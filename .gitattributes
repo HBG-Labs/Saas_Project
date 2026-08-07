@@ -1,0 +1,14 @@
+# Normalisation des fins de ligne : indispensable sur un dépôt développé sous
+# Windows et susceptible d'être cloné sous Linux/macOS (CI incluse).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+*.ps1 text eol=crlf

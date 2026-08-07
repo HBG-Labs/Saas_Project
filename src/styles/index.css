@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind 4 : la configuration est faite en CSS, il n'y a pas de
+ * tailwind.config.js. Ce bloc @theme est le POINT D'ANCRAGE du futur Design
+ * System (phase dédiée) — il ne contient volontairement que le minimum
+ * nécessaire pour que les fondations fonctionnent.
+ */
+@theme {
+  --color-surface: oklch(99% 0.002 250);
+  --color-surface-muted: oklch(96.5% 0.004 250);
+  --color-border: oklch(90% 0.006 250);
+  --color-content: oklch(25% 0.02 250);
+  --color-content-muted: oklch(52% 0.015 250);
+
+  --color-brand-50: oklch(97% 0.02 245);
+  --color-brand-500: oklch(62% 0.17 250);
+  --color-brand-600: oklch(55% 0.17 250);
+  --color-brand-700: oklch(48% 0.15 250);
+
+  --color-danger-500: oklch(60% 0.2 25);
+  --color-danger-50: oklch(96% 0.02 25);
+
+  /* Cible tactile minimale recommandée (§12) */
+  --spacing-touch: 2.75rem; /* 44px */
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* Encoche iPhone / barres système Android (§11) */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-content);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      sans-serif;
+    min-height: 100dvh;
+  }
+
+  /* Accessibilité : anneau de focus visible et cohérent partout (§12). */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* Respecte le réglage système de réduction des animations (§12). */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

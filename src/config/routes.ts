@@ -1,0 +1,41 @@
+/**
+ * Chemins de l'application.
+ *
+ * Placé dans `config/` (couche la plus basse) plutôt que dans `app/` : les
+ * features et les composants en ont besoin, et une feature ne doit pas dépendre
+ * de la racine de composition.
+ *
+ * Aucune URL ne doit être écrite en dur ailleurs — un renommage de route se
+ * répercute ici et nulle part ailleurs.
+ */
+export const ROUTES = {
+  home: '/',
+
+  login: '/login',
+  register: '/register',
+  forgotPassword: '/forgot-password',
+  /** Retour des liens e-mail : confirmation d'inscription, réinitialisation. */
+  authCallback: '/auth/callback',
+
+  dashboard: '/dashboard',
+  tools: '/tools',
+  favorites: '/favorites',
+  history: '/history',
+  references: '/references',
+  profile: '/profile',
+  settings: '/settings',
+
+  /**
+   * Les outils et catégories sont adressés par `slug`, pas par `id` : c'est le
+   * slug qui fait le lien entre la table `tools` et le registry côté code, et
+   * il produit des URL lisibles.
+   */
+  tool: (slug: string) => `/tools/${slug}`,
+  category: (slug: string) => `/categories/${slug}`,
+} as const;
+
+/** Patrons utilisés par la déclaration des routes (paramètres non résolus). */
+export const ROUTE_PATTERNS = {
+  tool: '/tools/:toolSlug',
+  category: '/categories/:categorySlug',
+} as const;
