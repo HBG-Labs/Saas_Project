@@ -1,5 +1,6 @@
 import { Search, Wrench, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -10,19 +11,29 @@ import { CategoryCard } from '@/features/tools/components/CategoryCard';
 import { ToolCard } from '@/features/tools/components/ToolCard';
 import { listTools, type ToolCategorySlug } from '@/features/tools';
 import { cn } from '@/lib/cn';
+import { useDocumentTitle } from '@/lib/use-document-title';
 
 type Filter = ToolCategorySlug | 'all';
 
-/**
- * Catalogue des outils.
- *
- * La recherche et le filtrage s'appliquent au registry, pas à une liste écrite
- * en dur : dès qu'un dossier sera ajouté dans `src/tools/`, l'outil apparaîtra
- * ici sans modification de cette page.
- */
 export default function ToolsPage() {
+  useDocumentTitle('Catalogue des outils');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+
+  // Catégorie lue depuis les paramètres d'URL (ex: ?category=fiber-optics)
+  const categoryParam = searchParams.get('category') as ToolCategorySlug | null;
+  const filter: Filter = categoryParam && CATEGORY_METADATA.some((c) => c.slug === categoryParam)
+    ? categoryParam
+    : 'all';
+
+  const handleFilterChange = (newFilter: Filter) => {
+    if (newFilter === 'all') {
+      searchParams.delete('category');
+    } else {
+      searchParams.set('category', newFilter);
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   const allTools = listTools();
 
@@ -34,8 +45,6 @@ export default function ToolsPage() {
       if (!matchesCategory) return false;
       if (normalized === '') return true;
 
-      // La recherche couvre aussi les mots-clés : un technicien cherchera
-      // « atténuation » sans connaître le titre exact de l'outil.
       return (
         tool.title.toLowerCase().includes(normalized) ||
         tool.description.toLowerCase().includes(normalized) ||
@@ -50,23 +59,23 @@ export default function ToolsPage() {
   return (
     <>
       <PageHeader
-        title="Outils"
-        description="Calculatrices et convertisseurs pour la fibre, les réseaux et l’électricité."
+        title="Catalogue des outils d’ingénierie"
+        description="Calculatrices, convertisseurs et bilans certifiés pour la fibre optique, les réseaux et l’électricité."
       />
 
       {hasTools ? (
         <>
-          <div className="mb-6 space-y-3">
+          <div className="mb-8 space-y-4">
             <Input
               label="Rechercher un outil"
               hideLabel
-              placeholder="Rechercher un outil…"
+              placeholder="Rechercher un outil par nom, mot-clé ou norme (ex: atténuation, CIDR)..."
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
               }}
               leadingIcon={<Search />}
-              className="max-w-md"
+              className="max-w-xl"
               {...(query
                 ? {
                     trailingSlot: (
@@ -85,13 +94,12 @@ export default function ToolsPage() {
                 : {})}
             />
 
-            {/* Filtres en boutons plutôt qu'en liste déroulante : les 5 options
-                tiennent à l'écran et restent atteignables en un seul geste. */}
-            <div role="group" aria-label="Filtrer par catégorie" className="flex flex-wrap gap-1.5">
+            {/* Boutons de catégories synchronisés avec l'URL */}
+            <div role="group" aria-label="Filtrer par domaine" className="flex flex-wrap gap-2">
               {(['all', ...CATEGORY_METADATA.map((c) => c.slug)] as Filter[]).map((value) => {
                 const label =
                   value === 'all'
-                    ? 'Toutes'
+                    ? 'Toutes les catégories'
                     : (CATEGORY_METADATA.find((c) => c.slug === value)?.name ?? value);
                 const isActive = filter === value;
 
@@ -100,15 +108,15 @@ export default function ToolsPage() {
                     key={value}
                     type="button"
                     onClick={() => {
-                      setFilter(value);
+                      handleFilterChange(value);
                     }}
                     aria-pressed={isActive}
                     className={cn(
-                      'h-8 rounded-md border px-3 text-xs font-medium transition-colors',
+                      'h-9 rounded-lg border px-3.5 text-xs font-medium transition-all',
                       'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                       isActive
-                        ? 'border-primary bg-primary-subtle text-primary'
-                        : 'border-border text-muted-foreground hover:bg-surface-hover',
+                        ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
+                        : 'border-border/70 bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                     )}
                   >
                     {label}
@@ -127,8 +135,8 @@ export default function ToolsPage() {
           ) : (
             <EmptyState
               icon={Search}
-              title="Aucun résultat"
-              description="Aucun outil ne correspond à votre recherche. Essayez un autre terme ou changez de catégorie."
+              title="Aucun outil trouvé"
+              description="Aucune calculatrice ne correspond à vos critères de recherche actuels."
               action={
                 isFiltering ? (
                   <Button
@@ -136,10 +144,10 @@ export default function ToolsPage() {
                     size="sm"
                     onClick={() => {
                       setQuery('');
-                      setFilter('all');
+                      handleFilterChange('all');
                     }}
                   >
-                    Réinitialiser les filtres
+                    Réinitialiser tous les filtres
                   </Button>
                 ) : undefined
               }

@@ -22,8 +22,8 @@ git add .
 # 3. Validation du commit
 $status = git status --porcelain
 if ($status) {
-    Write-Host "[3/4] 📝 Enregistrement du commit Phase 2..." -ForegroundColor Yellow
-    git commit -m "feat(phase-2): Design System, composants UI et pages publiques/applicatives"
+    Write-Host "[3/4] 📝 Enregistrement du commit..." -ForegroundColor Yellow
+    git commit -m "feat(nexoratech): Marketing 100% fonctionnel, Grille Tarifaire SaaS, Outils d'Ingénierie (Fibre, Réseaux, Électricité, Calculatrice Scientifique & Code Couleur 3456 FO), Historique par abonnement et Documentation"
 } else {
     Write-Host "[3/4] ℹ Tous les fichiers sont déjà commités." -ForegroundColor Green
 }
@@ -37,7 +37,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "🔗 Lien du dépôt : https://github.com/HBZ/ApplicationTech" -ForegroundColor Cyan
 } else {
     Write-Host "`n⚠️ Le push a rencontré un problème." -ForegroundColor Red
-    Write-Host "💡 Si le dépôt distant contient déjà des fichiers (ex: README), exécutez :" -ForegroundColor Yellow
+    Write-Host "💡 Si le dépôt distant contient déjà des fichiers, exécutez :" -ForegroundColor Yellow
     Write-Host "   git pull origin main --rebase" -ForegroundColor Yellow
     Write-Host "   git push -u origin main" -ForegroundColor Yellow
 }

@@ -1,5 +1,9 @@
-import { ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import { Accordion } from 'radix-ui';
+import { Link } from 'react-router';
+
+import { Button } from '@/components/ui/Button';
+import { ROUTES } from '@/config/routes';
 
 import { Section } from './Section';
 
@@ -7,60 +11,61 @@ const QUESTIONS = [
   {
     question: 'Les outils sont-ils fiables pour un usage professionnel ?',
     answer:
-      'La logique de calcul de chaque outil est isolée de l’interface et couverte par des tests unitaires. Cela dit, NexoraTech est un outil d’aide : les résultats doivent être validés selon les normes et procédures applicables à votre intervention.',
+      'Chaque algorithme de calcul s’appuie sur des normes certifiées (ITU-T, IEEE, UTE C 15-105) et est testé unitairement. C’est un outil d’aide précieux pour vos bilans de liaison et de puissance.',
   },
   {
-    question: 'Faut-il un compte pour utiliser les outils ?',
+    question: 'Faut-il un compte pour utiliser les calculatrices ?',
     answer:
-      'Non. Le catalogue et les outils sont consultables librement. Un compte n’est nécessaire que pour conserver vos favoris, votre historique et vos paramètres d’un appareil à l’autre.',
+      'Non. Toutes les calculatrices du catalogue sont consultables et exécutables librement. Un compte gratuit permet de sauvegarder vos favoris et votre historique.',
   },
   {
-    question: 'Mes données sont-elles accessibles à d’autres utilisateurs ?',
+    question: 'Mes données sont-elles sécurisées et privées ?',
     answer:
-      'Non. L’isolation est appliquée directement au niveau de la base de données par des politiques de sécurité par ligne : techniquement, une requête ne peut pas retourner les données d’un autre compte, même en cas d’erreur applicative.',
+      'Oui. La sécurité par ligne (RLS) est appliquée directement dans PostgreSQL Supabase : vos calculs et favoris personnels ne sont accessibles par aucun autre utilisateur.',
   },
   {
-    question: 'L’application fonctionne-t-elle sur téléphone ?',
+    question: 'L’application est-elle optimisée pour les smartphones ?',
     answer:
-      'Oui. L’interface est conçue en priorité pour le mobile : navigation basse accessible au pouce, cibles tactiles de 44 pixels minimum, et mode sombre pour les interventions en environnement peu éclairé.',
-  },
-  {
-    question: 'Quels outils sont disponibles aujourd’hui ?',
-    answer:
-      'La plateforme est en construction. Les quatre catégories — fibre optique, réseaux, électricité et calculs généraux — sont en place, et les outils y sont ajoutés progressivement. Chaque nouvel outil est publié dès qu’il est testé.',
-  },
-  {
-    question: 'Puis-je proposer un outil ?',
-    answer:
-      'Oui, et c’est encouragé. L’architecture a été conçue pour qu’un nouvel outil s’ajoute sans modifier le reste de la plateforme : les suggestions de terrain sont la meilleure source de priorisation.',
+      'Absolument. L’interface est conçue en priorité pour le terrain : cibles tactiles de 44 px minimum, navigation fluide au pouce et mode sombre pour les milieux peu éclairés.',
   },
 ] as const;
 
 export function Faq() {
   return (
     <Section id="faq" eyebrow="FAQ" title="Questions fréquentes">
-      <Accordion.Root type="single" collapsible className="mx-auto max-w-3xl">
+      <Accordion.Root type="single" collapsible className="mx-auto max-w-3xl space-y-3">
         {QUESTIONS.map((item, index) => (
           <Accordion.Item
             key={item.question}
             value={`item-${index}`}
-            className="border-border border-b"
+            className="border-border/70 bg-surface rounded-xl border px-4 py-1"
           >
-            <Accordion.Header>
-              <Accordion.Trigger className="group focus-visible:ring-ring flex w-full items-center justify-between gap-4 py-4 text-left text-base font-medium focus-visible:ring-2 focus-visible:outline-none">
-                {item.question}
+            <Accordion.Header className="flex">
+              <Accordion.Trigger className="group focus-visible:ring-ring flex flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:outline-none rounded-md">
+                <span>{item.question}</span>
                 <ChevronDown
-                  className="text-subtle-foreground size-4 shrink-0 transition-transform duration-[180ms] group-data-[state=open]:rotate-180"
+                  className="text-subtle-foreground size-4 shrink-0 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180"
                   aria-hidden="true"
                 />
               </Accordion.Trigger>
             </Accordion.Header>
             <Accordion.Content className="overflow-hidden">
-              <p className="text-muted-foreground pb-4 text-sm">{item.answer}</p>
+              <p className="text-muted-foreground pb-4 pt-1 text-xs leading-relaxed border-t border-border/40 mt-1">
+                {item.answer}
+              </p>
             </Accordion.Content>
           </Accordion.Item>
         ))}
       </Accordion.Root>
+
+      <div className="mt-10 text-center">
+        <Button asChild variant="outline">
+          <Link to={ROUTES.faq}>
+            Voir toutes les questions et réponses
+            <ArrowRight className="size-4 ml-1.5" />
+          </Link>
+        </Button>
+      </div>
     </Section>
   );
 }

@@ -1,7 +1,6 @@
 import { Command } from 'cmdk';
 import { Search } from 'lucide-react';
 import { Dialog } from 'radix-ui';
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from '@/components/layout/nav-icons';
@@ -30,26 +29,13 @@ const ITEM_CLASSES = cn(
  * fournit le filtrage flou et la navigation par flèches, dans un `Dialog` Radix
  * pour le piège de focus.
  *
- * Le raccourci est enregistré ici plutôt que dans le layout : le composant qui
- * possède le comportement possède aussi son déclencheur.
+ * Composant de présentation pur : l'état d'ouverture et le raccourci ⌘K sont
+ * détenus par `CommandBarProvider`, qui la monte une seule fois pour toute
+ * l'application.
  */
 export function CommandBar({ open, onOpenChange }: CommandBarProps) {
   const navigate = useNavigate();
   const tools = listTools();
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        onOpenChange(!open);
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open, onOpenChange]);
 
   const go = (path: string) => {
     onOpenChange(false);

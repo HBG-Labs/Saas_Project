@@ -1,125 +1,114 @@
-import { Check } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
 import { Section } from './Section';
 
-/**
- * Grille tarifaire — STRUCTURE uniquement.
- *
- * Aucun modèle économique n'a été défini pour NexoraTech. Afficher des montants
- * inventés serait un engagement commercial que le produit ne peut pas tenir :
- * les prix sont donc explicitement marqués « à définir ».
- *
- * La répartition des fonctionnalités reflète en revanche ce que l'architecture
- * permet réellement aujourd'hui.
- */
-const PLANS = [
-  {
-    name: 'Gratuit',
-    price: null,
-    tagline: 'Pour découvrir et pour les étudiants',
-    features: [
-      'Accès aux outils de base',
-      'Favoris illimités',
-      'Historique sur 30 jours',
-      'Mode sombre',
-    ],
-    cta: 'Créer un compte',
-    highlighted: false,
-  },
-  {
-    name: 'Pro',
-    price: null,
-    tagline: 'Pour les techniciens et ingénieurs en activité',
-    features: [
-      'Tous les outils, y compris avancés',
-      'Historique illimité',
-      'Paramètres d’outils sauvegardés',
-      'Export des résultats',
-      'Support prioritaire',
-    ],
-    cta: 'Choisir Pro',
-    highlighted: true,
-  },
-  {
-    name: 'Équipe',
-    price: null,
-    tagline: 'Pour les bureaux d’études et centres de formation',
-    features: [
-      'Tout le plan Pro',
-      'Comptes multiples',
-      'Espace de travail partagé',
-      'Références internes',
-      'Facturation centralisée',
-    ],
-    cta: 'Nous contacter',
-    highlighted: false,
-  },
-] as const;
-
 export function Pricing() {
+  const [isAnnual, setIsAnnual] = useState(true);
+
   return (
     <Section
       id="tarifs"
-      eyebrow="Tarifs"
-      title="Une offre simple"
-      description="La grille définitive sera publiée à la sortie de la version 1.0."
+      eyebrow="Tarifs & Offres"
+      title="Des formules adaptées à chaque professionnel"
+      description="Découvrez nos offres transparentes et sans engagement. Accès gratuit permanent pour tester la plateforme."
       centered
     >
-      <p className="border-warning-border bg-warning-subtle text-foreground mx-auto mb-10 max-w-2xl rounded-lg border px-4 py-3 text-center text-sm">
-        <strong className="font-semibold">Tarifs non définis.</strong> Les montants seront annoncés
-        ultérieurement ; seule la répartition des fonctionnalités est indicative.
-      </p>
+      {/* Sélecteur annuel / mensuel */}
+      <div className="mb-10 flex items-center justify-center gap-3">
+        <span className={`text-xs font-medium ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+          Mensuel
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isAnnual}
+          onClick={() => setIsAnnual(!isAnnual)}
+          className="bg-surface-sunken border-border relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-primary shadow-sm transform transition duration-200 ease-in-out ${
+              isAnnual ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+        <span className={`text-xs font-medium flex items-center gap-1.5 ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+          <span>Annuel</span>
+          <Badge variant="primary" className="text-2xs py-0 px-1.5">
+            -17 %
+          </Badge>
+        </span>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {PLANS.map((plan) => (
-          <div
-            key={plan.name}
-            className={cn(
-              'bg-surface relative flex flex-col rounded-xl border p-6',
-              plan.highlighted
-                ? 'border-primary shadow-overlay lg:scale-[1.03]'
-                : 'border-border shadow-raised',
-            )}
-          >
-            {plan.highlighted ? (
-              <Badge variant="primary" className="absolute -top-2.5 left-6">
-                Le plus complet
-              </Badge>
-            ) : null}
+        {PRICING_PLANS.map((plan) => {
+          const displayPrice = isAnnual ? plan.priceAnnualMonthly : plan.priceMonthly;
 
-            <h3 className="text-lg font-semibold">{plan.name}</h3>
-            <p className="text-muted-foreground mt-1 text-sm">{plan.tagline}</p>
-
-            <p className="mt-5 flex items-baseline gap-1.5">
-              <span className="text-subtle-foreground text-3xl font-bold">—</span>
-              <span className="text-muted-foreground text-sm">à définir</span>
-            </p>
-
-            <ul className="mt-6 flex-1 space-y-2.5">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex gap-2.5 text-sm">
-                  <Check className="text-success mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <span className="text-muted-foreground">{feature}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Button
-              asChild
-              variant={plan.highlighted ? 'primary' : 'outline'}
-              size="lg"
-              className="mt-6 w-full"
+          return (
+            <div
+              key={plan.id}
+              className={cn(
+                'bg-surface relative flex flex-col justify-between rounded-2xl border p-6 transition-all duration-200',
+                plan.popular
+                  ? 'border-primary/50 shadow-modal glow-primary lg:scale-[1.03]'
+                  : 'border-border/70 shadow-raised hover:border-border-strong',
+              )}
             >
-              <Link to={ROUTES.register}>{plan.cta}</Link>
-            </Button>
-          </div>
-        ))}
+              {plan.popular ? (
+                <Badge variant="primary" className="absolute -top-3 left-1/2 -translate-x-1/2 shadow-sm py-0.5 px-3">
+                  Recommandé
+                </Badge>
+              ) : null}
+
+              <div>
+                <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                <p className="text-muted-foreground mt-1 text-xs">{plan.tagline}</p>
+
+                <div className="mt-4 border-t border-border/40 pt-4">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
+                      {displayPrice === 0 ? '0 €' : `${displayPrice.toFixed(2)} €`}
+                    </span>
+                    {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
+                  </div>
+                  <p className="text-subtle-foreground text-2xs mt-1">
+                    {plan.id === 'free' ? 'Gratuit sans limitation de durée' : isAnnual ? 'Facturation annuelle' : 'Facturation mensuelle sans engagement'}
+                  </p>
+                </div>
+
+                <ul className="mt-6 space-y-2.5 text-xs">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2 text-foreground">
+                      <Check className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-border/40">
+                <Button
+                  asChild
+                  variant={plan.popular ? 'primary' : 'outline'}
+                  size="lg"
+                  className="w-full"
+                >
+                  <Link to={ROUTES.pricing}>
+                    {plan.ctaText}
+                    <ArrowRight className="size-4 ml-1.5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Section>
   );

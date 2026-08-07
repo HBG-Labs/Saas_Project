@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
@@ -16,17 +16,6 @@ export interface ToolCardProps {
   className?: string;
 }
 
-/**
- * Carte d'outil du catalogue.
- *
- * Le bouton favori est un vrai `<button>` posé À CÔTÉ du lien, pas à
- * l'intérieur : imbriquer un bouton dans un lien est invalide en HTML et rend
- * l'un des deux inatteignable au clavier.
- *
- * L'étoile reste visible en permanence sur tactile (`opacity-100`) et n'apparaît
- * au survol que sur pointeur fin : une action accessible uniquement au survol
- * n'existe pas sur mobile.
- */
 export function ToolCard({ tool, isFavorite = false, onToggleFavorite, className }: ToolCardProps) {
   const Icon = TOOL_ICONS[tool.icon] ?? FALLBACK_TOOL_ICON;
   const category = getCategoryMetadata(tool.category);
@@ -34,60 +23,63 @@ export function ToolCard({ tool, isFavorite = false, onToggleFavorite, className
   return (
     <div
       className={cn(
-        'group bg-surface border-border shadow-raised relative rounded-lg border p-4',
-        'hover:border-border-strong transition-colors duration-[120ms]',
+        'group bg-surface border-border/70 shadow-raised relative flex flex-col justify-between rounded-xl border p-4 sm:p-5',
+        'hover:border-primary/40 hover:shadow-overlay transition-all duration-200',
         'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-md',
-            category?.tint ?? 'bg-surface-hover text-muted-foreground',
-          )}
-        >
-          <Icon className="size-4" aria-hidden="true" />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">
-            {/* `after:absolute inset-0` étend la zone cliquable à toute la carte
-                sans imbriquer d'éléments interactifs. */}
-            <Link
-              to={ROUTES.tool(tool.slug)}
-              className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none"
-            >
-              {tool.title}
-            </Link>
-          </h3>
-          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{tool.description}</p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-2">
-        {category ? <Badge variant="neutral">{category.name}</Badge> : <span aria-hidden="true" />}
-
-        {onToggleFavorite ? (
-          <button
-            type="button"
-            onClick={() => onToggleFavorite(tool.slug)}
-            aria-pressed={isFavorite}
-            aria-label={
-              isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
-            }
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <span
             className={cn(
-              'relative z-10 flex size-8 items-center justify-center rounded-md transition-colors',
-              'hover:bg-surface-hover',
-              isFavorite ? 'text-warning' : 'text-subtle-foreground',
-              // Toujours visible au tactile ; révélé au survol sur pointeur fin.
-              'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
-              isFavorite && 'md:opacity-100',
+              'flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+              category?.tint ?? 'bg-surface-hover text-muted-foreground',
             )}
           >
-            <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden="true" />
-          </button>
-        ) : null}
+            <Icon className="size-5" aria-hidden="true" />
+          </span>
+
+          {onToggleFavorite ? (
+            <button
+              type="button"
+              onClick={() => onToggleFavorite(tool.slug)}
+              aria-pressed={isFavorite}
+              aria-label={
+                isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
+              }
+              className={cn(
+                'relative z-10 flex size-8 items-center justify-center rounded-md transition-colors',
+                'hover:bg-surface-hover',
+                isFavorite ? 'text-warning' : 'text-subtle-foreground',
+                'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
+                isFavorite && 'md:opacity-100',
+              )}
+            >
+              <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+
+        <h3 className="text-foreground mt-3 font-semibold text-base">
+          <Link
+            to={ROUTES.tool(tool.slug)}
+            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
+          >
+            {tool.title}
+          </Link>
+        </h3>
+        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
+          {tool.description}
+        </p>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2 text-xs">
+        {category ? <Badge variant="neutral" className="text-2xs">{category.name}</Badge> : <span aria-hidden="true" />}
+
+        <span className="text-primary font-medium flex items-center gap-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+          Lancer <ChevronRight className="size-3.5" />
+        </span>
       </div>
     </div>
   );

@@ -25,10 +25,6 @@ export default tseslint.config(
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
-      // Playwright n'est pas installé en Phase 1 : ces fichiers ne peuvent pas
-      // être résolus. À réactiver en Phase 2 (voir playwright.config.ts).
-      'e2e/**',
-      'playwright.config.ts',
     ],
   },
 

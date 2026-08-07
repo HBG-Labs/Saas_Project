@@ -17,6 +17,10 @@ export const ROUTES = {
   /** Retour des liens e-mail : confirmation d'inscription, réinitialisation. */
   authCallback: '/auth/callback',
 
+  features: '/features',
+  pricing: '/pricing',
+  faq: '/faq',
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',

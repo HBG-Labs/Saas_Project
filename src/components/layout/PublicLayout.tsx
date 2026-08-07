@@ -13,20 +13,12 @@ import { cn } from '@/lib/cn';
 import { Logo } from './Logo';
 
 const MARKETING_LINKS = [
-  { href: '#fonctionnalites', label: 'Fonctionnalités' },
-  { href: '#categories', label: 'Catégories' },
-  { href: '#tarifs', label: 'Tarifs' },
-  { href: '#faq', label: 'FAQ' },
+  { to: ROUTES.features, label: 'Fonctionnalités' },
+  { to: ROUTES.tools, label: 'Outils' },
+  { to: ROUTES.pricing, label: 'Tarifs' },
+  { to: ROUTES.faq, label: 'FAQ' },
 ] as const;
 
-/**
- * Ossature des pages publiques (landing, authentification).
- *
- * Distincte d'`AppLayout` : le contexte marketing n'a ni barre latérale, ni
- * palette de commandes, et remonte la taille de police de base à 16 px — un
- * lecteur de page d'accueil est plus distant et moins engagé qu'un utilisateur
- * en session de travail (cf. Design System §5.2).
- */
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { status } = useAuth();
@@ -48,13 +40,13 @@ export function PublicLayout() {
           <nav aria-label="Navigation du site" className="hidden md:block">
             <ul className="flex items-center gap-1">
               {MARKETING_LINKS.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
                     className="text-muted-foreground hover:text-foreground hover:bg-surface-hover flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -64,7 +56,7 @@ export function PublicLayout() {
             <ThemeToggle />
 
             {isAuthenticated ? (
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="glow-primary">
                 <Link to={ROUTES.dashboard}>Ouvrir l&apos;application</Link>
               </Button>
             ) : (
@@ -72,7 +64,7 @@ export function PublicLayout() {
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link to={ROUTES.login}>Connexion</Link>
                 </Button>
-                <Button asChild size="sm">
+                <Button asChild size="sm" className="glow-primary">
                   <Link to={ROUTES.register}>Commencer</Link>
                 </Button>
               </>
@@ -86,25 +78,25 @@ export function PublicLayout() {
                 <Menu className="size-5" aria-hidden="true" />
               </Dialog.Trigger>
               <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 md:hidden" />
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden" />
                 <Dialog.Content className="bg-surface border-border shadow-modal fixed inset-x-0 top-0 z-50 border-b p-4 md:hidden">
-                  <Dialog.Title className="sr-only">Menu</Dialog.Title>
+                  <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
                   <ul className="space-y-1">
                     {MARKETING_LINKS.map((link) => (
-                      <li key={link.href}>
-                        <a
-                          href={link.href}
+                      <li key={link.to}>
+                        <Link
+                          to={link.to}
                           onClick={() => {
                             setMenuOpen(false);
                           }}
                           className="hover:bg-surface-hover min-h-touch flex items-center rounded-md px-3 text-sm font-medium"
                         >
                           {link.label}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                     {!isAuthenticated ? (
-                      <li>
+                      <li className="pt-2 border-t border-border/40">
                         <Link
                           to={ROUTES.login}
                           onClick={() => {
@@ -137,17 +129,20 @@ export function PublicLayout() {
 
 const FOOTER_SECTIONS = [
   {
-    title: 'Produit',
+    title: 'Produit & Offres',
     links: [
-      { to: ROUTES.tools, label: 'Catalogue' },
-      { to: ROUTES.references, label: 'Références' },
+      { to: ROUTES.features, label: 'Fonctionnalités' },
+      { to: ROUTES.tools, label: 'Catalogue d’outils' },
+      { to: ROUTES.pricing, label: 'Tarifs' },
+      { to: ROUTES.faq, label: 'FAQ' },
     ],
   },
   {
-    title: 'Compte',
+    title: 'Compte & Session',
     links: [
       { to: ROUTES.login, label: 'Connexion' },
       { to: ROUTES.register, label: 'Créer un compte' },
+      { to: ROUTES.references, label: 'Références techniques' },
     ],
   },
 ] as const;
@@ -155,25 +150,28 @@ const FOOTER_SECTIONS = [
 function PublicFooter() {
   return (
     <footer className={cn('border-border bg-surface-sunken border-t')}>
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Logo />
-            <p className="text-muted-foreground mt-2 max-w-xs text-sm">
-              La boîte à outils technique des professionnels de la fibre, des réseaux et de
-              l&apos;électricité.
+            <p className="text-muted-foreground mt-3 max-w-sm text-xs leading-relaxed">
+              NexoraTech est le cockpit numérique des professionnels de la fibre optique, des réseaux et de l&apos;électricité. Formules certifiées UTE, IEEE et ITU-T.
             </p>
+            <div className="mt-4 flex items-center gap-2 text-2xs text-success">
+              <span className="size-2 rounded-full bg-success animate-pulse" />
+              <span className="font-mono font-medium">Tous les systèmes sont opérationnels</span>
+            </div>
           </div>
 
           {FOOTER_SECTIONS.map((section) => (
             <div key={section.title}>
-              <h2 className="text-foreground text-xs font-semibold">{section.title}</h2>
+              <h2 className="text-foreground text-xs font-semibold uppercase tracking-wider">{section.title}</h2>
               <ul className="mt-3 space-y-2">
                 {section.links.map((link) => (
                   <li key={link.to}>
                     <Link
                       to={link.to}
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-xs transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -184,8 +182,9 @@ function PublicFooter() {
           ))}
         </div>
 
-        <div className="border-border text-subtle-foreground mt-8 border-t pt-6 text-xs">
-          © {new Date().getFullYear()} NexoraTech. Tous droits réservés.
+        <div className="border-border/60 text-subtle-foreground mt-10 border-t pt-6 text-xs flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span>© {new Date().getFullYear()} NexoraTech. Tous droits réservés.</span>
+          <span className="text-2xs font-mono">v0.2.0-phase2 // Cockpit Numérique</span>
         </div>
       </div>
     </footer>

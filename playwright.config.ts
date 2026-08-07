@@ -1,24 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Configuration end-to-end.
+ * Configuration Playwright E2E pour NexoraTech.
  *
- * ⚠️ Playwright N'EST PAS INSTALLÉ en Phase 1 — ce fichier ne compile pas tant
- * que le paquet est absent (il est donc exclu du typecheck et du lint).
- *
- * Raison : Playwright télécharge ~500 Mo de navigateurs, et la Phase 1 ne
- * contient aucun parcours utilisateur réel à tester (les pages sont des
- * coquilles). Installer maintenant reviendrait à immobiliser de l'espace disque
- * pour vérifier des écrans qui vont changer.
- *
- * Activation en Phase 2, quand les formulaires d'authentification existeront :
- *
- *     npm install -D @playwright/test
- *     npx playwright install chromium
- *     npx playwright test
- *
- * Il faudra alors retirer les exclusions de `playwright.config.ts` et `e2e/`
- * dans tsconfig.node.json et eslint.config.js.
+ * Exécution :
+ * - `npm run test:e2e` (mode headless)
+ * - `npm run test:e2e:ui` (mode interactif avec Playwright UI)
  */
 export default defineConfig({
   testDir: './e2e',
@@ -34,8 +21,6 @@ export default defineConfig({
 
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Le responsive est une contrainte d'architecture, pas une finition :
-    // un profil mobile est prévu dès la mise en place.
     { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
   ],
 
