@@ -1,43 +1,68 @@
-import { cva, type VariantProps } from 'class-variance-authority';
-import type { ButtonHTMLAttributes } from 'react';
+import type { VariantProps } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
+import { Slot } from 'radix-ui';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
-/**
- * Primitive de bouton.
- *
- * Fondation minimale : le Design System complet fera l'objet d'une phase
- * dédiée. Deux points sont néanmoins traités dès maintenant car ils sont
- * structurels et coûteux à rétro-adapter :
- *   • la hauteur minimale respecte la cible tactile de 44 px (§12) ;
- *   • l'anneau de focus est hérité du style global `:focus-visible`.
- */
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ' +
-    'transition-colors disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-brand-600 text-white hover:bg-brand-700',
-        secondary: 'bg-surface-muted text-content hover:bg-border',
-        ghost: 'text-content hover:bg-surface-muted',
-        danger: 'bg-danger-500 text-white hover:opacity-90',
-      },
-      size: {
-        sm: 'min-h-9 px-3',
-        md: 'min-h-touch px-4',
-        lg: 'min-h-touch px-6 text-base',
-      },
-    },
-    defaultVariants: { variant: 'primary', size: 'md' },
-  },
-);
+import { buttonVariants } from './button-variants';
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  /**
+   * Rend l'élément enfant à la place du `<button>`, en lui transmettant styles
+   * et comportement. Indispensable pour styler un `<Link>` : imbriquer un lien
+   * dans un bouton est invalide en HTML et casse la navigation clavier.
+   */
+  asChild?: boolean;
+  /** Affiche un indicateur et désactive le bouton. La largeur est préservée. */
+  isLoading?: boolean;
+  /** Libellé annoncé aux lecteurs d'écran pendant le chargement. */
+  loadingLabel?: string;
+  leadingIcon?: ReactNode;
+  trailingIcon?: ReactNode;
+}
 
-export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  isLoading = false,
+  loadingLabel = 'Chargement en cours',
+  leadingIcon,
+  trailingIcon,
+  children,
+  disabled,
+  type = 'button',
+  ...props
+}: ButtonProps) {
+  // En mode `asChild`, Radix exige un enfant unique : on ne peut pas y injecter
+  // d'icônes ni d'indicateur. L'appelant compose lui-même son contenu.
+  if (asChild) {
+    return (
+      <Slot.Root className={cn(buttonVariants({ variant, size }), className)}>{children}</Slot.Root>
+    );
+  }
+
   return (
-    <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+    <button
+      type={type}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled ?? isLoading}
+      aria-busy={isLoading || undefined}
+      {...props}
+    >
+      {isLoading ? (
+        <>
+          <Loader2 className="animate-spin" aria-hidden="true" />
+          <span className="sr-only">{loadingLabel}</span>
+        </>
+      ) : (
+        leadingIcon
+      )}
+      {children}
+      {!isLoading && trailingIcon}
+    </button>
   );
 }

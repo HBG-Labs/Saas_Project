@@ -22,13 +22,19 @@
     "protect:node-modules": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/protect-node-modules.ps1"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@hookform/resolvers": "^5.7.1",
     "@supabase/supabase-js": "2.112.2",
     "@tanstack/react-query": "5.101.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "cmdk": "^1.1.1",
     "lucide-react": "1.30.0",
+    "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-hook-form": "^7.84.0",
     "react-router": "8.3.0",
     "tailwind-merge": "3.6.0",
     "zod": "4.4.3"

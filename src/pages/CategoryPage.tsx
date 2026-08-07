@@ -1,15 +1,80 @@
-import { useParams } from 'react-router';
+import { ArrowLeft, Wrench } from 'lucide-react';
+import { Link, useParams } from 'react-router';
 
-import { PagePlaceholder } from '@/components/feedback/PagePlaceholder';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
+import { ROUTES } from '@/config/routes';
+import { getCategoryMetadata } from '@/features/tools/catalog-metadata';
+import { ToolCard } from '@/features/tools/components/ToolCard';
+import { listTools } from '@/features/tools';
+import { cn } from '@/lib/cn';
 
 export default function CategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>();
+  const category = categorySlug ? getCategoryMetadata(categorySlug) : undefined;
+
+  if (!category) {
+    return (
+      <>
+        <PageHeader
+          title="Catégorie introuvable"
+          description={`Aucune catégorie ne correspond à « ${categorySlug ?? ''} ».`}
+        />
+        <EmptyState
+          icon={Wrench}
+          title="Cette catégorie n’existe pas"
+          description="Elle a peut-être été renommée. Le catalogue complet reste accessible."
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link to={ROUTES.tools}>Voir le catalogue</Link>
+            </Button>
+          }
+        />
+      </>
+    );
+  }
+
+  const Icon = TOOL_ICONS[category.icon] ?? FALLBACK_TOOL_ICON;
+  const tools = listTools().filter((tool) => tool.category === category.slug);
 
   return (
-    <PagePlaceholder
-      title={`Catégorie : ${categorySlug ?? 'inconnue'}`}
-      description="Listera les outils de la catégorie, en croisant la table `categories` et le registry."
-      plannedFor="Phase 3"
-    />
+    <>
+      <Link
+        to={ROUTES.tools}
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-xs transition-colors"
+      >
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        Tous les outils
+      </Link>
+
+      <div className="mb-6 flex items-start gap-4">
+        <span
+          className={cn(
+            'flex size-12 shrink-0 items-center justify-center rounded-lg',
+            category.tint,
+          )}
+          aria-hidden="true"
+        >
+          <Icon className="size-6" />
+        </span>
+        <PageHeader title={category.name} description={category.description} className="mb-0" />
+      </div>
+
+      {tools.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {tools.map((tool) => (
+            <ToolCard key={tool.slug} tool={tool} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Icon}
+          title="Bientôt disponible"
+          description={`Les outils de la catégorie « ${category.name} » sont en cours de développement et seront publiés progressivement.`}
+        />
+      )}
+    </>
   );
 }

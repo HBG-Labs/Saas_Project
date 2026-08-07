@@ -1,0 +1,55 @@
+import { NavLink } from 'react-router';
+
+import { MOBILE_NAV } from '@/config/navigation';
+import { ROUTES } from '@/config/routes';
+import { cn } from '@/lib/cn';
+
+import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
+
+/**
+ * Navigation basse, mobile uniquement.
+ *
+ * Pourquoi en bas plutôt qu'un simple menu hamburger : sur un téléphone tenu à
+ * une main, le haut de l'écran est hors d'atteinte du pouce. Les destinations
+ * fréquentes doivent être là où la main est.
+ *
+ * Le rembourrage bas suit `env(safe-area-inset-bottom)` pour ne pas passer sous
+ * l'indicateur d'accueil iOS ni sous la barre gestuelle Android.
+ */
+export function MobileNav() {
+  return (
+    <nav
+      aria-label="Navigation rapide"
+      className={cn(
+        'bg-surface/95 border-border fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur-sm',
+        'safe-bottom md:hidden',
+      )}
+    >
+      <ul className="flex items-stretch">
+        {MOBILE_NAV.map((item) => {
+          const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
+
+          return (
+            <li key={item.to} className="flex-1">
+              <NavLink
+                to={item.to}
+                end={item.to === ROUTES.dashboard}
+                className={({ isActive }) =>
+                  cn(
+                    // 44 px minimum : cible tactile WCAG 2.5.5.
+                    'min-h-touch flex flex-col items-center justify-center gap-0.5 py-1.5',
+                    'text-2xs font-medium transition-colors duration-[120ms]',
+                    isActive ? 'text-primary' : 'text-subtle-foreground',
+                  )
+                }
+              >
+                <Icon className="size-5" aria-hidden="true" />
+                <span>{item.label}</span>
+              </NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

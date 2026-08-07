@@ -1,66 +1,337 @@
 @import 'tailwindcss';
 
-/*
- * Tailwind 4 : la configuration est faite en CSS, il n'y a pas de
- * tailwind.config.js. Ce bloc @theme est le POINT D'ANCRAGE du futur Design
- * System (phase dédiée) — il ne contient volontairement que le minimum
- * nécessaire pour que les fondations fonctionnent.
- */
-@theme {
-  --color-surface: oklch(99% 0.002 250);
-  --color-surface-muted: oklch(96.5% 0.004 250);
-  --color-border: oklch(90% 0.006 250);
-  --color-content: oklch(25% 0.02 250);
-  --color-content-muted: oklch(52% 0.015 250);
+/* Polices auto-hébergées : aucun appel CDN, donc aucune fuite de données
+   utilisateur vers un tiers et aucune dépendance réseau au chargement. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
 
-  --color-brand-50: oklch(97% 0.02 245);
-  --color-brand-500: oklch(62% 0.17 250);
-  --color-brand-600: oklch(55% 0.17 250);
-  --color-brand-700: oklch(48% 0.15 250);
+/* Le thème sombre est piloté par une classe sur <html> plutôt que par la seule
+   media query : l'utilisateur doit pouvoir choisir un thème différent de son
+   réglage système. Le choix est appliqué avant le premier rendu (voir
+   src/features/theme/theme-script.ts) pour éviter tout flash. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --color-danger-500: oklch(60% 0.2 25);
-  --color-danger-50: oklch(96% 0.02 25);
-
-  /* Cible tactile minimale recommandée (§12) */
-  --spacing-touch: 2.75rem; /* 44px */
-}
-
+/* =============================================================================
+   TOKENS SÉMANTIQUES
+   Source de vérité unique. Voir docs/DESIGN_SYSTEM.md pour la justification
+   de chaque valeur. Aucune couleur ne doit être écrite en dur ailleurs.
+   ============================================================================= */
 @layer base {
   :root {
-    color-scheme: light;
+    /* --- Surfaces ------------------------------------------------------- */
+    --background: oklch(99% 0.002 258);
+    --surface: oklch(100% 0 0);
+    --surface-raised: oklch(100% 0 0);
+    --surface-sunken: oklch(97% 0.003 258);
+    --surface-hover: oklch(96.5% 0.004 258);
 
-    /* Encoche iPhone / barres système Android (§11) */
+    /* --- Bordures ------------------------------------------------------- */
+    --border: oklch(92% 0.005 258);
+    --border-strong: oklch(85% 0.008 258);
+
+    /* --- Texte ---------------------------------------------------------- */
+    --foreground: oklch(20% 0.015 258);
+    --muted-foreground: oklch(50% 0.012 258);
+    --subtle-foreground: oklch(62% 0.01 258);
+
+    /* --- Marque --------------------------------------------------------- */
+    --primary-50: oklch(97% 0.015 258);
+    --primary-100: oklch(93% 0.035 258);
+    --primary-200: oklch(87% 0.065 258);
+    --primary-300: oklch(78% 0.105 258);
+    --primary-400: oklch(68% 0.155 258);
+    --primary-500: oklch(58% 0.19 258);
+    --primary-600: oklch(52% 0.19 258);
+    --primary-700: oklch(45% 0.17 258);
+    --primary-800: oklch(37% 0.14 258);
+    --primary-900: oklch(29% 0.1 258);
+
+    --primary: var(--primary-500);
+    --primary-hover: var(--primary-600);
+    --primary-active: var(--primary-700);
+    --primary-foreground: oklch(100% 0 0);
+    --primary-subtle: var(--primary-50);
+
+    /* --- Accent (données, graphes — jamais une action principale) -------- */
+    --accent: oklch(70% 0.14 195);
+    --accent-foreground: oklch(22% 0.05 195);
+    --accent-subtle: oklch(95% 0.03 195);
+
+    /* --- Sémantiques ---------------------------------------------------- */
+    --success: oklch(60% 0.15 150);
+    --success-subtle: oklch(95% 0.04 150);
+    --success-border: oklch(85% 0.08 150);
+
+    --warning: oklch(72% 0.15 75);
+    --warning-subtle: oklch(96% 0.045 75);
+    --warning-border: oklch(87% 0.09 75);
+
+    --error: oklch(58% 0.2 25);
+    --error-subtle: oklch(96% 0.03 25);
+    --error-border: oklch(87% 0.08 25);
+
+    --info: oklch(62% 0.14 240);
+    --info-subtle: oklch(96% 0.03 240);
+    --info-border: oklch(87% 0.07 240);
+
+    /* --- Focus ---------------------------------------------------------- */
+    --ring: var(--primary-500);
+
+    /* --- Ombres (thème clair uniquement, cf. §7.2) ----------------------- */
+    --shadow-raised: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-overlay: 0 8px 24px -4px rgb(0 0 0 / 0.12);
+    --shadow-modal: 0 16px 48px -8px rgb(0 0 0 / 0.18);
+
+    /* --- Zones sûres (encoche iPhone, barre gestuelle Android) ---------- */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /* Fond à 14 % de clarté, jamais #000 : le noir pur crée un halo autour du
+       texte clair et supprime toute hiérarchie par élévation. */
+    --background: oklch(14% 0.008 258);
+    --surface: oklch(17.5% 0.01 258);
+    --surface-raised: oklch(21% 0.012 258);
+    --surface-sunken: oklch(11.5% 0.008 258);
+    --surface-hover: oklch(23% 0.013 258);
+
+    --border: oklch(27% 0.012 258);
+    --border-strong: oklch(35% 0.015 258);
+
+    --foreground: oklch(96% 0.005 258);
+    --muted-foreground: oklch(68% 0.01 258);
+    --subtle-foreground: oklch(55% 0.01 258);
+
+    /* Échelle inversée ET éclaircie : un bleu saturé ne reste lisible sur fond
+       sombre que si sa clarté remonte. Réutiliser les valeurs claires
+       produirait un bleu qui bave sur le fond. */
+    --primary-50: oklch(22% 0.04 258);
+    --primary-100: oklch(27% 0.06 258);
+    --primary-200: oklch(33% 0.09 258);
+    --primary-300: oklch(42% 0.13 258);
+    --primary-400: oklch(52% 0.17 258);
+    --primary-500: oklch(62% 0.18 258);
+    --primary-600: oklch(56% 0.18 258);
+    --primary-700: oklch(48% 0.16 258);
+    --primary-800: oklch(40% 0.13 258);
+    --primary-900: oklch(32% 0.1 258);
+
+    --primary: var(--primary-500);
+    --primary-hover: oklch(68% 0.17 258);
+    --primary-active: oklch(56% 0.18 258);
+    --primary-foreground: oklch(14% 0.01 258);
+    --primary-subtle: var(--primary-50);
+
+    --accent: oklch(74% 0.13 195);
+    --accent-foreground: oklch(95% 0.02 195);
+    --accent-subtle: oklch(26% 0.05 195);
+
+    --success: oklch(70% 0.15 150);
+    --success-subtle: oklch(24% 0.05 150);
+    --success-border: oklch(35% 0.08 150);
+
+    --warning: oklch(78% 0.15 75);
+    --warning-subtle: oklch(26% 0.05 75);
+    --warning-border: oklch(38% 0.08 75);
+
+    --error: oklch(68% 0.19 25);
+    --error-subtle: oklch(25% 0.06 25);
+    --error-border: oklch(38% 0.1 25);
+
+    --info: oklch(70% 0.13 240);
+    --info-subtle: oklch(24% 0.05 240);
+    --info-border: oklch(36% 0.08 240);
+
+    --ring: oklch(68% 0.17 258);
+
+    /* En sombre l'élévation passe par la clarté de surface : une ombre noire
+       sur fond sombre est invisible. On ne garde qu'un voile discret. */
+    --shadow-raised: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-overlay: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+    --shadow-modal: 0 16px 48px -8px rgb(0 0 0 / 0.6);
+
+    color-scheme: dark;
+  }
+}
+
+/* =============================================================================
+   EXPOSITION À TAILWIND
+   `@theme inline` est indispensable : il génère des utilitaires qui résolvent
+   la variable AU MOMENT DE L'USAGE. Sans `inline`, Tailwind figerait la valeur
+   du thème clair et la classe `.dark` n'aurait aucun effet.
+   ============================================================================= */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-subtle: var(--accent-subtle);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-error: var(--error);
+  --color-error-subtle: var(--error-subtle);
+  --color-error-border: var(--error-border);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-border: var(--info-border);
+
+  --color-ring: var(--ring);
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Échelle typographique — cf. DESIGN_SYSTEM.md §5.2 */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  --shadow-raised: var(--shadow-raised);
+  --shadow-overlay: var(--shadow-overlay);
+  --shadow-modal: var(--shadow-modal);
+
+  /* Cible tactile minimale — WCAG 2.5.5 / Apple HIG */
+  --spacing-touch: 2.75rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =============================================================================
+   BASE
+   ============================================================================= */
+@layer base {
+  * {
+    border-color: var(--border);
   }
 
   html {
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
   }
 
   body {
-    background-color: var(--color-surface);
-    color: var(--color-content);
-    font-family:
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      'Segoe UI',
-      sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    /* 14 px est la taille par défaut de l'APPLICATION (outil dense, cf. §5.2).
+       La landing page remonte localement à 16 px. */
+    font-size: 0.875rem;
+    line-height: 1.25rem;
     min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  /* Accessibilité : anneau de focus visible et cohérent partout (§12). */
+  /* Anneau de focus cohérent partout. Ne jamais supprimer sans remplacer. */
   :focus-visible {
-    outline: 2px solid var(--color-brand-600);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
   }
 
-  /* Respecte le réglage système de réduction des animations (§12). */
+  /* Safari iOS zoome automatiquement sur un champ dont la police est < 16 px.
+     C'est la seule exception assumée à la règle des 14 px. */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* Évite les lignes orphelines en fin de paragraphe. */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Chiffres tabulaires : sans cela `1.111` et `8.888` n'ont pas la même
+     largeur et les colonnes de résultats tremblent. */
+  .tabular,
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--primary-200);
+    color: var(--foreground);
+  }
+
+  /* Barres de défilement discrètes, accordées au thème. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--subtle-foreground);
+  }
+
+  /* Les animations déclenchent migraines et nausées chez les personnes
+     souffrant de troubles vestibulaires. Cette règle n'est pas négociable. */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -72,5 +343,14 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: max(0.5rem, var(--safe-bottom));
+  }
+  .safe-top {
+    padding-top: max(0.5rem, var(--safe-top));
   }
 }

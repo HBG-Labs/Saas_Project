@@ -29,12 +29,14 @@ function renderAt(path: string) {
 }
 
 describe('routing', () => {
-  it("affiche l'accueil sur /", async () => {
+  it("affiche la page d'accueil publique sur /", async () => {
     renderAt('/');
 
     expect(
-      await screen.findByRole('heading', { name: /nexoratech/i, level: 1 }),
+      await screen.findByRole('heading', { name: /boîte à outils/i, level: 1 }),
     ).toBeInTheDocument();
+    // La landing utilise l'ossature publique, pas la navigation applicative.
+    expect(screen.getByRole('navigation', { name: 'Navigation du site' })).toBeInTheDocument();
   });
 
   it('affiche le catalogue public sur /tools sans session', async () => {

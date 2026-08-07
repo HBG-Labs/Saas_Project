@@ -2,37 +2,44 @@ import type { ComponentType } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
-import { AppShell } from '@/components/layout/AppShell';
+import { LoadingScreen } from '@/components/feedback/LoadingScreen';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
 
 /**
  * Adapte un `import()` de page au format attendu par `lazy` de React Router.
- *
- * Chaque page devient ainsi son propre chunk : le navigateur ne télécharge que
- * le code de la route visitée (§13). Le helper évite de répéter quinze fois la
- * même conversion.
+ * Chaque page devient son propre chunk : le navigateur ne télécharge que le
+ * code de la route visitée.
  */
 function lazyPage(load: () => Promise<{ default: ComponentType }>) {
   return async () => ({ Component: (await load()).default });
 }
 
 /**
- * Arbre de routes, exporté séparément du routeur.
+ * Arbre de routes, exporté séparément du routeur pour que les tests puissent
+ * reconstruire un routeur mémoire à partir des MÊMES définitions.
  *
- * Permet aux tests de reconstruire un routeur mémoire à partir des MÊMES
- * définitions que la production : ce qui est vérifié est bien ce qui est livré.
+ * Deux ossatures distinctes :
+ *   • `PublicLayout` — landing et authentification : en-tête marketing, pied de
+ *     page, corps de texte à 16 px.
+ *   • `AppLayout` — application connectée : barre latérale, palette de
+ *     commandes, navigation basse mobile, densité à 14 px.
+ *
+ * Les séparer évite le composant unique truffé de conditions qui finit par
+ * charger le code du tableau de bord sur la page d'accueil.
  */
 export const routes: RouteObject[] = [
   {
-    element: <AppShell />,
-    // Filet de sécurité au niveau du routeur : une erreur non capturée plus bas
-    // affiche cet écran au lieu d'une page blanche.
+    element: <PublicLayout />,
     errorElement: <ErrorFallback error={null} />,
+    // Requis dès qu'une route racine est paresseuse : sans lui, React Router
+    // n'a rien à afficher pendant la résolution initiale du module.
+    hydrateFallbackElement: <LoadingScreen />,
     children: [
-      { index: true, lazy: lazyPage(() => import('@/pages/HomePage')) },
+      { index: true, lazy: lazyPage(() => import('@/pages/LandingPage')) },
 
-      // -------------------------------------------------- visiteurs non connectés
       {
         element: <PublicOnlyRoute />,
         children: [
@@ -45,17 +52,27 @@ export const routes: RouteObject[] = [
         ],
       },
 
-      // Accessible dans les deux états : le lien e-mail peut être ouvert avec
-      // ou sans session active.
+      // Accessible connecté ou non : le lien e-mail peut être ouvert dans un
+      // navigateur sans session.
       { path: ROUTES.authCallback, lazy: lazyPage(() => import('@/pages/AuthCallbackPage')) },
+    ],
+  },
 
-      // ------------------------------------------------------------- catalogue public
+  {
+    element: <AppLayout />,
+    errorElement: <ErrorFallback error={null} />,
+    // Requis dès qu'une route racine est paresseuse : sans lui, React Router
+    // n'a rien à afficher pendant la résolution initiale du module.
+    hydrateFallbackElement: <LoadingScreen />,
+    children: [
+      // Catalogue public : consultable sans compte, mais dans l'ossature
+      // applicative — un visiteur qui explore les outils est déjà dans le
+      // produit, pas dans la vitrine.
       { path: ROUTES.tools, lazy: lazyPage(() => import('@/pages/ToolsPage')) },
       { path: ROUTE_PATTERNS.tool, lazy: lazyPage(() => import('@/pages/ToolDetailPage')) },
       { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
       { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
 
-      // ------------------------------------------------------------- routes privées
       {
         element: <ProtectedRoute />,
         children: [
