@@ -183,6 +183,26 @@ export const routes: RouteObject[] = [
                         path: ROUTE_PATTERNS.intervention,
                         lazy: lazyPage(() => import('@/pages/interventions/InterventionPage')),
                       },
+                      {
+                        path: ROUTE_PATTERNS.interventionReport,
+                        lazy: lazyPage(() => import('@/pages/interventions/ReportEditorPage')),
+                      },
+                      /**
+                       * La file de contrôle exige `intervention.review` : elle
+                       * n'a aucun sens pour qui ne contrôle pas, et la policy
+                       * lui renverrait de toute façon une liste vide.
+                       */
+                      {
+                        element: (
+                          <RequirePermission permission={PERMISSIONS.interventionReview} />
+                        ),
+                        children: [
+                          {
+                            path: ROUTES.review,
+                            lazy: lazyPage(() => import('@/pages/interventions/ReviewQueuePage')),
+                          },
+                        ],
+                      },
                     ],
                   },
 

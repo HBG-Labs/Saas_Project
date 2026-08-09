@@ -43,6 +43,9 @@ export const ROUTES = {
   mission: (missionId: string) => `/missions/${missionId}`,
 
   intervention: (interventionId: string) => `/interventions/${interventionId}`,
+  interventionReport: (interventionId: string) => `/interventions/${interventionId}/rapport`,
+  /** File de contrôle des comptes rendus. */
+  review: '/controle',
 
   dashboard: '/dashboard',
   tools: '/tools',
@@ -70,4 +73,5 @@ export const ROUTE_PATTERNS = {
   team: '/equipes/:teamId',
   mission: '/missions/:missionId',
   intervention: '/interventions/:interventionId',
+  interventionReport: '/interventions/:interventionId/rapport',
 } as const;

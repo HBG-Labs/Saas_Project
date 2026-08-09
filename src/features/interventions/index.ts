@@ -33,4 +33,17 @@ export {
   useWorkedSeconds,
 } from './hooks/useInterventions';
 
+export {
+  useAttachmentUrl,
+  useAttachments,
+  useCreateReport,
+  useDeleteAttachment,
+  useReportsPendingReview,
+  useReviewReport,
+  useSaveReport,
+  useSubmitReport,
+  useUploadAttachment,
+} from './hooks/useReports';
+
+export { AttachmentGallery } from './components/AttachmentGallery';
 export { InterventionTimer } from './components/InterventionTimer';

@@ -67,6 +67,13 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     feature: 'missions',
   },
   {
+    to: ROUTES.review,
+    label: 'Contrôle',
+    icon: 'clipboard-check',
+    permission: 'intervention.review',
+    feature: 'intervention_review',
+  },
+  {
     to: ROUTES.customers,
     label: 'Clients',
     icon: 'contact',
