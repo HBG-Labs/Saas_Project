@@ -36,26 +36,48 @@ export interface NavItem {
   feature?: string;
 }
 
-export const APP_NAV: readonly NavItem[] = [
+/**
+ * Regroupement d'entrées sous un intitulé commun.
+ *
+ * La barre latérale n'affiche un groupe que si au moins une de ses entrées
+ * survit au filtrage (voir `useVisibleNavGroups`) : un intitulé surmontant le
+ * vide pose plus de questions qu'il n'en résout.
+ */
+export interface NavGroup {
+  /** Clé de rendu, jamais affichée. */
+  id: string;
+  label: string;
+  items: readonly NavItem[];
+}
+
+/** Le point de départ, hors de tout groupe : il n'a pas de pair. */
+export const ROOT_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
-  { to: ROUTES.tools, label: 'Outils', icon: 'tools', primary: true },
+];
+
+/** Le catalogue technique — accessible à tout utilisateur, organisation ou non. */
+export const TOOLS_NAV: readonly NavItem[] = [
+  { to: ROUTES.tools, label: 'Catalogue', icon: 'tools', primary: true },
   { to: ROUTES.favorites, label: 'Favoris', icon: 'star', primary: true },
   { to: ROUTES.history, label: 'Historique', icon: 'history', primary: true },
   { to: ROUTES.references, label: 'Références', icon: 'book' },
 ];
 
 /**
- * Section « Entreprise ».
+ * Liste plate du domaine personnel.
  *
- * Séparée d'`APP_NAV` : le catalogue d'outils s'adresse à tout utilisateur,
- * cette section aux seuls membres d'une organisation. Les mêler produirait un
- * menu dont la moitié disparaît selon le contexte, sans que rien n'explique
- * pourquoi.
+ * La navigation basse en dérive : sur mobile, une barre de cinq icônes n'a pas
+ * la place d'intitulés de section.
+ */
+export const APP_NAV: readonly NavItem[] = [...ROOT_NAV, ...TOOLS_NAV];
+
+/**
+ * Ce qui se fait au quotidien : le travail lui-même, et son contrôle.
  *
  * `permission` filtre à l'affichage (voir `useVisibleNavItems`) et ne protège
  * rien : la route reste atteignable, mais la RLS n'y renverra aucune ligne.
  */
-export const ORGANIZATION_NAV: readonly NavItem[] = [
+const OPERATIONS_NAV: readonly NavItem[] = [
   {
     to: ROUTES.missions,
     label: 'Missions',
@@ -73,6 +95,10 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     permission: 'intervention.review',
     feature: 'intervention_review',
   },
+];
+
+/** Ce sur quoi le travail s'appuie : chez qui l'on va, et avec qui. */
+const RESOURCES_NAV: readonly NavItem[] = [
   {
     to: ROUTES.customers,
     label: 'Clients',
@@ -89,9 +115,16 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     permission: 'team.view',
     feature: 'teams',
   },
+];
+
+/** L'administration de l'entreprise — consultée rarement, par peu de monde. */
+const COMPANY_NAV: readonly NavItem[] = [
   {
     to: ROUTES.organization,
-    label: 'Entreprise',
+    // Nommée « Paramètres » et non « Entreprise » : l'entrée portait
+    // auparavant le nom de la section qui la contient, et l'on ne pouvait pas
+    // deviner qu'elle menait à la fiche de la société plutôt qu'à l'ensemble.
+    label: 'Paramètres',
     icon: 'building',
     permission: 'organization.view',
   },
@@ -114,6 +147,36 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     permission: 'audit.view',
     feature: 'audit_log',
   },
+];
+
+/**
+ * Sections de la barre latérale, dans l'ordre où l'on s'en sert.
+ *
+ * Les trois premières s'adressent aux membres d'une organisation et
+ * disparaissent entièrement pour qui n'en fait pas partie — aucune de leurs
+ * entrées ne passe alors le filtrage. « Outils » reste, puisqu'il ne dépend ni
+ * d'un rôle ni d'une formule.
+ *
+ * L'ordre n'est pas décoratif : les missions sont ce qu'un technicien ouvre
+ * dix fois par jour, la facturation ce qu'un dirigeant ouvre une fois par mois.
+ */
+export const SIDEBAR_GROUPS: readonly NavGroup[] = [
+  { id: 'operations', label: 'Opérations', items: OPERATIONS_NAV },
+  { id: 'resources', label: 'Ressources', items: RESOURCES_NAV },
+  { id: 'company', label: 'Entreprise', items: COMPANY_NAV },
+  { id: 'tools', label: 'Outils', items: TOOLS_NAV },
+];
+
+/**
+ * Liste plate des entrées d'organisation.
+ *
+ * Dérivée des groupes, jamais saisie deux fois : une entrée ajoutée à un groupe
+ * sans l'être ici sortirait silencieusement du champ des tests de validité.
+ */
+export const ORGANIZATION_NAV: readonly NavItem[] = [
+  ...OPERATIONS_NAV,
+  ...RESOURCES_NAV,
+  ...COMPANY_NAV,
 ];
 
 export const ACCOUNT_NAV: readonly NavItem[] = [

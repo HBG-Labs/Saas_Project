@@ -40,7 +40,7 @@ export type {
 } from './context/organization-context';
 export { useCurrentOrganization } from './hooks/useCurrentOrganization';
 export { usePermission, type PermissionChecks } from './hooks/usePermission';
-export { useVisibleNavItems } from './hooks/useVisibleNavItems';
+export { useVisibleNavGroups, useVisibleNavItems } from './hooks/useVisibleNavItems';
 
 export {
   useCreateOrganization,

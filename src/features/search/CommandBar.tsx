@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from '@/components/layout/nav-icons';
 import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
-import { ACCOUNT_NAV, APP_NAV } from '@/config/navigation';
+import { ACCOUNT_NAV, ROOT_NAV, SIDEBAR_GROUPS } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
+import { useVisibleNavGroups } from '@/features/organizations';
 import { CATEGORY_METADATA, listTools } from '@/features/tools';
 import { cn } from '@/lib/cn';
 
@@ -36,6 +37,17 @@ const ITEM_CLASSES = cn(
 export function CommandBar({ open, onOpenChange }: CommandBarProps) {
   const navigate = useNavigate();
   const tools = listTools();
+
+  /*
+    La palette ne listait que le catalogue et le compte : les missions, les
+    clients et les équipes — ce qu'un utilisateur ouvre le plus souvent —
+    n'étaient atteignables qu'à la souris.
+
+    Le même filtrage que la barre latérale, et pour la même raison : proposer
+    « Journal » à qui n'a pas `audit.view` mènerait à une page vide.
+  */
+  const visibleGroups = useVisibleNavGroups(SIDEBAR_GROUPS);
+  const destinations = [...ROOT_NAV, ...visibleGroups.flatMap((group) => group.items), ...ACCOUNT_NAV];
 
   const go = (path: string) => {
     onOpenChange(false);
@@ -119,7 +131,7 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                 heading="Navigation"
                 className="[&_[cmdk-group-heading]]:text-subtle-foreground [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-medium"
               >
-                {[...APP_NAV, ...ACCOUNT_NAV].map((item) => {
+                {destinations.map((item) => {
                   const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
                   return (
                     <Command.Item

@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router';
 
-import { ACCOUNT_NAV, APP_NAV, ORGANIZATION_NAV, type NavItem } from '@/config/navigation';
+import { ACCOUNT_NAV, ROOT_NAV, SIDEBAR_GROUPS, type NavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
-import { useVisibleNavItems } from '@/features/organizations';
+import { useVisibleNavGroups, useVisibleNavItems } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
@@ -62,63 +62,76 @@ export function Sidebar({ collapsed = false, onNavigate, className }: SidebarPro
   // Les entrées réservées à un rôle ou à une formule disparaissent plutôt que
   // d'être grisées : un menu qui propose six sections dont quatre inaccessibles
   // décrit l'application, pas le travail de celui qui la regarde.
-  const visibleNav = useVisibleNavItems(APP_NAV);
-  const visibleOrganizationNav = useVisibleNavItems(ORGANIZATION_NAV);
+  const visibleRoot = useVisibleNavItems(ROOT_NAV);
+
+  /*
+    Quatre sections nommées plutôt qu'une liste plate surmontée d'un unique
+    « Entreprise » — intitulé qui désignait aussi l'une de ses propres entrées.
+    Les missions et la facturation ne se cherchent pas au même rythme ; les
+    ranger ensemble obligeait à relire huit lignes pour en trouver une.
+
+    Hors organisation, les trois premières sections s'effacent entièrement :
+    aucune de leurs entrées ne passe le filtrage.
+  */
+  const visibleGroups = useVisibleNavGroups(SIDEBAR_GROUPS);
 
   return (
     <nav
       aria-label="Navigation principale"
-      className={cn('flex h-full flex-col gap-6 p-3', className)}
+      className={cn('flex h-full flex-col gap-5 p-3', className)}
     >
       <ul className="space-y-0.5">
-        {visibleNav.map((item) => (
+        {visibleRoot.map((item) => (
           <SidebarLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </ul>
 
-      {/*
-        La section entière disparaît hors organisation — un intitulé
-        « Entreprise » surmontant le vide poserait plus de questions qu'il n'en
-        résout.
-      */}
-      {visibleOrganizationNav.length > 0 && (
-        <div>
-          <p
-            className={cn(
-              'text-subtle-foreground text-2xs mb-1 px-2.5 font-medium tracking-wider uppercase',
-              collapsed && 'sr-only',
-            )}
-          >
-            Entreprise
-          </p>
-          <ul className="space-y-0.5">
-            {visibleOrganizationNav.map((item) => (
-              <SidebarLink
-                key={item.to}
-                item={item}
-                collapsed={collapsed}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </ul>
-        </div>
-      )}
+      {visibleGroups.map((group) => (
+        <SidebarSection key={group.id} label={group.label} collapsed={collapsed}>
+          {group.items.map((item) => (
+            <SidebarLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+          ))}
+        </SidebarSection>
+      ))}
 
       <div className="mt-auto">
-        <p
-          className={cn(
-            'text-subtle-foreground text-2xs mb-1 px-2.5 font-medium tracking-wider uppercase',
-            collapsed && 'sr-only',
-          )}
-        >
-          Compte
-        </p>
-        <ul className="space-y-0.5">
+        <SidebarSection label="Compte" collapsed={collapsed}>
           {ACCOUNT_NAV.map((item) => (
             <SidebarLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
           ))}
-        </ul>
+        </SidebarSection>
       </div>
     </nav>
+  );
+}
+
+/**
+ * Section titrée.
+ *
+ * L'intitulé passe en `sr-only` en mode réduit : les icônes seules ne laissent
+ * pas la place d'un titre, mais le lecteur d'écran garde le repère qui
+ * distingue « Missions » de « Facturation ».
+ */
+function SidebarSection({
+  label,
+  collapsed,
+  children,
+}: {
+  label: string;
+  collapsed: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p
+        className={cn(
+          'text-subtle-foreground text-2xs mb-1 px-2.5 font-medium tracking-wider uppercase',
+          collapsed && 'sr-only',
+        )}
+      >
+        {label}
+      </p>
+      <ul className="space-y-0.5">{children}</ul>
+    </div>
   );
 }
