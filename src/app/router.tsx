@@ -3,12 +3,13 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
-import { RequireOrganization, RequirePermission } from '@/components/guards';
+import { RequireOrganization, RequirePermission, RequirePlan } from '@/components/guards';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
+import { FEATURES } from '@/features/billing';
 import { PERMISSIONS } from '@/features/organizations';
 
 /**
@@ -102,6 +103,39 @@ export const routes: RouteObject[] = [
               {
                 element: <RequireOrganization />,
                 children: [
+                  /**
+                   * Le module Clients cumule DEUX conditions : la formule de
+                   * l'entreprise doit l'inclure, et le rôle doit permettre de
+                   * consulter. Sans la première, les policies renverraient un
+                   * ensemble vide — une page accessible et désespérément muette
+                   * sur la raison.
+                   */
+                  {
+                    element: <RequirePlan feature={FEATURES.customers} label="Le module Clients" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.customerView} />,
+                        children: [
+                          {
+                            path: ROUTES.customers,
+                            lazy: lazyPage(() => import('@/pages/customers/CustomersListPage')),
+                          },
+                        ],
+                      },
+                      /**
+                       * La fiche n'exige PAS `customer.view` : un technicien
+                       * doit atteindre celle du client de sa mission, et la
+                       * policy `customers_select` l'y autorise déjà par sa
+                       * seconde branche. Exiger la permission ici lui fermerait
+                       * une porte que le serveur lui ouvre.
+                       */
+                      {
+                        path: ROUTE_PATTERNS.customer,
+                        lazy: lazyPage(() => import('@/pages/customers/CustomerDetailPage')),
+                      },
+                    ],
+                  },
+
                   {
                     path: ROUTES.organization,
                     lazy: lazyPage(() => import('@/pages/organization/OrganizationSettingsPage')),

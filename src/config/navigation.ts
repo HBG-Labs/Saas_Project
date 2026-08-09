@@ -57,6 +57,15 @@ export const APP_NAV: readonly NavItem[] = [
  */
 export const ORGANIZATION_NAV: readonly NavItem[] = [
   {
+    to: ROUTES.customers,
+    label: 'Clients',
+    icon: 'contact',
+    permission: 'customer.view',
+    // Double condition : le rôle ET la formule. Un chef d'équipe d'une
+    // entreprise restée en `free` ne verrait qu'une page vide.
+    feature: 'customers',
+  },
+  {
     to: ROUTES.organization,
     label: 'Entreprise',
     icon: 'building',

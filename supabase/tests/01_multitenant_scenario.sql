@@ -785,6 +785,75 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
+-- 4.2 bis — Voir un client n'autorise pas à y écrire
+-- -----------------------------------------------------------------------------
+--
+-- Régression déjà survenue. Les policies d'écriture étaient déclarées `for all`,
+-- avec la permission dans le `using` et la seule visibilité du client dans le
+-- `with check`. Or PostgreSQL n'évalue pas le `using` à l'INSERT : la permission
+-- n'était jamais consultée, et voir un client suffisait à lui ajouter contacts
+-- et sites.
+--
+-- Le technicien est le cas critique : il DOIT voir le client de sa mission, et
+-- ne doit rien pouvoir y écrire. Les deux tiennent ensemble ou pas du tout.
+do $$
+declare v_cust uuid; v_org uuid; v_raised boolean;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select id into v_cust from public.customers where name like 'Mairie de Saint-Pierre%';
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    insert into public.customer_contacts (customer_id, organization_id, last_name)
+    values (v_cust, v_org, 'Intrus');
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised or not exists (select 1 from public.customer_contacts where last_name = 'Intrus'),
+    'Le technicien ne peut PAS ajouter un contact au client de sa mission');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    insert into public.sites (customer_id, organization_id, name)
+    values (v_cust, v_org, 'Site Intrus');
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised or not exists (select 1 from public.sites where name = 'Site Intrus'),
+    'Le technicien ne peut PAS ajouter un site au client de sa mission');
+
+  -- Le chef d'équipe consulte le portefeuille mais ne le tient pas : il a
+  -- `customer.view`, pas `customer.update`.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.customers set name = 'Renomme par un technicien' where id = v_cust;
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised or not exists (select 1 from public.customers where name = 'Renomme par un technicien'),
+    'Le technicien ne peut PAS renommer un client');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- 4.3 — Cloisonnement des clients entre organisations
 -- -----------------------------------------------------------------------------
 do $$

@@ -73,6 +73,9 @@ export const qk = {
     contacts: (customerId: string) => [...qk.customers.all, customerId, 'contacts'] as const,
     sites: (customerId: string) => [...qk.customers.all, customerId, 'sites'] as const,
     history: (customerId: string) => [...qk.customers.all, customerId, 'history'] as const,
+    /** Tous les sites de l'organisation — alimente le sélecteur de mission. */
+    organizationSites: (organizationId: string) =>
+      [...qk.customers.all, organizationId, 'all-sites'] as const,
   },
 
   // ------------------------------------------------------------------ équipes

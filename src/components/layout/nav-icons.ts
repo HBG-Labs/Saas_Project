@@ -2,6 +2,7 @@ import {
   BookOpen,
   Building2,
   Clock,
+  Contact,
   CreditCard,
   LayoutDashboard,
   Settings,
@@ -33,6 +34,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   settings: Settings,
   building: Building2,
   users: Users,
+  contact: Contact,
   'credit-card': CreditCard,
 };
 

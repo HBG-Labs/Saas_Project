@@ -32,6 +32,9 @@ export const ROUTES = {
   /** Acceptation d'une invitation — le jeton est dans l'URL. */
   invitation: (token: string) => `/invitations/${token}`,
 
+  customers: '/clients',
+  customer: (customerId: string) => `/clients/${customerId}`,
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',
@@ -54,4 +57,5 @@ export const ROUTE_PATTERNS = {
   tool: '/tools/:toolSlug',
   category: '/categories/:categorySlug',
   invitation: '/invitations/:token',
+  customer: '/clients/:customerId',
 } as const;
