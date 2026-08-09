@@ -1492,6 +1492,145 @@ begin
 end
 $$;
 
+-- =============================================================================
+-- PARTIE 8 — Paternité du compte rendu
+-- =============================================================================
+--
+-- La séparation des pouvoirs était écrite dans un seul sens : « un intervenant
+-- ne valide jamais son propre compte rendu » (vérifié en 1.9). Le versant
+-- symétrique manquait.
+--
+-- Mesuré avant correctif : le contrôleur réécrivait le texte du technicien puis
+-- validait — le compte rendu portait le nom de l'un et les mots de l'autre — et
+-- pouvait encore modifier un compte rendu déjà validé.
+--
+-- Pour une pièce montrée à un client, ou produite en cas de litige, c'est la
+-- fin de toute valeur probante.
+-- =============================================================================
+
+do $$
+declare
+  v_org uuid; v_report uuid; v_raised boolean; v_texte text; v_statut public.report_status;
+  v_interv uuid; v_tech uuid; v_mission uuid;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  -- Un compte rendu neuf, à l'état soumis, sur une seconde intervention.
+  select m.id into v_tech from public.organization_members m
+  where m.organization_id = v_org and m.user_id = pg_temp.uid('a_tech2');
+
+  insert into public.missions (organization_id, title, assigned_user_id, status, created_by)
+  values (v_org, 'Mission pour paternite', v_tech, 'assigned', pg_temp.uid('a_manager'))
+  returning id into v_mission;
+
+  insert into public.interventions (mission_id, organization_id, technician_id, status, start_time)
+  values (v_mission, v_org, v_tech, 'completed', now()) returning id into v_interv;
+
+  insert into public.intervention_reports
+    (intervention_id, organization_id, technician_id, work_description, status, submitted_at)
+  values (v_interv, v_org, v_tech, 'Redige par le technicien', 'submitted', now())
+  returning id into v_report;
+
+  -- ---------------------------------------------------------------------------
+  -- 8.1 — Celui qui contrôle n'écrit pas
+  -- ---------------------------------------------------------------------------
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_manager');
+    set local role authenticated;
+    update public.intervention_reports
+    set work_description = 'Reecrit par le controleur', status = 'approved'
+    where id = v_report;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  select work_description, status into v_texte, v_statut
+  from public.intervention_reports where id = v_report;
+
+  perform pg_temp.ok(v_raised, 'Le controleur ne peut PAS reecrire le compte rendu');
+  perform pg_temp.ok(v_texte = 'Redige par le technicien',
+    'Le texte du technicien est intact');
+  perform pg_temp.ok(v_statut = 'submitted',
+    'La tentative de reecriture n''a pas valide le compte rendu');
+
+  -- ---------------------------------------------------------------------------
+  -- 8.2 — Mais il valide, et il refuse en motivant
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+  update public.intervention_reports
+  set status = 'rejected', rejection_reason = 'Photos manquantes sur le raccordement'
+  where id = v_report;
+  reset role;
+
+  perform pg_temp.ok(
+    (select status from public.intervention_reports where id = v_report) = 'rejected',
+    'Le controleur PEUT refuser en motivant');
+
+  -- L'auteur corrige, puis resoumet : c'est le chemin prévu pour une correction.
+  perform pg_temp.login('a_tech2');
+  set local role authenticated;
+  update public.intervention_reports
+  set work_description = 'Redige par le technicien - complete', status = 'submitted'
+  where id = v_report;
+  reset role;
+
+  perform pg_temp.ok(
+    (select work_description from public.intervention_reports where id = v_report)
+      = 'Redige par le technicien - complete',
+    'L''auteur PEUT corriger son compte rendu refuse');
+
+  -- ---------------------------------------------------------------------------
+  -- 8.3 — Un compte rendu validé est définitif
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+  update public.intervention_reports set status = 'approved' where id = v_report;
+  reset role;
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_manager');
+    set local role authenticated;
+    update public.intervention_reports
+    set observations = 'Ajoute apres validation' where id = v_report;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'Un compte rendu valide ne peut plus etre modifie, meme par le controleur');
+
+  -- Ni par son auteur — mais par un autre mécanisme, et la nuance compte.
+  --
+  -- Pour le contrôleur, la ligne est VISIBLE en écriture et le trigger lève.
+  -- Pour l'auteur, la policy `intervention_reports_update` ne retient que les
+  -- états `draft` et `rejected` : un compte rendu validé est simplement HORS de
+  -- sa portée. L'UPDATE ne touche aucune ligne et ne lève rien.
+  --
+  -- Tester l'exception ici passerait à côté : ce qu'il faut vérifier est le
+  -- résultat, pas la manière dont il est obtenu.
+  begin
+    perform pg_temp.login('a_tech2');
+    set local role authenticated;
+    update public.intervention_reports
+    set work_description = 'Retouche apres validation' where id = v_report;
+    reset role;
+  exception when others then reset role; end;
+
+  perform pg_temp.ok(
+    (select work_description from public.intervention_reports where id = v_report)
+      <> 'Retouche apres validation',
+    'L''auteur non plus ne modifie un compte rendu valide');
+
+  -- ---------------------------------------------------------------------------
+  -- 8.4 — Les informations de contrôle sont posées par le serveur
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.ok(
+    (select reviewed_by from public.intervention_reports where id = v_report) is not null,
+    'Le controleur est enregistre par le serveur');
+end
+$$;
+
 do $$
 begin
   raise notice '';
