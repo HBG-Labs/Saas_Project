@@ -1,5 +1,5 @@
 import { ArrowLeft, BookOpen, Star, Wrench } from 'lucide-react';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -10,6 +10,12 @@ import { Button } from '@/components/ui/Button';
 import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { ROUTES } from '@/config/routes';
+import {
+  useCatalogTool,
+  useFavorites,
+  useRecordToolUsage,
+  useToggleFavorite,
+} from '@/features/catalog';
 import { getCategoryMetadata } from '@/features/tools/catalog-metadata';
 import { getTool, ToolErrorBoundary } from '@/features/tools';
 import { cn } from '@/lib/cn';
@@ -29,7 +35,22 @@ import { cn } from '@/lib/cn';
 export default function ToolDetailPage() {
   const { toolSlug } = useParams<{ toolSlug: string }>();
   const tool = toolSlug ? getTool(toolSlug) : undefined;
-  const [isFavorite, setIsFavorite] = useState(false);
+
+  /**
+   * Le favori vient du serveur, il n'est plus un état local.
+   *
+   * La version précédente le stockait dans un `useState` : l'étoile
+   * s'allumait, et l'information disparaissait au rechargement. C'est le même
+   * défaut que le plan tarifaire corrigé en Phase 2 — un état d'interface qui
+   * se fait passer pour une donnée.
+   */
+  useRecordToolUsage(toolSlug);
+  const favorites = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const dbTool = useCatalogTool(toolSlug);
+
+  const favorite = (favorites.data ?? []).find((entry) => entry.slug === toolSlug) ?? null;
+  const isFavorite = favorite !== null;
 
   if (!tool) {
     // `PageHeader` porte le <h1> : une page dont le contenu principal est un
@@ -95,8 +116,16 @@ export default function ToolDetailPage() {
         <Button
           variant={isFavorite ? 'secondary' : 'outline'}
           onClick={() => {
-            setIsFavorite((current) => !current);
+            // Sans favori enregistré, il faut l'identifiant en base — que seule
+            // la liste des favoris porte. On la consulte donc pour retirer, et
+            // on résout le slug pour ajouter.
+            if (favorite !== null) {
+              toggleFavorite.mutate({ toolId: favorite.id, isFavorite: true });
+            } else if (dbTool.data != null) {
+              toggleFavorite.mutate({ toolId: dbTool.data.id, isFavorite: false });
+            }
           }}
+          disabled={toggleFavorite.isPending || (favorite === null && dbTool.data == null)}
           aria-pressed={isFavorite}
           leadingIcon={<Star className={cn(isFavorite && 'text-warning fill-current')} />}
           className="shrink-0"

@@ -98,3 +98,71 @@ export async function recordToolUsage(userId: string, toolId: string): Promise<v
 
   if (error) throw error;
 }
+
+// -----------------------------------------------------------------------------
+// Données personnelles — favoris et historique
+// -----------------------------------------------------------------------------
+//
+// Les policies restreignent ces deux tables au propriétaire de la ligne
+// (`auth.uid() = user_id`). Aucun filtre par utilisateur n'est donc nécessaire
+// ici : le serveur ne renverra jamais les favoris de quelqu'un d'autre. Le
+// `user_id` fourni aux écritures sert uniquement à satisfaire la contrainte
+// `not null` — la policy vérifie qu'il correspond bien à l'appelant.
+
+/** Favoris de l'utilisateur, outils joints pour l'affichage. */
+export async function listFavorites(): Promise<ToolWithCategory[]> {
+  const rows = await unwrap(
+    supabase
+      .from('favorites')
+      .select('created_at, tool:tools(*, category:categories(id, slug, name))')
+      .order('created_at', { ascending: false })
+      .returns<{ created_at: string; tool: ToolWithCategory | null }[]>(),
+  );
+
+  // La jointure peut remonter `null` si l'outil a été retiré du catalogue depuis
+  // la mise en favori — `tools_select_visible` le masque alors.
+  return rows.flatMap((row) => (row.tool ? [row.tool] : []));
+}
+
+export async function addFavorite(userId: string, toolId: string): Promise<void> {
+  const { error } = await supabase.from('favorites').insert({ user_id: userId, tool_id: toolId });
+  if (error) throw error;
+}
+
+export async function removeFavorite(userId: string, toolId: string): Promise<void> {
+  const { error } = await supabase
+    .from('favorites')
+    .delete()
+    .eq('user_id', userId)
+    .eq('tool_id', toolId);
+
+  if (error) throw error;
+}
+
+export interface ToolHistoryRow {
+  id: string;
+  usedAt: string;
+  tool: ToolWithCategory;
+}
+
+/**
+ * Historique d'utilisation des outils.
+ *
+ * À ne pas confondre avec l'historique des CALCULS, qui vit dans le navigateur
+ * (`features/history`) : celui-ci enregistre quel outil a été ouvert, celui-là
+ * ce qui y a été calculé. Le premier est un usage, le second un résultat.
+ */
+export async function listToolHistory(limit = 50): Promise<ToolHistoryRow[]> {
+  const rows = await unwrap(
+    supabase
+      .from('tool_history')
+      .select('id, used_at, tool:tools(*, category:categories(id, slug, name))')
+      .order('used_at', { ascending: false })
+      .limit(limit)
+      .returns<{ id: string; used_at: string; tool: ToolWithCategory | null }[]>(),
+  );
+
+  return rows.flatMap((row) =>
+    row.tool ? [{ id: row.id, usedAt: row.used_at, tool: row.tool }] : [],
+  );
+}
