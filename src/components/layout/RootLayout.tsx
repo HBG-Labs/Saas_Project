@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router';
 
 import { CommandBarProvider } from '@/features/search/CommandBarProvider';
+import { useCatalogReconciliation } from '@/features/tools';
 
 /**
  * Racine commune aux deux ossatures.
@@ -13,6 +14,10 @@ import { CommandBarProvider } from '@/features/search/CommandBarProvider';
  * `PublicLayout` et `AppLayout`.
  */
 export function RootLayout() {
+  // Confronte le registry au catalogue en base. Silencieux en production, et
+  // silencieux tant que les deux concordent.
+  useCatalogReconciliation();
+
   return (
     <CommandBarProvider>
       <Outlet />

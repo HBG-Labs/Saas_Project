@@ -218,11 +218,52 @@ npx supabase gen types typescript --project-id <votre-ref> > src/types/database.
 `app` sont volontairement absentes du fichier : elles ne doivent jamais être
 appelables depuis le navigateur.
 
+## Tables ajoutées après le socle initial
+
+| Table | Migration | Rôle |
+|---|---|---|
+| `customers` | `20260809100200` | Fiche client, référence `CLI-NNNN` générée par trigger |
+| `customer_contacts` | idem | Interlocuteurs, un seul principal par client |
+| `sites` | idem | Site d'intervention : adresse, GPS, **consignes d'accès** |
+| `intervention_time_entries` | `20260810100400` | Segments de temps — travail et pauses |
+
+`missions` a gagné `customer_id` et `site_id`, tous deux nullables et en
+`on delete set null` : supprimer une fiche client ne doit jamais faire
+disparaître une mission. Les colonnes textuelles (`customer_name`, adresse)
+sont conservées et deviennent un **instantané figé à la création** — le nom
+porté par un compte rendu de 2024 ne change pas parce que le client a été
+renommé en 2026.
+
+`mission_status` a gagné `closed`. Valider un compte rendu atteste la
+conformité technique ; clore atteste la fin administrative. Les confondre
+interdisait de demander « quelles missions sont validées mais pas encore
+facturées ».
+
+## Invariants garantis par trigger
+
+Ces règles portent sur un CHANGEMENT et non sur un état : aucune policy ne sait
+les exprimer. Elles sont toutes vérifiées par `tests/01_multitenant_scenario.sql`.
+
+| Trigger | Ce qu'il empêche |
+|---|---|
+| `enforce_organization_immutable` | Qu'une équipe, un client ou une mission change d'entreprise |
+| `enforce_mission_assignee_scope` | Que l'intervenant redéfinisse l'intitulé, le client ou la planification |
+| `enforce_intervention_scope` | Qu'il antidate ses heures ou déplace son intervention |
+| `enforce_time_entry` | Que l'heure vienne du client plutôt que du serveur ; qu'un segment clos soit rouvert |
+| `enforce_report_authorship` | Que le contrôleur réécrive le compte rendu ; qu'un CR validé soit modifié |
+| `enforce_report_review_separation` | Qu'un intervenant valide son propre compte rendu |
+
+Un index unique partiel complète le dispositif sur les temps :
+`intervention_time_entries_open_idx` n'autorise **qu'un seul segment ouvert par
+intervention**. C'est ce qui empêche le double démarrage depuis deux appareils —
+situation qu'aucune vérification côté client ne peut couvrir, les deux sessions
+ne se voyant pas.
+
 ## Migrations volontairement reportées
 
 | Table | Raison du report |
 |---|---|
 | `tool_configurations` | Sa forme dépend de la structure des paramètres des outils, qui n'existe pas encore. |
 | `references` | Aucun contenu de référence n'est encore défini. |
-| `materials` / `vehicles` / `customers` | Le §14 les prévoit. `intervention_reports.materials_used` est un `jsonb` en attendant : il accueille la saisie libre d'aujourd'hui et se migrera vers des tables quand la forme sera connue. |
+| `materials` / `vehicles` | Le §14 les prévoit. `intervention_reports.materials_used` est un `jsonb` en attendant : il accueille la saisie libre d'aujourd'hui et se migrera vers des tables quand la forme sera connue. |
 | `establishments` | Table fille de `organizations` le jour où le multi-établissement sera demandé. Aucun changement de schéma requis pour l'accueillir. |

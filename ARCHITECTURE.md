@@ -182,12 +182,56 @@ techniques. `registry/types.ts` et `catalog-metadata.ts` en dérivent, le seed S
 en est la contrepartie vérifiée par test. Ajouter une catégorie ne touche qu'un
 fichier.
 
+## Une policy raisonne par LIGNE, jamais par COLONNE
+
+C'est la leçon la plus coûteuse de ce projet, et elle explique cinq des huit
+failles qui ont été trouvées et fermées. Elle mérite d'être lue avant d'écrire la
+moindre policy.
+
+Une policy RLS décide si une LIGNE est accessible. Elle ne sait pas dire « cette
+personne peut modifier ce champ mais pas cet autre ». Dès qu'on ouvre l'écriture
+à quelqu'un pour un motif légitime — le technicien doit faire avancer le statut
+de sa mission — on la lui ouvre **sur toutes les colonnes**.
+
+Les cas rencontrés, tous mesurés sur la base avant correction :
+
+| Ce qui était permis | Pourquoi |
+|---|---|
+| Un technicien réécrivait l'intitulé de sa mission et changeait son client | ouverture accordée pour le statut |
+| Un technicien antidatait ses heures de six heures | ouverture accordée pour terminer l'intervention |
+| Un contrôleur réécrivait le compte rendu du technicien, puis le validait | ouverture accordée pour approuver |
+| Une équipe changeait d'entreprise | `WITH CHECK` plus faible que `USING` |
+| Voir un client suffisait à lui ajouter contacts et sites | `FOR ALL` : le `USING` n'est **pas** évalué à l'INSERT |
+
+Deux règles en découlent.
+
+**Un `WITH CHECK` doit être au moins aussi fort que son `USING`.** Le premier
+s'applique à la ligne APRÈS écriture, le second à la ligne AVANT. Les écrire
+différemment, c'est autoriser une transformation qu'aucun des deux ne décrit.
+
+**Ce qu'une policy ne sait pas exprimer, un trigger le sait.** Comparer `OLD` et
+`NEW`, colonne par colonne, est précisément son rôle. Chaque fois qu'une règle
+porte sur un CHANGEMENT plutôt que sur un état, elle appartient à un trigger :
+
+```
+app.enforce_organization_immutable()    une entité ne change pas d'entreprise
+app.enforce_mission_assignee_scope()    l'intervenant fait avancer, il ne redéfinit pas
+app.enforce_intervention_scope()        le serveur horodate, jamais le client
+app.enforce_report_authorship()         qui contrôle n'écrit pas ; un CR validé est définitif
+```
+
+**Corollaire pour les tests.** Le refus n'a pas toujours la même forme. Quand la
+ligne est visible en écriture, le trigger lève une exception. Quand la policy
+l'exclut, l'UPDATE ne touche aucune ligne et ne lève rien. Une assertion portant
+sur l'exception passerait à côté du second cas : **tester le résultat, pas la
+manière dont il est obtenu.**
+
 ## Choix explicitement écartés
 
 | Écarté | Raison |
 |---|---|
 | Zustand / Redux | Le server state est couvert par TanStack Query, la session par un contexte, le reste est local. À reconsidérer si un état UI non-serveur doit être partagé entre branches éloignées de l'arbre. |
 | `manualChunks` | Le découpage par route suffit et est vérifié. Un découpage vendor est une optimisation de cache à mesurer, pas à supposer. |
-| `react-hook-form` | Aucun formulaire avant la Phase 2. |
+| ~~`react-hook-form`~~ | **Adopté depuis la Phase 3.** Il porte tous les formulaires métier, avec Zod comme résolveur. |
 | `eslint-plugin-boundaries` | `no-restricted-imports` couvre le besoin sans dépendance supplémentaire. |
 | Tables `tool_configurations` / `references` | Leur schéma dépend d'un usage qui n'existe pas encore. |

@@ -26,3 +26,5 @@ export {
   type ToolCategorySlug,
   type ToolDefinition,
 } from './registry';
+
+export { useCatalogReconciliation } from './useCatalogReconciliation';
