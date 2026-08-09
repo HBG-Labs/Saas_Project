@@ -685,6 +685,196 @@ begin
 end
 $$;
 
+-- =============================================================================
+-- PARTIE 4 — Clients, sites et clôture
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 4.1 — Un responsable crée un client, un site, puis une mission sur ce site
+-- -----------------------------------------------------------------------------
+do $$
+declare
+  v_org uuid; v_cust uuid; v_cust2 uuid; v_site uuid; v_mission uuid;
+  v_ref text; v_snapshot record;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+
+  insert into public.customers (organization_id, name, city, created_by)
+  values (v_org, 'Mairie de Saint-Pierre', 'Saint-Pierre', pg_temp.uid('a_manager'))
+  returning id, reference into v_cust, v_ref;
+
+  -- Second client, jamais rattaché à une mission : c'est lui qui permettra de
+  -- vérifier qu'un technicien ne découvre pas le portefeuille de l'entreprise.
+  insert into public.customers (organization_id, name, created_by)
+  values (v_org, 'Clinique du Nord', pg_temp.uid('a_manager'))
+  returning id into v_cust2;
+
+  insert into public.sites
+    (customer_id, organization_id, name, address_line1, city, access_notes)
+  values
+    (v_cust, v_org, 'Annexe technique', '12 rue des Ecoles', 'Saint-Pierre',
+     'Portail code 4412')
+  returning id into v_site;
+
+  -- `customer_id` volontairement omis : le trigger doit le déduire du site.
+  insert into public.missions (organization_id, title, site_id, created_by)
+  values (v_org, 'Raccordement de l''annexe', v_site, pg_temp.uid('a_manager'))
+  returning id into v_mission;
+
+  reset role;
+
+  perform pg_temp.ok(v_ref ~ '^CLI-\d{4}$',
+    'La reference client est generee au format CLI-NNNN');
+
+  select customer_id, address_line1, city, location_label, customer_name
+  into v_snapshot
+  from public.missions where id = v_mission;
+
+  perform pg_temp.ok(v_snapshot.customer_id = v_cust,
+    'Le site impose son client a la mission');
+  perform pg_temp.ok(v_snapshot.address_line1 = '12 rue des Ecoles',
+    'L''adresse du site est recopiee sur la mission');
+  perform pg_temp.ok(v_snapshot.customer_name = 'Mairie de Saint-Pierre',
+    'Le nom du client est fige sur la mission');
+
+  -- Renommer la fiche ne doit PAS réécrire l'instantané : c'est toute la raison
+  -- d'être des colonnes textuelles conservées sur `missions`.
+  update public.customers set name = 'Mairie de Saint-Pierre (fusionnee)' where id = v_cust;
+
+  perform pg_temp.ok(
+    (select customer_name from public.missions where id = v_mission)
+      = 'Mairie de Saint-Pierre',
+    'Renommer le client ne reecrit pas l''historique de la mission');
+
+  -- Affectation au technicien, pour la vérification de cloisonnement suivante.
+  update public.missions
+  set assigned_user_id = (
+        select m.id from public.organization_members m
+        where m.organization_id = v_org and m.user_id = pg_temp.uid('a_tech1')
+      ),
+      status = 'assigned'
+  where id = v_mission;
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 4.2 — Le technicien atteint SON site, pas le portefeuille clients
+-- -----------------------------------------------------------------------------
+do $$
+declare v_customers int; v_sites int;
+begin
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+
+  select count(*) into v_customers from public.customers;
+  select count(*) into v_sites     from public.sites;
+
+  reset role;
+
+  -- Deux clients existent chez A ; le technicien n'en voit qu'un, celui de sa
+  -- mission. C'est le cœur du modèle : le besoin terrain est couvert — adresse
+  -- et codes d'accès — sans jamais livrer la liste des clients de l'entreprise.
+  perform pg_temp.ok(v_customers = 1,
+    'Le technicien ne voit que le client de SA mission');
+  perform pg_temp.ok(v_sites = 1,
+    'Le technicien atteint le site de SA mission');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 4.3 — Cloisonnement des clients entre organisations
+-- -----------------------------------------------------------------------------
+do $$
+declare v_customers int; v_sites int; v_raised boolean;
+begin
+  perform pg_temp.login('b_owner');
+  set local role authenticated;
+
+  select count(*) into v_customers from public.customers;
+  select count(*) into v_sites     from public.sites;
+
+  reset role;
+
+  perform pg_temp.ok(v_customers = 0, 'B ne voit AUCUN client de A');
+  perform pg_temp.ok(v_sites = 0,     'B ne voit AUCUN site de A');
+
+  -- Écriture croisée : B tente de rattacher un client à l'organisation A.
+  v_raised := false;
+  begin
+    perform pg_temp.login('b_owner');
+    set local role authenticated;
+
+    insert into public.customers (organization_id, name, created_by)
+    select id, 'Client pirate', pg_temp.uid('b_owner')
+    from public.organizations where slug = 'fibre-atlantique';
+
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised or not exists (select 1 from public.customers where name = 'Client pirate'),
+    'B ne peut pas creer un client chez A');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 4.4 — Clôture : seulement depuis une mission validée
+-- -----------------------------------------------------------------------------
+do $$
+declare v_mission uuid; v_raised boolean; v_status public.mission_status;
+begin
+  -- La mission de la Partie 1 s'est arrêtée à `approved`.
+  select id into v_mission
+  from public.missions where status = 'approved' limit 1;
+
+  perform pg_temp.ok(v_mission is not null,
+    'Une mission validee est disponible pour la cloture');
+
+  -- Un technicien ne clôture pas : il lui manque `mission.update`.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.missions set status = 'closed' where id = v_mission;
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(v_raised, 'Un technicien ne peut pas cloturer une mission');
+
+  -- Le responsable, si.
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+  update public.missions set status = 'closed' where id = v_mission;
+  reset role;
+
+  select status into v_status from public.missions where id = v_mission;
+  perform pg_temp.ok(v_status = 'closed', 'Le responsable cloture la mission validee');
+
+  -- État terminal : plus aucune sortie, pas même vers `cancelled`.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_manager');
+    set local role authenticated;
+    update public.missions set status = 'cancelled' where id = v_mission;
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(v_raised, 'Une mission cloturee ne peut plus changer d''etat');
+end
+$$;
+
 do $$
 begin
   raise notice '';

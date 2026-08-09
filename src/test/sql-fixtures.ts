@@ -2,6 +2,8 @@ import catalogSql from '../../supabase/migrations/20260808100000_catalog_v2.sql?
 import rbacSql from '../../supabase/migrations/20260808100100_rbac.sql?raw';
 import billingSql from '../../supabase/migrations/20260808100300_billing.sql?raw';
 import missionsSql from '../../supabase/migrations/20260808100500_missions.sql?raw';
+import rbacCustomersSql from '../../supabase/migrations/20260809100300_rbac_customers.sql?raw';
+import closureSql from '../../supabase/migrations/20260809100400_closure_entitlements.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -33,6 +35,8 @@ const MIGRATIONS: Record<string, string> = {
   rbac: rbacSql,
   billing: billingSql,
   missions: missionsSql,
+  rbacCustomers: rbacCustomersSql,
+  closure: closureSql,
 };
 
 export const MIGRATION_FILES = {
@@ -40,7 +44,26 @@ export const MIGRATION_FILES = {
   rbac: 'rbac',
   billing: 'billing',
   missions: 'missions',
+  rbacCustomers: 'rbacCustomers',
+  closure: 'closure',
 } as const;
+
+/**
+ * Tuples d'un `insert into <table>` cumulés sur PLUSIEURS migrations.
+ *
+ * Une table de référence n'est pas forcément peuplée d'un seul tenant : les
+ * permissions « customer.* », la transition de clôture et l'entitlement du
+ * module Clients sont arrivés après coup, dans leurs propres fichiers. Un test
+ * ne lisant que la migration d'origine conclurait à une divergence du miroir
+ * TypeScript alors que c'est SA vision du SQL qui est incomplète — le pire des
+ * verdicts, puisqu'il pousse à « corriger » du code juste.
+ */
+export function extractInsertTuplesAcross(
+  keys: readonly (keyof typeof MIGRATION_FILES)[],
+  table: string,
+): string[][] {
+  return keys.flatMap((key) => extractInsertTuples(readMigration(key), table));
+}
 
 export function readMigration(key: keyof typeof MIGRATION_FILES): string {
   const sql = MIGRATIONS[key];

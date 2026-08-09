@@ -42,7 +42,9 @@ export type MissionStatus =
   | 'submitted'
   | 'approved'
   | 'rejected'
-  | 'cancelled';
+  | 'cancelled'
+  /** Dossier clos et facturable — distinct de `approved`, qui n'atteste que la conformité technique. */
+  | 'closed';
 
 export type MissionPriority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -494,6 +496,158 @@ export interface Database {
       };
 
       // =======================================================================
+      // Clients
+      // =======================================================================
+      customers: {
+        Row: {
+          id: string;
+          organization_id: string;
+          /** `CLI-0042`, généré par trigger et unique par organisation. */
+          reference: string;
+          name: string;
+          legal_name: string | null;
+          registration_number: string | null;
+          vat_number: string | null;
+          email: string | null;
+          phone: string | null;
+          address_line1: string | null;
+          address_line2: string | null;
+          postal_code: string | null;
+          city: string | null;
+          country: string | null;
+          notes: string | null;
+          status: ContentStatus;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        /** `reference` est absente : le trigger la calcule. */
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          legal_name?: string | null;
+          registration_number?: string | null;
+          vat_number?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          country?: string | null;
+          notes?: string | null;
+          status?: ContentStatus;
+          created_by?: string | null;
+        };
+        Update: Partial<Omit<Database['public']['Tables']['customers']['Insert'], 'organization_id'>>;
+        Relationships: [
+          {
+            foreignKeyName: 'customers_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      customer_contacts: {
+        Row: {
+          id: string;
+          customer_id: string;
+          organization_id: string;
+          first_name: string | null;
+          last_name: string;
+          role_label: string | null;
+          email: string | null;
+          phone: string | null;
+          is_primary: boolean;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        /** `organization_id` est écrasé par trigger depuis le client parent. */
+        Insert: {
+          id?: string;
+          customer_id: string;
+          organization_id: string;
+          first_name?: string | null;
+          last_name: string;
+          role_label?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          is_primary?: boolean;
+          notes?: string | null;
+        };
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['customer_contacts']['Insert'],
+            'customer_id' | 'organization_id'
+          >
+        >;
+        Relationships: [
+          {
+            foreignKeyName: 'customer_contacts_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      sites: {
+        Row: {
+          id: string;
+          customer_id: string;
+          organization_id: string;
+          name: string;
+          /** Référence interne du client (« PBO-1245 »), pas la nôtre. */
+          code: string | null;
+          address_line1: string | null;
+          address_line2: string | null;
+          postal_code: string | null;
+          city: string | null;
+          country: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          /** Codes d'accès, consignes de sécurité, horaires. */
+          access_notes: string | null;
+          contact_id: string | null;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          organization_id: string;
+          name: string;
+          code?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          country?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          access_notes?: string | null;
+          contact_id?: string | null;
+          status?: ContentStatus;
+        };
+        Update: Partial<
+          Omit<Database['public']['Tables']['sites']['Insert'], 'customer_id' | 'organization_id'>
+        >;
+        Relationships: [
+          {
+            foreignKeyName: 'sites_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
       // Missions
       // =======================================================================
       missions: {
@@ -504,6 +658,14 @@ export interface Database {
           title: string;
           description: string | null;
           category_id: string | null;
+          /**
+           * Rattachement à la fiche client. Facultatif : une mission d'urgence
+           * peut naître sans client enregistré. `on delete set null` — supprimer
+           * une fiche ne doit jamais faire disparaître une mission.
+           */
+          customer_id: string | null;
+          /** Site d'intervention. Impose son client : le trigger le déduit. */
+          site_id: string | null;
           priority: MissionPriority;
           status: MissionStatus;
           assigned_team_id: string | null;
@@ -537,6 +699,8 @@ export interface Database {
           title: string;
           description?: string | null;
           category_id?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
           priority?: MissionPriority;
           assigned_team_id?: string | null;
           assigned_user_id?: string | null;
@@ -562,6 +726,8 @@ export interface Database {
           title?: string;
           description?: string | null;
           category_id?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
           priority?: MissionPriority;
           /** Toute transition passe par la machine à états (trigger). */
           status?: MissionStatus;

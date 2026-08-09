@@ -1,0 +1,24 @@
+-- =============================================================================
+-- Statut de clôture des missions
+-- =============================================================================
+--
+-- CETTE MIGRATION NE CONTIENT QU'UNE SEULE INSTRUCTION, ET C'EST VOLONTAIRE.
+--
+-- PostgreSQL refuse d'utiliser une valeur d'énumération dans la transaction qui
+-- l'a ajoutée (« unsafe use of new value of enum type »). Or la CLI Supabase
+-- encapsule chaque fichier de migration dans une transaction. Déclarer la valeur
+-- et l'employer — dans un seed de `mission_status_transitions`, par exemple —
+-- au sein du même fichier échouerait donc systématiquement.
+--
+-- Le peuplement des transitions vers `closed` vit en conséquence dans
+-- 20260809100400_closure_entitlements.sql, exécuté dans une transaction
+-- distincte.
+--
+-- Pourquoi un statut distinct de `approved` : valider un compte rendu et clore
+-- un dossier ne sont pas le même acte, ni le même métier. Le contrôle atteste
+-- que les travaux sont conformes ; la clôture atteste que l'affaire est
+-- administrativement terminée et facturable. Les confondre interdirait de
+-- répondre à « quelles missions sont validées mais pas encore facturées ? ».
+-- =============================================================================
+
+alter type public.mission_status add value if not exists 'closed';

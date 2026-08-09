@@ -47,6 +47,22 @@ export interface TeamWithMembers extends Team {
   members: (TeamMember & { member: MemberWithProfile })[];
 }
 
+// -------------------------------------------------------------------------- clients
+export type Customer = Tables<'customers'>;
+export type CustomerContact = Tables<'customer_contacts'>;
+export type Site = Tables<'sites'>;
+
+/** Site accompagné de son interlocuteur, tel qu'affiché sur une fiche. */
+export interface SiteWithContact extends Site {
+  contact: CustomerContact | null;
+}
+
+/** Client complet : la vue « fiche », avec ses contacts et ses sites. */
+export interface CustomerWithRelations extends Customer {
+  contacts: CustomerContact[];
+  sites: Site[];
+}
+
 // ------------------------------------------------------------------------- missions
 export type Mission = Tables<'missions'>;
 export type MissionAssignment = Tables<'mission_assignments'>;
@@ -58,6 +74,16 @@ export interface MissionWithRelations extends Mission {
   category: Pick<Category, 'id' | 'slug' | 'name'> | null;
   assigned_team: Pick<Team, 'id' | 'name' | 'color'> | null;
   assigned_member: MemberWithProfile | null;
+  /**
+   * Fiche client et site rattachés, quand ils existent.
+   *
+   * À ne pas confondre avec les colonnes `customer_name` / adresse de la mission :
+   * celles-ci sont un INSTANTANÉ figé à la création, que la fiche vivante ci-dessous
+   * ne doit jamais réécrire. Un compte rendu de 2024 conserve le nom qu'avait le
+   * client à l'époque.
+   */
+  customer: Pick<Customer, 'id' | 'reference' | 'name'> | null;
+  site: Pick<Site, 'id' | 'name' | 'city' | 'access_notes'> | null;
 }
 
 // -------------------------------------------------------------------- interventions

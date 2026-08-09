@@ -31,6 +31,7 @@ export const FEATURES = {
 
   // Module professionnel — réservé au plan `business`.
   organizations: 'organizations',
+  customers: 'customers',
   teams: 'teams',
   members: 'members',
   missions: 'missions',
@@ -74,6 +75,10 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     export_pdf: null,
     export_csv: null,
     organizations: null,
+    // Le nombre de clients ne distingue pas les offres : c'est l'accès au
+    // module qui les distingue. L'absence de cette clé pour `free` et `pro`
+    // suffit à le refuser.
+    customers: null,
     teams: null,
     members: 25,
     missions: null,

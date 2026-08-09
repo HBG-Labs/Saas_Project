@@ -10,7 +10,8 @@ import type { MissionStatus, OrgRole } from '@/types/database';
  *
  * `workflow.test.ts` compare cette table au seed SQL.
  *
- * Source : supabase/migrations/20260808100500_missions.sql
+ * Sources : supabase/migrations/20260808100500_missions.sql
+ *           supabase/migrations/20260809100400_closure_entitlements.sql
  */
 
 export interface TransitionRule {
@@ -143,10 +144,27 @@ export const MISSION_TRANSITIONS: readonly TransitionRule[] = [
     assigneeOnly: false,
     label: 'Abandonner',
   },
+
+  // Clôture administrative, distincte de la validation technique. Exige
+  // `mission.update` et non `intervention.review` : clore relève de
+  // l'exploitation, pas d'un second contrôle.
+  {
+    from: 'approved',
+    to: 'closed',
+    requiredPermission: PERMISSIONS.missionUpdate,
+    assigneeOnly: false,
+    label: 'Clôturer le dossier',
+  },
 ];
 
-/** États terminaux : plus aucune transition n'en part. */
-export const TERMINAL_STATUSES: readonly MissionStatus[] = ['approved', 'cancelled'];
+/**
+ * États terminaux : plus aucune transition n'en part.
+ *
+ * `approved` n'en fait plus partie — une mission validée attend désormais sa
+ * clôture. C'est précisément ce qui rend la question « quelles missions sont
+ * validées mais pas encore facturées ? » exprimable.
+ */
+export const TERMINAL_STATUSES: readonly MissionStatus[] = ['closed', 'cancelled'];
 
 export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
   draft: 'Brouillon',
@@ -158,6 +176,7 @@ export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
   approved: 'Validée',
   rejected: 'Refusée',
   cancelled: 'Annulée',
+  closed: 'Clôturée',
 };
 
 export function getAvailableTransitions(from: MissionStatus): readonly TransitionRule[] {

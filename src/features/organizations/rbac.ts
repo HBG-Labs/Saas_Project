@@ -16,7 +16,8 @@ import type { OrgRole } from '@/types/database';
  * idée des droits. `rbac.test.ts` lit le seed SQL et compare paire par paire :
  * une divergence casse `npm test`. Modifier l'un sans l'autre est impossible.
  *
- * Source : supabase/migrations/20260808100100_rbac.sql
+ * Sources : supabase/migrations/20260808100100_rbac.sql
+ *           supabase/migrations/20260809100300_rbac_customers.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -38,6 +39,11 @@ export const PERMISSIONS = {
   teamUpdate: 'team.update',
   teamDelete: 'team.delete',
   teamAssignMember: 'team.assign_member',
+
+  customerView: 'customer.view',
+  customerCreate: 'customer.create',
+  customerUpdate: 'customer.update',
+  customerDelete: 'customer.delete',
 
   missionViewAll: 'mission.view_all',
   missionCreate: 'mission.create',
@@ -104,6 +110,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'team.update',
     'team.delete',
     'team.assign_member',
+    'customer.view',
+    'customer.create',
+    'customer.update',
+    'customer.delete',
     'mission.view_all',
     'mission.create',
     'mission.update',
@@ -129,6 +139,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'team.update',
     'team.delete',
     'team.assign_member',
+    'customer.view',
+    'customer.create',
+    'customer.update',
+    'customer.delete',
     'mission.view_all',
     'mission.create',
     'mission.update',
@@ -148,6 +162,11 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'team.create',
     'team.update',
     'team.assign_member',
+    // Gère le portefeuille au quotidien, sans pouvoir supprimer une fiche :
+    // une suppression rompt le lien de missions archivées.
+    'customer.view',
+    'customer.create',
+    'customer.update',
     'mission.view_all',
     'mission.create',
     'mission.update',
@@ -163,6 +182,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'member.view',
     'team.view',
     'team.assign_member',
+    // Consultation seule : il prépare des interventions, il ne tient pas le
+    // fichier client.
+    'customer.view',
     'mission.create',
     'mission.update',
     'mission.assign',
@@ -173,6 +195,11 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
   // rendu, y compris celui d'un collègue. La règle « jamais le sien » est en
   // plus appliquée par trigger pour les rôles qui, eux, peuvent contrôler.
+  //
+  // Aucune permission « customer.* » non plus, et c'est délibéré : il n'a pas à
+  // connaître le portefeuille de l'entreprise. Il atteint la fiche du client
+  // CHEZ QUI il intervient par la policy `customers_select`, qui passe par ses
+  // missions — le besoin est couvert sans vue d'ensemble.
   technician: ['organization.view', 'team.view', 'member.view'],
 
   employee: ['organization.view', 'member.view'],

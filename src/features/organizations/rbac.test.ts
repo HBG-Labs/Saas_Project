@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  extractInsertTuples,
-  MIGRATION_FILES,
-  readMigration,
-  stripCast,
-} from '@/test/sql-fixtures';
+import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
 import type { OrgRole } from '@/types/database';
 
 import {
@@ -136,8 +131,13 @@ describe('canReviewReport — séparation des pouvoirs', () => {
 });
 
 describe('synchronisation avec le seed SQL', () => {
-  const sql = readMigration(MIGRATION_FILES.rbac);
-  const tuples = extractInsertTuples(sql, 'role_permissions');
+  // Les permissions « customer.* » sont arrivées après coup, dans leur propre
+  // migration. Ne lire que le seed d'origine ferait conclure à une divergence du
+  // miroir alors que c'est la vision du SQL qui serait incomplète.
+  const tuples = extractInsertTuplesAcross(
+    [MIGRATION_FILES.rbac, MIGRATION_FILES.rbacCustomers],
+    'role_permissions',
+  );
 
   const seeded = new Map<OrgRole, Set<string>>();
   for (const tuple of tuples) {

@@ -31,7 +31,9 @@ const MISSION_SELECT = `
   assigned_team:teams(id, name, color),
   assigned_member:organization_members(
     *, profile:profiles(id, display_name, avatar_url)
-  )
+  ),
+  customer:customers(id, reference, name),
+  site:sites(id, name, city, access_notes)
 ` as const;
 
 export interface MissionFilters {

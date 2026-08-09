@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  extractInsertTuples,
-  MIGRATION_FILES,
-  readMigration,
-  stripCast,
-} from '@/test/sql-fixtures';
+import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
 
 import {
   DEFAULT_PLAN,
@@ -86,8 +81,12 @@ describe('matrice des entitlements', () => {
 });
 
 describe('synchronisation avec le seed SQL', () => {
-  const sql = readMigration(MIGRATION_FILES.billing);
-  const tuples = extractInsertTuples(sql, 'plan_features');
+  // L'entitlement du module Clients a été ajouté avec la table `customers`,
+  // dans une migration ultérieure au seed d'origine.
+  const tuples = extractInsertTuplesAcross(
+    [MIGRATION_FILES.billing, MIGRATION_FILES.closure],
+    'plan_features',
+  );
 
   const seeded = new Map<string, Map<string, number | null>>();
   for (const tuple of tuples) {

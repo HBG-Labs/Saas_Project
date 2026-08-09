@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  extractInsertTuples,
-  MIGRATION_FILES,
-  readMigration,
-  stripCast,
-} from '@/test/sql-fixtures';
+import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
 import type { MissionStatus } from '@/types/database';
 
 import {
@@ -18,7 +13,7 @@ import {
 } from './workflow';
 
 describe('machine à états des missions', () => {
-  it('couvre les neuf statuts du cahier des charges', () => {
+  it('couvre les dix statuts du cahier des charges', () => {
     const statuses: MissionStatus[] = [
       'draft',
       'assigned',
@@ -29,6 +24,7 @@ describe('machine à états des missions', () => {
       'approved',
       'rejected',
       'cancelled',
+      'closed',
     ];
 
     for (const status of statuses) {
@@ -156,8 +152,13 @@ describe('getPermittedTransitions', () => {
 });
 
 describe('synchronisation avec le seed SQL', () => {
-  const sql = readMigration(MIGRATION_FILES.missions);
-  const tuples = extractInsertTuples(sql, 'mission_status_transitions');
+  // La transition de clôture vit dans sa propre migration : la valeur `closed`
+  // de l'énumération ne pouvait pas être employée dans la transaction qui l'a
+  // ajoutée.
+  const tuples = extractInsertTuplesAcross(
+    [MIGRATION_FILES.missions, MIGRATION_FILES.closure],
+    'mission_status_transitions',
+  );
 
   const seeded = tuples.map((tuple) => ({
     from: stripCast(tuple[0] ?? ''),
