@@ -1,3 +1,5 @@
+import { evaluateExpression } from './parser';
+
 export interface ScientificCalculatorResult {
   expression: string;
   result: number | null;
@@ -90,29 +92,36 @@ export function evaluateScientificExpression(
     const toRad = (x: number) => (angleUnit === 'deg' ? (x * Math.PI) / 180 : x);
     const fromRad = (x: number) => (angleUnit === 'deg' ? (x * 180) / Math.PI : x);
 
-    const context = {
+    /**
+     * Fonctions et constantes reconnues — la TOTALITÉ du vocabulaire.
+     *
+     * L'analyseur refuse tout identifiant absent de ces deux tables. C'est
+     * là que réside la sécurité : `fetch`, `window` ou `localStorage` ne sont
+     * pas filtrés, ils n'existent simplement pas dans cette grammaire.
+     */
+    const functions = {
       sin: (x: number) => Math.sin(toRad(x)),
       cos: (x: number) => Math.cos(toRad(x)),
       tan: (x: number) => Math.tan(toRad(x)),
       asin: (x: number) => fromRad(Math.asin(x)),
       acos: (x: number) => fromRad(Math.acos(x)),
       atan: (x: number) => fromRad(Math.atan(x)),
-      sqrt: Math.sqrt,
-      cbrt: Math.cbrt,
-      log: Math.log10,
-      ln: Math.log,
-      abs: Math.abs,
+      sqrt: (x: number) => Math.sqrt(x),
+      cbrt: (x: number) => Math.cbrt(x),
+      log: (x: number) => Math.log10(x),
+      ln: (x: number) => Math.log(x),
+      abs: (x: number) => Math.abs(x),
       fact: factorial,
+    };
+
+    const constants = {
       pi: Math.PI,
       e: Math.E,
+      /** Vitesse de la lumière — utile pour les calculs de propagation optique. */
       c: 299792458,
     };
 
-    const keys = Object.keys(context);
-    const values = Object.values(context);
-
-    const evaluator = new Function(...keys, `"use strict"; return (${sanitized});`);
-    const val = evaluator(...values) as unknown;
+    const val: unknown = evaluateExpression(sanitized, { functions, constants });
 
     if (typeof val !== 'number' || Number.isNaN(val)) {
       return {

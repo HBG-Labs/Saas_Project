@@ -18,16 +18,26 @@ export default function OhmLawPowerTool() {
   const [cableSectionMm2, setCableSectionMm2] = useState(2.5);
   const [copied, setCopied] = useState(false);
 
-  const inputs: OhmLawPowerInputs = {
-    phaseType,
-    voltageVolts: Number(voltageVolts) || 230,
-    currentAmps: Number(currentAmps) || 0.1,
-    cosPhi: Number(cosPhi) || 0.9,
-    cableLengthMeters: Number(cableLengthMeters) || 1,
-    cableSectionMm2: Number(cableSectionMm2) || 2.5,
-  };
+  /**
+   * L'objet est construit DANS le `useMemo`, pas à côté.
+   *
+   * Un littéral déclaré à l'extérieur est recréé à chaque rendu : sa référence
+   * change toujours, la dépendance n'est jamais satisfaite, et la mémoïsation
+   * ne sert à rien tout en donnant l'illusion d'exister. Les valeurs primitives
+   * en dépendance, elles, se comparent réellement.
+   */
+  const result = useMemo(() => {
+    const inputs: OhmLawPowerInputs = {
+      phaseType,
+      voltageVolts: Number(voltageVolts) || 230,
+      currentAmps: Number(currentAmps) || 0.1,
+      cosPhi: Number(cosPhi) || 0.9,
+      cableLengthMeters: Number(cableLengthMeters) || 1,
+      cableSectionMm2: Number(cableSectionMm2) || 2.5,
+    };
 
-  const result = useMemo(() => computeOhmLawPower(inputs), [inputs]);
+    return computeOhmLawPower(inputs);
+  }, [phaseType, voltageVolts, currentAmps, cosPhi, cableLengthMeters, cableSectionMm2]);
 
   const handleCopy = () => {
     const summary = `Puissance électrique (${phaseType === 'three' ? 'Triphasé 400V' : 'Monophasé 230V'}) : ${result.activePowerKw} kW (${result.apparentPowerKva} kVA) | Courant: ${currentAmps} A | Chute de tension: ${result.voltageDropPercent} %`;
