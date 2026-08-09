@@ -53,10 +53,17 @@ export default function FiberAttenuationTool() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-foreground text-xs font-semibold block mb-1.5">
+              <span
+                id="fiber-attenuation-wavelength-label"
+                className="text-foreground text-xs font-semibold block mb-1.5"
+              >
                 Longueur d&apos;onde (nm)
-              </label>
-              <div className="flex gap-2">
+              </span>
+              <div
+                role="group"
+                aria-labelledby="fiber-attenuation-wavelength-label"
+                className="flex gap-2"
+              >
                 <Button
                   type="button"
                   size="sm"

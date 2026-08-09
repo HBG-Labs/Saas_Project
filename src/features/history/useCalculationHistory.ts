@@ -1,24 +1,31 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { type HistoryEntry, PLAN_HISTORY_LIMITS, type PlanTier } from './types';
 
 const STORAGE_KEY = 'nexoratech_calculation_history_v1';
 
-export function useCalculationHistory(toolSlug?: string) {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [userPlan, setUserPlan] = useState<PlanTier>('free');
+/**
+ * Lecture de l'historique persisté.
+ *
+ * Appelée comme initialiseur paresseux de `useState` plutôt que depuis un effet
+ * de montage : écrire l'état dans un effet provoquait un second rendu immédiat
+ * à chaque montage — l'historique s'affichait vide puis se remplissait. Le
+ * `localStorage` étant synchrone, rien ne justifie de différer sa lecture.
+ */
+function readStoredEntries(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
 
-  // Chargement initial depuis localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as HistoryEntry[];
-        setEntries(Array.isArray(parsed) ? parsed : []);
-      }
-    } catch {
-      setEntries([]);
-    }
-  }, []);
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as HistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function useCalculationHistory(toolSlug?: string) {
+  const [entries, setEntries] = useState<HistoryEntry[]>(readStoredEntries);
+  const [userPlan, setUserPlan] = useState<PlanTier>('free');
 
   // Sauvegarde dans localStorage à chaque mise à jour
   const persistEntries = useCallback((newEntries: HistoryEntry[]) => {

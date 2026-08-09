@@ -42,10 +42,13 @@ export default function DbmMwConverterTool() {
 
         <CardContent className="space-y-4">
           <div>
-            <label className="text-foreground text-xs font-semibold block mb-1.5">
+            <span
+              id="dbm-mw-direction-label"
+              className="text-foreground text-xs font-semibold block mb-1.5"
+            >
               Sens de conversion
-            </label>
-            <div className="flex gap-2">
+            </span>
+            <div role="group" aria-labelledby="dbm-mw-direction-label" className="flex gap-2">
               <Button
                 type="button"
                 size="sm"

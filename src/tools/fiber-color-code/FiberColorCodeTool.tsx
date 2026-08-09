@@ -84,10 +84,17 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Choix de la Norme */}
             <div>
-              <label className="text-foreground text-xs font-semibold block mb-1.5">
+              <span
+                id="fiber-color-standard-label"
+                className="text-foreground text-xs font-semibold block mb-1.5"
+              >
                 Norme de repérage des couleurs
-              </label>
-              <div className="grid grid-cols-3 gap-2">
+              </span>
+              <div
+                role="group"
+                aria-labelledby="fiber-color-standard-label"
+                className="grid grid-cols-3 gap-2"
+              >
                 <Button
                   type="button"
                   size="sm"
@@ -120,10 +127,14 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
 
             {/* Choix de la Capacité Câble */}
             <div>
-              <label className="text-foreground text-xs font-semibold block mb-1.5">
+              <label
+                htmlFor="fiber-color-capacity"
+                className="text-foreground text-xs font-semibold block mb-1.5"
+              >
                 Capacité totale du câble (FO)
               </label>
               <select
+                id="fiber-color-capacity"
                 value={capacity}
                 onChange={(e) => {
                   const cap = parseInt(e.target.value, 10) as CableCapacity;

@@ -21,13 +21,16 @@ describe('computeFiberMapping (Norme France Telecom / Orange)', () => {
     expect(res.fiberColor.name).toBe('Rouge');
   });
 
-  it('identifie la fibre N°144 (Tube 12 Olive, Fibre 12 Olive)', () => {
+  // La 12ᵉ et dernière couleur de la palette France Télécom / Orange est Rose.
+  // « Olive » n'appartient à aucune des trois palettes du module : l'attente
+  // précédente ne pouvait donc être satisfaite par aucune norme.
+  it('identifie la fibre N°144 (Tube 12 Rose, Fibre 12 Rose)', () => {
     const res = computeFiberMapping({ fiberNumber: 144, standard: 'orange_ft', capacity: 144 });
 
     expect(res.tubeNumber).toBe(12);
-    expect(res.tubeColor.name).toBe('Olive');
+    expect(res.tubeColor.name).toBe('Rose');
     expect(res.fiberIndexInTube).toBe(12);
-    expect(res.fiberColor.name).toBe('Olive');
+    expect(res.fiberColor.name).toBe('Rose');
   });
 
   it('gère les câbles haute capacité 288 FO avec bague marquage (Fibre 145 = Tube 13 Rouge + bague)', () => {

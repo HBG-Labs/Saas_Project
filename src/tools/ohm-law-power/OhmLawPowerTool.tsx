@@ -49,10 +49,13 @@ export default function OhmLawPowerTool() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-foreground text-xs font-semibold block mb-1.5">
+              <span
+                id="ohm-network-label"
+                className="text-foreground text-xs font-semibold block mb-1.5"
+              >
                 Réseau électrique
-              </label>
-              <div className="flex gap-2">
+              </span>
+              <div role="group" aria-labelledby="ohm-network-label" className="flex gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -113,10 +116,14 @@ export default function OhmLawPowerTool() {
               onChange={(e) => setCableLengthMeters(parseFloat(e.target.value))}
             />
             <div>
-              <label className="text-foreground text-xs font-semibold block mb-1.5">
+              <label
+                htmlFor="ohm-cable-section"
+                className="text-foreground text-xs font-semibold block mb-1.5"
+              >
                 Section cuivre (mm²)
               </label>
               <select
+                id="ohm-cable-section"
                 value={cableSectionMm2}
                 onChange={(e) => setCableSectionMm2(parseFloat(e.target.value))}
                 className="bg-surface border-border/80 text-foreground h-9 w-full rounded-md border px-3 text-xs font-mono outline-none focus:ring-2 focus:ring-ring"
