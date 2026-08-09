@@ -1096,6 +1096,172 @@ begin
 end
 $$;
 
+-- =============================================================================
+-- PARTIE 6 — Équipes : périmètre du responsable et immuabilité d'organisation
+-- =============================================================================
+--
+-- Rappel du contexte posé en Partie 1 : `equipe-fibre` appartient à A, et
+-- `a_tech1` en est le `lead` — technicien au niveau de l'entreprise, responsable
+-- au niveau de l'équipe. `a_tech2` et `a_tech3` en sont simples membres.
+--
+-- C'est exactement la distinction que le module doit préserver : le rôle
+-- d'équipe donne un PÉRIMÈTRE, jamais des PERMISSIONS.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 6.1 — Le rôle d'équipe donne un périmètre, pas des permissions
+-- -----------------------------------------------------------------------------
+do $$
+declare v_team uuid; v_org uuid; v_raised boolean; v_member uuid;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select id into v_team from public.teams where slug = 'equipe-fibre';
+
+  -- Un technicien SIMPLE MEMBRE ne modifie pas l'équipe.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech2');
+    set local role authenticated;
+    update public.teams set name = 'Renommee par un membre' where id = v_team;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(
+    v_raised or not exists (select 1 from public.teams where name = 'Renommee par un membre'),
+    'Un technicien simple membre ne peut PAS modifier son equipe');
+
+  -- Le technicien RESPONSABLE, si. Il n'a pourtant aucune permission
+  -- « team.update » : c'est `app.my_led_team_ids()` qui lui ouvre la porte.
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  perform pg_temp.ok(not app.has_org_permission(v_org, 'team.update'),
+    'Le responsable d''equipe n''a PAS la permission team.update');
+  update public.teams set description = 'Pilotee par son responsable' where id = v_team;
+  reset role;
+
+  perform pg_temp.ok(
+    (select description from public.teams where id = v_team) = 'Pilotee par son responsable',
+    'Le technicien RESPONSABLE peut modifier SON equipe');
+
+  -- Et il ne gagne toujours pas le droit de contrôler un compte rendu.
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  perform pg_temp.ok(not app.has_org_permission(v_org, 'intervention.review'),
+    'Etre responsable d''equipe n''accorde PAS le controle des comptes rendus');
+  reset role;
+
+  -- Un simple membre ne compose pas l'équipe.
+  select m.id into v_member from public.organization_members m
+  where m.organization_id = v_org and m.user_id = pg_temp.uid('a_manager');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech2');
+    set local role authenticated;
+    insert into public.team_members (team_id, member_id) values (v_team, v_member);
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'Un technicien simple membre ne peut PAS ajouter quelqu''un a l''equipe');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 6.2 — Une équipe ne change jamais d'organisation
+-- -----------------------------------------------------------------------------
+--
+-- Régression mesurée avant correctif : un utilisateur `manager` chez A et
+-- simple membre chez B déplaçait une équipe de A vers B, avec ses membres — qui
+-- référencent pourtant les `organization_members` de A.
+--
+-- Le `WITH CHECK` de la policy ne vérifiait que l'appartenance. Le renforcer
+-- n'aurait pas suffi : sa branche `id in my_led_team_ids()` part de
+-- `team_members` et ignore l'organisation de l'équipe, si bien que le
+-- responsable serait passé malgré tout. Seul un trigger sait comparer
+-- l'ancienne et la nouvelle ligne.
+do $$
+declare v_team uuid; v_org_b uuid; v_raised boolean;
+begin
+  select id into v_team from public.teams where slug = 'equipe-fibre';
+  select id into v_org_b from public.organizations where slug = 'reseaux-du-sud';
+
+  -- Tenté avec le rôle le plus élevé qui soit : si le propriétaire échoue,
+  -- personne ne réussit.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_owner');
+    set local role authenticated;
+    update public.teams set organization_id = v_org_b where id = v_team;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised, 'Une equipe ne peut PAS changer d''organisation');
+  perform pg_temp.ok(
+    (select organization_id from public.teams where id = v_team) <> v_org_b,
+    'L''equipe est restee dans son organisation d''origine');
+
+  -- Même garantie sur les clients et les missions : la protection y était
+  -- déduite d'un enchaînement de conditions, elle est désormais écrite.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_owner');
+    set local role authenticated;
+    update public.customers set organization_id = v_org_b
+    where name like 'Mairie de Saint-Pierre%';
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised, 'Un client ne peut PAS changer d''organisation');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 6.3 — La lecture des équipes suit la matrice RBAC
+-- -----------------------------------------------------------------------------
+--
+-- `employee` ne possède pas `team.view`. La policy n'exigeait que
+-- `can_use_pro_module` : le serveur lui servait les équipes que l'interface lui
+-- masquait. Miroir et autorité divergeaient, dans le sens permissif.
+do $$
+declare v_org uuid; v_vues int;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  -- Les changements de rôle sont faits SOUS L'IDENTITÉ DU PROPRIÉTAIRE.
+  --
+  -- `reset role` rétablit le rôle PostgreSQL mais laisse `request.jwt.claims`
+  -- intact : `auth.uid()` continue de désigner le dernier utilisateur connecté.
+  -- Rétrograder `a_tech3` juste après l'avoir incarné revenait donc à lui faire
+  -- modifier son propre rôle, ce que `prevent_privilege_escalation` refuse — à
+  -- raison.
+  perform pg_temp.login('a_owner');
+
+  -- Rétrogradation temporaire — annulée par le rollback final.
+  update public.organization_members set role = 'employee'
+  where organization_id = v_org and user_id = pg_temp.uid('a_tech3');
+
+  perform pg_temp.login('a_tech3');
+  set local role authenticated;
+  select count(*) into v_vues from public.teams;
+  reset role;
+
+  perform pg_temp.ok(v_vues = 0, 'Un employe ne voit AUCUNE equipe');
+
+  perform pg_temp.login('a_owner');
+
+  update public.organization_members set role = 'technician'
+  where organization_id = v_org and user_id = pg_temp.uid('a_tech3');
+
+  perform pg_temp.login('a_tech3');
+  set local role authenticated;
+  select count(*) into v_vues from public.teams;
+  reset role;
+
+  perform pg_temp.ok(v_vues = 1, 'Un technicien voit a nouveau les equipes');
+end
+$$;
+
 do $$
 begin
   raise notice '';

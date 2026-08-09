@@ -66,6 +66,13 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     feature: 'customers',
   },
   {
+    to: ROUTES.teams,
+    label: 'Équipes',
+    icon: 'users-round',
+    permission: 'team.view',
+    feature: 'teams',
+  },
+  {
     to: ROUTES.organization,
     label: 'Entreprise',
     icon: 'building',

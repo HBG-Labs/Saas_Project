@@ -9,6 +9,7 @@ import {
   Star,
   User,
   Users,
+  UsersRound,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   settings: Settings,
   building: Building2,
   users: Users,
+  'users-round': UsersRound,
   contact: Contact,
   'credit-card': CreditCard,
 };

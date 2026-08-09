@@ -35,6 +35,9 @@ export const ROUTES = {
   customers: '/clients',
   customer: (customerId: string) => `/clients/${customerId}`,
 
+  teams: '/equipes',
+  team: (teamId: string) => `/equipes/${teamId}`,
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',
@@ -58,4 +61,5 @@ export const ROUTE_PATTERNS = {
   category: '/categories/:categorySlug',
   invitation: '/invitations/:token',
   customer: '/clients/:customerId',
+  team: '/equipes/:teamId',
 } as const;

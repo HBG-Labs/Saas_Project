@@ -136,6 +136,31 @@ export const routes: RouteObject[] = [
                     ],
                   },
 
+                  /**
+                   * Équipes : formule + permission, comme Clients. Mais la
+                   * FICHE reste elle aussi derrière `team.view` — contrairement
+                   * aux clients, aucune branche de la RLS n'ouvre une équipe à
+                   * qui n'a pas cette permission.
+                   */
+                  {
+                    element: <RequirePlan feature={FEATURES.teams} label="Le module Équipes" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.teamView} />,
+                        children: [
+                          {
+                            path: ROUTES.teams,
+                            lazy: lazyPage(() => import('@/pages/teams/TeamsListPage')),
+                          },
+                          {
+                            path: ROUTE_PATTERNS.team,
+                            lazy: lazyPage(() => import('@/pages/teams/TeamDetailPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
                   {
                     path: ROUTES.organization,
                     lazy: lazyPage(() => import('@/pages/organization/OrganizationSettingsPage')),
