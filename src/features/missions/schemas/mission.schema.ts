@@ -62,6 +62,31 @@ export function omitEmpty(value: string | undefined): string | undefined {
  * planning. `new Date()` l'interprète, elle, dans le fuseau du navigateur, qui
  * est celui de la personne qui a saisi l'horaire.
  */
+/**
+ * Chemin inverse : ISO → valeur d'un champ `datetime-local`.
+ *
+ * Le champ HTML n'accepte QUE le format `AAAA-MM-JJTHH:MM`, sans fuseau ni
+ * secondes. Lui passer un ISO complet le laisse vide, sans erreur — l'édition
+ * d'une mission planifiée perdrait silencieusement ses dates.
+ *
+ * La conversion se fait en heure LOCALE, celle dans laquelle la personne a
+ * saisi l'horaire. `toISOString()` la ramènerait en UTC et décalerait
+ * l'affichage de plusieurs heures.
+ */
+export function toDateTimeLocal(iso: string | null): string {
+  if (iso === null) return '';
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (value: number) => String(value).padStart(2, '0');
+
+  return (
+    `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
+}
+
 export function toIsoOrUndefined(value: string | undefined): string | undefined {
   const trimmed = value?.trim() ?? '';
   if (trimmed === '') return undefined;

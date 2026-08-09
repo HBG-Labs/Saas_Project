@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Phone, Star, Trash2, UserPlus } from 'lucide-react';
+import { Mail, Pencil, Phone, Star, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -13,13 +13,21 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
 
+import type { CustomerContact } from '@/types/domain';
+
 import {
   useCreateContact,
   useCustomerContacts,
   useDeleteContact,
   useSetPrimaryContact,
+  useUpdateContact,
 } from '../hooks/useCustomerChildren';
-import { contactSchema, omitEmpty, type ContactValues } from '../schemas/customer.schema';
+import {
+  contactSchema,
+  emptyToNull,
+  omitEmpty,
+  type ContactValues,
+} from '../schemas/customer.schema';
 
 export interface ContactsPanelProps {
   customerId: string;
@@ -96,6 +104,17 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
 
                 {canEdit ? (
                   <div className="flex items-center gap-1">
+                    {/*
+                      Modifier plutôt que supprimer-puis-recréer : recréer un
+                      contact lui ferait perdre son statut de principal, et le
+                      détacherait des sites qui le référencent.
+                    */}
+                    <ContactFormDialog
+                      customerId={customerId}
+                      organizationId={organizationId}
+                      contact={contact}
+                    />
+
                     {contact.is_primary ? null : (
                       <Tooltip content="Désigner comme interlocuteur principal">
                         <Button
@@ -134,16 +153,22 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
   );
 }
 
+/** Création et édition d'un interlocuteur — un seul composant, mêmes champs. */
 function ContactFormDialog({
   customerId,
   organizationId,
+  contact,
 }: {
   customerId: string;
   organizationId: string;
+  /** Fourni : édition. Absent : création. */
+  contact?: CustomerContact;
 }) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const createContact = useCreateContact(customerId);
+  const updateContact = useUpdateContact(customerId);
+  const isEdit = contact !== undefined;
 
   const {
     register,
@@ -152,27 +177,47 @@ function ContactFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<ContactValues>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { lastName: '', firstName: '', roleLabel: '', email: '', phone: '', notes: '' },
+    defaultValues: {
+      lastName: contact?.last_name ?? '',
+      firstName: contact?.first_name ?? '',
+      roleLabel: contact?.role_label ?? '',
+      email: contact?.email ?? '',
+      phone: contact?.phone ?? '',
+      notes: contact?.notes ?? '',
+    },
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const firstName = omitEmpty(values.firstName);
-      const roleLabel = omitEmpty(values.roleLabel);
-      const email = omitEmpty(values.email);
-      const phone = omitEmpty(values.phone);
+      if (isEdit) {
+        await updateContact.mutateAsync({
+          contactId: contact.id,
+          patch: {
+            last_name: values.lastName,
+            first_name: emptyToNull(values.firstName),
+            role_label: emptyToNull(values.roleLabel),
+            email: emptyToNull(values.email),
+            phone: emptyToNull(values.phone),
+          },
+        });
+      } else {
+        const firstName = omitEmpty(values.firstName);
+        const roleLabel = omitEmpty(values.roleLabel);
+        const email = omitEmpty(values.email);
+        const phone = omitEmpty(values.phone);
 
-      await createContact.mutateAsync({
-        customerId,
-        organizationId,
-        lastName: values.lastName,
-        ...(firstName !== undefined ? { firstName } : {}),
-        ...(roleLabel !== undefined ? { roleLabel } : {}),
-        ...(email !== undefined ? { email } : {}),
-        ...(phone !== undefined ? { phone } : {}),
-      });
-      reset();
+        await createContact.mutateAsync({
+          customerId,
+          organizationId,
+          lastName: values.lastName,
+          ...(firstName !== undefined ? { firstName } : {}),
+          ...(roleLabel !== undefined ? { roleLabel } : {}),
+          ...(email !== undefined ? { email } : {}),
+          ...(phone !== undefined ? { phone } : {}),
+        });
+        reset();
+      }
       setOpen(false);
     } catch (error) {
       setSubmitError(error);
@@ -183,12 +228,22 @@ function ContactFormDialog({
     <Modal
       open={open}
       onOpenChange={setOpen}
-      title="Nouvel interlocuteur"
+      title={isEdit ? 'Modifier l’interlocuteur' : 'Nouvel interlocuteur'}
       trigger={
-        <Button variant="outline" size="sm">
-          <UserPlus className="size-4" />
-          Ajouter un contact
-        </Button>
+        isEdit ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Modifier ${contact.last_name}`}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm">
+            <UserPlus className="size-4" />
+            Ajouter un contact
+          </Button>
+        )
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
@@ -236,7 +291,7 @@ function ContactFormDialog({
             Annuler
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Ajout…' : 'Ajouter'}
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter'}
           </Button>
         </div>
       </form>

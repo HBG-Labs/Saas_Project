@@ -7,15 +7,11 @@ import { Link, useNavigate } from 'react-router';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
-import { CustomerPicker, SitePicker } from '@/features/customers';
 import {
-  MISSION_PRIORITY_LABELS,
+  MissionFormFields,
   missionSchema,
   toIsoOrUndefined,
   useCreateMission,
@@ -71,6 +67,8 @@ export default function MissionCreatePage() {
         createdBy: user.id,
         title: values.title,
         priority,
+        // Propriété OMISE plutôt que passée à `undefined` :
+        // `exactOptionalPropertyTypes` distingue les deux.
         ...(description !== undefined && description !== '' ? { description } : {}),
         ...(notes !== undefined && notes !== '' ? { notes } : {}),
         ...(locationLabel !== undefined && locationLabel !== '' ? { locationLabel } : {}),
@@ -104,93 +102,24 @@ export default function MissionCreatePage() {
         <FormError error={submitError} />
 
         <Card>
-          <CardHeader>
-            <CardTitle>Intervention</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              label="Intitulé"
-              placeholder="Raccordement FTTH — armoire de rue"
-              required
-              {...(errors.title?.message ? { error: errors.title.message } : {})}
-              {...register('title')}
-            />
-
-            <Textarea
-              label="Description"
-              rows={3}
-              placeholder="Nature des travaux, matériel attendu, contraintes particulières."
-              {...register('description')}
-            />
-
-            <Select
-              options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
-                value,
-                label,
-              }))}
-              value={priority}
-              onValueChange={(value) => {
-                setPriority(value as MissionPriority);
-              }}
-              label="Priorité"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lieu</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/*
-              Choisir un site suffit : le trigger en déduit le client et recopie
-              l'adresse et les consignes d'accès sur la mission. Changer de client
-              remet le site à zéro — un site appartient à un client, et la base
-              refuse le couple incohérent.
-            */}
-            <CustomerPicker
+          {/*
+            Les champs viennent de `MissionFormFields`, partagés avec l'écran
+            d'édition. Deux formulaires jumeaux finissent toujours par diverger,
+            et l'on découvre alors qu'on ne peut pas corriger ce qu'on a pu
+            saisir.
+          */}
+          <CardContent className="space-y-4 pt-6">
+            <MissionFormFields
+              register={register}
+              errors={errors}
               organizationId={organization?.id ?? null}
-              value={customerId}
-              onChange={(next) => {
-                setCustomerId(next);
-                setSiteId(null);
-              }}
+              priority={priority}
+              onPriorityChange={setPriority}
+              customerId={customerId}
+              onCustomerChange={setCustomerId}
+              siteId={siteId}
+              onSiteChange={setSiteId}
             />
-
-            <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
-
-            <Input
-              label="Précision de lieu"
-              placeholder="Armoire PM 12, trottoir pair"
-              hint="Complète l’adresse du site — laissez vide pour reprendre celle du site."
-              {...register('locationLabel')}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Planification</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Début prévu"
-                type="datetime-local"
-                {...(errors.scheduledStart?.message
-                  ? { error: errors.scheduledStart.message }
-                  : {})}
-                {...register('scheduledStart')}
-              />
-              <Input
-                label="Fin prévue"
-                type="datetime-local"
-                {...(errors.scheduledEnd?.message ? { error: errors.scheduledEnd.message } : {})}
-                {...register('scheduledEnd')}
-              />
-            </div>
-
-            <Textarea label="Notes internes" rows={2} {...register('notes')} />
           </CardContent>
         </Card>
 

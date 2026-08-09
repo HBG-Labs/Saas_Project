@@ -33,12 +33,15 @@ export {
 } from './hooks/useMissions';
 
 export { AssignMissionDialog } from './components/AssignMissionDialog';
+export { MissionEditDialog } from './components/MissionEditDialog';
+export { MissionFormFields } from './components/MissionFormFields';
 export { MissionPriorityBadge, MissionStatusBadge } from './components/MissionBadges';
 export { MISSION_PRIORITY_LABELS } from './priority-labels';
 export { MissionTransitions } from './components/MissionTransitions';
 
 export {
   missionSchema,
+  toDateTimeLocal,
   toIsoOrUndefined,
   type MissionValues,
 } from './schemas/mission.schema';

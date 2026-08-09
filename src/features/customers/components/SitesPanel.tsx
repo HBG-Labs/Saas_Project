@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Archive, KeyRound, MapPin, Plus } from 'lucide-react';
+import { Archive, KeyRound, MapPin, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -12,9 +12,15 @@ import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import type { Site } from '@/types/domain';
 
-import { useArchiveSite, useCreateSite, useCustomerSites } from '../hooks/useCustomerChildren';
-import { omitEmpty, siteSchema, type SiteValues } from '../schemas/customer.schema';
+import {
+  useArchiveSite,
+  useCreateSite,
+  useCustomerSites,
+  useUpdateSite,
+} from '../hooks/useCustomerChildren';
+import { emptyToNull, omitEmpty, siteSchema, type SiteValues } from '../schemas/customer.schema';
 
 export interface SitesPanelProps {
   customerId: string;
@@ -75,18 +81,31 @@ export function SitesPanel({ customerId, organizationId, canEdit }: SitesPanelPr
                 </div>
 
                 {canEdit ? (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => {
-                      archiveSite.mutate(site.id);
-                    }}
-                    disabled={archiveSite.isPending}
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label={`Archiver le site ${site.name}`}
-                  >
-                    <Archive className="size-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {/*
+                      Modifier plutôt qu'archiver-puis-recréer : un code de
+                      portail qui change ne doit pas rompre le lien des missions
+                      passées vers ce site.
+                    */}
+                    <SiteFormDialog
+                      customerId={customerId}
+                      organizationId={organizationId}
+                      site={site}
+                    />
+
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => {
+                        archiveSite.mutate(site.id);
+                      }}
+                      disabled={archiveSite.isPending}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label={`Archiver le site ${site.name}`}
+                    >
+                      <Archive className="size-4" />
+                    </Button>
+                  </div>
                 ) : null}
               </div>
 
@@ -111,16 +130,29 @@ export function SitesPanel({ customerId, organizationId, canEdit }: SitesPanelPr
   );
 }
 
+/**
+ * Création et édition d'un site.
+ *
+ * Un seul composant pour les deux : les champs sont identiques, et deux
+ * formulaires jumeaux divergent toujours — l'un gagne un champ que l'autre
+ * n'aura jamais, et l'on découvre alors qu'on ne peut pas corriger ce qu'on a
+ * pu saisir.
+ */
 function SiteFormDialog({
   customerId,
   organizationId,
+  site,
 }: {
   customerId: string;
   organizationId: string;
+  /** Fourni : édition. Absent : création. */
+  site?: Site;
 }) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const createSite = useCreateSite(customerId);
+  const updateSite = useUpdateSite(customerId);
+  const isEdit = site !== undefined;
 
   const {
     register,
@@ -130,38 +162,54 @@ function SiteFormDialog({
   } = useForm<SiteValues>({
     resolver: zodResolver(siteSchema),
     defaultValues: {
-      name: '',
-      code: '',
-      addressLine1: '',
-      postalCode: '',
-      city: '',
-      country: 'FR',
-      accessNotes: '',
+      name: site?.name ?? '',
+      code: site?.code ?? '',
+      addressLine1: site?.address_line1 ?? '',
+      postalCode: site?.postal_code ?? '',
+      city: site?.city ?? '',
+      country: site?.country ?? 'FR',
+      accessNotes: site?.access_notes ?? '',
     },
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const code = omitEmpty(values.code);
-      const addressLine1 = omitEmpty(values.addressLine1);
-      const postalCode = omitEmpty(values.postalCode);
-      const city = omitEmpty(values.city);
-      const country = omitEmpty(values.country);
-      const accessNotes = omitEmpty(values.accessNotes);
+      if (isEdit) {
+        // `null` et non `undefined` : en édition, vider un champ doit l'effacer.
+        await updateSite.mutateAsync({
+          siteId: site.id,
+          patch: {
+            name: values.name,
+            code: emptyToNull(values.code),
+            address_line1: emptyToNull(values.addressLine1),
+            postal_code: emptyToNull(values.postalCode),
+            city: emptyToNull(values.city),
+            country: emptyToNull(values.country),
+            access_notes: emptyToNull(values.accessNotes),
+          },
+        });
+      } else {
+        const code = omitEmpty(values.code);
+        const addressLine1 = omitEmpty(values.addressLine1);
+        const postalCode = omitEmpty(values.postalCode);
+        const city = omitEmpty(values.city);
+        const country = omitEmpty(values.country);
+        const accessNotes = omitEmpty(values.accessNotes);
 
-      await createSite.mutateAsync({
-        customerId,
-        organizationId,
-        name: values.name,
-        ...(code !== undefined ? { code } : {}),
-        ...(addressLine1 !== undefined ? { addressLine1 } : {}),
-        ...(postalCode !== undefined ? { postalCode } : {}),
-        ...(city !== undefined ? { city } : {}),
-        ...(country !== undefined ? { country } : {}),
-        ...(accessNotes !== undefined ? { accessNotes } : {}),
-      });
-      reset();
+        await createSite.mutateAsync({
+          customerId,
+          organizationId,
+          name: values.name,
+          ...(code !== undefined ? { code } : {}),
+          ...(addressLine1 !== undefined ? { addressLine1 } : {}),
+          ...(postalCode !== undefined ? { postalCode } : {}),
+          ...(city !== undefined ? { city } : {}),
+          ...(country !== undefined ? { country } : {}),
+          ...(accessNotes !== undefined ? { accessNotes } : {}),
+        });
+        reset();
+      }
       setOpen(false);
     } catch (error) {
       setSubmitError(error);
@@ -172,12 +220,18 @@ function SiteFormDialog({
     <Modal
       open={open}
       onOpenChange={setOpen}
-      title="Nouveau site d’intervention"
+      title={isEdit ? 'Modifier le site' : 'Nouveau site d’intervention'}
       trigger={
-        <Button variant="outline" size="sm">
-          <Plus className="size-4" />
-          Ajouter un site
-        </Button>
+        isEdit ? (
+          <Button variant="ghost" size="icon-sm" aria-label={`Modifier le site ${site.name}`}>
+            <Pencil className="size-4" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm">
+            <Plus className="size-4" />
+            Ajouter un site
+          </Button>
+        )
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
@@ -230,7 +284,7 @@ function SiteFormDialog({
             Annuler
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Ajout…' : 'Ajouter le site'}
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter le site'}
           </Button>
         </div>
       </form>

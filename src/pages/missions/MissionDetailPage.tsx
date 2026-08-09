@@ -12,6 +12,7 @@ import { ROUTES } from '@/config/routes';
 import {
   AssignMissionDialog,
   MISSION_STATUS_LABELS,
+  MissionEditDialog,
   MissionPriorityBadge,
   MissionStatusBadge,
   MissionTransitions,
@@ -113,6 +114,16 @@ export default function MissionDetailPage() {
             <Badge variant="outline">{data.reference}</Badge>
             <MissionPriorityBadge priority={data.priority} />
             <MissionStatusBadge status={data.status} />
+
+            {/*
+              Réservé à `mission.update`. Le trigger `enforce_mission_assignee_scope`
+              interdit à l'intervenant de modifier tout ce que ce formulaire
+              touche : lui ouvrir la fenêtre reviendrait à le laisser saisir dix
+              champs pour se voir refuser à l'enregistrement.
+            */}
+            {can(PERMISSIONS.missionUpdate) ? (
+              <MissionEditDialog mission={data} organizationId={organization?.id ?? null} />
+            ) : null}
 
             {canAssign ? (
               <AssignMissionDialog
