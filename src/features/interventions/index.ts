@@ -47,3 +47,4 @@ export {
 
 export { AttachmentGallery } from './components/AttachmentGallery';
 export { InterventionTimer } from './components/InterventionTimer';
+export { MissionInterventionsPanel } from './components/MissionInterventionsPanel';

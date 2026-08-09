@@ -18,6 +18,7 @@ import {
   useMission,
   useMissionHistory,
 } from '@/features/missions';
+import { MissionInterventionsPanel } from '@/features/interventions';
 import {
   memberDisplayName,
   PERMISSIONS,
@@ -132,6 +133,25 @@ export default function MissionDetailPage() {
         </CardHeader>
         <CardContent>
           <MissionTransitions mission={data} role={role} isAssignee={isAssignee} />
+        </CardContent>
+      </Card>
+
+      {/*
+        Le maillon entre la mission et le travail réel. Sans lui, la machine à
+        états avançait mais aucune intervention n'existait — le chronomètre et
+        le compte rendu restaient inatteignables.
+      */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Interventions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MissionInterventionsPanel
+            missionId={data.id}
+            missionStatus={data.status}
+            myMemberId={myMemberId}
+            isAssignee={isAssignee}
+          />
         </CardContent>
       </Card>
 

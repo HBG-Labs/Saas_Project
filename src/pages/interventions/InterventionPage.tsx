@@ -1,4 +1,4 @@
-import { ArrowLeft, KeyRound, MapPin, Wrench } from 'lucide-react';
+import { ArrowLeft, FileText, KeyRound, MapPin, Wrench } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -103,6 +103,37 @@ export default function InterventionPage() {
             canTrack={canTrack}
             isCompleted={data.status === 'completed'}
           />
+        </CardContent>
+      </Card>
+
+      {/*
+        Le compte rendu est la suite naturelle du chronomètre : on le rédige en
+        partant, souvent depuis le véhicule. Le laisser accessible seulement par
+        l'URL le rendrait introuvable.
+      */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div>
+            <p className="text-foreground text-sm font-medium">Compte rendu</p>
+            <p className="text-muted-foreground text-xs">
+              {data.report === null
+                ? 'Aucun compte rendu ouvert pour cette intervention.'
+                : data.report.status === 'draft'
+                  ? 'Brouillon en cours de rédaction.'
+                  : data.report.status === 'submitted'
+                    ? 'Soumis au contrôle.'
+                    : data.report.status === 'approved'
+                      ? 'Validé — définitif.'
+                      : 'Refusé — à corriger et resoumettre.'}
+            </p>
+          </div>
+
+          <Button asChild variant={data.report === null ? 'primary' : 'outline'} size="sm">
+            <Link to={ROUTES.interventionReport(interventionId)}>
+              <FileText className="size-4" />
+              {data.report === null ? 'Rédiger' : 'Ouvrir'}
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 
