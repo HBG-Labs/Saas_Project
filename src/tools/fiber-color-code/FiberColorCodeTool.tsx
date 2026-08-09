@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 
 import {
-  CABLE_CAPACITIES,
   computeFiberMapping,
   computeFiberNumberFromTube,
   getPaletteByStandard,
   getStandardName,
 } from './compute';
+import { CABLE_CAPACITIES } from './schema';
 import type { CableCapacity, ColorStandard } from './schema';
 
 export default function FiberColorCodeTool() {
@@ -231,7 +231,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
           {/* Grille Principale Tube vs Fibre */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {/* Carte du Tube */}
-            <div className="bg-surface border-border/80 rounded-2xl border p-5 space-y-4 shadow-raised relative overflow-hidden">
+            <div className="bg-surface border-border/80 rounded-xl border p-3.5 space-y-3 shadow-raised relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-subtle-foreground text-2xs font-bold uppercase tracking-wider">
                   Tube N°{mapping.tubeNumber} sur {mapping.totalTubesInCable}
@@ -244,9 +244,9 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
               </div>
 
               {/* Pastille de Couleur du Tube */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div
-                  className="size-16 rounded-2xl flex items-center justify-center font-mono font-bold text-lg shadow-raised shrink-0 border"
+                  className="size-11 rounded-xl flex items-center justify-center font-mono font-bold text-sm shadow-raised shrink-0 border"
                   style={{
                     backgroundColor: mapping.tubeColor.hex,
                     color: mapping.tubeColor.textColor === 'white' ? '#FFFFFF' : '#000000',
@@ -257,18 +257,18 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                 </div>
 
                 <div>
-                  <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                  <div className="text-base font-bold text-foreground tracking-tight">
                     {mapping.tubeColor.name}
                   </div>
-                  <p className="text-muted-foreground text-xs mt-0.5 font-mono">
-                    Code Hex: {mapping.tubeColor.hex}
+                  <p className="text-muted-foreground text-2xs mt-0.5 font-mono">
+                    {mapping.tubeColor.hex}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Carte de la Fibre */}
-            <div className="bg-surface border-border/80 rounded-2xl border p-5 space-y-4 shadow-raised relative overflow-hidden">
+            <div className="bg-surface border-border/80 rounded-xl border p-3.5 space-y-3 shadow-raised relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-subtle-foreground text-2xs font-bold uppercase tracking-wider">
                   Fibre N°{mapping.fiberIndexInTube} dans le Tube
@@ -279,9 +279,9 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
               </div>
 
               {/* Pastille de Couleur de la Fibre */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div
-                  className="size-16 rounded-full flex items-center justify-center font-mono font-bold text-lg shadow-raised shrink-0 border"
+                  className="size-11 rounded-full flex items-center justify-center font-mono font-bold text-sm shadow-raised shrink-0 border"
                   style={{
                     backgroundColor: mapping.fiberColor.hex,
                     color: mapping.fiberColor.textColor === 'white' ? '#FFFFFF' : '#000000',
@@ -292,11 +292,11 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                 </div>
 
                 <div>
-                  <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                  <div className="text-base font-bold text-foreground tracking-tight">
                     {mapping.fiberColor.name}
                   </div>
-                  <p className="text-muted-foreground text-xs mt-0.5 font-mono">
-                    Code Hex: {mapping.fiberColor.hex}
+                  <p className="text-muted-foreground text-2xs mt-0.5 font-mono">
+                    {mapping.fiberColor.hex}
                   </p>
                 </div>
               </div>
@@ -325,7 +325,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
         </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12">
             {palette.map((color, index) => {
               const posInSequence = index + 1;
               const isSelectedFiber = mapping.fiberColor.code === color.code;
@@ -333,14 +333,14 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
               return (
                 <div
                   key={color.code}
-                  className={`rounded-xl border p-3 flex items-center gap-3 transition-all ${
+                  className={`rounded-lg border p-2 flex flex-col items-center gap-1.5 transition-all text-center ${
                     isSelectedFiber
                       ? 'border-primary shadow-modal ring-2 ring-primary/40 bg-surface'
                       : 'border-border/60 bg-surface-sunken/40 hover:border-border-strong'
                   }`}
                 >
                   <div
-                    className="size-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 border"
+                    className="size-7 rounded-md flex items-center justify-center font-mono text-2xs font-bold shrink-0 border"
                     style={{
                       backgroundColor: color.hex,
                       color: color.textColor === 'white' ? '#FFFFFF' : '#000000',
@@ -350,9 +350,9 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     {posInSequence}
                   </div>
 
-                  <div className="overflow-hidden">
-                    <div className="font-bold text-xs text-foreground truncate">{color.name}</div>
-                    <div className="text-subtle-foreground text-2xs font-mono">{color.code}</div>
+                  <div className="overflow-hidden w-full">
+                    <div className="font-semibold text-2xs text-foreground truncate">{color.name}</div>
+                    <div className="text-subtle-foreground text-[10px] font-mono">{color.code}</div>
                   </div>
                 </div>
               );

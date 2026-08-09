@@ -1,9 +1,17 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
 
-/** Catégories du catalogue. Doit rester aligné avec la table `categories`. */
-export const TOOL_CATEGORIES = ['fiber-optics', 'networking', 'electrical', 'general'] as const;
+import { CATEGORY_SLUGS, type CategorySlug } from '@/config/categories';
 
-export type ToolCategorySlug = (typeof TOOL_CATEGORIES)[number];
+/**
+ * Catégories du catalogue.
+ *
+ * DÉRIVÉES de `src/config/categories.ts` — ne jamais réécrire cette liste à la
+ * main. Elle était auparavant dupliquée ici, dans `catalog-metadata.ts` et dans
+ * le seed SQL ; les trois copies devaient être modifiées ensemble.
+ */
+export const TOOL_CATEGORIES: readonly CategorySlug[] = CATEGORY_SLUGS;
+
+export type ToolCategorySlug = CategorySlug;
 
 /**
  * Contrat que doit respecter tout outil de NexoraTech.

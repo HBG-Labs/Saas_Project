@@ -159,7 +159,7 @@ export default function ToolsPage() {
           <EmptyState
             icon={Wrench}
             title="Le catalogue se construit"
-            description="Aucun outil n’est encore publié. Les quatre catégories ci-dessous sont prêtes à les accueillir, et chaque outil sera disponible dès sa mise en service."
+            description="Aucun outil n’est encore publié. Les catégories ci-dessous sont prêtes à les accueillir, et chaque outil sera disponible dès sa mise en service."
             className="mb-8"
           />
 

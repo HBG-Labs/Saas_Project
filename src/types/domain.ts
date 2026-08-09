@@ -7,6 +7,8 @@ import type { Tables } from './database';
  * le schéma, tout en donnant à l'application un vocabulaire indépendant du
  * stockage.
  */
+
+// ---------------------------------------------------------------- socle & catalogue
 export type Profile = Tables<'profiles'>;
 export type Category = Tables<'categories'>;
 export type Tool = Tables<'tools'>;
@@ -16,4 +18,65 @@ export type ToolHistoryEntry = Tables<'tool_history'>;
 /** Outil du catalogue accompagné de sa catégorie (jointure courante). */
 export interface ToolWithCategory extends Tool {
   category: Pick<Category, 'id' | 'slug' | 'name'>;
+}
+
+// -------------------------------------------------------------------- multi-tenant
+export type Organization = Tables<'organizations'>;
+export type OrganizationMember = Tables<'organization_members'>;
+export type OrganizationInvitation = Tables<'organization_invitations'>;
+export type RolePermission = Tables<'role_permissions'>;
+
+/**
+ * Membre accompagné de son profil.
+ *
+ * `profile` est nullable : `organization_members` référence `auth.users`, et
+ * rien ne garantit qu'une ligne `profiles` existe pour un compte créé avant le
+ * trigger `handle_new_user` — ni qu'elle soit lisible, la RLS de `profiles`
+ * restreignant la lecture au propriétaire. Une jointure qui remonterait
+ * systématiquement le profil des collègues serait d'ailleurs une fuite.
+ */
+export interface MemberWithProfile extends OrganizationMember {
+  profile: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null;
+}
+
+// -------------------------------------------------------------------------- équipes
+export type Team = Tables<'teams'>;
+export type TeamMember = Tables<'team_members'>;
+
+export interface TeamWithMembers extends Team {
+  members: (TeamMember & { member: MemberWithProfile })[];
+}
+
+// ------------------------------------------------------------------------- missions
+export type Mission = Tables<'missions'>;
+export type MissionAssignment = Tables<'mission_assignments'>;
+export type MissionStatusEvent = Tables<'mission_status_events'>;
+export type MissionStatusTransition = Tables<'mission_status_transitions'>;
+
+/** Mission enrichie des libellés attendus par les listes et le planning. */
+export interface MissionWithRelations extends Mission {
+  category: Pick<Category, 'id' | 'slug' | 'name'> | null;
+  assigned_team: Pick<Team, 'id' | 'name' | 'color'> | null;
+  assigned_member: MemberWithProfile | null;
+}
+
+// -------------------------------------------------------------------- interventions
+export type Intervention = Tables<'interventions'>;
+export type InterventionReport = Tables<'intervention_reports'>;
+export type InterventionAttachment = Tables<'intervention_attachments'>;
+
+export interface InterventionWithReport extends Intervention {
+  report: InterventionReport | null;
+  attachments: InterventionAttachment[];
+}
+
+// ----------------------------------------------------------------- audit & facturation
+export type AuditLog = Tables<'audit_logs'>;
+export type Plan = Tables<'plans'>;
+export type PlanFeature = Tables<'plan_features'>;
+export type Subscription = Tables<'subscriptions'>;
+
+/** Plan accompagné de ses fonctionnalités : la forme utile côté produit. */
+export interface PlanWithFeatures extends Plan {
+  features: PlanFeature[];
 }

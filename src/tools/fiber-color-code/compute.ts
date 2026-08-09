@@ -30,12 +30,12 @@ export const ORANGE_FT_COLORS: ColorDef[] = [
   { code: 'JA', name: 'Jaune', hex: '#EAB308', textColor: 'black' },
   { code: 'VI', name: 'Violet', hex: '#A855F7', textColor: 'white' },
   { code: 'BC', name: 'Blanc', hex: '#FFFFFF', textColor: 'black', borderColor: '#CBD5E1' },
-  { code: 'NR', name: 'Noir', hex: '#1E293B', textColor: 'white', borderColor: '#475569' },
+  { code: 'OR', name: 'Orange', hex: '#F97316', textColor: 'white' },
+  { code: 'GR', name: 'Gris', hex: '#64748B', textColor: 'white' },
   { code: 'MA', name: 'Marron', hex: '#9A3412', textColor: 'white' },
+  { code: 'NR', name: 'Noir', hex: '#1E293B', textColor: 'white', borderColor: '#475569' },
   { code: 'TQ', name: 'Turquoise', hex: '#06B6D4', textColor: 'black' },
   { code: 'RS', name: 'Rose', hex: '#EC4899', textColor: 'white' },
-  { code: 'GR', name: 'Gris', hex: '#64748B', textColor: 'white' },
-  { code: 'OL', name: 'Olive', hex: '#65A30D', textColor: 'white' },
 ];
 
 // 12 Couleurs Norme TIA/EIA-598-C (International)

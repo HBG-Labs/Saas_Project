@@ -1,58 +1,27 @@
-import type { ToolCategorySlug } from './registry';
-
 /**
  * Métadonnées d'affichage des catégories.
  *
- * Uniquement de la présentation (libellé, description, icône, couleur) : la
- * curation et la publication restent dans la table `categories`, et
- * l'implémentation des outils dans `src/tools/`. Ce fichier existe pour que
- * l'interface puisse afficher une catégorie sans attendre un aller-retour
- * réseau, le jeu de catégories étant fixe et connu à la compilation.
+ * Ce module n'est plus qu'un ADAPTATEUR : la source unique est
+ * `src/config/categories.ts`. Il est conservé pour ne pas casser les
+ * consommateurs existants (pages, composants marketing) qui importent
+ * `CATEGORY_METADATA` depuis l'API publique de la feature `tools`.
  *
- * Les clés doivent rester alignées avec `TOOL_CATEGORIES` et avec le seed
- * `supabase/migrations/20260807090300_seed_categories.sql`.
+ * Pourquoi ne pas simplement supprimer ce fichier : `config/` est une couche
+ * plus basse que `features/`. Les pages doivent pouvoir consommer le catalogue
+ * par l'API publique de la feature sans connaître son implémentation — c'est la
+ * règle ESLint `no-restricted-imports` qui interdit d'atteindre les fichiers
+ * internes d'une feature.
+ *
+ * ⚠️ N'ajoutez RIEN ici. Toute évolution de catégorie se fait dans
+ * `src/config/categories.ts`.
  */
-export interface CategoryMetadata {
-  slug: ToolCategorySlug;
-  name: string;
-  description: string;
-  /** Nom d'icône lucide, résolu par `resolveIcon`. */
-  icon: string;
-  /** Classes de teinte, en tokens sémantiques uniquement. */
-  tint: string;
-}
+import { CATEGORIES, getCategory, type CategoryDefinition } from '@/config/categories';
 
-export const CATEGORY_METADATA: readonly CategoryMetadata[] = [
-  {
-    slug: 'fiber-optics',
-    name: 'Fibre optique',
-    description: 'Codes couleur, bilans de liaison, atténuation, conversions dBm/mW.',
-    icon: 'cable',
-    tint: 'bg-info-subtle text-info',
-  },
-  {
-    slug: 'networking',
-    name: 'Réseaux',
-    description: "IPv4, CIDR, sous-réseaux, masques, plages d'adresses.",
-    icon: 'network',
-    tint: 'bg-primary-subtle text-primary',
-  },
-  {
-    slug: 'electrical',
-    name: 'Électricité',
-    description: "Loi d'Ohm, puissance, tension, courant, résistance.",
-    icon: 'zap',
-    tint: 'bg-warning-subtle text-warning',
-  },
-  {
-    slug: 'general',
-    name: 'Calculs généraux',
-    description: "Pourcentages, conversions d'unités, temps, distances, dB.",
-    icon: 'calculator',
-    tint: 'bg-success-subtle text-success',
-  },
-];
+/** Alias historique. Identique à `CategoryDefinition`. */
+export type CategoryMetadata = CategoryDefinition;
+
+export const CATEGORY_METADATA: readonly CategoryMetadata[] = CATEGORIES;
 
 export function getCategoryMetadata(slug: string): CategoryMetadata | undefined {
-  return CATEGORY_METADATA.find((category) => category.slug === slug);
+  return getCategory(slug);
 }

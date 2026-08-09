@@ -35,7 +35,11 @@ export function CategoryCard({ category, toolCount, className }: CategoryCardPro
       </span>
 
       <h3 className="text-foreground mt-4 text-base font-semibold">{category.name}</h3>
-      <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{category.description}</p>
+      {/* `shortDescription` et non `description` : la version longue est
+          réservée à l'en-tête de la page de catégorie, où la place existe. */}
+      <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+        {category.shortDescription}
+      </p>
 
       <p className="text-primary mt-4 flex items-center gap-1.5 text-xs font-semibold">
         {toolCount === undefined || toolCount === 0

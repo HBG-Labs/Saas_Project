@@ -1,4 +1,16 @@
-import { Cable, Calculator, Network, Puzzle, Wrench, Zap, type LucideIcon } from 'lucide-react';
+import {
+  Cable,
+  Calculator,
+  Cog,
+  Droplets,
+  HardHat,
+  Network,
+  Puzzle,
+  RadioTower,
+  Wrench,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 
 /**
  * Icônes des outils et catégories, indexées par nom.
@@ -17,8 +29,12 @@ import { Cable, Calculator, Network, Puzzle, Wrench, Zap, type LucideIcon } from
 export const TOOL_ICONS: Record<string, LucideIcon> = {
   cable: Cable,
   calculator: Calculator,
+  cog: Cog,
+  droplets: Droplets,
+  'hard-hat': HardHat,
   network: Network,
   puzzle: Puzzle,
+  'radio-tower': RadioTower,
   wrench: Wrench,
   zap: Zap,
 };

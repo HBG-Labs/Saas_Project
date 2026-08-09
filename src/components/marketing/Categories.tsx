@@ -8,7 +8,7 @@ export function Categories() {
     <Section
       id="categories"
       eyebrow="Catalogue"
-      title="Quatre domaines techniques"
+      title="Huit domaines techniques"
       description="Le catalogue s’enrichit progressivement. L’architecture permet d’ajouter un outil sans toucher au reste de la plateforme."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

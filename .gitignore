@@ -36,7 +36,14 @@ pnpm-debug.log*
 !.vscode/settings.json
 .idea/
 
+# Dossiers temporaires et sous-dépôts
+COdeFinal/
+Test/
+*.jpeg
+*.jpg
+
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
+

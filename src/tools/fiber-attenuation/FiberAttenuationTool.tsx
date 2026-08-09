@@ -19,17 +19,18 @@ export default function FiberAttenuationTool() {
   const [safetyMarginDb, setSafetyMarginDb] = useState(1.5);
   const [copied, setCopied] = useState(false);
 
-  const inputs: FiberAttenuationInputs = {
-    wavelength,
-    distanceKm: Number(distanceKm) || 0,
-    splicesCount: Number(splicesCount) || 0,
-    spliceLossDb: Number(spliceLossDb) || 0,
-    connectorsCount: Number(connectorsCount) || 0,
-    connectorLossDb: Number(connectorLossDb) || 0,
-    safetyMarginDb: Number(safetyMarginDb) || 0,
-  };
-
-  const result = useMemo(() => computeFiberAttenuation(inputs), [inputs]);
+  const result = useMemo(() => {
+    const inputs: FiberAttenuationInputs = {
+      wavelength,
+      distanceKm: Number(distanceKm) || 0,
+      splicesCount: Number(splicesCount) || 0,
+      spliceLossDb: Number(spliceLossDb) || 0,
+      connectorsCount: Number(connectorsCount) || 0,
+      connectorLossDb: Number(connectorLossDb) || 0,
+      safetyMarginDb: Number(safetyMarginDb) || 0,
+    };
+    return computeFiberAttenuation(inputs);
+  }, [wavelength, distanceKm, splicesCount, spliceLossDb, connectorsCount, connectorLossDb, safetyMarginDb]);
 
   const handleCopy = () => {
     const summary = `Atténuation totale liaison optique (${wavelength} nm, ${distanceKm} km) : -${result.totalWithMarginDb} dB (${result.statusLabel})`;

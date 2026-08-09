@@ -57,7 +57,7 @@ export default function SubnetCalculatorTool() {
               >
                 {Array.from({ length: 23 }, (_, i) => i + 8).map((mask) => (
                   <option key={mask} value={mask}>
-                    /{mask} ({Math.pow(2, 32 - mask) - 2 &gt; 0 ? Math.pow(2, 32 - mask) - 2 : 0} hôtes)
+                    /{mask} ({Math.pow(2, 32 - mask) - 2 > 0 ? Math.pow(2, 32 - mask) - 2 : 0} hôtes)
                   </option>
                 ))}
               </select>

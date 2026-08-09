@@ -126,6 +126,54 @@ sans jamais reprendre les champs `details`/`hint`, qui divulgueraient la
 structure de la base. L'erreur d'origine reste dans `cause` pour la
 journalisation.
 
+## Le module professionnel (multi-tenant)
+
+NexoraTech comporte deux produits dans une même application :
+
+| | Catalogue d'outils | Module professionnel |
+|---|---|---|
+| Cloisonnement | par utilisateur | **par organisation** |
+| Accès | compte, ou anonyme | abonnement `business` **et** appartenance |
+| Autorisation | propriétaire de la ligne | RBAC à 6 rôles |
+| Source de vérité | registry en mémoire + `tools` | PostgreSQL exclusivement |
+
+### Pourquoi tout se joue dans la base
+
+L'application n'a **pas de serveur applicatif**. Il n'existe aucune couche où
+placer une vérification que le client ne pourrait pas contourner : une règle
+métier écrite en TypeScript s'exécute dans le navigateur de l'utilisateur, donc
+sous son contrôle.
+
+Toute règle critique — isolation entre entreprises, séparation des pouvoirs,
+quotas d'abonnement — vit donc dans PostgreSQL, sous forme de policies RLS et de
+triggers. Voir [`supabase/README.md`](supabase/README.md) pour le détail.
+
+### Les miroirs TypeScript
+
+Trois modules reflètent des tables SQL :
+
+| Module | Reflète | Sert à |
+|---|---|---|
+| `features/organizations/rbac.ts` | `role_permissions` | masquer les actions interdites |
+| `features/missions/workflow.ts` | `mission_status_transitions` | n'afficher que les transitions possibles |
+| `features/billing/entitlements.ts` | `plan_features` | expliquer ce qu'un plan débloque |
+
+**Aucun ne sécurise quoi que ce soit.** Ils évitent un aller-retour réseau et un
+message d'erreur, rien de plus.
+
+Le danger d'un miroir est qu'il diverge et réponde faux avec assurance. Chacun
+est donc accompagné d'un test qui lit le fichier de migration et compare paire
+par paire : modifier l'un sans l'autre casse `npm test`. C'est la même approche
+que les frontières d'architecture appliquées par ESLint — une convention non
+outillée finit toujours par être contournée.
+
+### Source unique des catégories
+
+`src/config/categories.ts` est la seule déclaration des huit domaines
+techniques. `registry/types.ts` et `catalog-metadata.ts` en dérivent, le seed SQL
+en est la contrepartie vérifiée par test. Ajouter une catégorie ne touche qu'un
+fichier.
+
 ## Choix explicitement écartés
 
 | Écarté | Raison |
