@@ -42,6 +42,8 @@ export const ROUTES = {
   missionNew: '/missions/nouvelle',
   mission: (missionId: string) => `/missions/${missionId}`,
 
+  intervention: (interventionId: string) => `/interventions/${interventionId}`,
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',
@@ -67,4 +69,5 @@ export const ROUTE_PATTERNS = {
   customer: '/clients/:customerId',
   team: '/equipes/:teamId',
   mission: '/missions/:missionId',
+  intervention: '/interventions/:interventionId',
 } as const;

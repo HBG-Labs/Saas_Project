@@ -52,6 +52,9 @@ export type InterventionStatus = 'planned' | 'in_progress' | 'completed' | 'canc
 export type ReportStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
 export type AttachmentKind = 'before' | 'after' | 'document' | 'proof' | 'signature';
 
+/** Nature d'un segment de temps : travail effectif ou interruption. */
+export type TimeEntryKind = 'work' | 'pause';
+
 export interface Database {
   public: {
     Tables: {
@@ -852,6 +855,48 @@ export interface Database {
       // =======================================================================
       // Interventions
       // =======================================================================
+      /**
+       * Segments de temps — démarrage, pause, reprise, fin.
+       *
+       * `started_at` et `ended_at` sont ABSENTS de `Insert` et d'`Update` : le
+       * trigger `enforce_time_entry` impose l'heure du serveur. Un relevé
+       * d'heures que l'intéressé peut antidater ne prouve rien.
+       *
+       * Fermer un segment se fait en écrivant `ended_at` — n'importe quelle
+       * valeur non nulle, que le trigger remplace par `now()`. D'où le type
+       * `string` conservé en `Update`.
+       */
+      intervention_time_entries: {
+        Row: {
+          id: string;
+          intervention_id: string;
+          organization_id: string;
+          kind: TimeEntryKind;
+          started_at: string;
+          ended_at: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          intervention_id: string;
+          /** Écrasé par trigger depuis l'intervention parente. */
+          organization_id: string;
+          kind?: TimeEntryKind;
+          reason?: string | null;
+        };
+        /** Seule la clôture est permise ; le trigger refuse tout le reste. */
+        Update: { ended_at?: string };
+        Relationships: [
+          {
+            foreignKeyName: 'intervention_time_entries_intervention_id_fkey';
+            columns: ['intervention_id'];
+            referencedRelation: 'interventions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       interventions: {
         Row: {
           id: string;
@@ -1059,6 +1104,18 @@ export interface Database {
           invited_role: OrgRole;
           expires_at: string;
         }[];
+      };
+
+      /**
+       * Temps net travaillé, en secondes — somme des seuls segments `work` clos.
+       *
+       * Passe-plat vers `app.intervention_worked_seconds`, le schéma `app`
+       * n'étant pas exposé par PostgREST. Le calcul reste unique : c'est celui
+       * qui servira à facturer.
+       */
+      intervention_worked_seconds: {
+        Args: { p_intervention_id: string };
+        Returns: number;
       };
     };
 

@@ -1337,6 +1337,161 @@ begin
 end
 $$;
 
+-- =============================================================================
+-- PARTIE 7 — Relevé du temps d'intervention
+-- =============================================================================
+--
+-- Un relevé d'heures sert à facturer un client, à payer un salarié et à prouver
+-- qu'on est intervenu. Il ne vaut que s'il est inopposable à celui qu'il engage.
+--
+-- Mesuré avant correctif : le technicien antidatait le début de son intervention
+-- de six heures, et la rattachait à une autre mission.
+-- =============================================================================
+
+do $$
+declare
+  v_org uuid; v_interv uuid; v_entry uuid; v_second uuid;
+  v_raised boolean; v_started timestamptz; v_net integer; v_ouverts int;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select id into v_interv from public.interventions limit 1;
+
+  perform pg_temp.ok(v_interv is not null, 'Une intervention existe pour le releve');
+
+  -- ---------------------------------------------------------------------------
+  -- 7.1 — L'horloge appartient au serveur
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+
+  insert into public.intervention_time_entries (intervention_id, organization_id, kind)
+  values (v_interv, v_org, 'work')
+  returning id, started_at into v_entry, v_started;
+
+  reset role;
+
+  perform pg_temp.ok(v_started > now() - interval '10 seconds',
+    'Le debut du segment est horodate par le serveur');
+
+  -- ---------------------------------------------------------------------------
+  -- 7.2 — Un seul segment ouvert à la fois
+  -- ---------------------------------------------------------------------------
+  --
+  -- Le cas n'est pas théorique : un technicien qui ouvre l'application sur son
+  -- téléphone ET sur la tablette du véhicule enverrait deux « démarrer ». Aucune
+  -- vérification côté client ne peut fermer cette porte — deux appareils, deux
+  -- sessions, aucune ne voit l'autre.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    insert into public.intervention_time_entries (intervention_id, organization_id, kind)
+    values (v_interv, v_org, 'work');
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised, 'Un second segment ouvert est refuse (double demarrage)');
+
+  select count(*) into v_ouverts from public.intervention_time_entries
+  where intervention_id = v_interv and ended_at is null;
+
+  perform pg_temp.ok(v_ouverts = 1, 'Il n''y a jamais qu''un seul segment ouvert');
+
+  -- ---------------------------------------------------------------------------
+  -- 7.3 — Un segment clos est définitif
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  update public.intervention_time_entries set ended_at = now() where id = v_entry;
+  reset role;
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    -- Tentative d'allonger après coup un segment déjà facturable.
+    update public.intervention_time_entries
+    set ended_at = now() + interval '3 hours' where id = v_entry;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised, 'Un segment clos ne peut plus etre modifie');
+
+  -- ---------------------------------------------------------------------------
+  -- 7.4 — Les pauses ne sont pas comptées
+  -- ---------------------------------------------------------------------------
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+
+  insert into public.intervention_time_entries (intervention_id, organization_id, kind, reason)
+  values (v_interv, v_org, 'pause', 'Dejeuner')
+  returning id into v_second;
+
+  update public.intervention_time_entries set ended_at = now() where id = v_second;
+  reset role;
+
+  v_net := app.intervention_worked_seconds(v_interv);
+
+  perform pg_temp.ok(v_net >= 0, 'Le temps net est calculable');
+  perform pg_temp.ok(
+    v_net = (select coalesce(sum(extract(epoch from (ended_at - started_at)))::integer, 0)
+             from public.intervention_time_entries
+             where intervention_id = v_interv and kind = 'work' and ended_at is not null),
+    'Le temps net ne compte QUE les segments de travail clos');
+
+  -- ---------------------------------------------------------------------------
+  -- 7.5 — Un responsable consulte, il ne pointe pas
+  -- ---------------------------------------------------------------------------
+  --
+  -- Pointer les heures de quelqu'un d'autre viderait le relevé de son sens.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_manager');
+    set local role authenticated;
+    insert into public.intervention_time_entries (intervention_id, organization_id, kind)
+    values (v_interv, v_org, 'work');
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'Un responsable ne peut PAS pointer a la place de l''intervenant');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 7.6 — L'intervention ne se déplace pas, et son heure ne se réécrit pas
+-- -----------------------------------------------------------------------------
+do $$
+declare v_interv uuid; v_autre_mission uuid; v_raised boolean; v_avant timestamptz;
+begin
+  select id, start_time into v_interv, v_avant from public.interventions limit 1;
+  select id into v_autre_mission from public.missions
+  where title like 'Raccordement annexe%' limit 1;
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.interventions set mission_id = v_autre_mission where id = v_interv;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'Une intervention ne peut PAS etre rattachee a une autre mission');
+
+  -- L'antidatage n'est pas refusé : il est NEUTRALISÉ. L'écriture passe, le
+  -- trigger réimpose l'heure d'origine. Ce qui compte est le résultat.
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  update public.interventions set start_time = now() - interval '6 hours' where id = v_interv;
+  reset role;
+
+  perform pg_temp.ok(
+    (select start_time from public.interventions where id = v_interv) = v_avant,
+    'L''antidatage du debut est neutralise');
+end
+$$;
+
 do $$
 begin
   raise notice '';

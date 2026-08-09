@@ -1,9 +1,11 @@
+import { mapPostgrestError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { AttachmentKind, Json, TablesUpdate } from '@/types/database';
+import type { AttachmentKind, Json, TablesUpdate, TimeEntryKind } from '@/types/database';
 import type {
   Intervention,
   InterventionAttachment,
   InterventionReport,
+  InterventionTimeEntry,
   InterventionWithReport,
 } from '@/types/domain';
 
@@ -76,6 +78,13 @@ export async function startIntervention(input: {
   );
 }
 
+/**
+ * Termine l'intervention.
+ *
+ * `end_time` n'est plus envoyée : le trigger `enforce_intervention_scope` la
+ * pose à `now()` au passage en `completed`, et ignorerait toute valeur fournie.
+ * La transmettre laisserait croire qu'elle compte.
+ */
 export async function completeIntervention(
   interventionId: string,
   notes?: string,
@@ -85,13 +94,128 @@ export async function completeIntervention(
       .from('interventions')
       .update({
         status: 'completed',
-        end_time: new Date().toISOString(),
         ...(notes !== undefined ? { notes } : {}),
       })
       .eq('id', interventionId)
       .select('*')
       .single(),
   );
+}
+
+// -----------------------------------------------------------------------------
+// Temps d'intervention
+// -----------------------------------------------------------------------------
+//
+// Le client déclare des ÉVÉNEMENTS, jamais des heures. Aucune de ces fonctions
+// n'envoie d'horodatage : le trigger `enforce_time_entry` pose `now()` à
+// l'ouverture comme à la clôture. Un relevé que l'intervenant peut antidater ne
+// prouve rien — ni pour facturer, ni pour payer.
+
+export async function listTimeEntries(interventionId: string): Promise<InterventionTimeEntry[]> {
+  return unwrap(
+    supabase
+      .from('intervention_time_entries')
+      .select('*')
+      .eq('intervention_id', interventionId)
+      .order('started_at', { ascending: true }),
+  );
+}
+
+/** Segment ouvert, s'il y en a un. L'index unique garantit qu'il n'y en a jamais deux. */
+export async function getOpenTimeEntry(
+  interventionId: string,
+): Promise<InterventionTimeEntry | null> {
+  return unwrapMaybe(
+    supabase
+      .from('intervention_time_entries')
+      .select('*')
+      .eq('intervention_id', interventionId)
+      .is('ended_at', null)
+      .maybeSingle(),
+  );
+}
+
+async function openTimeEntry(
+  interventionId: string,
+  organizationId: string,
+  kind: TimeEntryKind,
+  reason?: string,
+): Promise<InterventionTimeEntry> {
+  return unwrap(
+    supabase
+      .from('intervention_time_entries')
+      .insert({
+        intervention_id: interventionId,
+        // Écrasé par trigger depuis l'intervention ; exigé par la contrainte
+        // `not null`, d'où sa présence.
+        organization_id: organizationId,
+        kind,
+        ...(reason !== undefined ? { reason } : {}),
+      })
+      .select('*')
+      .single(),
+  );
+}
+
+async function closeTimeEntry(entryId: string): Promise<InterventionTimeEntry> {
+  return unwrap(
+    supabase
+      .from('intervention_time_entries')
+      .update({ ended_at: new Date().toISOString() })
+      .eq('id', entryId)
+      .select('*')
+      .single(),
+  );
+}
+
+/**
+ * Bascule entre travail et pause.
+ *
+ * Ferme le segment courant puis en ouvre un de l'autre nature. L'ordre est
+ * imposé par l'index unique « un seul segment ouvert » : ouvrir avant de fermer
+ * violerait la contrainte.
+ *
+ * Les deux écritures ne sont pas transactionnelles — PostgREST n'expose pas de
+ * transaction au client. Si la seconde échoue, l'intervention se retrouve sans
+ * segment ouvert : le chronomètre s'arrête, ce qui se voit et se corrige d'un
+ * clic. L'ordre inverse produirait une erreur systématique.
+ */
+export async function switchTimeEntry(input: {
+  interventionId: string;
+  organizationId: string;
+  openEntryId: string | null;
+  to: TimeEntryKind;
+  reason?: string;
+}): Promise<InterventionTimeEntry> {
+  if (input.openEntryId !== null) {
+    await closeTimeEntry(input.openEntryId);
+  }
+
+  return input.reason === undefined
+    ? openTimeEntry(input.interventionId, input.organizationId, input.to)
+    : openTimeEntry(input.interventionId, input.organizationId, input.to, input.reason);
+}
+
+/** Ferme le segment en cours sans en rouvrir : la fin de l'intervention. */
+export async function stopTimeTracking(openEntryId: string): Promise<InterventionTimeEntry> {
+  return closeTimeEntry(openEntryId);
+}
+
+/**
+ * Temps net travaillé, en secondes.
+ *
+ * Calculé par PostgreSQL, pas par le navigateur : c'est la même somme que celle
+ * qui servira à facturer, et deux calculs séparés finiraient par diverger.
+ * N'inclut que les segments CLOS — le compteur qui tourne à l'écran se déduit
+ * de `started_at`, jamais stocké.
+ */
+export async function getWorkedSeconds(interventionId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('intervention_worked_seconds', {
+    p_intervention_id: interventionId,
+  });
+
+  if (error) throw mapPostgrestError(error);
+  return data ?? 0;
 }
 
 export async function updateIntervention(

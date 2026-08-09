@@ -90,6 +90,7 @@ export interface MissionWithRelations extends Mission {
 export type Intervention = Tables<'interventions'>;
 export type InterventionReport = Tables<'intervention_reports'>;
 export type InterventionAttachment = Tables<'intervention_attachments'>;
+export type InterventionTimeEntry = Tables<'intervention_time_entries'>;
 
 export interface InterventionWithReport extends Intervention {
   report: InterventionReport | null;

@@ -169,6 +169,24 @@ export const routes: RouteObject[] = [
                   },
 
                   /**
+                   * Interventions : formule `interventions`, sans permission.
+                   * Comme pour les missions, le technicien doit atteindre la
+                   * sienne, et `interventions_select_scoped` la lui sert par sa
+                   * branche « technicien ».
+                   */
+                  {
+                    element: (
+                      <RequirePlan feature={FEATURES.interventions} label="Le suivi d’intervention" />
+                    ),
+                    children: [
+                      {
+                        path: ROUTE_PATTERNS.intervention,
+                        lazy: lazyPage(() => import('@/pages/interventions/InterventionPage')),
+                      },
+                    ],
+                  },
+
+                  /**
                    * Équipes : formule + permission, comme Clients. Mais la
                    * FICHE reste elle aussi derrière `team.view` — contrairement
                    * aux clients, aucune branche de la RLS n'ouvre une équipe à
