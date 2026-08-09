@@ -9,6 +9,7 @@ export {
   archiveTeam,
   createTeam,
   getTeamWithMembers,
+  listOrganizationTeamMemberships,
   listTeams,
   listTeamsOfMember,
   removeTeamMember,
@@ -16,7 +17,14 @@ export {
   updateTeamMemberRole,
 } from './api/teams.api';
 
-export { useArchiveTeam, useCreateTeam, useTeam, useTeams, useUpdateTeam } from './hooks/useTeams';
+export {
+  useArchiveTeam,
+  useCreateTeam,
+  useTeam,
+  useTeamMembershipsByMember,
+  useTeams,
+  useUpdateTeam,
+} from './hooks/useTeams';
 export {
   selectableMembers,
   useAddTeamMember,

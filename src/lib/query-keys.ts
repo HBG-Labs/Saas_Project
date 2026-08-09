@@ -84,6 +84,8 @@ export const qk = {
     list: (organizationId: string) => [...qk.teams.all, organizationId, 'list'] as const,
     detail: (teamId: string) => [...qk.teams.all, 'detail', teamId] as const,
     ofMember: (memberId: string) => [...qk.teams.all, 'member', memberId] as const,
+    memberships: (organizationId: string) =>
+      [...qk.teams.all, organizationId, 'memberships'] as const,
   },
 
   // ----------------------------------------------------------------- missions

@@ -17,6 +17,7 @@ import {
   MissionStatusBadge,
   MissionTransitions,
   useMission,
+  useMissionAssignments,
   useMissionHistory,
 } from '@/features/missions';
 import { MissionInterventionsPanel } from '@/features/interventions';
@@ -37,6 +38,7 @@ export default function MissionDetailPage() {
 
   const mission = useMission(missionId);
   const history = useMissionHistory(missionId);
+  const assignments = useMissionAssignments(missionId);
   const teams = useTeams(organization?.id ?? null);
   const members = useMembers(organization?.id ?? null);
 
@@ -265,7 +267,72 @@ export default function MissionDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Historique</CardTitle>
+          <CardTitle>Historique des affectations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/*
+            Distinct de l'historique d'état ci-dessous. La fiche ne montre que
+            l'affectation COURANTE : une mission passée de main en main ne
+            garde trace de rien, et un refus — sa date, son motif — n'a plus
+            aucune réponse ailleurs.
+          */}
+          {assignments.isPending ? (
+            <ListSkeleton />
+          ) : (assignments.data ?? []).length === 0 ? (
+            <p className="text-muted-foreground text-xs">Aucune affectation enregistrée.</p>
+          ) : (
+            <ul className="divide-border divide-y">
+              {(assignments.data ?? []).map((assignment) => {
+                const team =
+                  assignment.team_id === null
+                    ? null
+                    : ((teams.data ?? []).find((item) => item.id === assignment.team_id) ?? null);
+
+                const member =
+                  assignment.member_id === null
+                    ? null
+                    : ((members.data ?? []).find((item) => item.id === assignment.member_id) ??
+                      null);
+
+                const target =
+                  [team?.name, member === null ? null : memberDisplayName(member)]
+                    .filter((part) => part !== null && part !== undefined)
+                    .join(' · ') ||
+                  // Le nom vient des listes chargées pour cette page. La RLS
+                  // peut les tronquer, ou l'équipe avoir été archivée depuis :
+                  // dire « supprimée » serait une déduction, pas un fait.
+                  'Destinataire non consultable';
+
+                return (
+                  <li key={assignment.id} className="flex flex-wrap items-center gap-3 py-2 text-xs">
+                    <span className="text-subtle-foreground font-mono tabular-nums">
+                      {new Date(assignment.assigned_at).toLocaleString('fr-FR')}
+                    </span>
+
+                    <span className="text-foreground flex-1 font-medium">{target}</span>
+
+                    {assignment.declined_at !== null ? (
+                      <Badge variant="error">
+                        Refusée{assignment.decline_reason !== null ? ` — ${assignment.decline_reason}` : ''}
+                      </Badge>
+                    ) : assignment.accepted_at !== null ? (
+                      <Badge variant="success">Acceptée</Badge>
+                    ) : assignment.unassigned_at !== null ? (
+                      <Badge variant="neutral">Retirée</Badge>
+                    ) : (
+                      <Badge variant="outline">En attente</Badge>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Historique des états</CardTitle>
         </CardHeader>
         <CardContent>
           {history.isPending ? (

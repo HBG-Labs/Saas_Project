@@ -2,8 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { qk } from '@/lib/query-keys';
 import type { TablesUpdate } from '@/types/database';
+import type { Team } from '@/types/domain';
 
-import { archiveTeam, createTeam, getTeamWithMembers, listTeams, updateTeam } from '../api/teams.api';
+import {
+  archiveTeam,
+  createTeam,
+  getTeamWithMembers,
+  listOrganizationTeamMemberships,
+  listTeams,
+  updateTeam,
+} from '../api/teams.api';
 
 /**
  * Équipes actives de l'organisation.
@@ -28,6 +36,33 @@ export function useTeam(teamId: string | undefined) {
     queryKey: qk.teams.detail(teamId ?? 'none'),
     queryFn: () => (teamId === undefined ? null : getTeamWithMembers(teamId)),
     enabled: teamId !== undefined,
+  });
+}
+
+/**
+ * Équipes de chaque membre, indexées par identifiant de membre.
+ *
+ * Une seule requête pour toute la page : `listTeamsOfMember` appelée par ligne
+ * produirait autant d'allers-retours que de membres.
+ */
+export function useTeamMembershipsByMember(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.teams.memberships(organizationId ?? 'none'),
+    queryFn: async () => {
+      if (organizationId === null) return new Map<string, Team[]>();
+
+      const rows = await listOrganizationTeamMemberships(organizationId);
+      const byMember = new Map<string, Team[]>();
+
+      for (const row of rows) {
+        const existing = byMember.get(row.memberId);
+        if (existing === undefined) byMember.set(row.memberId, [row.team]);
+        else existing.push(row.team);
+      }
+
+      return byMember;
+    },
+    enabled: organizationId !== null,
   });
 }
 

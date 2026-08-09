@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { OrgRole } from '@/types/database';
-import type { MemberWithProfile } from '@/types/domain';
+import type { MemberWithProfile, Team } from '@/types/domain';
 
 import { memberDisplayName } from '../hooks/useMembers';
 
@@ -16,6 +16,14 @@ export interface MemberRowProps {
   member: MemberWithProfile;
   /** L'utilisateur courant se regarde-t-il lui-même ? */
   isSelf: boolean;
+  /**
+   * Équipes auxquelles cette personne appartient.
+   *
+   * Le rôle dit ce qu'elle a le droit de faire ; l'équipe dit avec qui elle le
+   * fait — et c'est par elle que les missions lui parviennent. Un « technicien »
+   * sans équipe ne recevra jamais rien, ce que la ligne ne laissait pas voir.
+   */
+  teams?: readonly Team[];
   /** Dernier propriétaire actif : ni retrait ni rétrogradation possibles. */
   isLastOwner: boolean;
   canUpdateRole: boolean;
@@ -42,6 +50,7 @@ export interface MemberRowProps {
 export function MemberRow({
   member,
   isSelf,
+  teams = [],
   isLastOwner,
   canUpdateRole,
   canRemove,
@@ -71,6 +80,24 @@ export function MemberRow({
         <p className="text-foreground truncate text-sm font-medium">{name}</p>
         {member.job_title !== null && member.job_title !== '' && name !== member.job_title ? (
           <p className="text-muted-foreground truncate text-xs">{member.job_title}</p>
+        ) : null}
+
+        {teams.length > 0 ? (
+          <ul className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {teams.map((team) => (
+              <li
+                key={team.id}
+                className="text-muted-foreground flex items-center gap-1.5 text-xs"
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: team.color ?? 'var(--color-border-strong)' }}
+                />
+                {team.name}
+              </li>
+            ))}
+          </ul>
         ) : null}
       </div>
 

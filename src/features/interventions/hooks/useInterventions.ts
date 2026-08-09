@@ -12,6 +12,7 @@ import {
   startIntervention,
   stopTimeTracking,
   switchTimeEntry,
+  updateIntervention,
 } from '../api/interventions.api';
 
 export function useMissionInterventions(missionId: string | undefined) {
@@ -55,6 +56,28 @@ export function useWorkedSeconds(interventionId: string | undefined) {
     queryFn: () => (interventionId === undefined ? 0 : getWorkedSeconds(interventionId)),
     enabled: interventionId !== undefined,
     staleTime: 0,
+  });
+}
+
+/**
+ * Notes de terrain.
+ *
+ * `completeIntervention` acceptait déjà des notes, mais une seule fois, au
+ * moment de terminer — c'est-à-dire au pire moment : celui où l'on range le
+ * matériel. Ce qui se note pendant l'intervention (un câble sectionné, un
+ * client absent) restait dans une poche.
+ *
+ * Le trigger `enforce_intervention_scope` laisse ce champ libre : il ne
+ * verrouille que les horodatages, la mission d'attache et le technicien.
+ */
+export function useUpdateInterventionNotes(interventionId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notes: string | null) => updateIntervention(interventionId, { notes }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.interventions.all });
+    },
   });
 }
 

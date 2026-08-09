@@ -27,6 +27,7 @@ export {
   useChangeMissionStatus,
   useCreateMission,
   useMission,
+  useMissionAssignments,
   useMissionHistory,
   useMissions,
   useUpdateMission,

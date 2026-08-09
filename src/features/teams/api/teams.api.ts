@@ -123,6 +123,33 @@ export async function removeTeamMember(teamMemberId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Appartenances aux équipes, pour toute l'organisation, en une requête.
+ *
+ * `listTeamsOfMember` ci-dessous répond à la même question pour UNE personne.
+ * L'appeler par ligne sur la liste des membres produirait autant de requêtes
+ * que de membres — trente allers-retours pour afficher trente étiquettes.
+ *
+ * Le filtre porte sur la table jointe (`teams!inner`) : `team_members` ne
+ * connaît pas l'organisation, et la traverser par `teams` évite de dénormaliser
+ * une colonne qui devrait ensuite rester cohérente.
+ */
+export async function listOrganizationTeamMemberships(
+  organizationId: string,
+): Promise<{ memberId: string; team: Team }[]> {
+  const rows = await unwrap(
+    supabase
+      .from('team_members')
+      .select('member_id, team:teams!inner(*)')
+      .eq('team.organization_id', organizationId)
+      .eq('team.status', 'active')
+      .returns<{ member_id: string; team: Team | null }[]>(),
+  );
+
+  // La jointure peut remonter `null` si la RLS de `teams` masque la ligne.
+  return rows.flatMap((row) => (row.team ? [{ memberId: row.member_id, team: row.team }] : []));
+}
+
 /** Équipes auxquelles appartient un membre donné. */
 export async function listTeamsOfMember(memberId: string): Promise<Team[]> {
   const rows = await unwrap(

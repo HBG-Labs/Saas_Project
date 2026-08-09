@@ -23,6 +23,7 @@ import {
   useRevokeInvitation,
   useUpdateMemberRole,
 } from '@/features/organizations';
+import { useTeamMembershipsByMember } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function MembersPage() {
@@ -35,6 +36,19 @@ export default function MembersPage() {
 
   const members = useMembers(organizationId);
   const invitations = useInvitations(organizationId);
+
+  /*
+    Le rôle dit ce qu'une personne a le droit de faire ; l'équipe dit avec qui
+    elle le fait — et c'est par elle que les missions lui parviennent. Un
+    « technicien » sans équipe ne recevra jamais rien, ce que cette page ne
+    laissait pas voir.
+
+    Conditionné à `team.view` : sans ce droit, la requête ne remonterait rien de
+    toute façon, autant ne pas la lancer.
+  */
+  const teamMemberships = useTeamMembershipsByMember(
+    can(PERMISSIONS.teamView) ? organizationId : null,
+  );
   const { limit } = useOrganizationEntitlements(organizationId);
 
   const updateRole = useUpdateMemberRole(organizationId ?? '');
@@ -114,6 +128,7 @@ export default function MembersPage() {
                   key={member.id}
                   member={member}
                   isSelf={member.user_id === user?.id}
+                  teams={teamMemberships.data?.get(member.id) ?? []}
                   isLastOwner={member.role === 'owner' && activeOwnerCount <= 1}
                   canUpdateRole={canUpdateRole}
                   canRemove={canRemove}

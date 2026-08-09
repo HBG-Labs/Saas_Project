@@ -8,6 +8,7 @@ import {
   changeMissionStatus,
   createMission,
   getMission,
+  listMissionAssignments,
   listMissionHistory,
   listMissions,
   updateMission,
@@ -41,6 +42,22 @@ export function useMissionHistory(missionId: string | undefined) {
   return useQuery({
     queryKey: qk.missions.history(missionId ?? 'none'),
     queryFn: () => (missionId === undefined ? [] : listMissionHistory(missionId)),
+    enabled: missionId !== undefined,
+  });
+}
+
+/**
+ * Historique des affectations successives.
+ *
+ * Distinct de `useMissionHistory`, qui suit les changements d'ÉTAT. Celui-ci
+ * répond à « qui a eu ce dossier en main, et depuis quand » : une mission
+ * réaffectée trois fois ne garde que la dernière équipe sur sa fiche, et la
+ * question du refus — quand, et pour quel motif — n'a plus de réponse ailleurs.
+ */
+export function useMissionAssignments(missionId: string | undefined) {
+  return useQuery({
+    queryKey: qk.missions.assignments(missionId ?? 'none'),
+    queryFn: () => (missionId === undefined ? [] : listMissionAssignments(missionId)),
     enabled: missionId !== undefined,
   });
 }

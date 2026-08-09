@@ -1,17 +1,21 @@
 import { ArrowLeft, FileText, KeyRound, MapPin, Wrench } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { FormError } from '@/components/feedback/FormError';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
 import {
   InterventionTimer,
   useIntervention,
   useTimeEntries,
+  useUpdateInterventionNotes,
   useWorkedSeconds,
 } from '@/features/interventions';
 import { useMission } from '@/features/missions';
@@ -186,6 +190,20 @@ export default function InterventionPage() {
         </Card>
       ) : null}
 
+      {/*
+        Les notes se prennent PENDANT, pas à la fin.
+
+        `completeIntervention` acceptait déjà un champ de notes, mais une seule
+        fois, au moment de terminer — c'est-à-dire au pire moment, celui où l'on
+        range le matériel. Un câble sectionné, un client absent, un accès
+        refusé : cela se note sur place, ou cela se perd.
+      */}
+      <InterventionNotes
+        interventionId={interventionId}
+        notes={data.notes}
+        canEdit={canTrack && data.status !== 'completed'}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Relevé du temps</CardTitle>
@@ -225,5 +243,88 @@ export default function InterventionPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/**
+ * Notes de terrain.
+ *
+ * Enregistrement explicite plutôt qu'automatique à la frappe : sur un chantier,
+ * le réseau est ce qu'il est, et un champ qui se sauvegarde tout seul ne dit
+ * pas si le texte est parti. Le bouton, lui, le dit.
+ *
+ * En lecture seule après la clôture. C'est un choix d'ERGONOMIE et non une
+ * protection — le serveur, lui, laisse ce champ ouvert. Ce qui doit être opposable
+ * passe par le compte rendu et son circuit de validation ; des notes retouchées
+ * après coup seraient un second récit, sans contrôle.
+ */
+function InterventionNotes({
+  interventionId,
+  notes,
+  canEdit,
+}: {
+  interventionId: string;
+  notes: string | null;
+  canEdit: boolean;
+}) {
+  const [draft, setDraft] = useState(notes ?? '');
+  const updateNotes = useUpdateInterventionNotes(interventionId);
+
+  const saved = notes ?? '';
+  const dirty = draft !== saved;
+
+  if (!canEdit) {
+    return saved === '' ? null : (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes de terrain</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-foreground text-sm whitespace-pre-line">{saved}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notes de terrain</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Textarea
+          label="Notes de terrain"
+          hideLabel
+          rows={4}
+          placeholder="Ce qu’il faut retenir de cette intervention : accès, matériel, imprévus…"
+          hint="Visible par vous et par votre responsable. Le compte rendu client se rédige à part."
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+          }}
+        />
+
+        <FormError error={updateNotes.error} />
+
+        <div className="flex items-center justify-end gap-3">
+          {!dirty && updateNotes.isSuccess ? (
+            <span className="text-success text-xs">Enregistré.</span>
+          ) : null}
+
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!dirty || updateNotes.isPending}
+            onClick={() => {
+              // `null` et non `''` : un champ vidé redevient vide en base, et
+              // non une chaîne vide qui se lirait comme une note sans contenu.
+              updateNotes.mutate(draft.trim() === '' ? null : draft);
+            }}
+          >
+            {updateNotes.isPending ? 'Enregistrement…' : 'Enregistrer les notes'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

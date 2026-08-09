@@ -30,6 +30,7 @@ export {
   useStartIntervention,
   useSwitchTimeEntry,
   useTimeEntries,
+  useUpdateInterventionNotes,
   useWorkedSeconds,
 } from './hooks/useInterventions';
 
