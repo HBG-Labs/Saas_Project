@@ -22,3 +22,9 @@ export {
   listPlans,
   resolvePlanCode,
 } from './api/billing.api';
+
+export {
+  useOrganizationEntitlements,
+  useUserEntitlements,
+  type Entitlements,
+} from './hooks/useEntitlements';

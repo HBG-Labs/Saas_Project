@@ -2,6 +2,7 @@ import { NavLink } from 'react-router';
 
 import { MOBILE_NAV } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
+import { useVisibleNavItems } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
@@ -17,6 +18,8 @@ import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
  * l'indicateur d'accueil iOS ni sous la barre gestuelle Android.
  */
 export function MobileNav() {
+  const visibleNav = useVisibleNavItems(MOBILE_NAV);
+
   return (
     <nav
       aria-label="Navigation rapide"
@@ -26,7 +29,7 @@ export function MobileNav() {
       )}
     >
       <ul className="flex items-stretch">
-        {MOBILE_NAV.map((item) => {
+        {visibleNav.map((item) => {
           const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
 
           return (

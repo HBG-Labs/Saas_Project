@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { AuthProvider } from '@/features/auth';
+import { OrganizationProvider } from '@/features/organizations';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { createQueryClient } from '@/lib/query-client';
 
@@ -11,10 +12,13 @@ import { createQueryClient } from '@/lib/query-client';
  * Contextes globaux.
  *
  * L'ordre est significatif :
- *   ErrorBoundary  — capture même une panne des providers eux-mêmes ;
- *   ThemeProvider  — l'écran d'erreur doit s'afficher dans le bon thème ;
- *   QueryClient    — l'authentification déclenchera des requêtes ;
- *   AuthProvider   — la session doit être disponible avant le routeur.
+ *   ErrorBoundary        — capture même une panne des providers eux-mêmes ;
+ *   ThemeProvider        — l'écran d'erreur doit s'afficher dans le bon thème ;
+ *   QueryClient          — l'authentification déclenchera des requêtes ;
+ *   AuthProvider         — la session doit être disponible avant le routeur ;
+ *   OrganizationProvider — s'appuie sur les deux précédents : il interroge le
+ *                          serveur (donc QueryClient) pour les organisations de
+ *                          l'utilisateur courant (donc AuthProvider).
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   // Initialisation paresseuse : un seul QueryClient pour toute la vie de
@@ -26,7 +30,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ErrorBoundary fallback={({ error, reset }) => <ErrorFallback error={error} reset={reset} />}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <OrganizationProvider>{children}</OrganizationProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </ErrorBoundary>

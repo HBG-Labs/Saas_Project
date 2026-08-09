@@ -3,7 +3,20 @@ import { ROUTES } from './routes';
 export type BillingInterval = 'monthly' | 'annual';
 
 export interface PricingTier {
-  id: 'free' | 'pro' | 'team';
+  /**
+   * DOIT correspondre à `plans.code` en base, et donc à `PlanCode` dans
+   * `features/billing`.
+   *
+   * Le troisième palier s'appelait ici `'team'` alors que la base le nomme
+   * `'business'`. `resolvePlanCode` faisant retomber tout code inconnu sur
+   * `free`, un abonné à cette offre aurait perdu ses droits en silence — le
+   * genre de défaut qu'aucune erreur ne signale.
+   *
+   * Le type n'est pas importé de `features/billing` : `config/` est la couche
+   * basse et ne doit dépendre d'aucune feature (règle ESLint). L'égalité est
+   * donc vérifiée par un test dans `features/billing/entitlements.test.ts`.
+   */
+  id: 'free' | 'pro' | 'business';
   name: string;
   tagline: string;
   badge: string;
@@ -65,7 +78,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ],
   },
   {
-    id: 'team',
+    id: 'business',
     name: 'Équipe / Entreprise',
     tagline: 'Pour les bureaux d’études et équipes terrain',
     badge: 'Multi-utilisateurs',
@@ -73,8 +86,8 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     priceMonthly: 39.99,
     priceAnnualMonthly: 33.25, // ~399€ / an
     priceAnnualTotal: 399,
-    stripePriceIdMonthly: 'price_team_monthly_v1',
-    stripePriceIdAnnual: 'price_team_annual_v1',
+    stripePriceIdMonthly: 'price_business_monthly_v1',
+    stripePriceIdAnnual: 'price_business_annual_v1',
     ctaText: 'Demander un devis Entreprise',
     ctaLink: 'mailto:contact@nexoratech.fr?subject=Demande%20Offre%20Entreprise%20NexoraTech',
     ctaVariant: 'outline',

@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
-import { type HistoryEntry, PLAN_HISTORY_LIMITS, type PlanTier } from './types';
+
+import { FEATURES, useUserEntitlements } from '@/features/billing';
+
+import { type HistoryEntry } from './types';
 
 const STORAGE_KEY = 'nexoratech_calculation_history_v1';
 
@@ -25,7 +28,15 @@ function readStoredEntries(): HistoryEntry[] {
 
 export function useCalculationHistory(toolSlug?: string) {
   const [entries, setEntries] = useState<HistoryEntry[]>(readStoredEntries);
-  const [userPlan, setUserPlan] = useState<PlanTier>('free');
+
+  // Le plan vient du serveur. Il n'est plus modifiable depuis l'interface :
+  // c'était une auto-attribution de droits déguisée en sélecteur de test.
+  const { planCode, limit: featureLimit } = useUserEntitlements();
+
+  // `null` signifie « illimité » côté entitlements ; le reste du hook raisonne
+  // en `Infinity`, plus commode pour comparer et tronquer.
+  const rawLimit = featureLimit(FEATURES.calculationHistory);
+  const limit = rawLimit === null ? Infinity : rawLimit;
 
   // Sauvegarde dans localStorage à chaque mise à jour
   const persistEntries = useCallback((newEntries: HistoryEntry[]) => {
@@ -35,8 +46,6 @@ export function useCalculationHistory(toolSlug?: string) {
       // Ignore les erreurs de quota localStorage
     }
   }, []);
-
-  const limit = PLAN_HISTORY_LIMITS[userPlan];
 
   const addEntry = useCallback(
     (item: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
@@ -78,7 +87,9 @@ export function useCalculationHistory(toolSlug?: string) {
     ? entries.filter((item) => item.toolSlug === toolSlug)
     : entries;
 
-  const isLimitReached = userPlan === 'free' && filteredEntries.length >= PLAN_HISTORY_LIMITS.free;
+  // Exprimé à partir de la limite effective plutôt que d'un test sur le nom du
+  // plan : ajouter une offre intermédiaire ne demandera pas de repasser ici.
+  const isLimitReached = limit !== Infinity && filteredEntries.length >= limit;
 
   const exportCsv = useCallback(() => {
     if (filteredEntries.length === 0) return;
@@ -107,8 +118,8 @@ export function useCalculationHistory(toolSlug?: string) {
     removeEntry,
     clearHistory,
     exportCsv,
-    userPlan,
-    setUserPlan,
+    /** Lecture seule : `setUserPlan` n'existe plus, volontairement. */
+    userPlan: planCode,
     maxLimit: limit,
     isLimitReached,
   };

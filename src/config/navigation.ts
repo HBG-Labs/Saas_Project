@@ -14,6 +14,26 @@ export interface NavItem {
   icon: string;
   /** Visible dans la navigation basse mobile (5 entrées maximum). */
   primary?: boolean;
+
+  /**
+   * Permission RBAC exigée pour voir l'entrée — `'mission.view_all'`,
+   * `'audit.view'`… Absente : l'entrée est visible de tous.
+   *
+   * Typée `string` et non `Permission` à dessein : `config/` est la couche la
+   * plus basse et ne doit dépendre d'aucune feature. La validité de la valeur
+   * est vérifiée par `navigation.test.ts`, du côté qui connaît le type.
+   *
+   * Masquer une entrée ne protège RIEN — la route reste atteignable à la main,
+   * et c'est bien la RLS qui refusera les données. On évite seulement de
+   * proposer une impasse.
+   */
+  permission?: string;
+
+  /**
+   * Fonctionnalité que l'abonnement de l'organisation doit inclure —
+   * `'missions'`, `'audit_log'`… Même raisonnement que ci-dessus.
+   */
+  feature?: string;
 }
 
 export const APP_NAV: readonly NavItem[] = [

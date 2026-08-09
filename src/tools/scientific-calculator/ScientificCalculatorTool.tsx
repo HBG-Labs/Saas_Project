@@ -22,7 +22,7 @@ export default function ScientificCalculatorTool() {
     clearHistory,
     exportCsv,
     userPlan,
-    setUserPlan,
+    maxLimit,
     isLimitReached,
   } = useCalculationHistory('scientific-calculator');
 
@@ -383,39 +383,20 @@ export default function ScientificCalculatorTool() {
             )}
           </div>
 
-          {/* Sélecteur de test du plan d'abonnement (Gratuit vs Pro) */}
-          <div className="bg-surface border border-border/60 rounded-xl p-2 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground text-2xs font-semibold">Formule active :</span>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => setUserPlan('free')}
-                className={`px-2 py-0.5 rounded text-2xs font-semibold transition-all ${
-                  userPlan === 'free'
-                    ? 'bg-surface-sunken text-foreground border border-border/80 shadow-xs'
-                    : 'text-subtle-foreground hover:text-foreground'
-                }`}
-              >
-                Gratuit (10 max)
-              </button>
-              <button
-                type="button"
-                onClick={() => setUserPlan('pro')}
-                className={`px-2 py-0.5 rounded text-2xs font-semibold transition-all ${
-                  userPlan === 'pro'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-subtle-foreground hover:text-foreground'
-                }`}
-              >
-                Pro (Illimité)
-              </button>
-            </div>
-          </div>
+          {/*
+            Le sélecteur « Gratuit / Pro » qui se trouvait ici a été retiré.
+            Il appelait `setUserPlan`, c'est-à-dire qu'il permettait à
+            l'utilisateur de s'accorder lui-même la formule payante d'un clic.
+            La formule est désormais lue depuis `subscriptions`, table fermée en
+            écriture au client.
+          */}
         </CardHeader>
 
         <CardContent className="space-y-3 flex-1 overflow-y-auto max-h-[420px] pt-4">
           {/* Bandeau d'incitation si quota Gratuit atteint */}
-          {isLimitReached && <HistoryUpgradeBanner currentCount={history.length} maxLimit={10} />}
+          {isLimitReached && (
+            <HistoryUpgradeBanner currentCount={history.length} maxLimit={maxLimit} />
+          )}
 
           {history.length === 0 ? (
             <p className="text-muted-foreground text-xs text-center py-10">

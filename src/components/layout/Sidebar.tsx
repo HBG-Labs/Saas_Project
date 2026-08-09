@@ -2,6 +2,7 @@ import { NavLink } from 'react-router';
 
 import { ACCOUNT_NAV, APP_NAV, type NavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
+import { useVisibleNavItems } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
@@ -58,13 +59,18 @@ function SidebarLink({
  * un tiroir sur mobile (voir `AppLayout`).
  */
 export function Sidebar({ collapsed = false, onNavigate, className }: SidebarProps) {
+  // Les entrées réservées à un rôle ou à une formule disparaissent plutôt que
+  // d'être grisées : un menu qui propose six sections dont quatre inaccessibles
+  // décrit l'application, pas le travail de celui qui la regarde.
+  const visibleNav = useVisibleNavItems(APP_NAV);
+
   return (
     <nav
       aria-label="Navigation principale"
       className={cn('flex h-full flex-col gap-6 p-3', className)}
     >
       <ul className="space-y-0.5">
-        {APP_NAV.map((item) => (
+        {visibleNav.map((item) => (
           <SidebarLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </ul>

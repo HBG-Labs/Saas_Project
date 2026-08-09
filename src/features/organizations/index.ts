@@ -32,3 +32,12 @@ export {
   updateMemberRole,
   updateOrganization,
 } from './api/organizations.api';
+
+export { OrganizationProvider } from './context/OrganizationProvider';
+export type {
+  OrganizationContextValue,
+  OrganizationStatus,
+} from './context/organization-context';
+export { useCurrentOrganization } from './hooks/useCurrentOrganization';
+export { usePermission, type PermissionChecks } from './hooks/usePermission';
+export { useVisibleNavItems } from './hooks/useVisibleNavItems';

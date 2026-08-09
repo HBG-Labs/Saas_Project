@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { PRICING_PLANS } from '@/config/pricing';
 import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
 
 import {
@@ -77,6 +78,23 @@ describe('matrice des entitlements', () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+describe('cohérence avec la grille tarifaire publique', () => {
+  it("n'affiche aucune offre dont le code n'existe pas en base", () => {
+    // Le troisième palier s'appelait « team » côté marketing et « business » en
+    // base. `resolvePlanCode` faisant retomber tout code inconnu sur `free`, un
+    // abonné aurait silencieusement perdu ses droits. Ce test rend la
+    // divergence impossible à réintroduire.
+    for (const tier of PRICING_PLANS) {
+      expect(PLAN_CODES, `l'offre « ${tier.name} » annonce un code inconnu`).toContain(tier.id);
+    }
+  });
+
+  it('propose une offre pour chaque plan actif', () => {
+    const advertised = PRICING_PLANS.map((tier) => tier.id).sort();
+    expect(advertised).toEqual([...PLAN_CODES].sort());
   });
 });
 
