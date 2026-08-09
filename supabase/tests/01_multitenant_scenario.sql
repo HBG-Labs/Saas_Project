@@ -53,6 +53,15 @@ insert into t_ids (k, v) values
   ('b_owner',   '00000000-0000-4000-8000-00000000b001'),
   ('b_tech',    '00000000-0000-4000-8000-00000000b002');
 
+-- Le scénario bascule en rôle `authenticated` pour rejouer les policies telles
+-- que PostgREST les évalue. Ce rôle doit donc pouvoir lire la table d'identités,
+-- faute de quoi `pg_temp.uid()` échoue en 42501 et tout le scénario s'arrête.
+--
+-- Superflu dans le SQL Editor, qui exécute l'ensemble sous `postgres`. Requis
+-- dès que l'exécution passe par un rôle de connexion restreint — c'est le cas
+-- de `supabase db query`, qui provisionne un rôle dédié.
+grant select on t_ids to authenticated;
+
 create function pg_temp.uid(p_key text) returns uuid
 language sql stable as $$ select v from pg_temp.t_ids where k = p_key $$;
 
@@ -442,7 +451,13 @@ do $$
 declare
   v_orgs int; v_missions int; v_teams int; v_members int;
   v_reports int; v_interventions int; v_audit int; v_events int;
+  v_org_b uuid;
 begin
+  -- Identifiant de B relevé AVANT la bascule de rôle. Sous RLS, `b_owner` ne
+  -- peut pas résoudre l'organisation de A : une comparaison bâtie après la
+  -- bascule porterait sur NULL et rendrait l'assertion vide de sens.
+  select id into v_org_b from public.organizations where slug = 'reseaux-du-sud';
+
   perform pg_temp.login('b_owner');
   set local role authenticated;
 
@@ -452,7 +467,13 @@ begin
   select count(*) into v_members       from public.organization_members;
   select count(*) into v_reports       from public.intervention_reports;
   select count(*) into v_interventions from public.interventions;
-  select count(*) into v_audit         from public.audit_logs;
+  -- Compte les lignes d'audit VISIBLES qui n'appartiennent pas à B. Compter
+  -- toutes les lignes visibles ne testait rien : B voit légitimement les siennes
+  -- (deux `member.added` écrits par trigger), et l'assertion « aucune ligne de A »
+  -- échouait donc sur des lignes de B.
+  select count(*) into v_audit
+  from public.audit_logs
+  where organization_id is distinct from v_org_b;
   select count(*) into v_events        from public.mission_status_events;
 
   reset role;
@@ -460,7 +481,12 @@ begin
   perform pg_temp.ok(v_orgs = 1,          'B ne voit QUE sa propre organisation');
   perform pg_temp.ok(v_missions = 0,      'B ne voit AUCUNE mission de A');
   perform pg_temp.ok(v_teams = 0,         'B ne voit AUCUNE equipe de A');
-  perform pg_temp.ok(v_members = 1,       'B ne voit QUE ses propres membres');
+  -- B compte DEUX membres : `b_owner`, créé par le trigger `handle_new_organization`
+  -- lors de l'insertion de l'organisation, et `b_tech` ajouté juste au-dessus.
+  -- L'attente précédente (1) ignorait le second et échouait donc toujours.
+  -- Ce qui est réellement vérifié ici : B ne voit pas les 5 membres de A — un
+  -- cloisonnement défaillant remonterait 7.
+  perform pg_temp.ok(v_members = 2,       'B ne voit QUE ses propres membres');
   perform pg_temp.ok(v_reports = 0,       'B ne voit AUCUN compte rendu de A');
   perform pg_temp.ok(v_interventions = 0, 'B ne voit AUCUNE intervention de A');
   perform pg_temp.ok(v_audit = 0,         'B ne voit AUCUNE ligne d''audit de A');
@@ -668,3 +694,15 @@ end
 $$;
 
 rollback;
+
+-- Verdict lisible hors du SQL Editor.
+--
+-- Les `raise notice` ci-dessus ne s'affichent que dans une console qui relaie
+-- les messages du serveur ; l'API Management, qu'utilise `supabase db query`,
+-- ne remonte que des lignes. Sans ce dernier select, un script entièrement
+-- réussi et un script n'ayant produit aucune ligne se ressemblent.
+--
+-- Placé APRÈS le rollback : il ne dépend donc d'aucune donnée de test, et sa
+-- seule présence prouve que l'exécution a atteint la fin du fichier — toute
+-- assertion en échec ayant interrompu le script bien avant.
+select 'TOUS LES TESTS PASSENT' as resultat;
