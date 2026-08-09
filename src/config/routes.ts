@@ -29,6 +29,8 @@ export const ROUTES = {
   organization: '/organisation',
   organizationMembers: '/organisation/membres',
   organizationBilling: '/organisation/facturation',
+  /** Journal d'audit — réservé à `audit.view`. */
+  auditLog: '/journal',
   /** Acceptation d'une invitation — le jeton est dans l'URL. */
   invitation: (token: string) => `/invitations/${token}`,
 

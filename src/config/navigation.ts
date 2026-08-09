@@ -107,6 +107,13 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
     icon: 'credit-card',
     permission: 'billing.view',
   },
+  {
+    to: ROUTES.auditLog,
+    label: 'Journal',
+    icon: 'scroll',
+    permission: 'audit.view',
+    feature: 'audit_log',
+  },
 ];
 
 export const ACCOUNT_NAV: readonly NavItem[] = [

@@ -253,6 +253,21 @@ export const routes: RouteObject[] = [
                       },
                     ],
                   },
+
+                  {
+                    element: <RequirePlan feature={FEATURES.auditLog} label="Le journal d’audit" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.auditView} />,
+                        children: [
+                          {
+                            path: ROUTES.auditLog,
+                            lazy: lazyPage(() => import('@/pages/organization/AuditLogPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
 

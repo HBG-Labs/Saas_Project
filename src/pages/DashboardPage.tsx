@@ -14,6 +14,8 @@ import { CategoryCard } from '@/features/tools/components/CategoryCard';
 import { ToolCard } from '@/features/tools/components/ToolCard';
 import { listTools } from '@/features/tools';
 
+import { ProfessionalSummary } from './dashboard/ProfessionalSummary';
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const tools = listTools();
@@ -66,6 +68,13 @@ export default function DashboardPage() {
           </span>
         </div>
       </div>
+
+      {/*
+        Module professionnel — inséré ENTRE l'en-tête et le catalogue.
+        N'apparaît que pour les membres d'une entreprise abonnée : pour un
+        utilisateur du seul catalogue d'outils, ce bloc n'existe pas.
+      */}
+      <ProfessionalSummary />
 
       {/* Grille de statistiques Cockpit */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

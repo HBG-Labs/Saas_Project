@@ -1,4 +1,6 @@
 /** API publique de la feature « audit ». */
+export { useAuditLogs, useEntityAuditTrail } from './hooks/useAuditLogs';
+
 export {
   AUDIT_ACTION_LABELS,
   describeAuditAction,

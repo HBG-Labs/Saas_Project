@@ -7,6 +7,7 @@ import {
   Contact,
   CreditCard,
   LayoutDashboard,
+  ScrollText,
   Settings,
   Star,
   User,
@@ -41,6 +42,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   contact: Contact,
   clipboard: ClipboardList,
   'clipboard-check': ClipboardCheck,
+  scroll: ScrollText,
   'credit-card': CreditCard,
 };
 
