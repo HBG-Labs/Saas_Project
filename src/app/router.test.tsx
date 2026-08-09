@@ -33,7 +33,7 @@ describe('routing', () => {
     renderAt('/');
 
     expect(
-      await screen.findByRole('heading', { name: /boîte à outils/i, level: 1 }),
+      await screen.findByRole('heading', { name: /un seul cockpit/i, level: 1 }),
     ).toBeInTheDocument();
     // La landing utilise l'ossature publique, pas la navigation applicative.
     expect(screen.getByRole('navigation', { name: 'Navigation du site' })).toBeInTheDocument();
@@ -42,7 +42,12 @@ describe('routing', () => {
   it('affiche le catalogue public sur /tools sans session', async () => {
     renderAt('/tools');
 
-    expect(await screen.findByRole('heading', { name: 'Outils', level: 1 })).toBeInTheDocument();
+    // Expression régulière plutôt que chaîne exacte : le titre contient une
+    // apostrophe typographique (« d’ingénierie ») qu'une comparaison stricte
+    // rendrait fragile au moindre ajustement de copie.
+    expect(
+      await screen.findByRole('heading', { name: /catalogue des outils/i, level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it('redirige une route privée vers /login quand la session est absente', async () => {

@@ -21,8 +21,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  // `playwright.config.ts` et `e2e/` sont volontairement exclus : @playwright/test
-  // n'est pas installé en Phase 1 (voir playwright.config.ts pour la raison et
-  // la procédure d'activation).
-  "include": ["vite.config.ts", "playwright.config.ts"]
+  // `e2e/` est inclus depuis l'installation effective de @playwright/test : sans
+  // cela, typescript-eslint ne rattache les specs à aucun projet et refuse de
+  // les analyser (« was not found by the project service »).
+  "include": ["vite.config.ts", "playwright.config.ts", "e2e"]
 }

@@ -1,11 +1,8 @@
 import {
   ArrowRight,
   BookOpen,
-  Cable,
   CheckCircle2,
   Clock,
-  Cpu,
-  Layers,
   Moon,
   Search,
   ShieldCheck,

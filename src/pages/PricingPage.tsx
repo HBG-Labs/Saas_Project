@@ -1,4 +1,4 @@
-import { ArrowRight, Check, HelpCircle, Minus, Shield, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Minus, Shield, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 

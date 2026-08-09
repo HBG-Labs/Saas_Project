@@ -1,4 +1,4 @@
-import { ArrowRight, Cable, Calculator, Clock, Cpu, Network, Search, Sparkles, Star, Wrench, Zap } from 'lucide-react';
+import { ArrowRight, Clock, Cpu, Search, Star, Wrench } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';

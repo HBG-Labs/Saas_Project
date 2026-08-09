@@ -1,5 +1,3 @@
-import type { ScientificCalculatorInputs } from './schema';
-
 export interface ScientificCalculatorResult {
   expression: string;
   result: number | null;

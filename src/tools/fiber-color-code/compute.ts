@@ -82,6 +82,26 @@ export function getPaletteByStandard(standard: ColorStandard): ColorDef[] {
   }
 }
 
+/**
+ * Accès cyclique à une palette.
+ *
+ * Les trois palettes comptent exactement douze entrées et l'index est toujours
+ * ramené par modulo : l'accès ne peut pas sortir des bornes. `noUncheckedIndexedAccess`
+ * ne sachant pas le démontrer, on préfère un garde-fou explicite à une assertion
+ * `!` — sur un outil utilisé pour repérer une fibre en armoire, une palette
+ * incomplète doit échouer bruyamment plutôt que produire une couleur `undefined`.
+ */
+function colorAt(palette: ColorDef[], index: number): ColorDef {
+  const size = palette.length;
+  const color = size === 0 ? undefined : palette[((index % size) + size) % size];
+
+  if (!color) {
+    throw new Error('Palette de couleurs vide : configuration de norme invalide.');
+  }
+
+  return color;
+}
+
 export function getStandardName(standard: ColorStandard): string {
   switch (standard) {
     case 'orange_ft':
@@ -103,8 +123,8 @@ export function computeFiberMapping(inputs: FiberColorCodeInputs): FiberMappingR
   const tubeIndex = Math.floor((fiberNumber - 1) / fibersPerTube);
   const fiberIndexInTube = ((fiberNumber - 1) % fibersPerTube) + 1; // 1 à 6 ou 1 à 12
 
-  const tubeColorDef = palette[tubeIndex % 12];
-  const fiberColorDef = palette[(fiberIndexInTube - 1) % 12];
+  const tubeColorDef = colorAt(palette, tubeIndex);
+  const fiberColorDef = colorAt(palette, fiberIndexInTube - 1);
 
   // Marquage de bague pour les câbles > 144 FO (tubeIndex >= 12)
   const ringSeries = Math.floor(tubeIndex / 12);

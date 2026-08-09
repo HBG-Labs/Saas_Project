@@ -37,10 +37,20 @@ pnpm-debug.log*
 .idea/
 
 # Dossiers temporaires et sous-dépôts
-COdeFinal/
-Test/
-*.jpeg
-*.jpg
+#
+# Les motifs sont ANCRÉS à la racine (« / » initial). Sans cette ancre, Git
+# applique le motif à toute profondeur : « Test/ » excluait `src/test/` — donc
+# `src/test/sql-fixtures.ts`, dont dépendent quatre tests versionnés. Un clone
+# neuf ne compilait pas. Sur Windows, la comparaison étant insensible à la
+# casse, « Test/ » capturait bien « test/ ».
+/COdeFinal/
+/Test/
+/Saas_Project/
+
+# Captures d'écran déposées à la racine — ancrées elles aussi, pour ne pas
+# exclure de véritables images d'interface rangées sous `src/`.
+/*.jpeg
+/*.jpg
 
 # OS
 .DS_Store

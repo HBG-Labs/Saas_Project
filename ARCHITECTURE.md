@@ -37,11 +37,19 @@ src/
 ├─ app/            racine de composition : providers, routeur
 ├─ components/
 │  ├─ ui/          primitives (Button…) — zéro logique métier
-│  ├─ layout/      AppShell
+│  ├─ layout/      RootLayout, PublicLayout, AppLayout, Sidebar, MobileNav
+│  ├─ marketing/   sections de la landing (Hero, Pricing, Faq…)
 │  └─ feedback/    ErrorBoundary, ErrorFallback, LoadingScreen, PagePlaceholder
 ├─ features/
 │  ├─ auth/        session, garde de routes, API d'authentification
-│  └─ tools/       registry (moteur du catalogue) + ToolErrorBoundary
+│  ├─ tools/       registry (moteur du catalogue) + ToolErrorBoundary
+│  ├─ theme/       thème clair/sombre, persistance
+│  ├─ search/      palette de commandes ⌘K
+│  ├─ history/     historique de calculs (local, à migrer vers Supabase)
+│  ├─ catalog/     lecture serveur du catalogue
+│  └─ organizations/ teams/ missions/ interventions/ billing/ audit/
+│                 module professionnel multi-tenant — couche `api/` uniquement
+│                 à ce stade, les hooks et écrans arrivent en Phase 2 et suivantes
 ├─ tools/          IMPLÉMENTATIONS des outils, un dossier chacun
 ├─ services/       accès Supabase (client + déballage des réponses)
 ├─ lib/            pur : cn, erreurs, client TanStack Query

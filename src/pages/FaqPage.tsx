@@ -1,10 +1,8 @@
-import { ChevronDown, HelpCircle, MessageSquare } from 'lucide-react';
+import { ChevronDown, MessageSquare } from 'lucide-react';
 import { Accordion } from 'radix-ui';
-import { Link } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { ROUTES } from '@/config/routes';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const FAQ_ITEMS = [

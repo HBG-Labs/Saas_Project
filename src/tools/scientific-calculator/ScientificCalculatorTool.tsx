@@ -83,11 +83,17 @@ export default function ScientificCalculatorTool() {
   const handleMemorySave = () => {
     if (currentResult.result !== null) setMemory(currentResult.result);
   };
+  // La valeur est capturée AVANT la mise à jour : le rétrécissement de type
+  // obtenu par le `if` ne survit pas à l'entrée dans la closure passée à
+  // `setMemory`, TypeScript ne pouvant garantir que la propriété n'a pas changé
+  // entre-temps.
   const handleMemoryAdd = () => {
-    if (currentResult.result !== null) setMemory((prev) => prev + currentResult.result);
+    const value = currentResult.result;
+    if (value !== null) setMemory((prev) => prev + value);
   };
   const handleMemorySub = () => {
-    if (currentResult.result !== null) setMemory((prev) => prev - currentResult.result);
+    const value = currentResult.result;
+    if (value !== null) setMemory((prev) => prev - value);
   };
 
   // Support Clavier Physique

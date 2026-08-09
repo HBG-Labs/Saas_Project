@@ -1,0 +1,168 @@
+import catalogSql from '../../supabase/migrations/20260808100000_catalog_v2.sql?raw';
+import rbacSql from '../../supabase/migrations/20260808100100_rbac.sql?raw';
+import billingSql from '../../supabase/migrations/20260808100300_billing.sql?raw';
+import missionsSql from '../../supabase/migrations/20260808100500_missions.sql?raw';
+
+/**
+ * Lecture des migrations SQL depuis les tests.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CES TESTS EXISTENT
+ *
+ * Plusieurs constantes TypeScript reflètent des tables seedées en SQL : les
+ * catégories, la matrice RBAC, les transitions de missions, les entitlements.
+ * Un miroir qui diverge est PIRE que pas de miroir — il répond faux avec
+ * assurance : une action proposée que le serveur refusera, ou masquée alors
+ * qu'elle est permise.
+ *
+ * Plutôt que de compter sur la discipline, les tests lisent le SQL et comparent.
+ * Modifier l'un sans l'autre casse `npm test`. Même logique que les frontières
+ * d'architecture appliquées par ESLint : une convention non outillée finit
+ * toujours par être contournée sous la pression du délai.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Les fichiers sont chargés par l'import `?raw` de Vite plutôt que par
+ * `node:fs`. Ce n'est pas un détail : `tsconfig.app.json` exclut délibérément
+ * les types Node de la couche applicative, et les réintroduire pour un helper
+ * de test ferait entrer `process` et `fs` dans l'autocomplétion de tout le code
+ * navigateur.
+ */
+
+const MIGRATIONS: Record<string, string> = {
+  catalog: catalogSql,
+  rbac: rbacSql,
+  billing: billingSql,
+  missions: missionsSql,
+};
+
+export const MIGRATION_FILES = {
+  catalog: 'catalog',
+  rbac: 'rbac',
+  billing: 'billing',
+  missions: 'missions',
+} as const;
+
+export function readMigration(key: keyof typeof MIGRATION_FILES): string {
+  const sql = MIGRATIONS[key];
+
+  if (sql === undefined || sql.trim() === '') {
+    throw new Error(
+      `Migration « ${key} » introuvable ou vide. Vérifiez les imports ?raw de sql-fixtures.ts.`,
+    );
+  }
+
+  return sql;
+}
+
+/**
+ * Extrait les tuples d'un `insert into <table> ... values (...), (...);`.
+ *
+ * Analyseur volontairement minimal — il ne couvre que la forme utilisée par nos
+ * seeds. Il traite en revanche ce qui produirait de FAUX résultats plutôt que
+ * des erreurs visibles : les quotes doublées (`''` en SQL), les virgules et
+ * parenthèses à l'intérieur des chaînes, et les commentaires `--`.
+ *
+ * Renvoie, pour chaque ligne, la liste de ses valeurs brutes.
+ */
+export function extractInsertTuples(sql: string, table: string): string[][] {
+  const pattern = new RegExp(
+    `insert\\s+into\\s+(?:public\\.)?${table}\\s*\\([^)]*\\)\\s*values\\s*`,
+    'i',
+  );
+
+  const match = pattern.exec(sql);
+  if (!match) return [];
+
+  const body = sql.slice(match.index + match[0].length);
+
+  const tuples: string[][] = [];
+  let current: string[] = [];
+  let value = '';
+  let depth = 0;
+  let inString = false;
+  let index = 0;
+
+  while (index < body.length) {
+    const char = body[index];
+    const next = body[index + 1];
+
+    if (inString) {
+      // `''` à l'intérieur d'une chaîne SQL est une apostrophe échappée,
+      // pas une fin de chaîne suivie d'un début.
+      if (char === "'" && next === "'") {
+        value += "'";
+        index += 2;
+        continue;
+      }
+      if (char === "'") {
+        inString = false;
+        index += 1;
+        continue;
+      }
+      value += char;
+      index += 1;
+      continue;
+    }
+
+    if (char === '-' && next === '-') {
+      const lineEnd = body.indexOf('\n', index);
+      index = lineEnd === -1 ? body.length : lineEnd + 1;
+      continue;
+    }
+
+    if (char === "'") {
+      inString = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === '(') {
+      depth += 1;
+      if (depth > 1) value += char;
+      index += 1;
+      continue;
+    }
+
+    if (char === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        current.push(value.trim());
+        tuples.push(current);
+        current = [];
+        value = '';
+      } else {
+        value += char;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (char === ',' && depth === 1) {
+      current.push(value.trim());
+      value = '';
+      index += 1;
+      continue;
+    }
+
+    if (depth > 0) {
+      value += char;
+      index += 1;
+      continue;
+    }
+
+    // Hors parenthèses, seuls les blancs et les virgules séparant deux tuples
+    // sont attendus. Tout autre caractère signale la fin de la liste : `;`, ou
+    // une clause `on conflict (...)` — dont les parenthèses seraient sinon
+    // lues comme un tuple supplémentaire.
+    if (!/\s|,/.test(char ?? '')) break;
+
+    index += 1;
+  }
+
+  return tuples;
+}
+
+/** Retire les suffixes de cast (`'active'::public.content_status` → `active`). */
+export function stripCast(value: string): string {
+  return value.replace(/::[a-z_.]+$/i, '').trim();
+}
