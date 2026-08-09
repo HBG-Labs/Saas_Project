@@ -1,4 +1,4 @@
-import { Building2, Plus, Search } from 'lucide-react';
+import { Archive, Building2, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -9,11 +9,13 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { CustomerFormDialog, useCustomers } from '@/features/customers';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import type { ContentStatus } from '@/types/database';
 
 export default function CustomersListPage() {
   useDocumentTitle('Clients');
@@ -23,7 +25,17 @@ export default function CustomersListPage() {
   const organizationId = organization?.id ?? null;
 
   const [search, setSearch] = useState('');
-  const customers = useCustomers(organizationId, search.trim() === '' ? {} : { search });
+  /**
+   * L'archivage était à sens unique : la fiche disparaissait sans retour
+   * possible, la liste filtrant `status = 'active'` sans alternative. Archiver
+   * doit pouvoir se défaire — sinon c'est une suppression déguisée.
+   */
+  const [status, setStatus] = useState<ContentStatus>('active');
+
+  const customers = useCustomers(organizationId, {
+    status,
+    ...(search.trim() !== '' ? { search } : {}),
+  });
 
   const canCreate = can(PERMISSIONS.customerCreate);
   const canViewAll = can(PERMISSIONS.customerView);
@@ -54,16 +66,31 @@ export default function CustomersListPage() {
       />
 
       {canViewAll ? (
-        <Input
-          label="Rechercher"
-          hideLabel
-          placeholder="Rechercher par nom, référence ou ville…"
-          leadingIcon={<Search className="size-4" aria-hidden="true" />}
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-          }}
-        />
+        <div className="grid gap-3 sm:grid-cols-[1fr_12rem]">
+          <Input
+            label="Rechercher"
+            hideLabel
+            placeholder="Rechercher par nom, référence ou ville…"
+            leadingIcon={<Search className="size-4" aria-hidden="true" />}
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+            }}
+          />
+
+          <Select
+            options={[
+              { value: 'active', label: 'Clients actifs' },
+              { value: 'archived', label: 'Clients archivés' },
+            ]}
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value as ContentStatus);
+            }}
+            label="Statut"
+            hideLabel
+          />
+        </div>
       ) : null}
 
       {customers.isPending ? (
@@ -77,12 +104,20 @@ export default function CustomersListPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={Building2}
-          title={search.trim() === '' ? 'Aucun client' : 'Aucun résultat'}
+          icon={status === 'archived' ? Archive : Building2}
+          title={
+            search.trim() !== ''
+              ? 'Aucun résultat'
+              : status === 'archived'
+                ? 'Aucun client archivé'
+                : 'Aucun client'
+          }
           description={
             search.trim() !== ''
               ? 'Aucun client ne correspond à cette recherche.'
-              : canCreate
+              : status === 'archived'
+                ? 'Les fiches archivées se retrouvent ici, et peuvent être réactivées à tout moment.'
+                : canCreate
                 ? 'Créez une fiche client pour rattacher ses sites, ses interlocuteurs et l’historique de vos interventions.'
                 : /*
                      Un technicien ne voit que les clients de SES missions : une

@@ -9,6 +9,7 @@ import { Kbd } from '@/components/ui/Kbd';
 import { StatCard } from '@/components/ui/StatCard';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
+import { useFavorites, useToolHistory } from '@/features/catalog';
 import { CATEGORY_METADATA } from '@/features/tools/catalog-metadata';
 import { CategoryCard } from '@/features/tools/components/CategoryCard';
 import { ToolCard } from '@/features/tools/components/ToolCard';
@@ -23,8 +24,18 @@ export default function DashboardPage() {
   const displayName =
     (user?.user_metadata['display_name'] as string | undefined) ?? user?.email?.split('@')[0] ?? 'Technicien';
 
-  const favoriteCount = 0;
-  const historyCount = 0;
+  /**
+   * Comptages réels, servis par le serveur.
+   *
+   * Ces deux valeurs étaient codées à `0` — les dernières données inventées de
+   * l'application. Un zéro affiché puis corrigé se lit comme une information sur
+   * un tableau de bord, d'où le tiret pendant le chargement.
+   */
+  const favorites = useFavorites();
+  const toolHistory = useToolHistory();
+
+  const favoriteCount = favorites.isPending ? '—' : (favorites.data ?? []).length;
+  const historyCount = toolHistory.isPending ? '—' : (toolHistory.data ?? []).length;
 
   return (
     <>
@@ -79,7 +90,8 @@ export default function DashboardPage() {
       {/* Grille de statistiques Cockpit */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Outils disponibles" value={tools.length} icon={Wrench} />
-        <StatCard label="Calculs ce mois-ci" value={historyCount} icon={Clock} />
+        {/* `tool_history` compte les OUVERTURES d'outils, pas les calculs. */}
+        <StatCard label="Outils consultés" value={historyCount} icon={Clock} />
         <StatCard label="Outils favoris" value={favoriteCount} icon={Star} />
         <StatCard label="Domaines couverts" value={CATEGORY_METADATA.length} icon={Cpu} />
       </div>

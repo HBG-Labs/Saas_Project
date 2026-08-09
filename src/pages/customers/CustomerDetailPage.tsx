@@ -1,4 +1,14 @@
-import { Archive, ArrowLeft, ClipboardList, Mail, MapPin, Pencil, Phone, Users } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  ClipboardList,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Users,
+} from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -17,6 +27,7 @@ import {
   useArchiveCustomer,
   useCustomer,
   useCustomerHistory,
+  useRestoreCustomer,
 } from '@/features/customers';
 import { MISSION_STATUS_LABELS } from '@/features/missions';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
@@ -29,6 +40,7 @@ export default function CustomerDetailPage() {
 
   const customer = useCustomer(customerId);
   const archiveCustomer = useArchiveCustomer();
+  const restoreCustomer = useRestoreCustomer();
 
   useDocumentTitle(customer.data?.name ?? 'Client');
 
@@ -126,6 +138,26 @@ export default function CustomerDetailPage() {
               >
                 <Archive className="size-4" />
                 Archiver
+              </Button>
+            ) : null}
+
+            {/*
+              Réactiver relève de `customer.update`, et non de `customer.delete` :
+              côté serveur, la restauration est un UPDATE de plus, soumis à
+              `customers_update`. Le bouton reprend donc la permission que le
+              serveur exigera, pas celle qui a permis d'archiver.
+            */}
+            {canEdit && isArchived ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  restoreCustomer.mutate(data.id);
+                }}
+                disabled={restoreCustomer.isPending}
+              >
+                <ArchiveRestore className="size-4" />
+                Réactiver
               </Button>
             ) : null}
           </div>
