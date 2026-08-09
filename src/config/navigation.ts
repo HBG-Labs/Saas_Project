@@ -57,6 +57,16 @@ export const APP_NAV: readonly NavItem[] = [
  */
 export const ORGANIZATION_NAV: readonly NavItem[] = [
   {
+    to: ROUTES.missions,
+    label: 'Missions',
+    icon: 'clipboard',
+    // Volontairement SANS `permission` : un technicien n'a pas
+    // `mission.view_all`, mais doit voir l'entrée pour atteindre SES missions —
+    // que la policy lui sert par ses autres branches. Exiger la permission ici
+    // lui cacherait son propre travail.
+    feature: 'missions',
+  },
+  {
     to: ROUTES.customers,
     label: 'Clients',
     icon: 'contact',

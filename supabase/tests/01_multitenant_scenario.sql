@@ -1262,6 +1262,81 @@ begin
 end
 $$;
 
+-- -----------------------------------------------------------------------------
+-- 6.4 — L'intervenant fait avancer la mission, il ne la redéfinit pas
+-- -----------------------------------------------------------------------------
+--
+-- La policy `missions_update_permitted` doit ouvrir l'écriture à l'intervenant
+-- affecté, sans quoi il ne pourrait pas faire avancer la machine à états. Mais
+-- une policy raisonne par LIGNE, jamais par COLONNE : accorder l'écriture pour
+-- le statut, c'était l'accorder pour tout le reste.
+--
+-- Mesuré avant correctif : un technicien affecté a réécrit l'intitulé de sa
+-- mission et l'a rattachée à un autre client. Pas une brèche multi-tenant —
+-- tout restait dans l'entreprise — mais celui qui exécute redéfinissait ce
+-- qu'il était censé faire, et à qui ce serait facturé.
+--
+-- Même principe que pour les comptes rendus : l'exécutant rend compte, il
+-- n'arbitre pas.
+do $$
+declare v_mission uuid; v_org uuid; v_raised boolean; v_titre text;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  -- La mission de la Partie 4, affectée à `a_tech1` et restée en `assigned`.
+  select id into v_mission from public.missions
+  where organization_id = v_org and title = 'Raccordement de l''annexe';
+
+  perform pg_temp.ok(v_mission is not null,
+    'Une mission affectee au technicien est disponible');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.missions set title = 'Redefinie par l''intervenant' where id = v_mission;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  select title into v_titre from public.missions where id = v_mission;
+
+  perform pg_temp.ok(v_raised and v_titre = 'Raccordement de l''annexe',
+    'L''intervenant ne peut PAS reecrire l''intitule de sa mission');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.missions set customer_id = null where id = v_mission;
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'L''intervenant ne peut PAS changer le client de sa mission');
+
+  -- Mais il DOIT pouvoir commenter : c'est sa contribution propre.
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  update public.missions set notes = 'Portail ferme, passage par l''arriere' where id = v_mission;
+  reset role;
+
+  perform pg_temp.ok(
+    (select notes from public.missions where id = v_mission)
+      = 'Portail ferme, passage par l''arriere',
+    'L''intervenant PEUT commenter sa mission');
+
+  -- Et le responsable, lui, garde la main sur tout.
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+  update public.missions set title = 'Raccordement annexe - revu' where id = v_mission;
+  reset role;
+
+  perform pg_temp.ok(
+    (select title from public.missions where id = v_mission) = 'Raccordement annexe - revu',
+    'Le responsable garde la main sur la definition de la mission');
+end
+$$;
+
 do $$
 begin
   raise notice '';

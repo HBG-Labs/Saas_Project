@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Building2,
+  ClipboardList,
   Clock,
   Contact,
   CreditCard,
@@ -37,6 +38,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   users: Users,
   'users-round': UsersRound,
   contact: Contact,
+  clipboard: ClipboardList,
   'credit-card': CreditCard,
 };
 

@@ -38,6 +38,10 @@ export const ROUTES = {
   teams: '/equipes',
   team: (teamId: string) => `/equipes/${teamId}`,
 
+  missions: '/missions',
+  missionNew: '/missions/nouvelle',
+  mission: (missionId: string) => `/missions/${missionId}`,
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',
@@ -62,4 +66,5 @@ export const ROUTE_PATTERNS = {
   invitation: '/invitations/:token',
   customer: '/clients/:customerId',
   team: '/equipes/:teamId',
+  mission: '/missions/:missionId',
 } as const;

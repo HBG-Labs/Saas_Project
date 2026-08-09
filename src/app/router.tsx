@@ -137,6 +137,38 @@ export const routes: RouteObject[] = [
                   },
 
                   /**
+                   * Missions : formule seule, SANS `RequirePermission`.
+                   *
+                   * Un technicien n'a pas `mission.view_all` et doit pourtant
+                   * atteindre ses propres missions — la policy
+                   * `missions_select_scoped` les lui sert par ses branches
+                   * « assigné » et « équipe ». Poser une permission ici lui
+                   * fermerait la porte de son propre travail.
+                   */
+                  {
+                    element: <RequirePlan feature={FEATURES.missions} label="Le module Missions" />,
+                    children: [
+                      {
+                        path: ROUTES.missions,
+                        lazy: lazyPage(() => import('@/pages/missions/MissionsListPage')),
+                      },
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.missionCreate} />,
+                        children: [
+                          {
+                            path: ROUTES.missionNew,
+                            lazy: lazyPage(() => import('@/pages/missions/MissionCreatePage')),
+                          },
+                        ],
+                      },
+                      {
+                        path: ROUTE_PATTERNS.mission,
+                        lazy: lazyPage(() => import('@/pages/missions/MissionDetailPage')),
+                      },
+                    ],
+                  },
+
+                  /**
                    * Équipes : formule + permission, comme Clients. Mais la
                    * FICHE reste elle aussi derrière `team.view` — contrairement
                    * aux clients, aucune branche de la RLS n'ouvre une équipe à
