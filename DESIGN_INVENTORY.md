@@ -188,3 +188,96 @@ n'appellent aucune migration, aucune policy, aucun trigger.
 
 Si l'implémentation révélait une anomalie, elle serait signalée avant toute écriture,
 conformément au §19 de la consigne.
+
+---
+---
+
+# Suites données — 9 août 2026
+
+> Six commits, de `6e6c28e` à `3692f45`. Le présent chapitre est le rapport de fin
+> de mission ; ce qui précède reste l'audit tel qu'il a été écrit, non retouché.
+
+## Ce qui a été fait
+
+| # de l'ordre de travail | État | Commit |
+|---|---|---|
+| 1 — B1 + B3 : mission et site modifiables | ✅ fait, **B2 inclus** | `d2d607e` |
+| 2 — les deux `0` du tableau de bord | ✅ fait | `39051e6` |
+| 3 — B2 + B4 : contacts, clients archivés | ✅ fait | `d2d607e`, `39051e6` |
+| 4 — navigation | ✅ fait | `869bfba` |
+| 5 — filtres missions | ✅ fait | `16a9bec` |
+| 6 — B5 + B6 + B7 | ✅ fait | `25fc926` |
+| 7 — mobile-first | ⚠️ fait **à l'aveugle** | `3692f45` |
+
+**B8** (comparer les formules) et **B9** (catégories servies par la base) n'ont pas été
+traités : B8 relève de la Phase 12 (Stripe), et B9 changerait la source de vérité du
+catalogue — une décision de conception, pas une lacune d'interface.
+
+## Trois choses trouvées en chemin, qui ne figuraient pas dans l'audit
+
+**Une sentinelle de sélecteur qui masquait son propre intitulé.** Le filtre de statut
+des missions employait `value=''` pour « En cours (par défaut) ». Radix affiche son
+texte de remplacement lorsque la valeur est vide : le filtre annonçait
+« Sélectionner… » alors qu'il valait « En cours ». Corrigé par une sentinelle non vide.
+Aucun test ne pouvait l'attraper — il n'existe pas de test montant un composant
+connecté, ce que l'audit signalait déjà en catégorie D.
+
+**La file de contrôle ne se nommait pas.** Dix comptes rendus soumis produisaient dix
+cartes identiques portant « Voir l'intervention ». La requête joint désormais la mission
+et l'auteur — et l'écran traite le cas où la RLS les masque, qui n'est pas théorique :
+un chef d'équipe détient `intervention.review` **sans** `mission.view_all`.
+
+**Terminer une intervention était à un pouce de « Mettre en pause ».** `end_time` est
+posée une fois pour toutes par `enforce_intervention_scope`. Le geste est désormais
+séparé et confirmé.
+
+## Un écart au plan, assumé
+
+Le plan prévoyait `listTeamsOfMember` pour afficher les équipes sur la liste des
+membres. Appelée par ligne, elle produirait autant de requêtes que de membres.
+`listOrganizationTeamMemberships` fait le tour en une requête, en filtrant sur la table
+jointe (`teams!inner`) puisque `team_members` ne connaît pas l'organisation.
+**`listTeamsOfMember` reste donc sans appelant**, et c'est délibéré.
+
+## Ce qui reste ouvert
+
+Sans changement depuis l'audit : `ReferencesPage` (table reportée), `ProfilePage` en
+lecture seule, les interrupteurs de `SettingsPage`, les signatures manuscrites, la vue
+planning, Stripe, l'envoi d'e-mail d'invitation. Le manque de navigation signalé plus
+haut subsiste également : aucune entrée ne mène aux interventions en cours, on n'y
+accède que par une mission.
+
+## Vérifications
+
+À chaque étape, sur l'état versionné — `src/components/dashboard/TechnicianHeroBanner.tsx`
+écarté le temps des contrôles, puis remis en place : c'est un travail en cours non
+tracké, et le seul à produire des erreurs.
+
+```
+npm run typecheck   0 erreur
+npm run lint        0 erreur, 0 avertissement
+npm test            171 tests (157 au départ, +14)
+npm run build       ✓
+```
+
+Les 14 tests ajoutés portent sur les invariants de navigation (4) et sur la traduction
+des critères de filtrage (10).
+
+**Base de données : intacte.** `supabase migration list --linked` donne 28 migrations,
+`local` et `remote` identiques pour chacune. Aucune migration, aucune policy, aucun
+trigger n'a été touché — conformément au §19. La seule requête modifiée est un `SELECT`
+enrichi, soumis aux mêmes policies qu'avant.
+
+Le scénario multi-tenant **n'a pas été rejoué**. Il crée des données avant de faire
+`rollback` ; le rejouer par un canal qui exécuterait les instructions séparément
+risquerait de laisser des lignes derrière lui. Aucun changement de cette mission ne
+touchant au SQL, il n'aurait rien appris de nouveau.
+
+## La limite, redite
+
+**Aucun de ces écrans n'a été vu rendu.** Ils sont derrière `RequirePlan` et
+l'organisation de test n'a pas d'abonnement `business`. Le travail visuel du commit
+`3692f45` — pleine largeur sur téléphone, empilement de la liste des missions, tailles
+de cible — repose sur la lecture du code et sur des règles connues, pas sur une
+observation. Le parcours manuel décrit dans le plan reste à faire, et c'est lui qui
+tranchera.
