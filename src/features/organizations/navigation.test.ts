@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { FEATURES, type FeatureKey } from '@/features/billing';
-import { ACCOUNT_NAV, APP_NAV, MOBILE_NAV, type NavItem } from '@/config/navigation';
+import {
+  ACCOUNT_NAV,
+  APP_NAV,
+  MOBILE_NAV,
+  ORGANIZATION_NAV,
+  type NavItem,
+} from '@/config/navigation';
 
 import { PERMISSIONS, type Permission } from './rbac';
 
@@ -19,7 +25,12 @@ import { PERMISSIONS, type Permission } from './rbac';
  * Ces tests rétablissent la garantie que le typage ne peut pas offrir ici.
  */
 
-const ALL_NAV: readonly NavItem[] = [...APP_NAV, ...ACCOUNT_NAV, ...MOBILE_NAV];
+const ALL_NAV: readonly NavItem[] = [
+  ...APP_NAV,
+  ...ORGANIZATION_NAV,
+  ...ACCOUNT_NAV,
+  ...MOBILE_NAV,
+];
 
 describe('configuration de navigation', () => {
   const knownPermissions = new Set<string>(Object.values(PERMISSIONS) as Permission[]);

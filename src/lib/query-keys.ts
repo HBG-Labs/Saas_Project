@@ -56,6 +56,12 @@ export const qk = {
       [...qk.organizations.all, organizationId, 'membership', userId] as const,
     invitations: (organizationId: string) =>
       [...qk.organizations.all, organizationId, 'invitations'] as const,
+    /**
+     * Aperçu d'une invitation — indexé par jeton, hors de toute organisation :
+     * celui qui consulte n'en est pas encore membre.
+     */
+    invitationPreview: (token: string) =>
+      [...qk.organizations.all, 'invitation-preview', token] as const,
   },
 
   // ------------------------------------------------------------------ clients

@@ -1042,6 +1042,24 @@ export interface Database {
         Args: { p_token: string };
         Returns: string;
       };
+
+      /**
+       * Aperçu d'une invitation, avant acceptation.
+       *
+       * `security definer` : l'invité n'est pas encore membre et ne peut donc
+       * pas lire `organizations`. La fonction ne révèle que le nom, le rôle
+       * proposé et l'expiration — la connaissance du jeton (UUID v4) tenant
+       * lieu d'autorisation. Renvoie zéro ligne pour un jeton inconnu, révoqué,
+       * déjà accepté ou expiré : les quatre cas sont indistinguables.
+       */
+      get_invitation_preview: {
+        Args: { p_token: string };
+        Returns: {
+          organization_name: string;
+          invited_role: OrgRole;
+          expires_at: string;
+        }[];
+      };
     };
 
     Enums: {

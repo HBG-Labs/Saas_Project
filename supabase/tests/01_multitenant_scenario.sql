@@ -875,6 +875,158 @@ begin
 end
 $$;
 
+-- =============================================================================
+-- PARTIE 5 — Gestion des membres et invitations
+-- =============================================================================
+--
+-- Les trois règles que l'interface reflète en désactivant des actions. Elles ne
+-- valent que si le serveur refuse VRAIMENT : un bouton grisé se contourne à la
+-- console.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 5.1 — Élévation de privilèges
+-- -----------------------------------------------------------------------------
+do $$
+declare v_org uuid; v_raised boolean; v_member uuid;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  -- Personne ne modifie son propre rôle, pas même un propriétaire.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_owner');
+    set local role authenticated;
+
+    update public.organization_members set role = 'admin'
+    where organization_id = v_org and user_id = pg_temp.uid('a_owner');
+
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(v_raised, 'Nul ne peut modifier son propre role');
+
+  -- Seul un propriétaire peut en désigner un autre. Le manager a pourtant un
+  -- rôle élevé : c'est bien la nature de l'action qui est refusée, pas le niveau
+  -- de l'acteur.
+  select m.id into v_member
+  from public.organization_members m
+  where m.organization_id = v_org and m.user_id = pg_temp.uid('a_tech1');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_manager');
+    set local role authenticated;
+
+    update public.organization_members set role = 'owner' where id = v_member;
+
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised or (select role from public.organization_members where id = v_member) <> 'owner',
+    'Un non-proprietaire ne peut pas creer un proprietaire');
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 5.2 — Quota de membres
+-- -----------------------------------------------------------------------------
+do $$
+declare v_org uuid; v_raised boolean; v_actifs int;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select count(*) into v_actifs
+  from public.organization_members where organization_id = v_org and status = 'active';
+
+  perform pg_temp.ok(app.org_feature_limit(v_org, 'members') = 25,
+    'Le plan business plafonne a 25 membres');
+
+  -- Plutôt que de créer vingt-cinq comptes fictifs, on abaisse le plafond sous
+  -- l'effectif courant. Le trigger est le même ; seule la borne change. Tout est
+  -- annulé par le rollback final.
+  update public.plan_features set limit_value = v_actifs
+  where plan_code = 'business' and feature_key = 'members';
+
+  v_raised := false;
+  begin
+    insert into public.organization_members (organization_id, user_id, role, status, joined_at)
+    values (v_org, pg_temp.uid('b_tech'), 'technician', 'active', now());
+  exception when others then
+    v_raised := true;
+  end;
+
+  perform pg_temp.ok(v_raised, 'Le membre au-dela du quota est refuse');
+
+  update public.plan_features set limit_value = 25
+  where plan_code = 'business' and feature_key = 'members';
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 5.3 — Aperçu d'invitation
+-- -----------------------------------------------------------------------------
+do $$
+declare
+  v_org uuid; v_token uuid; v_id uuid;
+  v_name text; v_role public.org_role; v_count int;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  perform pg_temp.login('a_owner');
+  set local role authenticated;
+
+  insert into public.organization_invitations (organization_id, email, role, invited_by)
+  values (v_org, 'nouvelle.recrue@test.local', 'technician', pg_temp.uid('a_owner'))
+  returning id, token into v_id, v_token;
+
+  reset role;
+
+  -- L'invité n'est PAS membre : il ne peut pas lire `organizations`. C'est toute
+  -- la raison d'être de la fonction.
+  perform pg_temp.login('b_tech');
+  set local role authenticated;
+
+  select organization_name, invited_role into v_name, v_role
+  from public.get_invitation_preview(v_token);
+
+  select count(*) into v_count from public.organizations;
+
+  reset role;
+
+  perform pg_temp.ok(v_name = 'Fibre Atlantique SAS',
+    'L''apercu revele le nom de l''entreprise a un non-membre');
+  perform pg_temp.ok(v_role = 'technician', 'L''apercu revele le role propose');
+  perform pg_temp.ok(v_count = 1,
+    'L''apercu n''ouvre AUCUN acces supplementaire aux organisations');
+
+  -- Une invitation révoquée ne doit plus rien révéler.
+  update public.organization_invitations set status = 'revoked' where id = v_id;
+
+  perform pg_temp.login('b_tech');
+  set local role authenticated;
+  select count(*) into v_count from public.get_invitation_preview(v_token);
+  reset role;
+
+  perform pg_temp.ok(v_count = 0, 'Une invitation revoquee ne revele plus rien');
+
+  -- Un jeton inventé non plus — indistinguable du cas précédent, à dessein.
+  perform pg_temp.login('b_tech');
+  set local role authenticated;
+  select count(*) into v_count
+  from public.get_invitation_preview('00000000-0000-4000-8000-0000000000ff'::uuid);
+  reset role;
+
+  perform pg_temp.ok(v_count = 0, 'Un jeton inconnu ne revele rien');
+end
+$$;
+
 do $$
 begin
   raise notice '';

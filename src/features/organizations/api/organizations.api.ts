@@ -223,6 +223,38 @@ export async function revokeInvitation(invitationId: string): Promise<void> {
   );
 }
 
+export interface InvitationPreview {
+  organizationName: string;
+  role: OrgRole;
+  expiresAt: string;
+}
+
+/**
+ * Aperçu d'une invitation à partir de son jeton.
+ *
+ * Renvoie `null` pour un jeton inconnu, révoqué, déjà accepté ou expiré. Les
+ * quatre cas sont volontairement indistinguables côté serveur : distinguer
+ * « expirée » de « inexistante » confirmerait l'existence d'une invitation à qui
+ * essaierait des jetons au hasard.
+ *
+ * L'interface, elle, peut nuancer — mais seulement APRÈS acceptation refusée,
+ * où l'erreur remontée par `accept_organization_invitation` est explicite.
+ */
+export async function getInvitationPreview(token: string): Promise<InvitationPreview | null> {
+  const { data, error } = await supabase.rpc('get_invitation_preview', { p_token: token });
+
+  if (error) throw mapPostgrestError(error);
+
+  const row = data?.[0];
+  if (row === undefined) return null;
+
+  return {
+    organizationName: row.organization_name,
+    role: row.invited_role,
+    expiresAt: row.expires_at,
+  };
+}
+
 /**
  * Accepte une invitation et renvoie l'organisation rejointe.
  *

@@ -3,11 +3,13 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
+import { RequireOrganization, RequirePermission } from '@/components/guards';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
+import { PERMISSIONS } from '@/features/organizations';
 
 /**
  * Adapte un `import()` de page au format attendu par `lazy` de React Router.
@@ -82,6 +84,49 @@ export const routes: RouteObject[] = [
           {
             element: <ProtectedRoute />,
             children: [
+              /**
+               * Création d'entreprise et acceptation d'invitation vivent HORS de
+               * `RequireOrganization` : ce sont précisément les deux écrans
+               * destinés à qui n'en a pas encore. Les y placer produirait une
+               * redirection en boucle vers la création.
+               */
+              {
+                path: ROUTES.organizationNew,
+                lazy: lazyPage(() => import('@/pages/organization/CreateOrganizationPage')),
+              },
+              {
+                path: ROUTE_PATTERNS.invitation,
+                lazy: lazyPage(() => import('@/pages/organization/AcceptInvitationPage')),
+              },
+
+              {
+                element: <RequireOrganization />,
+                children: [
+                  {
+                    path: ROUTES.organization,
+                    lazy: lazyPage(() => import('@/pages/organization/OrganizationSettingsPage')),
+                  },
+                  {
+                    element: <RequirePermission permission={PERMISSIONS.memberView} />,
+                    children: [
+                      {
+                        path: ROUTES.organizationMembers,
+                        lazy: lazyPage(() => import('@/pages/organization/MembersPage')),
+                      },
+                    ],
+                  },
+                  {
+                    element: <RequirePermission permission={PERMISSIONS.billingView} />,
+                    children: [
+                      {
+                        path: ROUTES.organizationBilling,
+                        lazy: lazyPage(() => import('@/pages/organization/BillingPage')),
+                      },
+                    ],
+                  },
+                ],
+              },
+
               { path: ROUTES.dashboard, lazy: lazyPage(() => import('@/pages/DashboardPage')) },
               { path: ROUTES.favorites, lazy: lazyPage(() => import('@/pages/FavoritesPage')) },
               { path: ROUTES.history, lazy: lazyPage(() => import('@/pages/HistoryPage')) },

@@ -44,6 +44,38 @@ export const APP_NAV: readonly NavItem[] = [
   { to: ROUTES.references, label: 'Références', icon: 'book' },
 ];
 
+/**
+ * Section « Entreprise ».
+ *
+ * Séparée d'`APP_NAV` : le catalogue d'outils s'adresse à tout utilisateur,
+ * cette section aux seuls membres d'une organisation. Les mêler produirait un
+ * menu dont la moitié disparaît selon le contexte, sans que rien n'explique
+ * pourquoi.
+ *
+ * `permission` filtre à l'affichage (voir `useVisibleNavItems`) et ne protège
+ * rien : la route reste atteignable, mais la RLS n'y renverra aucune ligne.
+ */
+export const ORGANIZATION_NAV: readonly NavItem[] = [
+  {
+    to: ROUTES.organization,
+    label: 'Entreprise',
+    icon: 'building',
+    permission: 'organization.view',
+  },
+  {
+    to: ROUTES.organizationMembers,
+    label: 'Membres',
+    icon: 'users',
+    permission: 'member.view',
+  },
+  {
+    to: ROUTES.organizationBilling,
+    label: 'Facturation',
+    icon: 'credit-card',
+    permission: 'billing.view',
+  },
+];
+
 export const ACCOUNT_NAV: readonly NavItem[] = [
   { to: ROUTES.profile, label: 'Profil', icon: 'user' },
   { to: ROUTES.settings, label: 'Paramètres', icon: 'settings' },

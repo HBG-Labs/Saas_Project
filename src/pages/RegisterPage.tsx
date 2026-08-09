@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { FormError } from '@/features/auth/components/FormError';
+import { FormError } from '@/components/feedback/FormError';
 import { registerSchema, type RegisterValues } from '@/features/auth/schemas/auth.schema';
 
 export default function RegisterPage() {

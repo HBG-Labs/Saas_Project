@@ -21,6 +21,17 @@ export const ROUTES = {
   pricing: '/pricing',
   faq: '/faq',
 
+  /**
+   * Module professionnel. Chemins en français : ils sont lus par des
+   * techniciens sur le terrain, pas par des développeurs.
+   */
+  organizationNew: '/organisation/nouvelle',
+  organization: '/organisation',
+  organizationMembers: '/organisation/membres',
+  organizationBilling: '/organisation/facturation',
+  /** Acceptation d'une invitation — le jeton est dans l'URL. */
+  invitation: (token: string) => `/invitations/${token}`,
+
   dashboard: '/dashboard',
   tools: '/tools',
   favorites: '/favorites',
@@ -42,4 +53,5 @@ export const ROUTES = {
 export const ROUTE_PATTERNS = {
   tool: '/tools/:toolSlug',
   category: '/categories/:categorySlug',
+  invitation: '/invitations/:token',
 } as const;

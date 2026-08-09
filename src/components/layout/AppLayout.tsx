@@ -15,6 +15,7 @@ import {
 import { Kbd } from '@/components/ui/Kbd';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
+import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 
@@ -119,6 +120,7 @@ export function AppLayout() {
               >
                 <DropdownLabel>{user?.email ?? displayName}</DropdownLabel>
                 <DropdownSeparator />
+                <OrganizationSwitcher />
                 <DropdownItem asChild>
                   <Link to={ROUTES.profile}>
                     <User />

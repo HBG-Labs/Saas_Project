@@ -25,6 +25,7 @@ export {
 
 export {
   useOrganizationEntitlements,
+  useOrganizationSubscription,
   useUserEntitlements,
   type Entitlements,
 } from './hooks/useEntitlements';

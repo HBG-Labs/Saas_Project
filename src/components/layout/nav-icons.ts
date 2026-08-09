@@ -1,10 +1,13 @@
 import {
   BookOpen,
+  Building2,
   Clock,
+  CreditCard,
   LayoutDashboard,
   Settings,
   Star,
   User,
+  Users,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -28,6 +31,9 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   book: BookOpen,
   user: User,
   settings: Settings,
+  building: Building2,
+  users: Users,
+  'credit-card': CreditCard,
 };
 
 export const FALLBACK_NAV_ICON: LucideIcon = Wrench;

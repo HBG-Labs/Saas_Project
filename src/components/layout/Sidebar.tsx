@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
 
-import { ACCOUNT_NAV, APP_NAV, type NavItem } from '@/config/navigation';
+import { ACCOUNT_NAV, APP_NAV, ORGANIZATION_NAV, type NavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useVisibleNavItems } from '@/features/organizations';
 import { cn } from '@/lib/cn';
@@ -63,6 +63,7 @@ export function Sidebar({ collapsed = false, onNavigate, className }: SidebarPro
   // d'être grisées : un menu qui propose six sections dont quatre inaccessibles
   // décrit l'application, pas le travail de celui qui la regarde.
   const visibleNav = useVisibleNavItems(APP_NAV);
+  const visibleOrganizationNav = useVisibleNavItems(ORGANIZATION_NAV);
 
   return (
     <nav
@@ -74,6 +75,34 @@ export function Sidebar({ collapsed = false, onNavigate, className }: SidebarPro
           <SidebarLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </ul>
+
+      {/*
+        La section entière disparaît hors organisation — un intitulé
+        « Entreprise » surmontant le vide poserait plus de questions qu'il n'en
+        résout.
+      */}
+      {visibleOrganizationNav.length > 0 && (
+        <div>
+          <p
+            className={cn(
+              'text-subtle-foreground text-2xs mb-1 px-2.5 font-medium tracking-wider uppercase',
+              collapsed && 'sr-only',
+            )}
+          >
+            Entreprise
+          </p>
+          <ul className="space-y-0.5">
+            {visibleOrganizationNav.map((item) => (
+              <SidebarLink
+                key={item.to}
+                item={item}
+                collapsed={collapsed}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-auto">
         <p

@@ -73,6 +73,26 @@ export function useUserEntitlements(): Entitlements {
 }
 
 /**
+ * Abonnement brut de l'organisation, pour l'écran de facturation.
+ *
+ * Distinct de `useOrganizationEntitlements`, qui n'en retient que le plan
+ * effectif : afficher « votre abonnement est en retard de paiement » suppose de
+ * connaître le statut, que la réduction en `PlanCode` a précisément écarté.
+ *
+ * `null` est une réponse valide — une organisation sans abonnement est sur le
+ * plan gratuit, ce n'est pas une anomalie.
+ */
+export function useOrganizationSubscription(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.billing.organizationSubscription(organizationId ?? 'none'),
+    queryFn: () =>
+      organizationId === null ? null : getOrganizationSubscription(organizationId),
+    enabled: organizationId !== null,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
  * Droits attachés à une ORGANISATION (missions, équipes, clients, audit…).
  *
  * Distincts de ceux du compte : c'est l'entreprise qui souscrit `business`, pas

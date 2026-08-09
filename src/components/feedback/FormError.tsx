@@ -8,6 +8,11 @@ import { toAppError } from '@/lib/errors';
  * `role="alert"` : l'erreur est annoncée immédiatement au lecteur d'écran.
  * Sans cela, un utilisateur non voyant ne saurait pas pourquoi le formulaire
  * n'a pas abouti.
+ *
+ * Vit dans `components/feedback/` et non dans une feature : il n'affiche qu'une
+ * `AppError`, sans rien connaître du domaine. Le laisser sous `features/auth`
+ * obligeait les autres features à franchir une frontière d'architecture pour
+ * afficher une erreur de formulaire.
  */
 export function FormError({ error }: { error: unknown }) {
   if (!error) return null;
