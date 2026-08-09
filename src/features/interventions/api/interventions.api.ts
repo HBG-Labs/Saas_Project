@@ -7,6 +7,7 @@ import type {
   InterventionReport,
   InterventionTimeEntry,
   InterventionWithReport,
+  ReportForReview,
 } from '@/types/domain';
 
 /**
@@ -312,17 +313,35 @@ export async function rejectReport(reportId: string, reason: string): Promise<In
   );
 }
 
-/** Comptes rendus en attente de contrôle — l'écran « Contrôle » du §19. */
+/**
+ * Comptes rendus en attente de contrôle — l'écran « Contrôle » du §19.
+ *
+ * La mission et l'auteur sont joints : sans eux, la file présente des cartes
+ * interchangeables et le contrôleur doit ouvrir chacune pour savoir laquelle il
+ * regarde. Les deux peuvent revenir `null` — un chef d'équipe détient
+ * `intervention.review` sans `mission.view_all`, et `missions_select_scoped`
+ * masque alors la mission dont il contrôle pourtant le compte rendu. L'écran
+ * doit le supporter, pas le supposer impossible.
+ */
 export async function listReportsPendingReview(
   organizationId: string,
-): Promise<InterventionReport[]> {
+): Promise<ReportForReview[]> {
   return unwrap(
     supabase
       .from('intervention_reports')
-      .select('*')
+      .select(
+        `*, intervention:interventions(
+           id,
+           mission:missions(id, reference, title),
+           technician:organization_members(
+             *, profile:profiles(id, display_name, avatar_url)
+           )
+         )`,
+      )
       .eq('organization_id', organizationId)
       .eq('status', 'submitted')
-      .order('submitted_at', { ascending: true }),
+      .order('submitted_at', { ascending: true })
+      .returns<ReportForReview[]>(),
   );
 }
 

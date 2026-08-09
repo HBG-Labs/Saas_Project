@@ -97,6 +97,26 @@ export interface InterventionWithReport extends Intervention {
   attachments: InterventionAttachment[];
 }
 
+/**
+ * Compte rendu accompagné de ce qui permet de l'identifier.
+ *
+ * La file de contrôle en a besoin : sans mission ni auteur, elle présente des
+ * cartes interchangeables, et le contrôleur doit ouvrir chacune pour savoir
+ * laquelle il regarde.
+ *
+ * Les deux relations sont NULLABLES, et pas seulement par prudence de typage :
+ * un chef d'équipe détient `intervention.review` sans `mission.view_all`, et la
+ * policy `missions_select_scoped` peut donc lui masquer la mission dont il
+ * contrôle pourtant le compte rendu.
+ */
+export interface ReportForReview extends InterventionReport {
+  intervention: {
+    id: string;
+    mission: Pick<Mission, 'id' | 'reference' | 'title'> | null;
+    technician: MemberWithProfile | null;
+  } | null;
+}
+
 // ----------------------------------------------------------------- audit & facturation
 export type AuditLog = Tables<'audit_logs'>;
 export type Plan = Tables<'plans'>;

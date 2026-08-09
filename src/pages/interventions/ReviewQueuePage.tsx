@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -13,7 +14,7 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
 import { useReportsPendingReview, useReviewReport } from '@/features/interventions';
-import { useCurrentOrganization } from '@/features/organizations';
+import { memberDisplayName, useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 /**
@@ -63,19 +64,48 @@ export default function ReviewQueuePage() {
             <li key={report.id}>
               <Card>
                 <CardContent className="space-y-3 pt-5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <Link
-                      to={ROUTES.intervention(report.intervention_id)}
-                      className="text-primary text-sm font-medium hover:underline"
-                    >
-                      Voir l’intervention
-                    </Link>
-                    <span className="text-subtle-foreground font-mono text-xs tabular-nums">
-                      Soumis le{' '}
+                  {/*
+                    La carte se nomme.
+
+                    Elle n'offrait qu'un lien « Voir l'intervention » : une file
+                    de dix comptes rendus présentait dix cartes identiques, et
+                    il fallait toutes les ouvrir pour savoir laquelle on
+                    regardait.
+
+                    Mission et auteur peuvent manquer — un chef d'équipe
+                    contrôle sans détenir `mission.view_all`. On le dit alors,
+                    plutôt que d'afficher un vide.
+                  */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {report.intervention?.mission != null ? (
+                      <Badge variant="outline">{report.intervention.mission.reference}</Badge>
+                    ) : null}
+
+                    <span className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
+                      {report.intervention?.mission?.title ?? 'Mission non consultable'}
+                    </span>
+
+                    <span className="text-subtle-foreground shrink-0 font-mono text-xs tabular-nums">
                       {report.submitted_at !== null
                         ? new Date(report.submitted_at).toLocaleDateString('fr-FR')
                         : '—'}
                     </span>
+                  </div>
+
+                  <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <span>
+                      Par{' '}
+                      {report.intervention?.technician != null
+                        ? memberDisplayName(report.intervention.technician)
+                        : 'auteur non consultable'}
+                    </span>
+
+                    <Link
+                      to={ROUTES.intervention(report.intervention_id)}
+                      className="text-primary hover:underline"
+                    >
+                      Voir l’intervention
+                    </Link>
                   </div>
 
                   {report.work_description !== null ? (
@@ -88,7 +118,13 @@ export default function ReviewQueuePage() {
                     </p>
                   )}
 
-                  <div className="flex flex-wrap gap-2">
+                  {/*
+                    Les deux commandes se partagent la largeur sur téléphone :
+                    valider ou refuser se fait souvent depuis un véhicule, d'un
+                    pouce. La règle porte sur le conteneur pour couvrir aussi le
+                    déclencheur de `RejectDialog`, qui n'est pas rendu ici.
+                  */}
+                  <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
                     <Button
                       variant="primary"
                       size="sm"

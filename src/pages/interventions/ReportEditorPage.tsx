@@ -112,6 +112,12 @@ export default function ReportEditorPage() {
   const isEditable =
     isAuthor && (report === null || report.status === 'draft' || report.status === 'rejected');
 
+  /** Comparé au texte SERVEUR, jamais à un drapeau posé à la frappe : revenir sur sa saisie ne compte pas comme une modification. */
+  const hasUnsavedChanges =
+    report !== null &&
+    (workDescription !== (report.work_description ?? '') ||
+      observations !== (report.observations ?? ''));
+
   const save = () => {
     if (report === null) return;
     setError(null);
@@ -205,11 +211,34 @@ export default function ReportEditorPage() {
               />
 
               {isEditable ? (
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" onClick={save} disabled={saveReport.isPending}>
-                    {saveReport.isPending ? 'Enregistrement…' : 'Enregistrer'}
+                /*
+                  L'état de la saisie est dit explicitement.
+
+                  Le bouton avait la même apparence que le texte soit enregistré
+                  ou non. Sur un chantier, l'application passe en arrière-plan
+                  dès qu'on décroche, et rien ne signalait qu'un quart d'heure de
+                  rédaction n'était pas encore parti. Le bouton devient appelant
+                  tant qu'il reste quelque chose à envoyer, et l'indication
+                  d'enregistrement disparaît dès la frappe suivante — elle ne
+                  parlerait plus du texte affiché.
+                */
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant={hasUnsavedChanges ? 'primary' : 'outline'}
+                    className="w-full sm:w-auto"
+                    onClick={save}
+                    disabled={saveReport.isPending || !hasUnsavedChanges}
+                  >
+                    {saveReport.isPending
+                      ? 'Enregistrement…'
+                      : hasUnsavedChanges
+                        ? 'Enregistrer les modifications'
+                        : 'Enregistré'}
                   </Button>
-                  {savedAt !== null ? (
+
+                  {hasUnsavedChanges ? (
+                    <span className="text-warning text-xs">Modifications non enregistrées.</span>
+                  ) : savedAt !== null ? (
                     <span className="text-success text-xs">
                       Enregistré à {savedAt.toLocaleTimeString('fr-FR')}
                     </span>

@@ -103,53 +103,65 @@ export default function MissionsListPage() {
           }
         />
       ) : (
+        /*
+          Empilée plutôt qu'en une seule ligne.
+
+          Une ligne unique tenait sur un écran large et se repliait n'importe
+          comment sur un téléphone : la référence, le statut et la date
+          finissaient dispersées sur trois rangs, dans un ordre dicté par la
+          largeur des mots. Empiler impose l'ordre — ce que c'est, puis pour
+          qui, puis quand — et se lit pareil partout.
+        */
         <ul className="divide-border divide-y">
           {list.map((mission) => (
             <li key={mission.id}>
               <Link
                 to={ROUTES.mission(mission.id)}
-                className="hover:bg-surface-hover -mx-2 flex flex-wrap items-center gap-3 rounded-md px-2 py-3 transition-colors"
+                className="hover:bg-surface-hover -mx-2 block rounded-md px-2 py-3 transition-colors"
               >
-                <Badge variant="outline">{mission.reference}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{mission.reference}</Badge>
+                  <MissionPriorityBadge priority={mission.priority} />
+                  <MissionStatusBadge status={mission.status} />
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-foreground truncate text-sm font-medium">{mission.title}</p>
-                  <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                    {mission.customer !== null ? <span>{mission.customer.name}</span> : null}
-                    {mission.site !== null ? (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="size-3" aria-hidden="true" />
-                        {mission.site.name}
-                      </span>
-                    ) : null}
-                  </p>
+                  <span className="text-subtle-foreground ml-auto shrink-0 font-mono text-xs tabular-nums">
+                    {mission.scheduled_start !== null
+                      ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                        })
+                      : '—'}
+                  </span>
                 </div>
 
-                {mission.assigned_team !== null ? (
-                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <span
-                      aria-hidden="true"
-                      className="size-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          mission.assigned_team.color ?? 'var(--color-border-strong)',
-                      }}
-                    />
-                    {mission.assigned_team.name}
-                  </span>
-                ) : null}
+                <p className="text-foreground mt-1.5 truncate text-sm font-medium">
+                  {mission.title}
+                </p>
 
-                <span className="text-subtle-foreground font-mono text-xs tabular-nums">
-                  {mission.scheduled_start !== null
-                    ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                      })
-                    : '—'}
-                </span>
+                <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  {mission.customer !== null ? <span>{mission.customer.name}</span> : null}
 
-                <MissionPriorityBadge priority={mission.priority} />
-                <MissionStatusBadge status={mission.status} />
+                  {mission.site !== null ? (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="size-3 shrink-0" aria-hidden="true" />
+                      {mission.site.name}
+                    </span>
+                  ) : null}
+
+                  {mission.assigned_team !== null ? (
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        aria-hidden="true"
+                        className="size-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor:
+                            mission.assigned_team.color ?? 'var(--color-border-strong)',
+                        }}
+                      />
+                      {mission.assigned_team.name}
+                    </span>
+                  ) : null}
+                </div>
               </Link>
             </li>
           ))}
