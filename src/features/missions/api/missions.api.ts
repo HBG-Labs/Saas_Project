@@ -41,6 +41,7 @@ export interface MissionFilters {
   priority?: readonly MissionPriority[];
   teamId?: string;
   memberId?: string;
+  customerId?: string;
   categoryId?: string;
   /** Bornes sur `scheduled_start`, au format ISO. */
   from?: string;
@@ -62,6 +63,7 @@ export async function listMissions(
   if (filters.priority?.length) query = query.in('priority', filters.priority);
   if (filters.teamId) query = query.eq('assigned_team_id', filters.teamId);
   if (filters.memberId) query = query.eq('assigned_user_id', filters.memberId);
+  if (filters.customerId) query = query.eq('customer_id', filters.customerId);
   if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
   if (filters.from) query = query.gte('scheduled_start', filters.from);
   if (filters.to) query = query.lte('scheduled_start', filters.to);

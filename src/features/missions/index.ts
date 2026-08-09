@@ -32,8 +32,17 @@ export {
   useUpdateMission,
 } from './hooks/useMissions';
 
+export {
+  ACTIVE_STATUSES,
+  countActiveFilters,
+  EMPTY_MISSION_FILTERS,
+  toMissionQuery,
+  type MissionListFilters,
+} from './mission-filters';
+
 export { AssignMissionDialog } from './components/AssignMissionDialog';
 export { MissionEditDialog } from './components/MissionEditDialog';
+export { MissionFiltersBar } from './components/MissionFiltersBar';
 export { MissionFormFields } from './components/MissionFormFields';
 export { MissionPriorityBadge, MissionStatusBadge } from './components/MissionBadges';
 export { MISSION_PRIORITY_LABELS } from './priority-labels';

@@ -1,4 +1,4 @@
-import { ClipboardList, MapPin, Plus, Search } from 'lucide-react';
+import { ClipboardList, MapPin, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -7,38 +7,19 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
-  MISSION_STATUS_LABELS,
+  countActiveFilters,
+  EMPTY_MISSION_FILTERS,
+  MissionFiltersBar,
   MissionPriorityBadge,
   MissionStatusBadge,
+  toMissionQuery,
   useMissions,
 } from '@/features/missions';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
-import type { MissionStatus } from '@/types/database';
-
-/**
- * Les états terminaux sont exclus par défaut.
- *
- * Une liste de missions sert à savoir quoi faire ensuite. Y laisser les dossiers
- * clos la fait grossir indéfiniment sans jamais rien apporter : au bout d'un an,
- * l'utile se noie dans l'archive. Le filtre reste accessible pour aller les
- * chercher.
- */
-const ACTIVE_STATUSES: readonly MissionStatus[] = [
-  'draft',
-  'assigned',
-  'accepted',
-  'in_progress',
-  'completed',
-  'submitted',
-  'rejected',
-  'approved',
-];
 
 export default function MissionsListPage() {
   useDocumentTitle('Missions');
@@ -47,16 +28,12 @@ export default function MissionsListPage() {
   const { can } = usePermission();
   const organizationId = organization?.id ?? null;
 
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-
-  const missions = useMissions(organizationId, {
-    ...(search.trim() !== '' ? { search } : {}),
-    status: status === '' ? ACTIVE_STATUSES : [status as MissionStatus],
-  });
+  const [filters, setFilters] = useState(EMPTY_MISSION_FILTERS);
+  const missions = useMissions(organizationId, toMissionQuery(filters));
 
   const canCreate = can(PERMISSIONS.missionCreate);
   const canViewAll = can(PERMISSIONS.missionViewAll);
+  const activeFilters = countActiveFilters(filters);
   const list = missions.data ?? [];
 
   return (
@@ -80,29 +57,12 @@ export default function MissionsListPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_14rem]">
-        <Input
-          label="Rechercher"
-          hideLabel
-          placeholder="Intitulé, référence ou client…"
-          leadingIcon={<Search className="size-4" aria-hidden="true" />}
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-          }}
-        />
-
-        <Select
-          options={[
-            { value: '', label: 'En cours (par défaut)' },
-            ...Object.entries(MISSION_STATUS_LABELS).map(([value, label]) => ({ value, label })),
-          ]}
-          value={status}
-          onValueChange={setStatus}
-          label="Statut"
-          hideLabel
-        />
-      </div>
+      <MissionFiltersBar
+        organizationId={organizationId}
+        value={filters}
+        onChange={setFilters}
+        showAdvanced={canViewAll}
+      />
 
       {missions.isPending ? (
         <ListSkeleton />
@@ -116,9 +76,22 @@ export default function MissionsListPage() {
       ) : list.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title={search.trim() === '' && status === '' ? 'Aucune mission en cours' : 'Aucun résultat'}
+          title={activeFilters === 0 ? 'Aucune mission en cours' : 'Aucun résultat'}
+          action={
+            activeFilters > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFilters(EMPTY_MISSION_FILTERS);
+                }}
+              >
+                Réinitialiser les filtres
+              </Button>
+            ) : null
+          }
           description={
-            search.trim() !== '' || status !== ''
+            activeFilters > 0
               ? 'Aucune mission ne correspond à ces critères.'
               : canCreate
                 ? 'Créez une mission pour l’affecter à une équipe et suivre son avancement jusqu’à la clôture.'
