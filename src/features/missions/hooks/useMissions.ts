@@ -7,6 +7,7 @@ import {
   assignMission,
   changeMissionStatus,
   createMission,
+  deleteMission,
   getMission,
   listMissionAssignments,
   listMissionHistory,
@@ -115,6 +116,17 @@ export function useChangeMissionStatus(missionId: string) {
 
   return useMutation({
     mutationFn: (status: MissionStatus) => changeMissionStatus(missionId, status),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+    },
+  });
+}
+
+export function useDeleteMission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (missionId: string) => deleteMission(missionId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.missions.all });
     },

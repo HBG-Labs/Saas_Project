@@ -63,11 +63,53 @@ export default function CategoryPage() {
       </div>
 
       {tools.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((tool) => (
-            <ToolCard key={tool.slug} tool={tool} />
-          ))}
-        </div>
+        category.slug === 'general' ? (
+          <div className="space-y-8">
+            {/* Sous-catégorie 1 : Calculatrices */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5 border-b border-border/80 pb-2">
+                <span className="rounded-lg bg-primary/10 px-3 py-1 font-mono text-xs font-extrabold text-primary">
+                  🧮 Calculatrices
+                </span>
+                <span className="text-xs text-muted-foreground font-medium">
+                  Calculatrices scientifiques, trigonométrie et fonctions mathématiques
+                </span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {tools
+                  .filter((t) => t.subcategory === 'calculator' || !t.subcategory)
+                  .map((tool) => (
+                    <ToolCard key={tool.slug} tool={tool} />
+                  ))}
+              </div>
+            </div>
+
+            {/* Sous-catégorie 2 : Convertisseurs */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5 border-b border-border/80 pb-2">
+                <span className="rounded-lg bg-info/10 px-3 py-1 font-mono text-xs font-extrabold text-info">
+                  🔄 Convertisseurs
+                </span>
+                <span className="text-xs text-muted-foreground font-medium">
+                  Convertisseurs d&apos;unités techniques, de puissance et de décibels
+                </span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {tools
+                  .filter((t) => t.subcategory === 'converter')
+                  .map((tool) => (
+                    <ToolCard key={tool.slug} tool={tool} />
+                  ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {tools.map((tool) => (
+              <ToolCard key={tool.slug} tool={tool} />
+            ))}
+          </div>
+        )
       ) : (
         <EmptyState
           icon={Icon}

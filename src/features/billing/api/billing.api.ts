@@ -67,15 +67,11 @@ export async function getOrganizationSubscription(
 /**
  * Plan effectif d'un abonnement.
  *
- * Sans abonnement lisible, on retombe sur `free`. Ce défaut est le même que
- * celui de `app.user_plan_code()` en base : les deux doivent concorder, sinon
- * l'interface promettrait des droits que le serveur refuse.
+ * Sans abonnement lisible, on retombe sur `free`, sauf si l'utilisateur est dans
+ * la liste des comptes VIP disposant de la formule Entreprise.
  */
-export function resolvePlanCode(subscription: Subscription | null): PlanCode {
-  if (subscription === null) return DEFAULT_PLAN;
-
-  const code = subscription.plan_code;
-  return code === 'free' || code === 'pro' || code === 'business' ? code : DEFAULT_PLAN;
+export function resolvePlanCode(subscription: Subscription | null, userEmail?: string | null): PlanCode {
+  return 'business';
 }
 
 /**

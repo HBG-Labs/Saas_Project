@@ -77,7 +77,7 @@ export function Modal({
             </div>
 
             <Dialog.Close
-              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mt-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors"
+              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mt-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer"
               aria-label="Fermer"
             >
               <X className="size-4" aria-hidden="true" />

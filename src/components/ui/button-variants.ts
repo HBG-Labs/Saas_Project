@@ -12,10 +12,10 @@ import { cva } from 'class-variance-authority';
  */
 export const buttonVariants = cva(
   [
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap',
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap cursor-pointer select-none',
     'transition-colors duration-[120ms] ease-out-expo',
-    'disabled:pointer-events-none disabled:opacity-50',
-    '[&_svg]:pointer-events-none [&_svg]:shrink-0',
+    'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
+    '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_*]:pointer-events-none',
   ],
   {
     variants: {
@@ -26,7 +26,9 @@ export const buttonVariants = cva(
         outline:
           'border border-border-strong bg-surface text-foreground hover:bg-surface-hover active:bg-border',
         ghost: 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
-        danger: 'bg-error text-white hover:opacity-90 active:opacity-80',
+        danger: 'bg-red-600/90 text-white hover:bg-red-600 active:bg-red-700 shadow-xs',
+        'danger-outline':
+          'border border-red-500/60 bg-red-600/35 text-white hover:bg-red-600/50 hover:border-red-500/80 active:bg-red-600/60 transition-all shadow-xs font-medium',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {

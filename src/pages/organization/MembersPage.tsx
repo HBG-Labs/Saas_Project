@@ -9,12 +9,14 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/features/auth';
 import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
 import {
+  AddMemberDialog,
   InvitationLink,
   InviteMemberDialog,
   MemberQuotaBar,
   MemberRow,
   PERMISSIONS,
   RoleBadge,
+  sortMembersByRole,
   useCurrentOrganization,
   useInvitations,
   useMembers,
@@ -60,7 +62,9 @@ export default function MembersPage() {
   const canInvite = can(PERMISSIONS.memberInvite);
   const viewerIsOwner = role === 'owner';
 
-  const activeMembers = (members.data ?? []).filter((member) => member.status !== 'removed');
+  const activeMembers = sortMembersByRole(
+    (members.data ?? []).filter((member) => member.status !== 'removed'),
+  );
 
   /**
    * Un seul propriétaire actif signifie que sa ligne est verrouillée : le
@@ -84,11 +88,21 @@ export default function MembersPage() {
         description="Qui appartient à l’entreprise, et avec quels droits."
         actions={
           canInvite && organizationId !== null ? (
-            <InviteMemberDialog
-              organizationId={organizationId}
-              viewerIsOwner={viewerIsOwner}
-              quotaReached={quotaReached}
-            />
+            <div className="flex items-center gap-2">
+              <AddMemberDialog
+                organizationId={organizationId}
+                viewerIsOwner={viewerIsOwner}
+                quotaReached={quotaReached}
+                onMemberAdded={() => {
+                  void members.refetch();
+                }}
+              />
+              <InviteMemberDialog
+                organizationId={organizationId}
+                viewerIsOwner={viewerIsOwner}
+                quotaReached={quotaReached}
+              />
+            </div>
           ) : null
         }
       />

@@ -73,3 +73,26 @@ export function memberDisplayName(member: MemberWithProfile): string {
 
   return 'Membre';
 }
+
+const ROLE_RANK: Record<OrgRole, number> = {
+  owner: 1,
+  admin: 2,
+  manager: 3,
+  team_leader: 4,
+  technician: 5,
+  employee: 6,
+};
+
+/**
+ * Trie les membres par hiérarchie de rôle (Propriétaire en haut, puis Administrateur, etc.).
+ */
+export function sortMembersByRole(members: readonly MemberWithProfile[]): MemberWithProfile[] {
+  return [...members].sort((a, b) => {
+    const rankA = ROLE_RANK[a.role] ?? 99;
+    const rankB = ROLE_RANK[b.role] ?? 99;
+    if (rankA !== rankB) return rankA - rankB;
+    const nameA = memberDisplayName(a);
+    const nameB = memberDisplayName(b);
+    return nameA.localeCompare(nameB, 'fr');
+  });
+}

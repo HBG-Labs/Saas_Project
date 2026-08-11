@@ -7,6 +7,7 @@ import type { Team } from '@/types/domain';
 import {
   archiveTeam,
   createTeam,
+  deleteTeam,
   getTeamWithMembers,
   listOrganizationTeamMemberships,
   listTeams,
@@ -98,6 +99,17 @@ export function useArchiveTeam() {
 
   return useMutation({
     mutationFn: archiveTeam,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.teams.all });
+    },
+  });
+}
+
+export function useDeleteTeam() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (teamId: string) => deleteTeam(teamId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.teams.all });
     },

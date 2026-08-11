@@ -30,11 +30,14 @@ export interface ToolDefinition {
   /** Identifiant stable, en kebab-case. Doit correspondre à `tools.slug` en base. */
   slug: string;
   category: ToolCategorySlug;
+  subcategory?: 'calculator' | 'converter';
   title: string;
   description: string;
   keywords: readonly string[];
   /** Nom d'icône lucide (ex. « calculator »). Une chaîne, pour ne pas coupler le registry à une librairie d'icônes. */
   icon: string;
+  /** Priorité d'affichage explicite (un nombre plus petit apparaît en premier). */
+  order?: number;
   /** Toujours `lazy(() => import('./MonOutilTool'))`. */
   Component: LazyExoticComponent<ComponentType>;
 }

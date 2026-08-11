@@ -1,4 +1,4 @@
-import { Archive, Building2, Plus, Search } from 'lucide-react';
+import { Archive, Building2, MapPin, Phone, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -128,25 +128,43 @@ export default function CustomersListPage() {
           }
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((customer) => (
-            <Card key={customer.id} className="transition-colors hover:border-border-strong">
-              <CardContent className="pt-5">
-                <Link to={ROUTES.customer(customer.id)} className="block space-y-2">
+            <Card
+              key={customer.id}
+              className="group transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+            >
+              <CardContent className="p-5">
+                <Link to={ROUTES.customer(customer.id)} className="block space-y-3">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-foreground text-sm font-semibold">{customer.name}</span>
-                    <Badge variant="outline">{customer.reference}</Badge>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-hover text-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        <Building2 className="size-4" />
+                      </div>
+                      <span className="text-foreground truncate text-sm font-semibold group-hover:text-primary transition-colors">
+                        {customer.name}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="font-mono text-xs shrink-0">
+                      {customer.reference}
+                    </Badge>
                   </div>
 
-                  <p className="text-muted-foreground text-xs">
-                    {[customer.postal_code, customer.city]
-                      .filter((part) => part !== null && part !== '')
-                      .join(' ') || 'Ville non renseignée'}
-                  </p>
+                  <div className="space-y-1 pt-1 text-xs">
+                    <p className="text-muted-foreground flex items-center gap-1.5 truncate">
+                      <MapPin className="text-subtle-foreground size-3.5 shrink-0" aria-hidden="true" />
+                      {[customer.postal_code, customer.city]
+                        .filter((part) => part !== null && part !== '')
+                        .join(' ') || 'Ville non renseignée'}
+                    </p>
 
-                  {customer.phone !== null && customer.phone !== '' ? (
-                    <p className="text-subtle-foreground font-mono text-xs">{customer.phone}</p>
-                  ) : null}
+                    {customer.phone !== null && customer.phone !== '' ? (
+                      <p className="text-subtle-foreground flex items-center gap-1.5 font-mono">
+                        <Phone className="text-subtle-foreground size-3.5 shrink-0" aria-hidden="true" />
+                        {customer.phone}
+                      </p>
+                    ) : null}
+                  </div>
                 </Link>
               </CardContent>
             </Card>

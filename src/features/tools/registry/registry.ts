@@ -46,9 +46,14 @@ export function hasTool(slug: string): boolean {
   return registry.has(slug);
 }
 
-/** Tous les outils enregistrés, triés par titre. */
+/** Tous les outils enregistrés, triés par ordre explicite puis par titre. */
 export function listTools(): ToolDefinition[] {
-  return [...registry.values()].sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+  return [...registry.values()].sort((a, b) => {
+    const orderA = a.order ?? 99;
+    const orderB = b.order ?? 99;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.title.localeCompare(b.title, 'fr');
+  });
 }
 
 export function listToolsByCategory(category: ToolCategorySlug): ToolDefinition[] {

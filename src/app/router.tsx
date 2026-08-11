@@ -11,44 +11,26 @@ import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
 import { FEATURES } from '@/features/billing';
 import { PERMISSIONS } from '@/features/organizations';
+import DashboardPage from '@/pages/DashboardPage';
 
-/**
- * Adapte un `import()` de page au format attendu par `lazy` de React Router.
- * Chaque page devient son propre chunk : le navigateur ne télécharge que le
- * code de la route visitée.
- */
+// Imports directs des pages principales pour un rechargement HMR instantané
+import LandingPage from '@/pages/LandingPage';
+
 function lazyPage(load: () => Promise<{ default: ComponentType }>) {
   return async () => ({ Component: (await load()).default });
 }
 
-/**
- * Arbre de routes, exporté séparément du routeur pour que les tests puissent
- * reconstruire un routeur mémoire à partir des MÊMES définitions.
- *
- * Trois niveaux :
- *   • `RootLayout` — sans interface propre, héberge ce qui doit être disponible
- *     partout (palette de commandes). Placé DANS le routeur car `CommandBar`
- *     dépend de `useNavigate`.
- *   • `PublicLayout` — landing et authentification : en-tête marketing, pied de
- *     page, corps de texte à 16 px.
- *   • `AppLayout` — application connectée : barre latérale, navigation basse
- *     mobile, densité à 14 px.
- *
- * Séparer les deux ossatures évite le composant unique truffé de conditions qui
- * finit par charger le code du tableau de bord sur la page d'accueil.
- */
 export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     errorElement: <ErrorFallback error={null} />,
-    // Requis dès qu'une route descendante est paresseuse : sans lui, React
-    // Router n'a rien à afficher pendant la résolution initiale du module.
     hydrateFallbackElement: <LoadingScreen />,
     children: [
       {
         element: <PublicLayout />,
         children: [
-          { index: true, lazy: lazyPage(() => import('@/pages/LandingPage')) },
+          // LandingPage en import direct pour HMR instantané
+          { index: true, Component: LandingPage },
           { path: ROUTES.features, lazy: lazyPage(() => import('@/pages/FeaturesPage')) },
           { path: ROUTES.pricing, lazy: lazyPage(() => import('@/pages/PricingPage')) },
           { path: ROUTES.faq, lazy: lazyPage(() => import('@/pages/FaqPage')) },
@@ -65,8 +47,6 @@ export const routes: RouteObject[] = [
             ],
           },
 
-          // Accessible connecté ou non : le lien e-mail peut être ouvert dans un
-          // navigateur sans session.
           { path: ROUTES.authCallback, lazy: lazyPage(() => import('@/pages/AuthCallbackPage')) },
         ],
       },
@@ -74,23 +54,19 @@ export const routes: RouteObject[] = [
       {
         element: <AppLayout />,
         children: [
-          // Catalogue public : consultable sans compte, mais dans l'ossature
-          // applicative — un visiteur qui explore les outils est déjà dans le
-          // produit, pas dans la vitrine.
           { path: ROUTES.tools, lazy: lazyPage(() => import('@/pages/ToolsPage')) },
           { path: ROUTE_PATTERNS.tool, lazy: lazyPage(() => import('@/pages/ToolDetailPage')) },
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
+          { path: ROUTES.equipment, lazy: lazyPage(() => import('@/pages/equipment/EquipmentPage')) },
+          { path: ROUTES.quotes, lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')) },
+          // DashboardPage en import direct pour HMR instantané
+          { path: ROUTES.dashboard, Component: DashboardPage },
+          { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
 
           {
             element: <ProtectedRoute />,
             children: [
-              /**
-               * Création d'entreprise et acceptation d'invitation vivent HORS de
-               * `RequireOrganization` : ce sont précisément les deux écrans
-               * destinés à qui n'en a pas encore. Les y placer produirait une
-               * redirection en boucle vers la création.
-               */
               {
                 path: ROUTES.organizationNew,
                 lazy: lazyPage(() => import('@/pages/organization/CreateOrganizationPage')),
@@ -103,13 +79,6 @@ export const routes: RouteObject[] = [
               {
                 element: <RequireOrganization />,
                 children: [
-                  /**
-                   * Le module Clients cumule DEUX conditions : la formule de
-                   * l'entreprise doit l'inclure, et le rôle doit permettre de
-                   * consulter. Sans la première, les policies renverraient un
-                   * ensemble vide — une page accessible et désespérément muette
-                   * sur la raison.
-                   */
                   {
                     element: <RequirePlan feature={FEATURES.customers} label="Le module Clients" />,
                     children: [
@@ -122,13 +91,6 @@ export const routes: RouteObject[] = [
                           },
                         ],
                       },
-                      /**
-                       * La fiche n'exige PAS `customer.view` : un technicien
-                       * doit atteindre celle du client de sa mission, et la
-                       * policy `customers_select` l'y autorise déjà par sa
-                       * seconde branche. Exiger la permission ici lui fermerait
-                       * une porte que le serveur lui ouvre.
-                       */
                       {
                         path: ROUTE_PATTERNS.customer,
                         lazy: lazyPage(() => import('@/pages/customers/CustomerDetailPage')),
@@ -136,15 +98,6 @@ export const routes: RouteObject[] = [
                     ],
                   },
 
-                  /**
-                   * Missions : formule seule, SANS `RequirePermission`.
-                   *
-                   * Un technicien n'a pas `mission.view_all` et doit pourtant
-                   * atteindre ses propres missions — la policy
-                   * `missions_select_scoped` les lui sert par ses branches
-                   * « assigné » et « équipe ». Poser une permission ici lui
-                   * fermerait la porte de son propre travail.
-                   */
                   {
                     element: <RequirePlan feature={FEATURES.missions} label="Le module Missions" />,
                     children: [
@@ -168,12 +121,6 @@ export const routes: RouteObject[] = [
                     ],
                   },
 
-                  /**
-                   * Interventions : formule `interventions`, sans permission.
-                   * Comme pour les missions, le technicien doit atteindre la
-                   * sienne, et `interventions_select_scoped` la lui sert par sa
-                   * branche « technicien ».
-                   */
                   {
                     element: (
                       <RequirePlan feature={FEATURES.interventions} label="Le suivi d’intervention" />
@@ -187,11 +134,6 @@ export const routes: RouteObject[] = [
                         path: ROUTE_PATTERNS.interventionReport,
                         lazy: lazyPage(() => import('@/pages/interventions/ReportEditorPage')),
                       },
-                      /**
-                       * La file de contrôle exige `intervention.review` : elle
-                       * n'a aucun sens pour qui ne contrôle pas, et la policy
-                       * lui renverrait de toute façon une liste vide.
-                       */
                       {
                         element: (
                           <RequirePermission permission={PERMISSIONS.interventionReview} />
@@ -206,12 +148,6 @@ export const routes: RouteObject[] = [
                     ],
                   },
 
-                  /**
-                   * Équipes : formule + permission, comme Clients. Mais la
-                   * FICHE reste elle aussi derrière `team.view` — contrairement
-                   * aux clients, aucune branche de la RLS n'ouvre une équipe à
-                   * qui n'a pas cette permission.
-                   */
                   {
                     element: <RequirePlan feature={FEATURES.teams} label="Le module Équipes" />,
                     children: [
@@ -271,7 +207,6 @@ export const routes: RouteObject[] = [
                 ],
               },
 
-              { path: ROUTES.dashboard, lazy: lazyPage(() => import('@/pages/DashboardPage')) },
               { path: ROUTES.favorites, lazy: lazyPage(() => import('@/pages/FavoritesPage')) },
               { path: ROUTES.history, lazy: lazyPage(() => import('@/pages/HistoryPage')) },
               { path: ROUTES.profile, lazy: lazyPage(() => import('@/pages/ProfilePage')) },

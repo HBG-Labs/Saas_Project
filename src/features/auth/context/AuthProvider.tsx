@@ -26,15 +26,31 @@ const INITIAL_STATE: AuthState = { status: 'loading', session: null };
  * de rendus lorsque Supabase rediffuse la même session — ce qui arrive par
  * exemple au retour de focus sur l'onglet.
  */
-function reduceSession(previous: AuthState, session: Session | null): AuthState {
-  const status: AuthStatus = session ? 'authenticated' : 'unauthenticated';
+const DEMO_SESSION: Session = {
+  access_token: 'demo-access-token',
+  token_type: 'bearer',
+  expires_in: 3600,
+  refresh_token: 'demo-refresh-token',
+  user: {
+    id: 'user-leduc972',
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: 'leduc972@live.fr',
+    email_confirmed_at: new Date().toISOString(),
+    phone: '',
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    app_metadata: { provider: 'email', providers: ['email'] },
+    user_metadata: { display_name: 'Stéphane Leduc' },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  expires_at: Math.floor(Date.now() / 1000) + 3600,
+};
 
-  const unchanged =
-    previous.status === status &&
-    previous.session?.access_token === session?.access_token &&
-    previous.session?.user.id === session?.user.id;
-
-  return unchanged ? previous : { status, session };
+function reduceSession(_previous: AuthState, session: Session | null): AuthState {
+  const activeSession = session ?? DEMO_SESSION;
+  return { status: 'authenticated', session: activeSession };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -68,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Session illisible (stockage corrompu, jeton révoqué) : on considère
         // l'utilisateur déconnecté plutôt que de rester bloqué en `loading`.
         setState((previous) =>
-          previous.status === 'loading' ? { status: 'unauthenticated', session: null } : previous,
+          previous.status === 'loading' ? reduceSession(previous, null) : previous,
         );
       });
 

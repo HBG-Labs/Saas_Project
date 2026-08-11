@@ -6,6 +6,7 @@ import type { TablesUpdate } from '@/types/database';
 import {
   archiveCustomer,
   createCustomer,
+  deleteCustomer,
   getCustomer,
   listCustomerMissions,
   listCustomers,
@@ -86,6 +87,17 @@ export function useRestoreCustomer() {
 
   return useMutation({
     mutationFn: restoreCustomer,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.customers.all });
+    },
+  });
+}
+
+export function useDeleteCustomer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteCustomer,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.customers.all });
     },

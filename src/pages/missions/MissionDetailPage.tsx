@@ -1,5 +1,6 @@
-import { ArrowLeft, ClipboardList, KeyRound, MapPin } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { ArrowLeft, ClipboardList, KeyRound, MapPin, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -7,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
@@ -16,6 +18,7 @@ import {
   MissionPriorityBadge,
   MissionStatusBadge,
   MissionTransitions,
+  useDeleteMission,
   useMission,
   useMissionAssignments,
   useMissionHistory,
@@ -33,6 +36,7 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function MissionDetailPage() {
   const { missionId } = useParams<{ missionId: string }>();
+  const navigate = useNavigate();
   const { organization, membership } = useCurrentOrganization();
   const { can, role } = usePermission();
 
@@ -41,6 +45,9 @@ export default function MissionDetailPage() {
   const assignments = useMissionAssignments(missionId);
   const teams = useTeams(organization?.id ?? null);
   const members = useMembers(organization?.id ?? null);
+  const deleteMission = useDeleteMission();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useDocumentTitle(mission.data?.reference ?? 'Mission');
 
@@ -69,7 +76,7 @@ export default function MissionDetailPage() {
       <EmptyState
         icon={ClipboardList}
         title="Mission introuvable"
-        description="Cette mission n’existe pas, ou ne vous est pas accessible."
+        description="Cette mission n’existe pas, ou vous n’avez pas le droit d’y accéder."
         action={
           <Button asChild variant="outline" size="sm">
             <Link to={ROUTES.missions}>Retour aux missions</Link>
@@ -96,6 +103,14 @@ export default function MissionDetailPage() {
   const isAssignee = isNamedAssignee || isInAssignedTeam;
 
   const canAssign = can(PERMISSIONS.missionAssign);
+  const canDelete = can(PERMISSIONS.missionDelete) || can(PERMISSIONS.missionUpdate);
+
+  const handleDelete = async () => {
+    if (!missionId) return;
+    await deleteMission.mutateAsync(missionId);
+    setIsDeleteModalOpen(false);
+    void navigate(ROUTES.missions);
+  };
 
   return (
     <div className="space-y-6">
@@ -135,6 +150,52 @@ export default function MissionDetailPage() {
                 currentTeamId={data.assigned_team_id}
                 currentMemberId={data.assigned_user_id}
               />
+            ) : null}
+
+            {canDelete ? (
+              <>
+                <div className="h-4 w-px bg-border mx-1" aria-hidden="true" />
+                <Button
+                  variant="danger-outline"
+                  size="sm"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  disabled={deleteMission.isPending}
+                >
+                  <Trash2 className="size-4" />
+                  Supprimer
+                </Button>
+
+                <Modal
+                  open={isDeleteModalOpen}
+                  onOpenChange={setIsDeleteModalOpen}
+                  title="Supprimer la mission"
+                  description={`Êtes-vous sûr de vouloir supprimer définitivement la mission "${data.title}" (${data.reference}) ?`}
+                  footer={
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsDeleteModalOpen(false)}
+                        disabled={deleteMission.isPending}
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        variant="danger-outline"
+                        size="sm"
+                        onClick={() => void handleDelete()}
+                        disabled={deleteMission.isPending}
+                      >
+                        {deleteMission.isPending ? 'Suppression…' : 'Supprimer la mission'}
+                      </Button>
+                    </div>
+                  }
+                >
+                  <p className="text-muted-foreground text-sm">
+                    Cette action est irréversible. La mission et son historique seront définitivement retirés de votre entreprise.
+                  </p>
+                </Modal>
+              </>
             ) : null}
           </div>
         }

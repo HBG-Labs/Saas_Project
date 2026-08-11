@@ -15,16 +15,25 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 type Filter = ToolCategorySlug | 'all';
 
+const LEGACY_SLUG_MAP: Record<string, ToolCategorySlug> = {
+  reseaux: 'networking',
+  electricite: 'electrical',
+  telecoms: 'telecom',
+  fibre: 'fiber-optics',
+};
+
 export default function ToolsPage() {
   useDocumentTitle('Catalogue des outils');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
 
-  // Catégorie lue depuis les paramètres d'URL (ex: ?category=fiber-optics)
-  const categoryParam = searchParams.get('category') as ToolCategorySlug | null;
-  const filter: Filter = categoryParam && CATEGORY_METADATA.some((c) => c.slug === categoryParam)
-    ? categoryParam
-    : 'all';
+  // Catégorie lue depuis les paramètres d'URL (ex: ?category=fiber-optics ou ?cat=fibre)
+  const rawParam = searchParams.get('category') ?? searchParams.get('cat');
+  const resolvedSlug = rawParam ? (LEGACY_SLUG_MAP[rawParam] ?? rawParam) : null;
+  const filter: Filter =
+    resolvedSlug && CATEGORY_METADATA.some((c) => c.slug === resolvedSlug)
+      ? (resolvedSlug as ToolCategorySlug)
+      : 'all';
 
   const handleFilterChange = (newFilter: Filter) => {
     if (newFilter === 'all') {

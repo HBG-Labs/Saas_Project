@@ -1,5 +1,6 @@
-import { Archive, ArrowLeft, Pencil, Users } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { Archive, ArrowLeft, Pencil, Trash2, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -7,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
@@ -15,17 +17,27 @@ import {
   useMembers,
   usePermission,
 } from '@/features/organizations';
-import { TeamFormDialog, TeamMembersPanel, useArchiveTeam, useTeam } from '@/features/teams';
+import {
+  TeamFormDialog,
+  TeamMembersPanel,
+  useArchiveTeam,
+  useDeleteTeam,
+  useTeam,
+} from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
+  const navigate = useNavigate();
   const { organization, membership } = useCurrentOrganization();
   const { can } = usePermission();
 
   const team = useTeam(teamId);
   const members = useMembers(organization?.id ?? null);
   const archiveTeam = useArchiveTeam();
+  const deleteTeam = useDeleteTeam();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useDocumentTitle(team.data?.name ?? 'Équipe');
 
@@ -67,18 +79,6 @@ export default function TeamDetailPage() {
   const data = team.data;
   const organizationId = organization?.id ?? null;
 
-  /**
-   * Deux origines au droit de gérer cette équipe, et il faut les additionner.
-   *
-   * La permission d'entreprise (`team.update` / `team.assign_member`) vaut pour
-   * TOUTES les équipes. Être responsable de CELLE-CI n'en donne aucune, mais
-   * élargit le périmètre côté serveur via `app.my_led_team_ids()`. Un technicien
-   * responsable d'équipe passe donc par la seconde voie — ne considérer que la
-   * première lui masquerait des actions que le serveur lui accorde.
-   */
-  // `membership` vient du contexte : c'est l'appartenance de l'UTILISATEUR
-  // COURANT à l'organisation courante, et son `id` est bien le `member_id`
-  // auquel `team_members` et `teams.manager_id` font référence.
   const myMemberId = membership?.id ?? null;
 
   const isTeamLead = data.members.some(
@@ -90,6 +90,14 @@ export default function TeamDetailPage() {
   const canEdit = can(PERMISSIONS.teamUpdate) || leadsThisTeam;
   const canAssign = can(PERMISSIONS.teamAssignMember) || leadsThisTeam;
   const canArchive = can(PERMISSIONS.teamDelete);
+  const canDelete = can(PERMISSIONS.teamDelete);
+
+  const handleDelete = async () => {
+    if (!teamId) return;
+    await deleteTeam.mutateAsync(teamId);
+    setIsDeleteModalOpen(false);
+    void navigate(ROUTES.teams);
+  };
 
   return (
     <div className="space-y-6">
@@ -122,17 +130,68 @@ export default function TeamDetailPage() {
 
             {canArchive && data.status !== 'archived' ? (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   archiveTeam.mutate(data.id);
                 }}
                 disabled={archiveTeam.isPending}
-                className="text-muted-foreground hover:text-foreground"
               >
                 <Archive className="size-4" />
                 Archiver
               </Button>
+            ) : null}
+
+            {canDelete ? (
+              <>
+                <div className="h-4 w-px bg-border mx-1" aria-hidden="true" />
+                <Button
+                  variant="danger-outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsDeleteModalOpen(true);
+                  }}
+                  disabled={deleteTeam.isPending}
+                >
+                  <Trash2 className="size-4" />
+                  Supprimer
+                </Button>
+
+                <Modal
+                  open={isDeleteModalOpen}
+                  onOpenChange={setIsDeleteModalOpen}
+                  title="Supprimer l'équipe"
+                  description={`Êtes-vous sûr de vouloir supprimer définitivement l'équipe "${data.name}" ?`}
+                  footer={
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsDeleteModalOpen(false);
+                        }}
+                        disabled={deleteTeam.isPending}
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        variant="danger-outline"
+                        size="sm"
+                        onClick={() => {
+                          void handleDelete();
+                        }}
+                        disabled={deleteTeam.isPending}
+                      >
+                        {deleteTeam.isPending ? 'Suppression…' : 'Supprimer l’équipe'}
+                      </Button>
+                    </div>
+                  }
+                >
+                  <p className="text-muted-foreground text-sm">
+                    Cette action est définitive. L'équipe sera retirée de l'organisation et ne sera plus proposée lors de l'affectation des missions.
+                  </p>
+                </Modal>
+              </>
             ) : null}
           </div>
         }

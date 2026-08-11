@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { Select } from '@/components/ui/Select';
 
 import { useCustomerSites } from '../hooks/useCustomerChildren';
@@ -5,17 +7,6 @@ import { useCustomers } from '../hooks/useCustomers';
 
 /**
  * Sélecteurs client et site, destinés au formulaire de mission (Phase 6).
- *
- * Ils vivent ici et non dans le module Missions parce que la règle qu'ils
- * portent appartient au domaine Clients : un site dépend d'un client, et le
- * choix du second doit réinitialiser le premier. Cette dépendance existe aussi
- * en base — le trigger `enforce_mission_customer_site` refuse un site
- * n'appartenant pas au client de la mission.
- *
- * Construits sur `Select` plutôt que sur une liste déroulante avec recherche :
- * au-delà de quelques dizaines de clients il faudra une vraie combobox, mais
- * l'écrire aujourd'hui serait la deviner. Le remplacement se fera derrière cette
- * interface, sans toucher aux appelants.
  */
 
 export interface CustomerPickerProps {
@@ -71,7 +62,16 @@ export function SitePicker({
 }: SitePickerProps) {
   const sites = useCustomerSites(customerId ?? undefined);
 
-  const options = (sites.data ?? []).map((site) => ({
+  const availableSites = sites.data ?? [];
+
+  // Pré-sélection automatique du premier site dès le choix du client
+  useEffect(() => {
+    if (customerId && availableSites.length > 0 && (!value || !availableSites.some(s => s.id === value))) {
+      onChange(availableSites[0].id);
+    }
+  }, [customerId, availableSites, value, onChange]);
+
+  const options = availableSites.map((site) => ({
     value: site.id,
     label: site.city !== null && site.city !== '' ? `${site.name} — ${site.city}` : site.name,
   }));
@@ -82,7 +82,7 @@ export function SitePicker({
       {...(value !== null ? { value } : {})}
       onValueChange={onChange}
       label={label}
-      placeholder={customerId === null ? 'Choisissez d’abord un client' : 'Aucun site sélectionné'}
+      placeholder={customerId === null ? 'Choisissez d’abord un client' : 'Sélectionnez un site'}
       {...(customerId === null
         ? {}
         : {

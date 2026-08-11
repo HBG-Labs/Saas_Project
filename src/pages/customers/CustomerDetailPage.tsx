@@ -7,9 +7,11 @@ import {
   MapPin,
   Pencil,
   Phone,
+  Trash2,
   Users,
 } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -17,6 +19,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { ROUTES } from '@/config/routes';
@@ -27,6 +30,7 @@ import {
   useArchiveCustomer,
   useCustomer,
   useCustomerHistory,
+  useDeleteCustomer,
   useRestoreCustomer,
 } from '@/features/customers';
 import { MISSION_STATUS_LABELS } from '@/features/missions';
@@ -35,12 +39,16 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams<{ customerId: string }>();
+  const navigate = useNavigate();
   const { organization } = useCurrentOrganization();
   const { can } = usePermission();
 
   const customer = useCustomer(customerId);
   const archiveCustomer = useArchiveCustomer();
   const restoreCustomer = useRestoreCustomer();
+  const deleteCustomer = useDeleteCustomer();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useDocumentTitle(customer.data?.name ?? 'Client');
 
@@ -92,7 +100,13 @@ export default function CustomerDetailPage() {
   const data = customer.data;
   const isArchived = data.status === 'archived';
 
-  return (
+  const handleDelete = async () => {
+    await deleteCustomer.mutateAsync(data.id);
+    setIsDeleteModalOpen(false);
+    navigate(ROUTES.customers);
+  };
+
+   return (
     <div className="space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={ROUTES.customers}>
@@ -101,105 +115,218 @@ export default function CustomerDetailPage() {
         </Link>
       </Button>
 
-      <PageHeader
-        title={data.name}
-        description={
-          [data.address_line1, data.postal_code, data.city]
-            .filter((part) => part !== null && part !== '')
-            .join(', ') || 'Adresse non renseignée'
-        }
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">{data.reference}</Badge>
-            {isArchived ? <Badge variant="warning">Archivé</Badge> : null}
+      {/* Hero Header Card */}
+      <Card className="overflow-hidden border-border bg-surface-raised/50 backdrop-blur-xs">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-foreground text-2xl font-bold tracking-tight">{data.name}</h1>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {data.reference}
+                </Badge>
+                {isArchived ? (
+                  <Badge variant="warning">Archivé</Badge>
+                ) : (
+                  <Badge variant="success">Actif</Badge>
+                )}
+              </div>
 
-            {canEdit && organizationId !== null ? (
-              <CustomerFormDialog
-                organizationId={organizationId}
-                customer={data}
-                trigger={
-                  <Button variant="outline" size="sm">
-                    <Pencil className="size-4" />
-                    Modifier
+              <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-xs">
+                {[data.address_line1, data.postal_code, data.city]
+                  .filter((part) => part !== null && part !== '')
+                  .join(', ') ? (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="text-subtle-foreground size-3.5" aria-hidden="true" />
+                    {[data.address_line1, data.postal_code, data.city]
+                      .filter((part) => part !== null && part !== '')
+                      .join(', ')}
+                  </span>
+                ) : null}
+
+                {data.phone ? (
+                  <span className="flex items-center gap-1.5 font-mono">
+                    <Phone className="text-subtle-foreground size-3.5" aria-hidden="true" />
+                    {data.phone}
+                  </span>
+                ) : null}
+
+                {data.email ? (
+                  <span className="flex items-center gap-1.5">
+                    <Mail className="text-subtle-foreground size-3.5" aria-hidden="true" />
+                    {data.email}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Action Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border lg:border-0 lg:pt-0">
+              {canEdit && organizationId !== null ? (
+                <CustomerFormDialog
+                  organizationId={organizationId}
+                  customer={data}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Pencil className="size-4" />
+                      Modifier
+                    </Button>
+                  }
+                />
+              ) : null}
+
+              {canDelete && !isArchived ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    archiveCustomer.mutate(data.id);
+                  }}
+                  disabled={archiveCustomer.isPending}
+                >
+                  <Archive className="size-4" />
+                  Archiver
+                </Button>
+              ) : null}
+
+              {canEdit && isArchived ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    restoreCustomer.mutate(data.id);
+                  }}
+                  disabled={restoreCustomer.isPending}
+                >
+                  <ArchiveRestore className="size-4" />
+                  Réactiver
+                </Button>
+              ) : null}
+
+              {canDelete ? (
+                <>
+                  <div className="hidden h-5 w-px bg-border lg:block" aria-hidden="true" />
+                  <Button
+                    variant="danger-outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsDeleteModalOpen(true);
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                    Supprimer
                   </Button>
-                }
-              />
-            ) : null}
+                </>
+              ) : null}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {canDelete && !isArchived ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  archiveCustomer.mutate(data.id);
-                }}
-                disabled={archiveCustomer.isPending}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Archive className="size-4" />
-                Archiver
-              </Button>
-            ) : null}
-
-            {/*
-              Réactiver relève de `customer.update`, et non de `customer.delete` :
-              côté serveur, la restauration est un UPDATE de plus, soumis à
-              `customers_update`. Le bouton reprend donc la permission que le
-              serveur exigera, pas celle qui a permis d'archiver.
-            */}
-            {canEdit && isArchived ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  restoreCustomer.mutate(data.id);
-                }}
-                disabled={restoreCustomer.isPending}
-              >
-                <ArchiveRestore className="size-4" />
-                Réactiver
-              </Button>
-            ) : null}
+      <Modal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Supprimer le client"
+        description={`Êtes-vous sûr de vouloir supprimer définitivement le client "${data.name}" (${data.reference}) ?`}
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+              }}
+              disabled={deleteCustomer.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger-outline"
+              size="sm"
+              onClick={() => {
+                void handleDelete();
+              }}
+              disabled={deleteCustomer.isPending}
+            >
+              {deleteCustomer.isPending ? 'Suppression…' : 'Supprimer définitivement'}
+            </Button>
           </div>
         }
-      />
+      >
+        <p className="text-muted-foreground text-sm">
+          Cette action est <strong className="text-foreground font-semibold">définitive et irréversible</strong>.
+          Toutes les informations associées à ce client (contacts et sites d'intervention) seront supprimées.
+        </p>
+      </Modal>
 
-      <Tabs defaultValue="fiche">
+      <Tabs defaultValue="fiche" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="fiche">Fiche</TabsTrigger>
+          <TabsTrigger value="fiche">Fiche générale</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="sites">Sites</TabsTrigger>
-          <TabsTrigger value="historique">Historique</TabsTrigger>
+          <TabsTrigger value="sites">Sites d'intervention</TabsTrigger>
+          <TabsTrigger value="historique">Historique des missions</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fiche">
-          <Card>
-            <CardContent className="pt-6">
-              <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                <Field label="Raison sociale" value={data.legal_name} />
-                <Field label="N° TVA" value={data.vat_number} />
-                <Field label="SIRET" value={data.registration_number} />
-                <Field label="Pays" value={data.country} />
-                <Field
-                  label="Téléphone"
-                  value={data.phone}
-                  icon={<Phone className="size-3.5" aria-hidden="true" />}
-                />
-                <Field
-                  label="Adresse e-mail"
-                  value={data.email}
-                  icon={<Mail className="size-3.5" aria-hidden="true" />}
-                />
-              </dl>
+        <TabsContent value="fiche" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Coordonnées */}
+            <Card>
+              <CardContent className="space-y-4 pt-6">
+                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                  Coordonnées & Contact
+                </h3>
+                <dl className="grid gap-3 text-sm">
+                  <Field
+                    label="Téléphone"
+                    value={data.phone}
+                    icon={<Phone className="size-3.5" aria-hidden="true" />}
+                  />
+                  <Field
+                    label="Adresse e-mail"
+                    value={data.email}
+                    icon={<Mail className="size-3.5" aria-hidden="true" />}
+                  />
+                  <Field
+                    label="Adresse postale"
+                    value={[data.address_line1, data.address_line2, data.postal_code, data.city]
+                      .filter((part) => part !== null && part !== '')
+                      .join(', ')}
+                    icon={<MapPin className="size-3.5" aria-hidden="true" />}
+                  />
+                  <Field label="Pays" value={data.country} />
+                </dl>
+              </CardContent>
+            </Card>
 
-              {data.notes !== null && data.notes !== '' ? (
-                <div className="border-border mt-6 border-t pt-4">
-                  <p className="text-muted-foreground mb-1 text-xs">Notes</p>
-                  <p className="text-foreground text-sm whitespace-pre-line">{data.notes}</p>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+            {/* Informations légales */}
+            <Card>
+              <CardContent className="space-y-4 pt-6">
+                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                  Informations Légales & Fiscales
+                </h3>
+                <dl className="grid gap-3 text-sm">
+                  <Field label="Raison sociale" value={data.legal_name} />
+                  <Field label="SIRET / SIREN" value={data.registration_number} />
+                  <Field label="N° de TVA Intracommunautaire" value={data.vat_number} />
+                  <Field label="Référence interne" value={data.reference} />
+                </dl>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notes */}
+          {data.notes !== null && data.notes !== '' ? (
+            <Card>
+              <CardContent className="space-y-2 pt-6">
+                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                  Notes & Remarques
+                </h3>
+                <p className="text-muted-foreground text-sm whitespace-pre-line leading-relaxed">
+                  {data.notes}
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="contacts">

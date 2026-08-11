@@ -11,6 +11,7 @@ export {
   createCustomer,
   createSite,
   deleteContact,
+  deleteCustomer,
   getCustomer,
   getSite,
   listContacts,
@@ -32,6 +33,7 @@ export {
   useCustomer,
   useCustomerHistory,
   useCustomers,
+  useDeleteCustomer,
   useRestoreCustomer,
   useUpdateCustomer,
 } from './hooks/useCustomers';

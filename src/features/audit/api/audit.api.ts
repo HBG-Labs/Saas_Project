@@ -37,7 +37,11 @@ export async function listAuditLogs(
   if (filters.from) query = query.gte('created_at', filters.from);
   if (filters.to) query = query.lte('created_at', filters.to);
 
-  return unwrap(query.order('created_at', { ascending: false }).limit(filters.limit ?? 100));
+  try {
+    return await unwrap(query.order('created_at', { ascending: false }).limit(filters.limit ?? 100));
+  } catch {
+    return [];
+  }
 }
 
 /** Historique d'une entité précise — l'onglet « Traçabilité » d'une mission. */

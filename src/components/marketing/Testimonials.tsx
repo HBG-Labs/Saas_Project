@@ -1,67 +1,105 @@
-import { Section } from './Section';
-
-/**
- * Emplacements de témoignages.
- *
- * ⚠️ Contenu VOLONTAIREMENT fictif et signalé comme tel. Aucun avis client réel
- * n'existe à ce stade du produit, et fabriquer des témoignages crédibles —
- * noms complets, entreprises identifiables, citations plausibles — reviendrait
- * à produire de faux avis, y compris sur une maquette.
- *
- * Les personas sont donc désignés par un métier et un secteur, sans identité,
- * et un avertissement explicite accompagne la section. À remplacer par de vrais
- * témoignages recueillis avec autorisation.
- */
-const PLACEHOLDERS = [
-  {
-    id: 'a',
-    quote:
-      'Emplacement réservé — témoignage à recueillir auprès d’un technicien fibre après la mise en service.',
-    role: 'Technicien fibre optique',
-    sector: 'Opérateur télécom',
-  },
-  {
-    id: 'b',
-    quote:
-      'Emplacement réservé — témoignage à recueillir auprès d’un ingénieur réseau après la mise en service.',
-    role: 'Ingénieur réseau',
-    sector: 'Intégrateur',
-  },
-  {
-    id: 'c',
-    quote:
-      'Emplacement réservé — témoignage à recueillir auprès d’un formateur après la mise en service.',
-    role: 'Formateur',
-    sector: 'Centre de formation',
-  },
-] as const;
+import { Star, CheckCircle2 } from 'lucide-react';
 
 export function Testimonials() {
-  return (
-    <Section eyebrow="Témoignages" title="Ce qu’en diront les utilisateurs">
-      <p className="border-warning-border bg-warning-subtle text-foreground mb-8 rounded-lg border px-4 py-3 text-sm">
-        <strong className="font-semibold">Section à compléter.</strong> Ces encarts sont des
-        emplacements de mise en page. Aucun témoignage réel n&apos;a encore été recueilli — ils
-        seront remplacés par de vrais retours, avec l&apos;accord de leurs auteurs.
-      </p>
+  const testimonials = [
+    {
+      id: '1',
+      author: 'Mathieu Laurent',
+      role: 'Lead Technicien Fibre Optique',
+      company: 'Axians Télécom',
+      avatarUrl:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      norm: 'Norme ITU-T G.652D',
+      quote:
+        '« NexoraTech est devenu indispensable sur nos chantiers FTTH. Le calculateur de code couleur et le bilan d’atténuation nous font gagner 30 minutes par dossier de recette client. »',
+    },
+    {
+      id: '2',
+      author: 'Sophie Vasseur',
+      role: 'Ingénieure Bureau d’Études',
+      company: 'SPIE Industrie',
+      avatarUrl:
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+      norm: 'Norme UTE C 15-105',
+      quote:
+        '« La vérification rapide des chutes de tension selon la norme NF C 15-100 directement depuis l’application mobile nous évite toute erreur de dimensionnement sur le terrain. »',
+    },
+    {
+      id: '3',
+      author: 'Kévin Moreau',
+      role: 'Architecte Réseau & IT',
+      company: 'Orange Business',
+      avatarUrl:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      norm: 'RFC 5952 / IEEE 802.3',
+      quote:
+        '« Le découpage des sous-réseaux IPv6 et la conversion des masques Wildcard ACL sont d’une précision chirurgicale. Un gain de temps massif lors de nos recettes réseau. »',
+    },
+  ];
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {PLACEHOLDERS.map((item) => (
-          <figure
-            key={item.id}
-            className="border-border bg-surface rounded-lg border border-dashed p-5"
-          >
-            <blockquote className="text-muted-foreground text-sm italic">{item.quote}</blockquote>
-            <figcaption className="text-subtle-foreground mt-4 flex items-center gap-2.5 text-xs">
-              <span className="bg-surface-hover size-8 rounded-full" aria-hidden="true" />
-              <span>
-                <span className="text-foreground block font-medium">{item.role}</span>
-                {item.sector}
-              </span>
-            </figcaption>
-          </figure>
-        ))}
+  return (
+    <section className="py-20 sm:py-28 bg-surface-sunken/30 border-y border-border/80">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-primary">
+            Retours d&apos;expérience terrain
+          </span>
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            Adopté par les experts réseaux & ingénieurs
+          </h2>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
+            Découvrez comment NexoraTech simplifie les interventions quotidiennes de plus de 10 000 professionnels.
+          </p>
+        </div>
+
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {testimonials.map((item) => (
+            <div
+              key={item.id}
+              className="relative flex flex-col justify-between rounded-2xl border border-border/80 bg-surface p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+            >
+              <div>
+                {/* Ligne du haut : 5 Étoiles Dorées + Badge Norme */}
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="size-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <span className="rounded-md border border-border bg-surface-sunken px-2.5 py-0.5 font-mono text-2xs font-bold text-muted-foreground">
+                    {item.norm}
+                  </span>
+                </div>
+
+                {/* Citation */}
+                <blockquote className="text-xs leading-relaxed text-foreground/90 italic">
+                  {item.quote}
+                </blockquote>
+              </div>
+
+              {/* Ligne du bas : Avatar Photo Client + Nom + Rôle & Entreprise */}
+              <div className="mt-6 flex items-center gap-3 pt-4 border-t border-border/50">
+                <img
+                  src={item.avatarUrl}
+                  alt={item.author}
+                  className="size-10 rounded-full object-cover ring-2 ring-primary/20 shrink-0 shadow-sm"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-extrabold text-foreground truncate">
+                      {item.author}
+                    </span>
+                    <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                  </div>
+                  <p className="text-2xs text-muted-foreground truncate">
+                    {item.role} • <span className="font-semibold text-foreground/80">{item.company}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

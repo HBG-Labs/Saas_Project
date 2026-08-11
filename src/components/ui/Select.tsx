@@ -114,11 +114,11 @@ export function Select({
       </RadixSelect.Root>
 
       {error ? (
-        <p id={errorId} role="alert" className="text-error mt-1.5 text-xs">
+        <p id={errorId} role="alert" className="text-rose-500 mt-1.5 text-xs font-medium">
           {error}
         </p>
       ) : hint ? (
-        <p id={hintId} className="text-subtle-foreground mt-1.5 text-xs">
+        <p id={hintId} className="text-slate-400 dark:text-slate-400 mt-1.5 text-xs leading-normal block">
           {hint}
         </p>
       ) : null}

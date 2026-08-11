@@ -64,35 +64,42 @@ export default function TeamsListPage() {
           }
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((team) => (
-            <Card key={team.id} className="hover:border-border-strong transition-colors">
-              <CardContent className="pt-5">
-                <Link to={ROUTES.team(team.id)} className="block space-y-2">
-                  <div className="flex items-start gap-2">
-                    {/*
-                      La pastille de couleur est le repère visuel de l'équipe
-                      dans le planning : elle doit apparaître partout où l'équipe
-                      est nommée, sans quoi le code couleur ne s'apprend pas.
-                    */}
-                    <span
-                      aria-hidden="true"
-                      className="mt-1 size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: team.color ?? 'var(--color-border-strong)' }}
-                    />
-                    <span className="text-foreground flex-1 text-sm font-semibold">
-                      {team.name}
-                    </span>
+            <Card
+              key={team.id}
+              className="group transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+            >
+              <CardContent className="p-5">
+                <Link to={ROUTES.team(team.id)} className="block space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        aria-hidden="true"
+                        className="size-3 shrink-0 rounded-full ring-2 ring-offset-1 ring-offset-background"
+                        style={{
+                          backgroundColor: team.color ?? 'var(--color-border-strong)',
+                          boxShadow: `0 0 10px ${team.color ?? '#3b82f6'}60`,
+                        }}
+                      />
+                      <span className="text-foreground truncate text-sm font-semibold group-hover:text-primary transition-colors">
+                        {team.name}
+                      </span>
+                    </div>
                     {team.status === 'archived' ? (
-                      <Badge variant="warning">Archivée</Badge>
+                      <Badge variant="warning" className="shrink-0">
+                        Archivée
+                      </Badge>
                     ) : null}
                   </div>
 
                   {team.description !== null && team.description !== '' ? (
-                    <p className="text-muted-foreground line-clamp-2 text-xs">
+                    <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
                       {team.description}
                     </p>
-                  ) : null}
+                  ) : (
+                    <p className="text-subtle-foreground text-xs italic">Aucune description</p>
+                  )}
                 </Link>
               </CardContent>
             </Card>

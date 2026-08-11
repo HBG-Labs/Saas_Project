@@ -1,93 +1,62 @@
 @import 'tailwindcss';
 
-/* Polices auto-hébergées : aucun appel CDN, donc aucune fuite de données
-   utilisateur vers un tiers et aucune dépendance réseau au chargement. */
+/* Polices auto-hébergées */
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
-/* Le thème sombre est piloté par une classe sur <html> plutôt que par la seule
-   media query : l'utilisateur doit pouvoir choisir un thème différent de son
-   réglage système. Le choix est appliqué avant le premier rendu (voir
-   src/features/theme/theme-script.ts) pour éviter tout flash. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
-   TOKENS SÉMANTIQUES
-   Source de vérité unique. Voir docs/DESIGN_SYSTEM.md pour la justification
-   de chaque valeur. Aucune couleur ne doit être écrite en dur ailleurs.
+   DESIGN SYSTEM COCKPIT PREMIUM — NEXORATECH
    ============================================================================= */
 @layer base {
   :root {
-    /* --- Surfaces ------------------------------------------------------- */
-    --background: oklch(99% 0.002 258);
-    --surface: oklch(100% 0 0);
-    --surface-raised: oklch(100% 0 0);
-    --surface-sunken: oklch(97% 0.003 258);
-    --surface-hover: oklch(96.5% 0.004 258);
+    /* --- Mode Clair Crisp ------------------------------------------------ */
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-sunken: #f1f5f9;
+    --surface-hover: #f1f5f9;
 
-    /* --- Bordures ------------------------------------------------------- */
-    --border: oklch(92% 0.005 258);
-    --border-strong: oklch(85% 0.008 258);
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
 
-    /* --- Texte ---------------------------------------------------------- */
-    --foreground: oklch(20% 0.015 258);
-    --muted-foreground: oklch(50% 0.012 258);
-    --subtle-foreground: oklch(62% 0.01 258);
+    --foreground: #0f172a;
+    --muted-foreground: #475569;
+    --subtle-foreground: #94a3b8;
 
-    /* --- Marque --------------------------------------------------------- */
-    --primary-50: oklch(97% 0.015 258);
-    --primary-100: oklch(93% 0.035 258);
-    --primary-200: oklch(87% 0.065 258);
-    --primary-300: oklch(78% 0.105 258);
-    --primary-400: oklch(68% 0.155 258);
-    --primary-500: oklch(58% 0.19 258);
-    --primary-600: oklch(52% 0.19 258);
-    --primary-700: oklch(45% 0.17 258);
-    --primary-800: oklch(37% 0.14 258);
-    --primary-900: oklch(29% 0.1 258);
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-active: #1e40af;
+    --primary-foreground: #ffffff;
+    --primary-subtle: #eff6ff;
 
-    --primary: var(--primary-500);
-    --primary-hover: var(--primary-600);
-    --primary-active: var(--primary-700);
-    --primary-foreground: oklch(100% 0 0);
-    --primary-subtle: var(--primary-50);
+    --accent: #0284c7;
+    --accent-foreground: #ffffff;
+    --accent-subtle: #f0f9ff;
 
-    /* --- Accent (données, graphes — jamais une action principale) -------- */
-    --accent: oklch(70% 0.14 195);
-    --accent-foreground: oklch(22% 0.05 195);
-    --accent-subtle: oklch(95% 0.03 195);
+    --success: #10b981;
+    --success-subtle: #ecfdf5;
+    --success-border: #a7f3d0;
 
-    /* --- Sémantiques ---------------------------------------------------- */
-    --success: oklch(60% 0.15 150);
-    --success-subtle: oklch(95% 0.04 150);
-    --success-border: oklch(85% 0.08 150);
+    --warning: #f59e0b;
+    --warning-subtle: #fffbeb;
+    --warning-border: #fde68a;
 
-    --warning: oklch(72% 0.15 75);
-    --warning-subtle: oklch(96% 0.045 75);
-    --warning-border: oklch(87% 0.09 75);
+    --error: #ef4444;
+    --error-subtle: #fef2f2;
+    --error-border: #fca5a5;
 
-    --error: oklch(58% 0.2 25);
-    --error-subtle: oklch(96% 0.03 25);
-    --error-border: oklch(87% 0.08 25);
+    --info: #3b82f6;
+    --info-subtle: #eff6ff;
+    --info-border: #bfdbfe;
 
-    --info: oklch(62% 0.14 240);
-    --info-subtle: oklch(96% 0.03 240);
-    --info-border: oklch(87% 0.07 240);
+    --ring: #2563eb;
 
-    /* --- Focus ---------------------------------------------------------- */
-    --ring: var(--primary-500);
+    --shadow-raised: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-overlay: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
 
-    /* --- Ombres (thème clair uniquement, cf. §7.2) ----------------------- */
-    --shadow-raised: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-overlay: 0 8px 24px -4px rgb(0 0 0 / 0.12);
-    --shadow-modal: 0 16px 48px -8px rgb(0 0 0 / 0.18);
-
-    /* Liseré de relief : neutre en clair (l'ombre suffit), il simule en sombre
-       une arête éclairée par le haut. C'est ce qui donne du volume aux cartes
-       quand l'ombre n'est plus lisible. */
-    --shadow-bevel: 0 0 0 0 transparent;
-
-    /* --- Zones sûres (encoche iPhone, barre gestuelle Android) ---------- */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
@@ -97,90 +66,56 @@
   }
 
   .dark {
-    /* Fond à 14 % de clarté, jamais #000 : le noir pur crée un halo autour du
-       texte clair et supprime toute hiérarchie par élévation. */
-    /* Écart background → surface porté de 3,5 à 6 points de clarté : à 3,5 les
-       cartes ne se détachaient pas du fond et l'interface paraissait plate.
-       Le fond reste à 14 %, jamais #000. */
-    --background: oklch(14% 0.008 258);
-    --surface: oklch(20% 0.011 258);
-    --surface-raised: oklch(24% 0.013 258);
-    --surface-sunken: oklch(11.5% 0.008 258);
-    --surface-hover: oklch(26% 0.014 258);
+    /* --- Mode Sombre Cockpit Nuit ---------------------------------------- */
+    --background: #090d16;
+    --surface: #0f172a;
+    --surface-raised: #1e293b;
+    --surface-sunken: #020617;
+    --surface-hover: #1e293b;
 
-    --border: oklch(30% 0.013 258);
-    --border-strong: oklch(38% 0.016 258);
+    --border: #1e293b;
+    --border-strong: #334155;
 
-    --foreground: oklch(96% 0.005 258);
-    --muted-foreground: oklch(68% 0.01 258);
-    --subtle-foreground: oklch(55% 0.01 258);
+    --foreground: #f8fafc;
+    --muted-foreground: #94a3b8;
+    --subtle-foreground: #64748b;
 
-    /* Échelle inversée ET éclaircie : un bleu saturé ne reste lisible sur fond
-       sombre que si sa clarté remonte. Réutiliser les valeurs claires
-       produirait un bleu qui bave sur le fond. */
-    --primary-50: oklch(22% 0.04 258);
-    --primary-100: oklch(27% 0.06 258);
-    --primary-200: oklch(33% 0.09 258);
-    --primary-300: oklch(42% 0.13 258);
-    --primary-400: oklch(52% 0.17 258);
-    --primary-500: oklch(62% 0.18 258);
-    --primary-600: oklch(56% 0.18 258);
-    --primary-700: oklch(48% 0.16 258);
-    --primary-800: oklch(40% 0.13 258);
-    --primary-900: oklch(32% 0.1 258);
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --primary-active: #2563eb;
+    --primary-foreground: #ffffff;
+    --primary-subtle: #1e293b;
 
-    --primary: var(--primary-500);
-    --primary-hover: oklch(68% 0.17 258);
-    --primary-active: oklch(56% 0.18 258);
-    /* Blanc dans les DEUX thèmes. Inverser le texte du bouton principal en
-       sombre (texte quasi noir sur bleu) le faisait lire comme désactivé et
-       cassait la cohérence de marque. Linear, Vercel, Stripe et Raycast
-       gardent tous du blanc sur leur couleur d'action. */
-    --primary-foreground: oklch(100% 0 0);
-    --primary-subtle: var(--primary-50);
+    --accent: #38bdf8;
+    --accent-foreground: #0f172a;
+    --accent-subtle: #0c4a6e;
 
-    --accent: oklch(74% 0.13 195);
-    --accent-foreground: oklch(95% 0.02 195);
-    --accent-subtle: oklch(26% 0.05 195);
+    --success: #10b981;
+    --success-subtle: #064e3b;
+    --success-border: #047857;
 
-    --success: oklch(70% 0.15 150);
-    --success-subtle: oklch(24% 0.05 150);
-    --success-border: oklch(35% 0.08 150);
+    --warning: #f59e0b;
+    --warning-subtle: #78350f;
+    --warning-border: #b45309;
 
-    --warning: oklch(78% 0.15 75);
-    --warning-subtle: oklch(26% 0.05 75);
-    --warning-border: oklch(38% 0.08 75);
+    --error: #ef4444;
+    --error-subtle: #7f1d1d;
+    --error-border: #b91c1c;
 
-    --error: oklch(68% 0.19 25);
-    --error-subtle: oklch(25% 0.06 25);
-    --error-border: oklch(38% 0.1 25);
+    --info: #3b82f6;
+    --info-subtle: #1e3a8a;
+    --info-border: #1d4ed8;
 
-    --info: oklch(70% 0.13 240);
-    --info-subtle: oklch(24% 0.05 240);
-    --info-border: oklch(36% 0.08 240);
+    --ring: #3b82f6;
 
-    --ring: oklch(68% 0.17 258);
-
-    /* En sombre l'élévation passe par la clarté de surface : une ombre noire
-       sur fond sombre est invisible. On ne garde qu'un voile discret. */
-    --shadow-raised: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-overlay: 0 8px 24px -4px rgb(0 0 0 / 0.5);
-    --shadow-modal: 0 16px 48px -8px rgb(0 0 0 / 0.6);
-
-    /* Arête haute éclairée, 4 % de blanc : suffisant pour décoller la carte du
-       fond, trop discret pour être perçu comme une bordure. */
-    --shadow-bevel: inset 0 1px 0 0 rgb(255 255 255 / 0.045);
+    --shadow-raised: 0 4px 12px 0 rgb(0 0 0 / 0.4);
+    --shadow-overlay: 0 12px 24px -4px rgb(0 0 0 / 0.5);
+    --shadow-modal: 0 24px 36px -6px rgb(0 0 0 / 0.6);
 
     color-scheme: dark;
   }
 }
 
-/* =============================================================================
-   EXPOSITION À TAILWIND
-   `@theme inline` est indispensable : il génère des utilitaires qui résolvent
-   la variable AU MOMENT DE L'USAGE. Sans `inline`, Tailwind figerait la valeur
-   du thème clair et la classe `.dark` n'aurait aucun effet.
-   ============================================================================= */
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -200,16 +135,6 @@
   --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-subtle: var(--primary-subtle);
-  --color-primary-50: var(--primary-50);
-  --color-primary-100: var(--primary-100);
-  --color-primary-200: var(--primary-200);
-  --color-primary-300: var(--primary-300);
-  --color-primary-400: var(--primary-400);
-  --color-primary-500: var(--primary-500);
-  --color-primary-600: var(--primary-600);
-  --color-primary-700: var(--primary-700);
-  --color-primary-800: var(--primary-800);
-  --color-primary-900: var(--primary-900);
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
@@ -230,39 +155,28 @@
 
   --color-ring: var(--ring);
 
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Échelle typographique — cf. DESIGN_SYSTEM.md §5.2 */
   --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
   --text-xs: 0.75rem;
-  --text-xs--line-height: 1rem;
   --text-sm: 0.875rem;
-  --text-sm--line-height: 1.25rem;
   --text-base: 1rem;
-  --text-base--line-height: 1.5rem;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
 
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
   --shadow-modal: var(--shadow-modal);
-  --shadow-bevel: var(--shadow-bevel);
-  /* Combine relief et élévation en une seule classe `shadow-card`. */
-  --shadow-card: var(--shadow-bevel), var(--shadow-raised);
-
-  /* Cible tactile minimale — WCAG 2.5.5 / Apple HIG */
-  --spacing-touch: 2.75rem;
-
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-card: var(--shadow-raised);
 }
 
 /* =============================================================================
-   BASE
+   BASE & COMPOSANTS RICHES
    ============================================================================= */
 @layer base {
   * {
@@ -279,8 +193,6 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    /* 14 px est la taille par défaut de l'APPLICATION (outil dense, cf. §5.2).
-       La landing page remonte localement à 16 px. */
     font-size: 0.875rem;
     line-height: 1.25rem;
     min-height: 100dvh;
@@ -288,135 +200,40 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Anneau de focus cohérent partout. Ne jamais supprimer sans remplacer. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
 
-  /* Safari iOS zoome automatiquement sur un champ dont la police est < 16 px.
-     C'est la seule exception assumée à la règle des 14 px. */
-  @supports (-webkit-touch-callout: none) {
-    input,
-    select,
-    textarea {
-      font-size: 16px;
-    }
-  }
-
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-weight: 600;
+  h1, h2, h3, h4 {
+    font-weight: 700;
     letter-spacing: -0.02em;
-    text-wrap: balance;
   }
 
-  /* Évite les lignes orphelines en fin de paragraphe. */
-  p {
-    text-wrap: pretty;
-  }
-
-  /* Chiffres tabulaires : sans cela `1.111` et `8.888` n'ont pas la même
-     largeur et les colonnes de résultats tremblent. */
-  .tabular,
-  table {
+  .tabular, table {
     font-variant-numeric: tabular-nums;
-  }
-
-  ::selection {
-    background-color: var(--primary-200);
-    color: var(--foreground);
-  }
-
-  /* Barres de défilement discrètes, accordées au thème. */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--border-strong);
-    border: 3px solid transparent;
-    background-clip: content-box;
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--subtle-foreground);
-  }
-
-  /* Les animations déclenchent migraines et nausées chez les personnes
-     souffrant de troubles vestibulaires. Cette règle n'est pas négociable. */
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
   }
 }
 
 @layer utilities {
-  .safe-bottom {
-    padding-bottom: max(0.5rem, var(--safe-bottom));
-  }
-  .safe-top {
-    padding-top: max(0.5rem, var(--safe-top));
-  }
-
-  /* Motifs et effets du Cockpit Numérique */
-  .bg-tech-grid {
-    background-image: radial-gradient(var(--border) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  .dark .bg-tech-grid {
-    background-image: radial-gradient(oklch(32% 0.015 258 / 0.5) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
   .glass-panel {
-    background-color: oklch(from var(--surface) l c h / 0.82);
+    background-color: rgb(15 23 42 / 0.85);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
 
   .border-glow {
-    position: relative;
-  }
-  .border-glow::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, oklch(65% 0.18 258 / 0.4), transparent 60%, oklch(70% 0.14 195 / 0.3));
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  .glow-cyan {
-    box-shadow: 0 0 25px -5px oklch(70% 0.14 195 / 0.25);
-  }
-  .dark .glow-cyan {
-    box-shadow: 0 0 30px -5px oklch(70% 0.14 195 / 0.35);
+    border: 1px solid rgb(59 130 246 / 0.25);
+    box-shadow: 0 0 15px -3px rgb(59 130 246 / 0.15);
   }
 
   .glow-primary {
-    box-shadow: 0 0 25px -5px oklch(58% 0.19 258 / 0.25);
+    box-shadow: 0 4px 14px 0 rgb(37 99 235 / 0.35);
   }
-  .dark .glow-primary {
-    box-shadow: 0 0 30px -5px oklch(62% 0.18 258 / 0.35);
+
+  .hero-gradient-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 50%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
-

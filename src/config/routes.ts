@@ -50,10 +50,13 @@ export const ROUTES = {
   review: '/controle',
 
   dashboard: '/dashboard',
+  analytics: '/analytics',
   tools: '/tools',
   favorites: '/favorites',
   history: '/history',
   references: '/references',
+  equipment: '/equipements',
+  quotes: '/devis',
   profile: '/profile',
   settings: '/settings',
 

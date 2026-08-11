@@ -15,7 +15,7 @@ function readStoredTheme(): Theme {
   } catch {
     // Stockage inaccessible (mode privé strict) : on retombe sur le système.
   }
-  return 'system';
+  return 'dark';
 }
 
 function systemPrefersDark(): boolean {

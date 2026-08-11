@@ -1,8 +1,10 @@
-import { UserMinus } from 'lucide-react';
+import { Trash2, UserMinus } from 'lucide-react';
+import { useState } from 'react';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { OrgRole } from '@/types/database';
 import type { MemberWithProfile, Team } from '@/types/domain';
@@ -59,6 +61,8 @@ export function MemberRow({
   onRoleChange,
   onRemove,
 }: MemberRowProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const name = memberDisplayName(member);
   const isInvited = member.status === 'invited';
 
@@ -72,78 +76,127 @@ export function MemberRow({
     ? 'Vous ne pouvez pas vous retirer vous-même.'
     : 'Le dernier propriétaire ne peut pas être retiré.';
 
+  const handleConfirmRemove = () => {
+    setIsConfirmOpen(false);
+    onRemove();
+  };
+
   return (
-    <li className="border-border flex flex-wrap items-center gap-3 border-b py-3 last:border-b-0">
-      <Avatar name={name} size="sm" />
+    <li className="border-border flex flex-wrap items-start justify-between gap-4 border-b py-4 last:border-b-0">
+      <div className="flex items-start gap-3 min-w-0 flex-1">
+        <Avatar name={name} size="sm" className="mt-0.5" />
 
-      <div className="min-w-0 flex-1">
-        <p className="text-foreground truncate text-sm font-medium">{name}</p>
-        {member.job_title !== null && member.job_title !== '' && name !== member.job_title ? (
-          <p className="text-muted-foreground truncate text-xs">{member.job_title}</p>
-        ) : null}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-center gap-2">
+            <p className="text-foreground truncate text-sm font-medium">{name}</p>
+            {isInvited ? <Badge variant="warning">Invitation en attente</Badge> : null}
+          </div>
 
-        {teams.length > 0 ? (
-          <ul className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-            {teams.map((team) => (
-              <li
-                key={team.id}
-                className="text-muted-foreground flex items-center gap-1.5 text-xs"
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: team.color ?? 'var(--color-border-strong)' }}
-                />
-                {team.name}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+          {member.job_title !== null && member.job_title !== '' && name !== member.job_title ? (
+            <p className="text-muted-foreground truncate text-xs">{member.job_title}</p>
+          ) : null}
+
+          {teams.length > 0 ? (
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+              {teams.map((team) => (
+                <li
+                  key={team.id}
+                  className="text-muted-foreground flex items-center gap-1.5 text-xs"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: team.color ?? 'var(--color-border-strong)' }}
+                  />
+                  {team.name}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       </div>
 
-      {isInvited ? <Badge variant="warning">Invitation en attente</Badge> : null}
-
-      {canUpdateRole && !roleLocked ? (
-        <div className="w-44">
-          <RoleSelect
-            value={member.role}
-            onChange={onRoleChange}
-            canAssignOwner={viewerIsOwner}
-            disabled={busy}
-            hideLabel
-            label={`Rôle de ${name}`}
-          />
-        </div>
-      ) : (
-        <Tooltip content={canUpdateRole ? roleLockReason : 'Rôle non modifiable par vous.'}>
-          <span>
-            <RoleBadge role={member.role} />
-          </span>
-        </Tooltip>
-      )}
-
-      {canRemove ? (
-        removeLocked ? (
-          <Tooltip content={removeLockReason}>
+      <div className="flex items-start gap-3 shrink-0">
+        {canUpdateRole && !roleLocked ? (
+          <div className="w-56 sm:w-64">
+            <RoleSelect
+              value={member.role}
+              onChange={onRoleChange}
+              canAssignOwner={viewerIsOwner}
+              disabled={busy}
+              hideLabel
+              label={`Rôle de ${name}`}
+            />
+          </div>
+        ) : (
+          <Tooltip content={canUpdateRole ? roleLockReason : 'Rôle non modifiable par vous.'}>
             <span>
-              <Button variant="ghost" size="icon-sm" disabled aria-label={`Retirer ${name}`}>
-                <UserMinus className="size-4" />
-              </Button>
+              <RoleBadge role={member.role} />
             </span>
           </Tooltip>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onRemove}
-            disabled={busy}
-            className="text-muted-foreground hover:text-error"
-            aria-label={`Retirer ${name}`}
-          >
-            <UserMinus className="size-4" />
-          </Button>
-        )
-      ) : null}
+        )}
+
+        {canRemove ? (
+          removeLocked ? (
+            <Tooltip content={removeLockReason}>
+              <span>
+                <Button variant="danger-outline" size="sm" disabled aria-label={`Retirer ${name}`}>
+                  <Trash2 className="size-3.5" />
+                  Supprimer
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <>
+              <Button
+                variant="danger-outline"
+                size="sm"
+                onClick={() => {
+                  setIsConfirmOpen(true);
+                }}
+                disabled={busy}
+                aria-label={`Retirer ${name}`}
+              >
+                <Trash2 className="size-3.5" />
+                Supprimer
+              </Button>
+
+              <Modal
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Supprimer le membre"
+                description={`Êtes-vous sûr de vouloir retirer ${name} de l'entreprise ?`}
+                footer={
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsConfirmOpen(false);
+                      }}
+                      disabled={busy}
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      variant="danger-outline"
+                      size="sm"
+                      onClick={handleConfirmRemove}
+                      disabled={busy}
+                    >
+                      {busy ? 'Suppression…' : 'Supprimer le membre'}
+                    </Button>
+                  </div>
+                }
+              >
+                <p className="text-muted-foreground text-sm">
+                  Cette personne n'aura plus accès aux outils, missions et données de l'organisation.
+                </p>
+              </Modal>
+            </>
+          )
+        ) : null}
+      </div>
     </li>
   );
 }

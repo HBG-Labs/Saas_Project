@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search, Settings, User } from 'lucide-react';
+import { LogOut, Menu, Search, Settings, Smartphone, User } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
@@ -19,27 +19,16 @@ import { OrganizationSwitcher } from '@/features/organizations/components/Organi
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 
+import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 import { MobileNav } from './MobileNav';
 import { Sidebar } from './Sidebar';
 import { displayNameOf } from './user-display';
 
-/**
- * Ossature de l'application connectée.
- *
- * Trois modèles de navigation selon la largeur (Design System §8.2) :
- *   • < 768 px  : barre supérieure + navigation basse + tiroir latéral
- *   • ≥ 1024 px : barre latérale persistante
- *
- * La barre latérale est rendue DEUX fois — une version fixe pour le desktop,
- * une dans un tiroir pour le mobile. C'est volontaire : masquer/afficher un
- * unique élément par CSS ne permettrait pas le piège de focus du tiroir.
- *
- * Le catalogue étant public, cette ossature sert AUSSI aux visiteurs non
- * connectés : l'en-tête s'adapte donc à l'état d'authentification.
- */
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status, user, signOut } = useAuth();
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
@@ -52,58 +41,73 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh bg-slate-50/50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <a
         href="#contenu-principal"
-        className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
+        className="sr-only rounded-md bg-blue-600 px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
       >
         Aller au contenu principal
       </a>
 
-      {/* ---------------------------------------------------- barre supérieure */}
-      <header className="bg-surface/95 border-border safe-top fixed inset-x-0 top-0 z-30 h-14 border-b backdrop-blur-sm">
-        <div className="flex h-14 items-center gap-2 px-3 sm:px-4">
-          <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-            <Dialog.Trigger
-              className="text-muted-foreground hover:bg-surface-hover flex size-9 items-center justify-center rounded-md lg:hidden"
-              aria-label="Ouvrir le menu"
-            >
-              <Menu className="size-5" aria-hidden="true" />
-            </Dialog.Trigger>
+      {/* ---------------------------------------------------- BARRE SUPÉRIEURE (HEADER) */}
+      <header className="fixed inset-x-0 top-0 z-30 h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95">
+        <div className="flex h-14 items-center justify-between gap-3 px-4">
+          <div className="flex items-center gap-3">
+            <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <Dialog.Trigger
+                className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Ouvrir le menu"
+              >
+                <Menu className="size-5" aria-hidden="true" />
+              </Dialog.Trigger>
 
-            <Dialog.Portal>
-              <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 lg:hidden" />
-              <Dialog.Content className="bg-surface border-border fixed inset-y-0 left-0 z-50 w-64 border-r shadow-modal lg:hidden">
-                <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
-                <div className="border-border flex h-14 items-center border-b px-4">
-                  <Logo to={ROUTES.tools} />
-                </div>
-                <Sidebar
-                  onNavigate={() => {
-                    setDrawerOpen(false);
-                  }}
-                  className="h-[calc(100%-3.5rem)]"
-                />
-              </Dialog.Content>
-            </Dialog.Portal>
-          </Dialog.Root>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
+                <Dialog.Content className="fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-200 bg-white shadow-xl lg:hidden dark:border-slate-800 dark:bg-slate-950">
+                  <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
+                  <div className="flex h-14 items-center border-b border-slate-200 px-4 dark:border-slate-800">
+                    <Logo to={ROUTES.home} />
+                  </div>
+                  <Sidebar
+                    onNavigate={() => setDrawerOpen(false)}
+                    onDownloadAppClick={() => {
+                      setDrawerOpen(false);
+                      setIsDownloadModalOpen(true);
+                    }}
+                    className="h-[calc(100%-3.5rem)]"
+                  />
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
 
-          <Logo to={isAuthenticated ? ROUTES.dashboard : ROUTES.home} className="lg:w-52" />
+            <Logo to={ROUTES.home} className="w-40 lg:w-48" />
+          </div>
 
-          {/* Un vrai <input> ouvrirait le clavier virtuel avant d'afficher la
-              palette, produisant un double saut visuel sur téléphone. */}
+          {/* Recherche globale ⌘K */}
           <button
             type="button"
             onClick={openCommandBar}
-            className="text-subtle-foreground hover:bg-surface-hover border-border bg-surface-sunken ml-auto flex h-9 items-center gap-2 rounded-md border px-2.5 text-sm transition-colors lg:ml-0 lg:w-72"
+            className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-slate-100/70 px-3 text-xs font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 sm:w-64 lg:w-80 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:border-slate-700"
             aria-label="Rechercher"
           >
-            <Search className="size-4 shrink-0" aria-hidden="true" />
-            <span className="hidden lg:inline">Rechercher…</span>
-            <Kbd className="ml-auto hidden lg:inline-flex">⌘K</Kbd>
+            <Search className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <span className="truncate">Rechercher dans NexoraTech…</span>
+            <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
-          <div className="flex items-center gap-1 lg:ml-auto">
+          {/* Actions utilisateur, Téléchargement App & Thème */}
+          <div className="flex items-center gap-2">
+            {/* BOUTON TÉLÉCHARGER L'APP MOBILE & DESKTOP */}
+            <button
+              type="button"
+              onClick={() => setIsDownloadModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-500/20 transition-all shadow-xs dark:text-blue-400 cursor-pointer"
+              aria-label="Télécharger l'application NexoraTech"
+            >
+              <Smartphone className="size-4 text-blue-600 dark:text-blue-400" />
+              <span className="hidden sm:inline">Télécharger l'App</span>
+            </button>
+
             <ThemeToggle />
 
             {isAuthenticated ? (
@@ -111,7 +115,7 @@ export function AppLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="hover:bg-surface-hover flex size-9 items-center justify-center rounded-md transition-colors"
+                    className="flex size-9 items-center justify-center rounded-full ring-2 ring-slate-200 hover:ring-slate-300 transition-all dark:ring-slate-800"
                     aria-label="Menu du compte"
                   >
                     <Avatar name={displayName} size="sm" />
@@ -134,19 +138,17 @@ export function AppLayout() {
                   </Link>
                 </DropdownItem>
                 <DropdownSeparator />
-                <DropdownItem onSelect={handleSignOut} className="text-error">
+                <DropdownItem onSelect={handleSignOut} className="text-rose-600 dark:text-rose-400">
                   <LogOut />
                   Se déconnecter
                 </DropdownItem>
               </Dropdown>
             ) : (
-              // Le catalogue est public : un visiteur non connecté ne doit pas
-              // voir d'avatar ni de menu « Se déconnecter ».
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link to={ROUTES.login}>Connexion</Link>
                 </Button>
-                <Button asChild size="sm">
+                <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold">
                   <Link to={ROUTES.register}>Créer un compte</Link>
                 </Button>
               </div>
@@ -155,21 +157,41 @@ export function AppLayout() {
         </div>
       </header>
 
-      {/* ---------------------------------------------- barre latérale desktop */}
-      <aside className="border-border fixed inset-y-0 top-14 left-0 z-20 hidden w-52 border-r lg:block">
-        <Sidebar />
+      {/* ---------------------------------------------------- BARRE LATÉRALE DESKTOP */}
+      <aside
+        className={`fixed inset-y-0 top-14 left-0 z-20 hidden border-r border-slate-200/80 bg-white transition-all duration-200 lg:block dark:border-slate-800/80 dark:bg-slate-950 ${
+          sidebarCollapsed ? 'w-16' : 'w-60'
+        }`}
+      >
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+          onDownloadAppClick={() => setIsDownloadModalOpen(true)}
+        />
       </aside>
 
-      {/* pb-20 sur mobile : réserve la hauteur de la navigation basse fixe. */}
-      <main id="contenu-principal" className="px-4 pt-20 pb-20 sm:px-6 md:pb-10 lg:pl-56 xl:pl-60">
-        <div className="mx-auto max-w-6xl">
+      {/* ---------------------------------------------------- CONTENU PRINCIPAL */}
+      <main
+        id="contenu-principal"
+        className={`pt-20 pb-20 px-4 sm:px-6 lg:px-8 transition-all duration-200 ${
+          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
           <Suspense fallback={<LoadingScreen />}>
             <Outlet />
           </Suspense>
         </div>
       </main>
 
+      {/* Navigation basse mobile */}
       <MobileNav />
+
+      {/* Modale de Téléchargement de l'Application (Mobile APK & Windows Desktop) */}
+      <DownloadAppModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+      />
     </div>
   );
 }

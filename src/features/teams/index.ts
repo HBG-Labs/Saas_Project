@@ -8,6 +8,7 @@ export {
   addTeamMember,
   archiveTeam,
   createTeam,
+  deleteTeam,
   getTeamWithMembers,
   listOrganizationTeamMemberships,
   listTeams,
@@ -20,6 +21,7 @@ export {
 export {
   useArchiveTeam,
   useCreateTeam,
+  useDeleteTeam,
   useTeam,
   useTeamMembershipsByMember,
   useTeams,

@@ -50,6 +50,7 @@ export {
 } from './hooks/useOrganizations';
 export {
   memberDisplayName,
+  sortMembersByRole,
   useMembers,
   useRemoveMember,
   useUpdateMemberRole,
@@ -67,6 +68,7 @@ export { getInvitationPreview, type InvitationPreview } from './api/organization
 export { InvitationLink } from './components/InvitationLink';
 export { buildInvitationUrl } from './invitation-url';
 export { InviteMemberDialog } from './components/InviteMemberDialog';
+export { AddMemberDialog } from './components/AddMemberDialog';
 export { MemberQuotaBar } from './components/MemberQuotaBar';
 export { MemberRow } from './components/MemberRow';
 export { OrganizationSwitcher } from './components/OrganizationSwitcher';

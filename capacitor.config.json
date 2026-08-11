@@ -1,0 +1,9 @@
+{
+  "appId": "fr.nexoratech.app",
+  "appName": "NexoraTech",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

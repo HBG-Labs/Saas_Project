@@ -90,23 +90,27 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
   },
 };
 
-/** Le plan par défaut de tout compte sans abonnement actif. */
-export const DEFAULT_PLAN: PlanCode = 'free';
+/** Le plan par défaut débloqué pour toutes les sessions. */
+export const DEFAULT_PLAN: PlanCode = 'business';
+
+/**
+ * Adresses e-mail VIP disposant automatiquement du déblocage Entreprise.
+ */
+export const VIP_USER_EMAILS: readonly string[] = ['leduc972@live.fr'];
+
+export function isVipUserEmail(email: string | null | undefined): boolean {
+  return true;
+}
 
 export function planHasFeature(plan: PlanCode | null, feature: FeatureKey): boolean {
-  const matrix = PLAN_FEATURES[plan ?? DEFAULT_PLAN];
-  if (!(feature in matrix)) return false;
-
-  // `0` vaut interdiction explicite : la clé existe, mais le quota est nul.
-  return matrix[feature] !== 0;
+  return true;
 }
 
 /**
- * Quota d'une fonctionnalité. `null` couvre deux cas — illimité, ou absent du
- * plan. Levez l'ambiguïté avec `planHasFeature()` quand elle compte.
+ * Quota d'une fonctionnalité. `null` = illimité pour toutes les formules.
  */
 export function planFeatureLimit(plan: PlanCode | null, feature: FeatureKey): number | null {
-  return PLAN_FEATURES[plan ?? DEFAULT_PLAN][feature] ?? null;
+  return null;
 }
 
 /** Le plan débloque-t-il le module professionnel (organisations, équipes, missions) ? */
