@@ -456,7 +456,7 @@ export default function QuotesPage() {
         </div>
 
         {/* Aperçu & Synthèse Financière (1/3) */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
           <Card className="border-emerald-500/30 bg-gradient-to-b from-surface to-surface-sunken shadow-xl">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
