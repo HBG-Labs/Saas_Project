@@ -2,7 +2,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
-import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavItem } from '@/config/navigation';
+import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
@@ -14,6 +14,12 @@ interface SidebarProps {
   onNavigate?: () => void;
   onDownloadAppClick?: () => void;
   className?: string;
+  /**
+   * Sections à afficher. Par défaut celles du pilotage ; `AppLayout` substitue
+   * les sections « Espace Technicien » quand le rôle réel dans l'organisation
+   * courante est `technician`.
+   */
+  groups?: readonly NavGroup[] | undefined;
 }
 
 function SidebarLink({
@@ -69,14 +75,15 @@ function SidebarLink({
 }
 
 export function Sidebar({
-  collapsed: externalCollapsed = false,
+  collapsed: externalCollapsed,
   onToggleCollapse,
   onNavigate,
-  onDownloadAppClick,
   className,
+  groups,
 }: SidebarProps) {
-  const [internalCollapsed, setInternalCollapsed] = useState(externalCollapsed);
-  const isCollapsed = onToggleCollapse ? externalCollapsed : internalCollapsed;
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const isCollapsed = externalCollapsed ?? internalCollapsed;
+  const activeGroups = groups ?? SIDEBAR_GROUPS;
 
   const handleToggle = () => {
     if (onToggleCollapse) {
@@ -98,7 +105,7 @@ export function Sidebar({
         {/* Bouton de bascule Collapsible */}
         <div className="flex items-center justify-between px-1 pt-1">
           {!isCollapsed && (
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Espace de travail
             </span>
           )}
@@ -117,8 +124,8 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* 3 Sections demandées */}
-        {SIDEBAR_GROUPS.map((group) => (
+        {/* Sections de navigation */}
+        {activeGroups.map((group) => (
           <SidebarSection key={group.id} label={group.label} collapsed={isCollapsed}>
             {group.items.map((item) => (
               <SidebarLink
@@ -156,7 +163,7 @@ function SidebarSection({
     <div>
       <p
         className={cn(
-          'text-2xs mb-1 px-2.5 font-bold tracking-wider text-slate-400 uppercase',
+          'text-2xs mb-1 px-2.5 font-bold tracking-wider text-muted-foreground uppercase',
           collapsed && 'sr-only',
         )}
       >

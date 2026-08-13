@@ -1,0 +1,90 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { qk } from '@/lib/query-keys';
+
+import {
+  createQuote,
+  createQuoteTemplate,
+  createQuoteTemplates,
+  deleteQuoteTemplate,
+  getQuote,
+  listQuoteTemplates,
+  listQuotes,
+  type QuoteLineInput,
+} from '../api/quotes.api';
+
+export function useQuoteTemplates(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.quotes.templates(organizationId ?? 'none'),
+    queryFn: () => (organizationId === null ? [] : listQuoteTemplates(organizationId)),
+    enabled: organizationId !== null,
+  });
+}
+
+export function useCreateQuoteTemplate(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { label: string; unit: string; priceEuros: number }) =>
+      createQuoteTemplate({ ...input, organizationId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.templates(organizationId) });
+    },
+  });
+}
+
+export function useSeedQuoteTemplates(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (presets: readonly { label: string; unit: string; priceEuros: number }[]) =>
+      createQuoteTemplates(organizationId, presets),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.templates(organizationId) });
+    },
+  });
+}
+
+export function useDeleteQuoteTemplate(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (templateId: string) => deleteQuoteTemplate(templateId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.templates(organizationId) });
+    },
+  });
+}
+
+export function useQuotes(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.quotes.list(organizationId ?? 'none'),
+    queryFn: () => (organizationId === null ? [] : listQuotes(organizationId)),
+    enabled: organizationId !== null,
+  });
+}
+
+export function useQuote(quoteId: string | undefined) {
+  return useQuery({
+    queryKey: qk.quotes.detail(quoteId ?? 'none'),
+    queryFn: () => (quoteId === undefined ? null : getQuote(quoteId)),
+    enabled: quoteId !== undefined,
+  });
+}
+
+export function useCreateQuote(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      title?: string;
+      customerName?: string;
+      siteName?: string;
+      vatRate: number;
+      items: readonly QuoteLineInput[];
+    }) => createQuote({ ...input, organizationId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.all });
+    },
+  });
+}

@@ -115,6 +115,35 @@ export const qk = {
       [...qk.interventions.all, organizationId, 'pending-review'] as const,
   },
 
+  // ----------------------------------------------------------- parc matériel
+  equipment: {
+    all: ['equipment'] as const,
+    list: (organizationId: string, filters?: unknown) =>
+      [...qk.equipment.all, organizationId, 'list', filters ?? null] as const,
+    detail: (equipmentId: string) => [...qk.equipment.all, 'detail', equipmentId] as const,
+  },
+
+  // -------------------------------------------------------------------- devis
+  quotes: {
+    all: ['quotes'] as const,
+    list: (organizationId: string, filters?: unknown) =>
+      [...qk.quotes.all, organizationId, 'list', filters ?? null] as const,
+    detail: (quoteId: string) => [...qk.quotes.all, 'detail', quoteId] as const,
+    templates: (organizationId: string) =>
+      [...qk.quotes.all, organizationId, 'templates'] as const,
+  },
+
+  // --------------------------------------------------------------- bloc-notes
+  notes: {
+    all: ['notes'] as const,
+    /**
+     * Indexées par utilisateur : une note est personnelle, et le cache ne doit
+     * pas la servir au compte suivant après une déconnexion.
+     */
+    list: (userId: string, organizationId: string | null) =>
+      [...qk.notes.all, userId, organizationId] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

@@ -1,4 +1,3 @@
-import { mapPostgrestError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { AttachmentKind, Json, TablesUpdate, TimeEntryKind } from '@/types/database';
 import type {
@@ -16,6 +15,8 @@ import type {
  * Le workflow de contrôle (§9) est appliqué par les triggers :
  *   • `enforce_report_review_separation` — un intervenant ne valide jamais son
  *     propre compte rendu, et un CR ne se valide qu'après soumission ;
+ *   • `enforce_report_authorship` — celui qui contrôle n'écrit pas, et un CR
+ *     validé est définitif ;
  *   • `sync_mission_from_report` — la mission suit l'état du compte rendu.
  *
  * Ces fonctions se contentent donc de déclencher les changements d'état.
@@ -27,109 +28,26 @@ const BUCKET = 'intervention-attachments';
 // Interventions
 // -----------------------------------------------------------------------------
 
-const DEFAULT_DEMO_INTERVENTIONS: InterventionWithReport[] = [
-  {
-    id: 'inter-001',
-    mission_id: 'mission-001',
-    organization_id: 'org-demo',
-    technician_id: 'mem-001',
-    status: 'completed',
-    start_time: '2026-08-10T08:30:00.000Z',
-    end_time: '2026-08-10T11:45:00.000Z',
-    start_latitude: 14.616,
-    start_longitude: -61.058,
-    end_latitude: 14.616,
-    end_longitude: -61.058,
-    created_at: '2026-08-10T08:30:00.000Z',
-    updated_at: '2026-08-10T11:45:00.000Z',
-    notes: 'Intervention sur tiroir B12',
-    report: {
-      id: 'report-demo-1',
-      intervention_id: 'inter-001',
-      organization_id: 'org-demo',
-      status: 'submitted',
-      work_description:
-        'Recette de la liaison fibre optique effectuée. Réflectométrie conforme avec atténuation inférieure à 0.35dB/km. Soudure du tiroir B12 finalisée.',
-      submitted_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-      reviewed_at: null,
-      reviewed_by: null,
-      rejection_reason: null,
-      created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    },
-    attachments: [],
-  },
-  {
-    id: 'inter-004',
-    mission_id: 'mission-004',
-    organization_id: 'org-demo',
-    technician_id: 'mem-002',
-    status: 'completed',
-    start_time: '2026-08-10T09:00:00.000Z',
-    end_time: '2026-08-10T12:30:00.000Z',
-    start_latitude: 14.616,
-    start_longitude: -61.058,
-    end_latitude: 14.616,
-    end_longitude: -61.058,
-    created_at: '2026-08-10T09:00:00.000Z',
-    updated_at: '2026-08-10T12:30:00.000Z',
-    notes: 'Vérification câblage FH',
-    report: {
-      id: 'report-demo-2',
-      intervention_id: 'inter-004',
-      organization_id: 'org-demo',
-      status: 'submitted',
-      work_description:
-        'Pose des antennes et câblage coaxial achevés. Tests d’étanchéité des connecteurs N réalisés sur le mât de 35 mètres. Rapport photo joint.',
-      submitted_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-      reviewed_at: null,
-      reviewed_by: null,
-      rejection_reason: null,
-      created_at: new Date(Date.now() - 3600000 * 10).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-    },
-    attachments: [],
-  },
-];
-
 export async function listInterventions(missionId: string): Promise<InterventionWithReport[]> {
-  const local = DEFAULT_DEMO_INTERVENTIONS.filter((i) => i.mission_id === missionId);
-
-  try {
-    const remote = await unwrap(
-      supabase
-        .from('interventions')
-        .select('*, report:intervention_reports(*), attachments:intervention_attachments(*)')
-        .eq('mission_id', missionId)
-        .order('start_time', { ascending: false, nullsFirst: false })
-        .returns<InterventionWithReport[]>(),
-    );
-    const remoteIds = new Set(remote.map((i) => i.id));
-    return [...remote, ...local.filter((i) => !remoteIds.has(i.id))];
-  } catch {
-    return local;
-  }
+  return unwrap(
+    supabase
+      .from('interventions')
+      .select('*, report:intervention_reports(*), attachments:intervention_attachments(*)')
+      .eq('mission_id', missionId)
+      .order('start_time', { ascending: false, nullsFirst: false })
+      .returns<InterventionWithReport[]>(),
+  );
 }
 
 export async function getIntervention(id: string): Promise<InterventionWithReport | null> {
-  const local = DEFAULT_DEMO_INTERVENTIONS.find((i) => i.id === id);
-  if (local || id.startsWith('inter-')) {
-    return local ?? DEFAULT_DEMO_INTERVENTIONS[0];
-  }
-
-  try {
-    const res = await unwrapMaybe(
-      supabase
-        .from('interventions')
-        .select('*, report:intervention_reports(*), attachments:intervention_attachments(*)')
-        .eq('id', id)
-        .single()
-        .returns<InterventionWithReport>(),
-    );
-    return res ?? local ?? DEFAULT_DEMO_INTERVENTIONS[0];
-  } catch {
-    return local ?? DEFAULT_DEMO_INTERVENTIONS[0];
-  }
+  return unwrapMaybe(
+    supabase
+      .from('interventions')
+      .select('*, report:intervention_reports(*), attachments:intervention_attachments(*)')
+      .eq('id', id)
+      .single()
+      .returns<InterventionWithReport>(),
+  );
 }
 
 /**
@@ -186,6 +104,15 @@ export async function completeIntervention(
   );
 }
 
+export async function updateIntervention(
+  interventionId: string,
+  patch: TablesUpdate<'interventions'>,
+): Promise<Intervention> {
+  return unwrap(
+    supabase.from('interventions').update(patch).eq('id', interventionId).select('*').single(),
+  );
+}
+
 // -----------------------------------------------------------------------------
 // Temps d'intervention
 // -----------------------------------------------------------------------------
@@ -196,54 +123,27 @@ export async function completeIntervention(
 // prouve rien — ni pour facturer, ni pour payer.
 
 export async function listTimeEntries(interventionId: string): Promise<InterventionTimeEntry[]> {
-  if (interventionId.startsWith('inter-') || !isUUID(interventionId)) {
-    return [
-      {
-        id: 'time-1',
-        intervention_id: interventionId,
-        organization_id: 'org-demo',
-        kind: 'work',
-        reason: null,
-        started_at: '2026-08-10T08:30:00.000Z',
-        ended_at: '2026-08-10T11:45:00.000Z',
-        created_at: '2026-08-10T08:30:00.000Z',
-      },
-    ];
-  }
-
-  try {
-    return await unwrap(
-      supabase
-        .from('intervention_time_entries')
-        .select('*')
-        .eq('intervention_id', interventionId)
-        .order('started_at', { ascending: true }),
-    );
-  } catch {
-    return [];
-  }
+  return unwrap(
+    supabase
+      .from('intervention_time_entries')
+      .select('*')
+      .eq('intervention_id', interventionId)
+      .order('started_at', { ascending: true }),
+  );
 }
 
 /** Segment ouvert, s'il y en a un. L'index unique garantit qu'il n'y en a jamais deux. */
 export async function getOpenTimeEntry(
   interventionId: string,
 ): Promise<InterventionTimeEntry | null> {
-  if (interventionId.startsWith('inter-') || !isUUID(interventionId)) {
-    return null;
-  }
-
-  try {
-    return await unwrapMaybe(
-      supabase
-        .from('intervention_time_entries')
-        .select('*')
-        .eq('intervention_id', interventionId)
-        .is('ended_at', null)
-        .maybeSingle(),
-    );
-  } catch {
-    return null;
-  }
+  return unwrapMaybe(
+    supabase
+      .from('intervention_time_entries')
+      .select('*')
+      .eq('intervention_id', interventionId)
+      .is('ended_at', null)
+      .maybeSingle(),
+  );
 }
 
 async function openTimeEntry(
@@ -321,29 +221,12 @@ export async function stopTimeTracking(openEntryId: string): Promise<Interventio
  * de `started_at`, jamais stocké.
  */
 export async function getWorkedSeconds(interventionId: string): Promise<number> {
-  if (interventionId.startsWith('inter-') || !isUUID(interventionId)) {
-    return 11700; // 3h15m
-  }
+  const { data, error } = await supabase.rpc('intervention_worked_seconds', {
+    p_intervention_id: interventionId,
+  });
 
-  try {
-    const { data, error } = await supabase.rpc('intervention_worked_seconds', {
-      p_intervention_id: interventionId,
-    });
-
-    if (error) return 11700;
-    return data ?? 11700;
-  } catch {
-    return 11700;
-  }
-}
-
-export async function updateIntervention(
-  interventionId: string,
-  patch: TablesUpdate<'interventions'>,
-): Promise<Intervention> {
-  return unwrap(
-    supabase.from('interventions').update(patch).eq('id', interventionId).select('*').single(),
-  );
+  if (error) throw error;
+  return data ?? 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -400,175 +283,35 @@ export async function submitReport(reportId: string): Promise<InterventionReport
   );
 }
 
-const STORAGE_REPORTS_KEY = 'nexoratech_local_demo_reports';
-
-const DEFAULT_DEMO_REPORTS: ReportForReview[] = [
-  {
-    id: 'report-demo-1',
-    intervention_id: 'inter-001',
-    organization_id: 'org-demo',
-    status: 'submitted',
-    work_description:
-      'Recette de la liaison fibre optique effectuée. Réflectométrie conforme avec atténuation inférieure à 0.35dB/km. Soudure du tiroir B12 finalisée.',
-    submitted_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    reviewed_at: null,
-    reviewed_by: null,
-    rejection_reason: null,
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    intervention: {
-      id: 'inter-001',
-      mission: {
-        id: 'mission-001',
-        reference: '2026-0001',
-        title: 'Audit & Recette Câblage Optique FTTH',
-      },
-      technician: {
-        id: 'mem-001',
-        organization_id: 'org-demo',
-        user_id: 'user-01',
-        role: 'technician',
-        joined_at: '2026-01-01T00:00:00.000Z',
-        profile: {
-          id: 'user-01',
-          display_name: 'Mathieu Laurent',
-          avatar_url: null,
-        },
-      },
-    },
-  },
-  {
-    id: 'report-demo-2',
-    intervention_id: 'inter-004',
-    organization_id: 'org-demo',
-    status: 'submitted',
-    work_description:
-      'Pose des antennes et câblage coaxial achevés. Tests d’étanchéité des connecteurs N réalisés sur le mât de 35 mètres. Rapport photo joint.',
-    submitted_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-    reviewed_at: null,
-    reviewed_by: null,
-    rejection_reason: null,
-    created_at: new Date(Date.now() - 3600000 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-    intervention: {
-      id: 'inter-004',
-      mission: {
-        id: 'mission-004',
-        reference: '2026-0004',
-        title: 'Installation & Pointer Alignement Faisceau FH 5G',
-      },
-      technician: {
-        id: 'mem-002',
-        organization_id: 'org-demo',
-        user_id: 'user-02',
-        role: 'technician',
-        joined_at: '2026-01-01T00:00:00.000Z',
-        profile: {
-          id: 'user-02',
-          display_name: 'Stéphane Leduc',
-          avatar_url: null,
-        },
-      },
-    },
-  },
-];
-
-function getLocalReports(): ReportForReview[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_REPORTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as ReportForReview[];
-      if (Array.isArray(parsed)) return parsed;
-    }
-    localStorage.setItem(STORAGE_REPORTS_KEY, JSON.stringify(DEFAULT_DEMO_REPORTS));
-    return DEFAULT_DEMO_REPORTS;
-  } catch {
-    return DEFAULT_DEMO_REPORTS;
-  }
-}
-
-function saveLocalReports(reports: ReportForReview[]) {
-  try {
-    localStorage.setItem(STORAGE_REPORTS_KEY, JSON.stringify(reports));
-  } catch {
-    // Ignore storage errors
-  }
-}
-
-/** Valide un compte rendu. Seul un chef ou un owner peut l'exécuter. */
+/**
+ * Valide un compte rendu.
+ *
+ * `reviewed_by` et `reviewed_at` ne sont pas envoyés : le trigger
+ * `enforce_report_review_separation` les pose lui-même et refuse la validation
+ * si le contrôleur est l'auteur. Une valeur venant du client serait rejetée par
+ * `enforce_report_authorship`.
+ */
 export async function approveReport(reportId: string): Promise<InterventionReport> {
-  if (reportId.startsWith('report-demo-')) {
-    const local = getLocalReports();
-    const updated = local.filter((r) => r.id !== reportId);
-    saveLocalReports(updated);
-    return {
-      id: reportId,
-      intervention_id: 'inter-001',
-      organization_id: 'org-demo',
-      status: 'approved',
-      work_description: 'Validé',
-      submitted_at: new Date().toISOString(),
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: 'user-01',
-      rejection_reason: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  try {
-    return await unwrap(
-      supabase
-        .from('intervention_reports')
-        .update({ status: 'approved' })
-        .eq('id', reportId)
-        .select('*')
-        .single(),
-    );
-  } catch {
-    const local = getLocalReports();
-    const updated = local.filter((r) => r.id !== reportId);
-    saveLocalReports(updated);
-    return { id: reportId, status: 'approved' } as InterventionReport;
-  }
+  return unwrap(
+    supabase
+      .from('intervention_reports')
+      .update({ status: 'approved' })
+      .eq('id', reportId)
+      .select('*')
+      .single(),
+  );
 }
 
 /** Refuse un compte rendu. Le motif est obligatoire — contrainte CHECK en base. */
 export async function rejectReport(reportId: string, reason: string): Promise<InterventionReport> {
-  if (reportId.startsWith('report-demo-')) {
-    const local = getLocalReports();
-    const updated = local.filter((r) => r.id !== reportId);
-    saveLocalReports(updated);
-    return {
-      id: reportId,
-      intervention_id: 'inter-001',
-      organization_id: 'org-demo',
-      status: 'rejected',
-      work_description: 'Refusé',
-      submitted_at: new Date().toISOString(),
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: 'user-01',
-      rejection_reason: reason,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  try {
-    return await unwrap(
-      supabase
-        .from('intervention_reports')
-        .update({ status: 'rejected', rejection_reason: reason })
-        .eq('id', reportId)
-        .select('*')
-        .single(),
-    );
-  } catch {
-    const local = getLocalReports();
-    const updated = local.filter((r) => r.id !== reportId);
-    saveLocalReports(updated);
-    return { id: reportId, status: 'rejected', rejection_reason: reason } as InterventionReport;
-  }
+  return unwrap(
+    supabase
+      .from('intervention_reports')
+      .update({ status: 'rejected', rejection_reason: reason })
+      .eq('id', reportId)
+      .select('*')
+      .single(),
+  );
 }
 
 /**
@@ -581,43 +324,51 @@ export async function rejectReport(reportId: string, reason: string): Promise<In
  * masque alors la mission dont il contrôle pourtant le compte rendu. L'écran
  * doit le supporter, pas le supposer impossible.
  */
-function isUUID(id: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-}
-
 export async function listReportsPendingReview(
   organizationId: string,
 ): Promise<ReportForReview[]> {
-  const local = getLocalReports().filter((r) => r.status === 'submitted');
+  return unwrap(
+    supabase
+      .from('intervention_reports')
+      .select(
+        `*, intervention:interventions(
+           id,
+           mission:missions(id, reference, title),
+           technician:organization_members(
+             *, profile:profiles(id, display_name, avatar_url)
+           )
+         )`,
+      )
+      .eq('organization_id', organizationId)
+      .eq('status', 'submitted')
+      .order('submitted_at', { ascending: true })
+      .returns<ReportForReview[]>(),
+  );
+}
 
-  if (!isUUID(organizationId)) {
-    return local;
+/**
+ * Répartition des comptes rendus par statut, pour l'organisation.
+ *
+ * Sert exclusivement à l'écran de contrôle quand sa file est vide. « Rien à
+ * contrôler » est exact mais muet : le responsable ne sait pas s'il n'y a aucun
+ * chantier en cours, ou si trois comptes rendus sont en cours de rédaction et
+ * arriveront bientôt. Ces deux situations appellent des décisions opposées.
+ */
+export async function countReportsByStatus(
+  organizationId: string,
+): Promise<Record<string, number>> {
+  const rows = await unwrap(
+    supabase
+      .from('intervention_reports')
+      .select('status')
+      .eq('organization_id', organizationId),
+  );
+
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    counts[row.status] = (counts[row.status] ?? 0) + 1;
   }
-
-  try {
-    const remote = await unwrap(
-      supabase
-        .from('intervention_reports')
-        .select(
-          `*, intervention:interventions(
-             id,
-             mission:missions(id, reference, title),
-             technician:organization_members(
-               *, profile:profiles(id, display_name, avatar_url)
-             )
-           )`,
-        )
-        .eq('organization_id', organizationId)
-        .eq('status', 'submitted')
-        .order('submitted_at', { ascending: true })
-        .returns<ReportForReview[]>(),
-    );
-
-    const remoteIds = new Set(remote.map((r) => r.id));
-    return [...remote, ...local.filter((r) => !remoteIds.has(r.id))];
-  } catch {
-    return local;
-  }
+  return counts;
 }
 
 // -----------------------------------------------------------------------------

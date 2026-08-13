@@ -31,6 +31,7 @@ export {
   useMission,
   useMissionAssignments,
   useMissionHistory,
+  useMissionStatusCounts,
   useMissions,
   useUpdateMission,
 } from './hooks/useMissions';

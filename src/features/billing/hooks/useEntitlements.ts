@@ -3,7 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth';
 import { qk } from '@/lib/query-keys';
 
-import { getMySubscription, getOrganizationSubscription, resolvePlanCode } from '../api/billing.api';
+import {
+  getMySubscription,
+  getOrganizationPlanCode,
+  getOrganizationSubscription,
+  resolvePlanCode,
+} from '../api/billing.api';
 import {
   DEFAULT_PLAN,
   planFeatureLimit,
@@ -100,15 +105,21 @@ export function useOrganizationSubscription(organizationId: string | null) {
  * d'une organisation restée en `free`.
  */
 export function useOrganizationEntitlements(organizationId: string | null): Entitlements {
+  // Le CODE de la formule, pas l'abonnement : `subscriptions` est réservée à
+  // `billing.view`, et l'interroger ici refusait le module professionnel à tout
+  // technicien — alors que le serveur le lui ouvre. Clé de cache distincte de
+  // `organizationSubscription`, qui sert l'écran de facturation.
   const { data, isPending } = useQuery({
-    queryKey: qk.billing.organizationSubscription(organizationId ?? 'none'),
+    queryKey: [...qk.billing.all, 'plan-code', organizationId ?? 'none'],
     queryFn: () =>
-      organizationId === null ? Promise.resolve(null) : getOrganizationSubscription(organizationId),
+      organizationId === null
+        ? Promise.resolve(DEFAULT_PLAN)
+        : getOrganizationPlanCode(organizationId),
     enabled: organizationId !== null,
     staleTime: 5 * 60_000,
   });
 
-  const planCode = organizationId === null ? DEFAULT_PLAN : resolvePlanCode(data ?? null);
+  const planCode = organizationId === null ? DEFAULT_PLAN : (data ?? DEFAULT_PLAN);
 
   return {
     planCode,

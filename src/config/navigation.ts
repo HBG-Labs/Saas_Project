@@ -25,7 +25,9 @@ export const PRINCIPAL_NAV: readonly NavItem[] = [
   { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
   { to: ROUTES.teams, label: 'Équipes', icon: 'users-round', feature: 'teams' },
-  { to: ROUTES.organizationMembers, label: 'Membres', icon: 'users', feature: 'members' },
+  { to: ROUTES.organizationMembers, label: 'Techniciens', icon: 'users', feature: 'members' },
+  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
+  { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];
 
 export const TOOLS_CATEGORIES_NAV: readonly NavItem[] = [

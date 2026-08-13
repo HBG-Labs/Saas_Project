@@ -4,7 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  Clock,
+  FileText,
   LayoutList,
   MapPin,
   Plus,
@@ -17,7 +17,7 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
@@ -27,12 +27,15 @@ import {
   MissionFiltersBar,
   MissionPriorityBadge,
   MissionStatusBadge,
+  MISSION_STATUS_LABELS,
   toMissionQuery,
+  useMissionStatusCounts,
   useMissions,
 } from '@/features/missions';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
-import type { MissionWithDetails } from '@/types/domain';
+import type { MissionStatus } from '@/types/database';
+import type { MissionWithRelations } from '@/types/domain';
 
 type ViewMode = 'list' | 'week' | 'month';
 
@@ -51,15 +54,27 @@ export default function MissionsListPage() {
   // State pour la modale d'inspection des missions d'un jour précis
   const [selectedDay, setSelectedDay] = useState<{
     date: Date;
-    missions: MissionWithDetails[];
+    missions: MissionWithRelations[];
   } | null>(null);
 
   const missions = useMissions(organizationId, toMissionQuery(filters));
+  const statusCounts = useMissionStatusCounts(organizationId);
 
   const canCreate = can(PERMISSIONS.missionCreate);
   const canViewAll = can(PERMISSIONS.missionViewAll);
   const activeFilters = countActiveFilters(filters);
   const list = missions.data ?? [];
+
+  /**
+   * États réellement peuplés, hors celui déjà sélectionné.
+   *
+   * Triés par ordre du cycle de vie plutôt que par volume : on cherche « où en
+   * est mon travail », pas « quel tas est le plus gros ».
+   */
+  const counts: Record<string, number> = statusCounts.data ?? {};
+  const elsewhere = (Object.keys(MISSION_STATUS_LABELS) as MissionStatus[])
+    .filter((status) => (counts[status] ?? 0) > 0 && status !== filters.status)
+    .map((status) => [status, counts[status] ?? 0] as const);
 
   // --- LOGIQUE SEMAINE (6 jours : LUN-SAM) ---
   const baseMonday = new Date(2026, 7, 10);
@@ -133,7 +148,6 @@ export default function MissionsListPage() {
     });
   };
 
-  const unscheduledMissions = list.filter((m) => m.scheduled_start === null);
 
   return (
     <div className="space-y-6">
@@ -198,6 +212,16 @@ export default function MissionsListPage() {
         }
       />
 
+      {/* Bannière de guidage pour les comptes-rendus */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">
+        <div className="flex items-center gap-2.5">
+          <FileText className="size-4 shrink-0 text-primary" />
+          <span>
+            <strong>Rédaction des comptes-rendus :</strong> Sélectionnez une mission ci-dessous, démarrez l’intervention pour enregistrer le chronomètre et rédiger votre compte-rendu terrain.
+          </span>
+        </div>
+      </div>
+
       <MissionFiltersBar
         organizationId={organizationId}
         value={filters}
@@ -215,6 +239,7 @@ export default function MissionsListPage() {
           }}
         />
       ) : list.length === 0 ? (
+        <div className="space-y-4">
         <EmptyState
           icon={ClipboardList}
           title={activeFilters === 0 ? 'Aucune mission en cours' : 'Aucun résultat'}
@@ -239,6 +264,37 @@ export default function MissionsListPage() {
                 : 'Aucune intervention ne vous est confiée pour le moment.'
           }
         />
+        {/*
+            Où sont les missions, alors ?
+
+            « Aucun résultat » est exact et muet : il ne dit pas si l'entreprise
+            n'en a aucune, ou si les onze qu'elle compte sont simplement dans un
+            autre état. L'utilisateur conclut à une panne là où il suffisait de
+            changer de filtre — d'autant que la liste masque les états terminaux
+            par défaut.
+
+            Chaque pastille bascule directement sur l'état correspondant.
+          */}
+        {elsewhere.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">Vos missions se trouvent ici :</p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {elsewhere.map(([status, count]) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => {
+                      setFilters({ ...EMPTY_MISSION_FILTERS, status });
+                    }}
+                    className="border-border bg-surface hover:border-primary/50 hover:text-foreground text-muted-foreground cursor-pointer rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors"
+                  >
+                    {MISSION_STATUS_LABELS[status]} · {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+        ) : null}
+        </div>
       ) : viewMode === 'list' ? (
         /* 📋 VUE 1 : LISTE ADMINISTRATIVE */
         <ul className="divide-border divide-y border-t border-border">
@@ -302,7 +358,7 @@ export default function MissionsListPage() {
             <div className="flex items-center gap-2">
               <CalendarIcon className="size-5 text-primary" />
               <span className="text-foreground font-bold text-sm">
-                Planning — Du {daysOfWeek[0].dateStr} au {daysOfWeek[5].dateStr} 2026
+                Planning — Du {daysOfWeek[0]?.dateStr} au {daysOfWeek[5]?.dateStr} 2026
               </span>
               {weekOffset !== 0 ? (
                 <Badge variant="outline" className="text-2xs font-mono">

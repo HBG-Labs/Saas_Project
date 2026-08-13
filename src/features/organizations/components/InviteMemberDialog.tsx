@@ -38,6 +38,7 @@ export function InviteMemberDialog({
    * seule chose que l'utilisateur est venu chercher.
    */
   const [created, setCreated] = useState<OrganizationInvitation | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   const inviteMember = useInviteMember(organizationId);
 
@@ -54,8 +55,12 @@ export function InviteMemberDialog({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const invitation = await inviteMember.mutateAsync({ email: values.email, role });
+      const { invitation, emailSent: sent } = await inviteMember.mutateAsync({
+        email: values.email,
+        role,
+      });
       setCreated(invitation);
+      setEmailSent(sent);
       reset();
     } catch (error) {
       setSubmitError(error);
@@ -66,6 +71,7 @@ export function InviteMemberDialog({
     setOpen(next);
     if (!next) {
       setCreated(null);
+      setEmailSent(false);
       setSubmitError(null);
       reset();
     }
@@ -75,7 +81,7 @@ export function InviteMemberDialog({
     <Modal
       open={open}
       onOpenChange={close}
-      title={created === null ? 'Inviter un membre' : 'Invitation créée'}
+      title={created === null ? 'Inviter un membre' : emailSent ? 'Invitation envoyée' : 'Invitation créée'}
       // Propriété omise plutôt que passée à `undefined` : `exactOptionalPropertyTypes`
       // distingue les deux, et la seconde forme est un type invalide.
       {...(created === null
@@ -116,7 +122,17 @@ export function InviteMemberDialog({
           <div className="border-warning/40 bg-warning-subtle rounded-lg border p-3">
             <p className="text-foreground text-sm font-medium">Aucun e-mail n’a été envoyé</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              Transmettez ce lien à <strong>{created.email}</strong> par le moyen de votre choix.
+              {emailSent ? (
+                <>
+                  Le lien vient d’être envoyé à <strong>{created.email}</strong>. Le voici en
+                  secours, si le courriel se perd ou atterrit dans les indésirables.
+                </>
+              ) : (
+                <>
+                  Le courriel n’a pas pu partir : transmettez ce lien à{' '}
+                  <strong>{created.email}</strong> par le moyen de votre choix.
+                </>
+              )}
               Il expire dans 7 jours et ne fonctionnera que pour un compte utilisant cette adresse.
             </p>
           </div>

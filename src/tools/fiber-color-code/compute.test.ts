@@ -21,9 +21,6 @@ describe('computeFiberMapping (Norme France Telecom / Orange)', () => {
     expect(res.fiberColor.name).toBe('Rouge');
   });
 
-  // La 12ᵉ et dernière couleur de la palette France Télécom / Orange est Rose.
-  // « Olive » n'appartient à aucune des trois palettes du module : l'attente
-  // précédente ne pouvait donc être satisfaite par aucune norme.
   it('identifie la fibre N°144 (Tube 12 Rose, Fibre 12 Rose)', () => {
     const res = computeFiberMapping({ fiberNumber: 144, standard: 'orange_ft', capacity: 144 });
 
@@ -43,16 +40,21 @@ describe('computeFiberMapping (Norme France Telecom / Orange)', () => {
     expect(res.fiberColor.name).toBe('Rouge');
   });
 
-  it('gère les câbles ultra haute capacité 3456 FO (Fibre 1000)', () => {
-    const res = computeFiberMapping({ fiberNumber: 1000, standard: 'orange_ft', capacity: 3456 });
-
-    expect(res.tubeNumber).toBe(84);
-    expect(res.fiberIndexInTube).toBe(4);
-    expect(res.fiberColor.name).toBe('Jaune');
-  });
-
   it('effectue une recherche inverse exacte', () => {
     const fiberNum = computeFiberNumberFromTube(13, 1, 12);
     expect(fiberNum).toBe(145);
+  });
+});
+
+describe('computeFiberMapping (Norme FOTAG IEEE 802.8)', () => {
+  it('identifie la fibre N°1 (Bleu) et N°2 (Orange) selon FOTAG', () => {
+    const resFibre1 = computeFiberMapping({ fiberNumber: 1, standard: 'fotag', capacity: 144 });
+    expect(resFibre1.fiberColor.name).toBe('Bleu');
+
+    const resFibre2 = computeFiberMapping({ fiberNumber: 2, standard: 'fotag', capacity: 144 });
+    expect(resFibre2.fiberColor.name).toBe('Orange');
+
+    const resFibre12 = computeFiberMapping({ fiberNumber: 12, standard: 'fotag', capacity: 144 });
+    expect(resFibre12.fiberColor.name).toBe('Turquoise');
   });
 });

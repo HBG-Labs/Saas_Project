@@ -1,4 +1,4 @@
-import { Check, Copy, Cpu, Globe, Info, ShieldCheck, Zap } from 'lucide-react';
+import { Check, Copy, Cpu, Globe, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 function expandIPv6(input: string): string | null {
@@ -8,7 +8,7 @@ function expandIPv6(input: string): string | null {
   // Handle IPv4-mapped or basic IPv6
   let ipStr = trimmed;
   if (ipStr.includes('/')) {
-    ipStr = ipStr.split('/')[0];
+    ipStr = ipStr.split('/')[0] ?? '';
   }
 
   const parts = ipStr.split('::');
@@ -83,7 +83,7 @@ function classifyIPv6(expanded: string): { type: string; description: string; sc
     return { type: 'Loopback (::1)', description: 'Adresse de bouclage local (127.0.0.1 equivalent)', scope: 'Hôte local' };
   }
 
-  const firstHextet = parseInt(expanded.split(':')[0], 16);
+  const firstHextet = parseInt(expanded.split(':')[0] ?? '', 16);
 
   if ((firstHextet & 0xff00) === 0xff00) {
     return { type: 'Multicast (ff00::/8)', description: 'Adresse de diffusion groupe (Multicast)', scope: 'Variable (Site/Global)' };
@@ -109,15 +109,15 @@ function macToEUI64(macInput: string): string | null {
   if (!octets || octets.length !== 6) return null;
 
   // Flip 7th bit of 1st octet (universal/local bit)
-  const firstByte = parseInt(octets[0], 16) ^ 0x02;
+  const firstByte = parseInt(octets[0] ?? '', 16) ^ 0x02;
   const firstHex = firstByte.toString(16).padStart(2, '0');
 
   // Insert FF-FE in middle (between octet 3 and 4)
   const eui64Parts = [
-    firstHex + octets[1],
-    octets[2] + 'ff',
-    'fe' + octets[3],
-    octets[4] + octets[5],
+    firstHex + (octets[1] ?? ''),
+    (octets[2] ?? '') + 'ff',
+    'fe' + (octets[3] ?? ''),
+    (octets[4] ?? '') + (octets[5] ?? ''),
   ];
 
   return `fe80::${eui64Parts.join(':')}`;
@@ -145,13 +145,13 @@ export default function IPv6SubnetCalculatorTool() {
       const bitEnd = (i + 1) * 16;
 
       if (maskBit >= bitEnd) {
-        resultHextets.push(bits[i].toString(16).padStart(4, '0'));
+        resultHextets.push((bits[i] ?? 0).toString(16).padStart(4, '0'));
       } else if (maskBit <= bitStart) {
         resultHextets.push('0000');
       } else {
         const remainingBits = maskBit - bitStart;
         const mask = (0xffff << (16 - remainingBits)) & 0xffff;
-        resultHextets.push((bits[i] & mask).toString(16).padStart(4, '0'));
+        resultHextets.push(((bits[i] ?? 0) & mask).toString(16).padStart(4, '0'));
       }
     }
 
@@ -276,7 +276,7 @@ export default function IPv6SubnetCalculatorTool() {
               <p className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 break-all">
                 {networkPrefix}/{prefixLength}
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-muted-foreground">
                 Espace total : 2<sup>{128 - prefixLength}</sup> adresses d&apos;hôtes.
               </p>
             </div>

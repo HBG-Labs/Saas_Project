@@ -66,12 +66,13 @@ export default function TeamsListPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((team) => (
-            <Card
+            <Link
               key={team.id}
-              className="group transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+              to={ROUTES.team(team.id)}
+              className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <CardContent className="p-5">
-                <Link to={ROUTES.team(team.id)} className="block space-y-3">
+              <Card className="h-full cursor-pointer transition-all duration-150 group-hover:border-primary/50 group-hover:shadow-md hover:border-primary/50 hover:shadow-md">
+                <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
@@ -100,9 +101,9 @@ export default function TeamsListPage() {
                   ) : (
                     <p className="text-subtle-foreground text-xs italic">Aucune description</p>
                   )}
-                </Link>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

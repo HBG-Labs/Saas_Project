@@ -17,8 +17,8 @@ import {
 } from './entitlements';
 
 describe('matrice des entitlements', () => {
-  it('déclare les trois plans du §13', () => {
-    expect(PLAN_CODES).toEqual(['free', 'pro', 'business']);
+  it('déclare les quatre plans du système tarifaire', () => {
+    expect(PLAN_CODES).toEqual(['free', 'pro', 'business', 'ultimate']);
   });
 
   it('retombe sur le plan gratuit par défaut', () => {
@@ -27,7 +27,7 @@ describe('matrice des entitlements', () => {
     expect(planHasFeature(null, FEATURES.missions)).toBe(false);
   });
 
-  it('réserve le module professionnel au plan Entreprise', () => {
+  it('réserve le module professionnel aux plans Business et Ultimate', () => {
     const proOnly: FeatureKey[] = [
       FEATURES.organizations,
       FEATURES.teams,
@@ -42,30 +42,33 @@ describe('matrice des entitlements', () => {
       expect(planHasFeature('free', feature), `free ne doit pas avoir ${feature}`).toBe(false);
       expect(planHasFeature('pro', feature), `pro ne doit pas avoir ${feature}`).toBe(false);
       expect(planHasFeature('business', feature), `business doit avoir ${feature}`).toBe(true);
+      expect(planHasFeature('ultimate', feature), `ultimate doit avoir ${feature}`).toBe(true);
     }
   });
 
   it('identifie les plans capables de porter une organisation', () => {
-    expect(ORGANIZATION_PLANS).toEqual(['business']);
+    expect(ORGANIZATION_PLANS).toEqual(['business', 'ultimate']);
     expect(planUnlocksProModule('pro')).toBe(false);
     expect(planUnlocksProModule('business')).toBe(true);
+    expect(planUnlocksProModule('ultimate')).toBe(true);
   });
 
   it("conserve la limite d'historique du plan gratuit", () => {
-    // Reprend PLAN_HISTORY_LIMITS.free, jusqu'ici appliqué côté navigateur.
     expect(planFeatureLimit('free', FEATURES.calculationHistory)).toBe(10);
     expect(planFeatureLimit('pro', FEATURES.calculationHistory)).toBeNull();
     expect(planFeatureLimit('business', FEATURES.calculationHistory)).toBeNull();
+    expect(planFeatureLimit('ultimate', FEATURES.calculationHistory)).toBeNull();
   });
 
-  it('applique un quota de membres au plan Entreprise', () => {
-    expect(planFeatureLimit('business', FEATURES.members)).toBe(25);
-    // Le quota n'empêche pas la fonctionnalité d'exister.
+  it('applique un quota de membres aux plans Business et Ultimate', () => {
+    expect(planFeatureLimit('business', FEATURES.members)).toBe(10);
+    expect(planFeatureLimit('ultimate', FEATURES.members)).toBe(20);
     expect(planHasFeature('business', FEATURES.members)).toBe(true);
+    expect(planHasFeature('ultimate', FEATURES.members)).toBe(true);
   });
 
   it('rend chaque plan au moins aussi généreux que le précédent', () => {
-    const order: PlanCode[] = ['free', 'pro', 'business'];
+    const order: PlanCode[] = ['free', 'pro', 'business', 'ultimate'];
 
     for (let i = 0; i < order.length - 1; i += 1) {
       const lower = order[i]!;
@@ -101,8 +104,17 @@ describe('cohérence avec la grille tarifaire publique', () => {
 describe('synchronisation avec le seed SQL', () => {
   // L'entitlement du module Clients a été ajouté avec la table `customers`,
   // dans une migration ultérieure au seed d'origine.
+  // L'ordre compte : `ultimate` arrive en dernier et son `on conflict do update`
+  // corrige le quota de membres du plan Entreprise. Lire les migrations dans
+  // l'ordre chronologique reproduit l'état réel de la table.
   const tuples = extractInsertTuplesAcross(
-    [MIGRATION_FILES.billing, MIGRATION_FILES.closure],
+    [
+      MIGRATION_FILES.billing,
+      MIGRATION_FILES.closure,
+      MIGRATION_FILES.ultimate,
+      MIGRATION_FILES.equipment,
+      MIGRATION_FILES.quotes,
+    ],
     'plan_features',
   );
 
@@ -117,8 +129,8 @@ describe('synchronisation avec le seed SQL', () => {
     seeded.get(plan)?.set(feature, limit);
   }
 
-  it('extrait les fonctionnalités des trois plans', () => {
-    expect(seeded.size).toBe(3);
+  it('extrait les fonctionnalités des quatre plans', () => {
+    expect(seeded.size).toBe(4);
     expect(tuples.length).toBeGreaterThan(20);
   });
 

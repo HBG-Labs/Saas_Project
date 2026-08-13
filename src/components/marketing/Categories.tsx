@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Cable, Cpu, Droplet, Network, Wrench, Zap } from 'lucide-react';
+import { ArrowRight, Cable, Cpu, Network, Wrench, Zap } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
@@ -7,8 +7,8 @@ export function Categories() {
   const categories = [
     {
       name: 'Réseaux & IT',
-      count: '6 calculatrices certifiées',
-      description: 'Découpage IPv4/v6, BDP & fenêtre TCP, masques Wildcard ACL, bande passante et migrations DNS.',
+      count: '5 calculatrices certifiées',
+      description: 'Calculateur IPv4/CIDR, Convertisseur IP Binaire, Calculateur VLAN, Débit Réseau et PoE.',
       icon: Cpu,
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-950/40',
@@ -27,8 +27,8 @@ export function Categories() {
     },
     {
       name: 'Télécoms',
-      count: '6 calculatrices',
-      description: 'Bilan de liaison hertzienne, affaiblissement espace libre et antennes 4G/5G.',
+      count: '7 calculatrices & repérages',
+      description: 'Code couleur câbles cuivre télécom (8 à 112 paires), bilans de liaison radio, affaiblissement et antennes.',
       icon: Network,
       color: 'text-indigo-600 dark:text-indigo-400',
       bg: 'bg-indigo-50 dark:bg-indigo-950/40',

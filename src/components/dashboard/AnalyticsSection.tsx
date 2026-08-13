@@ -50,11 +50,11 @@ export function AnalyticsSection() {
         <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs text-slate-500 dark:border-slate-800">
             <div>
-              <span className="text-slate-400">Total terminées : </span>
+              <span className="text-muted-foreground">Total terminées : </span>
               <span className="font-bold text-slate-900 dark:text-white">42</span>
             </div>
             <div>
-              <span className="text-slate-400">En attente : </span>
+              <span className="text-muted-foreground">En attente : </span>
               <span className="font-bold text-slate-900 dark:text-white">8</span>
             </div>
           </div>
@@ -139,7 +139,7 @@ export function AnalyticsSection() {
               />
             </svg>
 
-            <div className="mt-2 flex justify-between text-[10px] font-medium text-slate-400">
+            <div className="mt-2 flex justify-between text-[10px] font-medium text-muted-foreground">
               <span>Lun</span>
               <span>Mar</span>
               <span>Mer</span>

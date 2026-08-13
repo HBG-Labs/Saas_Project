@@ -37,13 +37,45 @@ export function MissionTransitions({ mission, role, isAssignee }: MissionTransit
   const changeStatus = useChangeMissionStatus(mission.id);
   const [error, setError] = useState<unknown>(null);
 
+  /**
+   * `accepted → in_progress` est délibérément absente d'ici.
+   *
+   * ─────────────────────────────────────────────────────────────────────────────
+   * POURQUOI CETTE TRANSITION N'A PAS SA PLACE DANS CETTE CARTE
+   *
+   * Le panneau « Interventions » propose déjà « Démarrer une intervention », qui
+   * fait le geste COMPLET : il passe la mission en cours, crée l'intervention,
+   * lance le relevé de temps et ouvre le compte rendu.
+   *
+   * La même transition offerte ici n'en faisait que la moitié — elle changeait le
+   * statut sans rien créer. On obtenait une mission « en cours » sans
+   * intervention derrière : ni chronomètre, ni compte rendu. Deux boutons au
+   * libellé quasi identique, dont l'un tenait mal sa promesse.
+   *
+   * Les autres transitions restent ici : terminer les travaux, annuler,
+   * reprendre après un refus. Elles ne décrivent que l'avancement, et n'ont
+   * aucune contrepartie à créer.
+   * ─────────────────────────────────────────────────────────────────────────────
+   */
   const transitions = getPermittedTransitions({
     from: mission.status,
     role,
     isAssignee,
-  });
+  }).filter((rule) => !(rule.from === 'accepted' && rule.to === 'in_progress'));
 
   if (transitions.length === 0) {
+    // Sur une mission acceptée, l'action existe — elle est simplement ailleurs,
+    // dans le panneau qui crée l'intervention. Afficher « aucune action » ici
+    // ferait croire à un blocage à trois centimètres du bouton qui débloque.
+    if (mission.status === 'accepted' && isAssignee) {
+      return (
+        <p className="text-muted-foreground text-xs">
+          Mission acceptée. Utilisez «&nbsp;Démarrer une intervention&nbsp;» ci-dessous : le
+          relevé du temps et le compte rendu s’ouvrent en même temps.
+        </p>
+      );
+    }
+
     return (
       <p className="text-muted-foreground text-xs">
         Aucune action disponible à ce stade — soit la mission est close, soit elle attend

@@ -162,7 +162,6 @@ const FOOTER_SECTIONS = [
     links: [
       { to: ROUTES.login, label: 'Connexion' },
       { to: ROUTES.register, label: 'Créer un compte' },
-      { to: ROUTES.references, label: 'Références techniques' },
     ],
   },
 ] as const;

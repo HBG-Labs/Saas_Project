@@ -130,12 +130,13 @@ export default function CustomersListPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((customer) => (
-            <Card
+            <Link
               key={customer.id}
-              className="group transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+              to={ROUTES.customer(customer.id)}
+              className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <CardContent className="p-5">
-                <Link to={ROUTES.customer(customer.id)} className="block space-y-3">
+              <Card className="h-full cursor-pointer transition-all duration-150 group-hover:border-primary/50 group-hover:shadow-md hover:border-primary/50 hover:shadow-md">
+                <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-hover text-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
@@ -165,9 +166,9 @@ export default function CustomersListPage() {
                       </p>
                     ) : null}
                   </div>
-                </Link>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

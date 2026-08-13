@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, HardHat, Sparkles, Wrench, Search, RefreshCw, Maximize2, CheckCircle2, Cpu, Wifi } from 'lucide-react';
+import { ShieldCheck, HardHat, Sparkles, Wrench, Search, RefreshCw, Maximize2, CheckCircle2, Cpu, Wifi, FileText } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Kbd } from '@/components/ui/Kbd';
 import { Modal } from '@/components/ui/Modal';
 import { ROUTES } from '@/config/routes';
-import { TECHNICIAN_IMAGES, TechnicianImage } from '@/assets/images/technicianData';
+import { TECHNICIAN_IMAGES } from '@/assets/images/technicianData';
 
 interface TechnicianHeroBannerProps {
   displayName: string;
@@ -19,7 +19,11 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const currentImg: TechnicianImage = TECHNICIAN_IMAGES[selectedImageIndex];
+  const currentImg = TECHNICIAN_IMAGES[selectedImageIndex % TECHNICIAN_IMAGES.length];
+
+  // Le module d'images pourrait être vidé : mieux vaut ne rien afficher qu'une
+  // bannière au visuel manquant.
+  if (currentImg === undefined) return null;
 
   const handleNextImage = () => {
     setImageLoaded(false);
@@ -28,11 +32,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-surface-elevated/90 via-surface/95 to-surface-sunken/90 p-6 sm:p-8 shadow-raised backdrop-blur-xl transition-all duration-300 hover:border-primary/40 mb-8 glow-subtle">
-        {/* Arrière-plan décoratif néon & grilles technologiques */}
-        <div className="absolute -right-20 -top-20 size-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 size-80 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
-
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8 shadow-sm transition-all duration-300 mb-8">
         <div className="relative z-10 grid gap-8 lg:grid-cols-12 lg:items-center">
           {/* Colonne Gauche : Cockpit & Informations du Technicien */}
           <div className="lg:col-span-7 flex flex-col justify-between space-y-5">
@@ -95,17 +95,24 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
 
             {/* Boutons d'Action */}
             <div className="flex flex-wrap items-center gap-3 pt-3">
-              <Button asChild size="md" className="glow-primary rounded-xl font-semibold">
+              <Button asChild size="md" variant="primary" className="glow-primary rounded-xl font-semibold">
+                <Link to={ROUTES.reports}>
+                  <FileText className="size-4 mr-2" />
+                  Rédiger un compte-rendu
+                </Link>
+              </Button>
+
+              <Button asChild size="md" variant="outline" className="rounded-xl font-semibold">
                 <Link to={ROUTES.tools}>
                   <Wrench className="size-4 mr-2" />
-                  Ouvrir le Catalogue des Outils
+                  Catalogue des Outils
                 </Link>
               </Button>
 
               <button
                 type="button"
                 onClick={handleNextImage}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated/80 px-3.5 py-2 text-xs font-medium text-foreground hover:bg-surface-sunken hover:border-primary/50 transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-raised/80 px-3.5 py-2 text-xs font-medium text-foreground hover:bg-surface-sunken hover:border-primary/50 transition-all cursor-pointer shadow-xs"
                 title="Changer la vue d'intervention du technicien"
               >
                 <RefreshCw className="size-3.5 text-primary animate-spin-slow" />
@@ -130,7 +137,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
 
           {/* Colonne Droite : Carte Visuelle avec la Photo du Technicien avec Casque */}
           <div className="lg:col-span-5 relative group">
-            <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-surface-elevated shadow-2xl transition-all duration-500 group-hover:border-primary/60 group-hover:shadow-primary/20">
+            <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-surface-raised shadow-2xl transition-all duration-500 group-hover:border-primary/60 group-hover:shadow-primary/20">
               {/* Effet de brillance lors du survol */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 pointer-events-none" />
 
@@ -148,14 +155,14 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
                 {/* Badge Flottant "Casque de Sécurité Conforme" sur l'image */}
                 <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1 text-2xs font-medium text-white shadow-lg">
                   <HardHat className="size-3.5 text-warning" />
-                  <span className="font-semibold text-warning-contrast">EPI Obligatoire</span>
+                  <span className="font-semibold text-amber-300">EPI Obligatoire</span>
                 </div>
 
                 {/* Bouton Agrandir Photo */}
                 <button
                   type="button"
                   onClick={() => setIsZoomOpen(true)}
-                  className="absolute top-3 right-3 z-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 p-2 text-white hover:bg-primary hover:border-primary transition-all cursor-pointer shadow-lg"
+                  className="absolute top-3 right-3 z-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 p-2 text-foreground hover:bg-primary hover:border-primary transition-all cursor-pointer shadow-lg"
                   title="Agrandir la photo du technicien"
                 >
                   <Maximize2 className="size-4" />
@@ -163,26 +170,26 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
               </div>
 
               {/* Légende & Overlay sous la Photo */}
-              <div className="absolute bottom-0 inset-x-0 z-20 p-4 text-white">
+              <div className="absolute bottom-0 inset-x-0 z-20 p-4 text-foreground">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                    <h3 className="text-sm font-bold text-foreground tracking-tight flex items-center gap-1.5">
                       {currentImg.title}
-                      <Sparkles className="size-3.5 text-amber-400 animate-pulse" />
+                      <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400 animate-pulse" />
                     </h3>
-                    <p className="text-xs text-slate-300 font-medium">{currentImg.role}</p>
+                    <p className="text-xs text-muted-foreground font-medium">{currentImg.role}</p>
                   </div>
-                  <span className="text-2xs font-mono rounded-md bg-primary/80 border border-primary-hover px-2 py-0.5 text-white">
+                  <span className="text-2xs font-mono rounded-md bg-primary/80 border border-primary-hover px-2 py-0.5 text-foreground">
                     {currentImg.environment}
                   </span>
                 </div>
 
-                <div className="mt-2.5 pt-2 border-t border-white/15 flex items-center justify-between text-2xs text-slate-300">
-                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <div className="mt-2.5 pt-2 border-t border-white/15 flex items-center justify-between text-2xs text-muted-foreground">
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                     <CheckCircle2 className="size-3" />
                     {currentImg.badgeText}
                   </span>
-                  <span className="text-slate-400">NexoraTech® Field</span>
+                  <span className="text-muted-foreground">NexoraTech® Field</span>
                 </div>
               </div>
             </div>
@@ -213,7 +220,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-base font-bold text-white">{currentImg.title}</h4>
-                  <p className="text-xs text-slate-300">{currentImg.environment} — {currentImg.role}</p>
+                  <p className="text-xs text-white/70">{currentImg.environment} — {currentImg.role}</p>
                 </div>
                 <Badge variant="outline" className="border-warning/40 bg-warning/20 text-warning text-xs">
                   <HardHat className="size-3.5 mr-1" />

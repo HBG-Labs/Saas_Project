@@ -1,4 +1,4 @@
-import { Award, BookOpen, CheckCircle2, FileText, Info, ShieldCheck } from 'lucide-react';
+import { Award, BookOpen, FileText, Info, ShieldCheck } from 'lucide-react';
 import type { ToolDefinition } from '../registry';
 
 interface ReferenceSection {
@@ -252,7 +252,7 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
           {/* Formules scientifiques */}
           {ref.formulas && ref.formulas.length > 0 && (
             <div className="space-y-3">
-              <h5 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <h5 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <FileText className="size-3.5" /> Formules & Équations de référence
               </h5>
               <div className="grid gap-3 sm:grid-cols-2">

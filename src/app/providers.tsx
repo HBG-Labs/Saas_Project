@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
-import { AuthProvider } from '@/features/auth';
+import { AuthProvider, SimulatedRoleProvider } from '@/features/auth';
 import { OrganizationProvider } from '@/features/organizations';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { createQueryClient } from '@/lib/query-client';
@@ -15,6 +15,7 @@ import { createQueryClient } from '@/lib/query-client';
  *   ErrorBoundary        — capture même une panne des providers eux-mêmes ;
  *   ThemeProvider        — l'écran d'erreur doit s'afficher dans le bon thème ;
  *   QueryClient          — l'authentification déclenchera des requêtes ;
+ *   SimulatedRoleProvider— gestion des rôles pour le développement ;
  *   AuthProvider         — la session doit être disponible avant le routeur ;
  *   OrganizationProvider — s'appuie sur les deux précédents : il interroge le
  *                          serveur (donc QueryClient) pour les organisations de
@@ -30,9 +31,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ErrorBoundary fallback={({ error, reset }) => <ErrorFallback error={error} reset={reset} />}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OrganizationProvider>{children}</OrganizationProvider>
-          </AuthProvider>
+          <SimulatedRoleProvider>
+            <AuthProvider>
+              <OrganizationProvider>{children}</OrganizationProvider>
+            </AuthProvider>
+          </SimulatedRoleProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </ErrorBoundary>

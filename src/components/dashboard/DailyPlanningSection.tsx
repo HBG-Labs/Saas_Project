@@ -183,11 +183,11 @@ export function DailyPlanningSection({
                   {item.client}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock className="size-3.5 text-slate-400" />
+                  <Clock className="size-3.5 text-muted-foreground" />
                   {item.time}
                 </span>
                 <span className="flex items-center gap-1">
-                  <MapPin className="size-3.5 text-slate-400" />
+                  <MapPin className="size-3.5 text-muted-foreground" />
                   {item.location}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export function DailyPlanningSection({
                   <div className="text-xs font-medium text-slate-900 dark:text-slate-200">
                     {item.technician.name}
                   </div>
-                  <div className="text-[10px] text-slate-400">Technicien</div>
+                  <div className="text-[10px] text-muted-foreground">Technicien</div>
                 </div>
               </div>
 

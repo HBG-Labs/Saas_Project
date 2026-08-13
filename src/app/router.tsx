@@ -54,19 +54,30 @@ export const routes: RouteObject[] = [
       {
         element: <AppLayout />,
         children: [
+          // Catalogue et références : consultables sans compte. La policy
+          // `tools_select_visible` ouvre déjà ces lignes au rôle `anon` — le
+          // routage ne fait que refléter ce que la base autorise.
           { path: ROUTES.tools, lazy: lazyPage(() => import('@/pages/ToolsPage')) },
           { path: ROUTE_PATTERNS.tool, lazy: lazyPage(() => import('@/pages/ToolDetailPage')) },
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
-          { path: ROUTES.equipment, lazy: lazyPage(() => import('@/pages/equipment/EquipmentPage')) },
-          { path: ROUTES.quotes, lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')) },
-          // DashboardPage en import direct pour HMR instantané
-          { path: ROUTES.dashboard, Component: DashboardPage },
-          { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
 
           {
             element: <ProtectedRoute />,
             children: [
+              // Écrans de travail : ils n'affichent que des données
+              // d'entreprise, que la RLS refuserait à une session absente. Les
+              // laisser publics ne montrerait qu'une coquille vide.
+              // DashboardPage en import direct pour HMR instantané
+              { path: ROUTES.dashboard, Component: DashboardPage },
+              { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
+              // Le bloc-notes est personnel : ni organisation ni formule requises.
+              { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
+              {
+                path: ROUTES.reports,
+                lazy: lazyPage(() => import('@/pages/interventions/ReportsHubPage')),
+              },
+
               {
                 path: ROUTES.organizationNew,
                 lazy: lazyPage(() => import('@/pages/organization/CreateOrganizationPage')),
@@ -118,6 +129,13 @@ export const routes: RouteObject[] = [
                         path: ROUTE_PATTERNS.mission,
                         lazy: lazyPage(() => import('@/pages/missions/MissionDetailPage')),
                       },
+                      // Répertoire des dossiers terminés. Même formule et même
+                      // RLS que la liste courante : ce sont les mêmes missions,
+                      // seul l'état diffère.
+                      {
+                        path: ROUTES.archives,
+                        lazy: lazyPage(() => import('@/pages/missions/ArchivedMissionsPage')),
+                      },
                     ],
                   },
 
@@ -142,6 +160,38 @@ export const routes: RouteObject[] = [
                           {
                             path: ROUTES.review,
                             lazy: lazyPage(() => import('@/pages/interventions/ReviewQueuePage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    element: (
+                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />
+                    ),
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
+                        children: [
+                          {
+                            path: ROUTES.equipment,
+                            lazy: lazyPage(() => import('@/pages/equipment/EquipmentPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    element: <RequirePlan feature={FEATURES.quotes} label="Le module Devis" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.quoteView} />,
+                        children: [
+                          {
+                            path: ROUTES.quotes,
+                            lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')),
                           },
                         ],
                       },

@@ -25,11 +25,11 @@ export function ManagerDashboard() {
   return (
     <div className="space-y-8 pb-12">
       {/* Header Manager */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-emerald-950/40 p-6 shadow-xl backdrop-blur-md">
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-surface p-6 shadow-raised">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-emerald-500/10 px-3 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
+              <span className="rounded-full bg-emerald-500/10 px-3 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 Espace Responsable & Chef d'équipe
               </span>
               <span className="text-xs text-muted-foreground">• {organization?.name}</span>
@@ -51,14 +51,14 @@ export function ManagerDashboard() {
             <Link to={ROUTES.review} className="block group space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <ClipboardCheck className="size-4 text-amber-400" />
+                  <ClipboardCheck className="size-4 text-amber-600 dark:text-amber-400" />
                   Rapports à contrôler
                 </span>
                 <Badge variant={pendingReportsCount > 0 ? "warning" : "outline"}>{pendingReportsCount}</Badge>
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-extrabold tracking-tight tabular-nums text-amber-400">{pendingReportsCount}</span>
-                <span className="text-xs font-semibold text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                <span className="text-3xl font-extrabold tracking-tight tabular-nums text-amber-600 dark:text-amber-400">{pendingReportsCount}</span>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                   Revoir & Valider
                   <ArrowRight className="size-3.5" />
                 </span>
@@ -72,7 +72,7 @@ export function ManagerDashboard() {
             <Link to={ROUTES.missions} className="block group space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <ClipboardList className="size-4 text-blue-400" />
+                  <ClipboardList className="size-4 text-primary" />
                   Missions du périmètre
                 </span>
                 <Badge variant="primary">{missionList.length}</Badge>
@@ -93,14 +93,14 @@ export function ManagerDashboard() {
             <Link to={ROUTES.teams} className="block group space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <UsersRound className="size-4 text-emerald-400" />
+                  <UsersRound className="size-4 text-emerald-600 dark:text-emerald-400" />
                   Mes Équipes
                 </span>
                 <Badge variant="success">{teamList.length}</Badge>
               </div>
               <div className="flex items-baseline justify-between">
                 <span className="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">{teamList.length}</span>
-                <span className="text-xs font-semibold text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                   Voir les équipes
                   <ArrowRight className="size-3.5" />
                 </span>

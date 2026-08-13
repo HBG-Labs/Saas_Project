@@ -18,6 +18,8 @@ import type { OrgRole } from '@/types/database';
  *
  * Sources : supabase/migrations/20260808100100_rbac.sql
  *           supabase/migrations/20260809100300_rbac_customers.sql
+ *           supabase/migrations/20260812100300_equipment.sql
+ *           supabase/migrations/20260812100400_quotes.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -54,6 +56,12 @@ export const PERMISSIONS = {
 
   interventionViewAll: 'intervention.view_all',
   interventionReview: 'intervention.review',
+
+  equipmentView: 'equipment.view',
+  equipmentManage: 'equipment.manage',
+
+  quoteView: 'quote.view',
+  quoteManage: 'quote.manage',
 
   auditView: 'audit.view',
   statisticsView: 'statistics.view',
@@ -122,6 +130,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'mission.cancel',
     'intervention.view_all',
     'intervention.review',
+    'equipment.view',
+    'equipment.manage',
+    'quote.view',
+    'quote.manage',
     'audit.view',
     'statistics.view',
   ],
@@ -151,6 +163,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'mission.cancel',
     'intervention.view_all',
     'intervention.review',
+    'equipment.view',
+    'equipment.manage',
+    'quote.view',
+    'quote.manage',
     'audit.view',
     'statistics.view',
   ],
@@ -174,6 +190,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'mission.cancel',
     'intervention.view_all',
     'intervention.review',
+    'equipment.view',
+    'equipment.manage',
+    'quote.view',
+    'quote.manage',
     'statistics.view',
   ],
 
@@ -189,6 +209,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'mission.update',
     'mission.assign',
     'intervention.review',
+    // Consulte le parc pour préparer une intervention, et un devis accepté pour
+    // savoir ce qui a été vendu. Il ne fixe ni l'inventaire ni les prix.
+    'equipment.view',
+    'quote.view',
     'statistics.view',
   ],
 
@@ -200,7 +224,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
   // connaître le portefeuille de l'entreprise. Il atteint la fiche du client
   // CHEZ QUI il intervient par la policy `customers_select`, qui passe par ses
   // missions — le besoin est couvert sans vue d'ensemble.
-  technician: ['organization.view', 'team.view', 'member.view'],
+  // `equipment.view` est la seule ouverture : il doit pouvoir vérifier que le
+  // réflectomètre qu'on lui confie est encore étalonné. Aucun accès aux devis —
+  // les tarifs de l'entreprise ne le regardent pas, comme le fichier client.
+  technician: ['organization.view', 'team.view', 'member.view', 'equipment.view'],
 
   employee: ['organization.view', 'member.view'],
 };

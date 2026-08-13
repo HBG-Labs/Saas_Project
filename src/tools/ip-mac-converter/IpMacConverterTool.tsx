@@ -1,4 +1,4 @@
-import { Check, Copy, Cpu, Info, Layers, Network, Terminal } from 'lucide-react';
+import { Check, Copy, Cpu, Network, Terminal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 function ipToLong(ip: string): number | null {
@@ -6,7 +6,7 @@ function ipToLong(ip: string): number | null {
   if (parts.length !== 4) return null;
   let num = 0;
   for (let i = 0; i < 4; i++) {
-    const n = parseInt(parts[i], 10);
+    const n = parseInt(parts[i] ?? '', 10);
     if (isNaN(n) || n < 0 || n > 255) return null;
     num = (num << 8) + n;
   }
@@ -249,21 +249,21 @@ export default function IpMacConverterTool() {
           {macFormats ? (
             <div className="grid gap-3 sm:grid-cols-3 pt-2">
               <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-slate-400 uppercase">Format Deux-Points (Standard)</span>
+                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Deux-Points (Standard)</span>
                 <code className="mt-1 block font-mono text-xs font-bold text-slate-900 dark:text-white">
                   {macFormats.colon}
                 </code>
               </div>
 
               <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-slate-400 uppercase">Format Cisco (Point Quad)</span>
+                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Cisco (Point Quad)</span>
                 <code className="mt-1 block font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
                   {macFormats.cisco}
                 </code>
               </div>
 
               <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-slate-400 uppercase">Format Tirés (Windows)</span>
+                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Tirés (Windows)</span>
                 <code className="mt-1 block font-mono text-xs font-bold text-slate-900 dark:text-white">
                   {macFormats.hyphen}
                 </code>

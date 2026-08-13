@@ -113,8 +113,15 @@ export function convertCurrent(value: number, fromUnit: 'a' | 'ma' | 'ua' | 'dba
 /** 4. Terminé (Z = 50 Ω / 75 Ω) */
 export function convertTerminated(value: number, fromUnit: 'dbm' | 'dbuv' | 'dbua' | 'vrms', z: number = 50) {
   let dbm = 0;
-  // Offset pour 50Ω: dBµV = dBm + 107. Margin offset pour 75Ω: dBµV = dBm + 108.75
-  const k = 10 * Math.log10(z * 1000); // 107 pour 50Ω, 108.75 pour 75Ω
+
+  // dBµV − dBm = 90 + 10·log10(Z).
+  //
+  //   dBm  = 20·log10(V) − 10·log10(Z) + 30      (V en volts, P en milliwatts)
+  //   dBµV = 20·log10(V) + 120
+  //
+  // La différence vaut donc 120 − 30 + 10·log10(Z). Soit 106,99 dB sous 50 Ω et
+  // 108,75 dB sous 75 Ω — les valeurs de référence des tables RF.
+  const k = 90 + 10 * Math.log10(z);
 
   if (fromUnit === 'dbm') dbm = value;
   else if (fromUnit === 'dbuv') dbm = value - k;

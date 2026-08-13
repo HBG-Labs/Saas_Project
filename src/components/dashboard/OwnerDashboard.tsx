@@ -13,11 +13,9 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
-  UserPlus,
   Users,
   UsersRound,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
@@ -81,22 +79,19 @@ export function OwnerDashboard() {
   return (
     <div className="space-y-8 pb-12">
       {/* 1. Executive Hero Cockpit Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-blue-950/40 p-6 shadow-xl backdrop-blur-md">
-        {/* Glow effect in top right corner */}
-        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-blue-500/10 blur-3xl" />
-
+      <div className="relative rounded-2xl border border-border bg-surface p-6 shadow-sm">
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <ShieldCheck className="size-3.5" />
                 Espace Direction & Propriétaire
               </span>
               <span className="text-muted-foreground text-xs font-medium">
                 • {organization?.name ?? 'Entreprise'}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-2xs font-semibold text-emerald-400 border border-emerald-500/20">
-                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-2xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Cockpit Opérationnel
               </span>
             </div>
@@ -261,7 +256,7 @@ export function OwnerDashboard() {
 
               <div>
                 <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Membres & Techniciens
+                  Techniciens
                 </p>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
@@ -389,7 +384,7 @@ export function OwnerDashboard() {
                 </div>
               ) : (
                 <div className="divide-border space-y-2.5 divide-y">
-                  {missionList.map((m, idx) => {
+                  {missionList.map((m) => {
                     const progressPercent =
                       m.status === 'completed' ? 100 : m.status === 'in_progress' ? 65 : 25;
 

@@ -4,7 +4,13 @@ import { qk } from '@/lib/query-keys';
 import type { OrgRole } from '@/types/database';
 import type { MemberWithProfile } from '@/types/domain';
 
-import { listMembers, removeMember, updateMemberRole } from '../api/organizations.api';
+import {
+  createMemberAccount,
+  listMembers,
+  removeMember,
+  updateMemberDetails,
+  updateMemberRole,
+} from '../api/organizations.api';
 
 export function useMembers(organizationId: string | null) {
   return useQuery({
@@ -14,17 +20,26 @@ export function useMembers(organizationId: string | null) {
   });
 }
 
-export function useUpdateMemberRole(organizationId: string) {
+/**
+ * Crée le compte d'un collaborateur et le rattache à l'organisation.
+ *
+ * Le mot de passe renvoyé n'est PAS mis en cache : il n'est lisible qu'une fois,
+ * dans la réponse de la mutation. Le stocker dans le cache de requêtes le
+ * laisserait en mémoire du navigateur bien après la fermeture de la boîte de
+ * dialogue.
+ */
+export function useCreateMemberAccount(organizationId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ memberId, role }: { memberId: string; role: OrgRole }) =>
-      updateMemberRole(memberId, role),
+    mutationFn: (input: {
+      email: string;
+      role: OrgRole;
+      displayName?: string;
+      jobTitle?: string;
+      password?: string;
+    }) => createMemberAccount({ ...input, organizationId }),
     onSuccess: async () => {
-      // Seule la liste est invalidée : `prevent_privilege_escalation` interdit
-      // de modifier son propre rôle, l'appartenance de l'utilisateur courant ne
-      // peut donc pas changer par cette action. Invalider tout le domaine
-      // relancerait inutilement la résolution de l'organisation courante.
       await queryClient.invalidateQueries({
         queryKey: qk.organizations.members(organizationId),
       });
@@ -32,13 +47,87 @@ export function useUpdateMemberRole(organizationId: string) {
   });
 }
 
+export function useUpdateMemberDetails(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      memberId,
+      displayName,
+      jobTitle,
+    }: {
+      memberId: string;
+      displayName?: string;
+      jobTitle?: string;
+    }) => {
+      const updated = await updateMemberDetails(memberId, { displayName, jobTitle });
+
+      queryClient.setQueryData<MemberWithProfile[]>(
+        qk.organizations.members(organizationId),
+        (old) => {
+          if (!old) return old;
+          return old.map((m) => {
+            if (m.id !== memberId) return m;
+            return {
+              ...m,
+              job_title: jobTitle !== undefined ? jobTitle : m.job_title,
+              profile: {
+                id: m.profile?.id ?? `prof-${memberId}`,
+                display_name: displayName !== undefined ? displayName : (m.profile?.display_name ?? ''),
+                avatar_url: m.profile?.avatar_url ?? null,
+              },
+            };
+          });
+        },
+      );
+
+      return updated;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: qk.organizations.members(organizationId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: qk.teams.all,
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateMemberRole(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: OrgRole }) => {
+      const updated = await updateMemberRole(memberId, role);
+
+      queryClient.setQueryData<MemberWithProfile[]>(
+        qk.organizations.members(organizationId),
+        (old) => {
+          if (!old) return old;
+          return old.map((m) => (m.id === memberId ? { ...m, role } : m));
+        },
+      );
+
+      return updated;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: qk.organizations.members(organizationId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: qk.teams.all,
+        }),
+      ]);
+    },
+  });
+}
+
 /**
  * Retire un membre — statut `removed`, sans suppression de ligne.
- *
- * Les missions et comptes rendus le référencent : effacer la ligne ferait
- * disparaître le nom de l'intervenant des historiques. `current_org_role` ne
- * retenant que les appartenances actives, l'accès est coupé sans altérer le
- * passé.
  */
 export function useRemoveMember(organizationId: string) {
   const queryClient = useQueryClient();
@@ -55,18 +144,12 @@ export function useRemoveMember(organizationId: string) {
 
 /**
  * Nom à afficher pour un membre.
- *
- * `profile` est nullable PAR CONCEPTION : la RLS de `profiles` restreint la
- * lecture au propriétaire de la ligne. Un membre voit donc rarement le profil de
- * ses collègues, et l'affichage doit se replier proprement.
- *
- * La tentation serait d'élargir la jointure pour « corriger » ces vides. Ce
- * serait une fuite : le nom et l'avatar de chaque utilisateur deviendraient
- * lisibles par toute personne partageant une organisation avec lui.
  */
 export function memberDisplayName(member: MemberWithProfile): string {
-  const profileName = member.profile?.display_name?.trim();
-  if (profileName !== undefined && profileName !== '') return profileName;
+  const rawName = member.profile?.display_name?.trim();
+  if (rawName !== undefined && rawName !== '') {
+    return rawName.replace(/\s*\((Entrepreneur|Technicien|Responsable|Membre|Admin)\)/gi, '');
+  }
 
   const jobTitle = member.job_title?.trim();
   if (jobTitle !== undefined && jobTitle !== '') return jobTitle;

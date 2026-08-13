@@ -9,6 +9,7 @@
 export { ToolErrorBoundary } from './components/ToolErrorBoundary';
 export { CategoryCard, type CategoryCardProps } from './components/CategoryCard';
 export { ToolCard, type ToolCardProps } from './components/ToolCard';
+export { ToolReferences } from './components/ToolReferences';
 
 export { CATEGORY_METADATA, getCategoryMetadata, type CategoryMetadata } from './catalog-metadata';
 

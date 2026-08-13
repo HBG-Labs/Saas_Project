@@ -13,8 +13,18 @@ import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
-import { useReportsPendingReview, useReviewReport } from '@/features/interventions';
-import { memberDisplayName, useCurrentOrganization } from '@/features/organizations';
+import {
+  useReportsPendingReview,
+  useReportStatusCounts,
+  useReviewReport,
+} from '@/features/interventions';
+import {
+  canReviewReport,
+  memberDisplayName,
+  useCurrentOrganization,
+  usePermission,
+} from '@/features/organizations';
+import { useAuth } from '@/features/auth';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 /**
@@ -29,10 +39,46 @@ export default function ReviewQueuePage() {
 
   const { organization } = useCurrentOrganization();
   const reports = useReportsPendingReview(organization?.id ?? null);
+  const counts = useReportStatusCounts(organization?.id ?? null);
+  const { user } = useAuth();
+  const { role } = usePermission();
   const { approve, reject } = useReviewReport();
   const [error, setError] = useState<unknown>(null);
 
   const list = reports.data ?? [];
+
+  /**
+   * « Rien à contrôler » est exact, et muet.
+   *
+   * Le responsable ne sait pas s'il n'y a aucun chantier en cours, ou si trois
+   * comptes rendus sont en cours de rédaction et arriveront sous peu — deux
+   * situations qui appellent des décisions opposées. Pire : celui qui vient de
+   * soumettre le sien et ne le voit pas apparaître conclut à une panne.
+   *
+   * Le rappel de la condition d'arrivée est là pour ce cas précis : un compte
+   * rendu ne rejoint cette file qu'une fois SOUMIS, ce qui suppose la mission
+   * terminée.
+   */
+  const byStatus: Record<string, number> = counts.data ?? {};
+  const drafts = byStatus['draft'] ?? 0;
+  const rejected = byStatus['rejected'] ?? 0;
+  const approved = byStatus['approved'] ?? 0;
+
+  const emptyExplanation =
+    drafts + rejected + approved === 0
+      ? 'Aucun compte rendu dans cette entreprise pour l’instant. Ils apparaîtront ici une fois rédigés puis soumis — ce qui suppose la mission terminée.'
+      : [
+          drafts > 0
+            ? `${drafts} compte${drafts > 1 ? 's' : ''} rendu${drafts > 1 ? 's' : ''} en cours de rédaction`
+            : null,
+          rejected > 0
+            ? `${rejected} renvoyé${rejected > 1 ? 's' : ''} pour correction`
+            : null,
+          approved > 0 ? `${approved} déjà validé${approved > 1 ? 's' : ''}` : null,
+        ]
+          .filter((part) => part !== null)
+          .join(', ') +
+        '. Un compte rendu rejoint cette file une fois soumis, la mission terminée.';
 
   return (
     <div className="space-y-6">
@@ -56,7 +102,7 @@ export default function ReviewQueuePage() {
         <EmptyState
           icon={ClipboardCheck}
           title="Rien à contrôler"
-          description="Aucun compte rendu n’attend de validation. Ils apparaîtront ici dès qu’un intervenant en soumettra un."
+          description={emptyExplanation}
         />
       ) : (
         <ul className="space-y-3">
@@ -124,6 +170,26 @@ export default function ReviewQueuePage() {
                     pouce. La règle porte sur le conteneur pour couvrir aussi le
                     déclencheur de `RejectDialog`, qui n'est pas rendu ici.
                   */}
+                  {/*
+                    Séparation des pouvoirs, reproduite ici.
+
+                    `enforce_report_review_separation` refuse qu'un intervenant
+                    valide son propre compte rendu — y compris s'il est
+                    propriétaire de l'entreprise, cas courant chez un artisan qui
+                    intervient lui-même. Afficher les boutons puis renvoyer un
+                    refus ferait passer une règle voulue pour une panne.
+                  */}
+                  {!canReviewReport({
+                    role,
+                    reviewerUserId: user?.id ?? null,
+                    technicianUserId: report.intervention?.technician?.user_id ?? null,
+                  }) ? (
+                    <p className="text-muted-foreground border-border rounded-md border border-dashed p-2.5 text-xs">
+                      {report.intervention?.technician?.user_id === user?.id
+                        ? 'Vous avez réalisé cette intervention : son contrôle revient à quelqu’un d’autre. C’est ce qui donne sa valeur au compte rendu.'
+                        : 'Votre rôle ne permet pas de contrôler les comptes rendus.'}
+                    </p>
+                  ) : (
                   <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
                     <Button
                       variant="primary"
@@ -132,9 +198,6 @@ export default function ReviewQueuePage() {
                         setError(null);
                         approve.mutate(report.id, {
                           onError: (mutationError) => {
-                            // Le refus le plus fréquent : c'est SON propre
-                            // compte rendu. Le message du serveur le dit
-                            // explicitement, et doit rester lisible.
                             setError(mutationError);
                           },
                         });
@@ -160,6 +223,7 @@ export default function ReviewQueuePage() {
                       busy={reject.isPending}
                     />
                   </div>
+                  )}
                 </CardContent>
               </Card>
             </li>

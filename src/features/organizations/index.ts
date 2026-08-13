@@ -50,9 +50,11 @@ export {
 } from './hooks/useOrganizations';
 export {
   memberDisplayName,
+  useCreateMemberAccount,
   sortMembersByRole,
   useMembers,
   useRemoveMember,
+  useUpdateMemberDetails,
   useUpdateMemberRole,
 } from './hooks/useMembers';
 export {
@@ -60,6 +62,7 @@ export {
   useInvitationPreview,
   useInvitations,
   useInviteMember,
+  useResendInvitationEmail,
   useRevokeInvitation,
 } from './hooks/useInvitations';
 
@@ -72,5 +75,6 @@ export { AddMemberDialog } from './components/AddMemberDialog';
 export { MemberQuotaBar } from './components/MemberQuotaBar';
 export { MemberRow } from './components/MemberRow';
 export { OrganizationSwitcher } from './components/OrganizationSwitcher';
+export { OwnershipCard } from './components/OwnershipCard';
 export { RoleBadge } from './components/RoleBadge';
 export { RoleSelect } from './components/RoleSelect';

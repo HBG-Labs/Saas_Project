@@ -7,16 +7,14 @@ import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { useCurrentOrganization } from '@/features/organizations';
 
+import { displayNameOf } from '@/components/layout/user-display';
+
 export function DashboardHeader() {
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
 
   const displayName = useMemo(() => {
-    const raw =
-      (user?.user_metadata?.['display_name'] as string | undefined) ??
-      user?.email?.split('@')[0] ??
-      'Alexandre';
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
+    return displayNameOf(user);
   }, [user]);
 
   const formattedDate = useMemo(() => {
@@ -42,7 +40,7 @@ export function DashboardHeader() {
           </span>
         </div>
         <p className="mt-1 flex items-center gap-2 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
-          <Calendar className="size-4 text-slate-400" />
+          <Calendar className="size-4 text-muted-foreground" />
           <span>{formattedDate}</span>
           <span className="text-slate-300 dark:text-slate-700">•</span>
           <span>Aperçu de votre activité aujourd&apos;hui — {organization?.name ?? 'NexoraTech'}</span>

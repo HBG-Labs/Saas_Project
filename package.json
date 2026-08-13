@@ -21,6 +21,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "smoke": "node scripts/smoke-queries.mjs",
+    "smoke:writes": "node scripts/smoke-queries.mjs --writes",
     "cap:build": "tsc -b && vite build && npx cap sync",
     "cap:open": "npx cap open android",
     "cap:run": "npx cap run android",

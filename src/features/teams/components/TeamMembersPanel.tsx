@@ -1,4 +1,4 @@
-import { Star, UserMinus, UserPlus } from 'lucide-react';
+import { UserMinus, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -6,8 +6,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { memberDisplayName, RoleBadge } from '@/features/organizations';
+import type { TeamMemberRole } from '@/types/database';
 import type { MemberWithProfile, TeamWithMembers } from '@/types/domain';
 
 import {
@@ -17,7 +17,7 @@ import {
   useSetTeamMemberRole,
 } from '../hooks/useTeamMembers';
 
-import { TeamManagerBadge, TeamRoleBadge } from './TeamRoleBadge';
+import { TeamRoleBadge } from './TeamRoleBadge';
 
 export interface TeamMembersPanelProps {
   team: TeamWithMembers;
@@ -44,7 +44,13 @@ export function TeamMembersPanel({
   const removeMember = useRemoveTeamMember(team.id);
   const setRole = useSetTeamMemberRole(team.id);
 
-  const members = team.members;
+  const members = [...team.members].sort((a, b) => {
+    const isALead = a.role === 'lead';
+    const isBLead = b.role === 'lead';
+    if (isALead && !isBLead) return -1;
+    if (!isALead && isBLead) return 1;
+    return memberDisplayName(a.member).localeCompare(memberDisplayName(b.member), 'fr');
+  });
   const busy = addMember.isPending || removeMember.isPending || setRole.isPending;
 
   return (
@@ -71,7 +77,7 @@ export function TeamMembersPanel({
         <ul className="divide-border divide-y">
           {members.map((entry) => {
             const name = memberDisplayName(entry.member);
-            const isTeamManager = team.manager_id === entry.member_id;
+            const isLead = entry.role === 'lead';
 
             return (
               <li key={entry.id} className="flex flex-wrap items-center gap-3 py-3">
@@ -87,37 +93,32 @@ export function TeamMembersPanel({
                 {/* Rôle dans l'ENTREPRISE — les permissions. */}
                 <RoleBadge role={entry.member.role} />
 
-                {/* Rôle dans l'ÉQUIPE — le périmètre. */}
-                <TeamRoleBadge role={entry.role} />
-
-                {isTeamManager ? <TeamManagerBadge /> : null}
+                {/* Rôle dans l'ÉQUIPE — le sélecteur pour choisir le responsable. */}
+                {canAssign ? (
+                  <div className="w-44 sm:w-48">
+                    <Select
+                      value={isLead ? 'lead' : 'member'}
+                      onValueChange={(val) => {
+                        setRole.mutate({
+                          teamMemberId: entry.id,
+                          role: val as TeamMemberRole,
+                        });
+                      }}
+                      options={[
+                        { value: 'member', label: "Membre d'équipe" },
+                        { value: 'lead', label: "Responsable d'équipe" },
+                      ]}
+                      hideLabel
+                      label={`Rôle d'équipe de ${name}`}
+                      disabled={busy}
+                    />
+                  </div>
+                ) : (
+                  <TeamRoleBadge role={isLead ? 'lead' : 'member'} />
+                )}
 
                 {canAssign ? (
                   <div className="flex items-center gap-1">
-                    <Tooltip
-                      content={
-                        entry.role === 'lead'
-                          ? 'Retirer le rôle de responsable d’équipe'
-                          : 'Désigner responsable d’équipe'
-                      }
-                    >
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => {
-                          setRole.mutate({
-                            teamMemberId: entry.id,
-                            role: entry.role === 'lead' ? 'member' : 'lead',
-                          });
-                        }}
-                        disabled={busy}
-                        className={entry.role === 'lead' ? 'text-accent-foreground' : undefined}
-                        aria-label={`Basculer le rôle d’équipe de ${name}`}
-                      >
-                        <Star className="size-4" />
-                      </Button>
-                    </Tooltip>
-
                     <Button
                       variant="ghost"
                       size="icon-sm"

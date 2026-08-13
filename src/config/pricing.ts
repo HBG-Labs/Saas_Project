@@ -3,20 +3,7 @@ import { ROUTES } from './routes';
 export type BillingInterval = 'monthly' | 'annual';
 
 export interface PricingTier {
-  /**
-   * DOIT correspondre à `plans.code` en base, et donc à `PlanCode` dans
-   * `features/billing`.
-   *
-   * Le troisième palier s'appelait ici `'team'` alors que la base le nomme
-   * `'business'`. `resolvePlanCode` faisant retomber tout code inconnu sur
-   * `free`, un abonné à cette offre aurait perdu ses droits en silence — le
-   * genre de défaut qu'aucune erreur ne signale.
-   *
-   * Le type n'est pas importé de `features/billing` : `config/` est la couche
-   * basse et ne doit dépendre d'aucune feature (règle ESLint). L'égalité est
-   * donc vérifiée par un test dans `features/billing/entitlements.test.ts`.
-   */
-  id: 'free' | 'pro' | 'business';
+  id: 'free' | 'pro' | 'business' | 'ultimate';
   name: string;
   tagline: string;
   badge: string;
@@ -35,8 +22,8 @@ export interface PricingTier {
 export const PRICING_PLANS: readonly PricingTier[] = [
   {
     id: 'free',
-    name: 'Gratuit',
-    tagline: 'Pour découvrir la plateforme et les étudiants',
+    name: 'Starter',
+    tagline: 'Pour techniciens solo et étudiants',
     badge: 'Accès Libre',
     popular: false,
     priceMonthly: 0,
@@ -46,10 +33,11 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaLink: ROUTES.register,
     ctaVariant: 'outline',
     features: [
-      'Accès complet à toutes les calculatrices publiées',
+      '1 utilisateur (Monocompte strict)',
+      '❌ Gestion du personnel non autorisée',
+      'Accès complet aux calculatrices et outils',
       'Recherche universelle via ⌘K',
       'Calculs certifiés conformes UTE / ITU-T',
-      'Mode sombre & application mobile',
       'Historique des 10 derniers calculs',
       'Jusqu’à 3 outils favoris',
     ],
@@ -57,52 +45,78 @@ export const PRICING_PLANS: readonly PricingTier[] = [
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Pour les techniciens et ingénieurs en activité',
-    badge: 'Recommandé',
-    popular: true,
-    priceMonthly: 14.99,
-    priceAnnualMonthly: 12.41, // ~149€ / an (2 mois offerts)
-    priceAnnualTotal: 149,
+    tagline: 'Pour artisans et micro-équipes',
+    badge: 'Artisans',
+    popular: false,
+    priceMonthly: 19,
+    priceAnnualMonthly: 15,
+    priceAnnualTotal: 180,
     stripePriceIdMonthly: 'price_pro_monthly_v1',
     stripePriceIdAnnual: 'price_pro_annual_v1',
-    ctaText: 'Commencer l’essai gratuit 14 jours',
+    ctaText: 'S’abonner au plan Pro',
     ctaLink: `${ROUTES.register}?plan=pro`,
-    ctaVariant: 'primary',
+    ctaVariant: 'outline',
     features: [
-      'Toutes les fonctionnalités du plan Gratuit',
+      'Toutes les fonctionnalités du plan Starter',
+      'Jusqu’à 3 utilisateurs inclus (Fixe)',
+      '✅ Gestion du personnel essentielle',
       'Historique de calculs illimité',
       'Exportation des rapports en PDF certifié & CSV',
       'Nombre d’outils favoris illimité',
-      'Sauvegarde automatique des paramètres d’outils',
-      'Support prioritaire par e-mail sous 24h',
+      'Sauvegarde automatique des paramètres',
     ],
   },
   {
     id: 'business',
-    name: 'Équipe / Entreprise',
-    tagline: 'Pour les bureaux d’études et équipes terrain',
-    badge: 'Multi-utilisateurs',
-    popular: false,
-    priceMonthly: 39.99,
-    priceAnnualMonthly: 33.25, // ~399€ / an
-    priceAnnualTotal: 399,
+    name: 'Business',
+    tagline: 'Pour PME et équipes terrain',
+    badge: 'Recommandé',
+    popular: true,
+    priceMonthly: 49,
+    priceAnnualMonthly: 39,
+    priceAnnualTotal: 468,
     stripePriceIdMonthly: 'price_business_monthly_v1',
     stripePriceIdAnnual: 'price_business_annual_v1',
-    ctaText: 'Demander un devis Entreprise',
-    ctaLink: 'mailto:contact@nexoratech.fr?subject=Demande%20Offre%20Entreprise%20NexoraTech',
-    ctaVariant: 'outline',
+    ctaText: 'S’abonner au plan Business',
+    ctaLink: `${ROUTES.register}?plan=business`,
+    ctaVariant: 'primary',
     features: [
       'Toutes les fonctionnalités du plan Pro',
-      'Comptes utilisateurs centralisés pour l’équipe',
+      '10 utilisateurs inclus',
+      'Technicien supplémentaire à +5 € / mois',
+      '✅ Gestion du personnel avancée & plannings',
       'Espace de travail partagé avec dossiers d’étude',
-      'Modèles de calculs et normes d’entreprise personnalisés',
-      'Garantie de service (SLA 99.9%) & Support dédié',
-      'Facturation annuelle centralisée avec TVA',
+      'Modèles de calculs et normes personnalisés',
+      'Support prioritaire par e-mail sous 24h',
+    ],
+  },
+  {
+    id: 'ultimate',
+    name: 'Ultimate',
+    tagline: 'Pour grands comptes et structures multi-sites',
+    badge: 'Haut de gamme',
+    popular: false,
+    priceMonthly: 99,
+    priceAnnualMonthly: 79,
+    priceAnnualTotal: 948,
+    stripePriceIdMonthly: 'price_ultimate_monthly_v1',
+    stripePriceIdAnnual: 'price_ultimate_annual_v1',
+    ctaText: 'S’abonner au plan Ultimate',
+    ctaLink: `${ROUTES.register}?plan=ultimate`,
+    ctaVariant: 'primary',
+    features: [
+      'Toutes les fonctionnalités du plan Business',
+      '20 utilisateurs inclus',
+      'Technicien supplémentaire à +5 € / mois',
+      '✅ Multi-sites & Intégration SSO / API',
+      'Gouvernance d’organisation & audit log',
+      'Garantie de service (SLA 99.9%)',
+      'Account Manager et support dédié',
     ],
   },
 ] as const;
 
 export function formatPrice(price: number): string {
   if (price === 0) return '0 €';
-  return `${price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+  return `${price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
 }

@@ -1,4 +1,4 @@
-import { Calendar, Check, Copy, FileCode, Globe, Info, ShieldCheck } from 'lucide-react';
+import { Calendar, Check, Copy, FileCode, Globe, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type TimeUnit = 'seconds' | 'minutes' | 'hours' | 'days';
@@ -110,7 +110,7 @@ export default function DnsTtlCalculatorTool() {
             </div>
 
             <div className="space-y-1 pt-1">
-              <span className="text-[11px] font-semibold text-slate-400">Raccourcis TTL classiques :</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">Raccourcis TTL classiques :</span>
               <div className="flex flex-wrap gap-1.5">
                 {[
                   { label: '300s (5 min)', val: 300 },
@@ -164,7 +164,7 @@ export default function DnsTtlCalculatorTool() {
                 <option value="hours">Heures</option>
               </select>
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-muted-foreground">
               Un TTL bas (ex: 300s = 5 min) permet d&apos;annuler la bascule quasi-instantanément en cas de problème.
             </p>
           </div>

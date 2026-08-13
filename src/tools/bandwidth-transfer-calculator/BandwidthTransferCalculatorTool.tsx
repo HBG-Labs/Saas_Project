@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, HardDrive, Info, Layers, RefreshCw, Zap } from 'lucide-react';
+import { Clock, HardDrive, Info, Layers, RefreshCw, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type DataUnit = 'MB' | 'GB' | 'TB' | 'PB';
@@ -128,7 +128,7 @@ export default function BandwidthTransferCalculatorTool() {
 
             {/* Presets rapides */}
             <div className="space-y-1.5 pt-2">
-              <span className="text-[11px] font-semibold text-slate-400">Préréglages fréquents :</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">Préréglages fréquents :</span>
               <div className="flex flex-wrap gap-1.5">
                 {PRESETS.map((p) => (
                   <button
@@ -199,7 +199,7 @@ export default function BandwidthTransferCalculatorTool() {
                 onChange={(e) => setOverheadPercent(parseInt(e.target.value, 10))}
                 className="w-full accent-blue-600 cursor-pointer"
               />
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-muted-foreground">
                 Compense les en-têtes de paquets TCP/IP, réémissions et encadrement Ethernet (~5% typique).
               </p>
             </div>
@@ -232,7 +232,7 @@ export default function BandwidthTransferCalculatorTool() {
               ? `${(results.effectiveMBps / 1024).toFixed(2)} Go/s`
               : `${results.effectiveMBps.toFixed(2)} Mo/s`}
           </p>
-          <span className="mt-1 block text-[10px] text-slate-400">
+          <span className="mt-1 block text-[10px] text-muted-foreground">
             Vitesse de copie réelle perçue par le système
           </span>
         </div>
@@ -245,7 +245,7 @@ export default function BandwidthTransferCalculatorTool() {
           <p className="mt-2 font-mono text-2xl font-black text-slate-900 dark:text-white">
             {formatDuration(results.nominalSecondsTotal)}
           </p>
-          <span className="mt-1 block text-[10px] text-slate-400">
+          <span className="mt-1 block text-[10px] text-muted-foreground">
             Sans aucune perte ou surcharge de paquet
           </span>
         </div>

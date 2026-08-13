@@ -12,16 +12,18 @@ import { ROUTES } from '@/config/routes';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const COMPARISON_FEATURES = [
-  { name: 'Accès au catalogue complet d’outils', free: true, pro: true, team: true },
-  { name: 'Recherche universelle ⌘K', free: true, pro: true, team: true },
-  { name: 'Calculs certifiés UTE / ITU-T', free: true, pro: true, team: true },
-  { name: 'Mode sombre & application mobile', free: true, pro: true, team: true },
-  { name: 'Historique des calculs', free: '10 derniers', pro: 'Illimité', team: 'Illimité' },
-  { name: 'Outils favoris', free: '3 favoris', pro: 'Illimité', team: 'Illimité' },
-  { name: 'Export de bilans (PDF certifié & CSV)', free: false, pro: true, team: true },
-  { name: 'Sauvegarde auto des paramètres', free: false, pro: true, team: true },
-  { name: 'Espace de travail partagé d’équipe', free: false, pro: false, team: true },
-  { name: 'Support technique', free: 'Communauté', pro: 'Prioritaire 24h', team: 'Dédié + SLA' },
+  { name: 'Nombre d’utilisateurs', free: '1 user (solo)', pro: '3 users (fixe)', business: '10 users + 5€/user', ultimate: '20 users + 5€/user' },
+  { name: 'Gestion du personnel & équipes', free: false, pro: 'Essentielle', business: 'Avancée & Plannings', ultimate: 'Multi-sites & SSO' },
+  { name: 'Accès au catalogue complet d’outils', free: true, pro: true, business: true, ultimate: true },
+  { name: 'Recherche universelle ⌘K', free: true, pro: true, business: true, ultimate: true },
+  { name: 'Calculs certifiés UTE / ITU-T', free: true, pro: true, business: true, ultimate: true },
+  { name: 'Historique des calculs', free: '10 derniers', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
+  { name: 'Outils favoris', free: '3 favoris', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
+  { name: 'Export de bilans (PDF certifié & CSV)', free: false, pro: true, business: true, ultimate: true },
+  { name: 'Sauvegarde auto des paramètres', free: false, pro: true, business: true, ultimate: true },
+  { name: 'Espace de travail partagé d’équipe', free: false, pro: false, business: true, ultimate: true },
+  { name: 'Multi-sites & Intégration SSO/API', free: false, pro: false, business: false, ultimate: true },
+  { name: 'Support technique', free: 'Communauté', pro: 'E-mail 24h', business: 'Prioritaire 24h', ultimate: 'Dédié + SLA 99.9%' },
 ] as const;
 
 export default function PricingPage() {
@@ -30,10 +32,10 @@ export default function PricingPage() {
   const [proModalOpen, setProModalOpen] = useState(false);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <PageHeader
         title="Une offre claire et transparente pour tous les professionnels"
-        description="Choisissez la formule adaptée à vos besoins. Essai gratuit de 14 jours sur la formule Pro, sans engagement."
+        description="Choisissez la formule adaptée à vos besoins. Des offres claires, transparentes et sans engagement."
       />
 
       {/* Sélecteur Facturation Mensuelle / Annuelle */}
@@ -62,14 +64,14 @@ export default function PricingPage() {
           >
             <span>Facturation annuelle</span>
             <Badge variant="primary" className="text-2xs py-0 px-1.5">
-              -17 %
+              -20 %
             </Badge>
           </button>
         </div>
       </div>
 
       {/* Grille des Cartes Tarifaires */}
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {PRICING_PLANS.map((tier) => {
           const isAnnual = billingInterval === 'annual';
           const displayPrice = isAnnual ? tier.priceAnnualMonthly : tier.priceMonthly;
@@ -101,7 +103,7 @@ export default function PricingPage() {
                   <div className="mt-4 border-t border-border/40 pt-4">
                     <div className="flex items-baseline gap-1">
                       <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
-                        {displayPrice === 0 ? '0 €' : `${displayPrice.toFixed(2)} €`}
+                        {displayPrice === 0 ? '0 €' : `${displayPrice % 1 === 0 ? displayPrice : displayPrice.toFixed(2)} €`}
                       </span>
                       {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
                     </div>
@@ -122,7 +124,7 @@ export default function PricingPage() {
                   <ul className="space-y-2.5 text-xs">
                     {tier.features.map((feat) => (
                       <li key={feat} className="flex items-start gap-2 text-foreground">
-                        <Check className="size-4 text-primary shrink-0 mt-0.5" />
+                        <Check className={`size-4 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-rose-500' : 'text-primary'}`} />
                         <span>{feat}</span>
                       </li>
                     ))}
@@ -131,28 +133,24 @@ export default function PricingPage() {
               </div>
 
               <div className="p-6 pt-0">
-                {tier.ctaLink ? (
-                  tier.ctaLink.startsWith('mailto:') ? (
-                    <Button asChild variant={tier.ctaVariant} className="w-full">
-                      <a href={tier.ctaLink}>{tier.ctaText}</a>
-                    </Button>
-                  ) : (
-                    <Button asChild variant={tier.ctaVariant} className="w-full">
-                      <Link to={tier.ctaLink}>
-                        {tier.ctaText}
-                        <ArrowRight className="size-4 ml-1.5" />
-                      </Link>
-                    </Button>
-                  )
-                ) : (
-                  <Button
-                    variant={tier.ctaVariant}
-                    className="w-full"
-                    onClick={() => setProModalOpen(true)}
-                  >
+                <Button
+                  asChild
+                  variant={tier.id === 'business' || tier.id === 'ultimate' ? 'primary' : tier.ctaVariant}
+                  className={`w-full font-bold cursor-pointer ${
+                    tier.id === 'ultimate'
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20'
+                      : tier.id === 'business'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20'
+                        : tier.id === 'pro'
+                          ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20'
+                          : ''
+                  }`}
+                >
+                  <Link to={tier.ctaLink ?? ROUTES.register}>
                     {tier.ctaText}
-                  </Button>
-                )}
+                    <ArrowRight className="size-4 ml-1.5" />
+                  </Link>
+                </Button>
               </div>
             </Card>
           );
@@ -172,9 +170,10 @@ export default function PricingPage() {
               <thead className="bg-surface-sunken border-b border-border/60">
                 <tr>
                   <th scope="col" className="p-4 font-semibold text-foreground">Fonctionnalité</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-foreground w-1/5">Gratuit</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-primary w-1/5">Pro</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-foreground w-1/5">Équipe</th>
+                  <th scope="col" className="p-4 font-semibold text-center text-foreground w-1/5">Starter</th>
+                  <th scope="col" className="p-4 font-semibold text-center text-blue-500 w-1/5">Pro</th>
+                  <th scope="col" className="p-4 font-semibold text-center text-emerald-500 w-1/5">Business</th>
+                  <th scope="col" className="p-4 font-semibold text-center text-purple-500 w-1/5">Ultimate</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
@@ -198,11 +197,19 @@ export default function PricingPage() {
                       )}
                     </td>
 
-                    <td className="p-4 text-center text-muted-foreground">
-                      {typeof row.team === 'boolean' ? (
-                        row.team ? <Check className="size-4 text-success inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                    <td className="p-4 text-center text-foreground font-semibold">
+                      {typeof row.business === 'boolean' ? (
+                        row.business ? <Check className="size-4 text-emerald-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs">{row.team}</span>
+                        <span className="font-mono text-2xs text-emerald-500">{row.business}</span>
+                      )}
+                    </td>
+
+                    <td className="p-4 text-center text-foreground font-semibold">
+                      {typeof row.ultimate === 'boolean' ? (
+                        row.ultimate ? <Check className="size-4 text-purple-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                      ) : (
+                        <span className="font-mono text-2xs text-purple-500">{row.ultimate}</span>
                       )}
                     </td>
                   </tr>
@@ -218,9 +225,9 @@ export default function PricingPage() {
         <div className="flex items-center gap-3">
           <Shield className="size-6 text-primary shrink-0" />
           <div>
-            <h3 className="text-foreground text-sm font-semibold">Paiements sécurisés & Garantie 14 jours</h3>
+            <h3 className="text-foreground text-sm font-semibold">Paiements sécurisés & Sans engagement</h3>
             <p className="text-muted-foreground text-xs">
-              Testez la formule Pro en toute sérénité. Résiliable à tout moment en un clic depuis votre espace membre.
+              Abonnez-vous à la formule Pro en toute sérénité. Résiliable à tout moment en un clic depuis votre espace membre.
             </p>
           </div>
         </div>
@@ -233,15 +240,15 @@ export default function PricingPage() {
       <Modal
         open={proModalOpen}
         onOpenChange={setProModalOpen}
-        title="Offre Pro — Essai gratuit 14 jours"
-        description="Activez votre essai gratuit de 14 jours lors de la création de votre compte."
+        title="Offre Pro — Fonctionnalités avancées"
+        description="Passez à l'offre Pro pour débloquer toutes les fonctionnalités avancées."
       >
         <div className="space-y-4 text-xs text-muted-foreground">
           <p>
             La formule Pro débloque l&apos;historique de calculs illimité, l&apos;exportation des rapports en PDF certifiés et la sauvegarde automatique de vos paramètres d&apos;outils.
           </p>
           <div className="bg-surface-sunken rounded-lg p-3 border border-border/40 text-foreground font-medium">
-            💡 Aucune carte bancaire n&apos;est requise pour débuter l&apos;essai gratuit.
+            💡 Accédez immédiatement aux calculatrices, exports PDF/CSV certifiés et à l'historique illimité.
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setProModalOpen(false)}>

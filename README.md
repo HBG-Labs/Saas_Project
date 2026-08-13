@@ -37,6 +37,8 @@ Les migrations de base de données s'appliquent séparément : voir
 | `npm run test` | Tests unitaires et d'intégration |
 | `npm run test:watch` | Tests en mode surveillance |
 | `npm run test:coverage` | Tests avec couverture |
+| `npm run smoke` | Rejoue toutes les requêtes Supabase de l'app contre la vraie base (lecture seule) |
+| `npm run smoke:writes` | Idem, plus les écritures, dans une organisation jetable auto-supprimée |
 | `npm run protect:node-modules` | Protection OneDrive (voir plus bas) |
 
 ## Variables d'environnement
@@ -55,6 +57,19 @@ provoque un échec immédiat et explicite, plutôt qu'un `undefined` silencieux.
 > **Ne jamais placer `SUPABASE_SERVICE_ROLE_KEY` dans ce projet.** Cette clé
 > contourne la Row Level Security et n'a sa place que côté serveur. Vite
 > n'expose au navigateur que les variables préfixées `VITE_`.
+
+## Déploiement
+
+L'application est un frontend statique : `vercel.json` est versionné, et le seul
+travail restant est de renseigner les trois variables ci-dessus dans Vercel puis
+d'autoriser le domaine dans Supabase Auth.
+
+Procédure complète, réglages Supabase compris :
+[`docs/DEPLOIEMENT-VERCEL.md`](docs/DEPLOIEMENT-VERCEL.md).
+
+> Les migrations ne partent PAS avec le déploiement. Elles s'appliquent
+> séparément par `npx supabase db push --linked`, et doivent précéder la mise en
+> ligne du frontend qui en dépend.
 
 ## Architecture
 

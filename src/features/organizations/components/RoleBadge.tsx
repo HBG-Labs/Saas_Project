@@ -12,14 +12,24 @@ import { ROLE_LABELS } from '../rbac';
  * transformerait la liste en arc-en-ciel sans rien hiérarchiser.
  */
 const ROLE_VARIANTS: Record<OrgRole, NonNullable<BadgeProps['variant']>> = {
-  owner: 'primary',
-  admin: 'accent',
+  owner: 'accent',
+  admin: 'primary',
   manager: 'info',
-  team_leader: 'neutral',
-  technician: 'neutral',
-  employee: 'outline',
+  team_leader: 'warning',
+  technician: 'success',
+  employee: 'neutral',
 };
 
-export function RoleBadge({ role }: { role: OrgRole }) {
-  return <Badge variant={ROLE_VARIANTS[role]}>{ROLE_LABELS[role]}</Badge>;
+export function RoleBadge({
+  role,
+  size = 'default',
+}: {
+  role: OrgRole;
+  size?: BadgeProps['size'];
+}) {
+  return (
+    <Badge variant={ROLE_VARIANTS[role]} size={size}>
+      {ROLE_LABELS[role]}
+    </Badge>
+  );
 }

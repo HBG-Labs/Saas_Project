@@ -1,7 +1,6 @@
 import {
   Award,
   BarChart3,
-  Building2,
   Calendar,
   Check,
   CheckCircle2,
@@ -9,11 +8,8 @@ import {
   Clock,
   Download,
   FileCheck,
-  Filter,
   Loader2,
   PieChart,
-  Printer,
-  ShieldCheck,
   TrendingUp,
   UsersRound,
 } from 'lucide-react';
@@ -23,6 +19,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { formatWorkedTime, useActivityStats } from '@/features/analytics';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -184,8 +181,117 @@ export default function AnalyticsPage() {
     };
   };
 
-  const currentData = getSelectedAnalytics();
-  const maxChartCount = Math.max(...currentData.chartData.map((d) => d.count));
+  /**
+   * Période interrogée, déduite de la sélection.
+   *
+   * Les bornes sont calculées ici et transmises à la base : c'est elle qui
+   * agrège, sur exactement l'intervalle affiché.
+   */
+  const range = (() => {
+    if (viewMode === 'month') {
+      const from = new Date();
+      from.setDate(from.getDate() - 30);
+      return { from: from.toISOString(), to: new Date().toISOString() };
+    }
+
+    if (viewMode === 'quarter') {
+      const quarterIndex = Number(selectedQuarter.slice(1)) - 1;
+      return {
+        from: new Date(Date.UTC(selectedYear, quarterIndex * 3, 1)).toISOString(),
+        to: new Date(Date.UTC(selectedYear, quarterIndex * 3 + 3, 0, 23, 59, 59)).toISOString(),
+      };
+    }
+
+    return {
+      from: new Date(Date.UTC(selectedYear, 0, 1)).toISOString(),
+      to: new Date(Date.UTC(selectedYear, 11, 31, 23, 59, 59)).toISOString(),
+    };
+  })();
+
+  const statsQuery = useActivityStats(organization?.id ?? null, range);
+  const stats = statsQuery.data ?? null;
+
+  const fallback = getSelectedAnalytics();
+
+  /**
+   * Les indicateurs proviennent de la base dès qu'elle a répondu.
+   *
+   * ─────────────────────────────────────────────────────────────────────────
+   * CE QUI A CHANGÉ
+   *
+   * Ces chiffres étaient écrits en dur : ils affichaient « 98,4 % de conformité »
+   * quelle que soit l'activité, y compris sur une entreprise sans une seule
+   * mission. `organization_activity_stats` les calcule désormais côté serveur,
+   * sur la période sélectionnée.
+   *
+   * Le taux de conformité est le rapport des comptes rendus VALIDÉS sur les
+   * comptes rendus contrôlés — validés plus refusés. Les comptes rendus encore
+   * en attente n'entrent pas au dénominateur : ils ne sont pas non conformes,
+   * ils ne sont pas encore jugés.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+  const STATUS_LABELS_SHORT: Record<string, string> = {
+    draft: 'Brouillon',
+    assigned: 'Affectée',
+    accepted: 'Acceptée',
+    in_progress: 'En cours',
+    completed: 'Terminée',
+    submitted: 'Soumise',
+    approved: 'Validée',
+    rejected: 'Refusée',
+    cancelled: 'Annulée',
+    closed: 'Clôturée',
+  };
+
+  const currentData = (() => {
+    if (stats === null) return fallback;
+
+    const reviewed = stats.reports_approved + stats.reports_rejected;
+    const conformity = reviewed === 0 ? null : (stats.reports_approved / reviewed) * 100;
+
+    const avgSeconds =
+      stats.interventions_total === 0
+        ? 0
+        : Math.round(stats.worked_seconds / stats.interventions_total);
+
+    const chartData = Object.entries(stats.missions_by_status)
+      .map(([status, count]) => ({
+        label: STATUS_LABELS_SHORT[status] ?? status,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const totalCustomerMissions = stats.customers.reduce((sum, c) => sum + c.missions, 0);
+    const palette = ['#ea580c', '#dc2626', '#0891b2', '#ca8a04', '#7c3aed', '#059669'];
+
+    return {
+      periodLabel: fallback.periodLabel,
+      conformity: conformity === null ? '—' : `${conformity.toFixed(1)}%`,
+      conformityDiff:
+        reviewed === 0
+          ? 'Aucun compte rendu contrôlé'
+          : `${stats.reports_approved} validé${stats.reports_approved > 1 ? 's' : ''} sur ${reviewed}`,
+      volume: String(stats.interventions_total),
+      volumeDiff: `${stats.active_members} intervenant${stats.active_members > 1 ? 's' : ''}`,
+      avgDuration: avgSeconds === 0 ? '—' : formatWorkedTime(avgSeconds),
+      durationDiff: `${formatWorkedTime(stats.worked_seconds)} au total`,
+      sla: String(stats.missions_total),
+      slaLabel: `${stats.reports_pending} en attente de contrôle`,
+      totalMissions: stats.missions_total,
+      chartData: chartData.length > 0 ? chartData : [{ label: 'Aucune mission', count: 0 }],
+      clientBreakdown: stats.customers.map((customer, index) => ({
+        name: customer.name,
+        percentage:
+          totalCustomerMissions === 0
+            ? 0
+            : Math.round((customer.missions / totalCustomerMissions) * 100),
+        count: customer.missions,
+        color: palette[index % palette.length] ?? '#64748b',
+      })),
+    };
+  })();
+
+  const maxChartCount = Math.max(1, ...currentData.chartData.map((d) => d.count));
 
   // Performance des équipes
   const teamPerformance = [
@@ -918,7 +1024,7 @@ export default function AnalyticsPage() {
             <CardTitle className="text-foreground flex items-center justify-between text-sm font-semibold">
               <span className="flex items-center gap-2">
                 <BarChart3 className="size-4.5 text-primary" />
-                Graphique du Volume d'Interventions ({currentData.periodLabel})
+                Répartition des missions par statut ({currentData.periodLabel})
               </span>
               <span className="text-muted-foreground font-mono text-xs">
                 Total : {currentData.totalMissions} missions

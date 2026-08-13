@@ -55,16 +55,6 @@ export interface CategoryDefinition {
  */
 export const CATEGORIES = [
   {
-    slug: 'networking',
-    name: 'Réseaux & Informatique',
-    description:
-      "Adressage IPv4 et IPv6, CIDR, sous-réseaux, VLSM, masques, plages d'adresses et conversions binaires.",
-    shortDescription: "IPv4, IPv6, CIDR, sous-réseaux, plages d'adresses.",
-    icon: 'network',
-    tint: 'bg-primary-subtle text-primary',
-    sortOrder: 10,
-  },
-  {
     slug: 'electrical',
     name: 'Électricité',
     description:
@@ -72,6 +62,16 @@ export const CATEGORIES = [
     shortDescription: "Loi d'Ohm, puissance, tension, courant, résistance.",
     icon: 'zap',
     tint: 'bg-warning-subtle text-warning',
+    sortOrder: 10,
+  },
+  {
+    slug: 'fiber-optics',
+    name: 'Fibre optique',
+    description:
+      "Codes couleur jusqu'à 3456 FO, bilans de liaison, budgets optiques, atténuation et conversions dBm/mW.",
+    shortDescription: 'Codes couleur, bilans de liaison, atténuation, dBm/mW.',
+    icon: 'cable',
+    tint: 'bg-info-subtle text-info',
     sortOrder: 20,
   },
   {
@@ -85,14 +85,44 @@ export const CATEGORIES = [
     sortOrder: 30,
   },
   {
-    slug: 'fiber-optics',
-    name: 'Fibre optique',
+    slug: 'networking',
+    name: 'Réseaux & Informatique',
     description:
-      "Codes couleur jusqu'à 3456 FO, bilans de liaison, budgets optiques, atténuation et conversions dBm/mW.",
-    shortDescription: 'Codes couleur, bilans de liaison, atténuation, dBm/mW.',
-    icon: 'cable',
-    tint: 'bg-info-subtle text-info',
+      "Adressage IPv4 et IPv6, CIDR, sous-réseaux, VLSM, masques, plages d'adresses et conversions binaires.",
+    shortDescription: "IPv4, IPv6, CIDR, sous-réseaux, plages d'adresses.",
+    icon: 'network',
+    tint: 'bg-primary-subtle text-primary',
     sortOrder: 40,
+  },
+  {
+    slug: 'mechanical',
+    name: 'Mécanique',
+    description:
+      'Couples de serrage, transmissions, engrenages, résistance des matériaux, contraintes et facteurs de sécurité.',
+    shortDescription: 'Couples, transmissions, engrenages, résistance des matériaux.',
+    icon: 'cog',
+    tint: 'bg-surface-sunken text-muted-foreground',
+    sortOrder: 50,
+  },
+  {
+    slug: 'hydraulics',
+    name: 'Hydraulique',
+    description:
+      'Débits, pertes de charge, pressions, dimensionnement de conduites, pompes et vérins hydrauliques.',
+    shortDescription: 'Débits, pertes de charge, pressions, conduites, pompes.',
+    icon: 'droplets',
+    tint: 'bg-info-subtle text-info',
+    sortOrder: 60,
+  },
+  {
+    slug: 'construction',
+    name: 'BTP',
+    description:
+      'Métrés, volumes de béton, dosages, surfaces, pentes, terrassement et quantitatifs de chantier.',
+    shortDescription: 'Métrés, béton, dosages, surfaces, pentes, terrassement.',
+    icon: 'hard-hat',
+    tint: 'bg-warning-subtle text-warning',
+    sortOrder: 70,
   },
   {
     slug: 'general',
@@ -102,7 +132,7 @@ export const CATEGORIES = [
     shortDescription: "Calculatrice, pourcentages, conversions d'unités, temps.",
     icon: 'calculator',
     tint: 'bg-success-subtle text-success',
-    sortOrder: 50,
+    sortOrder: 80,
   },
 ] as const satisfies readonly CategoryDefinition[];
 

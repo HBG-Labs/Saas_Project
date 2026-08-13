@@ -6,6 +6,7 @@ import type { MissionStatus, TablesUpdate } from '@/types/database';
 import {
   assignMission,
   changeMissionStatus,
+  countMissionsByStatus,
   createMission,
   deleteMission,
   getMission,
@@ -21,6 +22,16 @@ export function useMissions(organizationId: string | null, filters: MissionFilte
     queryKey: qk.missions.list(organizationId ?? 'none', filters),
     queryFn: () => (organizationId === null ? [] : listMissions(organizationId, filters)),
     enabled: organizationId !== null,
+  });
+}
+
+/** Répartition par statut — contexte affiché quand un filtre ne renvoie rien. */
+export function useMissionStatusCounts(organizationId: string | null) {
+  return useQuery({
+    queryKey: [...qk.missions.all, organizationId ?? 'none', 'status-counts'],
+    queryFn: () => (organizationId === null ? {} : countMissionsByStatus(organizationId)),
+    enabled: organizationId !== null,
+    staleTime: 60_000,
   });
 }
 

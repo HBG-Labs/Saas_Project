@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +11,6 @@ import { cn } from '@/lib/cn';
 const THEME_OPTIONS: readonly { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Clair', icon: Sun },
   { value: 'dark', label: 'Sombre', icon: Moon },
-  { value: 'system', label: 'Système', icon: Monitor },
 ];
 
 export default function SettingsPage() {
@@ -33,7 +32,7 @@ export default function SettingsPage() {
           <CardContent>
             <fieldset>
               <legend className="text-foreground mb-2 text-xs font-medium">Thème</legend>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {THEME_OPTIONS.map((option) => {
                   const Icon = option.icon;
                   const isActive = theme === option.value;
@@ -60,9 +59,6 @@ export default function SettingsPage() {
                   );
                 })}
               </div>
-              <p className="text-subtle-foreground mt-2 text-xs">
-                « Système » suit le réglage de votre appareil et bascule automatiquement.
-              </p>
             </fieldset>
           </CardContent>
         </Card>

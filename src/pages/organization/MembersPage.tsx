@@ -1,6 +1,7 @@
-import { Mail, Users, X } from 'lucide-react';
+import { Mail, Send, Users, X } from 'lucide-react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { FormError } from '@/components/feedback/FormError';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -22,14 +23,16 @@ import {
   useMembers,
   usePermission,
   useRemoveMember,
+  useResendInvitationEmail,
   useRevokeInvitation,
+  useUpdateMemberDetails,
   useUpdateMemberRole,
 } from '@/features/organizations';
 import { useTeamMembershipsByMember } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function MembersPage() {
-  useDocumentTitle('Membres');
+  useDocumentTitle('Techniciens');
 
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
@@ -54,8 +57,10 @@ export default function MembersPage() {
   const { limit } = useOrganizationEntitlements(organizationId);
 
   const updateRole = useUpdateMemberRole(organizationId ?? '');
+  const updateDetails = useUpdateMemberDetails(organizationId ?? '');
   const removeMember = useRemoveMember(organizationId ?? '');
   const revokeInvitation = useRevokeInvitation(organizationId ?? '');
+  const resendInvitation = useResendInvitationEmail();
 
   const canUpdateRole = can(PERMISSIONS.memberUpdateRole);
   const canRemove = can(PERMISSIONS.memberRemove);
@@ -79,13 +84,13 @@ export default function MembersPage() {
   const memberLimit = limit(FEATURES.members);
   const quotaReached = memberLimit !== null && activeMembers.length >= memberLimit;
 
-  const busy = updateRole.isPending || removeMember.isPending;
+  const busy = updateRole.isPending || updateDetails.isPending || removeMember.isPending;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Membres"
-        description="Qui appartient à l’entreprise, et avec quels droits."
+        title="Techniciens"
+        description="Gestion de l’équipe de techniciens, des rôles et des accès de l’entreprise."
         actions={
           canInvite && organizationId !== null ? (
             <div className="flex items-center gap-2">
@@ -151,6 +156,9 @@ export default function MembersPage() {
                   onRoleChange={(nextRole) => {
                     updateRole.mutate({ memberId: member.id, role: nextRole });
                   }}
+                  onUpdateDetails={(displayName, jobTitle) => {
+                    updateDetails.mutate({ memberId: member.id, displayName, jobTitle });
+                  }}
                   onRemove={() => {
                     removeMember.mutate(member.id);
                   }}
@@ -193,6 +201,22 @@ export default function MembersPage() {
                       </span>
                       <RoleBadge role={invitation.role} />
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          resendInvitation.mutate(invitation.id);
+                        }}
+                        disabled={resendInvitation.isPending}
+                        className="gap-1.5 text-2xs"
+                        aria-label={`Renvoyer le courriel à ${invitation.email}`}
+                      >
+                        <Send className="size-3" />
+                        {resendInvitation.isPending &&
+                        resendInvitation.variables === invitation.id
+                          ? 'Envoi…'
+                          : 'Renvoyer'}
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => {
@@ -205,6 +229,18 @@ export default function MembersPage() {
                         <X className="size-4" />
                       </Button>
                     </div>
+
+                    {resendInvitation.isError &&
+                      resendInvitation.variables === invitation.id && (
+                        <FormError error={resendInvitation.error} />
+                      )}
+
+                    {resendInvitation.isSuccess &&
+                      resendInvitation.variables === invitation.id && (
+                        <p className="text-2xs font-medium text-emerald-600 dark:text-emerald-400">
+                          Courriel renvoyé à {invitation.email}.
+                        </p>
+                      )}
 
                     <InvitationLink token={invitation.token} />
 

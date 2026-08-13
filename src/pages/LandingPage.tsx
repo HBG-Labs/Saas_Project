@@ -38,16 +38,16 @@ export default function LandingPage() {
       {/* BANNIÈRE CONVERSION FINALE */}
       <section className="py-16 sm:py-24 border-t border-border/60 bg-surface">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-16 text-center text-white shadow-2xl sm:px-12 sm:py-20">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 px-6 py-16 text-center shadow-2xl backdrop-blur-xl transition-all duration-300 dark:border-transparent dark:bg-slate-950/90 dark:shadow-none sm:px-12 sm:py-20">
             {/* Halo d'ambiance */}
-            <div className="absolute top-1/2 left-1/2 -z-10 h-[350px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-600/30 via-indigo-500/20 to-cyan-400/20 blur-[100px]" />
+            <div className="absolute top-1/2 left-1/2 -z-10 h-[350px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-cyan-400/15 blur-[100px]" />
 
             <div className="relative z-10 mx-auto max-w-3xl space-y-6">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl leading-tight">
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white">
                 Prêt à décupler la productivité de votre activité technique ?
               </h2>
 
-              <p className="text-base text-slate-300 sm:text-lg">
+              <p className="text-base text-slate-600 sm:text-lg dark:text-slate-300">
                 Rejoignez plus de 10 000 techniciens, ingénieurs et entreprises qui automatisent leurs calculs et bilans au quotidien.
               </p>
 

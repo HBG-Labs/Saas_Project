@@ -15,7 +15,6 @@ import { Link, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -103,7 +102,9 @@ export default function CustomerDetailPage() {
   const handleDelete = async () => {
     await deleteCustomer.mutateAsync(data.id);
     setIsDeleteModalOpen(false);
-    navigate(ROUTES.customers);
+    // `navigate` renvoie une promesse depuis React Router 7 : sans `await`, une
+    // erreur de navigation passerait inaperçue.
+    await navigate(ROUTES.customers);
   };
 
    return (

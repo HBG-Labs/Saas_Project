@@ -135,7 +135,12 @@ describe('synchronisation avec le seed SQL', () => {
   // migration. Ne lire que le seed d'origine ferait conclure à une divergence du
   // miroir alors que c'est la vision du SQL qui serait incomplète.
   const tuples = extractInsertTuplesAcross(
-    [MIGRATION_FILES.rbac, MIGRATION_FILES.rbacCustomers],
+    [
+      MIGRATION_FILES.rbac,
+      MIGRATION_FILES.rbacCustomers,
+      MIGRATION_FILES.equipment,
+      MIGRATION_FILES.quotes,
+    ],
     'role_permissions',
   );
 

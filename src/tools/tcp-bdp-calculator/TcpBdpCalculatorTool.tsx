@@ -124,7 +124,7 @@ export default function TcpBdpCalculatorTool() {
 
             {/* Presets latence */}
             <div className="space-y-1.5 pt-2">
-              <span className="text-[11px] font-semibold text-slate-400">Préréglages de latence :</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">Préréglages de latence :</span>
               <div className="flex flex-wrap gap-1.5">
                 {LATENCY_PRESETS.map((p) => (
                   <button
@@ -165,7 +165,7 @@ export default function TcpBdpCalculatorTool() {
             </div>
 
             <div className="space-y-1 pt-2">
-              <span className="text-[11px] font-semibold text-slate-400">Tailles courantes :</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">Tailles courantes :</span>
               <div className="flex flex-wrap gap-1.5">
                 {[64, 128, 256, 512, 1024, 4096].map((size) => (
                   <button
@@ -208,7 +208,7 @@ export default function TcpBdpCalculatorTool() {
               ? `${(calculations.maxThroughputMbps / 1000).toFixed(2)} Gbps`
               : `${calculations.maxThroughputMbps.toFixed(2)} Mbps`}
           </p>
-          <span className="mt-1 block text-[10px] text-slate-400">
+          <span className="mt-1 block text-[10px] text-muted-foreground">
             Plafonné par la fenêtre TCP de {currentWindowKB} KB
           </span>
         </div>
@@ -221,7 +221,7 @@ export default function TcpBdpCalculatorTool() {
           <p className="mt-2 font-mono text-2xl font-black text-slate-900 dark:text-white">
             {calculations.efficiency.toFixed(1)}%
           </p>
-          <span className="mt-1 block text-[10px] text-slate-400">
+          <span className="mt-1 block text-[10px] text-muted-foreground">
             {calculations.efficiency < 90
               ? '⚠️ Fenêtre TCP sous-dimensionnée (Goulot d’étranglement)'
               : '✅ Fenêtre TCP optimale pour cette latence'}

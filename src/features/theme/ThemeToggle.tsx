@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { cn } from '@/lib/cn';
@@ -9,7 +9,6 @@ import type { Theme } from './theme-context';
 const OPTIONS: readonly { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Clair', icon: Sun },
   { value: 'dark', label: 'Sombre', icon: Moon },
-  { value: 'system', label: 'Système', icon: Monitor },
 ];
 
 /**

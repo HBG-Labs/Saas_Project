@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { CustomerPicker, SitePicker } from '@/features/customers';
+import { memberDisplayName, useMembers } from '@/features/organizations';
+import { useTeams } from '@/features/teams';
 import type { MissionPriority } from '@/types/database';
 
 import { MISSION_PRIORITY_LABELS } from '../priority-labels';
@@ -22,24 +24,14 @@ export interface MissionFormFieldsProps {
 
   siteId: string | null;
   onSiteChange: (siteId: string | null) => void;
+
+  assignedTeamId?: string | null;
+  onAssignedTeamChange?: (teamId: string | null) => void;
+
+  assignedMemberId?: string | null;
+  onAssignedMemberChange?: (memberId: string | null) => void;
 }
 
-/**
- * Champs communs à la création et à l'édition d'une mission.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI CE COMPOSANT EXISTE
- *
- * La création se fait sur une page dédiée, l'édition dans une fenêtre : deux
- * contextes, deux mises en page. Mais les CHAMPS sont les mêmes, et deux
- * formulaires jumeaux divergent toujours — l'un gagne un champ que l'autre
- * n'aura jamais, et l'on découvre des mois plus tard qu'on ne peut pas corriger
- * ce qu'on peut saisir.
- *
- * Chaque appelant fournit son propre habillage — cartes sur la page, sections
- * simples dans la fenêtre — et partage cette liste.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 export function MissionFormFields({
   register,
   errors,
@@ -50,7 +42,27 @@ export function MissionFormFields({
   onCustomerChange,
   siteId,
   onSiteChange,
+  assignedTeamId = null,
+  onAssignedTeamChange,
+  assignedMemberId = null,
+  onAssignedMemberChange,
 }: MissionFormFieldsProps) {
+  const teamsQuery = useTeams(organizationId);
+  const membersQuery = useMembers(organizationId);
+
+  const teamOptions = [
+    { value: '', label: 'Aucune équipe affectée' },
+    ...(teamsQuery.data ?? []).map((t) => ({ value: t.id, label: t.name })),
+  ];
+
+  const memberOptions = [
+    { value: '', label: 'Aucun technicien affecté' },
+    ...(membersQuery.data ?? []).map((m) => ({
+      value: m.id,
+      label: memberDisplayName(m),
+    })),
+  ];
+
   return (
     <>
       <Input
@@ -68,24 +80,40 @@ export function MissionFormFields({
         {...register('description')}
       />
 
-      <Select
-        options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
-          value,
-          label,
-        }))}
-        value={priority}
-        onValueChange={(value) => {
-          onPriorityChange(value as MissionPriority);
-        }}
-        label="Priorité"
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Select
+          options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
+            value,
+            label,
+          }))}
+          value={priority}
+          onValueChange={(value) => {
+            onPriorityChange(value as MissionPriority);
+          }}
+          label="Priorité"
+        />
 
-      {/*
-        Choisir un site suffit : le trigger en déduit le client et recopie
-        l'adresse et les consignes d'accès. Changer de client remet le site à
-        zéro — un site appartient à un client, et la base refuse le couple
-        incohérent.
-      */}
+        {onAssignedTeamChange ? (
+          <Select
+            options={teamOptions}
+            value={assignedTeamId ?? ''}
+            onValueChange={(value) => onAssignedTeamChange(value === '' ? null : value)}
+            label="Affecter une équipe"
+            hint="L'équipe entière recevra la notification"
+          />
+        ) : null}
+      </div>
+
+      {onAssignedMemberChange ? (
+        <Select
+          options={memberOptions}
+          value={assignedMemberId ?? ''}
+          onValueChange={(value) => onAssignedMemberChange(value === '' ? null : value)}
+          label="Affecter un technicien"
+          hint="Technicien désigné pour l'intervention terrain"
+        />
+      ) : null}
+
       <CustomerPicker
         organizationId={organizationId}
         value={customerId}

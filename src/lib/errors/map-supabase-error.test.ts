@@ -9,6 +9,34 @@ describe('mapPostgrestError', () => {
     expect(mapPostgrestError({ message: 'x', code: '42501' }).code).toBe('forbidden');
     expect(mapPostgrestError({ message: 'x', code: 'PGRST116' }).code).toBe('not_found');
     expect(mapPostgrestError({ message: 'x', code: '23503' }).code).toBe('validation');
+    expect(mapPostgrestError({ message: 'x', code: '23514' }).code).toBe('validation');
+  });
+
+  it('laisse passer les messages rédigés par nos triggers', () => {
+    // Ces phrases sont écrites pour l'utilisateur : les remplacer par un
+    // libellé générique lui retire la seule information qui dit quoi faire.
+    const transition = mapPostgrestError({
+      message: 'Transition interdite : in_progress → submitted.',
+      code: '23514',
+    });
+    expect(transition.message).toBe('Transition interdite : in_progress → submitted.');
+
+    const owner = mapPostgrestError({
+      message: 'Seul un propriétaire peut nommer un autre propriétaire.',
+      code: '42501',
+    });
+    expect(owner.message).toBe('Seul un propriétaire peut nommer un autre propriétaire.');
+  });
+
+  it('écarte les messages produits par PostgreSQL lui-même', () => {
+    // Même code, mais la phrase vient du moteur et nomme la table.
+    const rls = mapPostgrestError({
+      message: 'new row violates row-level security policy for table "missions"',
+      code: '42501',
+    });
+
+    expect(rls.message).not.toContain('missions');
+    expect(rls.message).toBe("Vous n'avez pas les droits nécessaires pour accéder à cette ressource.");
   });
 
   it('retombe sur le statut HTTP quand le code est inconnu', () => {

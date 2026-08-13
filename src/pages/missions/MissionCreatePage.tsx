@@ -33,6 +33,8 @@ export default function MissionCreatePage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [priority, setPriority] = useState<MissionPriority>('normal');
+  const [assignedTeamId, setAssignedTeamId] = useState<string | null>(null);
+  const [assignedMemberId, setAssignedMemberId] = useState<string | null>(null);
 
   const {
     register,
@@ -67,8 +69,6 @@ export default function MissionCreatePage() {
         createdBy: user.id,
         title: values.title,
         priority,
-        // Propriété OMISE plutôt que passée à `undefined` :
-        // `exactOptionalPropertyTypes` distingue les deux.
         ...(description !== undefined && description !== '' ? { description } : {}),
         ...(notes !== undefined && notes !== '' ? { notes } : {}),
         ...(locationLabel !== undefined && locationLabel !== '' ? { locationLabel } : {}),
@@ -76,6 +76,8 @@ export default function MissionCreatePage() {
         ...(scheduledEnd !== undefined ? { scheduledEnd } : {}),
         ...(customerId !== null ? { customerId } : {}),
         ...(siteId !== null ? { siteId } : {}),
+        ...(assignedTeamId !== null ? { assignedTeamId } : {}),
+        ...(assignedMemberId !== null ? { assignedUserId: assignedMemberId } : {}),
       });
 
       await navigate(ROUTES.mission(mission.id));
@@ -95,19 +97,13 @@ export default function MissionCreatePage() {
 
       <PageHeader
         title="Nouvelle mission"
-        description="La référence est attribuée automatiquement. La mission naît en brouillon : vous l’affecterez ensuite."
+        description="Renseignez les détails de la mission et affectez directement une équipe ou un technicien responsable."
       />
 
       <form onSubmit={onSubmit} noValidate className="space-y-6">
         <FormError error={submitError} />
 
         <Card>
-          {/*
-            Les champs viennent de `MissionFormFields`, partagés avec l'écran
-            d'édition. Deux formulaires jumeaux finissent toujours par diverger,
-            et l'on découvre alors qu'on ne peut pas corriger ce qu'on a pu
-            saisir.
-          */}
           <CardContent className="space-y-4 pt-6">
             <MissionFormFields
               register={register}
@@ -119,6 +115,10 @@ export default function MissionCreatePage() {
               onCustomerChange={setCustomerId}
               siteId={siteId}
               onSiteChange={setSiteId}
+              assignedTeamId={assignedTeamId}
+              onAssignedTeamChange={setAssignedTeamId}
+              assignedMemberId={assignedMemberId}
+              onAssignedMemberChange={setAssignedMemberId}
             />
           </CardContent>
         </Card>

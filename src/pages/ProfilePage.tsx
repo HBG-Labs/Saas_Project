@@ -1,12 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   User,
   Mail,
-  Phone,
   ShieldCheck,
   Award,
   Wrench,
-  CheckCircle2,
   MapPin,
   Clock,
   Briefcase,
@@ -30,10 +28,10 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { FormError } from '@/components/feedback/FormError';
 import { useAuth } from '@/features/auth';
+import { useMyProfile, useUpdateMyProfile, type FullProfile } from '@/features/profile';
 import { formatDate } from '@/lib/format';
-
-const STORAGE_PROFILE_KEY = 'nexoratech_user_profile_custom';
 
 export interface EquipmentItem {
   id: string;
@@ -85,57 +83,118 @@ const DEFAULT_PROFILE: UserProfileData = {
   ],
 };
 
+/**
+ * Ligne `profiles` → formulaire.
+ *
+ * Les habilitations et le matériel déclaré sont stockés en `jsonb` : leur forme
+ * varie d'un métier à l'autre, et aucune requête ne filtre dessus. La lecture
+ * reste donc défensive — une valeur écrite par une version antérieure du
+ * formulaire ne doit pas faire planter la page.
+ */
+function toFormProfile(full: FullProfile | undefined, fallbackName: string): UserProfileData {
+  const identity = full?.identity ?? null;
+  const details = full?.details ?? null;
+
+  const certifications = Array.isArray(details?.certifications)
+    ? (details.certifications as { label?: string; detail?: string; expires_at?: string }[])
+    : [];
+  const equipments = Array.isArray(details?.equipments)
+    ? (details.equipments as { id?: string; name?: string; serial?: string }[])
+    : [];
+
+  const [elec, caces] = certifications;
+
+  return {
+    displayName: identity?.display_name ?? fallbackName,
+    jobTitle: DEFAULT_PROFILE.jobTitle,
+    phone: details?.phone ?? '',
+    zone: details?.zone ?? '',
+    habElec: elec?.label ?? '',
+    habElecExpiry: elec?.detail ?? '',
+    habCaces: caces?.label ?? '',
+    habCacesInfo: caces?.detail ?? '',
+    equipments: equipments.map((item, index) => ({
+      id: item.id ?? `eq-${index}`,
+      name: item.name ?? '',
+      serial: item.serial ?? '',
+      color: 'blue' as const,
+    })),
+  };
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
+  const profileQuery = useMyProfile();
+  const updateProfile = useUpdateMyProfile();
 
-  const initialName =
+  const fallbackName =
     (user?.user_metadata['display_name'] as string | undefined) ??
     user?.email?.split('@')[0] ??
-    'Stéphane Leduc';
+    'Utilisateur';
 
-  // Charger profil personnalisé depuis localStorage avec fallback propre
-  const [profile, setProfile] = useState<UserProfileData>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_PROFILE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_PROFILE,
-          ...parsed,
-          displayName: parsed.displayName || initialName,
-          equipments: Array.isArray(parsed.equipments) ? parsed.equipments : DEFAULT_PROFILE.equipments,
-        };
-      }
-    } catch {
-      // Fallback
-    }
-    return { ...DEFAULT_PROFILE, displayName: initialName };
-  });
+  const remoteProfile = toFormProfile(profileQuery.data ?? undefined, fallbackName);
 
-  // État local de la modale pour édition
+  /**
+   * Tampon d'édition.
+   *
+   * Les champs de cette page se modifient sur place et ne sont enregistrés qu'au
+   * clic sur « Sauvegarder ». Éditer directement l'objet dérivé du cache le
+   * ferait réapparaître tel quel au premier rafraîchissement en arrière-plan,
+   * effaçant la saisie en cours.
+   */
+  const [profile, setProfile] = useState<UserProfileData>(remoteProfile);
+  const loadedFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    const loadedId = profileQuery.data?.identity?.id ?? null;
+    if (loadedId === null || loadedFor.current === loadedId) return;
+
+    loadedFor.current = loadedId;
+    setProfile(remoteProfile);
+  }, [profileQuery.data, remoteProfile]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [draftProfile, setDraftProfile] = useState<UserProfileData>(profile);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<unknown>(null);
 
-  // Synchroniser le draft lorsque la modale s'ouvre
   const handleOpenModal = () => {
-    setDraftProfile(JSON.parse(JSON.stringify(profile)));
+    // Copie profonde : l'édition ne doit pas modifier l'objet dérivé du cache,
+    // qu'un abandon devrait laisser intact.
+    setDraftProfile(structuredClone(profile));
     setIsModalOpen(true);
   };
 
-  // Sauvegarder les modifications générales du profil
-  const handleSaveProfile = (dataToSave: UserProfileData = profile) => {
-    try {
-      localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(dataToSave));
-      setProfile(dataToSave);
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
-    } catch {
-      // Storage fallback
-    }
+  const handleSaveProfile = (dataToSave: UserProfileData) => {
+    setSubmitError(null);
+
+    updateProfile.mutate(
+      {
+        identity: { display_name: dataToSave.displayName.trim() },
+        details: {
+          phone: dataToSave.phone.trim() === '' ? null : dataToSave.phone.trim(),
+          zone: dataToSave.zone.trim() === '' ? null : dataToSave.zone.trim(),
+          certifications: [
+            { label: dataToSave.habElec, detail: dataToSave.habElecExpiry },
+            { label: dataToSave.habCaces, detail: dataToSave.habCacesInfo },
+          ],
+          equipments: dataToSave.equipments.map((eq) => ({
+            id: eq.id,
+            name: eq.name,
+            serial: eq.serial,
+          })),
+        },
+      },
+      {
+        onSuccess: () => {
+          setSavedSuccess(true);
+          setTimeout(() => setSavedSuccess(false), 3000);
+        },
+        onError: setSubmitError,
+      },
+    );
   };
 
-  // Validation et enregistrement depuis la modale
   const handleModalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSaveProfile(draftProfile);
@@ -179,9 +238,14 @@ export default function ProfilePage() {
         description="Gérez vos données professionnelles, vos habilitations techniques, votre matériel attribué et vos préférences d'intervention."
       />
 
-      {/* Header Banner - Executive Technician Identity */}
-      <Card className="relative overflow-hidden border-border bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 p-6 text-white shadow-xl">
-        <div className="pointer-events-none absolute top-0 right-0 h-full w-1/3 bg-gradient-to-l from-blue-600/10 to-transparent" />
+      {/*
+        Bandeau d'identité, sans dégradé.
+
+        Il en portait deux : un fondu vers `slate-800` et un voile bleu sur le
+        tiers droit. Écrits pour un fond sombre, ils produisaient en thème clair
+        un coin bleu nuit qui avalait le bouton « Sauvegarder » — un aplat suffit.
+      */}
+      <Card className="border-border bg-surface text-foreground relative overflow-hidden p-6 shadow-raised">
 
         <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div className="flex items-center gap-5">
@@ -192,7 +256,7 @@ export default function ProfilePage() {
                 className="size-20 text-xl font-bold ring-4 ring-blue-500/30 shadow-lg"
               />
               <span
-                className="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-emerald-500 text-3xs text-white ring-2 ring-slate-900"
+                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-emerald-500 text-3xs text-white ring-2"
                 title="Disponible pour intervention"
               >
                 ✓
@@ -200,46 +264,52 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold tracking-tight text-white">{profile.displayName}</h2>
+                <h2 className="text-xl font-bold tracking-tight text-foreground">{profile.displayName}</h2>
                 <Badge
                   variant="outline"
-                  className="border-blue-400/40 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-300"
+                  className="border-blue-400/40 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300"
                 >
                   Administrateur & Expert Terrain
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300"
+                  className="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
                 >
                   🟢 En service
                 </Badge>
               </div>
-              <p className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                <Briefcase className="size-3.5 text-blue-400" />
+              <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Briefcase className="size-3.5 text-primary" />
                 {profile.jobTitle}
               </p>
-              <div className="flex items-center gap-4 pt-1 text-xs text-slate-400">
+              <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <MapPin className="size-3 text-slate-400" />
+                  <MapPin className="size-3 text-muted-foreground" />
                   {profile.zone}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock className="size-3 text-slate-400" />
+                  <Clock className="size-3 text-muted-foreground" />
                   Membre depuis : {user?.created_at ? formatDate(user.created_at) : '9 août 2026'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex w-full items-center gap-3 border-t border-slate-700/60 pt-4 md:w-auto md:border-t-0 md:pt-0">
+          <div className="flex w-full flex-col items-stretch gap-2 border-t border-border-strong pt-4 md:w-auto md:items-end md:border-t-0 md:pt-0">
             <Button
               variant="primary"
               onClick={() => handleSaveProfile(profile)}
+              disabled={updateProfile.isPending}
               className="cursor-pointer gap-2 bg-blue-600 font-medium text-white shadow-md hover:bg-blue-500"
             >
               <Save className="size-4" />
-              {savedSuccess ? 'Enregistré !' : 'Sauvegarder le profil'}
+              {updateProfile.isPending
+                ? 'Enregistrement…'
+                : savedSuccess
+                  ? 'Enregistré !'
+                  : 'Sauvegarder le profil'}
             </Button>
+            <FormError error={submitError} />
           </div>
         </div>
       </Card>
@@ -252,7 +322,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <User className="size-4 text-blue-400" />
+                <User className="size-4 text-primary" />
                 Informations & Coordonnées
               </CardTitle>
               <CardDescription>
@@ -281,19 +351,19 @@ export default function ProfilePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                     Adresse e-mail (Compte)
                   </label>
                   <div className="relative flex items-center">
-                    <Mail className="absolute left-3 size-4 text-slate-400" />
+                    <Mail className="absolute left-3 size-4 text-muted-foreground" />
                     <input
                       type="email"
                       value={user?.email ?? 'leduc972@live.fr'}
                       readOnly
                       disabled
-                      className="w-full rounded-md border border-slate-700 bg-slate-900/60 py-2 pr-24 pl-9 text-sm text-slate-300 opacity-80 cursor-not-allowed"
+                      className="w-full rounded-md border border-border-strong bg-surface py-2 pr-24 pl-9 text-sm text-muted-foreground opacity-80 cursor-not-allowed"
                     />
-                    <span className="absolute right-2 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-400">
+                    <span className="absolute right-2 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-600 dark:text-emerald-400">
                       ✓ Vérifiée
                     </span>
                   </div>
@@ -327,7 +397,7 @@ export default function ProfilePage() {
             <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <HardHat className="size-4 text-amber-400" />
+                  <HardHat className="size-4 text-amber-600 dark:text-amber-400" />
                   Habilitations & Matériel Attribué
                 </CardTitle>
                 <CardDescription className="mt-1">
@@ -349,33 +419,33 @@ export default function ProfilePage() {
             <CardContent className="space-y-6 pt-5">
               {/* Habilitations */}
               <div>
-                <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-400 uppercase">
-                  <ShieldCheck className="size-3.5 text-emerald-400" />
+                <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   Habilitations & Certifications Sécurité
                 </h4>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {profile.habElec.trim() !== '' ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-                      <Zap className="mt-0.5 size-5 shrink-0 text-amber-400" />
+                    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3">
+                      <Zap className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
                       <div>
-                        <p className="text-xs font-semibold text-white">{profile.habElec}</p>
-                        <p className="mt-0.5 text-2xs text-slate-400">{profile.habElecExpiry || "Valide"}</p>
+                        <p className="text-xs font-semibold text-foreground">{profile.habElec}</p>
+                        <p className="mt-0.5 text-2xs text-muted-foreground">{profile.habElecExpiry || "Valide"}</p>
                       </div>
                     </div>
                   ) : null}
 
                   {profile.habCaces.trim() !== '' ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-                      <Award className="mt-0.5 size-5 shrink-0 text-blue-400" />
+                    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3">
+                      <Award className="mt-0.5 size-5 shrink-0 text-primary" />
                       <div>
-                        <p className="text-xs font-semibold text-white">{profile.habCaces}</p>
-                        <p className="mt-0.5 text-2xs text-slate-400">{profile.habCacesInfo || "Intervention Nacelle"}</p>
+                        <p className="text-xs font-semibold text-foreground">{profile.habCaces}</p>
+                        <p className="mt-0.5 text-2xs text-muted-foreground">{profile.habCacesInfo || "Intervention Nacelle"}</p>
                       </div>
                     </div>
                   ) : null}
 
                   {profile.habElec.trim() === '' && profile.habCaces.trim() === '' ? (
-                    <p className="col-span-2 text-xs italic text-slate-500">
+                    <p className="col-span-2 text-xs italic text-subtle-foreground">
                       Aucune habilitation enregistrée. Cliquez sur "Modifier" pour en ajouter une.
                     </p>
                   ) : null}
@@ -383,9 +453,9 @@ export default function ProfilePage() {
               </div>
 
               {/* Équipements attribués */}
-              <div className="border-t border-slate-800/80 pt-4">
-                <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-400 uppercase">
-                  <Wrench className="size-3.5 text-blue-400" />
+              <div className="border-t border-border pt-4">
+                <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  <Wrench className="size-3.5 text-primary" />
                   Équipements & Instruments de Mesure Détenus
                 </h4>
                 
@@ -404,14 +474,14 @@ export default function ProfilePage() {
                         return (
                           <div
                             key={eq.id}
-                            className="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/30 px-3 py-2 text-xs"
+                            className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-xs"
                           >
                             <div className="flex items-center gap-2.5">
                               <div className={`size-2 rounded-full ${dotColor}`} />
-                              <span className="font-medium text-slate-200">{eq.name}</span>
+                              <span className="font-medium text-foreground">{eq.name}</span>
                             </div>
                             {eq.serial.trim() !== '' ? (
-                              <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-2xs text-slate-400">
+                              <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-2xs text-muted-foreground">
                                 S/N: {eq.serial}
                               </span>
                             ) : null}
@@ -420,7 +490,7 @@ export default function ProfilePage() {
                       })}
                   </div>
                 ) : (
-                  <p className="text-xs italic text-slate-500">
+                  <p className="text-xs italic text-subtle-foreground">
                     Aucun équipement de mesure enregistré. Cliquez sur "Modifier" pour en déclarer.
                   </p>
                 )}
@@ -432,45 +502,45 @@ export default function ProfilePage() {
         {/* Colonne Droite (1/3) : Stats Performance & Identifiants */}
         <div className="space-y-6">
           {/* Card 3 : Statistiques de Performance */}
-          <Card className="border-blue-500/20 bg-gradient-to-b from-slate-900 to-slate-950">
+          <Card className="border-blue-500/20 bg-gradient-to-b from-surface to-surface-sunken">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Activity className="size-4 text-emerald-400" />
+                <Activity className="size-4 text-emerald-600 dark:text-emerald-400" />
                 Performance 30 Jours
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-5">
               <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
                 <div className="space-y-0.5">
-                  <p className="text-2xs font-semibold tracking-wider text-emerald-400 uppercase">
+                  <p className="text-2xs font-semibold tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">
                     Missions Réalisées
                   </p>
-                  <p className="text-xl font-bold text-white">48 missions</p>
+                  <p className="text-xl font-bold text-foreground">48 missions</p>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400">
+                <div className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   <Star className="size-3.5 fill-current" /> 98.2%
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                  <span className="block text-2xs text-slate-400">Temps moyen</span>
-                  <span className="text-sm font-bold text-white">1h 35min</span>
+                <div className="space-y-1 rounded-lg border border-border bg-surface p-3">
+                  <span className="block text-2xs text-muted-foreground">Temps moyen</span>
+                  <span className="text-sm font-bold text-foreground">1h 35min</span>
                 </div>
-                <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                  <span className="block text-2xs text-slate-400">PV Signés</span>
-                  <span className="flex items-center gap-1 text-sm font-bold text-emerald-400">
+                <div className="space-y-1 rounded-lg border border-border bg-surface p-3">
+                  <span className="block text-2xs text-muted-foreground">PV Signés</span>
+                  <span className="flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     <FileCheck className="size-3.5" /> 42 validés
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-2xs text-slate-400">
-                <div className="flex justify-between font-medium text-slate-300">
+              <div className="space-y-1.5 rounded-lg border border-border bg-surface p-3 text-2xs text-muted-foreground">
+                <div className="flex justify-between font-medium text-muted-foreground">
                   <span>Satisfaction Client</span>
-                  <span className="font-bold text-amber-400">4.9 / 5.0 ★</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">4.9 / 5.0 ★</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-raised">
                   <div className="h-full w-[98%] rounded-full bg-amber-400" />
                 </div>
               </div>
@@ -481,7 +551,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Smartphone className="size-4 text-purple-400" />
+                <Smartphone className="size-4 text-purple-600 dark:text-purple-400" />
                 Identifiants & Sécurité
               </CardTitle>
             </CardHeader>
@@ -490,7 +560,7 @@ export default function ProfilePage() {
                 <p className="text-subtle-foreground text-2xs font-semibold tracking-wider uppercase">
                   Identifiant Unique Supabase (UUID)
                 </p>
-                <p className="mt-1 rounded border border-slate-800 bg-slate-900 p-2 font-mono text-2xs text-slate-300 break-all select-all">
+                <p className="mt-1 rounded border border-border bg-surface p-2 font-mono text-2xs text-muted-foreground break-all select-all">
                   {user?.id ?? 'c208bc1c-68a1-48be-8bb7-ca96555a13be'}
                 </p>
               </div>
@@ -499,9 +569,9 @@ export default function ProfilePage() {
                 <p className="text-subtle-foreground text-2xs font-semibold tracking-wider uppercase">
                   Type de compte & Rôle
                 </p>
-                <div className="mt-1 flex items-center justify-between rounded border border-slate-800 bg-slate-900/50 p-2">
-                  <span className="font-medium text-slate-200">Administrateur Technique</span>
-                  <span className="text-2xs font-semibold text-blue-400">Accès global</span>
+                <div className="mt-1 flex items-center justify-between rounded border border-border bg-surface p-2">
+                  <span className="font-medium text-foreground">Administrateur Technique</span>
+                  <span className="text-2xs font-semibold text-primary">Accès global</span>
                 </div>
               </div>
 
@@ -509,9 +579,9 @@ export default function ProfilePage() {
                 <p className="text-subtle-foreground text-2xs font-semibold tracking-wider uppercase">
                   Application Mobile Enregistrée
                 </p>
-                <div className="mt-1 flex items-center justify-between rounded border border-slate-800 bg-slate-900/50 p-2">
-                  <span className="font-medium text-slate-200">Android App (SM-G990B)</span>
-                  <span className="text-2xs font-semibold text-emerald-400">🟢 Connectée</span>
+                <div className="mt-1 flex items-center justify-between rounded border border-border bg-surface p-2">
+                  <span className="font-medium text-foreground">Android App (SM-G990B)</span>
+                  <span className="text-2xs font-semibold text-emerald-600 dark:text-emerald-400">🟢 Connectée</span>
                 </div>
               </div>
             </CardContent>
@@ -531,8 +601,8 @@ export default function ProfilePage() {
           {/* Section Équipements */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-300 uppercase">
-                <Wrench className="size-3.5 text-blue-400" />
+              <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                <Wrench className="size-3.5 text-primary" />
                 Équipements & Instruments de Mesure
               </h4>
               <Button
@@ -540,15 +610,15 @@ export default function ProfilePage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleAddEquipment}
-                className="cursor-pointer gap-1 text-xs text-blue-400 hover:text-blue-300"
+                className="cursor-pointer gap-1 text-xs text-primary hover:text-primary-hover"
               >
                 <Plus className="size-3.5" /> Ajouter un matériel
               </Button>
             </div>
 
             <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-              {draftProfile.equipments.map((eq, idx) => (
-                <div key={eq.id} className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+              {draftProfile.equipments.map((eq) => (
+                <div key={eq.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface p-2.5">
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Input
                       placeholder="Nom de l'équipement (ex: Soudeuse Fujikura)"
@@ -566,7 +636,7 @@ export default function ProfilePage() {
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => handleRemoveEquipment(eq.id)}
-                    className="cursor-pointer text-slate-400 hover:text-rose-400 shrink-0"
+                    className="cursor-pointer text-muted-foreground hover:text-error shrink-0"
                     title="Supprimer cet équipement"
                   >
                     <Trash2 className="size-4" />
@@ -577,9 +647,9 @@ export default function ProfilePage() {
           </div>
 
           {/* Section Habilitations */}
-          <div className="space-y-3 border-t border-slate-800 pt-4">
-            <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-300 uppercase">
-              <ShieldCheck className="size-3.5 text-emerald-400" />
+          <div className="space-y-3 border-t border-border pt-4">
+            <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+              <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
               Habilitations Électriques & Sécurité
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -613,7 +683,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Boutons d'action de la modale */}
-          <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+          <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"

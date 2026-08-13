@@ -1,7 +1,8 @@
+import { mapPostgrestError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { Plan, PlanFeature, PlanWithFeatures, Subscription } from '@/types/domain';
 
-import { DEFAULT_PLAN, type FeatureKey, type PlanCode } from '../entitlements';
+import { DEFAULT_PLAN, PLAN_CODES, type FeatureKey, type PlanCode } from '../entitlements';
 
 /**
  * Lecture des plans et abonnements.
@@ -65,13 +66,42 @@ export async function getOrganizationSubscription(
 }
 
 /**
+ * Code de la formule d'une organisation, lisible par TOUS ses membres.
+ *
+ * Ne lit pas `subscriptions` : cette table est réservée à `billing.view`, et
+ * s'y fier faisait conclure « pas d'abonnement » à tout technicien — donc lui
+ * refuser des écrans que le serveur lui aurait ouverts. La RPC applique
+ * exactement le même calcul que les policies, expiration comprise, et n'expose
+ * que le code.
+ */
+export async function getOrganizationPlanCode(organizationId: string): Promise<PlanCode> {
+  const { data, error } = await supabase.rpc('organization_plan_code', {
+    p_organization_id: organizationId,
+  });
+
+  if (error) throw mapPostgrestError(error);
+
+  const known = PLAN_CODES.find((code) => code === data);
+  return known ?? DEFAULT_PLAN;
+}
+
+/**
  * Plan effectif d'un abonnement.
  *
- * Sans abonnement lisible, on retombe sur `free`, sauf si l'utilisateur est dans
- * la liste des comptes VIP disposant de la formule Entreprise.
+ * Sans abonnement lisible, on retombe sur `free`. Aucune exception, aucune liste
+ * d'adresses privilégiées : le plan vient de `subscriptions`, la seule source
+ * que la base consulte pour appliquer les droits. Toute dérogation côté client
+ * afficherait des fonctionnalités que le serveur refuse.
+ *
+ * `plan_code` est une clé étrangère vers `plans`, mais reste un `string` dans les
+ * types générés. La comparaison au tableau `PLAN_CODES` fait le pont, et écarte
+ * un code de plan ajouté en base sans l'être dans le miroir.
  */
-export function resolvePlanCode(subscription: Subscription | null, userEmail?: string | null): PlanCode {
-  return 'business';
+export function resolvePlanCode(subscription: Subscription | null): PlanCode {
+  if (subscription === null) return DEFAULT_PLAN;
+
+  const known = PLAN_CODES.find((code) => code === subscription.plan_code);
+  return known ?? DEFAULT_PLAN;
 }
 
 /**

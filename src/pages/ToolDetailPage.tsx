@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, Star, Wrench } from 'lucide-react';
+import { ArrowLeft, Star, Wrench } from 'lucide-react';
 import { Suspense } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -8,7 +8,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { ROUTES } from '@/config/routes';
 import {
   useCatalogTool,
@@ -134,39 +133,13 @@ export default function ToolDetailPage() {
         </Button>
       </header>
 
-      <Tabs defaultValue="tool">
-        <TabsList>
-          <TabsTrigger value="tool">Outil</TabsTrigger>
-          <TabsTrigger value="docs">Documentation</TabsTrigger>
-          <TabsTrigger value="references">Références</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="tool">
-          <ToolErrorBoundary toolSlug={tool.slug} toolTitle={tool.title}>
-            <Suspense fallback={<LoadingScreen variant="inline" label="Chargement de l’outil…" />}>
-              <Component />
-            </Suspense>
-          </ToolErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="docs">
-          <EmptyState
-            icon={BookOpen}
-            size="sm"
-            title="Documentation à venir"
-            description="Le mode d’emploi et les formules utilisées par cet outil seront publiés avec sa mise en service."
-          />
-        </TabsContent>
-
-        <TabsContent value="references">
-          <EmptyState
-            icon={BookOpen}
-            size="sm"
-            title="Aucune référence"
-            description="Normes, abaques et documents de référence associés à cet outil apparaîtront ici."
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="mt-4">
+        <ToolErrorBoundary toolSlug={tool.slug} toolTitle={tool.title}>
+          <Suspense fallback={<LoadingScreen variant="inline" label="Chargement de l’outil…" />}>
+            <Component />
+          </Suspense>
+        </ToolErrorBoundary>
+      </div>
     </>
   );
 }

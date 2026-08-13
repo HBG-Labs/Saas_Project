@@ -103,7 +103,7 @@ export function ActiveTeamSection({
                     🟢 En intervention
                   </span>
                   {tech.currentTask && (
-                    <span className="text-[10px] text-slate-400 max-w-[120px] truncate">
+                    <span className="text-[10px] text-muted-foreground max-w-[120px] truncate">
                       {tech.currentTask}
                     </span>
                   )}

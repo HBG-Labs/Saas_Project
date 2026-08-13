@@ -99,7 +99,7 @@ export function FeaturesBento() {
                   Rejoignez des milliers de techniciens et d&apos;ingénieurs qui utilisent NexoraTech pour piloter leur infrastructure technique.
                 </p>
                 <Button asChild size="md" variant="secondary" className="bg-white text-primary hover:bg-white/90 font-bold shadow-md">
-                  <Link to={ROUTES.register}>Démarrer un essai gratuit</Link>
+                  <Link to={ROUTES.register}>Créer un compte gratuit</Link>
                 </Button>
               </div>
 

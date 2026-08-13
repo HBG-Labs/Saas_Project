@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
-import { roleHasAnyPermission, roleHasPermission, type Permission } from '../rbac';
+import { useSimulatedRole } from '@/features/auth';
 
+import { roleHasAnyPermission, roleHasPermission, type Permission } from '../rbac';
 import { useCurrentOrganization } from './useCurrentOrganization';
 
 export interface PermissionChecks {
@@ -12,29 +13,37 @@ export interface PermissionChecks {
 }
 
 /**
- * Droits de l'utilisateur dans l'organisation courante.
+ * Le rôle vient de `organization_members`, et de nulle part ailleurs.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * CE HOOK NE SÉCURISE RIEN.
+ * LE SÉLECTEUR DE DÉVELOPPEMENT NE PEUT QUE RESTREINDRE
  *
- * Il évite de proposer une action que le serveur refusera : un bouton
- * « Supprimer » offert à un technicien produirait un aller-retour et un message
- * d'erreur là où l'absence du bouton dit la même chose, immédiatement.
+ * La version précédente accordait `owner` dès que le sélecteur affichait
+ * « entrepreneur », rôle réel ou non. L'interface proposait alors des actions
+ * que PostgreSQL refusait systématiquement — l'inverse du service rendu.
  *
- * L'autorisation réelle vit dans les policies RLS et les triggers. Une requête
- * forgée en console est refusée par PostgreSQL, que ce hook ait renvoyé `true`
- * ou non.
+ * Il reste utile de VOIR l'application comme un technicien sans changer de
+ * compte. Cette bascule est donc conservée, mais dans un seul sens : elle
+ * retire des droits, elle n'en donne jamais. Sans appartenance, le rôle reste
+ * `null` — exactement ce que renvoie `app.current_org_role()` au serveur.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export function usePermission(): PermissionChecks {
-  const { role } = useCurrentOrganization();
+  const { role: orgRole } = useCurrentOrganization();
+  const { role: simRole } = useSimulatedRole();
+
+  const activeRole = useMemo(() => {
+    if (orgRole === null) return null;
+    if (import.meta.env.DEV && simRole === 'technician') return 'technician';
+    return orgRole;
+  }, [orgRole, simRole]);
 
   return useMemo(
     () => ({
-      role,
-      can: (permission) => roleHasPermission(role, permission),
-      canAny: (permissions) => roleHasAnyPermission(role, permissions),
+      role: activeRole,
+      can: (permission) => roleHasPermission(activeRole, permission),
+      canAny: (permissions) => roleHasAnyPermission(activeRole, permissions),
     }),
-    [role],
+    [activeRole],
   );
 }

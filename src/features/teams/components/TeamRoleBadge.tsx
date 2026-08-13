@@ -21,13 +21,13 @@ import type { TeamMemberRole } from '@/types/database';
  */
 export function TeamRoleBadge({ role }: { role: TeamMemberRole }) {
   if (role !== 'lead') {
-    return <Badge variant="outline">Membre</Badge>;
+    return <Badge variant="neutral">Membre d’équipe</Badge>;
   }
 
   return (
-    <Tooltip content="Pilote cette équipe : composition et fiche. N’accorde aucune permission dans l’entreprise.">
+    <Tooltip content="Pilote cette équipe : composition et fiche. N’accorde aucune permission d'administration globale dans l’entreprise.">
       <span>
-        <Badge variant="accent">Responsable d’équipe</Badge>
+        <Badge variant="warning">Responsable d’équipe</Badge>
       </span>
     </Tooltip>
   );

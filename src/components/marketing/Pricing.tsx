@@ -13,7 +13,7 @@ export function Pricing() {
 
   return (
     <section className="border-t border-border/80 bg-surface-sunken/40 py-20 dark:bg-slate-950 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-3">
           <Badge variant="primary" className="text-2xs uppercase tracking-wider">
             Tarifs simples et transparents
@@ -51,15 +51,15 @@ export function Pricing() {
               >
                 <span>Facturation annuelle</span>
                 <Badge variant="primary" className="text-2xs py-0 px-1.5">
-                  -17 %
+                  -20 %
                 </Badge>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Grille des Cartes Tarifaires — Même design & couleurs que la page Tarifs */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-3">
+        {/* Grille des Cartes Tarifaires — 4 Formules */}
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {PRICING_PLANS.map((tier) => {
             const isAnnual = billingInterval === 'annual';
             const displayPrice = isAnnual ? tier.priceAnnualMonthly : tier.priceMonthly;
@@ -93,7 +93,7 @@ export function Pricing() {
                     <div className="mt-4 border-t border-border/40 pt-4">
                       <div className="flex items-baseline gap-1">
                         <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
-                          {displayPrice === 0 ? '0 €' : `${displayPrice.toFixed(2)} €`}
+                          {displayPrice === 0 ? '0 €' : `${displayPrice % 1 === 0 ? displayPrice : displayPrice.toFixed(2)} €`}
                         </span>
                         {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
                       </div>
@@ -114,7 +114,7 @@ export function Pricing() {
                     <ul className="space-y-2.5 text-xs">
                       {tier.features.map((feat) => (
                         <li key={feat} className="flex items-start gap-2 text-foreground">
-                          <Check className="size-4 text-primary shrink-0 mt-0.5" />
+                          <Check className={`size-4 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-rose-500' : 'text-primary'}`} />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -123,18 +123,24 @@ export function Pricing() {
                 </div>
 
                 <div className="p-6 pt-0">
-                  {tier.ctaLink && tier.ctaLink.startsWith('mailto:') ? (
-                    <Button asChild variant={tier.ctaVariant} className="w-full">
-                      <a href={tier.ctaLink}>{tier.ctaText}</a>
-                    </Button>
-                  ) : (
-                    <Button asChild variant={tier.ctaVariant} className="w-full">
-                      <Link to={tier.ctaLink ?? ROUTES.register}>
-                        {tier.ctaText}
-                        <ArrowRight className="size-4 ml-1.5" />
-                      </Link>
-                    </Button>
-                  )}
+                  <Button
+                    asChild
+                    variant={tier.id === 'business' || tier.id === 'ultimate' ? 'primary' : tier.ctaVariant}
+                    className={`w-full font-bold cursor-pointer ${
+                      tier.id === 'ultimate'
+                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20'
+                        : tier.id === 'business'
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20'
+                          : tier.id === 'pro'
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20'
+                            : ''
+                    }`}
+                  >
+                    <Link to={tier.ctaLink ?? ROUTES.register}>
+                      {tier.ctaText}
+                      <ArrowRight className="size-4 ml-1.5" />
+                    </Link>
+                  </Button>
                 </div>
               </Card>
             );
@@ -142,7 +148,7 @@ export function Pricing() {
         </div>
 
         <div className="mt-10 text-center text-xs text-muted-foreground">
-          🔒 Paiements sécurisés par Stripe • Essai Pro 14 jours sans carte bancaire • Annulation en 1 clic
+          🔒 Paiements sécurisés par Stripe • Formules sans engagement • Annulation en 1 clic
         </div>
       </div>
     </section>

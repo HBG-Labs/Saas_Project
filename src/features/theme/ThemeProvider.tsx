@@ -11,45 +11,27 @@ import {
 function readStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+    if (stored === 'light' || stored === 'dark') return stored;
   } catch {
-    // Stockage inaccessible (mode privé strict) : on retombe sur le système.
+    // Stockage inaccessible : valeur par défaut.
   }
   return 'dark';
 }
 
-function systemPrefersDark(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(readStoredTheme);
-  const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
 
-  // `resolvedTheme` est DÉRIVÉ, donc calculé pendant le rendu et non stocké
-  // dans un état synchronisé par un effet. Le stocker provoquerait un rendu en
-  // cascade et ferait retarder la valeur d'un cycle.
-  const resolvedTheme: ResolvedTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
+  const resolvedTheme: ResolvedTheme = theme;
 
   // Effet légitime : synchroniser un système externe (le DOM) avec l'état React.
   useEffect(() => {
     document.documentElement.classList.toggle('dark', resolvedTheme === 'dark');
   }, [resolvedTheme]);
 
-  // Effet légitime : s'abonner à un système externe. `setState` a lieu dans le
-  // rappel d'événement, pas dans le corps de l'effet.
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const onChange = (event: MediaQueryListEvent) => {
-      setSystemDark(event.matches);
-    };
-
-    media.addEventListener('change', onChange);
-    return () => {
-      media.removeEventListener('change', onChange);
-    };
-  }, []);
+  // Plus aucun abonnement à `prefers-color-scheme` : le thème ne suit plus le
+  // système, il vaut « clair » ou « sombre », choisi explicitement et mémorisé.
+  // L'écouteur qui subsistait ici appelait un `setSystemDark` supprimé avec ce
+  // mode — il n'aurait jamais pu s'exécuter sans lever une ReferenceError.
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

@@ -1,4 +1,4 @@
-import { ArrowLeft, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
+import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
 import {
   AttachmentGallery,
@@ -40,6 +41,10 @@ export default function ReportEditorPage() {
   const { organization, membership } = useCurrentOrganization();
 
   const intervention = useIntervention(interventionId);
+  // La mission porte le statut que la machine à états fait avancer ; le compte
+  // rendu ne peut partir au contrôle que depuis `completed`.
+  const mission = useMission(intervention.data?.mission_id);
+  const advanceMission = useChangeMissionStatus(intervention.data?.mission_id ?? '');
   const attachments = useAttachments(interventionId);
   const createReport = useCreateReport(interventionId ?? '');
   const submitReport = useSubmitReport(interventionId ?? '');
@@ -111,6 +116,46 @@ export default function ReportEditorPage() {
   const isAuthor = membership !== null && data.technician_id === membership.id;
   const isEditable =
     isAuthor && (report === null || report.status === 'draft' || report.status === 'rejected');
+
+  /**
+   * Le compte rendu ne part au contrôle que depuis une mission `completed`.
+   *
+   * ───────────────────────────────────────────────────────────────────────────
+   * POURQUOI CE N'EST PAS AUTOMATIQUE
+   *
+   * `mission_status_transitions` ne déclare que `completed → submitted` : une
+   * mission encore `in_progress` fait échouer la soumission par le trigger
+   * `sync_mission_from_report`.
+   *
+   * Terminer une INTERVENTION ne termine pas la MISSION, et c'est délibéré —
+   * une mission peut compter plusieurs passages sur site. Le technicien qui
+   * clôt son relevé de temps n'a pas forcément fini le chantier.
+   *
+   * Mais l'écran ne doit pas pour autant renvoyer ailleurs : le geste qui
+   * débloque se fait ICI, en un clic, sans quitter le compte rendu en cours de
+   * rédaction. La décision reste explicite, l'aller-retour disparaît.
+   * ───────────────────────────────────────────────────────────────────────────
+   */
+  const missionStatus = mission.data?.status ?? null;
+  const worksFinished = missionStatus === null || missionStatus === 'completed';
+
+  /** Transition à opérer pour débloquer, selon l'état réel de la mission. */
+  const unblock: { to: 'completed' | 'in_progress'; label: string; explanation: string } | null =
+    missionStatus === 'in_progress'
+      ? {
+          to: 'completed',
+          label: 'Terminer les travaux',
+          explanation:
+            'Vous avez clôturé votre relevé de temps, mais la mission reste ouverte — elle peut compter plusieurs passages sur site. Confirmez que le chantier est achevé pour transmettre le compte rendu.',
+        }
+      : missionStatus === 'rejected'
+        ? {
+            to: 'in_progress',
+            label: 'Reprendre les travaux',
+            explanation:
+              'Ce compte rendu vous a été renvoyé. Reprenez la mission pour le corriger, puis terminez-la à nouveau avant de la soumettre.',
+          }
+        : null;
 
   /** Comparé au texte SERVEUR, jamais à un drapeau posé à la frappe : revenir sur sa saisie ne compte pas comme une modification. */
   const hasUnsavedChanges =
@@ -271,6 +316,58 @@ export default function ReportEditorPage() {
                   Une fois soumis, le compte rendu part au contrôle et n’est plus modifiable —
                   sauf s’il vous est renvoyé avec un motif.
                 </p>
+
+                {!worksFinished ? (
+                  <div className="border-warning/40 bg-warning/10 flex gap-2 rounded-md border p-3">
+                    <AlertTriangle
+                      className="text-warning mt-0.5 size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <div className="space-y-2 text-xs">
+                      <p className="text-foreground font-medium">
+                        {unblock?.to === 'in_progress'
+                          ? 'Compte rendu renvoyé pour correction.'
+                          : 'La mission est encore ouverte.'}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {unblock?.explanation ??
+                          'Cette mission n’est pas dans un état permettant la soumission.'}
+                      </p>
+
+                      <FormError error={advanceMission.error} />
+
+                      {unblock !== null ? (
+                        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={advanceMission.isPending}
+                            onClick={() => {
+                              setError(null);
+                              // Le brouillon part AVANT la transition : sans cela,
+                              // la dernière frappe serait perdue si l'utilisateur
+                              // enchaîne aussitôt sur la soumission.
+                              saveReport.mutate(
+                                { work_description: workDescription, observations },
+                                { onSuccess: () => setSavedAt(new Date()) },
+                              );
+                              advanceMission.mutate(unblock.to);
+                            }}
+                          >
+                            {advanceMission.isPending ? 'Enregistrement…' : unblock.label}
+                          </Button>
+                          <Button asChild variant="ghost" size="sm">
+                            <Link to={ROUTES.mission(data.mission_id)}>Ouvrir la mission</Link>
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button asChild variant="outline" size="sm" className="mt-1">
+                          <Link to={ROUTES.mission(data.mission_id)}>Ouvrir la mission</Link>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
                 <Button
                   variant="primary"
                   size="lg"
@@ -295,7 +392,12 @@ export default function ReportEditorPage() {
                       },
                     );
                   }}
-                  disabled={saveReport.isPending || submitReport.isPending || workDescription.trim() === ''}
+                  disabled={
+                    !worksFinished ||
+                    saveReport.isPending ||
+                    submitReport.isPending ||
+                    workDescription.trim() === ''
+                  }
                 >
                   <Send className="size-4" />
                   Soumettre au contrôle

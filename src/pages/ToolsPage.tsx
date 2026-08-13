@@ -1,4 +1,4 @@
-import { Search, Wrench, X } from 'lucide-react';
+import { LayoutGrid, LayoutList, Search, Wrench, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
@@ -14,6 +14,7 @@ import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 type Filter = ToolCategorySlug | 'all';
+type ViewMode = 'list' | 'grid';
 
 const LEGACY_SLUG_MAP: Record<string, ToolCategorySlug> = {
   reseaux: 'networking',
@@ -26,6 +27,7 @@ export default function ToolsPage() {
   useDocumentTitle('Catalogue des outils');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Catégorie lue depuis les paramètres d'URL (ex: ?category=fiber-optics ou ?cat=fibre)
   const rawParam = searchParams.get('category') ?? searchParams.get('cat');
@@ -49,7 +51,7 @@ export default function ToolsPage() {
   const tools = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
-    return allTools.filter((tool) => {
+    const filtered = allTools.filter((tool) => {
       const matchesCategory = filter === 'all' || tool.category === filter;
       if (!matchesCategory) return false;
       if (normalized === '') return true;
@@ -59,6 +61,13 @@ export default function ToolsPage() {
         tool.description.toLowerCase().includes(normalized) ||
         tool.keywords.some((keyword) => keyword.toLowerCase().includes(normalized))
       );
+    });
+
+    // Tri prioritaire : Calculatrice Scientifique TOUJOURS en position #1
+    return filtered.sort((a, b) => {
+      if (a.slug === 'scientific-calculator') return -1;
+      if (b.slug === 'scientific-calculator') return 1;
+      return (a.order ?? 99) - (b.order ?? 99);
     });
   }, [allTools, query, filter]);
 
@@ -74,34 +83,66 @@ export default function ToolsPage() {
 
       {hasTools ? (
         <>
-          <div className="mb-8 space-y-4">
-            <Input
-              label="Rechercher un outil"
-              hideLabel
-              placeholder="Rechercher un outil par nom, mot-clé ou norme (ex: atténuation, CIDR)..."
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-              }}
-              leadingIcon={<Search />}
-              className="max-w-xl"
-              {...(query
-                ? {
-                    trailingSlot: (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQuery('');
-                        }}
-                        aria-label="Effacer la recherche"
-                        className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded"
-                      >
-                        <X className="size-4" aria-hidden="true" />
-                      </button>
-                    ),
-                  }
-                : {})}
-            />
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <Input
+                label="Rechercher un outil"
+                hideLabel
+                placeholder="Rechercher un outil par nom, mot-clé ou norme (ex: atténuation, CIDR)..."
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
+                leadingIcon={<Search />}
+                className="max-w-xl"
+                {...(query
+                  ? {
+                      trailingSlot: (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuery('');
+                          }}
+                          aria-label="Effacer la recherche"
+                          className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded"
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </button>
+                      ),
+                    }
+                  : {})}
+              />
+
+              {/* Sélecteur de vue (Liste / Grille) */}
+              <div className="flex items-center gap-1 bg-surface border border-border/80 rounded-lg p-1 shrink-0 self-start sm:self-auto shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                    viewMode === 'list'
+                      ? 'bg-primary text-primary-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <LayoutList className="size-4" />
+                  <span>Liste</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                    viewMode === 'grid'
+                      ? 'bg-primary text-primary-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <LayoutGrid className="size-4" />
+                  <span>Grille</span>
+                </button>
+              </div>
+            </div>
 
             {/* Boutons de catégories synchronisés avec l'URL */}
             <div role="group" aria-label="Filtrer par domaine" className="flex flex-wrap gap-2">
@@ -121,7 +162,7 @@ export default function ToolsPage() {
                     }}
                     aria-pressed={isActive}
                     className={cn(
-                      'h-9 rounded-lg border px-3.5 text-xs font-medium transition-all',
+                      'h-9 rounded-lg border px-3.5 text-xs font-medium transition-all cursor-pointer',
                       'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                       isActive
                         ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
@@ -136,9 +177,15 @@ export default function ToolsPage() {
           </div>
 
           {tools.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
               {tools.map((tool) => (
-                <ToolCard key={tool.slug} tool={tool} />
+                <ToolCard key={tool.slug} tool={tool} variant={viewMode} />
               ))}
             </div>
           ) : (

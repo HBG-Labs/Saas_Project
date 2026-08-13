@@ -1,9 +1,8 @@
 import { createContext } from 'react';
 
-/** `system` suit le réglage du système d'exploitation et réagit à ses changements. */
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
-/** Le thème effectivement appliqué, une fois `system` résolu. */
+/** Le thème effectivement appliqué. */
 export type ResolvedTheme = 'light' | 'dark';
 
 export interface ThemeContextValue {

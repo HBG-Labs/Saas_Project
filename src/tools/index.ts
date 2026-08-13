@@ -7,18 +7,22 @@ import { registerTool, type ToolDefinition } from '@/features/tools/registry';
  * automatiquement. Ajouter un outil = créer un dossier. AUCUN fichier du cœur
  * applicatif n'est à modifier.
  *
- * Pourquoi `eager: true` ne casse pas le code splitting :
- * seules les métadonnées (chaînes) sont chargées ici. Le composant d'un outil
- * est déclaré via `lazy(() => import('./MonOutilTool'))`, donc son code n'est
- * téléchargé qu'à l'ouverture de l'outil. La règle ESLint appliquée à l'index
- * de chaque outil interdit tout import statique de composant, ce qui rend cette
- * garantie structurelle plutôt que documentaire.
- *
- * Les dossiers préfixés par `_` (gabarits) sont exclus.
+ * Les dossiers préfixés par `_` (gabarits) ainsi que les outils masqués sont exclus.
  */
-const modules = import.meta.glob<{ default: ToolDefinition }>(['./*/index.ts', '!./_*/**'], {
-  eager: true,
-});
+const modules = import.meta.glob<{ default: ToolDefinition }>(
+  [
+    './*/index.ts',
+    '!./_*/**',
+    '!./fiber-attenuation/**',
+    '!./dns-ttl-calculator/**',
+    '!./dbm-mw-converter/**',
+    '!./rf-calculators/**',
+    '!./ohm-law-power/**',
+  ],
+  {
+    eager: true,
+  },
+);
 
 for (const [path, module] of Object.entries(modules)) {
   if (!module.default) {

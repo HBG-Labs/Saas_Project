@@ -1,4 +1,4 @@
-import { Building2, Cable, Cpu, Droplet, Network, Wrench, Zap } from 'lucide-react';
+import { Cable, Cpu, Network, Wrench, Zap } from 'lucide-react';
 
 export function BuiltForTech() {
   const domains = [
@@ -12,7 +12,7 @@ export function BuiltForTech() {
   return (
     <section className="border-y border-slate-200/80 bg-white py-10 dark:border-slate-800/80 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">
+        <p className="text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Pensé pour les professionnels de terrain et les entreprises techniques
         </p>
 

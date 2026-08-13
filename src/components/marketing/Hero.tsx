@@ -1,4 +1,4 @@
-import { ArrowRight, Briefcase, Calendar, CheckCircle2, ChevronRight, Clock, FileCheck2, MapPin, Smartphone, Sparkles, Users, Wrench } from 'lucide-react';
+import { ArrowRight, Briefcase, Calendar, ChevronRight, Clock, FileCheck2, MapPin, Smartphone, Sparkles, Users, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -62,11 +62,13 @@ export function Hero() {
             </Button>
             <Button
               asChild
-              variant="ghost"
               size="lg"
-              className="rounded-2xl px-6 py-3.5 font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="group rounded-2xl bg-blue-600 px-8 py-3.5 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-500/35 cursor-pointer"
             >
-              <Link to={ROUTES.tools}>Découvrir la plateforme</Link>
+              <Link to={ROUTES.tools}>
+                Découvrir la plateforme
+                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -86,7 +88,7 @@ export function Hero() {
                 <span className="size-3 rounded-full bg-rose-500/80" />
                 <span className="size-3 rounded-full bg-amber-500/80" />
                 <span className="size-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-xs font-semibold text-slate-400">
+                <span className="ml-2 font-mono text-xs font-semibold text-muted-foreground">
                   nexoratech-cockpit.saas // v2.4
                 </span>
               </div>
@@ -176,7 +178,7 @@ export function Hero() {
                     <Calendar className="size-4 text-blue-600 dark:text-blue-400" />
                     Planning des interventions du jour
                   </span>
-                  <span className="flex items-center gap-1 text-blue-600 hover:underline cursor-pointer dark:text-blue-400">
+                  <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 select-none">
                     Voir tout <ChevronRight className="size-3.5" />
                   </span>
                 </div>
@@ -185,7 +187,7 @@ export function Hero() {
                   <div className="flex items-center justify-between rounded-xl bg-white p-3.5 text-xs shadow-2xs dark:bg-slate-950">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-400">INT-8902</span>
+                        <span className="font-mono font-bold text-muted-foreground">INT-8902</span>
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
                           <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           En cours
@@ -206,7 +208,7 @@ export function Hero() {
                   <div className="flex items-center justify-between rounded-xl bg-white p-3.5 text-xs shadow-2xs dark:bg-slate-950">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-400">INT-8903</span>
+                        <span className="font-mono font-bold text-muted-foreground">INT-8903</span>
                         <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
                           <span className="size-1.5 rounded-full bg-rose-500 animate-ping" />
                           Urgente

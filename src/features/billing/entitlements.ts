@@ -18,7 +18,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export const PLAN_CODES = ['free', 'pro', 'business'] as const;
+export const PLAN_CODES = ['free', 'pro', 'business', 'ultimate'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
 
 export const FEATURES = {
@@ -29,7 +29,7 @@ export const FEATURES = {
   exportPdf: 'export_pdf',
   exportCsv: 'export_csv',
 
-  // Module professionnel — réservé au plan `business`.
+  // Module professionnel — réservé aux plans `business` et `ultimate`.
   organizations: 'organizations',
   customers: 'customers',
   teams: 'teams',
@@ -40,6 +40,8 @@ export const FEATURES = {
   auditLog: 'audit_log',
   statistics: 'statistics',
   attachments: 'attachments',
+  equipment: 'equipment',
+  quotes: 'quotes',
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -75,42 +77,77 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     export_pdf: null,
     export_csv: null,
     organizations: null,
-    // Le nombre de clients ne distingue pas les offres : c'est l'accès au
-    // module qui les distingue. L'absence de cette clé pour `free` et `pro`
-    // suffit à le refuser.
     customers: null,
     teams: null,
-    members: 25,
+    members: 10,
     missions: null,
     interventions: null,
     intervention_review: null,
     audit_log: null,
     statistics: null,
     attachments: null,
+    equipment: null,
+    quotes: null,
+  },
+
+  ultimate: {
+    catalog_access: null,
+    calculation_history: null,
+    favorites: null,
+    pro_tools: null,
+    export_pdf: null,
+    export_csv: null,
+    organizations: null,
+    customers: null,
+    teams: null,
+    members: 20,
+    missions: null,
+    interventions: null,
+    intervention_review: null,
+    audit_log: null,
+    statistics: null,
+    attachments: null,
+    equipment: null,
+    quotes: null,
   },
 };
 
-/** Le plan par défaut débloqué pour toutes les sessions. */
-export const DEFAULT_PLAN: PlanCode = 'business';
-
 /**
- * Adresses e-mail VIP disposant automatiquement du déblocage Entreprise.
+ * Plan retenu en l'absence d'abonnement lisible.
+ *
+ * `free`, et pas autre chose : une organisation sans abonnement n'a AUCUNE
+ * fonctionnalité professionnelle côté serveur — `app.org_plan_code()` renvoie
+ * NULL et `can_use_pro_module` refuse tout. Annoncer `business` par défaut, comme
+ * le faisait la version précédente, ouvrait des sections que la base laissait
+ * désespérément vides, sans dire pourquoi.
  */
-export const VIP_USER_EMAILS: readonly string[] = ['leduc972@live.fr'];
+export const DEFAULT_PLAN: PlanCode = 'free';
 
-export function isVipUserEmail(email: string | null | undefined): boolean {
-  return true;
-}
-
+/**
+ * La fonctionnalité est-elle incluse dans le plan ?
+ *
+ * Trois cas distincts, et la nuance compte pour le message affiché :
+ *   • clé absente  → la formule ne comprend pas la fonctionnalité ;
+ *   • `0`          → comprise mais explicitement interdite ;
+ *   • `null` ou n  → disponible, éventuellement plafonnée.
+ *
+ * Reproduit exactement `app.org_has_feature`, qui applique la même règle en SQL.
+ */
 export function planHasFeature(plan: PlanCode | null, feature: FeatureKey): boolean {
-  return true;
+  const matrix = PLAN_FEATURES[plan ?? DEFAULT_PLAN];
+
+  if (!(feature in matrix)) return false;
+
+  const limit = matrix[feature];
+  return limit === null || limit === undefined || limit > 0;
 }
 
 /**
- * Quota d'une fonctionnalité. `null` = illimité pour toutes les formules.
+ * Quota d'une fonctionnalité. `null` = illimité, ou fonctionnalité absente du
+ * plan — les deux cas se distinguent par `planHasFeature`.
  */
 export function planFeatureLimit(plan: PlanCode | null, feature: FeatureKey): number | null {
-  return null;
+  return PLAN_FEATURES[plan ?? DEFAULT_PLAN][feature] ?? null;
 }
 
 /** Le plan débloque-t-il le module professionnel (organisations, équipes, missions) ? */

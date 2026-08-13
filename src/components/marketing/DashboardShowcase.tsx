@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CheckCircle2, ShieldCheck, Users } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Users } from 'lucide-react';
 
 export function DashboardShowcase() {
   return (
@@ -64,7 +64,7 @@ export function DashboardShowcase() {
                 Dashboard Cockpit NexoraTech
               </span>
             </div>
-            <span className="text-2xs font-mono font-medium text-slate-400">
+            <span className="text-2xs font-mono font-medium text-muted-foreground">
               Interface Responsable & Chef d&apos;Entreprise
             </span>
           </div>
@@ -84,15 +84,15 @@ export function DashboardShowcase() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <span className="text-2xs font-bold uppercase text-slate-400">Taux de complétion</span>
+                <span className="text-2xs font-bold uppercase text-muted-foreground">Taux de complétion</span>
                 <div className="mt-2 text-2xl font-black font-mono text-slate-900 dark:text-white">94.2%</div>
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <span className="text-2xs font-bold uppercase text-slate-400">Marge de sécurité optique</span>
+                <span className="text-2xs font-bold uppercase text-muted-foreground">Marge de sécurité optique</span>
                 <div className="mt-2 text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">+3.18 dB</div>
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <span className="text-2xs font-bold uppercase text-slate-400">Temps moyen d&apos;intervention</span>
+                <span className="text-2xs font-bold uppercase text-muted-foreground">Temps moyen d&apos;intervention</span>
                 <div className="mt-2 text-2xl font-black font-mono text-slate-900 dark:text-white">1h 45m</div>
               </div>
             </div>

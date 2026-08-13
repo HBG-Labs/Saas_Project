@@ -46,3 +46,30 @@ export const FIELD_TECHNICIANS: FieldTechnician[] = [
     quote: 'Gain de temps immédiat sur les mesures de réflectométrie lors des recettes de raccordement.',
   },
 ];
+
+/**
+ * Même jeu de photos, sous la forme attendue par la bannière du tableau de bord
+ * technicien.
+ *
+ * Une projection plutôt qu'un second tableau : les deux écrans montrent les
+ * mêmes personnes, et deux listes à maintenir en parallèle finiraient par
+ * diverger. Seuls les noms de champs changent, la landing parlant de
+ * « technicien » là où la bannière parle d'« image ».
+ */
+export interface TechnicianImage {
+  url: string;
+  alt: string;
+  title: string;
+  role: string;
+  environment: string;
+  badgeText: string;
+}
+
+export const TECHNICIAN_IMAGES: TechnicianImage[] = FIELD_TECHNICIANS.map((technician) => ({
+  url: technician.imageUrl,
+  alt: technician.alt,
+  title: technician.name,
+  role: technician.role,
+  environment: technician.location,
+  badgeText: technician.badge,
+}));

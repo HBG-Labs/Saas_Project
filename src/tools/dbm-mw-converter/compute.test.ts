@@ -69,7 +69,10 @@ describe('Module de Conversion Universel 6 Domaines', () => {
   it('convertit la terminaison RF sous 50Ω', () => {
     const res = convertTerminated(0, 'dbm', 50);
     expect(res.dbm).toBe(0);
-    expect(res.dbuv).toBe(107);
+    // 90 + 10·log10(50) = 106,9897. Les tables RF arrondissent à 107 ; la
+    // comparaison porte donc sur la décimale, pas sur l'entier de commodité.
+    expect(res.dbuv).toBeCloseTo(107, 1);
+    expect(res.vrms).toBeCloseTo(0.2236, 3);
   });
 
   it('convertit l’intensité du champ (dBµV/m ↔ V/m)', () => {

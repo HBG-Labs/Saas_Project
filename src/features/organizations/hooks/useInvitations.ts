@@ -9,6 +9,7 @@ import {
   inviteMember,
   listInvitations,
   revokeInvitation,
+  sendInvitationEmail,
 } from '../api/organizations.api';
 
 import { useCurrentOrganization } from './useCurrentOrganization';
@@ -21,16 +22,53 @@ export function useInvitations(organizationId: string | null) {
   });
 }
 
+/**
+ * Crée l'invitation, puis tente d'en envoyer le courriel.
+ *
+ * Les deux étapes sont volontairement dissociées : l'invitation est un FAIT
+ * enregistré en base, l'envoi n'est qu'un acheminement. Lier leur sort ferait
+ * disparaître une invitation valide parce qu'un serveur de messagerie a
+ * répondu de travers.
+ *
+ * Le résultat porte donc `emailSent`, que l'écran traduit : « envoyée à … »
+ * quand c'est parti, « à transmettre vous-même » sinon — avec le lien dans les
+ * deux cas.
+ */
 export function useInviteMember(organizationId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { email: string; role: OrgRole }) =>
-      inviteMember({ organizationId, email: input.email, role: input.role }),
+    mutationFn: async (input: { email: string; role: OrgRole }) => {
+      const invitation = await inviteMember({
+        organizationId,
+        email: input.email,
+        role: input.role,
+      });
+
+      const email = await sendInvitationEmail(invitation.id);
+
+      return { invitation, emailSent: email.sent, emailReason: email.reason };
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: qk.organizations.invitations(organizationId),
       });
+    },
+  });
+}
+
+/** Réémet le courriel d'une invitation déjà créée, sans en créer une seconde. */
+export function useResendInvitationEmail() {
+  return useMutation({
+    mutationFn: async (invitationId: string) => {
+      const result = await sendInvitationEmail(invitationId);
+      if (!result.sent) {
+        throw new Error(
+          result.reason ??
+            "Le courriel n'a pas pu être envoyé. Transmettez le lien ci-dessous à votre collaborateur.",
+        );
+      }
+      return result;
     },
   });
 }

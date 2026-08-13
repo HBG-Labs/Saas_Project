@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FormError } from '@/components/feedback/FormError';
 import {
+  OwnershipCard,
   PERMISSIONS,
   useCurrentOrganization,
   useOrganization,
@@ -133,6 +134,8 @@ export default function OrganizationSettingsPage() {
             : 'Consultation seule — seuls un propriétaire ou un administrateur peuvent modifier ces informations.'
         }
       />
+
+      {organization !== null && <OwnershipCard organizationId={organization.id} />}
 
       {query.isPending ? (
         <Card>

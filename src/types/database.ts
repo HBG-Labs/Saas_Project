@@ -55,12 +55,28 @@ export type AttachmentKind = 'before' | 'after' | 'document' | 'proof' | 'signat
 /** Nature d'un segment de temps : travail effectif ou interruption. */
 export type TimeEntryKind = 'work' | 'pause';
 
+export type EquipmentCategory = 'optique' | 'electricite' | 'radio' | 'securite' | 'autre';
+export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expired';
+export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
+
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
+
+export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
+
 export interface Database {
   public: {
     Tables: {
       // =======================================================================
       // Socle utilisateur
       // =======================================================================
+      /**
+       * Identité, visible des collègues.
+       *
+       * `profiles_select_visible` autorise la lecture à soi-même et à toute
+       * personne partageant une organisation. Les données PERSONNELLES —
+       * téléphone, habilitations — vivent dans `profile_details`, que son seul
+       * titulaire peut lire.
+       */
       profiles: {
         Row: {
           id: string;
@@ -82,6 +98,45 @@ export interface Database {
           updated_at?: string;
         };
         Relationships: [];
+      };
+
+      /**
+       * Fiche personnelle — lisible et modifiable par son seul titulaire, pas
+       * même par un propriétaire d'organisation.
+       */
+      profile_details: {
+        Row: {
+          user_id: string;
+          phone: string | null;
+          zone: string | null;
+          /** `[{ label, detail, expires_at }]` — déclaratif, jamais opposable. */
+          certifications: Json;
+          /** `[{ id, name, serial }]` — distinct de `equipment`, l'inventaire de l'entreprise. */
+          equipments: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          phone?: string | null;
+          zone?: string | null;
+          certifications?: Json;
+          equipments?: Json;
+        };
+        Update: {
+          phone?: string | null;
+          zone?: string | null;
+          certifications?: Json;
+          equipments?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_details_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
 
       // =======================================================================
@@ -1044,6 +1099,255 @@ export interface Database {
       };
 
       // =======================================================================
+      // Parc materiel
+      // =======================================================================
+      equipment: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          brand: string | null;
+          serial_number: string | null;
+          category: EquipmentCategory;
+          status: EquipmentStatus;
+          condition: EquipmentCondition;
+          assigned_member_id: string | null;
+          last_calibration: string | null;
+          next_calibration: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          brand?: string | null;
+          serial_number?: string | null;
+          category?: EquipmentCategory;
+          status?: EquipmentStatus;
+          condition?: EquipmentCondition;
+          assigned_member_id?: string | null;
+          last_calibration?: string | null;
+          next_calibration?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          name?: string;
+          brand?: string | null;
+          serial_number?: string | null;
+          category?: EquipmentCategory;
+          status?: EquipmentStatus;
+          condition?: EquipmentCondition;
+          assigned_member_id?: string | null;
+          last_calibration?: string | null;
+          next_calibration?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'equipment_assigned_member_id_fkey';
+            columns: ['assigned_member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
+      // Devis
+      // =======================================================================
+      quote_templates: {
+        Row: {
+          id: string;
+          organization_id: string;
+          label: string;
+          unit: string;
+          unit_price_cents: number;
+          sort_order: number;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          label: string;
+          unit?: string;
+          unit_price_cents?: number;
+          sort_order?: number;
+          status?: ContentStatus;
+        };
+        Update: {
+          label?: string;
+          unit?: string;
+          unit_price_cents?: number;
+          sort_order?: number;
+          status?: ContentStatus;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quote_templates_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      quotes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          reference: string;
+          title: string | null;
+          customer_id: string | null;
+          site_id: string | null;
+          customer_name: string | null;
+          site_name: string | null;
+          /** Pourcentage : `8.50` pour 8,5 %. */
+          vat_rate: number;
+          status: QuoteStatus;
+          notes: string | null;
+          valid_until: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          /** Generee par trigger si omise : `DEV-nnnn`, par organisation. */
+          reference?: string;
+          title?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
+          customer_name?: string | null;
+          site_name?: string | null;
+          vat_rate?: number;
+          status?: QuoteStatus;
+          notes?: string | null;
+          valid_until?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          title?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
+          customer_name?: string | null;
+          site_name?: string | null;
+          vat_rate?: number;
+          status?: QuoteStatus;
+          notes?: string | null;
+          valid_until?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quotes_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'quotes_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      quote_items: {
+        Row: {
+          id: string;
+          quote_id: string;
+          organization_id: string;
+          description: string;
+          unit: string;
+          quantity: number;
+          unit_price_cents: number;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          quote_id: string;
+          /** Ecrase par trigger depuis le devis ; requis par la contrainte NOT NULL. */
+          organization_id: string;
+          description: string;
+          unit?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          position?: number;
+        };
+        Update: {
+          description?: string;
+          unit?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quote_items_quote_id_fkey';
+            columns: ['quote_id'];
+            referencedRelation: 'quotes';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
+      // Bloc-notes personnel
+      // =======================================================================
+      notes: {
+        Row: {
+          id: string;
+          user_id: string;
+          organization_id: string | null;
+          title: string;
+          content: string;
+          category: NoteCategory | null;
+          is_pinned: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          /** Impose a `auth.uid()` par le trigger `notes_enforce_owner`. */
+          user_id?: string;
+          organization_id?: string | null;
+          title?: string;
+          content?: string;
+          category?: NoteCategory | null;
+          is_pinned?: boolean;
+        };
+        Update: {
+          organization_id?: string | null;
+          title?: string;
+          content?: string;
+          category?: NoteCategory | null;
+          is_pinned?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notes_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
       // Audit
       // =======================================================================
       audit_logs: {
@@ -1072,7 +1376,24 @@ export interface Database {
       };
     };
 
-    Views: Record<never, never>;
+    Views: {
+      /**
+       * Totaux d'un devis, recalcules a la demande depuis ses lignes.
+       *
+       * Vue `security_invoker` : elle herite des policies de `quotes` et
+       * `quote_items`, et ne constitue donc pas une porte derobee.
+       */
+      quote_totals: {
+        Row: {
+          quote_id: string;
+          organization_id: string;
+          subtotal_cents: number;
+          vat_cents: number;
+          total_cents: number;
+        };
+        Relationships: [];
+      };
+    };
 
     Functions: {
       /**
@@ -1117,6 +1438,37 @@ export interface Database {
         Args: { p_intervention_id: string };
         Returns: number;
       };
+
+      /**
+       * Agrégats d'activité d'une organisation, sur une période.
+       *
+       * `security definer` : les compteurs portent sur toute l'organisation,
+       * là où `missions_select_scoped` restreint un chef d'équipe à ses seules
+       * missions. La fonction vérifie elle-même `statistics.view` et
+       * l'entitlement du plan avant la moindre lecture.
+       */
+      /**
+       * Code de la formule d'une organisation dont on est membre.
+       *
+       * `security definer` : `app.org_plan_code` lit `subscriptions`, que
+       * `subscriptions_select_own` réserve à `billing.view`. Un technicien doit
+       * pourtant savoir si son entreprise est abonnée — c'est ce qui détermine
+       * les écrans auxquels il accède. Seul le CODE sort ; prix, statut et
+       * échéance restent derrière la permission de facturation.
+       */
+      organization_plan_code: {
+        Args: { p_organization_id: string };
+        Returns: string | null;
+      };
+
+      organization_activity_stats: {
+        Args: {
+          p_organization_id: string;
+          p_from?: string | null;
+          p_to?: string | null;
+        };
+        Returns: Json;
+      };
     };
 
     Enums: {
@@ -1133,6 +1485,12 @@ export interface Database {
       intervention_status: InterventionStatus;
       report_status: ReportStatus;
       attachment_kind: AttachmentKind;
+      time_entry_kind: TimeEntryKind;
+      equipment_category: EquipmentCategory;
+      equipment_status: EquipmentStatus;
+      equipment_condition: EquipmentCondition;
+      quote_status: QuoteStatus;
+      note_category: NoteCategory;
     };
 
     CompositeTypes: Record<never, never>;

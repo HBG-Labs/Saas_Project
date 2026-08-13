@@ -26,6 +26,7 @@ function useTeamMemberMutation<TVariables, TData>(
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.teams.detail(teamId) }),
         queryClient.invalidateQueries({ queryKey: qk.teams.all }),
+        queryClient.invalidateQueries({ queryKey: qk.organizations.all }),
       ]);
     },
   });

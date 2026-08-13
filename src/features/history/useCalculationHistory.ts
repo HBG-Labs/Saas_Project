@@ -7,6 +7,27 @@ import { type HistoryEntry } from './types';
 const STORAGE_KEY = 'nexoratech_calculation_history_v1';
 
 /**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CET HISTORIQUE RESTE LOCAL
+ *
+ * À ne pas confondre avec `tool_history`, qui vit bien en base et alimente la
+ * page Historique : cette table consigne QUELS outils ont été ouverts, pas ce
+ * qu'ils ont calculé. Elle n'a pas de colonne pour un résultat.
+ *
+ * Le ruban ci-dessous garde les CALCULS eux-mêmes — saisies et résultats — au
+ * fil d'une session de travail. Deux raisons de ne pas le déplacer :
+ *
+ *   • il doit fonctionner hors ligne. Un technicien en gaine technique ou en
+ *     sous-sol n'a pas de réseau, et c'est précisément là qu'il calcule ;
+ *   • une écriture réseau par touche de calculatrice serait absurde.
+ *
+ * Le déplacer en base demanderait une table dédiée avec une charge utile
+ * `jsonb`. Tant que ce besoin n'est pas exprimé, le stockage local est le bon
+ * choix — assumé, pas subi.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/**
  * Lecture de l'historique persisté.
  *
  * Appelée comme initialiseur paresseux de `useState` plutôt que depuis un effet

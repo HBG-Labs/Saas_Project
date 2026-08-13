@@ -4,15 +4,20 @@ import { Calculator, Bot, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, Zap
 export function InteractivePlayground() {
   const [activeTab, setActiveTab] = useState<'calc' | 'ai'>('calc');
 
-  // État pour le calculateur de chute de tension
-  const [cableLength, setCableLength] = useState<number>(35); // mètres
-  const [cableSection, setCableSection] = useState<number>(2.5); // mm²
-  const [currentIntensity, setCurrentIntensity] = useState<number>(16); // Ampères
+  // État pour le calculateur de bilan d'atténuation optique
+  const [fiberDistance, setFiberDistance] = useState<number>(12.5); // km
+  const [wavelength, setWavelength] = useState<'1310' | '1550'>('1310'); // nm
+  const [splicesCount, setSplicesCount] = useState<number>(6); // nb d'épissures
+  const [connectorsCount, setConnectorsCount] = useState<number>(4); // nb de connecteurs
 
-  // Calcul simplifié de chute de tension : ΔU = (2 * L * I) / (56 * S) pour le cuivre
-  const voltageDropVolts = (2 * cableLength * currentIntensity) / (56 * cableSection);
-  const voltageDropPercent = (voltageDropVolts / 230) * 100;
-  const isConform = voltageDropPercent <= 3.0; // Conforme NF C 15-100 si <= 3%
+  // Calcul du bilan d'atténuation optique : Atténuation = (L * alpha) + (Ne * 0.05) + (Nc * 0.5) + Marge (1.5 dB)
+  const fiberCoeff = wavelength === '1310' ? 0.35 : 0.21;
+  const fiberLoss = fiberDistance * fiberCoeff;
+  const splicesLoss = splicesCount * 0.05;
+  const connectorsLoss = connectorsCount * 0.5;
+  const safetyMargin = 1.5;
+  const totalAttenuationDb = fiberLoss + splicesLoss + connectorsLoss + safetyMargin;
+  const isFiberConform = totalAttenuationDb <= 15.0; // Conforme FTTH ITU-T G.652 si <= 15 dB
 
   // État pour la démo Assistant IA
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
@@ -84,7 +89,7 @@ export function InteractivePlayground() {
               }`}
             >
               <Calculator className="size-4" />
-              <span>Calculateur NF C 15-100 Live</span>
+              <span>Atténuation Optique Fibre Live</span>
             </button>
 
             <button
@@ -106,67 +111,99 @@ export function InteractivePlayground() {
               {/* Entrées / Sliders */}
               <div className="space-y-6 lg:col-span-7">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chute de Tension en Monophasé 230V</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bilan d&apos;Atténuation Optique (FTTH)</h3>
                   <span className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-mono font-semibold text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-cyan-400">
-                    Cuivre (Cu)
+                    Monomode (SMF)
                   </span>
                 </div>
 
-                {/* Slider 1 : Longueur */}
+                {/* Choix 1 : Longueur d'onde */}
+                <div className="space-y-2">
+                  <span className="text-sm text-slate-700 dark:text-slate-300 block">Longueur d&apos;onde (nm)</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setWavelength('1310')}
+                      className={`rounded-lg py-2.5 px-3 text-xs font-mono font-bold transition-all cursor-pointer ${
+                        wavelength === '1310'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      1310 nm (0.35 dB/km)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWavelength('1550')}
+                      className={`rounded-lg py-2.5 px-3 text-xs font-mono font-bold transition-all cursor-pointer ${
+                        wavelength === '1550'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      1550 nm (0.21 dB/km)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Slider : Distance */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-700 dark:text-slate-300">Longueur du câble (mètres)</span>
-                    <span className="font-mono font-bold text-blue-600 dark:text-indigo-400">{cableLength} m</span>
+                    <span className="text-slate-700 dark:text-slate-300">Distance de la liaison (km)</span>
+                    <span className="font-mono font-bold text-blue-600 dark:text-indigo-400">{fiberDistance} km</span>
                   </div>
                   <input
                     type="range"
-                    min="5"
-                    max="150"
-                    step="5"
-                    value={cableLength}
-                    onChange={(e) => setCableLength(Number(e.target.value))}
+                    min="1"
+                    max="50"
+                    step="0.5"
+                    value={fiberDistance}
+                    onChange={(e) => setFiberDistance(Number(e.target.value))}
                     className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 dark:bg-slate-800 dark:accent-indigo-500"
                   />
                 </div>
 
-                {/* Slider 2 : Section */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-700 dark:text-slate-300">Section du conducteur (mm²)</span>
-                    <span className="font-mono font-bold text-blue-600 dark:text-indigo-400">{cableSection} mm²</span>
+                {/* Choix : Épissures & Connecteurs */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <span className="text-xs text-slate-700 dark:text-slate-300 block">Épissures fusion (0.05 dB)</span>
+                    <div className="flex gap-1.5">
+                      {[2, 4, 6, 8, 12].map((cnt) => (
+                        <button
+                          key={cnt}
+                          type="button"
+                          onClick={() => setSplicesCount(cnt)}
+                          className={`flex-1 rounded-md py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                            splicesCount === cnt
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
+                          {cnt}x
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {[1.5, 2.5, 4, 6, 10].map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setCableSection(sec)}
-                        className={`rounded-lg py-2 text-xs font-mono font-bold transition-all cursor-pointer ${
-                          cableSection === sec
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                        }`}
-                      >
-                        {sec} mm²
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Slider 3 : Intensité */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-700 dark:text-slate-300">Intensité de courant (Ampères)</span>
-                    <span className="font-mono font-bold text-blue-600 dark:text-indigo-400">{currentIntensity} A</span>
+                  <div className="space-y-2">
+                    <span className="text-xs text-slate-700 dark:text-slate-300 block">Connecteurs SC/APC (0.5 dB)</span>
+                    <div className="flex gap-1.5">
+                      {[2, 4, 6].map((cnt) => (
+                        <button
+                          key={cnt}
+                          type="button"
+                          onClick={() => setConnectorsCount(cnt)}
+                          className={`flex-1 rounded-md py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                            connectorsCount === cnt
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
+                          {cnt}x
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="2"
-                    max="63"
-                    step="1"
-                    value={currentIntensity}
-                    onChange={(e) => setCurrentIntensity(Number(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 dark:bg-slate-800 dark:accent-indigo-500"
-                  />
                 </div>
               </div>
 
@@ -179,37 +216,37 @@ export function InteractivePlayground() {
 
                   <div className="space-y-1">
                     <div className="text-4xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
-                      {voltageDropPercent.toFixed(2)} %
+                      −{totalAttenuationDb.toFixed(2)} dB
                     </div>
-                    <div className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                      Chute brute : <span className="text-blue-600 font-bold dark:text-indigo-300">{voltageDropVolts.toFixed(2)} Volts</span>
+                    <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                      Perte fibre : <span className="text-blue-600 font-bold dark:text-indigo-300">−{fiberLoss.toFixed(2)} dB</span> | Marge : <span className="text-slate-700 font-bold dark:text-slate-300">+1.5 dB</span>
                     </div>
                   </div>
 
                   {/* Badge de Conformité */}
                   <div
                     className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold border transition-all ${
-                      isConform
+                      isFiberConform
                         ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                         : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
                     }`}
                   >
-                    {isConform ? (
+                    {isFiberConform ? (
                       <>
                         <CheckCircle2 className="size-5 shrink-0" />
-                        <span>Conforme NF C 15-100 (≤ 3%)</span>
+                        <span>Conforme ITU-T G.652 (≤ 15 dB)</span>
                       </>
                     ) : (
                       <>
                         <AlertTriangle className="size-5 shrink-0" />
-                        <span>Non-conforme (&gt; 3%) — Augmenter la section</span>
+                        <span>Non-conforme (&gt; 15 dB) — Réduire la distance</span>
                       </>
                     )}
                   </div>
                 </div>
 
                 <div className="mt-6 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800">
-                  ⚡ Formule normée : <code className="text-slate-700 font-mono dark:text-slate-400">ΔU = (2 · L · I) / (γ · S)</code>
+                  ⚡ Formule normée : <code className="text-slate-700 font-mono dark:text-slate-400">A = (L · α) + N_e · 0.05 + N_c · 0.5 + M</code>
                 </div>
               </div>
             </div>

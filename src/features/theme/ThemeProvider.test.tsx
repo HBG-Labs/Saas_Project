@@ -47,10 +47,10 @@ function Probe() {
       <button
         type="button"
         onClick={() => {
-          setTheme('system');
+          setTheme('light');
         }}
       >
-        Système
+        Clair
       </button>
     </div>
   );
@@ -66,7 +66,7 @@ afterEach(() => {
 });
 
 describe('ThemeProvider', () => {
-  it('suit la préférence système par défaut', () => {
+  it('applique le thème sombre par défaut ou stocké', () => {
     mockSystemDark(true);
     render(
       <ThemeProvider>
@@ -74,7 +74,7 @@ describe('ThemeProvider', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme')).toHaveTextContent('system');
+    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
     expect(document.documentElement).toHaveClass('dark');
   });
@@ -88,35 +88,12 @@ describe('ThemeProvider', () => {
         <Probe />
       </ThemeProvider>,
     );
-    expect(document.documentElement).not.toHaveClass('dark');
 
-    await user.click(screen.getByRole('button', { name: 'Sombre' }));
+    await user.click(screen.getByRole('button', { name: 'Clair' }));
 
-    expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
-    expect(document.documentElement).toHaveClass('dark');
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
-  });
-
-  it('réagit au changement système uniquement en mode « system »', async () => {
-    const listeners = mockSystemDark(false);
-    const user = userEvent.setup();
-
-    render(
-      <ThemeProvider>
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    // Choix explicite « sombre » : le système ne doit plus primer.
-    await user.click(screen.getByRole('button', { name: 'Sombre' }));
-    for (const listener of listeners) {
-      listener({ matches: false } as MediaQueryListEvent);
-    }
-    expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
-
-    // Retour en mode « system » : le réglage de l'OS reprend la main.
-    await user.click(screen.getByRole('button', { name: 'Système' }));
     expect(screen.getByTestId('resolved')).toHaveTextContent('light');
+    expect(document.documentElement).not.toHaveClass('dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
   });
 
   it('reste utilisable si localStorage est inaccessible', () => {
@@ -125,8 +102,6 @@ describe('ThemeProvider', () => {
       throw new Error('accès refusé');
     });
 
-    // Ne doit pas interrompre le démarrage : une préférence d'affichage ne
-    // justifie pas de casser l'application.
     expect(() =>
       render(
         <ThemeProvider>
@@ -135,6 +110,6 @@ describe('ThemeProvider', () => {
       ),
     ).not.toThrow();
 
-    expect(screen.getByTestId('theme')).toHaveTextContent('system');
+    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
   });
 });

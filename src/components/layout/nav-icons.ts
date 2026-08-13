@@ -1,4 +1,5 @@
 import {
+  Archive,
   BarChart3,
   BookOpen,
   Building2,
@@ -28,6 +29,7 @@ import {
 
 export const NAV_ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
+  archive: Archive,
   tools: Wrench,
   star: Star,
   history: Clock,

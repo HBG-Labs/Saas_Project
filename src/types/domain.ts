@@ -1,4 +1,4 @@
-import type { Tables } from './database';
+import type { Database, Tables } from './database';
 
 /**
  * Types métier de l'application.
@@ -10,6 +10,7 @@ import type { Tables } from './database';
 
 // ---------------------------------------------------------------- socle & catalogue
 export type Profile = Tables<'profiles'>;
+export type ProfileDetails = Tables<'profile_details'>;
 export type Category = Tables<'categories'>;
 export type Tool = Tables<'tools'>;
 export type Favorite = Tables<'favorites'>;
@@ -29,11 +30,15 @@ export type RolePermission = Tables<'role_permissions'>;
 /**
  * Membre accompagné de son profil.
  *
- * `profile` est nullable : `organization_members` référence `auth.users`, et
- * rien ne garantit qu'une ligne `profiles` existe pour un compte créé avant le
- * trigger `handle_new_user` — ni qu'elle soit lisible, la RLS de `profiles`
- * restreignant la lecture au propriétaire. Une jointure qui remonterait
- * systématiquement le profil des collègues serait d'ailleurs une fuite.
+ * `profile` reste nullable, mais plus pour la raison d'origine : depuis
+ * `profiles_select_visible`, un collègue de la même organisation EST lisible.
+ * Le `null` ne subsiste que pour un compte antérieur au trigger
+ * `handle_new_user`, ou pour un membre d'une autre organisation croisé par une
+ * jointure large. L'affichage doit toujours le prévoir — `memberDisplayName`
+ * retombe alors sur le poste occupé.
+ *
+ * Seule l'IDENTITÉ transite ici. Le téléphone, la zone et les habilitations
+ * vivent dans `profile_details`, que son seul titulaire peut lire.
  */
 export interface MemberWithProfile extends OrganizationMember {
   profile: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null;
@@ -127,3 +132,31 @@ export type Subscription = Tables<'subscriptions'>;
 export interface PlanWithFeatures extends Plan {
   features: PlanFeature[];
 }
+
+// ----------------------------------------------------------------- parc matériel
+export type Equipment = Tables<'equipment'>;
+
+/** Appareil accompagné du membre à qui il est confié — la forme affichée au parc. */
+export interface EquipmentWithAssignee extends Equipment {
+  assigned_member: MemberWithProfile | null;
+}
+
+// ----------------------------------------------------------------- devis
+export type QuoteTemplate = Tables<'quote_templates'>;
+export type Quote = Tables<'quotes'>;
+export type QuoteItem = Tables<'quote_items'>;
+export type QuoteTotals = Database['public']['Views']['quote_totals']['Row'];
+
+/**
+ * Devis complet : ses lignes et ses totaux.
+ *
+ * Les totaux viennent de la vue `quote_totals`, jamais d'un calcul local — c'est
+ * la même somme que celle qui figurera sur le document remis au client.
+ */
+export interface QuoteWithItems extends Quote {
+  items: QuoteItem[];
+  totals: QuoteTotals | null;
+}
+
+// ----------------------------------------------------------------- bloc-notes
+export type Note = Tables<'notes'>;

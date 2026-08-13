@@ -6,6 +6,7 @@ import type { InterventionAttachment } from '@/types/domain';
 
 import {
   approveReport,
+  countReportsByStatus,
   createReport,
   deleteAttachment,
   getAttachmentUrl,
@@ -70,6 +71,20 @@ export function useSubmitReport(interventionId: string) {
 // -----------------------------------------------------------------------------
 // Contrôle
 // -----------------------------------------------------------------------------
+
+/**
+ * Répartition par statut — contexte de l'écran de contrôle quand la file est
+ * vide. Rafraîchie moins souvent que la file : c'est une indication, pas une
+ * donnée de travail.
+ */
+export function useReportStatusCounts(organizationId: string | null) {
+  return useQuery({
+    queryKey: [...qk.interventions.all, organizationId ?? 'none', 'report-counts'],
+    queryFn: () => (organizationId === null ? {} : countReportsByStatus(organizationId)),
+    enabled: organizationId !== null,
+    staleTime: 60_000,
+  });
+}
 
 export function useReportsPendingReview(organizationId: string | null) {
   return useQuery({

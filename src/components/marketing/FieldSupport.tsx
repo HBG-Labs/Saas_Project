@@ -64,7 +64,7 @@ export function FieldSupport() {
                   <span className="size-3 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-bold text-slate-900 dark:text-white">Interface Mobile Réactive</span>
                 </div>
-                <span className="font-mono text-2xs text-slate-400">iOS / Android</span>
+                <span className="font-mono text-2xs text-muted-foreground">iOS / Android</span>
               </div>
 
               <div className="rounded-2xl border border-slate-200/60 bg-white p-4 space-y-3 dark:border-slate-800 dark:bg-slate-900">

@@ -39,6 +39,7 @@ export {
   useAttachments,
   useCreateReport,
   useDeleteAttachment,
+  useReportStatusCounts,
   useReportsPendingReview,
   useReviewReport,
   useSaveReport,

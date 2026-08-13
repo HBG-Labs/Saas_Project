@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search, Settings, Smartphone, User } from 'lucide-react';
+import { LogOut, Menu, Search, Settings, User } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
@@ -14,11 +14,14 @@ import {
 } from '@/components/ui/Dropdown';
 import { Kbd } from '@/components/ui/Kbd';
 import { ROUTES } from '@/config/routes';
+import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 import { useAuth } from '@/features/auth';
+import { usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 
+import { DevRoleSelector } from './DevRoleSelector';
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 import { MobileNav } from './MobileNav';
@@ -30,11 +33,17 @@ export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status, user, signOut } = useAuth();
+  const { role } = usePermission();
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
 
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
+
+  // Les sections « Espace Technicien » suivent le rôle RÉEL dans l'organisation
+  // courante, pas une préférence d'affichage : un technicien connecté en
+  // production doit voir sa navigation, et un dirigeant la sienne.
+  const activeSidebarGroups = role === 'technician' ? TECHNICIAN_SIDEBAR_GROUPS : undefined;
 
   const handleSignOut = () => {
     void signOut().then(() => navigate(ROUTES.home));
@@ -69,6 +78,7 @@ export function AppLayout() {
                     <Logo to={ROUTES.home} />
                   </div>
                   <Sidebar
+                    groups={activeSidebarGroups}
                     onNavigate={() => setDrawerOpen(false)}
                     onDownloadAppClick={() => {
                       setDrawerOpen(false);
@@ -90,23 +100,15 @@ export function AppLayout() {
             className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-slate-100/70 px-3 text-xs font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 sm:w-64 lg:w-80 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:border-slate-700"
             aria-label="Rechercher"
           >
-            <Search className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span className="truncate">Rechercher dans NexoraTech…</span>
             <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
-          {/* Actions utilisateur, Téléchargement App & Thème */}
+          {/* Actions utilisateur, Sélecteur de Rôle DEV & Thème */}
           <div className="flex items-center gap-2">
-            {/* BOUTON TÉLÉCHARGER L'APP MOBILE & DESKTOP */}
-            <button
-              type="button"
-              onClick={() => setIsDownloadModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-500/20 transition-all shadow-xs dark:text-blue-400 cursor-pointer"
-              aria-label="Télécharger l'application NexoraTech"
-            >
-              <Smartphone className="size-4 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Télécharger l'App</span>
-            </button>
+            {/* SÉLECTEUR DE RÔLE SIMULÉ EN DÉVELOPPEMENT */}
+            <DevRoleSelector />
 
             <ThemeToggle />
 
@@ -164,6 +166,7 @@ export function AppLayout() {
         }`}
       >
         <Sidebar
+          groups={activeSidebarGroups}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
           onDownloadAppClick={() => setIsDownloadModalOpen(true)}

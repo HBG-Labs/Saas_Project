@@ -1,17 +1,19 @@
-import { Trash2, UserMinus } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { cn } from '@/lib/cn';
 import type { OrgRole } from '@/types/database';
 import type { MemberWithProfile, Team } from '@/types/domain';
 
 import { memberDisplayName } from '../hooks/useMembers';
+import { ROLE_LABELS } from '../rbac';
 
-import { RoleBadge } from './RoleBadge';
 import { RoleSelect } from './RoleSelect';
 
 export interface MemberRowProps {
@@ -20,10 +22,6 @@ export interface MemberRowProps {
   isSelf: boolean;
   /**
    * Équipes auxquelles cette personne appartient.
-   *
-   * Le rôle dit ce qu'elle a le droit de faire ; l'équipe dit avec qui elle le
-   * fait — et c'est par elle que les missions lui parviennent. Un « technicien »
-   * sans équipe ne recevra jamais rien, ce que la ligne ne laissait pas voir.
    */
   teams?: readonly Team[];
   /** Dernier propriétaire actif : ni retrait ni rétrogradation possibles. */
@@ -34,21 +32,10 @@ export interface MemberRowProps {
   viewerIsOwner: boolean;
   busy: boolean;
   onRoleChange: (role: OrgRole) => void;
+  onUpdateDetails?: (displayName: string, jobTitle: string) => void;
   onRemove: () => void;
 }
 
-/**
- * Ligne de membre.
- *
- * Trois règles métier appliquées par des triggers se lisent ici. L'interface ne
- * les APPLIQUE pas — elle évite de proposer une action qui sera refusée, et
- * surtout elle DIT pourquoi. Un bouton grisé sans explication est une énigme ;
- * une infobulle qui nomme la raison est une réponse.
- *
- *   • `protect_last_owner`          — le dernier propriétaire est intouchable
- *   • `prevent_privilege_escalation` — nul ne modifie son propre rôle
- *   • idem                           — seul un propriétaire en crée un autre
- */
 export function MemberRow({
   member,
   isSelf,
@@ -59,12 +46,17 @@ export function MemberRow({
   viewerIsOwner,
   busy,
   onRoleChange,
+  onUpdateDetails,
   onRemove,
 }: MemberRowProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const name = memberDisplayName(member);
   const isInvited = member.status === 'invited';
+
+  const [editName, setEditName] = useState(name);
+  const [editJobTitle, setEditJobTitle] = useState(member.job_title ?? '');
 
   const roleLocked = isSelf || isLastOwner;
   const roleLockReason = isSelf
@@ -79,6 +71,14 @@ export function MemberRow({
   const handleConfirmRemove = () => {
     setIsConfirmOpen(false);
     onRemove();
+  };
+
+  const handleSaveDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onUpdateDetails) {
+      onUpdateDetails(editName, editJobTitle);
+    }
+    setIsEditOpen(false);
   };
 
   return (
@@ -116,9 +116,66 @@ export function MemberRow({
         </div>
       </div>
 
-      <div className="flex items-start gap-3 shrink-0">
+      <div className="flex items-start gap-2 shrink-0">
+        {canUpdateRole && (
+          <>
+            <Tooltip content="Modifier le nom ou la spécialité / fonction">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditName(name);
+                  setEditJobTitle(member.job_title ?? '');
+                  setIsEditOpen(true);
+                }}
+                disabled={busy}
+                aria-label={`Modifier les détails de ${name}`}
+              >
+                <Pencil className="size-3.5" />
+                Modifier
+              </Button>
+            </Tooltip>
+
+            <Modal
+              open={isEditOpen}
+              onOpenChange={setIsEditOpen}
+              title="Modifier le technicien"
+              description="Ajustez le nom complet et l'intitulé de poste ou la spécialité."
+            >
+              <form onSubmit={handleSaveDetails} className="space-y-4">
+                <Input
+                  label="Nom complet"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Ex: Jean Dupont"
+                  required
+                />
+                <Input
+                  label="Poste / Spécialité / Fonction"
+                  value={editJobTitle}
+                  onChange={(e) => setEditJobTitle(e.target.value)}
+                  placeholder="Ex: Technicien Fibre Optique, Conducteur de travaux..."
+                />
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditOpen(false)}
+                    disabled={busy}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={busy}>
+                    {busy ? 'Enregistrement…' : 'Enregistrer'}
+                  </Button>
+                </div>
+              </form>
+            </Modal>
+          </>
+        )}
+
         {canUpdateRole && !roleLocked ? (
-          <div className="w-56 sm:w-64">
+          <div className="w-48 sm:w-56">
             <RoleSelect
               value={member.role}
               onChange={onRoleChange}
@@ -130,9 +187,20 @@ export function MemberRow({
           </div>
         ) : (
           <Tooltip content={canUpdateRole ? roleLockReason : 'Rôle non modifiable par vous.'}>
-            <span>
-              <RoleBadge role={member.role} />
-            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className={cn(
+                'font-semibold opacity-100 disabled:opacity-100 cursor-default',
+                member.role === 'owner' && 'border-purple-500/40 bg-purple-500/20 text-purple-700 dark:text-purple-300',
+                member.role === 'admin' && 'border-blue-500/40 bg-blue-500/20 text-blue-700 dark:text-blue-300',
+                member.role === 'manager' && 'border-sky-500/40 bg-sky-500/20 text-sky-700 dark:text-sky-300',
+                member.role === 'technician' && 'border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+              )}
+            >
+              {ROLE_LABELS[member.role]}
+            </Button>
           </Tooltip>
         )}
 

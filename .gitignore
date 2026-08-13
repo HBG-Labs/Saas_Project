@@ -18,6 +18,9 @@ test-results/
 blob-report/
 .playwright/
 
+# Plateformes d'hébergement — identifiants de projet, non versionnés.
+.vercel/
+
 # Caches outils
 .vite/
 *.tsbuildinfo

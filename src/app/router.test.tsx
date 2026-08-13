@@ -33,7 +33,7 @@ describe('routing', () => {
     renderAt('/');
 
     expect(
-      await screen.findByRole('heading', { name: /un seul cockpit/i, level: 1 }),
+      await screen.findByRole('heading', { name: /pilotez votre activité technique/i, level: 1 }),
     ).toBeInTheDocument();
     // La landing utilise l'ossature publique, pas la navigation applicative.
     expect(screen.getByRole('navigation', { name: 'Navigation du site' })).toBeInTheDocument();

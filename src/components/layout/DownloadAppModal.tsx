@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
 interface DownloadAppModalProps {
@@ -58,27 +57,27 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 text-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-sunken backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface text-foreground shadow-2xl animate-in zoom-in-95 duration-200">
         
         {/* Glow de fond */}
         <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-blue-500/10 blur-3xl" />
 
         {/* Header de la Modale */}
-        <div className="flex items-center justify-between border-b border-slate-800 p-5">
+        <div className="flex items-center justify-between border-b border-border p-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-primary border border-blue-500/20">
               <Smartphone className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 Télécharger l'Application Mobile NexoraTech
-                <span className="text-2xs font-mono font-medium text-slate-400 border-l border-slate-700 pl-2">
+                <span className="text-2xs font-mono font-medium text-muted-foreground border-l border-border-strong pl-2">
                   v2.4.0
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Vos interventions, outils de calculs et normes techniques directement sur votre smartphone (Android & iOS).
               </p>
             </div>
@@ -86,7 +85,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-raised hover:text-foreground transition-colors cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -94,7 +93,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
 
         {/* Message de succès */}
         {downloadSuccess ? (
-          <div className="mx-6 mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+          <div className="mx-6 mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
             <CheckCircle2 className="size-4 shrink-0" />
             {downloadSuccess}
           </div>
@@ -106,19 +105,19 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* 1. Android Card */}
-            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-950/60 p-5 flex flex-col justify-between hover:border-emerald-500/40 transition-all">
+            <div className="relative overflow-hidden rounded-xl border border-border bg-surface-sunken p-5 flex flex-col justify-between hover:border-emerald-500/40 transition-all">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     <Smartphone className="size-5" />
                   </span>
-                  <span className="text-2xs font-semibold text-emerald-400">
+                  <span className="text-2xs font-semibold text-emerald-600 dark:text-emerald-400">
                     Android (Google)
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Android (.APK)</h3>
-                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  <h3 className="font-bold text-foreground text-base">Android (.APK)</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                     Package d'installation direct APK. Suivi d'interventions, outils de calculs métier et rapports terrain.
                   </p>
                 </div>
@@ -139,19 +138,19 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </div>
 
             {/* 2. iOS Apple Card */}
-            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-950/60 p-5 flex flex-col justify-between hover:border-blue-500/40 transition-all">
+            <div className="relative overflow-hidden rounded-xl border border-border bg-surface-sunken p-5 flex flex-col justify-between hover:border-blue-500/40 transition-all">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10 text-primary border border-blue-500/20">
                     <Apple className="size-5" />
                   </span>
-                  <span className="text-2xs font-semibold text-blue-400">
+                  <span className="text-2xs font-semibold text-primary">
                     iOS / iPadOS (Apple)
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Apple iOS (iPhone / iPad)</h3>
-                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  <h3 className="font-bold text-foreground text-base">Apple iOS (iPhone / iPad)</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                     Application officielle pour iPhone et iPad. Outils de calculs normés, gestion des missions et synchro cloud.
                   </p>
                 </div>
@@ -174,9 +173,9 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
           </div>
 
           {/* Section QR Code d'installation rapide sur Smartphone */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex size-24 items-center justify-center rounded-xl border border-blue-500/30 bg-slate-900 p-2 shrink-0">
-              <svg viewBox="0 0 100 100" className="size-full text-blue-400 fill-current">
+          <div className="rounded-xl border border-border bg-surface-sunken p-4 flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex size-24 items-center justify-center rounded-xl border border-blue-500/30 bg-surface p-2 shrink-0">
+              <svg viewBox="0 0 100 100" className="size-full text-primary fill-current">
                 <rect x="10" y="10" width="25" height="25" rx="4" />
                 <rect x="65" y="10" width="25" height="25" rx="4" />
                 <rect x="10" y="65" width="25" height="25" rx="4" />
@@ -191,11 +190,11 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </div>
 
             <div className="flex-1 space-y-1 text-center sm:text-left">
-              <h4 className="text-xs font-bold text-white flex items-center justify-center sm:justify-start gap-1.5">
-                <QrCode className="size-3.5 text-blue-400" />
+              <h4 className="text-xs font-bold text-foreground flex items-center justify-center sm:justify-start gap-1.5">
+                <QrCode className="size-3.5 text-primary" />
                 Scannez avec un iPhone ou Android pour installer l'application
               </h4>
-              <p className="text-2xs text-slate-400 leading-relaxed">
+              <p className="text-2xs text-muted-foreground leading-relaxed">
                 Le QR Code redirige automatiquement vers le bon Store mobile (Google Play Store sur Android, Apple App Store sur iOS).
               </p>
             </div>
@@ -204,9 +203,9 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950 px-6 py-3.5 text-2xs text-slate-500">
+        <div className="flex items-center justify-between border-t border-border bg-surface-sunken px-6 py-3.5 text-2xs text-subtle-foreground">
           <span className="flex items-center gap-1">
-            <ShieldCheck className="size-3.5 text-emerald-400" />
+            <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             Certifié Google Play Protect & Apple Enterprise Signed
           </span>
           <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">

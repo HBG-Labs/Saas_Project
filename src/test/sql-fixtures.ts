@@ -4,6 +4,9 @@ import billingSql from '../../supabase/migrations/20260808100300_billing.sql?raw
 import missionsSql from '../../supabase/migrations/20260808100500_missions.sql?raw';
 import rbacCustomersSql from '../../supabase/migrations/20260809100300_rbac_customers.sql?raw';
 import closureSql from '../../supabase/migrations/20260809100400_closure_entitlements.sql?raw';
+import ultimateSql from '../../supabase/migrations/20260812100100_ultimate_plan.sql?raw';
+import equipmentSql from '../../supabase/migrations/20260812100300_equipment.sql?raw';
+import quotesSql from '../../supabase/migrations/20260812100400_quotes.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -37,6 +40,9 @@ const MIGRATIONS: Record<string, string> = {
   missions: missionsSql,
   rbacCustomers: rbacCustomersSql,
   closure: closureSql,
+  ultimate: ultimateSql,
+  equipment: equipmentSql,
+  quotes: quotesSql,
 };
 
 export const MIGRATION_FILES = {
@@ -46,6 +52,9 @@ export const MIGRATION_FILES = {
   missions: 'missions',
   rbacCustomers: 'rbacCustomers',
   closure: 'closure',
+  ultimate: 'ultimate',
+  equipment: 'equipment',
+  quotes: 'quotes',
 } as const;
 
 /**

@@ -48,6 +48,8 @@ export const ROUTES = {
   interventionReport: (interventionId: string) => `/interventions/${interventionId}/rapport`,
   /** File de contrôle des comptes rendus. */
   review: '/controle',
+  /** Répertoire des dossiers terminés — clos et annulés. */
+  archives: '/dossiers-clos',
 
   dashboard: '/dashboard',
   analytics: '/analytics',
@@ -57,6 +59,8 @@ export const ROUTES = {
   references: '/references',
   equipment: '/equipements',
   quotes: '/devis',
+  notes: '/bloc-notes',
+  reports: '/comptes-rendus',
   profile: '/profile',
   settings: '/settings',
 

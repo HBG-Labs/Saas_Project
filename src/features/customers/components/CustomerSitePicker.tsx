@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Select } from '@/components/ui/Select';
 
@@ -62,12 +62,15 @@ export function SitePicker({
 }: SitePickerProps) {
   const sites = useCustomerSites(customerId ?? undefined);
 
-  const availableSites = sites.data ?? [];
+  // Mémoïsé : sans cela, un nouveau tableau à chaque rendu relancerait l'effet
+  // de pré-sélection en boucle.
+  const availableSites = useMemo(() => sites.data ?? [], [sites.data]);
 
   // Pré-sélection automatique du premier site dès le choix du client
   useEffect(() => {
     if (customerId && availableSites.length > 0 && (!value || !availableSites.some(s => s.id === value))) {
-      onChange(availableSites[0].id);
+      const first = availableSites[0];
+      if (first) onChange(first.id);
     }
   }, [customerId, availableSites, value, onChange]);
 

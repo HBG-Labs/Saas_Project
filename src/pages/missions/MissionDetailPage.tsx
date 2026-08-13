@@ -1,4 +1,13 @@
-import { ArrowLeft, ClipboardList, KeyRound, MapPin, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ClipboardList,
+  KeyRound,
+  MapPin,
+  Navigation,
+  Phone,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
@@ -33,6 +42,98 @@ import {
 } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import type { MissionWithRelations } from '@/types/domain';
+
+/** Retire les vides et les doublons, en conservant l'ordre de saisie. */
+function joinParts(parts: readonly (string | null | undefined)[]): string {
+  const seen = new Set<string>();
+  const kept: string[] = [];
+
+  for (const part of parts) {
+    const value = part?.trim();
+    if (value === undefined || value === '') continue;
+
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    kept.push(value);
+  }
+
+  return kept.join(', ');
+}
+
+/**
+ * Adresse du chantier, en une ligne.
+ *
+ * `location_label` d'abord : c'est le repère que le planificateur a saisi
+ * (« pied du pylône », « local technique B »), et il désigne souvent mieux le
+ * point d'intervention que la voie postale.
+ */
+function formatAddress(mission: MissionWithRelations): string {
+  return joinParts([
+    mission.location_label,
+    mission.address_line1,
+    mission.postal_code,
+    mission.city,
+  ]);
+}
+
+/**
+ * Destination à ouvrir dans Google Maps.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CE N'EST PAS SIMPLEMENT L'ADRESSE
+ *
+ * Une mission n'a pas toujours d'adresse postale complète. Sur le terrain, elle
+ * porte souvent un repère seul — « Site Central Baie A12 » — qui ne mène nulle
+ * part si on l'envoie tel quel à un moteur de cartes. Le bouton disparaissait
+ * alors, ce qui privait le technicien de la seule action dont il a besoin en
+ * montant dans son véhicule.
+ *
+ * DEUX RÉGIMES, SELON CE QUE L'ON SAIT
+ *
+ *   Adresse réelle (voie + code postal ou ville) → on l'envoie SEULE. Y ajouter
+ *   le nom du client dégraderait la précision d'un point que Maps sait déjà
+ *   situer exactement.
+ *
+ *   Repère seul → on assemble tout ce qui peut aider à le localiser : le repère,
+ *   le site, sa ville, le client. Le résultat est une recherche, pas une adresse
+ *   — c'est ce que ferait un humain devant la barre de recherche.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function buildMapsDestination(mission: MissionWithRelations): string {
+  const hasStreet = mission.address_line1 !== null && mission.address_line1.trim() !== '';
+  const hasLocality =
+    (mission.postal_code !== null && mission.postal_code.trim() !== '') ||
+    (mission.city !== null && mission.city.trim() !== '');
+
+  if (hasStreet && hasLocality) {
+    return joinParts([mission.address_line1, mission.postal_code, mission.city]);
+  }
+
+  return joinParts([
+    mission.location_label,
+    mission.address_line1,
+    mission.site?.name,
+    mission.postal_code,
+    mission.city,
+    mission.site?.city,
+    mission.customer?.name ?? mission.customer_name,
+  ]);
+}
+
+/**
+ * Numéro rendu composable par `tel:`.
+ *
+ * Espaces, points et parenthèses sont retirés — un technicien ne doit pas avoir
+ * à recopier à la main un numéro saisi « 06 96 45 89 12 ». Le `+` initial est
+ * conservé : il porte l'indicatif pays.
+ */
+function toDialable(phone: string): string {
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  return cleaned.startsWith('+') ? cleaned : cleaned.replace(/\+/g, '');
+}
 
 export default function MissionDetailPage() {
   const { missionId } = useParams<{ missionId: string }>();
@@ -87,6 +188,16 @@ export default function MissionDetailPage() {
   }
 
   const data = mission.data;
+
+  /** Adresse telle qu'affichée — peut rester vide, la mission n'en exige pas. */
+  const address = formatAddress(data);
+
+  /**
+   * Destination de l'itinéraire, plus tolérante que l'adresse : elle retombe sur
+   * le site puis sur le client, de sorte que le bouton reste utilisable même
+   * quand seule une référence de chantier a été saisie.
+   */
+  const mapsDestination = buildMapsDestination(data);
 
   /**
    * Qualité d'intervenant, reproduisant `app.is_mission_assignee()`.
@@ -254,12 +365,32 @@ export default function MissionDetailPage() {
 
             <p className="text-muted-foreground flex items-start gap-1.5 text-xs">
               <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                {[data.location_label, data.address_line1, data.postal_code, data.city]
-                  .filter((part) => part !== null && part !== '')
-                  .join(', ') || 'Adresse non renseignée'}
-              </span>
+              <span>{address === '' ? 'Adresse non renseignée' : address}</span>
             </p>
+
+            {/*
+              Interlocuteur sur place et son numéro.
+
+              Ces deux colonnes existaient depuis l'origine sur `missions` et
+              n'étaient affichées nulle part. C'est pourtant l'information la
+              plus utile au technicien devant un portail fermé : qui appeler.
+            */}
+            {data.customer_contact !== null && data.customer_contact !== '' ? (
+              <p className="text-muted-foreground flex items-start gap-1.5 text-xs">
+                <User className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                <span>{data.customer_contact}</span>
+              </p>
+            ) : null}
+
+            {data.customer_phone !== null && data.customer_phone !== '' ? (
+              <a
+                href={`tel:${toDialable(data.customer_phone)}`}
+                className="text-primary flex items-center gap-1.5 text-xs font-medium hover:underline"
+              >
+                <Phone className="size-3.5 shrink-0" aria-hidden="true" />
+                {data.customer_phone}
+              </a>
+            ) : null}
 
             {data.site?.access_notes !== null && data.site?.access_notes !== undefined ? (
               <div className="bg-surface-sunken flex gap-2 rounded-md p-2">
@@ -272,6 +403,41 @@ export default function MissionDetailPage() {
                 </p>
               </div>
             ) : null}
+
+            {/*
+              Itinéraire. `google.com/maps` plutôt qu'un schéma natif (`geo:`,
+              `maps://`) : cette URL s'ouvre dans l'application de cartes sur
+              Android et iOS, et dans le navigateur ailleurs — sans détection de
+              plateforme à maintenir.
+
+              Le bouton est TOUJOURS rendu. Il n'est désactivé que si la mission
+              ne porte strictement aucun repère : ni adresse, ni site, ni client.
+              Le masquer laissait le technicien sans explication.
+            */}
+            {mapsDestination === '' ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="w-full justify-center gap-1.5"
+                title="Renseignez une adresse, un site ou un client pour activer l’itinéraire"
+              >
+                <Navigation className="size-3.5" aria-hidden="true" />
+                Itinéraire indisponible — aucun lieu renseigné
+              </Button>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="w-full justify-center gap-1.5">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapsDestination)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`Ouvrir Google Maps vers : ${mapsDestination}`}
+                >
+                  <Navigation className="size-3.5" aria-hidden="true" />
+                  Itinéraire vers le chantier
+                </a>
+              </Button>
+            )}
           </CardContent>
         </Card>
 

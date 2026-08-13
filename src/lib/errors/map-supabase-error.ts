@@ -23,23 +23,72 @@ const MESSAGES: Record<AppErrorCode, string> = {
 };
 
 /**
+ * Motifs des messages produits par PostgreSQL lui-même.
+ *
+ * Ils nomment tables, colonnes, contraintes et policies — « new row violates
+ * row-level security policy for table "missions" ». Les afficher divulguerait
+ * la structure de la base à qui provoque une erreur exprès.
+ */
+const POSTGRES_INTERNALS = /violates|constraint|relation\s|column\s|duplicate key|permission denied/i;
+
+/**
+ * Message écrit POUR être lu, s'il y en a un.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CETTE EXCEPTION À LA RÈGLE
+ *
+ * Les triggers du schéma lèvent des messages rédigés en français, à l'intention
+ * de l'utilisateur : « Transition interdite : in_progress → submitted. »,
+ * « Impossible de retirer le dernier propriétaire de l'organisation. »,
+ * « Le quota de membres de votre formule est atteint. »
+ *
+ * Les remplacer par « une erreur inattendue s'est produite » gaspille la seule
+ * information utile — celle qui dit quoi faire ensuite. L'utilisateur reste
+ * bloqué sans savoir pourquoi.
+ *
+ * Le filtre reste strict : tout message portant la signature de PostgreSQL est
+ * écarté. Ne passent que les phrases que nous avons nous-mêmes écrites.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function readableMessage(error: SupabaseLikeError): string | null {
+  const message = error.message?.trim();
+
+  if (message === undefined || message === '') return null;
+  if (POSTGRES_INTERNALS.test(message)) return null;
+
+  return message;
+}
+
+/**
  * Traduit une erreur PostgREST en AppError.
  *
  * Les champs `details` et `hint` de Postgres ne sont volontairement jamais
- * repris : ils divulguent la structure de la base.
+ * repris : ils divulguent la structure de la base. Le `message`, lui, n'est
+ * retenu que s'il vient d'un de nos triggers — voir `readableMessage`.
  */
 export function mapPostgrestError(error: SupabaseLikeError): AppError {
   const code = mapPostgrestCode(error);
-  return new AppError(code, MESSAGES[code], { cause: error });
+
+  // `23514` (check_violation) et `42501` (insufficient_privilege) sont les deux
+  // codes que nos triggers emploient pour refuser une opération en l'expliquant.
+  const carriesBusinessRule = error.code === '23514' || error.code === '42501';
+  const message = (carriesBusinessRule ? readableMessage(error) : null) ?? MESSAGES[code];
+
+  return new AppError(code, message, { cause: error });
 }
 
 function mapPostgrestCode(error: SupabaseLikeError): AppErrorCode {
   switch (error.code) {
     case '23505': // unique_violation
       return 'conflict';
+    // `23514` (check_violation) est une contrainte CHECK, mais AUSSI le code que
+    // nos triggers emploient pour refuser une opération — transition de statut
+    // interdite, dernier propriétaire, quota de membres. Sans cette entrée, ces
+    // refus parfaitement explicites tombaient en « erreur inattendue ».
     case '23503': // foreign_key_violation
     case '23502': // not_null_violation
     case '22P02': // invalid_text_representation
+    case '23514': // check_violation
       return 'validation';
     case '42501': // insufficient_privilege — typiquement un refus RLS
       return 'forbidden';
