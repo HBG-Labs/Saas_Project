@@ -522,7 +522,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs">
                 <div className="space-y-1 rounded-lg border border-border bg-surface p-3">
                   <span className="block text-2xs text-muted-foreground">Temps moyen</span>
                   <span className="text-sm font-bold text-foreground">1h 35min</span>

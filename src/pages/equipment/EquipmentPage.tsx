@@ -464,7 +464,7 @@ export default function EquipmentPage() {
             required
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input
               label="Marque / Constructeur"
               placeholder="ex: VIAVI, Fujikura, Fluke"
@@ -479,7 +479,7 @@ export default function EquipmentPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="new-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Catégorie technique
@@ -564,7 +564,7 @@ export default function EquipmentPage() {
               required
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label="Marque / Constructeur"
                 value={editing.brand ?? ''}
@@ -577,7 +577,7 @@ export default function EquipmentPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="edit-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Catégorie technique
@@ -619,7 +619,7 @@ export default function EquipmentPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="edit-eq-member" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Attribué au technicien

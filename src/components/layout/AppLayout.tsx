@@ -50,21 +50,32 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-dvh bg-slate-50/50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="bg-background text-foreground min-h-dvh">
       <a
         href="#contenu-principal"
-        className="sr-only rounded-md bg-blue-600 px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
+        className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
       >
         Aller au contenu principal
       </a>
 
       {/* ---------------------------------------------------- BARRE SUPÉRIEURE (HEADER) */}
-      <header className="fixed inset-x-0 top-0 z-30 h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95">
-        <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <div className="flex items-center gap-3">
+      <header className="border-border bg-surface/95 fixed inset-x-0 top-0 z-30 h-14 border-b backdrop-blur-md">
+        {/*
+          Trois zones, dont une seule est élastique.
+
+          Le logo faisait 160 px fixes, les actions une centaine, et la
+          recherche s'intercalait entre les deux : à 360 px la somme dépassait
+          la largeur de l'écran et poussait la barre hors cadre. Le logo se
+          réduit désormais sur mobile, la recherche est la seule à absorber
+          l'espace restant (`min-w-0`, sans quoi un enfant en `flex` refuse de
+          descendre sous la largeur de son contenu), et les actions ne se
+          compriment jamais — ce sont des cibles tactiles.
+        */}
+        <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+          <div className="flex shrink-0 items-center gap-1">
             <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
               <Dialog.Trigger
-                className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:hover:bg-slate-800 dark:hover:text-white"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-touch items-center justify-center rounded-lg lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
@@ -72,9 +83,9 @@ export function AppLayout() {
 
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
-                <Dialog.Content className="fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-200 bg-white shadow-xl lg:hidden dark:border-slate-800 dark:bg-slate-950">
+                <Dialog.Content className="border-border bg-surface fixed inset-y-0 left-0 z-50 w-[min(17rem,85vw)] border-r shadow-xl lg:hidden">
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
-                  <div className="flex h-14 items-center border-b border-slate-200 px-4 dark:border-slate-800">
+                  <div className="border-border flex h-14 items-center border-b px-4">
                     <Logo to={ROUTES.home} />
                   </div>
                   <Sidebar
@@ -90,23 +101,25 @@ export function AppLayout() {
               </Dialog.Portal>
             </Dialog.Root>
 
-            <Logo to={ROUTES.home} className="w-40 lg:w-48" />
+            <Logo to={ROUTES.home} className="w-28 sm:w-36 lg:w-48" />
           </div>
 
           {/* Recherche globale ⌘K */}
           <button
             type="button"
             onClick={openCommandBar}
-            className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-slate-100/70 px-3 text-xs font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 sm:w-64 lg:w-80 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:border-slate-700"
+            className="border-border bg-surface-sunken text-muted-foreground hover:border-border-strong hover:bg-surface-hover flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border px-3 text-xs font-medium transition-colors sm:max-w-64 lg:max-w-80"
             aria-label="Rechercher"
           >
-            <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="truncate">Rechercher dans NexoraTech…</span>
+            <Search className="size-4 shrink-0" aria-hidden="true" />
+            {/* Le libellé s'efface avant de se réduire en bouillie : sur un très petit écran, l'icône et l'`aria-label` disent la même chose. */}
+            <span className="hidden truncate xs:inline">Rechercher</span>
+            <span className="hidden truncate lg:inline">dans NexoraTech</span>
             <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
           {/* Actions utilisateur, Sélecteur de Rôle DEV & Thème */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {/* SÉLECTEUR DE RÔLE SIMULÉ EN DÉVELOPPEMENT */}
             <DevRoleSelector />
 
@@ -117,7 +130,7 @@ export function AppLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="flex size-9 items-center justify-center rounded-full ring-2 ring-slate-200 hover:ring-slate-300 transition-all dark:ring-slate-800"
+                    className="ring-border hover:ring-border-strong flex size-9 items-center justify-center rounded-full ring-2 transition-all"
                     aria-label="Menu du compte"
                   >
                     <Avatar name={displayName} size="sm" />
@@ -161,7 +174,7 @@ export function AppLayout() {
 
       {/* ---------------------------------------------------- BARRE LATÉRALE DESKTOP */}
       <aside
-        className={`fixed inset-y-0 top-14 left-0 z-20 hidden border-r border-slate-200/80 bg-white transition-all duration-200 lg:block dark:border-slate-800/80 dark:bg-slate-950 ${
+        className={`border-border bg-surface fixed inset-y-0 top-14 left-0 z-20 hidden border-r transition-all duration-200 lg:block ${
           sidebarCollapsed ? 'w-16' : 'w-60'
         }`}
       >
@@ -176,7 +189,10 @@ export function AppLayout() {
       {/* ---------------------------------------------------- CONTENU PRINCIPAL */}
       <main
         id="contenu-principal"
-        className={`pt-20 pb-20 px-4 sm:px-6 lg:px-8 transition-all duration-200 ${
+        // Le bas ne réserve de la place que là où la navigation basse existe :
+        // elle disparaît à `md`, où 80 px de vide n'avaient plus de raison
+        // d'être. `safe-x` écarte le contenu des bords arrondis en paysage.
+        className={`safe-x px-4 pt-[4.5rem] pb-24 transition-all duration-200 sm:px-6 md:pb-10 lg:px-8 ${
           sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >

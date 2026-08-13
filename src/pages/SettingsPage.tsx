@@ -32,7 +32,7 @@ export default function SettingsPage() {
           <CardContent>
             <fieldset>
               <legend className="text-foreground mb-2 text-xs font-medium">Thème</legend>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {THEME_OPTIONS.map((option) => {
                   const Icon = option.icon;
                   const isActive = theme === option.value;

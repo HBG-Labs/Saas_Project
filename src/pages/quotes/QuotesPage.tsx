@@ -350,61 +350,107 @@ export default function QuotesPage() {
               </Button>
             </CardHeader>
 
-            <CardContent className="space-y-3 pt-5">
+            <CardContent className="space-y-2 pt-5">
+              {/*
+                Ligne d'en-tête, à partir de `sm` seulement.
+
+                Sur grand écran elle nomme les colonnes une fois pour toutes.
+                Sur téléphone les champs s'empilent : la même information doit
+                alors être portée par chaque champ, d'où les libellés inline
+                ci-dessous — sans quoi trois nombres se suivent sans qu'on
+                sache lequel est la quantité et lequel le prix.
+              */}
+              {items.length > 0 ? (
+                <div className="text-subtle-foreground hidden grid-cols-12 gap-2 px-3 text-3xs font-bold tracking-wider uppercase sm:grid">
+                  <span className="col-span-5">Désignation</span>
+                  <span className="col-span-2 text-center">Quantité</span>
+                  <span className="col-span-2 text-right">Prix unitaire</span>
+                  <span className="col-span-2 text-right">Total HT</span>
+                  <span className="col-span-1" />
+                </div>
+              ) : null}
+
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-12 gap-2 items-center rounded-lg border border-border bg-surface p-3 text-xs"
+                  className="border-border bg-surface grid grid-cols-12 items-end gap-2 rounded-lg border p-3 text-xs sm:items-center"
                 >
                   <div className="col-span-12 sm:col-span-5">
+                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                      Désignation
+                    </label>
                     <input
                       type="text"
                       value={item.description}
+                      aria-label="Désignation de la prestation"
                       onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
-                      className="w-full rounded border border-border-strong bg-surface-sunken px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none"
                     />
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
+                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                      Qté
+                    </label>
                     <input
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                      className="w-full rounded border border-border-strong bg-surface-sunken px-2 py-1.5 text-xs text-center text-foreground focus:border-primary focus:outline-none"
+                      aria-label="Quantité"
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
+                      }
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none"
                     />
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
+                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                      P.U.
+                    </label>
                     <div className="relative flex items-center">
                       <input
                         type="number"
                         min="0"
                         step="0.5"
                         value={item.unitPrice}
-                        onChange={(e) => handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                        className="w-full rounded border border-border-strong bg-surface-sunken py-1.5 pl-2 pr-5 text-xs text-right text-emerald-600 dark:text-emerald-400 font-semibold focus:border-primary focus:outline-none"
+                        aria-label="Prix unitaire hors taxes, en euros"
+                        onChange={(e) =>
+                          handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
+                        }
+                        className="border-border-strong bg-surface-sunken focus:border-primary w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold text-emerald-600 focus:outline-none dark:text-emerald-400"
                       />
-                      <span className="absolute right-2 text-2xs text-muted-foreground">€</span>
+                      <span className="text-muted-foreground absolute right-2 text-2xs">€</span>
                     </div>
                   </div>
 
-                  <div className="col-span-3 sm:col-span-2 text-right font-bold text-foreground text-xs">
+                  <div className="text-foreground col-span-3 pb-1.5 text-right text-xs font-bold sm:col-span-2 sm:pb-0">
                     {(item.quantity * item.unitPrice).toFixed(2)} €
                   </div>
 
-                  <div className="col-span-1 text-right">
+                  <div className="col-span-1 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(item.id)}
-                      className="text-subtle-foreground hover:text-error cursor-pointer transition-colors p-1"
+                      // 44 px : la corbeille est collée au montant, et un
+                      // pouce qui vise mal efface une ligne au lieu de la
+                      // corriger.
+                      className="text-subtle-foreground hover:text-error flex size-touch cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
                       title="Supprimer la ligne"
+                      aria-label={`Supprimer la ligne « ${item.description} »`}
                     >
-                      <Trash2 className="size-3.5" />
+                      <Trash2 className="size-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
               ))}
+
+              {items.length === 0 ? (
+                <p className="text-muted-foreground border-border rounded-lg border border-dashed px-4 py-6 text-center text-xs">
+                  Aucune ligne pour l’instant. Touchez une prestation du catalogue ci-dessus, ou
+                  ajoutez une ligne libre.
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         </div>
@@ -550,7 +596,7 @@ export default function QuotesPage() {
             required
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Unité de facturation</label>
               <select

@@ -470,7 +470,7 @@ export default function MissionDetailPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-xs">Début prévu</p>
                 <p className="text-foreground font-mono text-xs tabular-nums">
