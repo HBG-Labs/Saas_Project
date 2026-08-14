@@ -20,7 +20,9 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-const PURGE_FLAG = 'nexoratech_demo_storage_purged_v1';
+// Version 2 : la mise en production a retiré le sélecteur de rôle simulé, dont
+// le réglage dort encore dans les onglets ouverts avant la bascule.
+const PURGE_FLAG = 'nexoratech_demo_storage_purged_v2';
 
 /**
  * Clés écrites par l'ancienne couche de démonstration.
@@ -49,6 +51,11 @@ export function purgeDemoStorage(): void {
     for (const key of DEMO_KEYS) {
       localStorage.removeItem(key);
     }
+
+    // Le sélecteur de rôle de développement n'existe plus : son réglage ne
+    // pilote plus rien. Un réglage sans effet est pire qu'absent — on finit par
+    // lui attribuer un comportement qu'il n'a pas.
+    sessionStorage.removeItem('nexoratech_simulated_dev_role');
 
     localStorage.setItem(PURGE_FLAG, new Date().toISOString());
   } catch {

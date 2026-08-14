@@ -16,12 +16,12 @@ import { Kbd } from '@/components/ui/Kbd';
 import { ROUTES } from '@/config/routes';
 import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 import { useAuth } from '@/features/auth';
-import { usePermission } from '@/features/organizations';
+import { TrialBanner } from '@/features/billing';
+import { useCurrentOrganization, usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
 
-import { DevRoleSelector } from './DevRoleSelector';
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 import { MobileNav } from './MobileNav';
@@ -34,6 +34,8 @@ export function AppLayout() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status, user, signOut } = useAuth();
   const { role } = usePermission();
+  const { organization } = useCurrentOrganization();
+  const organizationId = organization?.id ?? null;
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
 
@@ -136,11 +138,8 @@ export function AppLayout() {
             <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
-          {/* Actions utilisateur, Sélecteur de Rôle DEV & Thème */}
+          {/* Actions utilisateur et thème */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {/* SÉLECTEUR DE RÔLE SIMULÉ EN DÉVELOPPEMENT */}
-            <DevRoleSelector />
-
             <ThemeToggle />
 
             {isAuthenticated ? (
@@ -223,6 +222,16 @@ export function AppLayout() {
         }`}
       >
         <div className="mx-auto max-w-7xl">
+          {/*
+            Au-dessus du contenu, pas dans une page : l'échéance d'essai suspend
+            l'accès à TOUS les modules professionnels, pas seulement à celui
+            qu'on regarde. La cantonner au tableau de bord serait la manquer.
+
+            Le bandeau se retire de lui-même : hors période d'essai, à plus d'un
+            mois de l'échéance, ou pour qui n'a pas `billing.view`.
+          */}
+          <TrialBanner organizationId={organizationId} />
+
           <Suspense fallback={<LoadingScreen />}>
             <Outlet />
           </Suspense>
