@@ -29,7 +29,8 @@
     "protect:node-modules": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/protect-node-modules.ps1",
     "audit:responsive": "node scripts/responsive-audit.mjs",
     "check:deploy": "node scripts/check-deploy-package.mjs",
-    "predeploy": "npm run typecheck && npm run test && npm run check:deploy && npm run build"
+    "predeploy": "npm run typecheck && npm run test && npm run check:deploy && npm run build",
+    "vercel:env": "node scripts/setup-vercel-env.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
