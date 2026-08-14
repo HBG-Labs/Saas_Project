@@ -58,7 +58,7 @@ export function InteractivePlayground() {
   return (
     <section className="relative overflow-hidden border-y border-slate-200/80 bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-50 py-20 dark:border-slate-800/80 dark:bg-slate-950 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 sm:py-28">
       {/* Glows d'arrière-plan doux */}
-      <div className="absolute top-1/2 left-1/2 -z-10 h-[500px] w-[750px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-300/15 to-cyan-300/20 blur-[140px] dark:from-blue-600/30 dark:via-indigo-500/25 dark:to-cyan-400/20" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[500px] w-[min(750px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-300/15 to-cyan-300/20 blur-[140px] dark:from-blue-600/30 dark:via-indigo-500/25 dark:to-cyan-400/20" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center space-y-4">

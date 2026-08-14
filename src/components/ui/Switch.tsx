@@ -43,6 +43,8 @@ export function Switch({
         aria-describedby={description ? descriptionId : undefined}
         className={cn(
           'peer relative mt-0.5 inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent',
+          // Zone tactile étendue au-delà du dessin : 20 px de haut se ratent.
+          'after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[""] sm:after:hidden',
           'ease-out-expo transition-colors duration-[120ms]',
           'data-[state=checked]:bg-primary data-[state=unchecked]:bg-border-strong',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',

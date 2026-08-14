@@ -161,11 +161,11 @@ export default function MissionsListPage() {
         actions={
           <div className="flex items-center gap-3">
             {/* 3-Way Switcher : Liste / Semaine / Mois */}
-            <div className="flex items-center rounded-lg border border-border bg-surface p-1 shadow-xs">
+            <div className="border-border bg-surface scroll-x flex w-full items-center rounded-lg border p-1 shadow-xs sm:w-auto">
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`flex min-h-touch cursor-pointer items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1 ${
                   viewMode === 'list'
                     ? 'bg-primary text-primary-foreground shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -177,7 +177,7 @@ export default function MissionsListPage() {
               <button
                 type="button"
                 onClick={() => setViewMode('week')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`flex min-h-touch cursor-pointer items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1 ${
                   viewMode === 'week'
                     ? 'bg-primary text-primary-foreground shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -189,7 +189,7 @@ export default function MissionsListPage() {
               <button
                 type="button"
                 onClick={() => setViewMode('month')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`flex min-h-touch cursor-pointer items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1 ${
                   viewMode === 'month'
                     ? 'bg-primary text-primary-foreground shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -526,10 +526,28 @@ export default function MissionsListPage() {
 
           <Card className="border border-border shadow-md overflow-hidden">
             <CardContent className="p-0">
-              <div className="grid grid-cols-7 border-b border-border bg-surface-subtle/80 text-center text-xs font-bold text-foreground">
-                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((d) => (
-                  <div key={d} className="py-3 border-r border-border last:border-r-0 uppercase tracking-wider">
-                    {d}
+              {/*
+                Sept colonnes tiennent toujours dans la largeur : on ne fait pas
+                défiler un mois horizontalement, on allège chaque case. En
+                dessous de `md`, l'initiale suffit — « L M M J V S D » se lit
+                aussi bien que les abrégés et libère 40 % de la largeur.
+              */}
+              <div className="border-border bg-surface-subtle text-foreground grid grid-cols-7 border-b text-center text-2xs font-bold sm:text-xs">
+                {[
+                  { short: 'L', long: 'Lun' },
+                  { short: 'M', long: 'Mar' },
+                  { short: 'M', long: 'Mer' },
+                  { short: 'J', long: 'Jeu' },
+                  { short: 'V', long: 'Ven' },
+                  { short: 'S', long: 'Sam' },
+                  { short: 'D', long: 'Dim' },
+                ].map((day) => (
+                  <div
+                    key={day.long}
+                    className="border-border border-r py-2 tracking-wider uppercase last:border-r-0 sm:py-3"
+                  >
+                    <span className="md:hidden">{day.short}</span>
+                    <span className="hidden md:inline">{day.long}</span>
                   </div>
                 ))}
               </div>
@@ -546,14 +564,31 @@ export default function MissionsListPage() {
                   const remainingCount = dayMissions.length - visibleMissions.length;
 
                   return (
-                    <div
+                    /*
+                      Une case est un bouton, pas un `div` cliquable.
+
+                      Elle ouvre le détail de la journée : le clavier et les
+                      lecteurs d'écran doivent pouvoir le faire aussi. Elle est
+                      désactivée quand la journée est vide, ce qui supprime au
+                      passage le curseur « main » trompeur.
+
+                      Hauteur : 140 px porte deux fiches de mission, ce qui
+                      demande une colonne d'au moins 110 px — impossible à sept
+                      sur un téléphone. En dessous de `md` la case se réduit à
+                      une pastille de comptage, et l'appui ouvre la liste
+                      complète du jour dans la modale qui existe déjà.
+                    */
+                    <button
                       key={idx}
+                      type="button"
+                      disabled={dayMissions.length === 0}
+                      aria-label={`${cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — ${dayMissions.length} mission${dayMissions.length > 1 ? 's' : ''}`}
                       onClick={() => {
                         if (dayMissions.length > 0) {
                           setSelectedDay({ date: cell.date, missions: dayMissions });
                         }
                       }}
-                      className={`min-h-[140px] p-2 flex flex-col justify-between transition-colors ${
+                      className={`flex min-h-touch flex-col justify-between p-1.5 text-left transition-colors sm:min-h-[96px] md:min-h-[140px] md:p-2 ${
                         dayMissions.length > 0 ? 'cursor-pointer' : ''
                       } ${
                         !cell.isCurrentMonth
@@ -577,16 +612,18 @@ export default function MissionsListPage() {
                         </span>
 
                         {dayMissions.length > 0 ? (
-                          <span
-                            className="text-3xs font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
-                          >
-                            {dayMissions.length} mission{dayMissions.length > 1 ? 's' : ''}
+                          <span className="bg-primary/10 text-primary border-primary/20 rounded-full border px-1.5 py-0.5 text-3xs font-semibold">
+                            {dayMissions.length}
+                            <span className="hidden md:inline">
+                              {' '}
+                              mission{dayMissions.length > 1 ? 's' : ''}
+                            </span>
                           </span>
                         ) : null}
                       </div>
 
                       {/* Interventions du Jour */}
-                      <div className="mt-1 space-y-1.5 flex-1">
+                      <div className="mt-1 hidden flex-1 space-y-1.5 md:block">
                         {visibleMissions.map((m) => (
                           <Link
                             key={m.id}
@@ -655,7 +692,7 @@ export default function MissionsListPage() {
                           </button>
                         ) : null}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

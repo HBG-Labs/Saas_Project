@@ -118,7 +118,7 @@ export default function CustomerDetailPage() {
 
       {/* Hero Header Card */}
       <Card className="overflow-hidden border-border bg-surface-raised/50 backdrop-blur-xs">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">

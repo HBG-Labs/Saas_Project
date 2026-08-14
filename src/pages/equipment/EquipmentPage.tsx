@@ -208,50 +208,50 @@ export default function EquipmentPage() {
       />
 
       {/* KPI Cards Header */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-blue-500/20 bg-surface p-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Card className="border-blue-500/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Total Équipements</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{totalCount}</p>
+              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{totalCount}</p>
             </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-primary border border-blue-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-blue-500/10 text-primary border border-blue-500/20">
               <Cpu className="size-5" />
             </div>
           </div>
         </Card>
 
-        <Card className="border-emerald-500/20 bg-surface p-4">
+        <Card className="border-emerald-500/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Attribués / Sur le terrain</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{assignedCount}</p>
+              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{assignedCount}</p>
             </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <User className="size-5" />
             </div>
           </div>
         </Card>
 
-        <Card className="border-border-strong bg-surface p-4">
+        <Card className="border-border-strong p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Disponibles en Stock</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{availableCount}</p>
+              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{availableCount}</p>
             </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-surface-raised text-muted-foreground border border-border-strong">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-surface-raised text-muted-foreground border border-border-strong">
               <CheckCircle2 className="size-5" />
             </div>
           </div>
         </Card>
 
-        <Card className="border-amber-500/20 bg-surface p-4">
+        <Card className="border-amber-500/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Étalonnage / Révision</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{maintenanceCount}</p>
+              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{maintenanceCount}</p>
             </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               <AlertTriangle className="size-5" />
             </div>
           </div>
@@ -268,16 +268,22 @@ export default function EquipmentPage() {
               placeholder="Rechercher par nom, marque ou matricule S/N…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-border-strong bg-surface py-2 pl-9 pr-4 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none"
+              className="border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus:border-primary min-h-touch w-full rounded-md border py-2 pr-4 pl-9 text-xs focus:outline-none md:min-h-0"
             />
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          {/*
+            Les deux filtres se partagent la ligne, l'action passe dessous et
+            occupe toute la largeur : sur un téléphone, « Nouveau matériel » est
+            le geste principal de cet écran, pas une commande secondaire coincée
+            au bout d'une rangée.
+          */}
+          <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value as 'all' | EquipmentCategory)}
               aria-label="Filtrer par catégorie"
-              className="rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto"
             >
               <option value="all">Toutes catégories</option>
               {CATEGORY_OPTIONS.map((option) => (
@@ -291,7 +297,7 @@ export default function EquipmentPage() {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | EquipmentStatus)}
               aria-label="Filtrer par statut"
-              className="rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto"
             >
               <option value="all">Tous les statuts</option>
               {STATUS_OPTIONS.map((option) => (
@@ -305,7 +311,7 @@ export default function EquipmentPage() {
               <Button
                 variant="primary"
                 onClick={() => setIsAddOpen(true)}
-                className="cursor-pointer gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs"
+                className="col-span-2 min-h-touch cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
               >
                 <Plus className="size-4" />
                 Nouveau matériel
@@ -364,21 +370,21 @@ export default function EquipmentPage() {
                         {statusBadge}
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                      <div className="text-muted-foreground flex flex-col gap-1 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                         <span>
                           Matricule S/N :{' '}
                           <strong className="text-foreground font-mono">
                             {eq.serial_number ?? '—'}
                           </strong>
                         </span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>
                           Catégorie :{' '}
                           <strong className="text-muted-foreground">
                             {EQUIPMENT_CATEGORY_LABELS[eq.category]}
                           </strong>
                         </span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" /> Prochain étalonnage :{' '}
                           <strong

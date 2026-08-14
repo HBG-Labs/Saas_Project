@@ -31,13 +31,23 @@ export const buttonVariants = cva(
           'border border-red-500/60 bg-red-600/35 text-white hover:bg-red-600/50 hover:border-red-500/80 active:bg-red-600/60 transition-all shadow-xs font-medium',
         link: 'text-primary underline-offset-4 hover:underline',
       },
+      /*
+        Deux hauteurs par taille : le doigt d'abord, la densité ensuite.
+
+        Le pointeur vise au pixel, le pouce à neuf millimètres. Une commande de
+        36 px de haut est confortable à la souris et ratée une fois sur trois
+        sur un chantier, gants compris. Chaque taille part donc de 44 px (WCAG
+        2.5.5) et ne retrouve sa hauteur compacte qu'à partir de `sm`, où
+        l'entrée est presque toujours un pointeur.
+
+        Seul `lg` conserve sa hauteur : il est déjà au-dessus du seuil.
+      */
       size: {
-        sm: 'h-8 px-3 text-xs [&_svg]:size-3.5',
-        md: 'h-9 px-4 text-sm [&_svg]:size-4',
-        // 44 px : cible tactile minimale, taille par défaut sur mobile.
-        lg: 'h-11 px-6 text-sm [&_svg]:size-4',
-        icon: 'size-9 [&_svg]:size-4',
-        'icon-sm': 'size-8 [&_svg]:size-3.5',
+        sm: 'h-touch px-3 text-xs sm:h-8 [&_svg]:size-3.5',
+        md: 'h-touch px-4 text-sm sm:h-9 [&_svg]:size-4',
+        lg: 'h-12 px-6 text-sm sm:h-11 [&_svg]:size-4',
+        icon: 'size-touch sm:size-9 [&_svg]:size-4',
+        'icon-sm': 'size-touch sm:size-8 [&_svg]:size-3.5',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

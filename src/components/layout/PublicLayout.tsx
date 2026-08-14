@@ -37,11 +37,18 @@ export function PublicLayout() {
 
       {/* ---------------------------------------------------- NAVBAR */}
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/90">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Logo className="text-lg" />
+        {/*
+          À 360 px la rangée contenait : logo, « Télécharger l'App »,
+          bascule de thème, « Connexion », « Commencer gratuitement » et le
+          menu. Soit environ 480 px de contenu pour 360 px de large — la barre
+          débordait. Les libellés longs se réduisent maintenant avant que la
+          mise en page ne cède, et les écarts se resserrent.
+        */}
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
+          <Logo className="shrink-0 text-base sm:text-lg" />
 
           {/* Navigation centrale */}
-          <nav aria-label="Navigation du site" className="hidden md:block">
+          <nav aria-label="Navigation du site" className="hidden lg:block">
             <ul className="flex items-center gap-1">
               {MARKETING_LINKS.map((link) => (
                 <li key={link.to}>
@@ -57,12 +64,12 @@ export function PublicLayout() {
           </nav>
 
           {/* Actions à droite */}
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             {/* BOUTON TÉLÉCHARGER L'APP */}
             <button
               type="button"
               onClick={() => setIsDownloadModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-500/20 transition-all shadow-xs dark:text-blue-400 cursor-pointer"
+              className="hidden items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-600 shadow-xs transition-all hover:bg-blue-500/20 cursor-pointer sm:flex dark:text-blue-400"
               aria-label="Télécharger l'application mobile ou desktop"
             >
               <Smartphone className="size-4 text-blue-600 dark:text-blue-400" />
@@ -72,16 +79,22 @@ export function PublicLayout() {
             <ThemeToggle />
 
             {isAuthenticated ? (
-              <Button asChild size="sm" className="rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-500">
-                <Link to={ROUTES.dashboard}>Ouvrir l&apos;application</Link>
+              <Button asChild size="sm" className="rounded-xl font-bold">
+                <Link to={ROUTES.dashboard}>
+                  <span className="lg:hidden">Ouvrir</span>
+                  <span className="hidden lg:inline">Ouvrir l&apos;application</span>
+                </Link>
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex text-xs font-semibold">
+                <Button asChild variant="ghost" size="sm" className="hidden text-xs font-semibold lg:inline-flex">
                   <Link to={ROUTES.login}>Connexion</Link>
                 </Button>
-                <Button asChild size="sm" className="rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-500 shadow-xs">
-                  <Link to={ROUTES.register}>Commencer gratuitement</Link>
+                <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
+                  <Link to={ROUTES.register}>
+                    <span className="lg:hidden">Commencer</span>
+                    <span className="hidden lg:inline">Commencer gratuitement</span>
+                  </Link>
                 </Button>
               </>
             )}
@@ -89,14 +102,14 @@ export function PublicLayout() {
             {/* Burger mobile */}
             <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
               <Dialog.Trigger
-                className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 md:hidden dark:hover:bg-slate-800 dark:hover:text-white"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mr-1 flex size-touch items-center justify-center rounded-lg sm:size-9 lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
               </Dialog.Trigger>
               <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs md:hidden" />
-                <Dialog.Content className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white p-4 shadow-xl md:hidden dark:border-slate-800 dark:bg-slate-950">
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
+                <Dialog.Content className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white p-4 shadow-xl lg:hidden dark:border-slate-800 dark:bg-slate-950">
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
                   <ul className="space-y-1">
                     {MARKETING_LINKS.map((link) => (

@@ -52,11 +52,11 @@ export function Testimonials() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((item) => (
             <div
               key={item.id}
-              className="relative flex flex-col justify-between rounded-2xl border border-border/80 bg-surface p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+              className="border-border/80 bg-surface relative flex min-w-0 flex-col justify-between rounded-2xl border p-4 shadow-sm sm:p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
               <div>
                 {/* Ligne du haut : 5 Étoiles Dorées + Badge Norme */}
@@ -91,7 +91,7 @@ export function Testimonials() {
                     </span>
                     <CheckCircle2 className="size-3.5 text-primary shrink-0" />
                   </div>
-                  <p className="text-2xs text-muted-foreground truncate">
+                  <p className="text-muted-foreground truncate text-2xs">
                     {item.role} • <span className="font-semibold text-foreground/80">{item.company}</span>
                   </p>
                 </div>

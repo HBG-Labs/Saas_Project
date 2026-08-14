@@ -174,7 +174,7 @@ export default function CopperColorCodeTool() {
             </span>
           </div>
 
-          <div className="max-h-[580px] overflow-y-auto rounded-lg border border-border/60">
+          <div className="border-border/60 scroll-x max-h-[580px] overflow-y-auto rounded-lg border">
             <table className="w-full text-left text-xs">
               <thead className="bg-surface-sunken sticky top-0 border-b border-border/60 text-2xs uppercase tracking-wider text-muted-foreground">
                 <tr>

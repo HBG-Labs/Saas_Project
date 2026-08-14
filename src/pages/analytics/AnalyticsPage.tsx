@@ -742,7 +742,7 @@ export default function AnalyticsPage() {
                     setIsQuarterMenuOpen(false);
                     setIsYearMenuOpen(false);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
                     viewMode === 'month'
                       ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground'
@@ -757,7 +757,7 @@ export default function AnalyticsPage() {
                     setIsQuarterMenuOpen(false);
                     setIsYearMenuOpen(false);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
                     viewMode === 'quarter'
                       ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground'
@@ -772,7 +772,7 @@ export default function AnalyticsPage() {
                     setIsQuarterMenuOpen(false);
                     setIsYearMenuOpen(false);
                   }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
                     viewMode === 'year'
                       ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground'
@@ -1033,11 +1033,19 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
+              {/*
+                Huit barres dans 328 px, c'est 37 px chacune : la barre passe
+                sous son propre libellé, qui se replie sur trois lignes. On
+                impose donc une largeur minimale par barre et on laisse le
+                graphique défiler dans son cadre — la comparaison visuelle
+                exige une échelle lisible, pas un tassement.
+              */}
+              <div className="scroll-x -mx-1 px-1">
               <div
-                className={`grid gap-3 items-end h-56 pt-6 pb-2 border-b border-border px-2 ${
+                className={`border-border grid h-56 items-end gap-3 border-b px-2 pt-6 pb-2 ${
                   currentData.chartData.length === 3
-                    ? 'grid-cols-3'
-                    : 'grid-cols-8'
+                    ? 'min-w-0 grid-cols-3'
+                    : 'min-w-[34rem] grid-cols-8'
                 }`}
               >
                 {currentData.chartData.map((item) => {
@@ -1061,15 +1069,14 @@ export default function AnalyticsPage() {
                   );
                 })}
               </div>
+              </div>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1.5">
-                    <span className="size-3 rounded bg-primary" />
-                    Missions Réalisées & Validées
-                  </span>
-                </div>
-                <span>Tendance : +14.2% de croissance d'activité</span>
+              <div className="text-muted-foreground flex flex-col gap-2 pt-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="bg-primary size-3 shrink-0 rounded" />
+                  Missions Réalisées & Validées
+                </span>
+                <span>Tendance : +14.2% de croissance d&apos;activité</span>
               </div>
             </div>
           </CardContent>
@@ -1135,7 +1142,7 @@ export default function AnalyticsPage() {
           </Badge>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="overflow-x-auto">
+          <div className="scroll-x">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">

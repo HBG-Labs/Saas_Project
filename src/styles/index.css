@@ -186,6 +186,10 @@
   */
   --spacing-touch: 2.75rem;
 
+  /* Rotation lente d'un indicateur de synchronisation — le `animate-spin` de
+     Tailwind (1 s) évoque une attente bloquante, pas un fond de tâche. */
+  --animate-spin-slow: spin 3s linear infinite;
+
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -313,6 +317,67 @@
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* ---------------------------------------------------------------------
+     Transitions d'ouverture
+
+     Dix composants écrivaient déjà `animate-in fade-in zoom-in-95` — la
+     syntaxe de `tailwindcss-animate`, qui n'est pas installé. Les classes
+     n'existaient donc pas et les modales apparaissaient d'un coup.
+
+     Plutôt que d'ajouter une dépendance pour quatre classes, on définit ici
+     le strict nécessaire. Les variables permettent de composer : `fade-in`
+     règle l'opacité de départ, `zoom-in-95` l'échelle, `slide-in-from-bottom`
+     le décalage.
+     --------------------------------------------------------------------- */
+  @keyframes nx-enter {
+    from {
+      opacity: var(--nx-enter-opacity, 1);
+      transform: translate3d(0, var(--nx-enter-y, 0), 0) scale(var(--nx-enter-scale, 1));
+    }
+  }
+
+  @keyframes nx-exit {
+    to {
+      opacity: var(--nx-exit-opacity, 1);
+      transform: translate3d(0, var(--nx-exit-y, 0), 0) scale(var(--nx-exit-scale, 1));
+    }
+  }
+
+  .animate-in {
+    animation: nx-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-out {
+    animation: nx-exit 140ms ease-in forwards;
+  }
+
+  .fade-in {
+    --nx-enter-opacity: 0;
+  }
+
+  .fade-out {
+    --nx-exit-opacity: 0;
+  }
+
+  .zoom-in-95 {
+    --nx-enter-scale: 0.95;
+  }
+
+  .slide-in-from-bottom {
+    --nx-enter-y: 100%;
+  }
+
+  /*
+    Une animation d'entrée n'est pas une information : quand le système demande
+    moins de mouvement, on la supprime au lieu de l'atténuer.
+  */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-in,
+    .animate-out {
+      animation: none;
+    }
   }
 
   .glass-panel {

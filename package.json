@@ -26,7 +26,8 @@
     "cap:build": "tsc -b && vite build && npx cap sync",
     "cap:open": "npx cap open android",
     "cap:run": "npx cap run android",
-    "protect:node-modules": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/protect-node-modules.ps1"
+    "protect:node-modules": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/protect-node-modules.ps1",
+    "audit:responsive": "node scripts/responsive-audit.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

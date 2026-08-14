@@ -14,7 +14,7 @@ export function Hero() {
       {/* Halo de lumière diffuse en arrière-plan */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[600px] w-[1000px] -translate-x-1/2 rounded-full bg-gradient-to-b from-blue-500/15 via-indigo-500/10 to-transparent blur-3xl"
+        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[600px] w-[min(1000px,100vw)] -translate-x-1/2 rounded-full bg-gradient-to-b from-blue-500/15 via-indigo-500/10 to-transparent blur-3xl"
       />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -40,11 +40,11 @@ export function Hero() {
             NexoraTech réunit vos missions, interventions, équipes, clients et outils techniques dans un espace professionnel unique.
           </p>
 
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <Button
               asChild
               size="lg"
-              className="group rounded-2xl bg-blue-600 px-8 py-3.5 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-500/35"
+              className="group rounded-2xl bg-blue-600 px-6 py-3.5 sm:px-8 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-500/35"
             >
               <Link to={ROUTES.register}>
                 Commencer gratuitement
@@ -55,15 +55,16 @@ export function Hero() {
               variant="outline"
               size="lg"
               onClick={() => setIsDownloadModalOpen(true)}
-              className="rounded-2xl border-blue-500/30 bg-blue-500/10 px-8 py-3.5 font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer gap-2"
+              className="rounded-2xl border-blue-500/30 bg-blue-500/10 px-6 py-3.5 sm:px-8 font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer gap-2"
             >
               <Smartphone className="size-4" />
-              Télécharger l'App Mobile (Android & iOS)
+              <span className="lg:hidden">Télécharger l&apos;App</span>
+              <span className="hidden lg:inline">Télécharger l&apos;App Mobile (Android &amp; iOS)</span>
             </Button>
             <Button
               asChild
               size="lg"
-              className="group rounded-2xl bg-blue-600 px-8 py-3.5 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-500/35 cursor-pointer"
+              className="group rounded-2xl bg-blue-600 px-6 py-3.5 sm:px-8 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-500/35 cursor-pointer"
             >
               <Link to={ROUTES.tools}>
                 Découvrir la plateforme

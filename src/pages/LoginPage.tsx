@@ -82,7 +82,8 @@ export default function LoginPage() {
                   setShowPassword((visible) => !visible);
                 }}
                 aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded transition-colors"
+                // 28 px : le pouce visait l'œil et sélectionnait le champ.
+                className="text-subtle-foreground hover:text-foreground flex size-touch items-center justify-center rounded transition-colors sm:size-7"
               >
                 {showPassword ? (
                   <EyeOff className="size-4" aria-hidden="true" />

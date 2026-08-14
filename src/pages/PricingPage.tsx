@@ -165,7 +165,7 @@ export default function PricingPage() {
         </div>
 
         <div className="bg-surface border-border/80 shadow-raised overflow-hidden rounded-2xl border">
-          <div className="overflow-x-auto">
+          <div className="scroll-x">
             <table className="w-full text-left text-xs">
               <thead className="bg-surface-sunken border-b border-border/60">
                 <tr>

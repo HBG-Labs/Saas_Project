@@ -282,7 +282,7 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
               <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 {ref.table.title}
               </h5>
-              <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <div className="scroll-x rounded-xl border border-slate-200/80 dark:border-slate-800">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
                     <tr>

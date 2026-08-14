@@ -19,7 +19,7 @@ import { useAuth } from '@/features/auth';
 import { usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useCommandBar } from '@/features/search/useCommandBar';
-import { ThemeToggle } from '@/features/theme/ThemeToggle';
+import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
 
 import { DevRoleSelector } from './DevRoleSelector';
 import { DownloadAppModal } from './DownloadAppModal';
@@ -71,11 +71,11 @@ export function AppLayout() {
           descendre sous la largeur de son contenu), et les actions ne se
           compriment jamais — ce sont des cibles tactiles.
         */}
-        <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
-          <div className="flex shrink-0 items-center gap-1">
+        <div className="flex h-14 items-center gap-1 px-3 sm:gap-3 sm:px-4">
+          <div className="flex min-w-0 shrink-0 items-center gap-1">
             <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
               <Dialog.Trigger
-                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-touch items-center justify-center rounded-lg lg:hidden"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -ml-1 flex size-touch shrink-0 items-center justify-center rounded-lg sm:size-9 lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
@@ -101,20 +101,38 @@ export function AppLayout() {
               </Dialog.Portal>
             </Dialog.Root>
 
-            <Logo to={ROUTES.home} className="w-28 sm:w-36 lg:w-48" />
+            <Logo to={ROUTES.home} className="shrink-0 text-sm sm:text-base lg:text-lg" />
           </div>
 
-          {/* Recherche globale ⌘K */}
+          {/*
+            Recherche globale ⌘K — deux objets, pas un objet élastique.
+
+            La version précédente était un champ en `flex-1` censé rétrécir avec
+            l'écran. Elle rétrécissait trop bien : les actions à sa droite étant
+            incompressibles, elle se réduisait à son propre rembourrage et
+            n'affichait plus qu'une pastille ronde autour de la loupe.
+
+            Un champ ne se réduit pas indéfiniment sans cesser d'être un champ.
+            En dessous de `md` c'est donc un bouton d'icône de largeur fixe ; le
+            champ n'apparaît qu'à partir du moment où il a la place d'exister.
+          */}
           <button
             type="button"
             onClick={openCommandBar}
-            className="border-border bg-surface-sunken text-muted-foreground hover:border-border-strong hover:bg-surface-hover flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border px-3 text-xs font-medium transition-colors sm:max-w-64 lg:max-w-80"
+            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground ml-auto flex size-touch shrink-0 items-center justify-center rounded-lg transition-colors sm:size-9 md:hidden"
+            aria-label="Rechercher"
+          >
+            <Search className="size-5" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            onClick={openCommandBar}
+            className="border-border bg-surface-sunken text-muted-foreground hover:border-border-strong hover:bg-surface-hover mx-auto hidden h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border px-3 text-xs font-medium transition-colors md:flex md:max-w-64 lg:max-w-80"
             aria-label="Rechercher"
           >
             <Search className="size-4 shrink-0" aria-hidden="true" />
-            {/* Le libellé s'efface avant de se réduire en bouillie : sur un très petit écran, l'icône et l'`aria-label` disent la même chose. */}
-            <span className="hidden truncate xs:inline">Rechercher</span>
-            <span className="hidden truncate lg:inline">dans NexoraTech</span>
+            <span className="truncate">Rechercher dans NexoraTech…</span>
             <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
@@ -130,7 +148,7 @@ export function AppLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="ring-border hover:ring-border-strong flex size-9 items-center justify-center rounded-full ring-2 transition-all"
+                    className="ring-border hover:ring-border-strong flex size-touch items-center justify-center rounded-full ring-2 transition-all sm:size-9"
                     aria-label="Menu du compte"
                   >
                     <Avatar name={displayName} size="sm" />
@@ -153,6 +171,11 @@ export function AppLayout() {
                   </Link>
                 </DropdownItem>
                 <DropdownSeparator />
+                <div className="sm:hidden">
+                  <DropdownLabel>Apparence</DropdownLabel>
+                  <ThemeMenuItems />
+                  <DropdownSeparator />
+                </div>
                 <DropdownItem onSelect={handleSignOut} className="text-rose-600 dark:text-rose-400">
                   <LogOut />
                   Se déconnecter
@@ -163,8 +186,11 @@ export function AppLayout() {
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link to={ROUTES.login}>Connexion</Link>
                 </Button>
-                <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold">
-                  <Link to={ROUTES.register}>Créer un compte</Link>
+                <Button asChild size="sm" className="font-semibold">
+                  <Link to={ROUTES.register}>
+                    <span className="sm:hidden">S&apos;inscrire</span>
+                    <span className="hidden sm:inline">Créer un compte</span>
+                  </Link>
                 </Button>
               </div>
             )}

@@ -258,7 +258,7 @@ export default function BandwidthTransferCalculatorTool() {
           Comparatif de durée pour {dataSize} {dataUnit} selon le type de liaison
         </h4>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="scroll-x rounded-xl border border-slate-100 dark:border-slate-800">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               <tr>

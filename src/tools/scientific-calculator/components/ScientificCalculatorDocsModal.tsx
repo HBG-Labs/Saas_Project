@@ -76,7 +76,7 @@ export function ScientificCalculatorDocsModal() {
               <Key className="size-4 text-primary" />
               3. Tableau des Raccourcis Clavier Physique NATIVE
             </h3>
-            <div className="bg-surface rounded-xl border border-border/60 overflow-hidden">
+            <div className="bg-surface border-border/60 scroll-x rounded-xl border">
               <table className="w-full text-left text-2xs">
                 <thead className="bg-surface-sunken border-b border-border/40 font-semibold text-foreground">
                   <tr>

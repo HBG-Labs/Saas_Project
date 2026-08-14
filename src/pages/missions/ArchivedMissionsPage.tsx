@@ -88,7 +88,7 @@ export default function ArchivedMissionsPage() {
               type="button"
               onClick={() => setScope(item.value)}
               className={cn(
-                'cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                'min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5',
                 scope === item.value
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',

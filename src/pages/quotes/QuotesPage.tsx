@@ -376,9 +376,9 @@ export default function QuotesPage() {
                   className="border-border bg-surface grid grid-cols-12 items-end gap-2 rounded-lg border p-3 text-xs sm:items-center"
                 >
                   <div className="col-span-12 sm:col-span-5">
-                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
                       Désignation
-                    </label>
+                    </span>
                     <input
                       type="text"
                       value={item.description}
@@ -389,9 +389,9 @@ export default function QuotesPage() {
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
-                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
                       Qté
-                    </label>
+                    </span>
                     <input
                       type="number"
                       min="1"
@@ -405,9 +405,9 @@ export default function QuotesPage() {
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
-                    <label className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
                       P.U.
-                    </label>
+                    </span>
                     <div className="relative flex items-center">
                       <input
                         type="number"
@@ -496,7 +496,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('8.5')}
                       className={cn(
-                        'rounded px-1.5 py-0.5 border cursor-pointer transition-colors',
+                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 8.5
                           ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
@@ -508,7 +508,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('20')}
                       className={cn(
-                        'rounded px-1.5 py-0.5 border cursor-pointer transition-colors',
+                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 20
                           ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
@@ -520,7 +520,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('0')}
                       className={cn(
-                        'rounded px-1.5 py-0.5 border cursor-pointer transition-colors',
+                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 0
                           ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
@@ -676,7 +676,7 @@ export default function QuotesPage() {
             </div>
 
             {/* Tableau des Lignes du Devis */}
-            <div className="overflow-x-auto">
+            <div className="scroll-x">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-300 bg-slate-100 text-slate-700 font-semibold">

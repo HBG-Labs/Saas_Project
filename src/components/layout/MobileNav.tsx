@@ -33,21 +33,27 @@ export function MobileNav() {
           const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
 
           return (
-            <li key={item.to} className="flex-1">
+            <li key={item.to} className="min-w-0 flex-1">
               <NavLink
                 to={item.to}
                 end={item.to === ROUTES.dashboard}
                 className={({ isActive }) =>
                   cn(
                     // 44 px minimum : cible tactile WCAG 2.5.5.
-                    'min-h-touch flex flex-col items-center justify-center gap-0.5 py-1.5',
-                    'text-2xs font-medium transition-colors duration-[120ms]',
+                    'min-h-touch flex flex-col items-center justify-center gap-0.5 px-1 py-1.5',
+                    'text-3xs font-medium transition-colors duration-[120ms] xs:text-2xs',
                     isActive ? 'text-primary' : 'text-subtle-foreground',
                   )
                 }
               >
-                <Icon className="size-5" aria-hidden="true" />
-                <span>{item.label}</span>
+                <Icon className="size-5 shrink-0" aria-hidden="true" />
+                {/*
+                  Le libellé se tronque plutôt que de forcer la barre à
+                  déborder : avec cinq entrées sur un écran de 320 px, chaque
+                  case ne fait que 64 px et un mot comme « Interventions » y
+                  pousserait les autres hors cadre.
+                */}
+                <span className="w-full truncate text-center">{item.label}</span>
               </NavLink>
             </li>
           );

@@ -245,7 +245,7 @@ export default function ProfilePage() {
         tiers droit. Écrits pour un fond sombre, ils produisaient en thème clair
         un coin bleu nuit qui avalait le bouton « Sauvegarder » — un aplat suffit.
       */}
-      <Card className="border-border bg-surface text-foreground relative overflow-hidden p-6 shadow-raised">
+      <Card className="border-border bg-surface text-foreground shadow-raised relative overflow-hidden p-4 sm:p-6">
 
         <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div className="flex items-center gap-5">

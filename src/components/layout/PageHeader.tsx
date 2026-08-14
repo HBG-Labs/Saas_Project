@@ -20,18 +20,29 @@ export function PageHeader({ title, description, actions, className }: PageHeade
   return (
     <div
       className={cn(
-        'mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+        'mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between',
         className,
       )}
     >
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
         {description ? (
           <p className="text-muted-foreground mt-1 max-w-prose text-sm">{description}</p>
         ) : null}
       </div>
 
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {/*
+        Les actions se partagent la largeur sur téléphone.
+
+        Un bouton de 90 px aligné à gauche sous un titre pleine largeur se
+        cherche ; étiré, il devient la suite naturelle du regard et une cible
+        que le pouce ne peut pas manquer.
+      */}
+      {actions ? (
+        <div className="flex shrink-0 items-center gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -40,7 +40,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 px-6 py-16 text-center shadow-2xl backdrop-blur-xl transition-all duration-300 dark:border-transparent dark:bg-slate-950/90 dark:shadow-none sm:px-12 sm:py-20">
             {/* Halo d'ambiance */}
-            <div className="absolute top-1/2 left-1/2 -z-10 h-[350px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-cyan-400/15 blur-[100px]" />
+            <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[350px] w-[min(500px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-cyan-400/15 blur-[100px]" />
 
             <div className="relative z-10 mx-auto max-w-3xl space-y-6">
               <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white">
@@ -55,10 +55,11 @@ export default function LandingPage() {
                 <Button
                   asChild
                   size="lg"
-                  className="rounded-xl bg-blue-600 px-8 py-3.5 font-bold text-white shadow-xl shadow-blue-600/30 hover:bg-blue-500 cursor-pointer"
+                  className="w-full rounded-xl px-6 py-3.5 font-bold shadow-xl shadow-blue-600/30 sm:w-auto sm:px-8"
                 >
                   <Link to={ROUTES.register}>
-                    Commencer gratuitement dès maintenant
+                    <span className="sm:hidden">Commencer gratuitement</span>
+                    <span className="hidden sm:inline">Commencer gratuitement dès maintenant</span>
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
