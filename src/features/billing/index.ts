@@ -29,3 +29,5 @@ export {
   useUserEntitlements,
   type Entitlements,
 } from './hooks/useEntitlements';
+
+export { TrialBanner } from './components/TrialBanner';
