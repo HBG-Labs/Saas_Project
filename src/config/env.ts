@@ -33,10 +33,22 @@ export function parseEnv(source: unknown): Env {
       .map((issue) => `  • ${issue.path.join('.')} : ${issue.message}`)
       .join('\n');
 
-    throw new Error(
-      `Configuration d'environnement invalide.\n\n${details}\n\n` +
-        'Copiez .env.example vers .env.local puis renseignez les valeurs de votre projet Supabase.',
-    );
+    /*
+      Le conseil dépend de qui lit.
+
+      « Copiez .env.example vers .env.local » n'a aucun sens pour quelqu'un qui
+      ouvre un site déployé : il n'a pas de dépôt. Et le rappel qui compte en
+      production ne compte pas en local — Vite fige ces valeurs À LA
+      COMPILATION, si bien qu'ajouter les variables chez l'hébergeur ne change
+      rien tant qu'on n'a pas reconstruit. C'est la cause la plus fréquente
+      d'un « je les ai pourtant renseignées ».
+    */
+    const remedy = import.meta.env.DEV
+      ? 'Copiez .env.example vers .env.local puis renseignez les valeurs de votre projet Supabase.'
+      : "Renseignez ces variables chez l'hébergeur, puis RELANCEZ UN DÉPLOIEMENT : " +
+        'leurs valeurs sont figées au moment de la compilation, les modifier ne suffit pas.';
+
+    throw new Error(`Configuration d'environnement invalide.\n\n${details}\n\n${remedy}`);
   }
 
   return result.data;

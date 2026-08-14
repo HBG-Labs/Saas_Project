@@ -78,12 +78,10 @@ export function renderBootFailure(container: HTMLElement | null, error: unknown)
         'white-space:pre-wrap;overflow-x:auto;color:#0f172a',
     );
 
-    const hint = document.createElement('p');
-    hint.textContent =
-      'Si vous administrez ce site : renseignez ces variables chez votre hébergeur, puis redéployez.';
-    hint.setAttribute('style', 'margin:0.75rem 0 0;font-size:0.75rem;color:#94a3b8');
-
-    panel.append(pre, hint);
+    // Le message porté par l'exception dit déjà quoi faire, et il s'adapte
+    // au contexte (voir `parseEnv`). Le répéter ici en plus petit ne ferait
+    // que diluer la seule ligne qui compte.
+    panel.append(pre);
   }
 
   target.append(panel);
