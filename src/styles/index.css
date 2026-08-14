@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 /* Polices auto-hébergées */
+@import '@fontsource-variable/plus-jakarta-sans';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
@@ -158,7 +159,12 @@
 
   --color-ring: var(--ring);
 
-  --font-sans: 'Plus Jakarta Sans', 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Le paquet fontsource declare la famille sous le nom 'Plus Jakarta Sans
+     Variable'. L'ancien nom reste en second : il couvre une police
+     eventuellement installee sur le poste. */
+  --font-sans:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Inter Variable', 'Inter',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /*

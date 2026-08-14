@@ -1,7 +1,34 @@
 <!doctype html>
-<html lang="fr" class="dark">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Le thème est posé AVANT le premier octet de rendu.
+
+      `<html>` portait `class="dark"` en dur, et le thème réel n'était appliqué
+      qu'une fois le bundle JavaScript chargé et exécuté : toute personne en
+      thème clair voyait donc un écran bleu nuit pendant quelques centaines de
+      millisecondes à chaque chargement à froid.
+
+      Ce script est volontairement en ligne et synchrone. Un fichier externe
+      serait téléchargé après le parsing du `<head>` — trop tard : le navigateur
+      aurait déjà peint le fond.
+    -->
+    <script>
+      (function () {
+        try {
+          /* Clé dupliquée depuis THEME_STORAGE_KEY (src/features/theme/theme-context.ts).
+             Un test la vérifie : voir src/features/theme/theme-script.test.ts. */
+          var stored = localStorage.getItem('nexoratech-theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (error) {
+          /* Navigation privée stricte : le thème clair par défaut reste utilisable. */
+        }
+      })();
+    </script>
     <!-- viewport-fit=cover : nécessaire pour exploiter env(safe-area-inset-*) sur iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!--
@@ -15,12 +42,19 @@
       name="description"
       content="NexoraTech — boîte à outils technique pour les professionnels de la fibre, des réseaux et de l'électricité."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
+    <!-- Polices auto-hébergées : voir les imports @fontsource de src/styles/index.css. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NexoraTech" />
+    <meta property="og:title" content="NexoraTech — le cockpit des équipes terrain" />
+    <meta
+      property="og:description"
+      content="Missions, interventions, comptes rendus, devis et parc matériel pour les professionnels de la fibre, des réseaux et de l'électricité."
     />
+    <meta name="twitter:card" content="summary" />
+
     <title>NexoraTech</title>
   </head>
   <body>

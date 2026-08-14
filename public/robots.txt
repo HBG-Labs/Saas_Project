@@ -1,0 +1,35 @@
+# NexoraTech
+#
+# La vitrine est indexable ; les écrans de travail ne le sont pas. Ils exigent
+# une session de toute façon — un robot n'y verrait qu'une redirection — mais
+# les déclarer évite de laisser des URL internes apparaître dans un index.
+
+User-agent: *
+Allow: /$
+Allow: /pricing
+Allow: /features
+Allow: /faq
+Allow: /tools
+Allow: /categories
+Allow: /references
+
+Disallow: /dashboard
+Disallow: /missions
+Disallow: /interventions
+Disallow: /clients
+Disallow: /equipes
+Disallow: /equipements
+Disallow: /devis
+Disallow: /analytics
+Disallow: /organisation
+Disallow: /journal
+Disallow: /controle
+Disallow: /comptes-rendus
+Disallow: /dossiers-clos
+Disallow: /bloc-notes
+Disallow: /profile
+Disallow: /settings
+Disallow: /history
+Disallow: /favorites
+Disallow: /invitations
+Disallow: /auth
