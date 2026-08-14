@@ -8,12 +8,36 @@ confié**, uniquement les trois variables publiques du frontend.
 
 ---
 
+## 0. L'ordre, et pourquoi il compte
+
+Chaque étape dépend de la précédente. Prises dans le désordre, certaines
+échouent d'une manière qui ne dit pas pourquoi.
+
+| # | Étape | Pourquoi ici |
+|---|---|---|
+| 1 | `npx supabase db push --linked` | Un frontend qui interroge une table absente échoue en silence. La base précède toujours. |
+| 2 | `npm run predeploy` | Attrape localement ce qui échouerait chez l'hébergeur. |
+| 3 | Déployer une **prévisualisation** | Fournit l'URL, sans engager la production. |
+| 4 | Renseigner les 3 variables (§2) | Sans elles, le site se charge et n'affiche qu'un panneau d'erreur. |
+| 5 | Supabase → URL Configuration (§3) | Il faut connaître l'URL de l'étape 3 pour la déclarer. |
+| 6 | Secrets courriel, dont `APP_URL` (§3 bis) | Même raison : `APP_URL` est cette URL. |
+| 7 | Vérifier la preview (§6) | Dernier moment où une erreur ne coûte rien. |
+| 8 | Promouvoir en production | |
+
+Les étapes 4 à 6 ne peuvent pas précéder l'étape 3 : **elles ont besoin de
+l'URL que Vercel attribue.** C'est la raison pour laquelle un premier
+déploiement se fait toujours en deux temps.
+
+---
+
 ## 1. Ce que le dépôt contient déjà
 
 | Fichier | Rôle |
 |---|---|
 | [`vercel.json`](../vercel.json) | Framework, commandes, réécritures SPA, en-têtes de sécurité et de cache |
-| [`.vercelignore`](../.vercelignore) | Écarte du transfert ce qui ne sert pas au build |
+| [`.vercelignore`](../.vercelignore) | Écarte du transfert ce que le build ne lit **jamais** |
+| [`scripts/check-deploy-package.mjs`](../scripts/check-deploy-package.mjs) | Vérifie que la ligne précédente est tenue |
+| `package.json` → `predeploy` | Types, tests, cohérence du paquet, construction |
 | `package.json` → `engines.node` | `>=20.19.0` — Vercel s'y conforme automatiquement |
 
 Rien d'autre n'est à créer. Les réglages ci-dessous se font dans l'interface
@@ -24,10 +48,19 @@ Vercel et dans le tableau de bord Supabase.
 ## 2. Variables d'environnement
 
 Trois variables, à déclarer dans **Vercel → Settings → Environment Variables**.
-Le build échoue immédiatement si l'une manque : `src/config/env.ts` les valide
-au démarrage et nomme précisément ce qui fait défaut. C'est voulu — une variable
-oubliée doit se voir au déploiement, pas se manifester en `undefined` opaque
-trois écrans plus loin.
+
+> **Le build ne les vérifie pas.** Vite remplace les `import.meta.env.VITE_*`
+> par leur valeur au moment de la compilation : une variable absente devient
+> `undefined`, et la compilation réussit. C'est au premier chargement dans le
+> navigateur que `src/config/env.ts` s'en aperçoit et lève.
+>
+> L'application affiche alors un panneau qui nomme les variables manquantes
+> ([`boot-failure.ts`](../src/app/boot-failure.ts)), au lieu de la page blanche
+> que produisait cette exception avant d'être interceptée — elle survient plus
+> haut que l'`ErrorBoundary`, qui n'est pas encore monté.
+>
+> Autrement dit : **un déploiement peut être « réussi » et le site inutilisable.**
+> Ouvrez toujours l'URL après le premier déploiement.
 
 | Variable | Valeur | Environnements |
 |---|---|---|
@@ -208,16 +241,42 @@ npx supabase functions deploy send-invitation
 
 ## 4. Première mise en ligne
 
-Le plus simple, et le mode recommandé : **connecter le dépôt GitHub** dans
-l'interface Vercel. Vercel détecte Vite, lit `vercel.json`, et redéploie à chaque
-poussée — les branches produisent des previews, `main` produit la production.
+### Avant de pousser
 
-En ligne de commande :
+```bash
+npm run predeploy
+```
+
+Cette commande enchaîne, dans cet ordre : les types, les tests, la **cohérence
+du paquet de déploiement**, puis la construction. Chaque étape informe la
+suivante — inutile de compiler ce dont les types sont faux.
+
+Le contrôle de cohérence
+([`check-deploy-package.mjs`](../scripts/check-deploy-package.mjs)) mérite un
+mot : il demande à TypeScript la liste exacte des fichiers que `tsc -b`
+compilera, y ajoute les ressources importées en `?raw`, et vérifie qu'aucune
+n'est écartée par `.vercelignore`. C'est la faute la plus courante d'un premier
+déploiement, et la plus déroutante — elle n'existe que chez l'hébergeur.
+
+### Le déploiement lui-même
+
+Le mode recommandé : **connecter le dépôt GitHub** dans l'interface Vercel.
+Vercel détecte Vite, lit `vercel.json`, et redéploie à chaque poussée — les
+branches produisent des prévisualisations, `main` produit la production.
+
+**Passez par une prévisualisation avant la production.** Poussez la branche,
+laissez Vercel construire, ouvrez l'URL de preview, déroulez le §6. C'est
+gratuit, sans effet sur le domaine de production, et c'est la seule preuve
+complète que le paquet est correct — aucun contrôle local ne reproduit
+exactement l'environnement de l'hébergeur.
+
+En ligne de commande, si vous préférez :
 
 ```bash
 npx vercel login
 npx vercel link     # crée .vercel/, déjà ignoré par Git
-npx vercel --prod
+npx vercel          # prévisualisation
+npx vercel --prod   # production, une fois la preview vérifiée
 ```
 
 ---
@@ -267,10 +326,16 @@ un second temps, en mode `Content-Security-Policy-Report-Only` d'abord.
    ```
 5. Onglet Réseau : aucune requête vers un domaine autre que
    `<projet>.supabase.co` et le domaine Vercel.
-6. `localStorage` : ne doivent subsister que `nexoratech_theme`,
+6. `localStorage` : ne doivent subsister que `nexoratech-theme`,
    `nexoratech_current_organization`, `nexoratech_calculation_history_v1` et le
-   drapeau `nexoratech_demo_storage_purged_v1`. Toute clé `nexoratech_local_*`
+   drapeau `nexoratech_demo_storage_purged_v2`. Toute clé `nexoratech_local_*`
    signalerait un reliquat non purgé.
+7. Recharger en thème clair : **aucun clignotement sombre** au premier affichage.
+   S'il subsiste, le script en ligne de `index.html` n'a pas été servi.
+8. Onglet Réseau, filtre « Font » : les polices viennent du domaine Vercel, pas
+   de `fonts.gstatic.com`.
+9. Depuis un téléphone réel, ou `npm run audit:responsive -- --url=<domaine>` :
+   aucun débordement horizontal.
 
 ---
 
