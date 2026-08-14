@@ -2,35 +2,48 @@
 # Ce qui ne monte pas sur Vercel
 # =============================================================================
 #
-# Vercel applique déjà `.gitignore`. Ce fichier écarte en plus ce qui est
-# VERSIONNÉ mais inutile au build d'un frontend statique : chaque fichier
-# transféré allonge le déploiement, et le dossier Android en pèse l'essentiel.
+# RÈGLE : on n'exclut QUE ce que le build ne lit jamais.
+#
+# La tentation est d'alléger le transfert en écartant tout ce qui n'est pas du
+# code applicatif. C'est une fausse économie, et un piège : `npm run build`
+# exécute `tsc -b`, qui construit les DEUX projets référencés par
+# `tsconfig.json`. Un fichier retiré ici mais listé dans un `include` là-bas
+# produit un échec de build qui n'apparaît qu'en déploiement — jamais en local,
+# où le fichier existe.
+#
+# Concrètement, sont donc CONSERVÉS, contre l'intuition :
+#
+#   supabase/    `src/test/sql-fixtures.ts` importe les migrations en `?raw`,
+#                et ce fichier est couvert par le `include: ["src"]` de
+#                tsconfig.app.json.
+#   e2e/         `tsconfig.node.json` les inclut explicitement, avec
+#   playwright.config.ts   `vite.config.ts`.
+#   *.md, docs/  `src/features/theme/theme-script.test.ts` lit `index.html`, et
+#                d'autres tests pourraient lire d'autres fichiers du dépôt.
+#                Quelques dizaines de kilo-octets ne valent pas ce risque.
+#
+# Ce qui reste ci-dessous est soit volumineux, soit un artefact reconstructible.
+# `scripts/check-deploy-package.mjs` vérifie que cette règle tient.
 # =============================================================================
 
 # Application mobile Capacitor — construite séparément, jamais servie par Vercel.
+# C'est l'essentiel du poids du dépôt, et rien du build web ne la référence.
 android/
-capacitor.config.json
 
-# `supabase/` n'est PAS exclu, et c'est délibéré : `src/test/sql-fixtures.ts`
-# importe les migrations par `?raw`, et ce fichier est couvert par le `include`
-# de `tsconfig.app.json`. Les retirer ferait échouer le `tsc -b` du build.
-
-# Tests de bout en bout et leurs artefacts.
-e2e/
-playwright.config.ts
+# Artefacts de test, reconstruits à la demande.
 playwright-report/
 test-results/
 coverage/
 
-# Documentation et rapports d'audit.
-docs/
-*.md
-!README.md
+# Captures d'écran déposées À LA RACINE pendant la mise au point.
+#
+# Le motif est ancré (`/`) : sans cela il écarterait aussi toute illustration
+# de `public/` ou `src/assets/` ajoutée plus tard — un fichier manquant en
+# production, découvert par une image cassée chez un client.
+/*.jpeg
+/*.jpg
+/*.png
 
-# Captures d'écran déposées à la racine.
-*.jpeg
-*.jpg
-
-# Scripts de poste de travail.
-scripts/
+# Scripts de poste de travail (PowerShell, Windows uniquement).
 push.ps1
+scripts/protect-node-modules.ps1
