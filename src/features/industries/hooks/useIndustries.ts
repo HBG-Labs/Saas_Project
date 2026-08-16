@@ -11,7 +11,11 @@ import {
 import { useCurrentOrganization } from '@/features/organizations';
 import { qk } from '@/lib/query-keys';
 
-import { listIndustries, type Industry } from '../api/industries.api';
+import {
+  listIndustries,
+  listInterventionTypes,
+  type Industry,
+} from '../api/industries.api';
 
 /**
  * Le référentiel complet, pour les écrans qui font choisir un métier.
@@ -96,4 +100,22 @@ export function useCurrentIndustry(): CurrentIndustry {
  */
 export function useLabel(key: keyof IndustryVocabulary): string {
   return useCurrentIndustry().vocabulary[key];
+}
+
+/**
+ * Types d'intervention du métier courant.
+ *
+ * La clé de cache porte le métier, pas l'organisation : deux entreprises du
+ * même corps de métier partagent exactement la même liste, et la dupliquer en
+ * cache n'apporterait rien.
+ */
+export function useInterventionTypes() {
+  const { code, isResolved } = useCurrentIndustry();
+
+  return useQuery({
+    queryKey: [...qk.industries.all, 'intervention-types', code],
+    queryFn: () => listInterventionTypes(code),
+    enabled: isResolved,
+    staleTime: 60 * 60_000,
+  });
 }

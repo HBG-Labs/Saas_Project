@@ -68,3 +68,43 @@ export async function listIndustries(): Promise<Industry[]> {
     vocabulary: toVocabulary(row.vocabulary),
   }));
 }
+
+export interface InterventionType {
+  id: string;
+  industryCode: string;
+  code: string;
+  label: string;
+  description: string | null;
+  icon: string;
+}
+
+/**
+ * Types d'intervention proposables à une organisation.
+ *
+ * Le métier de l'entreprise, PLUS le socle `general` : une entreprise
+ * spécialisée enregistre aussi des visites techniques et des dépannages sans
+ * caractère métier. Le trigger `missions_intervention_type_matches_industry`
+ * applique exactement la même règle côté serveur — ce filtre n'est qu'un
+ * confort de saisie, jamais une barrière.
+ */
+export async function listInterventionTypes(industry: string): Promise<InterventionType[]> {
+  const codes = industry === 'general' ? ['general'] : [industry, 'general'];
+
+  const rows = await unwrap(
+    supabase
+      .from('intervention_types')
+      .select('id, industry_code, code, label, description, icon')
+      .in('industry_code', codes)
+      .order('industry_code', { ascending: false })
+      .order('sort_order', { ascending: true }),
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    industryCode: row.industry_code,
+    code: row.code,
+    label: row.label,
+    description: row.description,
+    icon: row.icon,
+  }));
+}

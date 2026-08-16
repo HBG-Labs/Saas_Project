@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { CustomerPicker, SitePicker } from '@/features/customers';
+import { useInterventionTypes } from '@/features/industries';
 import { memberDisplayName, useMembers } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
 import type { MissionPriority } from '@/types/database';
@@ -30,6 +31,9 @@ export interface MissionFormFieldsProps {
 
   assignedMemberId?: string | null;
   onAssignedMemberChange?: (memberId: string | null) => void;
+
+  interventionTypeId?: string | null;
+  onInterventionTypeChange?: (typeId: string | null) => void;
 }
 
 export function MissionFormFields({
@@ -46,13 +50,27 @@ export function MissionFormFields({
   onAssignedTeamChange,
   assignedMemberId = null,
   onAssignedMemberChange,
+  interventionTypeId = null,
+  onInterventionTypeChange,
 }: MissionFormFieldsProps) {
   const teamsQuery = useTeams(organizationId);
+  const typesQuery = useInterventionTypes();
   const membersQuery = useMembers(organizationId);
 
   const teamOptions = [
     { value: '', label: 'Aucune équipe affectée' },
     ...(teamsQuery.data ?? []).map((t) => ({ value: t.id, label: t.name })),
+  ];
+
+  /*
+    Types du métier de l'entreprise, plus le socle commun.
+
+    Le trigger `missions_intervention_type_matches_industry` applique la même
+    règle côté serveur : cette liste est un confort de saisie, pas une barrière.
+  */
+  const typeOptions = [
+    { value: '', label: 'Type non précisé' },
+    ...(typesQuery.data ?? []).map((t) => ({ value: t.id, label: t.label })),
   ];
 
   const memberOptions = [
@@ -81,6 +99,17 @@ export function MissionFormFields({
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
+        {onInterventionTypeChange ? (
+          <Select
+            options={typeOptions}
+            value={interventionTypeId ?? ''}
+            onValueChange={(value) => onInterventionTypeChange(value === '' ? null : value)}
+            label="Nature de l'intervention"
+            hint="Détermine le formulaire de compte rendu."
+            disabled={typesQuery.isPending}
+          />
+        ) : null}
+
         <Select
           options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
             value,

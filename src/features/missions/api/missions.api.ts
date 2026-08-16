@@ -120,6 +120,8 @@ export async function createMission(input: {
   title: string;
   description?: string;
   categoryId?: string;
+  /** Nature du travail. Le serveur vérifie qu'elle relève bien du métier de l'organisation. */
+  interventionTypeId?: string | null;
   customerId?: string | null;
   siteId?: string | null;
   assignedTeamId?: string | null;
@@ -148,6 +150,7 @@ export async function createMission(input: {
     title: input.title,
     ...(input.description !== undefined ? { description: input.description } : {}),
     ...(input.categoryId !== undefined ? { category_id: input.categoryId } : {}),
+    ...(input.interventionTypeId ? { intervention_type_id: input.interventionTypeId } : {}),
     ...(input.customerId ? { customer_id: input.customerId } : {}),
     ...(input.siteId ? { site_id: input.siteId } : {}),
     ...(input.assignedTeamId ? { assigned_team_id: input.assignedTeamId } : {}),

@@ -35,6 +35,7 @@ export default function MissionCreatePage() {
   const [priority, setPriority] = useState<MissionPriority>('normal');
   const [assignedTeamId, setAssignedTeamId] = useState<string | null>(null);
   const [assignedMemberId, setAssignedMemberId] = useState<string | null>(null);
+  const [interventionTypeId, setInterventionTypeId] = useState<string | null>(null);
 
   const {
     register,
@@ -78,6 +79,7 @@ export default function MissionCreatePage() {
         ...(siteId !== null ? { siteId } : {}),
         ...(assignedTeamId !== null ? { assignedTeamId } : {}),
         ...(assignedMemberId !== null ? { assignedUserId: assignedMemberId } : {}),
+        ...(interventionTypeId !== null ? { interventionTypeId } : {}),
       });
 
       await navigate(ROUTES.mission(mission.id));
@@ -119,6 +121,8 @@ export default function MissionCreatePage() {
               onAssignedTeamChange={setAssignedTeamId}
               assignedMemberId={assignedMemberId}
               onAssignedMemberChange={setAssignedMemberId}
+              interventionTypeId={interventionTypeId}
+              onInterventionTypeChange={setInterventionTypeId}
             />
           </CardContent>
         </Card>

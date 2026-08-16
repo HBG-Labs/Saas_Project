@@ -435,6 +435,37 @@ export interface Database {
         Relationships: [];
       };
 
+      /**
+       * Nature du travail, par métier. Ancre les formulaires et check-lists.
+       *
+       * Écriture fermée, comme `industries` : les types sont livrés avec le
+       * produit, versionnés en migration.
+       */
+      intervention_types: {
+        Row: {
+          id: string;
+          industry_code: string;
+          code: string;
+          label: string;
+          description: string | null;
+          icon: string;
+          sort_order: number;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'intervention_types_industry_code_fkey';
+            columns: ['industry_code'];
+            referencedRelation: 'industries';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
+
       plans: {
         Row: {
           code: string;
@@ -744,7 +775,10 @@ export interface Database {
           reference: string;
           title: string;
           description: string | null;
+          /** Héritée du catalogue d'outils. Inutilisée : aucune mission ne la renseigne. */
           category_id: string | null;
+          /** Nature du travail, dans le métier de l'organisation. */
+          intervention_type_id: string | null;
           /**
            * Rattachement à la fiche client. Facultatif : une mission d'urgence
            * peut naître sans client enregistré. `on delete set null` — supprimer
@@ -786,6 +820,7 @@ export interface Database {
           title: string;
           description?: string | null;
           category_id?: string | null;
+          intervention_type_id?: string | null;
           customer_id?: string | null;
           site_id?: string | null;
           priority?: MissionPriority;
@@ -813,6 +848,7 @@ export interface Database {
           title?: string;
           description?: string | null;
           category_id?: string | null;
+          intervention_type_id?: string | null;
           customer_id?: string | null;
           site_id?: string | null;
           priority?: MissionPriority;
