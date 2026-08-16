@@ -1,4 +1,4 @@
-import { LayoutGrid, LayoutList, Search, Wrench, X } from 'lucide-react';
+import { Briefcase, LayoutGrid, LayoutList, Search, Wrench, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
@@ -9,7 +9,14 @@ import { Input } from '@/components/ui/Input';
 import { CATEGORY_METADATA } from '@/features/tools/catalog-metadata';
 import { CategoryCard } from '@/features/tools/components/CategoryCard';
 import { ToolCard } from '@/features/tools/components/ToolCard';
-import { listTools, type ToolCategorySlug } from '@/features/tools';
+import { useCurrentIndustry } from '@/features/industries';
+import {
+  countOutsideIndustry,
+  listTools,
+  servesIndustry,
+  sortByIndustryRelevance,
+  type ToolCategorySlug,
+} from '@/features/tools';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -48,12 +55,30 @@ export default function ToolsPage() {
 
   const allTools = listTools();
 
+  /*
+    Le metier ORDONNE le catalogue, il ne le tronque pas par defaut.
+
+    `/tools` est public : un visiteur sans compte n'a pas de metier, et lui
+    servir un catalogue ampute n'aurait aucun sens. Une entreprise, elle, voit
+    d'abord ce qui la concerne — mais garde tout le reste a portee d'un clic,
+    parce que les corps de metier se recouvrent : l'entreprise qui utilise ce
+    produit fait de la fibre ET de l'electricite.
+  */
+  const { code: industry, label: industryLabel, isResolved } = useCurrentIndustry();
+  const [industryOnly, setIndustryOnly] = useState(false);
+
+  const outsideCount = useMemo(
+    () => (isResolved ? countOutsideIndustry(allTools, industry) : 0),
+    [allTools, industry, isResolved],
+  );
+
   const tools = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
     const filtered = allTools.filter((tool) => {
       const matchesCategory = filter === 'all' || tool.category === filter;
       if (!matchesCategory) return false;
+      if (industryOnly && !servesIndustry(tool, industry)) return false;
       if (normalized === '') return true;
 
       return (
@@ -64,12 +89,16 @@ export default function ToolsPage() {
     });
 
     // Tri prioritaire : Calculatrice Scientifique TOUJOURS en position #1
-    return filtered.sort((a, b) => {
+    const ordered = [...filtered].sort((a, b) => {
       if (a.slug === 'scientific-calculator') return -1;
       if (b.slug === 'scientific-calculator') return 1;
       return (a.order ?? 99) - (b.order ?? 99);
     });
-  }, [allTools, query, filter]);
+
+    // Puis remontee des outils du metier, en tri STABLE : le classement
+    // ci-dessus survit intact a l'interieur de chaque groupe.
+    return isResolved ? sortByIndustryRelevance(ordered, industry) : ordered;
+  }, [allTools, query, filter, industry, industryOnly, isResolved]);
 
   const hasTools = allTools.length > 0;
   const isFiltering = query.trim() !== '' || filter !== 'all';
@@ -143,6 +172,34 @@ export default function ToolsPage() {
                 </button>
               </div>
             </div>
+
+            {/*
+              Restriction au metier : proposee, jamais imposee.
+
+              Le bouton n'apparait que si l'organisation exerce un metier ET
+              qu'il y a effectivement quelque chose a ecarter. Il annonce le
+              nombre d'outils concernes : « masquer 3 outils » se decide, « voir
+              moins » se subit.
+            */}
+            {isResolved && outsideCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIndustryOnly((only) => !only)}
+                aria-pressed={industryOnly}
+                className={cn(
+                  'flex min-h-touch items-center gap-2 rounded-lg border px-3.5 text-xs font-medium transition-all cursor-pointer sm:min-h-9',
+                  'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                  industryOnly
+                    ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
+                    : 'border-border/70 bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+                )}
+              >
+                <Briefcase className="size-4 shrink-0" aria-hidden="true" />
+                {industryOnly
+                  ? `Métier « ${industryLabel} » — afficher les ${outsideCount} autres outils`
+                  : `Limiter au métier « ${industryLabel} » (${outsideCount} outils masqués)`}
+              </button>
+            ) : null}
 
             {/* Boutons de catégories synchronisés avec l'URL */}
             <div role="group" aria-label="Filtrer par domaine" className="flex flex-wrap gap-2">

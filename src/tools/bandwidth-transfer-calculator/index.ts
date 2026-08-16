@@ -3,6 +3,7 @@ import { defineTool } from '@/features/tools/registry';
 
 export default defineTool({
   slug: 'bandwidth-transfer-calculator',
+  industry: ['fiber_telecom', 'it_networks'],
   category: 'networking',
   title: 'Calculateur Débit Réseau',
   description: 'Calcul du débit utile net, estimation de la durée de transfert de fichiers et bande passante requise.',

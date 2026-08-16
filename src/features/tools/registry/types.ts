@@ -1,6 +1,7 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
 
 import { CATEGORY_SLUGS, type CategorySlug } from '@/config/categories';
+import type { IndustryCode } from '@/config/industries';
 
 /**
  * Catégories du catalogue.
@@ -30,6 +31,23 @@ export interface ToolDefinition {
   /** Identifiant stable, en kebab-case. Doit correspondre à `tools.slug` en base. */
   slug: string;
   category: ToolCategorySlug;
+  /**
+   * Métier(s) que l'outil sert en premier lieu.
+   *
+   * ─────────────────────────────────────────────────────────────────────────
+   * CE N'EST PAS UN DROIT D'ACCÈS
+   *
+   * Le catalogue reste consultable en entier, y compris sans compte. Cet
+   * attribut sert à mettre en avant ce qui concerne le métier de l'entreprise,
+   * pas à cacher le reste : les corps de métier se recouvrent largement — un
+   * frigoriste vérifie une tension, un fibreur pose un chemin de câbles — et
+   * masquer un outil utile serait une régression déguisée en pertinence.
+   *
+   * Absent = outil transverse, pertinent partout (calculatrice, convertisseurs
+   * d'unités).
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+  industry?: IndustryCode | readonly IndustryCode[];
   subcategory?: 'calculator' | 'converter';
   title: string;
   description: string;

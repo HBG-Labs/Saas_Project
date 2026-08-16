@@ -3,6 +3,7 @@ import { defineTool } from '@/features/tools/registry';
 
 export default defineTool({
   slug: 'ipv6-subnet-calculator',
+  industry: ['fiber_telecom', 'it_networks'],
   category: 'networking',
   title: 'Calculateur VLAN',
   description: 'Planification des VLANs (802.1Q), découpage de sous-réseaux virtuels et étiquetage de trames.',

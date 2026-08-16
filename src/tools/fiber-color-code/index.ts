@@ -3,6 +3,7 @@ import { defineTool } from '@/features/tools/registry';
 
 export default defineTool({
   slug: 'fiber-color-code',
+  industry: 'fiber_telecom',
   category: 'fiber-optics',
   order: 1,
   title: 'Codes couleurs de fibre optique (Modulo 6 & 12)',

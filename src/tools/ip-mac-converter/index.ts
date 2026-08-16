@@ -3,6 +3,7 @@ import { defineTool } from '@/features/tools/registry';
 
 export default defineTool({
   slug: 'ip-mac-converter',
+  industry: ['fiber_telecom', 'it_networks'],
   category: 'networking',
   title: 'Convertisseur IP Binaire',
   description: 'Conversion d’adresses IP en binaire (32 bits), hexadécimal, masques réseaux et dérivations Wildcard.',

@@ -29,3 +29,10 @@ export {
 } from './registry';
 
 export { useCatalogReconciliation } from './useCatalogReconciliation';
+
+export {
+  countOutsideIndustry,
+  isTransverseTool,
+  servesIndustry,
+  sortByIndustryRelevance,
+} from './registry/industry-scope';

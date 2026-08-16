@@ -3,6 +3,7 @@ import { defineTool } from '@/features/tools/registry';
 
 export default defineTool({
   slug: 'tcp-bdp-calculator',
+  industry: ['fiber_telecom', 'it_networks'],
   category: 'networking',
   title: 'Calculateur PoE',
   description: 'Calcul d’alimentation PoE / PoE+ / PoE++ (802.3af/at/bt), bilan de consommation et chute de tension sur câble RJ45.',
