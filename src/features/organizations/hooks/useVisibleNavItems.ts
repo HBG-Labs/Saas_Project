@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { IndustryCode } from '@/config/industries';
+import { pluralize, type IndustryCode, type IndustryVocabulary } from '@/config/industries';
 import { useOrganizationEntitlements, type FeatureKey } from '@/features/billing';
 import { useCurrentIndustry } from '@/features/industries';
 import type { NavGroup, NavItem } from '@/config/navigation';
@@ -11,10 +11,10 @@ import { useCurrentOrganization } from './useCurrentOrganization';
 import { usePermission } from './usePermission';
 
 /**
- * Filtre une liste de destinations selon le rôle et la formule.
+ * Composition du menu : ce qui est visible, et sous quel nom.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * CE HOOK NE SÉCURISE RIEN.
+ * CES HOOKS NE SÉCURISENT RIEN.
  *
  * Retirer une entrée de menu n'empêche pas d'atteindre l'URL à la main. La
  * section s'ouvrira alors — et restera vide, la RLS ne renvoyant rien. C'est
@@ -22,12 +22,36 @@ import { usePermission } from './usePermission';
  * décrit le produit, pas le travail de celui qui le consulte.
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * `permission` et `feature` arrivent en `string` : `config/` est la couche basse
- * et ignore les types des features. La conversion est faite ici, du côté qui les
- * connaît, et `navigation.test.ts` garantit qu'aucune valeur invalide ne se
- * glisse dans la configuration — sans quoi une entrée disparaîtrait
- * silencieusement pour tout le monde.
+ * `permission`, `feature` et `industry` arrivent en `string` : `config/` est la
+ * couche basse et ignore les types des features. La conversion est faite ici,
+ * du côté qui les connaît, et `navigation.test.ts` garantit qu'aucune valeur
+ * invalide ne se glisse dans la configuration — sans quoi une entrée
+ * disparaîtrait silencieusement pour tout le monde.
  */
+
+/**
+ * Remplace le libellé d'une entrée par le terme du métier, s'il y a lieu.
+ *
+ * Fait ici parce que ces hooks connaissent déjà le métier : le résoudre une
+ * seconde fois dans chaque composant de menu multiplierait les sources et
+ * finirait par les faire diverger.
+ */
+function withVocabulary(
+  item: NavItem,
+  vocabulary: IndustryVocabulary,
+  overrides: Record<string, string>,
+): NavItem {
+  if (item.vocabulary === undefined) return item;
+
+  const singular = vocabulary[item.vocabulary.term];
+  const label =
+    item.vocabulary.plural === true
+      ? pluralize(singular, overrides[`${item.vocabulary.term}_plural`])
+      : singular;
+
+  return { ...item, label };
+}
+
 /**
  * Une destination survit-elle aux trois critères ?
  *
@@ -61,11 +85,14 @@ export function useVisibleNavItems(items: readonly NavItem[]): readonly NavItem[
   const { can } = usePermission();
   const { organization } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
-  const { code } = useCurrentIndustry();
+  const { code, vocabulary, overrides } = useCurrentIndustry();
 
   return useMemo(
-    () => items.filter((item) => isVisible(item, has, code, can)),
-    [items, can, has, code],
+    () =>
+      items
+        .filter((item) => isVisible(item, has, code, can))
+        .map((item) => withVocabulary(item, vocabulary, overrides)),
+    [items, can, has, code, vocabulary, overrides],
   );
 }
 
@@ -83,17 +110,19 @@ export function useVisibleNavGroups(groups: readonly NavGroup[]): readonly NavGr
   const { can } = usePermission();
   const { organization } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
-  const { code } = useCurrentIndustry();
+  const { code, vocabulary, overrides } = useCurrentIndustry();
 
   return useMemo(() => {
     const visible: NavGroup[] = [];
 
     for (const group of groups) {
-      const items = group.items.filter((item) => isVisible(item, has, code, can));
+      const items = group.items
+        .filter((item) => isVisible(item, has, code, can))
+        .map((item) => withVocabulary(item, vocabulary, overrides));
 
       if (items.length > 0) visible.push({ ...group, items });
     }
 
     return visible;
-  }, [groups, can, has, code]);
+  }, [groups, can, has, code, vocabulary, overrides]);
 }

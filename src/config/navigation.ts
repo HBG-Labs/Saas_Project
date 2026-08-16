@@ -19,6 +19,18 @@ export interface NavItem {
    * `navigation.test.ts` garantit qu'aucune valeur invalide ne s'y glisse.
    */
   industry?: string | readonly string[];
+  /**
+   * Terme du vocabulaire métier qui remplace `label`.
+   *
+   * « Missions » pour un fibreur, « Chantiers » pour un paysagiste,
+   * « Prestations » pour une société de nettoyage. La substitution est faite
+   * par `useVisibleNavItems`, qui connaît déjà le métier courant — le menu et
+   * ses consommateurs n'ont rien à savoir de tout cela.
+   *
+   * Typé en clair ici comme le reste : `config/` est la couche la plus basse et
+   * ne dépend d'aucune feature.
+   */
+  vocabulary?: { term: 'worker' | 'job' | 'visit'; plural?: boolean };
 }
 
 export interface NavGroup {
@@ -33,11 +45,23 @@ export const ROOT_NAV: readonly NavItem[] = [
 
 export const PRINCIPAL_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Dashboard', icon: 'dashboard', primary: true },
-  { to: ROUTES.missions, label: 'Missions', icon: 'clipboard', feature: 'missions' },
+  {
+    to: ROUTES.missions,
+    label: 'Missions',
+    icon: 'clipboard',
+    feature: 'missions',
+    vocabulary: { term: 'job', plural: true },
+  },
   { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
   { to: ROUTES.teams, label: 'Équipes', icon: 'users-round', feature: 'teams' },
-  { to: ROUTES.organizationMembers, label: 'Techniciens', icon: 'users', feature: 'members' },
+  {
+    to: ROUTES.organizationMembers,
+    label: 'Techniciens',
+    icon: 'users',
+    feature: 'members',
+    vocabulary: { term: 'worker', plural: true },
+  },
   { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];

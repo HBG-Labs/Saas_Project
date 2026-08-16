@@ -6,6 +6,8 @@ import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/conf
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
+import { useVisibleNavGroups } from '@/features/organizations';
+
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
 interface SidebarProps {
@@ -83,7 +85,19 @@ export function Sidebar({
 }: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isCollapsed = externalCollapsed ?? internalCollapsed;
-  const activeGroups = groups ?? SIDEBAR_GROUPS;
+  /*
+    La barre latérale filtre, comme la navigation basse et la recherche.
+
+    Elle rendait `SIDEBAR_GROUPS` BRUT : ni le rôle, ni la formule, ni le métier
+    n'étaient consultés. Un technicien y voyait « Clients », « Équipes » et
+    « Facturation » — des sections qu'il pouvait ouvrir pour n'y trouver que du
+    vide, la RLS ne lui renvoyant rien.
+
+    Le hook existait pourtant, avec sa documentation, et n'était appelé que par
+    `MobileNav` et la recherche. C'est le menu principal du poste de travail qui
+    y échappait.
+  */
+  const activeGroups = useVisibleNavGroups(groups ?? SIDEBAR_GROUPS);
 
   const handleToggle = () => {
     if (onToggleCollapse) {

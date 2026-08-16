@@ -69,3 +69,28 @@ export const DEFAULT_VOCABULARY: IndustryVocabulary = {
   job: 'Mission',
   visit: 'Intervention',
 };
+
+/**
+ * Pluriel d'un terme métier.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UN « s » SUFFIT — POUR L'INSTANT
+ *
+ * Les trente-trois termes semés sont tous des pluriels réguliers : technicien,
+ * frigoriste, jardinier, chantier, prestation, passage, visite… Stocker
+ * trente-trois formes plurielles en base pour ajouter un « s » serait une
+ * cérémonie sans objet.
+ *
+ * Mais la règle française ne tient pas toujours — « travaux » est déjà pluriel,
+ * un terme en -al ferait -aux. Le jour où un métier en apportera un, sa clé
+ * `<terme>_plural` dans `industries.vocabulary` prendra le dessus, sans
+ * migration de schéma ni changement ici.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function pluralize(singular: string, override?: string): string {
+  if (override !== undefined && override !== '') return override;
+  if (singular === '') return singular;
+
+  // Un mot déjà terminé par s, x ou z est invariable.
+  return /[sxz]$/i.test(singular) ? singular : `${singular}s`;
+}

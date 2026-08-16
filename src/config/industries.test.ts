@@ -7,7 +7,7 @@ import {
   stripCast,
 } from '@/test/sql-fixtures';
 
-import { DEFAULT_INDUSTRY, INDUSTRY_CODES, isIndustryCode } from './industries';
+import { DEFAULT_INDUSTRY, INDUSTRY_CODES, isIndustryCode, pluralize } from './industries';
 
 /**
  * Le miroir TypeScript des métiers ne doit pas diverger du semis SQL.
@@ -94,5 +94,36 @@ describe('migration des métiers', () => {
     // Seule une migration alimente cette table. Comme pour `subscriptions`,
     // l'absence de policy d'écriture vaut interdiction.
     expect(sql).not.toMatch(/create policy[^;]*on public\.industries for (insert|update|delete)/i);
+  });
+});
+
+describe('vocabulaire métier', () => {
+  it('forme le pluriel des trente-trois termes semés', () => {
+    // Tous réguliers aujourd'hui. Ce test échouera le jour où un métier
+    // apportera un terme irrégulier — et rappellera qu'il faut alors poser sa
+    // clé `<terme>_plural` en base plutôt que de corriger `pluralize`.
+    const tuples = extractInsertTuplesAcross([MIGRATION_FILES.industries], 'industries');
+    expect(tuples.length).toBeGreaterThan(0);
+
+    for (const [singular, expected] of [
+      ['Technicien', 'Techniciens'],
+      ['Frigoriste', 'Frigoristes'],
+      ['Jardinier', 'Jardiniers'],
+      ['Chantier', 'Chantiers'],
+      ['Prestation', 'Prestations'],
+      ['Passage', 'Passages'],
+    ] as const) {
+      expect(pluralize(singular)).toBe(expected);
+    }
+  });
+
+  it('laisse invariable un terme déjà terminé par s, x ou z', () => {
+    expect(pluralize('Travaux')).toBe('Travaux');
+    expect(pluralize('Devis')).toBe('Devis');
+  });
+
+  it('privilégie la forme explicite quand elle existe', () => {
+    // Le recours prévu pour un pluriel que la règle ne sait pas produire.
+    expect(pluralize('Cheval', 'Chevaux')).toBe('Chevaux');
   });
 });

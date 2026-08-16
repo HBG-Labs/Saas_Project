@@ -29,6 +29,8 @@ export interface Industry {
   icon: string;
   sortOrder: number;
   vocabulary: IndustryVocabulary;
+  /** Clés supplémentaires du `vocabulary` : pluriels irréguliers, notamment. */
+  overrides: Record<string, string>;
 }
 
 /**
@@ -45,6 +47,19 @@ function toVocabulary(raw: unknown): IndustryVocabulary {
     typeof source[key] === 'string' && source[key] !== '' ? source[key] : DEFAULT_VOCABULARY[key];
 
   return { worker: read('worker'), job: read('job'), visit: read('visit') };
+}
+
+/** Les clés du `vocabulary` qui ne sont pas l'un des trois termes typés. */
+function toOverrides(raw: unknown): Record<string, string> {
+  if (typeof raw !== 'object' || raw === null) return {};
+
+  const known = new Set(['worker', 'job', 'visit']);
+  const out: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!known.has(key) && typeof value === 'string') out[key] = value;
+  }
+  return out;
 }
 
 export async function listIndustries(): Promise<Industry[]> {
@@ -66,6 +81,7 @@ export async function listIndustries(): Promise<Industry[]> {
     icon: row.icon,
     sortOrder: row.sort_order,
     vocabulary: toVocabulary(row.vocabulary),
+    overrides: toOverrides(row.vocabulary),
   }));
 }
 

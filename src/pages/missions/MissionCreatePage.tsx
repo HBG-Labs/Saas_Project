@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
+import { useLabel } from '@/features/industries';
 import {
   MissionFormFields,
   missionSchema,
@@ -28,6 +29,7 @@ export default function MissionCreatePage() {
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const createMission = useCreateMission();
+  const job = useLabel('job');
 
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -98,7 +100,7 @@ export default function MissionCreatePage() {
       </Button>
 
       <PageHeader
-        title="Nouvelle mission"
+        title={`Nouveau ${job.toLowerCase()}`}
         description="Renseignez les détails de la mission et affectez directement une équipe ou un technicien responsable."
       />
 

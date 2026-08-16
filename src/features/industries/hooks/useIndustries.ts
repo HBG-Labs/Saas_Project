@@ -5,6 +5,7 @@ import {
   DEFAULT_INDUSTRY,
   DEFAULT_VOCABULARY,
   isIndustryCode,
+  pluralize,
   type IndustryCode,
   type IndustryVocabulary,
 } from '@/config/industries';
@@ -39,6 +40,13 @@ export interface CurrentIndustry {
   label: string;
   icon: string;
   vocabulary: IndustryVocabulary;
+  /**
+   * Clés brutes du `vocabulary` en base, au-delà des trois termes typés.
+   *
+   * Sert aujourd'hui aux pluriels irréguliers (`job_plural`), et évite d'avoir
+   * à migrer le schéma le jour où un métier en apportera un.
+   */
+  overrides: Record<string, string>;
   /** `false` tant que le référentiel n'est pas chargé, ou hors organisation. */
   isResolved: boolean;
 }
@@ -75,6 +83,7 @@ export function useCurrentIndustry(): CurrentIndustry {
         label: code,
         icon: 'briefcase',
         vocabulary: DEFAULT_VOCABULARY,
+        overrides: {},
         isResolved: false,
       };
     }
@@ -84,6 +93,7 @@ export function useCurrentIndustry(): CurrentIndustry {
       label: match.label,
       icon: match.icon,
       vocabulary: match.vocabulary,
+      overrides: match.overrides,
       isResolved: true,
     };
   }, [organization, industries.data]);
@@ -99,8 +109,11 @@ export function useCurrentIndustry(): CurrentIndustry {
  * d'internationalisation entrera, il n'y aura plus rien de centralisé à lui
  * confier.
  */
-export function useLabel(key: keyof IndustryVocabulary): string {
-  return useCurrentIndustry().vocabulary[key];
+export function useLabel(key: keyof IndustryVocabulary, plural = false): string {
+  const { vocabulary, overrides } = useCurrentIndustry();
+  const singular = vocabulary[key];
+
+  return plural ? pluralize(singular, overrides[`${key}_plural`]) : singular;
 }
 
 /**

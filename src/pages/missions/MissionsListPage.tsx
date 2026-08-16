@@ -15,6 +15,7 @@ import { Link } from 'react-router';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useLabel } from '@/features/industries';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -59,6 +60,8 @@ export default function MissionsListPage() {
 
   const missions = useMissions(organizationId, toMissionQuery(filters));
   const statusCounts = useMissionStatusCounts(organizationId);
+  // « Missions » chez un fibreur, « Chantiers » chez un paysagiste.
+  const jobPlural = useLabel('job', true);
 
   const canCreate = can(PERMISSIONS.missionCreate);
   const canViewAll = can(PERMISSIONS.missionViewAll);
@@ -152,7 +155,7 @@ export default function MissionsListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Missions & Planning"
+        title={`${jobPlural} & Planning`}
         description={
           canViewAll
             ? 'Pilotage des interventions de l’entreprise en vue Liste, Semaine ou Calendrier Mensuel.'
