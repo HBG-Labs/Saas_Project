@@ -63,6 +63,21 @@ export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 
 export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
 
+/**
+ * Types de champ d'un formulaire métier.
+ *
+ * Sept, délibérément. `photo` et `signature` sont absents : ils supposent le
+ * téléversement vers `intervention_attachments`, qui n'a jamais été exercé.
+ */
+export type FormFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'boolean'
+  | 'select'
+  | 'multiselect'
+  | 'date';
+
 export interface Database {
   public: {
     Tables: {
@@ -462,6 +477,105 @@ export interface Database {
             columns: ['industry_code'];
             referencedRelation: 'industries';
             referencedColumns: ['code'];
+          },
+        ];
+      };
+
+      /** Modèle de saisie rattaché à un type d'intervention. Une ligne = une version. */
+      form_templates: {
+        Row: {
+          id: string;
+          intervention_type_id: string;
+          version: number;
+          label: string;
+          description: string | null;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'form_templates_intervention_type_id_fkey';
+            columns: ['intervention_type_id'];
+            referencedRelation: 'intervention_types';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      form_fields: {
+        Row: {
+          id: string;
+          form_template_id: string;
+          /** Clé stable employée dans le document de réponses. */
+          key: string;
+          label: string;
+          help: string | null;
+          type: FormFieldType;
+          required: boolean;
+          /** Étiquette affichée près du champ : dB, bar, m². Jamais convertie. */
+          unit: string | null;
+          min_value: number | null;
+          max_value: number | null;
+          /** Tableau de chaînes pour `select` et `multiselect`, nul ailleurs. */
+          options: Json;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'form_fields_form_template_id_fkey';
+            columns: ['form_template_id'];
+            referencedRelation: 'form_templates';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /**
+       * Réponses saisies, validées à l'écriture contre `form_fields` par
+       * `app.validate_form_response`.
+       */
+      intervention_form_responses: {
+        Row: {
+          id: string;
+          intervention_id: string;
+          organization_id: string;
+          form_template_id: string;
+          values: Json;
+          /** Non nul = déclaré complet. C'est alors que les champs obligatoires s'imposent. */
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          intervention_id: string;
+          organization_id: string;
+          form_template_id: string;
+          values?: Json;
+          completed_at?: string | null;
+        };
+        Update: {
+          values?: Json;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intervention_form_responses_intervention_id_fkey';
+            columns: ['intervention_id'];
+            referencedRelation: 'interventions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intervention_form_responses_form_template_id_fkey';
+            columns: ['form_template_id'];
+            referencedRelation: 'form_templates';
+            referencedColumns: ['id'];
           },
         ];
       };

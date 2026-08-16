@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
+import { InterventionFormCard } from '@/features/industries';
 import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
 import {
@@ -292,6 +293,25 @@ export default function ReportEditorPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          {/*
+            Le relevé métier, entre le récit et les pièces jointes.
+
+            Il ne s'affiche que si la mission porte un type d'intervention ET
+            que ce type dispose d'un modèle. Sinon l'écran reste exactement ce
+            qu'il était — c'est le cas de quatre des sept types du pack fibre,
+            et de toute organisation sans métier déclaré.
+          */}
+          {organization !== null ? (
+            <InterventionFormCard
+              interventionId={data.id}
+              organizationId={organization.id}
+              interventionTypeId={mission.data?.intervention_type_id ?? null}
+              readOnly={
+                report !== null && report.status !== 'draft' && report.status !== 'rejected'
+              }
+            />
+          ) : null}
 
           <Card>
             <CardHeader>
