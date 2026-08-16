@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { isIndustryCode } from '@/config/industries';
 import { FEATURES, type FeatureKey } from '@/features/billing';
 import {
   ACCOUNT_NAV,
@@ -57,6 +58,26 @@ describe('configuration de navigation', () => {
         knownFeatures,
         `« ${item.label} » exige la fonctionnalité inconnue « ${item.feature} »`,
       ).toContain(item.feature);
+    }
+  });
+
+  it("n'exige que des métiers existants", () => {
+    // Même piège que ci-dessus, et plus discret encore : un métier mal
+    // orthographié ne correspondrait à aucune organisation, et l'entrée
+    // disparaîtrait pour la totalité des utilisateurs sans jamais lever
+    // d'erreur. On ne s'en apercevrait qu'en cherchant un écran qu'on croit
+    // avoir livré.
+    for (const item of ALL_NAV) {
+      if (item.industry === undefined) continue;
+
+      const codes = Array.isArray(item.industry) ? item.industry : [item.industry];
+
+      for (const code of codes) {
+        expect(
+          isIndustryCode(code),
+          `« ${item.label} » exige le métier inconnu « ${code} »`,
+        ).toBe(true);
+      }
     }
   });
 

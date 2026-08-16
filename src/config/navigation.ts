@@ -5,8 +5,20 @@ export interface NavItem {
   label: string;
   icon: string;
   primary?: boolean;
+  /** Rôle requis dans l'organisation. */
   permission?: string;
+  /** Clé d'entitlement : ce que la formule débloque. */
   feature?: string;
+  /**
+   * Métier requis. Absent = destination transverse, visible partout.
+   *
+   * Une chaîne pour un seul métier, un tableau quand plusieurs le partagent.
+   * Le type reste `string` ici : `config/` est la couche la plus basse et ne
+   * doit dépendre d'aucune feature — la conversion se fait dans
+   * `useVisibleNavItems`, du côté qui connaît les codes, et
+   * `navigation.test.ts` garantit qu'aucune valeur invalide ne s'y glisse.
+   */
+  industry?: string | readonly string[];
 }
 
 export interface NavGroup {

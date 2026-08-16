@@ -8,8 +8,10 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { ROUTES } from '@/config/routes';
 import { FormError } from '@/components/feedback/FormError';
+import { useIndustries } from '@/features/industries';
 import { useCreateOrganization } from '@/features/organizations';
 import { isAppError } from '@/lib/errors';
 import {
@@ -24,6 +26,7 @@ export default function CreateOrganizationPage() {
 
   const navigate = useNavigate();
   const createOrganization = useCreateOrganization();
+  const industries = useIndustries();
   const [submitError, setSubmitError] = useState<unknown>(null);
   /**
    * L'identifiant se remplit automatiquement TANT QUE l'utilisateur n'y a pas
@@ -40,7 +43,7 @@ export default function CreateOrganizationPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateOrganizationValues>({
     resolver: zodResolver(createOrganizationSchema),
-    defaultValues: { name: '', slug: '', city: '' },
+    defaultValues: { name: '', slug: '', city: '', industry: '' },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -50,6 +53,9 @@ export default function CreateOrganizationPage() {
         name: values.name,
         slug: values.slug,
         ...(values.city !== undefined && values.city !== '' ? { city: values.city } : {}),
+        ...(values.industry !== undefined && values.industry !== ''
+          ? { industry: values.industry }
+          : {}),
       });
       await navigate(ROUTES.organization);
     } catch (error) {
@@ -119,6 +125,34 @@ export default function CreateOrganizationPage() {
               hint="Facultatif — complétez le reste des coordonnées plus tard."
               {...(errors.city?.message ? { error: errors.city.message } : {})}
               {...register('city')}
+            />
+
+            {/*
+              Le métier est demandé À LA CRÉATION, et pas plus tard.
+
+              Il détermine les types d'intervention, les formulaires de compte
+              rendu et les outils proposés. Le demander une fois l'entreprise
+              installée obligerait à requalifier des missions déjà saisies —
+              c'est le genre de question dont la réponse coûte de plus en plus
+              cher à mesure qu'on la reporte.
+
+              Facultatif malgré tout : une entreprise dont le métier ne figure
+              pas encore dans la liste doit pouvoir avancer. Elle disposera du
+              cœur complet, sans spécialisation.
+            */}
+            <Select
+              label="Métier"
+              placeholder={industries.isPending ? 'Chargement…' : 'Choisir un métier…'}
+              hint="Détermine les formulaires d’intervention et les outils proposés. Modifiable plus tard."
+              disabled={industries.isPending}
+              options={(industries.data ?? []).map((item) => ({
+                value: item.code,
+                label: item.label,
+              }))}
+              onValueChange={(value) => {
+                setValue('industry', value, { shouldValidate: false });
+              }}
+              {...(errors.industry?.message ? { error: errors.industry.message } : {})}
             />
 
             <Button

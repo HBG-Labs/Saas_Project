@@ -46,6 +46,15 @@ export const createOrganizationSchema = z.object({
   name: organizationName,
   slug,
   city: z.string().trim().max(100).optional().or(z.literal('')),
+  /**
+   * Metier exerce.
+   *
+   * Volontairement pas contraint a la liste des codes : `config/` ne connait
+   * pas le referentiel, et la cle etrangere `organizations_industry_fkey`
+   * refusera de toute facon une valeur inventee. Valider deux fois la meme
+   * regle a deux endroits, c'est se donner deux occasions de la voir diverger.
+   */
+  industry: z.string().trim().min(1).optional().or(z.literal('')),
 });
 
 export const organizationSettingsSchema = z.object({

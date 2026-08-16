@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
+import type { IndustryCode } from '@/config/industries';
 import { useOrganizationEntitlements, type FeatureKey } from '@/features/billing';
+import { useCurrentIndustry } from '@/features/industries';
 import type { NavGroup, NavItem } from '@/config/navigation';
 
 import { type Permission } from '../rbac';
@@ -26,19 +28,44 @@ import { usePermission } from './usePermission';
  * glisse dans la configuration — sans quoi une entrée disparaîtrait
  * silencieusement pour tout le monde.
  */
+/**
+ * Une destination survit-elle aux trois critères ?
+ *
+ * L'ordre n'est pas indifférent : abonnement, puis métier, puis rôle. Il va du
+ * plus général au plus personnel — ce que l'entreprise a payé, ce que son
+ * métier justifie, ce que la personne a le droit de faire. C'est aussi l'ordre
+ * dans lequel une absence s'explique le mieux.
+ *
+ * Prédicat partagé plutôt que dupliqué dans les deux hooks : deux copies du
+ * même filtre divergent toujours, et c'est le menu entier qui en dépend.
+ */
+function isVisible(
+  item: NavItem,
+  has: (feature: FeatureKey) => boolean,
+  industry: IndustryCode,
+  can: (permission: Permission) => boolean,
+): boolean {
+  if (item.feature !== undefined && !has(item.feature as FeatureKey)) return false;
+
+  if (item.industry !== undefined) {
+    const allowed = Array.isArray(item.industry) ? item.industry : [item.industry];
+    if (!allowed.includes(industry)) return false;
+  }
+
+  if (item.permission !== undefined && !can(item.permission as Permission)) return false;
+
+  return true;
+}
+
 export function useVisibleNavItems(items: readonly NavItem[]): readonly NavItem[] {
   const { can } = usePermission();
   const { organization } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
+  const { code } = useCurrentIndustry();
 
   return useMemo(
-    () =>
-      items.filter((item) => {
-        if (item.permission !== undefined && !can(item.permission as Permission)) return false;
-        if (item.feature !== undefined && !has(item.feature as FeatureKey)) return false;
-        return true;
-      }),
-    [items, can, has],
+    () => items.filter((item) => isVisible(item, has, code, can)),
+    [items, can, has, code],
   );
 }
 
@@ -56,20 +83,17 @@ export function useVisibleNavGroups(groups: readonly NavGroup[]): readonly NavGr
   const { can } = usePermission();
   const { organization } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
+  const { code } = useCurrentIndustry();
 
   return useMemo(() => {
     const visible: NavGroup[] = [];
 
     for (const group of groups) {
-      const items = group.items.filter((item) => {
-        if (item.permission !== undefined && !can(item.permission as Permission)) return false;
-        if (item.feature !== undefined && !has(item.feature as FeatureKey)) return false;
-        return true;
-      });
+      const items = group.items.filter((item) => isVisible(item, has, code, can));
 
       if (items.length > 0) visible.push({ ...group, items });
     }
 
     return visible;
-  }, [groups, can, has]);
+  }, [groups, can, has, code]);
 }

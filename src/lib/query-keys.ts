@@ -144,6 +144,16 @@ export const qk = {
       [...qk.notes.all, userId, organizationId] as const,
   },
 
+  // --------------------------------------------------------------- industries
+  //
+  // Pas d'identifiant d'organisation ici, contrairement à la convention : le
+  // référentiel des métiers est global et public. Le partager entre
+  // organisations est correct, et c'est même le but — la liste ne change que
+  // par migration.
+  industries: {
+    all: ['industries'] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

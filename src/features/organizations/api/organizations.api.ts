@@ -85,6 +85,8 @@ export async function createOrganization(input: {
   city?: string;
   postalCode?: string;
   country?: string;
+  /** Metier exerce. Omis = coeur sans specialisation. */
+  industry?: string;
 }): Promise<Organization> {
   const { data: userData, error } = await supabase.auth.getUser();
   if (error || !userData.user) {
@@ -103,6 +105,7 @@ export async function createOrganization(input: {
     ...(input.city !== undefined ? { city: input.city } : {}),
     ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
     ...(input.country !== undefined ? { country: input.country } : {}),
+    ...(input.industry !== undefined ? { industry: input.industry } : {}),
   };
 
   const { error: insertError } = await supabase.from('organizations').insert(payload);
