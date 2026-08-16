@@ -178,7 +178,7 @@ export async function createMission(input: {
   // machine à états et laisserait passer une affectation par quelqu'un qui n'en
   // a pas le droit.
   if (input.assignedTeamId || input.assignedUserId) {
-    const assigned = await unwrap<Mission>(
+    const assigned = await unwrap(
       supabase
         .from('missions')
         .update({ status: 'assigned' })
@@ -233,7 +233,7 @@ export async function assignMission(input: {
   memberId?: string | null;
   assignedBy: string;
 }): Promise<Mission> {
-  const mission = await unwrap<Mission>(
+  const mission = await unwrap(
     supabase
       .from('missions')
       .update({

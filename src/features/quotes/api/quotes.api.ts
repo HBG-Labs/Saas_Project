@@ -195,7 +195,7 @@ export async function createQuote(input: {
     ...(input.siteName !== undefined ? { site_name: input.siteName } : {}),
   };
 
-  const quote = await unwrap<Quote>(supabase.from('quotes').insert(payload).select('*').single());
+  const quote = await unwrap(supabase.from('quotes').insert(payload).select('*').single());
 
   if (input.items.length > 0) {
     await unwrap(
