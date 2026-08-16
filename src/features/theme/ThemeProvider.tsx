@@ -1,50 +1,165 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import {
+  ACCENT_STORAGE_KEY,
+  PRESET_STORAGE_KEY,
   THEME_STORAGE_KEY,
   ThemeContext,
   type ResolvedTheme,
   type Theme,
   type ThemeContextValue,
 } from './theme-context';
+import { ACCENT_COLORS, type AccentColorId } from './accent-colors';
+import { DEFAULT_THEME_PRESET, THEME_PRESETS, type ThemePresetId } from './theme-presets';
 
-function readStoredTheme(): Theme {
+function readStoredPreset(): ThemePresetId {
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
+    const stored = localStorage.getItem(PRESET_STORAGE_KEY) as ThemePresetId | null;
+    if (stored && THEME_PRESETS.some((p) => p.id === stored)) return stored;
+
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === 'light') return 'light';
   } catch {
-    // Stockage inaccessible : valeur par défaut.
+    // Stockage inaccessible
   }
-  return 'dark';
+  return 'default';
+}
+
+function readStoredAccent(): AccentColorId {
+  try {
+    const stored = localStorage.getItem(ACCENT_STORAGE_KEY) as AccentColorId | null;
+    if (stored && ACCENT_COLORS.some((a) => a.id === stored)) return stored;
+  } catch {
+    // Stockage inaccessible
+  }
+  return 'auto';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+  const [preset, setPresetState] = useState<ThemePresetId>(readStoredPreset);
+  const [accentColor, setAccentColorState] = useState<AccentColorId>(readStoredAccent);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
 
+  const activePreset = useMemo(
+    () => THEME_PRESETS.find((p) => p.id === preset) ?? DEFAULT_THEME_PRESET,
+    [preset],
+  );
+
+  const theme: Theme = activePreset.baseMode;
   const resolvedTheme: ResolvedTheme = theme;
 
-  // Effet légitime : synchroniser un système externe (le DOM) avec l'état React.
+  // Effet légitime : synchroniser les variables CSS et classes DOM avec l'état
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', resolvedTheme === 'dark');
-  }, [resolvedTheme]);
+    const root = document.documentElement;
 
-  // Plus aucun abonnement à `prefers-color-scheme` : le thème ne suit plus le
-  // système, il vaut « clair » ou « sombre », choisi explicitement et mémorisé.
-  // L'écouteur qui subsistait ici appelait un `setSystemDark` supprimé avec ce
-  // mode — il n'aurait jamais pu s'exécuter sans lever une ReferenceError.
+    // 1. Classe dark/light
+    root.classList.toggle('dark', resolvedTheme === 'dark');
+    root.setAttribute('data-theme', preset);
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
+    // 2. Nettoyer les variables personnalisées précédentes
+    const allCssVarKeys = new Set<string>();
+    THEME_PRESETS.forEach((p) => Object.keys(p.variables).forEach((k) => allCssVarKeys.add(k)));
+    ACCENT_COLORS.forEach((a) => {
+      Object.keys(a.lightVariables).forEach((k) => allCssVarKeys.add(k));
+      Object.keys(a.darkVariables).forEach((k) => allCssVarKeys.add(k));
+    });
+
+    allCssVarKeys.forEach((key) => {
+      root.style.removeProperty(key);
+    });
+
+    // 3. Appliquer les variables du preset
+    Object.entries(activePreset.variables).forEach(([key, val]) => {
+      root.style.setProperty(key, val);
+    });
+
+    // 4. Appliquer la surcharge de couleur principale si définie
+    if (accentColor !== 'auto') {
+      const accent = ACCENT_COLORS.find((a) => a.id === accentColor);
+      if (accent) {
+        const accentVars = resolvedTheme === 'dark' ? accent.darkVariables : accent.lightVariables;
+        Object.entries(accentVars).forEach(([key, val]) => {
+          root.style.setProperty(key, val);
+        });
+      }
+    }
+  }, [preset, activePreset, resolvedTheme, accentColor]);
+
+  const setPreset = useCallback((next: ThemePresetId) => {
+    setPresetState(next);
+    const target = THEME_PRESETS.find((p) => p.id === next);
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, next);
+      localStorage.setItem(PRESET_STORAGE_KEY, next);
+      if (target) {
+        localStorage.setItem(THEME_STORAGE_KEY, target.baseMode);
+      }
     } catch {
-      // Préférence non persistée : l'application reste utilisable pour la session.
+      // Stockage inaccessible
+    }
+  }, []);
+
+  const setTheme = useCallback(
+    (next: Theme) => {
+      if (next === 'light') {
+        setPreset('light');
+      } else {
+        setPreset('default');
+      }
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+      } catch {
+        // Stockage inaccessible
+      }
+    },
+    [setPreset],
+  );
+
+  const setAccentColor = useCallback((next: AccentColorId) => {
+    setAccentColorState(next);
+    try {
+      localStorage.setItem(ACCENT_STORAGE_KEY, next);
+    } catch {
+      // Stockage inaccessible
+    }
+  }, []);
+
+  const resetCustomization = useCallback(() => {
+    setPresetState('default');
+    setAccentColorState('auto');
+    try {
+      localStorage.removeItem(PRESET_STORAGE_KEY);
+      localStorage.removeItem(ACCENT_STORAGE_KEY);
+      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    } catch {
+      // Stockage inaccessible
     }
   }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, resolvedTheme, setTheme }),
-    [theme, resolvedTheme, setTheme],
+    () => ({
+      theme,
+      resolvedTheme,
+      preset,
+      accentColor,
+      setTheme,
+      setPreset,
+      setAccentColor,
+      resetCustomization,
+      isCustomizerOpen,
+      setIsCustomizerOpen,
+    }),
+    [
+      theme,
+      resolvedTheme,
+      preset,
+      accentColor,
+      setTheme,
+      setPreset,
+      setAccentColor,
+      resetCustomization,
+      isCustomizerOpen,
+      setIsCustomizerOpen,
+    ],
   );
 
   return <ThemeContext value={value}>{children}</ThemeContext>;

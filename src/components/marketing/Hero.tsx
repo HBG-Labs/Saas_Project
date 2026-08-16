@@ -113,15 +113,15 @@ export function Hero() {
                       Session Sécurisée
                     </span>
                     <span className="rounded-md bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-2xs font-bold text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
-                      Chef de Projet Télécom
+                      Responsable Opérations Multi-Métiers
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 dark:text-slate-400">
-                    Aperçu temps réel de votre activité entreprise — Thales & BNP
+                    Aperçu temps réel de votre activité entreprise — Pilotage multi-chantiers
                   </p>
                 </div>
                 <span className="rounded-lg bg-blue-50 px-3 py-1 font-mono text-xs font-bold text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
-                  Lundi 9 août 2026
+                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </span>
               </div>
 
@@ -194,9 +194,9 @@ export function Hero() {
                           En cours
                         </span>
                       </div>
-                      <div className="font-bold text-slate-900 dark:text-white">Maintenance Fibre Optique</div>
+                      <div className="font-bold text-slate-900 dark:text-white">Installation & Mise en service CVC</div>
                       <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">Thales DataCenter</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Complexe Tertiaire Horizon</span>
                         <span className="flex items-center gap-1"><Clock className="size-3" /> 08:30 - 10:30</span>
                         <span className="flex items-center gap-1"><MapPin className="size-3" /> Paris Nord</span>
                       </div>
@@ -215,7 +215,7 @@ export function Hero() {
                           Urgente
                         </span>
                       </div>
-                      <div className="font-bold text-slate-900 dark:text-white">Audit Réseau IT & Sécurité</div>
+                      <div className="font-bold text-slate-900 dark:text-white">Audit Technique & Conformité</div>
                       <div className="flex items-center gap-3 text-[11px] text-slate-500">
                         <span className="font-semibold text-slate-700 dark:text-slate-300">Clinique Val d&apos;Or</span>
                         <span className="flex items-center gap-1"><Clock className="size-3" /> 10:00 - 12:00</span>

@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search, Settings, User } from 'lucide-react';
+import { Building2, LogOut, Menu, Search, Settings, User } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
@@ -19,6 +19,7 @@ import { useAuth } from '@/features/auth';
 import { TrialBanner } from '@/features/billing';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
+import { useAvatarStore } from '@/features/profile';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
 
@@ -39,6 +40,7 @@ export function AppLayout() {
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
 
+  const { avatarUrl } = useAvatarStore();
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
 
@@ -147,16 +149,22 @@ export function AppLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="ring-border hover:ring-border-strong flex size-touch items-center justify-center rounded-full ring-2 transition-all sm:size-9"
+                    className="ring-border hover:ring-border-strong flex size-touch items-center justify-center rounded-full ring-2 transition-all sm:size-9 cursor-pointer overflow-hidden"
                     aria-label="Menu du compte"
                   >
-                    <Avatar name={displayName} size="sm" />
+                    <Avatar src={avatarUrl} name={displayName} size="sm" />
                   </button>
                 }
               >
                 <DropdownLabel>{user?.email ?? displayName}</DropdownLabel>
                 <DropdownSeparator />
                 <OrganizationSwitcher />
+                <DropdownItem asChild>
+                  <Link to={ROUTES.organization}>
+                    <Building2 />
+                    Entreprise & Métier
+                  </Link>
+                </DropdownItem>
                 <DropdownItem asChild>
                   <Link to={ROUTES.profile}>
                     <User />

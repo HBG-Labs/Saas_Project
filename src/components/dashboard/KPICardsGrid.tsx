@@ -67,29 +67,29 @@ export function KPICardsGrid({
         return (
           <div
             key={kpi.id}
-            className={`group relative flex flex-col justify-between rounded-2xl border ${kpi.border} bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900/90`}
+            className={`group relative flex flex-col justify-between rounded-2xl border ${kpi.border} bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md min-h-[152px]`}
           >
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {kpi.title}
                 </span>
-                <div className={`rounded-xl p-2.5 ${kpi.bg}`}>
+                <div className={`flex size-10 items-center justify-center rounded-xl p-2.5 ${kpi.bg} border border-border/40`}>
                   <IconComponent className={`size-5 ${kpi.color}`} />
                 </div>
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-mono text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
                   {kpi.value}
                 </span>
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs dark:border-slate-800/60">
-              <span className="font-medium text-slate-600 dark:text-slate-400">
+            <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/60 text-xs">
+              <span className="font-medium text-muted-foreground">
                 {kpi.subtitle}
               </span>
-              <span className="rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+              <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 {kpi.change}
               </span>
             </div>

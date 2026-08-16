@@ -154,7 +154,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     onClick={() => {
                       setModuleType(6);
                       if (reverseFiber > 6) setReverseFiber(6);
-                      if (!CAPACITIES_MODULO_6.includes(capacity as any)) {
+                      if (!(CAPACITIES_MODULO_6 as readonly number[]).includes(capacity)) {
                         setCapacity(144);
                       }
                     }}
@@ -170,7 +170,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     type="button"
                     onClick={() => {
                       setModuleType(12);
-                      if (!CAPACITIES_MODULO_12.includes(capacity as any)) {
+                      if (!(CAPACITIES_MODULO_12 as readonly number[]).includes(capacity)) {
                         setCapacity(144);
                       }
                     }}
@@ -189,7 +189,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                 id="fiber-color-capacity"
                 value={capacity}
                 onChange={(e) => {
-                  const cap = parseInt(e.target.value, 10) as CableCapacity;
+                  const cap = parseInt(e.target.value, 10);
                   setCapacity(cap);
                   if (fiberNumber > cap) setFiberNumber(cap);
                 }}

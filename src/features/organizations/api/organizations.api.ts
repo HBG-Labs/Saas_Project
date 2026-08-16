@@ -376,17 +376,18 @@ export interface InvitationEmailResult {
 export async function sendInvitationEmail(
   invitationId: string,
 ): Promise<InvitationEmailResult> {
-  const { data, error } = await supabase.functions.invoke<{ sent?: boolean; error?: string }>(
-    'send-invitation',
-    { body: { invitationId } },
-  );
+  const result = (await supabase.functions.invoke('send-invitation', {
+    body: { invitationId },
+  })) as { data: { sent?: boolean; error?: string } | null; error: { message?: string } | null };
+
+  const { data, error } = result;
 
   if (error) {
     // `functions.invoke` ne remonte qu'un message générique : le corps de la
     // réponse, où la fonction explique ce qui manque, se lit dans `context`.
     // Sans cette lecture, l'écran affiche « envoi impossible » sans jamais dire
     // qu'il suffisait de poser trois secrets.
-    let reason = error.message;
+    let reason: string = error.message ?? "Envoi impossible";
 
     const response: unknown = (error as { context?: unknown }).context;
     if (response instanceof Response) {
@@ -440,9 +441,11 @@ export async function createMemberAccount(input: {
   jobTitle?: string;
   password?: string;
 }): Promise<CreatedMemberAccount> {
-  const { data, error } = await supabase.functions.invoke<
-    CreatedMemberAccount & { error?: string }
-  >('create-member', { body: input });
+  const result = (await supabase.functions.invoke('create-member', {
+    body: input,
+  })) as { data: (CreatedMemberAccount & { error?: string }) | null; error: Error | null };
+
+  const { data, error } = result;
 
   if (error) {
     // Le motif précis vit dans le corps de la réponse, que `functions.invoke`

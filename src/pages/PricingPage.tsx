@@ -16,7 +16,7 @@ const COMPARISON_FEATURES = [
   { name: 'Gestion du personnel & équipes', free: false, pro: 'Essentielle', business: 'Avancée & Plannings', ultimate: 'Multi-sites & SSO' },
   { name: 'Accès au catalogue complet d’outils', free: true, pro: true, business: true, ultimate: true },
   { name: 'Recherche universelle ⌘K', free: true, pro: true, business: true, ultimate: true },
-  { name: 'Calculs certifiés UTE / ITU-T', free: true, pro: true, business: true, ultimate: true },
+  { name: 'Calculs certifiés & formulaires métiers', free: true, pro: true, business: true, ultimate: true },
   { name: 'Historique des calculs', free: '10 derniers', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
   { name: 'Outils favoris', free: '3 favoris', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
   { name: 'Export de bilans (PDF certifié & CSV)', free: false, pro: true, business: true, ultimate: true },

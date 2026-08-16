@@ -19,6 +19,8 @@ import {
   Plus,
   Trash2,
   Check,
+  Camera,
+  Sparkles,
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -30,7 +32,13 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { FormError } from '@/components/feedback/FormError';
 import { useAuth } from '@/features/auth';
-import { useMyProfile, useUpdateMyProfile, type FullProfile } from '@/features/profile';
+import {
+  AvatarPickerModal,
+  useAvatarStore,
+  useMyProfile,
+  useUpdateMyProfile,
+  type FullProfile,
+} from '@/features/profile';
 import { formatDate } from '@/lib/format';
 
 export interface EquipmentItem {
@@ -153,6 +161,8 @@ export default function ProfilePage() {
     setProfile(remoteProfile);
   }, [profileQuery.data, remoteProfile]);
 
+  const { avatarUrl } = useAvatarStore();
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [draftProfile, setDraftProfile] = useState<UserProfileData>(profile);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -249,14 +259,26 @@ export default function ProfilePage() {
 
         <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div className="flex items-center gap-5">
-            <div className="relative">
-              <Avatar
-                name={profile.displayName}
-                size="lg"
-                className="size-20 text-xl font-bold ring-4 ring-blue-500/30 shadow-lg"
-              />
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="relative block rounded-full focus:outline-none focus:ring-4 focus:ring-primary/40 cursor-pointer"
+                title="Changer de photo de profil 3D"
+              >
+                <Avatar
+                  src={avatarUrl}
+                  name={profile.displayName}
+                  size="lg"
+                  className="size-20 text-xl font-bold ring-4 ring-primary/40 shadow-lg transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                  <Camera className="size-5" />
+                  <span className="text-[9px] font-bold mt-0.5">Modifier</span>
+                </div>
+              </button>
               <span
-                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-emerald-500 text-3xs text-white ring-2"
+                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-emerald-500 text-3xs text-white ring-2 pointer-events-none shadow-xs"
                 title="Disponible pour intervention"
               >
                 ✓
@@ -265,6 +287,15 @@ export default function ProfilePage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold tracking-tight text-foreground">{profile.displayName}</h2>
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  className="flex items-center gap-1 text-3xs font-bold text-primary hover:underline cursor-pointer bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md transition-colors"
+                  title="Choisir un avatar 3D (patron, technicien, etc.)"
+                >
+                  <Sparkles className="size-3 text-amber-500" />
+                  <span>Changer d'avatar 3D</span>
+                </button>
                 <Badge
                   variant="outline"
                   className="border-blue-400/40 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300"
@@ -351,14 +382,15 @@ export default function ProfilePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label htmlFor="profile-email-readonly" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                     Adresse e-mail (Compte)
                   </label>
                   <div className="relative flex items-center">
                     <Mail className="absolute left-3 size-4 text-muted-foreground" />
                     <input
+                      id="profile-email-readonly"
                       type="email"
-                      value={user?.email ?? 'leduc972@live.fr'}
+                      value={user?.email ?? ''}
                       readOnly
                       disabled
                       className="w-full rounded-md border border-border-strong bg-surface py-2 pr-24 pl-9 text-sm text-muted-foreground opacity-80 cursor-not-allowed"
@@ -699,6 +731,12 @@ export default function ProfilePage() {
           </div>
         </form>
       </Modal>
+
+      {/* Modale de Sélection d'Avatar 3D */}
+      <AvatarPickerModal
+        open={isAvatarModalOpen}
+        onOpenChange={setIsAvatarModalOpen}
+      />
     </div>
   );
 }

@@ -86,11 +86,12 @@ export default function DnsTtlCalculatorTool() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="current-ttl-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Durée de mise en cache actuelle (Current TTL)
             </label>
             <div className="flex gap-2">
               <input
+                id="current-ttl-input"
                 type="number"
                 min="1"
                 value={currentTtlValue}
@@ -98,6 +99,7 @@ export default function DnsTtlCalculatorTool() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
               />
               <select
+                aria-label="Unité TTL actuel"
                 value={currentTtlUnit}
                 onChange={(e) => setCurrentTtlUnit(e.target.value as TimeUnit)}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -143,11 +145,12 @@ export default function DnsTtlCalculatorTool() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="reduced-ttl-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               TTL réduit à appliquer avant la bascule
             </label>
             <div className="flex gap-2">
               <input
+                id="reduced-ttl-input"
                 type="number"
                 min="1"
                 value={reducedTtlValue}
@@ -155,6 +158,7 @@ export default function DnsTtlCalculatorTool() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
               />
               <select
+                aria-label="Unité TTL transitoire"
                 value={reducedTtlUnit}
                 onChange={(e) => setReducedTtlUnit(e.target.value as TimeUnit)}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -268,10 +272,11 @@ export default function DnsTtlCalculatorTool() {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <label htmlFor="dns-domain-input" className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Nom de domaine / Hôte
             </label>
             <input
+              id="dns-domain-input"
               type="text"
               value={domainName}
               onChange={(e) => setDomainName(e.target.value)}
@@ -280,12 +285,13 @@ export default function DnsTtlCalculatorTool() {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <label htmlFor="dns-record-type-select" className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Type d&apos;enregistrement
             </label>
             <select
+              id="dns-record-type-select"
               value={recordType}
-              onChange={(e) => setRecordType(e.target.value as any)}
+              onChange={(e) => setRecordType(e.target.value as 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'SPF')}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="A">A (IPv4)</option>
@@ -298,10 +304,11 @@ export default function DnsTtlCalculatorTool() {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <label htmlFor="dns-record-value-input" className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Cible / Valeur
             </label>
             <input
+              id="dns-record-value-input"
               type="text"
               value={recordValue}
               onChange={(e) => setRecordValue(e.target.value)}

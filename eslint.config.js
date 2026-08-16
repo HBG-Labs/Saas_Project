@@ -25,6 +25,7 @@ export default tseslint.config(
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
+      'supabase/**',
     ],
   },
 

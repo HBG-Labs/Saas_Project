@@ -30,12 +30,23 @@ function mockSystemDark(matches: boolean) {
 }
 
 function Probe() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const {
+    theme,
+    resolvedTheme,
+    preset,
+    accentColor,
+    setTheme,
+    setPreset,
+    setAccentColor,
+    resetCustomization,
+  } = useTheme();
 
   return (
     <div>
       <span data-testid="theme">{theme}</span>
       <span data-testid="resolved">{resolvedTheme}</span>
+      <span data-testid="preset">{preset}</span>
+      <span data-testid="accent">{accentColor}</span>
       <button
         type="button"
         onClick={() => {
@@ -51,6 +62,30 @@ function Probe() {
         }}
       >
         Clair
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setPreset('luxury');
+        }}
+      >
+        Luxe
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setAccentColor('purple');
+        }}
+      >
+        Accent Violet
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          resetCustomization();
+        }}
+      >
+        Reset
       </button>
     </div>
   );
@@ -96,6 +131,27 @@ describe('ThemeProvider', () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
   });
 
+  it('permet de changer de preset d’ambiance et d’accent de couleur', async () => {
+    mockSystemDark(true);
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Luxe' }));
+    expect(screen.getByTestId('preset')).toHaveTextContent('luxury');
+
+    await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
+    expect(screen.getByTestId('accent')).toHaveTextContent('purple');
+
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(screen.getByTestId('preset')).toHaveTextContent('default');
+    expect(screen.getByTestId('accent')).toHaveTextContent('auto');
+  });
+
   it('reste utilisable si localStorage est inaccessible', () => {
     mockSystemDark(false);
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
@@ -113,3 +169,4 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('theme')).toHaveTextContent('dark');
   });
 });
+

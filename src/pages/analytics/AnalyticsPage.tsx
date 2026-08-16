@@ -927,93 +927,85 @@ export default function AnalyticsPage() {
 
       {/* 1. Grille des 4 Métriques Clés Analytics Réactives */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border border-border shadow-xs hover:shadow-md transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <CheckCircle2 className="size-5" />
-              </div>
-              <Badge variant="success" className="text-2xs font-semibold">
-                {currentData.conformityDiff}
-              </Badge>
+        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+          <div className="flex items-center justify-between">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <CheckCircle2 className="size-5" />
             </div>
-            <div className="mt-4 space-y-1">
-              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Conformité du 1er Coup
-              </p>
-              <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                {currentData.conformity}
-              </p>
-              <p className="text-subtle-foreground text-2xs">Rapports validés sans correction</p>
-            </div>
-          </CardContent>
-        </Card>
+            <Badge variant="success" className="text-2xs font-semibold">
+              {currentData.conformityDiff}
+            </Badge>
+          </div>
+          <div className="mt-auto pt-3 space-y-1">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+              Conformité du 1er Coup
+            </p>
+            <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
+              {currentData.conformity}
+            </p>
+            <p className="text-subtle-foreground text-2xs">Rapports validés sans correction</p>
+          </div>
+        </div>
 
-        <Card className="border border-border shadow-xs hover:shadow-md transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <TrendingUp className="size-5" />
-              </div>
-              <Badge variant="primary" className="text-2xs font-semibold">
-                {currentData.volumeDiff}
-              </Badge>
+        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+          <div className="flex items-center justify-between">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <TrendingUp className="size-5" />
             </div>
-            <div className="mt-4 space-y-1">
-              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Volume Interventions
-              </p>
-              <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                {currentData.volume}
-              </p>
-              <p className="text-subtle-foreground text-2xs">Missions réalisées sur la période</p>
-            </div>
-          </CardContent>
-        </Card>
+            <Badge variant="primary" className="text-2xs font-semibold">
+              {currentData.volumeDiff}
+            </Badge>
+          </div>
+          <div className="mt-auto pt-3 space-y-1">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+              Volume Interventions
+            </p>
+            <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
+              {currentData.volume}
+            </p>
+            <p className="text-subtle-foreground text-2xs">Missions réalisées sur la période</p>
+          </div>
+        </div>
 
-        <Card className="border border-border shadow-xs hover:shadow-md transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <Clock className="size-5" />
-              </div>
-              <Badge variant="warning" className="text-2xs font-semibold">
-                {currentData.durationDiff}
-              </Badge>
+        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+          <div className="flex items-center justify-between">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <Clock className="size-5" />
             </div>
-            <div className="mt-4 space-y-1">
-              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Durée Moyenne Terrain
-              </p>
-              <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                {currentData.avgDuration}
-              </p>
-              <p className="text-subtle-foreground text-2xs">Temps moyen par intervention</p>
-            </div>
-          </CardContent>
-        </Card>
+            <Badge variant="warning" className="text-2xs font-semibold">
+              {currentData.durationDiff}
+            </Badge>
+          </div>
+          <div className="mt-auto pt-3 space-y-1">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+              Durée Moyenne Terrain
+            </p>
+            <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
+              {currentData.avgDuration}
+            </p>
+            <p className="text-subtle-foreground text-2xs">Temps moyen par intervention</p>
+          </div>
+        </div>
 
-        <Card className="border border-border shadow-xs hover:shadow-md transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <Award className="size-5" />
-              </div>
-              <Badge variant="outline" className="text-2xs font-semibold border-purple-500/30 text-purple-400">
-                {currentData.slaLabel}
-              </Badge>
+        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+          <div className="flex items-center justify-between">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <Award className="size-5" />
             </div>
-            <div className="mt-4 space-y-1">
-              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Satisfaction Client SLA
-              </p>
-              <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                {currentData.sla}
-              </p>
-              <p className="text-subtle-foreground text-2xs">Respect des rendez-vous planifiés</p>
-            </div>
-          </CardContent>
-        </Card>
+            <Badge variant="outline" className="text-2xs font-semibold border-purple-500/30 text-purple-400">
+              {currentData.slaLabel}
+            </Badge>
+          </div>
+          <div className="mt-auto pt-3 space-y-1">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+              Satisfaction Client SLA
+            </p>
+            <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
+              {currentData.sla}
+            </p>
+            <p className="text-subtle-foreground text-2xs">Respect des rendez-vous planifiés</p>
+          </div>
+        </div>
       </div>
 
       {/* 2. Graphiques Principaux (Volume Mensuel/Trimestriel + Répartition Client) */}

@@ -46,12 +46,12 @@ export interface QuoteLineItem {
  * l'organisation, qui les modifie ou les supprime librement.
  */
 const STANDARD_PRESETS: readonly { label: string; unit: string; priceEuros: number }[] = [
-  { label: 'Raccordement & Soudure Fibre (Par casier / 12 FO)', unit: 'Forfait', priceEuros: 120 },
-  { label: 'Tirage de câble optique monomode (Au mètre)', unit: 'mètre', priceEuros: 3.5 },
-  { label: 'Pose & Fixation Boîtier PBO / PTO', unit: 'Unité', priceEuros: 65 },
-  { label: 'Recette Réflectométrique OTDR (Par fibre)', unit: 'Fibre', priceEuros: 15 },
-  { label: 'Pose Câble Réseau Ethernet Cat6A / UTP', unit: 'mètre', priceEuros: 4.2 },
-  { label: 'Consignation & Contrôle Électrique BT', unit: 'Intervention', priceEuros: 150 },
+  { label: 'Diagnostic & Intervention Technique', unit: 'Forfait', priceEuros: 120 },
+  { label: 'Maintenance préventive / Entretien', unit: 'Intervention', priceEuros: 95 },
+  { label: 'Pose & Raccordement d’équipement', unit: 'Unité', priceEuros: 150 },
+  { label: 'Passage de câbles / Gaines / Conduits', unit: 'mètre', priceEuros: 4.5 },
+  { label: 'Mise en conformité & Contrôle sécurité', unit: 'Forfait', priceEuros: 180 },
+  { label: 'Remplacement pièce d’usure / Composant', unit: 'Unité', priceEuros: 65 },
 ];
 
 export default function QuotesPage() {
@@ -279,25 +279,31 @@ export default function QuotesPage() {
                   return (
                     <div
                       key={preset.id}
-                      onClick={() =>
-                        handleAddItem({
-                          label: preset.label,
-                          unit: preset.unit,
-                          price: priceEuros,
-                        })
-                      }
-                      className="group relative flex items-center gap-1.5 rounded-lg border border-border bg-surface pl-3 pr-2 py-1.5 text-2xs text-muted-foreground hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-foreground transition-all cursor-pointer select-none"
+                      className="group relative flex items-center rounded-lg border border-border bg-surface pl-2 pr-1.5 py-1 text-2xs text-muted-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
                     >
-                      <Plus className="size-3 text-primary shrink-0" />
-                      <span className="truncate max-w-[220px]">{preset.label}</span>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-                        ({priceEuros.toFixed(2)} €)
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAddItem({
+                            label: preset.label,
+                            unit: preset.unit,
+                            price: priceEuros,
+                          })
+                        }
+                        className="flex items-center gap-1.5 text-left cursor-pointer focus-visible:outline-none"
+                      >
+                        <Plus className="size-3 text-primary shrink-0" />
+                        <span className="truncate max-w-[200px] text-foreground">{preset.label}</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                          ({priceEuros.toFixed(2)} €)
+                        </span>
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
-                        className="ml-1 flex size-4 items-center justify-center rounded-full text-subtle-foreground hover:bg-rose-500/20 hover:text-error transition-colors cursor-pointer"
+                        className="ml-1.5 flex size-4.5 items-center justify-center rounded-full text-subtle-foreground hover:bg-rose-500/20 hover:text-error transition-colors cursor-pointer"
                         title="Supprimer cette prestation du catalogue"
+                        aria-label={`Supprimer ${preset.label} du catalogue`}
                       >
                         <X className="size-3" />
                       </button>
@@ -598,8 +604,11 @@ export default function QuotesPage() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Unité de facturation</label>
+              <label htmlFor="quote-new-preset-unit" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Unité de facturation
+              </label>
               <select
+                id="quote-new-preset-unit"
                 value={newPreset.unit}
                 onChange={(e) => setNewPreset({ ...newPreset, unit: e.target.value })}
                 className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
@@ -608,7 +617,6 @@ export default function QuotesPage() {
                 <option value="Forfait">Forfait Global</option>
                 <option value="mètre">Au mètre (m)</option>
                 <option value="Heure">À l'heure (h)</option>
-                <option value="Fibre">Par Fibre Optique</option>
                 <option value="Intervention">Par Intervention</option>
               </select>
             </div>

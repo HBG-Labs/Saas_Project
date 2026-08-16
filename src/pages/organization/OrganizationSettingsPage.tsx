@@ -1,14 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Check, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FormError } from '@/components/feedback/FormError';
+import { ROUTES } from '@/config/routes';
+import { useIndustries } from '@/features/industries';
 import {
   OwnershipCard,
   PERMISSIONS,
@@ -43,18 +48,21 @@ export default function OrganizationSettingsPage() {
 
   const query = useOrganization(organization?.id ?? null);
   const updateOrganization = useUpdateOrganization(organization?.id ?? '');
+  const industries = useIndustries();
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
 
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<OrganizationSettingsValues>({
     resolver: zodResolver(organizationSettingsSchema),
     defaultValues: {
       name: '',
+      industry: '',
       legalName: '',
       registrationNumber: '',
       vatNumber: '',
@@ -77,6 +85,7 @@ export default function OrganizationSettingsPage() {
 
     reset({
       name: data.name,
+      industry: toFormValue(data.industry),
       legalName: toFormValue(data.legal_name),
       registrationNumber: toFormValue(data.registration_number),
       vatNumber: toFormValue(data.vat_number),
@@ -90,12 +99,23 @@ export default function OrganizationSettingsPage() {
     });
   }, [data, reset]);
 
+  const navigate = useNavigate();
+
+  const handleClose = () => {
+    if (window.history.length > 1) {
+      void navigate(-1);
+    } else {
+      void navigate(ROUTES.dashboard);
+    }
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     setSaved(false);
     try {
       await updateOrganization.mutateAsync({
         name: values.name,
+        industry: toPatchValue(values.industry),
         legal_name: toPatchValue(values.legalName),
         registration_number: toPatchValue(values.registrationNumber),
         vat_number: toPatchValue(values.vatNumber),
@@ -108,6 +128,9 @@ export default function OrganizationSettingsPage() {
         country: toPatchValue(values.country),
       });
       setSaved(true);
+      setTimeout(() => {
+        handleClose();
+      }, 700);
     } catch (error) {
       setSubmitError(error);
     }
@@ -127,11 +150,23 @@ export default function OrganizationSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        title="Entreprise"
+        title="Paramètres de l'entreprise"
         description={
           canUpdate
-            ? 'Ces informations apparaissent sur les comptes rendus d’intervention.'
+            ? 'Modifiez le nom, le secteur d’activité et les coordonnées de votre entreprise.'
             : 'Consultation seule — seuls un propriétaire ou un administrateur peuvent modifier ces informations.'
+        }
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClose}
+            className="gap-1.5"
+          >
+            <X className="size-4" />
+            <span>Fermer</span>
+          </Button>
         }
       />
 
@@ -151,16 +186,39 @@ export default function OrganizationSettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Identité</CardTitle>
+              <CardTitle>Identité & Secteur d'activité</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Input
-                label="Nom commercial"
-                required
-                disabled={!canUpdate}
-                {...(errors.name?.message ? { error: errors.name.message } : {})}
-                {...register('name')}
-              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Nom de l’entreprise (Nom commercial)"
+                  required
+                  disabled={!canUpdate}
+                  {...(errors.name?.message ? { error: errors.name.message } : {})}
+                  {...register('name')}
+                />
+
+                <Controller
+                  control={control}
+                  name="industry"
+                  render={({ field }) => (
+                    <Select
+                      label="Secteur d'activité (Métier)"
+                      placeholder={industries.isPending ? 'Chargement…' : 'Choisir un métier…'}
+                      hint="Adapte le vocabulaire, les outils métier et les formulaires."
+                      disabled={!canUpdate || industries.isPending}
+                      options={(industries.data ?? []).map((item) => ({
+                        value: item.code,
+                        label: item.label,
+                      }))}
+                      {...(field.value ? { value: field.value } : {})}
+                      onValueChange={(value) => field.onChange(value)}
+                      {...(errors.industry?.message ? { error: errors.industry.message } : {})}
+                    />
+                  )}
+                />
+              </div>
+
               <Input
                 label="Raison sociale"
                 hint="Si elle diffère du nom commercial."
@@ -216,12 +274,18 @@ export default function OrganizationSettingsPage() {
           </Card>
 
           {canUpdate ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Button type="submit" variant="primary" disabled={isSubmitting || !isDirty}>
-                {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+                {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Fermer
               </Button>
               {saved && !isDirty ? (
-                <span className="text-success text-sm">Modifications enregistrées.</span>
+                <span className="text-success text-sm font-semibold flex items-center gap-1.5 animate-in fade-in">
+                  <Check className="size-4 text-emerald-500" />
+                  <span>Modifications enregistrées. Fermeture…</span>
+                </span>
               ) : null}
             </div>
           ) : null}

@@ -80,7 +80,10 @@ export default function MissionsListPage() {
     .map((status) => [status, counts[status] ?? 0] as const);
 
   // --- LOGIQUE SEMAINE (6 jours : LUN-SAM) ---
-  const baseMonday = new Date(2026, 7, 10);
+  const today = new Date();
+  const currentDay = today.getDay();
+  const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+  const baseMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diffToMonday);
   baseMonday.setDate(baseMonday.getDate() + weekOffset * 7);
 
   const dayNamesWeek = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'];
@@ -97,7 +100,7 @@ export default function MissionsListPage() {
   });
 
   // --- LOGIQUE MOIS (Grille mensuelle 7x5) ---
-  const targetMonthDate = new Date(2026, 7 + monthOffset, 1);
+  const targetMonthDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
   const monthYearLabel = targetMonthDate.toLocaleDateString('fr-FR', {
     month: 'long',
     year: 'numeric',
@@ -405,7 +408,10 @@ export default function MissionsListPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
             {daysOfWeek.map((day) => {
               const dayMissions = getMissionsForDate(day.fullDate);
-              const isToday = weekOffset === 0 && day.fullDate.getDate() === 10;
+              const isToday =
+                day.fullDate.getDate() === today.getDate() &&
+                day.fullDate.getMonth() === today.getMonth() &&
+                day.fullDate.getFullYear() === today.getFullYear();
 
               return (
                 <div
@@ -559,9 +565,9 @@ export default function MissionsListPage() {
                 {monthGridCells.map((cell, idx) => {
                   const dayMissions = getMissionsForDate(cell.date);
                   const isToday =
-                    cell.date.getDate() === 10 &&
-                    cell.date.getMonth() === 7 &&
-                    cell.date.getFullYear() === 2026;
+                    cell.date.getDate() === today.getDate() &&
+                    cell.date.getMonth() === today.getMonth() &&
+                    cell.date.getFullYear() === today.getFullYear();
 
                   const visibleMissions = dayMissions.slice(0, 2);
                   const remainingCount = dayMissions.length - visibleMissions.length;

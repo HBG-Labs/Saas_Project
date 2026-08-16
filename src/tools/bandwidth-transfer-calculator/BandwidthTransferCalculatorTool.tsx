@@ -102,11 +102,12 @@ export default function BandwidthTransferCalculatorTool() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="bw-data-size-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Taille totale du fichier / archive
             </label>
             <div className="flex gap-2">
               <input
+                id="bw-data-size-input"
                 type="number"
                 min="0.1"
                 step="any"
@@ -115,6 +116,7 @@ export default function BandwidthTransferCalculatorTool() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
               />
               <select
+                aria-label="Unité de données"
                 value={dataUnit}
                 onChange={(e) => setDataUnit(e.target.value as DataUnit)}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -156,11 +158,12 @@ export default function BandwidthTransferCalculatorTool() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="bw-network-speed-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Vitesse nominale de la ligne
             </label>
             <div className="flex gap-2">
               <input
+                id="bw-network-speed-input"
                 type="number"
                 min="0.1"
                 step="any"

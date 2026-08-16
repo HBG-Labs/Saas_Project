@@ -128,10 +128,11 @@ export default function IpMacConverterTool() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-net-ip-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Adresse IP de réseau
             </label>
             <input
+              id="ip-mac-net-ip-input"
               type="text"
               value={ipInput}
               onChange={(e) => setIpInput(e.target.value)}
@@ -141,12 +142,13 @@ export default function IpMacConverterTool() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-cidr-prefix-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Masque / Notation CIDR
             </label>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm font-bold text-slate-500">/</span>
               <input
+                id="ip-mac-cidr-prefix-input"
                 type="number"
                 min="0"
                 max="32"
@@ -158,10 +160,11 @@ export default function IpMacConverterTool() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-subnet-mask-output" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Masque de sous-réseau calculé
             </label>
             <input
+              id="ip-mac-subnet-mask-output"
               type="text"
               readOnly
               value={subnetMask}
@@ -235,10 +238,11 @@ export default function IpMacConverterTool() {
         </div>
 
         <div className="space-y-3">
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <label htmlFor="ip-mac-raw-mac-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
             Saisissez une adresse MAC (n&apos;importe quel format)
           </label>
           <input
+            id="ip-mac-raw-mac-input"
             type="text"
             value={macInput}
             onChange={(e) => setMacInput(e.target.value)}
@@ -288,10 +292,11 @@ export default function IpMacConverterTool() {
 
         <div className="grid gap-4 sm:grid-cols-2 items-end">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-multicast-ip-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Adresse IP Multicast de Classe D (224.0.0.0 – 239.255.255.255)
             </label>
             <input
+              id="ip-mac-multicast-ip-input"
               type="text"
               value={multicastIpInput}
               onChange={(e) => setMulticastIpInput(e.target.value)}

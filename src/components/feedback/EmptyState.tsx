@@ -28,23 +28,23 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'border-border flex flex-col items-center justify-center rounded-lg border border-dashed text-center',
-        size === 'md' ? 'gap-3 px-6 py-12' : 'gap-2 px-4 py-8',
+        'border-border/80 bg-surface/50 flex flex-col items-center justify-center rounded-2xl border border-dashed text-center',
+        size === 'md' ? 'gap-4 px-6 py-12 sm:py-16' : 'gap-3 px-4 py-8',
         className,
       )}
     >
       {Icon ? (
-        <div className="bg-surface-hover text-subtle-foreground flex size-10 items-center justify-center rounded-full">
-          <Icon className="size-5" aria-hidden="true" />
+        <div className="bg-primary/10 border border-primary/20 text-primary flex size-12 items-center justify-center rounded-2xl shadow-xs">
+          <Icon className="size-6" aria-hidden="true" />
         </div>
       ) : null}
 
-      <div className="space-y-1">
-        <p className="text-foreground text-sm font-medium">{title}</p>
-        <p className="text-muted-foreground mx-auto max-w-sm text-xs">{description}</p>
+      <div className="space-y-1.5 max-w-md">
+        <p className="text-foreground text-base font-bold tracking-tight">{title}</p>
+        <p className="text-muted-foreground text-xs leading-relaxed">{description}</p>
       </div>
 
-      {action}
+      {action ? <div className="pt-2">{action}</div> : null}
     </div>
   );
 }

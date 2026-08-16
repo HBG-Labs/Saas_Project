@@ -91,7 +91,7 @@ export default function CreateOrganizationPage() {
           <form onSubmit={onSubmit} noValidate className="space-y-4">
             <Input
               label="Nom de l’entreprise"
-              placeholder="Fibre Atlantique"
+              placeholder="Nexora Services & Travaux"
               autoComplete="organization"
               required
               {...(errors.name?.message ? { error: errors.name.message } : {})}
@@ -108,7 +108,7 @@ export default function CreateOrganizationPage() {
 
             <Input
               label="Identifiant"
-              placeholder="fibre-atlantique"
+              placeholder="nexora-services"
               hint="Sert dans les adresses et doit rester unique. Modifiable maintenant, figé ensuite."
               required
               {...(errors.slug?.message ? { error: errors.slug.message } : {})}

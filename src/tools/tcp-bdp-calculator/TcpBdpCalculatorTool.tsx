@@ -84,11 +84,12 @@ export default function TcpBdpCalculatorTool() {
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label htmlFor="tcp-bdp-speed-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Bande passante disponible (Capacité réseau)
               </label>
               <div className="flex gap-2">
                 <input
+                  id="tcp-bdp-speed-input"
                   type="number"
                   min="0.1"
                   step="any"
@@ -97,6 +98,7 @@ export default function TcpBdpCalculatorTool() {
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                 />
                 <select
+                  aria-label="Unité de débit"
                   value={speedUnit}
                   onChange={(e) => setSpeedUnit(e.target.value as SpeedUnit)}
                   className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -109,10 +111,11 @@ export default function TcpBdpCalculatorTool() {
             </div>
 
             <div className="space-y-1 pt-2">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label htmlFor="tcp-bdp-rtt-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Temps d&apos;aller-retour RTT (Latence en ms)
               </label>
               <input
+                id="tcp-bdp-rtt-input"
                 type="number"
                 min="0.1"
                 step="any"
@@ -149,11 +152,12 @@ export default function TcpBdpCalculatorTool() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="tcp-bdp-window-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Taille actuelle de la fenêtre TCP (Socket Buffer)
             </label>
             <div className="flex gap-2 items-center">
               <input
+                id="tcp-bdp-window-input"
                 type="number"
                 min="8"
                 step="8"

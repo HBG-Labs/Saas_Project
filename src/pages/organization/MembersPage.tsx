@@ -29,10 +29,12 @@ import {
   useUpdateMemberRole,
 } from '@/features/organizations';
 import { useTeamMembershipsByMember } from '@/features/teams';
+import { useLabel } from '@/features/industries';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function MembersPage() {
-  useDocumentTitle('Techniciens');
+  const workerLabelPlural = useLabel('worker', true);
+  useDocumentTitle(`Équipe & ${workerLabelPlural}`);
 
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
@@ -89,8 +91,8 @@ export default function MembersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Techniciens"
-        description="Gestion de l’équipe de techniciens, des rôles et des accès de l’entreprise."
+        title={`Équipe & ${workerLabelPlural}`}
+        description={`Gestion des ${workerLabelPlural.toLowerCase()}, des rôles et des accès aux interventions de l’entreprise.`}
         actions={
           canInvite && organizationId !== null ? (
             <div className="flex items-center gap-2">

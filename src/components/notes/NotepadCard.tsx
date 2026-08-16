@@ -405,8 +405,18 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                   return (
                     <div
                       key={note.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setActiveNoteId(note.id)}
-                      className={`group relative flex items-center justify-between rounded-xl p-2.5 transition-all cursor-pointer ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          if (e.target === e.currentTarget) {
+                            e.preventDefault();
+                            setActiveNoteId(note.id);
+                          }
+                        }
+                      }}
+                      className={`group relative flex items-center justify-between rounded-xl p-2.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary ${
                         isActive
                           ? 'bg-primary/10 text-primary border border-primary/30 font-medium shadow-2xs'
                           : 'hover:bg-surface-hover text-foreground border border-transparent'
@@ -428,7 +438,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                               if (e.key === 'Enter') handleSaveRename();
                               if (e.key === 'Escape') setEditingTitleId(null);
                             }}
-                            autoFocus
+                            ref={(input) => input?.focus()}
                             className="w-full rounded border border-primary bg-surface px-1.5 py-0.5 text-xs text-foreground outline-hidden"
                             onClick={(e) => e.stopPropagation()}
                           />

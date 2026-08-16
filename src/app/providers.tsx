@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
+import { SupportBubble } from '@/components/feedback/SupportBubble';
 import { AuthProvider } from '@/features/auth';
 import { OrganizationProvider } from '@/features/organizations';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
@@ -31,10 +32,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <OrganizationProvider>{children}</OrganizationProvider>
+            <OrganizationProvider>
+              {children}
+              <SupportBubble />
+            </OrganizationProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
+

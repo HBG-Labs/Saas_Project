@@ -37,34 +37,43 @@ export function StatCard({
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
   return (
-    <div className={cn('bg-surface border-border shadow-raised rounded-lg border p-4', className)}>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-muted-foreground text-xs font-medium">{label}</p>
+    <div
+      className={cn(
+        'bg-surface border-border shadow-xs hover:border-border-strong hover:shadow-md transition-all rounded-2xl border p-5 sm:p-6 flex flex-col justify-between min-h-[152px]',
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{label}</p>
         {Icon ? (
-          <Icon className="text-subtle-foreground size-4 shrink-0" aria-hidden="true" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
+          </div>
         ) : null}
       </div>
 
-      <p className="mt-2 flex items-baseline gap-1">
-        <span className="text-foreground text-2xl leading-none font-semibold tabular-nums">
+      <p className="mt-auto pt-2 flex items-baseline gap-1.5">
+        <span className="text-foreground text-2xl sm:text-3xl leading-none font-extrabold tracking-tight tabular-nums">
           {value}
         </span>
-        {unit ? <span className="text-muted-foreground text-xs">{unit}</span> : null}
+        {unit ? <span className="text-muted-foreground text-xs font-medium">{unit}</span> : null}
       </p>
 
       {hasTrend ? (
-        <p className="mt-2 flex items-center gap-1 text-xs">
-          <TrendIcon
-            className={cn('size-3.5', isPositive ? 'text-success' : 'text-error')}
-            aria-hidden="true"
-          />
+        <p className="mt-3 flex items-center gap-1.5 text-xs">
           <span
-            className={cn('font-medium tabular-nums', isPositive ? 'text-success' : 'text-error')}
+            className={cn(
+              'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-2xs font-bold tabular-nums',
+              isPositive
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+            )}
           >
+            <TrendIcon className="size-3" aria-hidden="true" />
             {isPositive ? '+' : ''}
             {trend}%
           </span>
-          {trendLabel ? <span className="text-subtle-foreground">{trendLabel}</span> : null}
+          {trendLabel ? <span className="text-subtle-foreground text-2xs">{trendLabel}</span> : null}
         </p>
       ) : null}
     </div>

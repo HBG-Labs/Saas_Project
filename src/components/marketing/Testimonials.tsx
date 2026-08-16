@@ -62,7 +62,7 @@ export function Testimonials() {
                 {/* Ligne du haut : 5 Étoiles Dorées + Badge Norme */}
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
+                    {[0, 1, 2, 3, 4].map((i) => (
                       <Star key={i} className="size-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>

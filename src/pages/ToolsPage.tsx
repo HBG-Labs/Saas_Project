@@ -106,8 +106,8 @@ export default function ToolsPage() {
   return (
     <>
       <PageHeader
-        title="Catalogue des outils d’ingénierie"
-        description="Calculatrices, convertisseurs et bilans certifiés pour la fibre optique, les réseaux et l’électricité."
+        title="Catalogue des outils d’ingénierie & calcul"
+        description="Calculatrices scientifiques, convertisseurs techniques et utilitaires de dimensionnement pour vos opérations terrain."
       />
 
       {hasTools ? (

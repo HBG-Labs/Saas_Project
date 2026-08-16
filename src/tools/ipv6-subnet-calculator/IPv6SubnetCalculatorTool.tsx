@@ -28,19 +28,19 @@ function expandIPv6(input: string): string | null {
   if (missingCount < 0 && parts.length === 2) return null;
   if (parts.length === 1 && firstHextets.length !== 8) return null;
 
-  const middleHextets = new Array(Math.max(0, missingCount)).fill('0000');
-  const fullArray = [...firstHextets, ...middleHextets, ...lastHextets];
+  const middleHextets: string[] = Array.from({ length: Math.max(0, missingCount) }, () => '0000');
+  const fullArray: string[] = [...firstHextets, ...middleHextets, ...lastHextets];
 
   if (fullArray.length !== 8) return null;
 
-  const padded = fullArray.map((hex) => {
+  const padded: (string | null)[] = fullArray.map((hex: string): string | null => {
     if (!/^[0-9a-f]{1,4}$/.test(hex)) return null;
     return hex.padStart(4, '0');
   });
 
   if (padded.includes(null)) return null;
 
-  return padded.join(':');
+  return (padded as string[]).join(':');
 }
 
 function compressIPv6(expanded: string): string {
@@ -178,10 +178,11 @@ export default function IPv6SubnetCalculatorTool() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-addr-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Adresse IPv6 (Abrégée ou complète)
             </label>
             <input
+              id="ipv6-addr-input"
               type="text"
               value={ipv6Input}
               onChange={(e) => setIpv6Input(e.target.value)}
@@ -191,12 +192,13 @@ export default function IPv6SubnetCalculatorTool() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-prefix-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Longueur du préfixe (CIDR /N)
             </label>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm font-bold text-slate-500">/</span>
               <input
+                id="ipv6-prefix-input"
                 type="number"
                 min="0"
                 max="128"
@@ -299,10 +301,11 @@ export default function IPv6SubnetCalculatorTool() {
 
         <div className="grid gap-4 sm:grid-cols-2 items-end">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-eui-mac-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Adresse MAC du matériel (48 bits)
             </label>
             <input
+              id="ipv6-eui-mac-input"
               type="text"
               value={macInput}
               onChange={(e) => setMacInput(e.target.value)}

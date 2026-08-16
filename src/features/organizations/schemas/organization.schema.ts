@@ -59,6 +59,7 @@ export const createOrganizationSchema = z.object({
 
 export const organizationSettingsSchema = z.object({
   name: organizationName,
+  industry: z.string().trim().min(1).optional().or(z.literal('')),
   legalName: z.string().trim().max(150).optional().or(z.literal('')),
   registrationNumber: z.string().trim().max(50).optional().or(z.literal('')),
   vatNumber: z.string().trim().max(50).optional().or(z.literal('')),

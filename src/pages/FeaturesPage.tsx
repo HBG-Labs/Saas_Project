@@ -35,7 +35,7 @@ const FEATURES_LIST = [
     title: 'Catalogue d’Outils Modulaire',
     subtitle: 'Un écosystème d’ingénierie en permanente évolution',
     description:
-      'Classés par domaines (Fibre optique, Réseaux, Électricité, Mathématiques), chaque outil est conçu de façon autonome. L’architecture modulaire garantit un chargement ultra-rapide et l’ajout continu de nouvelles calculatrices.',
+      'Classés par domaines et métiers (CVC, Électricité, Télécoms, Espaces verts, Plomberie, Mathématiques), chaque outil est conçu de façon autonome. L’architecture modulaire garantit un chargement ultra-rapide et l’ajout continu de nouveaux modules.',
     badge: 'Modularité',
     benefit: 'Accédez à l’outil exact dont vous avez besoin sans surcharge.',
   },
@@ -46,7 +46,7 @@ const FEATURES_LIST = [
     description:
       'Éliminez les doutes et les erreurs de saisie sur feuille de calcul ad-hoc. Tous les calculs respectent scrupuleusement les exigences normatives professionnelles avec gestion précise des unités et des chiffres tabulaires.',
     badge: 'Fiabilité',
-    benefit: 'Fournissez des résultats irréprochables pour vos PV de recette.',
+    benefit: 'Fournissez des résultats irréprochables pour vos PV de recette et devis.',
   },
   {
     icon: Star,
@@ -82,7 +82,7 @@ const FEATURES_LIST = [
     description:
       'Toutes les cibles tactiles respectent la taille minimale recommandée (44px min). L’interface s’adapte parfaitement aux écrans d’intervention sur le terrain.',
     badge: 'Mobile-first',
-    benefit: 'Effectuez vos calculs au pied du poteau ou dans la baie de brassage.',
+    benefit: 'Effectuez vos saisies et calculs directement sur vos chantiers et sites d’intervention.',
   },
   {
     icon: Moon,

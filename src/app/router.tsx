@@ -68,9 +68,10 @@ export const routes: RouteObject[] = [
               // Écrans de travail : ils n'affichent que des données
               // d'entreprise, que la RLS refuserait à une session absente. Les
               // laisser publics ne montrerait qu'une coquille vide.
-              // DashboardPage en import direct pour HMR instantané
               { path: ROUTES.dashboard, Component: DashboardPage },
               { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
+              { path: ROUTES.planning, lazy: lazyPage(() => import('@/pages/planning/PlanningPage')) },
+              { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
               { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
               {

@@ -49,3 +49,5 @@ export function useUpdateMyProfile() {
 }
 
 export { getMyProfile, updateMyProfile, type FullProfile } from './api/profile.api';
+export { PROFILE_AVATARS, useAvatarStore, type ProfileAvatar } from './avatars-data';
+export { AvatarPickerModal } from './components/AvatarPickerModal';

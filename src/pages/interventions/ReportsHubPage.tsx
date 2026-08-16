@@ -115,10 +115,11 @@ export default function ReportsHubPage() {
               </p>
             ) : (
               missionList.map((m) => (
-                <div
+                <button
                   key={m.id}
+                  type="button"
                   onClick={() => setSelectedInterventionId(m.id === 'mission-001' ? 'inter-001' : 'inter-004')}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary ${
                     (selectedInterventionId === 'inter-001' && m.id === 'mission-001') ||
                     (selectedInterventionId === 'inter-004' && m.id !== 'mission-001')
                       ? 'border-primary bg-primary/10 shadow-2xs font-semibold'
@@ -135,7 +136,7 @@ export default function ReportsHubPage() {
                   <p className="text-2xs text-muted-foreground truncate mt-0.5">
                     {m.city ? `Ville : ${m.city}` : 'Chantier terrain'}
                   </p>
-                </div>
+                </button>
               ))
             )}
           </div>
@@ -359,22 +360,23 @@ function InsertFromNotepadDialog({ onInsert }: { onInsert: (content: string) => 
         ) : (
           <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
             {notes.map((note) => (
-              <div
+              <button
                 key={note.id}
-                className="p-3 rounded-xl border border-border/60 hover:border-primary bg-surface transition-all cursor-pointer flex flex-col gap-1"
+                type="button"
+                className="w-full text-left p-3 rounded-xl border border-border/60 hover:border-primary bg-surface transition-all cursor-pointer flex flex-col gap-1 focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={() => {
                   onInsert(note.content);
                   setOpen(false);
                 }}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between w-full">
                   <span className="text-xs font-bold text-foreground">{note.title}</span>
                   <Badge variant="outline" className="text-3xs">Insérer</Badge>
                 </div>
                 <p className="text-2xs text-muted-foreground line-clamp-2">
                   {note.content || 'Note vide'}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         )}

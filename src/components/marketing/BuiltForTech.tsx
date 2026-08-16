@@ -1,12 +1,14 @@
-import { Cable, Cpu, Network, Wrench, Zap } from 'lucide-react';
+import { Cable, Cpu, Droplet, Flame, Sparkles, Trees, Zap } from 'lucide-react';
 
 export function BuiltForTech() {
   const domains = [
-    { name: 'Réseaux & IT', icon: Cpu, color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
-    { name: 'Électricité', icon: Zap, color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
-    { name: 'Télécoms', icon: Network, color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' },
-    { name: 'Fibre optique', icon: Cable, color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' },
-    { name: 'Outils généraux', icon: Wrench, color: 'text-slate-500 bg-slate-500/10 border-slate-500/20' },
+    { name: 'CVC & Climatisation', icon: Flame, color: 'text-rose-500 bg-rose-500/10 border-rose-500/20' },
+    { name: 'Électricité & Courants Faibles', icon: Zap, color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
+    { name: 'Fibre Optique & Télécoms', icon: Cable, color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' },
+    { name: 'Paysage & Espaces Verts', icon: Trees, color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
+    { name: 'Plomberie & Chauffage', icon: Droplet, color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' },
+    { name: 'Nettoyage & Services', icon: Sparkles, color: 'text-purple-500 bg-purple-500/10 border-purple-500/20' },
+    { name: 'Réseaux & IT', icon: Cpu, color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' },
   ];
 
   return (

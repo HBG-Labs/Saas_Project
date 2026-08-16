@@ -1,9 +1,8 @@
 import {
   Activity,
   ArrowRight,
-  BarChart3,
+  Briefcase,
   Building2,
-  CheckCircle2,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
@@ -12,7 +11,6 @@ import {
   Plus,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
   Users,
   UsersRound,
 } from 'lucide-react';
@@ -23,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuditLogs } from '@/features/audit';
+import { useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import {
@@ -32,10 +31,16 @@ import {
   useMembers,
 } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
+import { cn } from '@/lib/cn';
 
 export function OwnerDashboard() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
+  const { label: industryLabel, isResolved } = useCurrentIndustry();
+
+  const jobPlural = useLabel('job', true);
+  const jobSingular = useLabel('job');
+  const workerPlural = useLabel('worker', true);
 
   const members = useMembers(organizationId);
   const missions = useMissions(organizationId, { limit: 6 });
@@ -49,37 +54,10 @@ export function OwnerDashboard() {
   const teamList = teams.data ?? [];
   const recentLogs = auditLogs.data ?? [];
 
-  // Fallback demo activity items if audit logs are empty in dev environment
-  const demoActivities = [
-    {
-      id: 'act-1',
-      action: 'Mise à jour du statut de la mission 2026-0001 (En cours)',
-      time: 'Il y a 15 min',
-      user: 'Mathieu Laurent',
-      link: ROUTES.missions,
-    },
-    {
-      id: 'act-2',
-      action: 'Validation du rapport de recette fibre optique #R-884',
-      time: 'Il y a 1 heure',
-      user: 'Stéphane Leduc',
-      link: ROUTES.review,
-    },
-    {
-      id: 'act-3',
-      action: 'Création d’un nouveau site d’intervention (Site Technopole)',
-      time: 'Il y a 3 heures',
-      user: 'Stéphane Leduc',
-      link: ROUTES.customers,
-    },
-  ];
-
-  const displayLogs = recentLogs.length > 0 ? recentLogs : demoActivities;
-
   return (
     <div className="space-y-8 pb-12">
       {/* 1. Executive Hero Cockpit Banner */}
-      <div className="relative rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <div className="relative rounded-2xl border border-border bg-surface p-6 shadow-xs">
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -87,9 +65,12 @@ export function OwnerDashboard() {
                 <ShieldCheck className="size-3.5" />
                 Espace Direction & Propriétaire
               </span>
-              <span className="text-muted-foreground text-xs font-medium">
-                • {organization?.name ?? 'Entreprise'}
-              </span>
+              {isResolved && industryLabel ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-muted-foreground">
+                  <Briefcase className="size-3 text-primary" />
+                  {industryLabel}
+                </span>
+              ) : null}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-2xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Cockpit Opérationnel
@@ -100,7 +81,7 @@ export function OwnerDashboard() {
               Tableau de Bord — Pilotage d’Entreprise
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Vue d'ensemble 360° de vos effectifs, du suivi des missions terrain et du contrôle qualité.
+              Vue d&apos;ensemble 360° de vos effectifs, du suivi des {jobPlural.toLowerCase()} terrain et du contrôle qualité.
             </p>
           </div>
 
@@ -124,153 +105,146 @@ export function OwnerDashboard() {
               </>
             ) : null}
 
-            <Button asChild variant="primary" size="sm" className="shadow-md">
+            <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
               <Link to={ROUTES.missionNew}>
                 <Plus className="size-4" />
-                Nouvelle mission
+                Nouveau {jobSingular.toLowerCase()}
               </Link>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* 2. Grille de 4 KPIs Entreprise Re-ordonnés par Flux Opérationnel */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* KPI 1 : Missions de l'entreprise (Cœur d'Activité) */}
-        <Card className="group relative overflow-hidden transition-all duration-200 hover:border-cyan-500/50 hover:shadow-lg">
-          <CardContent className="p-5">
-            <Link to={ROUTES.missions} className="block space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 transition-transform group-hover:scale-105">
-                  <ClipboardList className="size-5" />
-                </div>
-                <Badge variant="outline" className="font-mono text-xs">
-                  {missionList.length} au total
-                </Badge>
+      {/* 2. Grille de 4 KPIs Entreprise avec Dimensions Compactes & Épurées */}
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* KPI 1 : Missions / Chantiers de l'entreprise */}
+        <div className="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md">
+          <Link to={ROUTES.missions} className="flex h-full flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                <ClipboardList className="size-4" />
               </div>
+              <Badge variant="outline" className="font-mono text-3xs px-2 py-0.5">
+                {missionList.length} au total
+              </Badge>
+            </div>
 
-              <div>
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Missions de l'entreprise
-                </p>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                    {missionList.length}
-                  </span>
-                  <span className="text-cyan-400 group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
-                    Voir les missions
-                    <ArrowRight className="size-3.5" />
-                  </span>
-                </div>
+            <div>
+              <p className="text-muted-foreground text-3xs font-semibold uppercase tracking-wider">
+                {jobPlural} de l&apos;entreprise
+              </p>
+              <div className="mt-0.5 flex items-baseline justify-between">
+                <span className="text-foreground text-2xl font-extrabold tracking-tight tabular-nums">
+                  {missionList.length}
+                </span>
+                <span className="text-primary group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
+                  Voir les {jobPlural.toLowerCase()}
+                  <ArrowRight className="size-3" />
+                </span>
               </div>
-            </Link>
-          </CardContent>
-        </Card>
+            </div>
+          </Link>
+        </div>
 
         {/* KPI 2 : Contrôle Qualité (Validation des Rapports) */}
-        <Card
-          className={
+        <div
+          className={cn(
+            'group relative flex flex-col justify-between rounded-xl border bg-surface p-3.5 sm:p-4 shadow-xs transition-all duration-200',
             pendingReportsCount > 0
-              ? 'group relative overflow-hidden border-amber-500/50 bg-amber-950/10 transition-all duration-200 hover:border-amber-500 hover:shadow-lg'
-              : 'group relative overflow-hidden transition-all duration-200 hover:border-amber-500/50 hover:shadow-lg'
-          }
+              ? 'border-amber-500/50 bg-amber-500/5 hover:border-amber-500 hover:shadow-md'
+              : 'border-border hover:border-border-strong hover:shadow-md',
+          )}
         >
-          <CardContent className="p-5">
-            <Link to={ROUTES.review} className="block space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 transition-transform group-hover:scale-105">
-                  <ClipboardCheck className="size-5" />
-                </div>
-                {pendingReportsCount > 0 ? (
-                  <Badge variant="warning" className="font-semibold animate-pulse">
-                    {pendingReportsCount} à valider
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs">
-                    À jour
-                  </Badge>
-                )}
+          <Link to={ROUTES.review} className="flex h-full flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 transition-transform group-hover:scale-105">
+                <ClipboardCheck className="size-4" />
               </div>
+              {pendingReportsCount > 0 ? (
+                <Badge variant="warning" className="font-semibold text-3xs px-2 py-0.5 animate-pulse">
+                  {pendingReportsCount} à valider
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-3xs px-2 py-0.5">
+                  À jour
+                </Badge>
+              )}
+            </div>
 
-              <div>
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Contrôle Qualité
-                </p>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-amber-400 text-3xl font-extrabold tracking-tight tabular-nums">
-                    {pendingReportsCount}
-                  </span>
-                  <span className="text-amber-400 group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
-                    Revoir & Valider
-                    <ArrowRight className="size-3.5" />
-                  </span>
-                </div>
+            <div>
+              <p className="text-muted-foreground text-3xs font-semibold uppercase tracking-wider">
+                Contrôle Qualité
+              </p>
+              <div className="mt-0.5 flex items-baseline justify-between">
+                <span className="text-amber-600 dark:text-amber-400 text-2xl font-extrabold tracking-tight tabular-nums">
+                  {pendingReportsCount}
+                </span>
+                <span className="text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
+                  Revoir & Valider
+                  <ArrowRight className="size-3" />
+                </span>
               </div>
-            </Link>
-          </CardContent>
-        </Card>
+            </div>
+          </Link>
+        </div>
 
         {/* KPI 3 : Équipes de terrain */}
-        <Card className="group relative overflow-hidden transition-all duration-200 hover:border-emerald-500/50 hover:shadow-lg">
-          <CardContent className="p-5">
-            <Link to={ROUTES.teams} className="block space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 transition-transform group-hover:scale-105">
-                  <UsersRound className="size-5" />
-                </div>
-                <Badge variant="success" className="font-medium text-xs">
-                  {teamList.length} équipe{teamList.length > 1 ? 's' : ''}
-                </Badge>
+        <div className="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:border-emerald-500/50 hover:shadow-md">
+          <Link to={ROUTES.teams} className="flex h-full flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-transform group-hover:scale-105">
+                <UsersRound className="size-4" />
               </div>
+              <Badge variant="success" className="font-medium text-3xs px-2 py-0.5">
+                {teamList.length} équipe{teamList.length > 1 ? 's' : ''}
+              </Badge>
+            </div>
 
-              <div>
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Équipes de terrain
-                </p>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                    {teamList.length}
-                  </span>
-                  <span className="text-emerald-400 group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
-                    Organiser
-                    <ArrowRight className="size-3.5" />
-                  </span>
-                </div>
+            <div>
+              <p className="text-muted-foreground text-3xs font-semibold uppercase tracking-wider">
+                Équipes de terrain
+              </p>
+              <div className="mt-0.5 flex items-baseline justify-between">
+                <span className="text-foreground text-2xl font-extrabold tracking-tight tabular-nums">
+                  {teamList.length}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
+                  Organiser
+                  <ArrowRight className="size-3" />
+                </span>
               </div>
-            </Link>
-          </CardContent>
-        </Card>
+            </div>
+          </Link>
+        </div>
 
         {/* KPI 4 : Effectifs & Membres */}
-        <Card className="group relative overflow-hidden transition-all duration-200 hover:border-blue-500/50 hover:shadow-lg">
-          <CardContent className="p-5">
-            <Link to={ROUTES.organizationMembers} className="block space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 transition-transform group-hover:scale-105">
-                  <Users className="size-5" />
-                </div>
-                <Badge variant="primary" className="font-medium text-xs">
-                  {activeMembersCount} actif{activeMembersCount > 1 ? 's' : ''}
-                </Badge>
+        <div className="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md">
+          <Link to={ROUTES.organizationMembers} className="flex h-full flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                <Users className="size-4" />
               </div>
+              <Badge variant="primary" className="font-medium text-3xs px-2 py-0.5">
+                {activeMembersCount} actif{activeMembersCount > 1 ? 's' : ''}
+              </Badge>
+            </div>
 
-              <div>
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Techniciens
-                </p>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
-                    {activeMembersCount}
-                  </span>
-                  <span className="text-primary group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
-                    Gérer l'équipe
-                    <ArrowRight className="size-3.5" />
-                  </span>
-                </div>
+            <div>
+              <p className="text-muted-foreground text-3xs font-semibold uppercase tracking-wider">
+                {workerPlural}
+              </p>
+              <div className="mt-0.5 flex items-baseline justify-between">
+                <span className="text-foreground text-2xl font-extrabold tracking-tight tabular-nums">
+                  {activeMembersCount}
+                </span>
+                <span className="text-primary group-hover:translate-x-0.5 inline-flex items-center gap-1 text-xs font-semibold transition-transform">
+                  Gérer l&apos;équipe
+                  <ArrowRight className="size-3" />
+                </span>
               </div>
-            </Link>
-          </CardContent>
-        </Card>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* 3. Section des Raccourcis de Gestion Rapide */}
@@ -286,14 +260,14 @@ export function OwnerDashboard() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Link
             to={ROUTES.organizationMembers}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-blue-500/50 hover:bg-surface-hover hover:shadow-md"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-primary/50 hover:bg-surface-hover hover:shadow-sm"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <Users className="size-4.5" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-foreground text-xs font-semibold group-hover:text-primary transition-colors">
-                Gérer l'équipe
+                {workerPlural}
               </p>
               <p className="text-muted-foreground truncate text-2xs">Membres & Rôles</p>
             </div>
@@ -302,29 +276,29 @@ export function OwnerDashboard() {
 
           <Link
             to={ROUTES.teams}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-emerald-500/50 hover:bg-surface-hover hover:shadow-md"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-emerald-500/50 hover:bg-surface-hover hover:shadow-sm"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
               <UsersRound className="size-4.5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-foreground text-xs font-semibold group-hover:text-emerald-400 transition-colors">
+              <p className="text-foreground text-xs font-semibold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                 Équipes Terrain
               </p>
-              <p className="text-muted-foreground truncate text-2xs">Groupes & Techniciens</p>
+              <p className="text-muted-foreground truncate text-2xs">Groupes & Opérations</p>
             </div>
             <ChevronRight className="text-subtle-foreground size-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </Link>
 
           <Link
             to={ROUTES.customers}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-cyan-500/50 hover:bg-surface-hover hover:shadow-md"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-sky-500/50 hover:bg-surface-hover hover:shadow-sm"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 group-hover:scale-110 transition-transform">
               <Building2 className="size-4.5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-foreground text-xs font-semibold group-hover:text-cyan-400 transition-colors">
+              <p className="text-foreground text-xs font-semibold group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                 Fichier Clients
               </p>
               <p className="text-muted-foreground truncate text-2xs">Contacts & Sites</p>
@@ -334,16 +308,16 @@ export function OwnerDashboard() {
 
           <Link
             to={ROUTES.organization}
-            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-amber-500/50 hover:bg-surface-hover hover:shadow-md"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-amber-500/50 hover:bg-surface-hover hover:shadow-sm"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
               <ShieldCheck className="size-4.5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-foreground text-xs font-semibold group-hover:text-amber-400 transition-colors">
+              <p className="text-foreground text-xs font-semibold group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                 Paramètres
               </p>
-              <p className="text-muted-foreground truncate text-2xs">Profil & Sécurité</p>
+              <p className="text-muted-foreground truncate text-2xs">Entreprise & Métier</p>
             </div>
             <ChevronRight className="text-subtle-foreground size-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </Link>
@@ -358,11 +332,11 @@ export function OwnerDashboard() {
             <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
               <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
                 <ClipboardList className="size-4.5 text-primary" />
-                Missions récentes de l'entreprise
+                {jobPlural} récentes de l&apos;entreprise
               </CardTitle>
               <Button asChild variant="ghost" size="sm" className="text-xs">
                 <Link to={ROUTES.missions} className="flex items-center gap-1">
-                  Voir tout le catalogue
+                  Voir tout
                   <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
@@ -372,13 +346,13 @@ export function OwnerDashboard() {
               {missionList.length === 0 ? (
                 <div className="text-muted-foreground flex flex-col items-center justify-center py-10 text-center">
                   <ClipboardList className="size-10 text-subtle-foreground/50 mb-2" />
-                  <p className="text-sm font-medium">Aucune mission enregistrée</p>
+                  <p className="text-sm font-medium">Aucun {jobSingular.toLowerCase()} enregistré</p>
                   <p className="text-xs text-subtle-foreground mt-1">
-                    Créez votre première mission pour commencer le suivi d'intervention.
+                    Créez votre première mission pour commencer le suivi d&apos;intervention.
                   </p>
                   <Button asChild variant="outline" size="sm" className="mt-4">
                     <Link to={ROUTES.missionNew}>
-                      <Plus className="size-3.5 mr-1" /> Créer une mission
+                      <Plus className="size-3.5 mr-1" /> Créer un {jobSingular.toLowerCase()}
                     </Link>
                   </Button>
                 </div>
@@ -412,9 +386,7 @@ export function OwnerDashboard() {
                               <span className="font-medium text-foreground/80">
                                 {m.customer.name}
                               </span>
-                            ) : (
-                              <span>Client Telecom</span>
-                            )}
+                            ) : null}
 
                             {m.site !== null ? (
                               <span className="flex items-center gap-1">
@@ -480,102 +452,51 @@ export function OwnerDashboard() {
           <Card className="h-auto">
             <CardHeader className="border-b pb-4">
               <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-                <Activity className="size-4.5 text-emerald-400" />
+                <Activity className="size-4.5 text-primary" />
                 Traçabilité & Activités récentes
               </CardTitle>
             </CardHeader>
 
             <CardContent className="pt-4">
-              <div className="space-y-3">
-                {displayLogs.map((log) => {
-                  const linkTarget =
-                    'link' in log && typeof log.link === 'string'
-                      ? log.link
-                      : ROUTES.missions;
-
-                  return (
-                    <Link
+              {recentLogs.length === 0 ? (
+                <div className="py-8 text-center space-y-2">
+                  <Activity className="size-7 text-subtle-foreground/50 mx-auto" />
+                  <p className="text-xs font-medium text-muted-foreground">Aucune activité récente</p>
+                  <p className="text-2xs text-subtle-foreground">
+                    Les actions d&apos;équipe et modifications de statut apparaîtront ici.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {recentLogs.map((log) => (
+                    <div
                       key={log.id}
-                      to={linkTarget}
-                      className="group relative flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-surface-hover/70"
+                      className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-surface-hover/70"
                     >
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mt-0.5 group-hover:scale-110 transition-transform">
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 mt-0.5">
                         <Clock className="size-3.5" />
                       </div>
                       <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="text-foreground text-xs font-medium leading-snug group-hover:text-primary transition-colors">
+                        <p className="text-foreground text-xs font-medium leading-snug">
                           {log.action}
                         </p>
                         <div className="flex items-center gap-2 text-2xs text-muted-foreground">
-                          {'user' in log ? <span>{log.user}</span> : null}
-                          <span>•</span>
                           <span>
-                            {'time' in log
-                              ? log.time
-                              : new Date(log.created_at).toLocaleDateString('fr-FR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                            {new Date(log.created_at).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
                         </div>
                       </div>
-                      <ChevronRight className="size-3.5 text-subtle-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
-                    </Link>
-                  );
-                })}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
-      </div>
-
-      {/* 5. Bandeau d'Indicateurs Opérationnels (Santé du Système) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-emerald-500/40 hover:shadow-md">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
-            <CheckCircle2 className="size-5" />
-          </div>
-          <div>
-            <p className="text-foreground text-xs font-bold flex items-center gap-1.5">
-              Conformité Opérationnelle
-              <Badge variant="success" className="text-2xs py-0 px-1.5">
-                98.4%
-              </Badge>
-            </p>
-            <p className="text-muted-foreground text-2xs">Rapports validés du premier coup</p>
-          </div>
-        </div>
-
-        <div className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-blue-500/40 hover:shadow-md">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
-            <TrendingUp className="size-5" />
-          </div>
-          <div>
-            <p className="text-foreground text-xs font-bold flex items-center gap-1.5">
-              Réactivité Équipe
-              <Badge variant="primary" className="text-2xs py-0 px-1.5">
-                2.1 h
-              </Badge>
-            </p>
-            <p className="text-muted-foreground text-2xs">Délai moyen de réponse terrain</p>
-          </div>
-        </div>
-
-        <div className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-indigo-500/40 hover:shadow-md">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:scale-105 transition-transform">
-            <BarChart3 className="size-5" />
-          </div>
-          <div>
-            <p className="text-foreground text-xs font-bold flex items-center gap-1.5">
-              Traçabilité Supabase RLS
-              <Badge variant="outline" className="text-2xs py-0 px-1.5 border-indigo-500/30 text-indigo-400">
-                Active
-              </Badge>
-            </p>
-            <p className="text-muted-foreground text-2xs">Isolation des données par entreprise</p>
-          </div>
         </div>
       </div>
     </div>

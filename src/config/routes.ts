@@ -53,6 +53,8 @@ export const ROUTES = {
 
   dashboard: '/dashboard',
   analytics: '/analytics',
+  planning: '/planning',
+  map: '/carte',
   tools: '/tools',
   favorites: '/favorites',
   history: '/history',

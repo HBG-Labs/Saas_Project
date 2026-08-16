@@ -10,19 +10,19 @@ const FAQ_ITEMS = [
     id: 'what-is-nexoratech',
     question: 'Qu’est-ce que NexoraTech ?',
     answer:
-      'NexoraTech est une plateforme SaaS de boîte à outils techniques destinée aux techniciens, ingénieurs et étudiants de la fibre optique, des réseaux et de l’électricité. Elle centralise toutes vos calculatrices et convertisseurs dans un cockpit numérique unique, précis et accessible partout.',
+      'NexoraTech est une plateforme SaaS de gestion d’interventions et d’outils techniques destinée aux techniciens, artisans, chefs d’équipe et entreprises multi-métiers (CVC/climatisation, électricité, fibre & télécoms, paysage, plomberie, maintenance). Elle centralise vos missions, vos rapports terrain et vos calculatrices d’ingénierie dans un espace numérique unique.',
   },
   {
     id: 'who-is-it-for',
     question: 'À qui s’adresse NexoraTech ?',
     answer:
-      'L’application est conçue pour tous les professionnels et apprenants du secteur technique : techniciens d’intervention terrain, ingénieurs en bureau d’études, installateurs télécoms et réseaux, et étudiants préparant des diplômes techniques (BTS, IUT, Écoles d’ingénieurs).',
+      'L’application est conçue pour les professionnels et entreprises techniques : entreprises du bâtiment, installateurs de climatisation/CVC, électriciens, techniciens télécoms, paysagistes, plombiers, et équipes de maintenance multi-sites.',
   },
   {
     id: 'available-tools',
-    question: 'Quels types d’outils sont disponibles ?',
+    question: 'Quels types d’outils et fonctionnalités sont disponibles ?',
     answer:
-      'La plateforme couvre les bilans de liaison optique FTTH (atténuation 1310/1550nm), le sous-réseautage IPv4/v6 (masques CIDR, plages d’hôtes), les calculs de puissance électrique triphasée et de chute de tension (UTE C 15-105), ainsi que diverses calculatrices mathématiques et de conversion.',
+      'La plateforme intègre la gestion complète des interventions, le suivi de temps terrain, les formulaires et checklists adaptatifs par métier, les devis rapides, ainsi qu’un catalogue d’outils d’ingénierie (bilans optiques, calculs électriques NF C 15-100, sous-réseautage, conversions d’unités et calculatrices de dimensionnement).',
   },
   {
     id: 'is-it-free',
