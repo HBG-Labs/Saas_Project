@@ -580,6 +580,89 @@ export interface Database {
         ];
       };
 
+      /** Points de contrôle d'un type d'intervention. Une ligne = une version. */
+      checklist_templates: {
+        Row: {
+          id: string;
+          intervention_type_id: string;
+          version: number;
+          label: string;
+          description: string | null;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'checklist_templates_intervention_type_id_fkey';
+            columns: ['intervention_type_id'];
+            referencedRelation: 'intervention_types';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      checklist_items: {
+        Row: {
+          id: string;
+          checklist_template_id: string;
+          /** Code stable retrouvé dans le document de réponses. */
+          code: string;
+          label: string;
+          help: string | null;
+          /** Non coché, il empêche la transmission du compte rendu. */
+          required: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'checklist_items_checklist_template_id_fkey';
+            columns: ['checklist_template_id'];
+            referencedRelation: 'checklist_templates';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      intervention_checklist_responses: {
+        Row: {
+          id: string;
+          intervention_id: string;
+          organization_id: string;
+          checklist_template_id: string;
+          /** Tableau des codes cochés. Un point non coché est absent, pas `false`. */
+          checked: Json;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          intervention_id: string;
+          organization_id: string;
+          checklist_template_id: string;
+          checked?: Json;
+          completed_at?: string | null;
+        };
+        Update: {
+          checked?: Json;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intervention_checklist_responses_intervention_id_fkey';
+            columns: ['intervention_id'];
+            referencedRelation: 'interventions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       plans: {
         Row: {
           code: string;

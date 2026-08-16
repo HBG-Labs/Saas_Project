@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
-import { InterventionFormCard } from '@/features/industries';
+import { ChecklistCard, InterventionFormCard } from '@/features/industries';
 import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
 import {
@@ -293,6 +293,24 @@ export default function ReportEditorPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          {/*
+            La check-list AVANT le relevé de mesures.
+
+            Elle porte les gestes ; le formulaire porte les grandeurs. Surtout,
+            c'est elle qui conditionne la transmission du compte rendu — la
+            placer en second reviendrait à annoncer le blocage après coup.
+          */}
+          {organization !== null ? (
+            <ChecklistCard
+              interventionId={data.id}
+              organizationId={organization.id}
+              interventionTypeId={mission.data?.intervention_type_id ?? null}
+              readOnly={
+                report !== null && report.status !== 'draft' && report.status !== 'rejected'
+              }
+            />
+          ) : null}
 
           {/*
             Le relevé métier, entre le récit et les pièces jointes.

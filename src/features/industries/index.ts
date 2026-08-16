@@ -26,3 +26,13 @@ export { useFormResponse, useFormTemplate, useSaveFormResponse } from './hooks/u
 export { DynamicForm } from './components/DynamicForm';
 export { findMissingRequired } from './components/form-validation';
 export { InterventionFormCard } from './components/InterventionFormCard';
+
+export {
+  getChecklistResponse,
+  getChecklistTemplate,
+  saveChecklistResponse,
+  type ChecklistItem,
+  type ChecklistResponse,
+  type ChecklistTemplate,
+} from './api/checklists.api';
+export { ChecklistCard } from './components/ChecklistCard';
