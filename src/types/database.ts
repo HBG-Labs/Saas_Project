@@ -481,6 +481,37 @@ export interface Database {
         ];
       };
 
+      /**
+       * Classement du matériel.
+       *
+       * `industry_code` nul = catégorie commune à tous les métiers. Contrairement
+       * aux types d'intervention, aucun trigger ne restreint le classement au
+       * métier de l'organisation : on range un outil, on ne l'autorise pas.
+       */
+      equipment_categories: {
+        Row: {
+          id: string;
+          industry_code: string | null;
+          code: string;
+          label: string;
+          icon: string;
+          sort_order: number;
+          status: ContentStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_categories_industry_code_fkey';
+            columns: ['industry_code'];
+            referencedRelation: 'industries';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
+
       /** Modèle de saisie rattaché à un type d'intervention. Une ligne = une version. */
       form_templates: {
         Row: {
@@ -1370,7 +1401,10 @@ export interface Database {
           name: string;
           brand: string | null;
           serial_number: string | null;
+          /** Vestige de l'enum fibre. Tenu en phase avec `category_id` par trigger. */
           category: EquipmentCategory;
+          /** Classement par métier. Remplace `category`. */
+          category_id: string | null;
           status: EquipmentStatus;
           condition: EquipmentCondition;
           assigned_member_id: string | null;
@@ -1388,6 +1422,7 @@ export interface Database {
           brand?: string | null;
           serial_number?: string | null;
           category?: EquipmentCategory;
+          category_id?: string | null;
           status?: EquipmentStatus;
           condition?: EquipmentCondition;
           assigned_member_id?: string | null;
@@ -1401,6 +1436,7 @@ export interface Database {
           brand?: string | null;
           serial_number?: string | null;
           category?: EquipmentCategory;
+          category_id?: string | null;
           status?: EquipmentStatus;
           condition?: EquipmentCondition;
           assigned_member_id?: string | null;

@@ -108,3 +108,48 @@ export async function listInterventionTypes(industry: string): Promise<Intervent
     icon: row.icon,
   }));
 }
+
+export interface EquipmentCategoryRef {
+  id: string;
+  industryCode: string | null;
+  code: string;
+  label: string;
+  icon: string;
+}
+
+/**
+ * Catégories de matériel proposables à une organisation.
+ *
+ * Celles du métier, PLUS les communes (`industry_code` nul) : « Sécurité &
+ * EPI » ou « Outillage à main » sont les mêmes partout.
+ *
+ * Contrairement aux types d'intervention, aucun trigger ne restreint le
+ * classement du matériel au métier de l'organisation. C'est délibéré : on RANGE
+ * un outil, on ne l'AUTORISE pas. Une entreprise de fibre qui possède un
+ * détecteur de fuite doit pouvoir le classer comme tel.
+ */
+export async function listEquipmentCategories(
+  industry: string | null,
+): Promise<EquipmentCategoryRef[]> {
+  let query = supabase
+    .from('equipment_categories')
+    .select('id, industry_code, code, label, icon')
+    .order('sort_order', { ascending: true });
+
+  // `or` plutôt que deux requêtes : les communes et celles du métier forment
+  // une seule liste, triée d'un bloc par ordre d'affichage.
+  query =
+    industry === null || industry === 'general'
+      ? query.is('industry_code', null)
+      : query.or(`industry_code.is.null,industry_code.eq.${industry}`);
+
+  const rows = await unwrap(query);
+
+  return rows.map((row) => ({
+    id: row.id,
+    industryCode: row.industry_code,
+    code: row.code,
+    label: row.label,
+    icon: row.icon,
+  }));
+}

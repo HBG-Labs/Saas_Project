@@ -33,6 +33,8 @@ export interface EquipmentFilters {
   search?: string;
   status?: EquipmentStatus;
   category?: EquipmentCategory;
+  /** Classement par metier. Remplace `category`, tenu en phase par trigger. */
+  categoryId?: string;
 }
 
 export async function listEquipment(
@@ -46,6 +48,7 @@ export async function listEquipment(
 
   if (filters.status) query = query.eq('status', filters.status);
   if (filters.category) query = query.eq('category', filters.category);
+  if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
 
   if (filters.search) {
     const term = filters.search.replace(/[%,()]/g, ' ').trim();
@@ -76,6 +79,8 @@ export interface EquipmentInput {
   brand?: string;
   serialNumber?: string;
   category?: EquipmentCategory;
+  /** Classement par metier. Le trigger `equipment_sync_category` aligne l'enum. */
+  categoryId?: string;
   condition?: EquipmentCondition;
   assignedMemberId?: string | null;
   lastCalibration?: string | null;
@@ -110,6 +115,7 @@ export async function createEquipment(input: EquipmentInput): Promise<Equipment>
     ...(input.brand !== undefined ? { brand: input.brand } : {}),
     ...(input.serialNumber !== undefined ? { serial_number: input.serialNumber } : {}),
     ...(input.category !== undefined ? { category: input.category } : {}),
+    ...(input.categoryId !== undefined ? { category_id: input.categoryId } : {}),
     ...(input.condition !== undefined ? { condition: input.condition } : {}),
     ...(input.assignedMemberId ? { assigned_member_id: input.assignedMemberId } : {}),
     ...(input.lastCalibration !== undefined ? { last_calibration: input.lastCalibration } : {}),

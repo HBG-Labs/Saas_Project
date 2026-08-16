@@ -37,17 +37,11 @@ import {
   useMembers,
   usePermission,
 } from '@/features/organizations';
+import { useEquipmentCategories } from '@/features/industries';
 import { useDocumentTitle } from '@/lib/use-document-title';
-import type { EquipmentCategory, EquipmentStatus } from '@/types/database';
+import type { EquipmentStatus } from '@/types/database';
 import type { EquipmentWithAssignee } from '@/types/domain';
 
-const CATEGORY_OPTIONS: { value: EquipmentCategory; label: string }[] = [
-  { value: 'optique', label: 'Optique & Fibre FTTH' },
-  { value: 'electricite', label: 'Électricité BT / HTA' },
-  { value: 'radio', label: 'Réseaux IP & Radio' },
-  { value: 'securite', label: 'Sécurité & EPI' },
-  { value: 'autre', label: 'Autre' },
-];
 
 const STATUS_OPTIONS: { value: EquipmentStatus; label: string }[] = [
   { value: 'assigned', label: 'Attribué à un technicien' },
@@ -80,12 +74,22 @@ export default function EquipmentPage() {
   const canManage = can(PERMISSIONS.equipmentManage);
 
   const [search, setSearch] = useState('');
-  const [filterCategory, setFilterCategory] = useState<'all' | EquipmentCategory>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | EquipmentStatus>('all');
+
+  /*
+    Categories du metier de l'entreprise, plus les communes.
+
+    Remplacent les cinq valeurs de l'ancien enum, toutes issues du monde fibre :
+    un frigoriste n'y rangeait ni ses stations de charge ni ses detecteurs de
+    fuite, un paysagiste ni sa motoculture.
+  */
+  const categoriesQuery = useEquipmentCategories();
+  const categories = categoriesQuery.data ?? [];
 
   const equipmentQuery = useEquipmentList(organizationId, {
     ...(search.trim() !== '' ? { search: search.trim() } : {}),
-    ...(filterCategory !== 'all' ? { category: filterCategory } : {}),
+    ...(filterCategory !== 'all' ? { categoryId: filterCategory } : {}),
     ...(filterStatus !== 'all' ? { status: filterStatus } : {}),
   });
 
@@ -106,7 +110,7 @@ export default function EquipmentPage() {
     name: '',
     brand: '',
     serialNumber: '',
-    category: 'optique' as EquipmentCategory,
+    categoryId: '',
     status: 'available' as EquipmentStatus,
     assignedMemberId: '',
     nextCalibration: inOneYear(),
@@ -119,7 +123,7 @@ export default function EquipmentPage() {
       name: '',
       brand: '',
       serialNumber: '',
-      category: 'optique',
+      categoryId: '',
       status: 'available',
       assignedMemberId: '',
       nextCalibration: inOneYear(),
@@ -135,7 +139,7 @@ export default function EquipmentPage() {
     createEquipment.mutate(
       {
         name: newEq.name.trim(),
-        category: newEq.category,
+        ...(newEq.categoryId !== '' ? { categoryId: newEq.categoryId } : {}),
         condition: 'neuf',
         assignedMemberId: newEq.assignedMemberId === '' ? null : newEq.assignedMemberId,
         lastCalibration: new Date().toISOString().slice(0, 10),
@@ -165,7 +169,7 @@ export default function EquipmentPage() {
           name: editing.name,
           brand: editing.brand,
           serial_number: editing.serial_number,
-          category: editing.category,
+          ...(editing.category_id !== null ? { categoryId: editing.category_id } : {}),
           status: editing.status,
           assigned_member_id: editing.assigned_member_id,
           next_calibration: editing.next_calibration,
@@ -281,13 +285,13 @@ export default function EquipmentPage() {
           <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
             <select
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value as 'all' | EquipmentCategory)}
+              onChange={(e) => setFilterCategory(e.target.value)}
               aria-label="Filtrer par catégorie"
               className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto"
             >
               <option value="all">Toutes catégories</option>
-              {CATEGORY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
+              {categories.map((option) => (
+                <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}
@@ -381,7 +385,7 @@ export default function EquipmentPage() {
                         <span>
                           Catégorie :{' '}
                           <strong className="text-muted-foreground">
-                            {EQUIPMENT_CATEGORY_LABELS[eq.category]}
+                            {categories.find((c) => c.id === eq.category_id)?.label ?? EQUIPMENT_CATEGORY_LABELS[eq.category]}
                           </strong>
                         </span>
                         <span className="hidden sm:inline">•</span>
@@ -492,12 +496,12 @@ export default function EquipmentPage() {
               </label>
               <select
                 id="new-eq-category"
-                value={newEq.category}
-                onChange={(e) => setNewEq({ ...newEq, category: e.target.value as EquipmentCategory })}
+                value={newEq.categoryId}
+                onChange={(e) => setNewEq({ ...newEq, categoryId: e.target.value })}
                 className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
               >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                {categories.map((option) => (
+                  <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
                 ))}
@@ -590,14 +594,14 @@ export default function EquipmentPage() {
                 </label>
                 <select
                   id="edit-eq-category"
-                  value={editing.category}
+                  value={editing.category_id ?? ''}
                   onChange={(e) =>
-                    setEditing({ ...editing, category: e.target.value as EquipmentCategory })
+                    setEditing({ ...editing, category_id: e.target.value })
                   }
                   className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
                 >
-                  {CATEGORY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
+                  {categories.map((option) => (
+                    <option key={option.id} value={option.id}>
                       {option.label}
                     </option>
                   ))}

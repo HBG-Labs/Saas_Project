@@ -1,12 +1,15 @@
 /** API publique de la feature « industries ». */
 export {
   listIndustries,
+  listEquipmentCategories,
   listInterventionTypes,
+  type EquipmentCategoryRef,
   type Industry,
   type InterventionType,
 } from './api/industries.api';
 export {
   useCurrentIndustry,
+  useEquipmentCategories,
   useIndustries,
   useInterventionTypes,
   useLabel,

@@ -12,6 +12,7 @@ import { useCurrentOrganization } from '@/features/organizations';
 import { qk } from '@/lib/query-keys';
 
 import {
+  listEquipmentCategories,
   listIndustries,
   listInterventionTypes,
   type Industry,
@@ -115,6 +116,22 @@ export function useInterventionTypes() {
   return useQuery({
     queryKey: [...qk.industries.all, 'intervention-types', code],
     queryFn: () => listInterventionTypes(code),
+    enabled: isResolved,
+    staleTime: 60 * 60_000,
+  });
+}
+
+/**
+ * Catégories de matériel du métier courant, communes comprises.
+ *
+ * Même mise en cache que les types : ce référentiel n'évolue que par migration.
+ */
+export function useEquipmentCategories() {
+  const { code, isResolved } = useCurrentIndustry();
+
+  return useQuery({
+    queryKey: [...qk.industries.all, 'equipment-categories', code],
+    queryFn: () => listEquipmentCategories(code),
     enabled: isResolved,
     staleTime: 60 * 60_000,
   });
