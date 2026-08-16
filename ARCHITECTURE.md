@@ -165,6 +165,7 @@ Trois modules reflètent des tables SQL :
 | `features/organizations/rbac.ts` | `role_permissions` | masquer les actions interdites |
 | `features/missions/workflow.ts` | `mission_status_transitions` | n'afficher que les transitions possibles |
 | `features/billing/entitlements.ts` | `plan_features` | expliquer ce qu'un plan débloque |
+| `config/industries.ts` | `industries` | typer les codes métier et filtrer le catalogue |
 
 **Aucun ne sécurise quoi que ce soit.** Ils évitent un aller-retour réseau et un
 message d'erreur, rien de plus.
@@ -181,6 +182,67 @@ outillée finit toujours par être contournée.
 techniques. `registry/types.ts` et `catalog-metadata.ts` en dérivent, le seed SQL
 en est la contrepartie vérifiée par test. Ajouter une catégorie ne touche qu'un
 fichier.
+
+## Le métier est une donnée, jamais un chemin de code
+
+NexoraTech sert des fibreurs, des frigoristes et des paysagistes avec le même
+cœur applicatif. Une organisation exerce **un** métier, porté par une colonne
+`organizations.industry` — nullable, et rétro-remplie à `fiber_telecom` pour les
+entreprises antérieures, ce qui est un fait et non une commodité.
+
+Le cœur n'a pas eu à changer pour cela : `missions`, `interventions` et
+`intervention_reports` ne contenaient déjà aucune colonne fibre. Un client, un
+site, une visite, un compte rendu, une signature — c'est vrai de tous ces
+métiers. Ce qui varie tient dans neuf tables de référence, sur trois étages :
+
+| Étage | Tables | Nature |
+|---|---|---|
+| Référentiel | `industries`, `intervention_types`, `equipment_categories` | lecture publique, aucune écriture cliente |
+| Définitions | `form_templates` + `form_fields`, `checklist_templates` + `checklist_items` | livrées en migration, versionnées, non modifiables par les entreprises |
+| Réponses | `intervention_form_responses`, `intervention_checklist_responses` | données d'entreprise, cloisonnées comme le reste |
+
+**Aucun `if (industry === …)` n'existe dans l'application.** Le métier
+sélectionne des lignes ; il ne branche pas. `DynamicForm` reçoit un modèle et le
+rend, en ignorant jusqu'à l'existence de la fibre.
+
+La preuve tient dans deux commits : les packs HVAC et Paysage sont des
+**migrations de données seules**. Ajouter un métier ne demande plus de code —
+sauf s'il appelle de vrais calculateurs, qui sont des programmes et non des
+lignes de configuration.
+
+### La définition est relationnelle, la réponse est un document
+
+Un modèle de formulaire décrit en `jsonb` ne se contraint pas, ne s'indexe pas et
+ne se migre pas proprement : les champs sont donc des lignes. Les réponses, dont
+la forme change à chaque modèle et qu'on n'interroge jamais en travers des
+métiers, sont un document — validé à l'écriture par
+`app.validate_form_response`, pas par le type de la colonne.
+
+Corollaire à tenir : **tout indicateur destiné aux statistiques est promu en
+colonne typée.** Découvrir trop tard qu'un chiffre clé dort dans un `jsonb` coûte
+une migration de données, pas une requête.
+
+Deux tables de réponses plutôt qu'une, contrairement au plan initial : un type
+d'intervention peut porter une check-list sans formulaire, et
+`intervention_form_responses.form_template_id` est `not null`. Les fusionner
+aurait obligé à fabriquer une réponse de formulaire vide pour cocher une case.
+
+### Ce que le serveur refuse
+
+Le frontend guide la saisie ; il ne décide de rien. Quatre garanties vivent en
+base, et `npm run test:sql` les rejoue :
+
+```
+app.enforce_mission_intervention_type   un type d'un autre métier est refusé
+app.validate_form_response              clé inconnue, hors bornes, hors liste
+app.validate_checklist_response         un point qui n'appartient pas au modèle
+app.enforce_checklist_before_submit     un point obligatoire non coché BLOQUE
+                                        la transmission du compte rendu
+```
+
+Le dernier mérite l'insistance : la check-list n'est pas un pense-bête
+d'interface. Elle est adossée au trigger qui gouverne déjà la transition
+`in_progress → submitted`.
 
 ## Une policy raisonne par LIGNE, jamais par COLONNE
 
@@ -235,3 +297,6 @@ manière dont il est obtenu.**
 | ~~`react-hook-form`~~ | **Adopté depuis la Phase 3.** Il porte tous les formulaires métier, avec Zod comme résolveur. |
 | `eslint-plugin-boundaries` | `no-restricted-imports` couvre le besoin sans dépendance supplémentaire. |
 | Tables `tool_configurations` / `references` | Leur schéma dépend d'un usage qui n'existe pas encore. |
+| Système de modules générique (chargement dynamique, registre de greffons) | Réponse disproportionnée : le cœur est déjà commun à tous les métiers et ce qui varie tient dans des tables de référence. Un tel système se paierait à chaque écran. |
+| Gating du métier par la formule | Envisagé (une clé `industry_pack` dans `plan_features`), puis écarté : un métier n'est pas un module optionnel, c'est ce qui rend l'application utilisable. Une entreprise privée de ses formulaires réglementaires n'a pas une version réduite du produit, elle en a une inutile. On vend des sièges et des modules, pas des corps de métier. |
+| Retrait immédiat de `missions.category_id` | La colonne pointe la taxonomie du catalogue d'outils et `intervention_type_id` la remplace, mais les deux coexistent tant qu'une requête de contrôle n'a pas prouvé qu'aucune mission n'est orpheline. Dette assumée, pas oubli. |
