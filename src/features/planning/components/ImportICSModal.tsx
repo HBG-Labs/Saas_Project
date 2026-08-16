@@ -4,27 +4,49 @@ import { Upload, Calendar, CheckCircle2, AlertCircle, X, FileText, User } from '
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { memberDisplayName } from '@/features/organizations';
+import type { MemberWithProfile } from '@/types/domain';
+
 import { parseICS, type ParsedICSEvent } from '../utils/ical';
-import type { PlanningCalendarEvent } from '../types';
+
+/**
+ * Importer un agenda, c'est CRÉER DES MISSIONS.
+ *
+ * Il n'existe pas de table d'événements où déposer un fichier iCalendar : le
+ * calendrier compose des missions, des congés et des fériés. La version
+ * précédente ajoutait les lignes importées à un tableau en mémoire — elles
+ * disparaissaient au rechargement, ce qui est la pire issue possible pour un
+ * import : l'utilisateur croit son planning repris.
+ *
+ * Chaque VEVENT devient donc une mission réelle, affectée à l'intervenant
+ * choisi. L'aperçu avant validation prend tout son sens : ces lignes vont être
+ * écrites.
+ */
+export interface ImportSubmission {
+  events: readonly ParsedICSEvent[];
+  assignedMemberId: string | null;
+  sourceName: string;
+}
 
 interface ImportICSModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onImportEvents: (events: PlanningCalendarEvent[]) => void;
+  members: readonly MemberWithProfile[];
+  submitting: boolean;
+  onImport: (submission: ImportSubmission) => void;
 }
 
-const TECHNICIANS = [
-  { id: 'tech-1', name: 'Aurélie B.', role: 'Frigoriste & Climatisation', initials: 'AB' },
-  { id: 'tech-2', name: 'Thomas R.', role: 'Technicien Fibre & Réseaux', initials: 'TR' },
-  { id: 'tech-3', name: 'Karim M.', role: 'Électricien Tertiaire', initials: 'KM' },
-  { id: 'tech-4', name: 'Sophie L.', role: 'Plombière Chauffagiste', initials: 'SL' },
-];
-
-export function ImportICSModal({ open, onOpenChange, onImportEvents }: ImportICSModalProps) {
+export function ImportICSModal({
+  open,
+  onOpenChange,
+  members,
+  submitting,
+  onImport,
+}: ImportICSModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [parsedEvents, setParsedEvents] = useState<ParsedICSEvent[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [selectedTechId, setSelectedTechId] = useState<string>('tech-1');
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,22 +77,11 @@ export function ImportICSModal({ open, onOpenChange, onImportEvents }: ImportICS
   };
 
   const handleConfirmImport = () => {
-    const tech = TECHNICIANS.find((t) => t.id === selectedTechId);
-
-    const imported: PlanningCalendarEvent[] = parsedEvents.map((pe) => ({
-      id: `imported-${pe.id}`,
-      title: pe.title,
-      date: pe.date,
-      type: 'intervention',
-      technicianId: tech?.id,
-      technicianName: tech?.name,
-      technicianInitials: tech?.initials,
-      details: pe.details || `Importé depuis ${fileName ?? 'fichier .ics'}`,
-      status: 'planifie',
-    }));
-
-    onImportEvents(imported);
-    handleClose();
+    onImport({
+      events: parsedEvents,
+      assignedMemberId: selectedMemberId === '' ? null : selectedMemberId,
+      sourceName: fileName ?? 'fichier .ics',
+    });
   };
 
   const handleClose = () => {
@@ -167,20 +178,24 @@ export function ImportICSModal({ open, onOpenChange, onImportEvents }: ImportICS
                   className="text-3xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1"
                 >
                   <User className="size-3 text-primary" />
-                  <span>Assigner ces événements à :</span>
+                  <span>Assigner ces missions à :</span>
                 </label>
                 <select
                   id="tech-assign-select"
-                  value={selectedTechId}
-                  onChange={(e) => setSelectedTechId(e.target.value)}
+                  value={selectedMemberId}
+                  onChange={(e) => setSelectedMemberId(e.target.value)}
                   className="w-full h-9 px-3 rounded-xl border border-border bg-surface text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
                 >
-                  {TECHNICIANS.map((tech) => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.name} — {tech.role}
+                  <option value="">À affecter plus tard</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {memberDisplayName(member)}
                     </option>
                   ))}
                 </select>
+                <p className="text-3xs text-muted-foreground">
+                  Chaque événement deviendra une mission planifiée à sa date.
+                </p>
               </div>
 
               {/* Event preview list */}
@@ -213,13 +228,15 @@ export function ImportICSModal({ open, onOpenChange, onImportEvents }: ImportICS
             <Button
               size="sm"
               variant="primary"
-              disabled={parsedEvents.length === 0}
+              disabled={parsedEvents.length === 0 || submitting}
               onClick={handleConfirmImport}
               className="text-xs h-8 gap-1.5"
             >
               <CheckCircle2 className="size-3.5" />
               <span>
-                Importer {parsedEvents.length > 0 ? `(${parsedEvents.length})` : ''}
+                {submitting
+                  ? 'Création…'
+                  : `Créer ${parsedEvents.length > 0 ? String(parsedEvents.length) : ''} mission${parsedEvents.length > 1 ? 's' : ''}`}
               </span>
             </Button>
           </div>

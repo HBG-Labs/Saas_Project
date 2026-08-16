@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Calendar as CalendarIcon,
   Download,
@@ -10,9 +10,19 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
+import { useAuth } from '@/features/auth';
+import { useCreateMission } from '@/features/missions';
+import {
+  PERMISSIONS,
+  useCurrentOrganization,
+  useMembers,
+  usePermission,
+} from '@/features/organizations';
+import { useMissions } from '@/features/missions';
 import {
   PlanningCalendarView,
   LeavesManagementTab,
@@ -21,132 +31,212 @@ import {
   NewLeaveModal,
   NewEventModal,
   ImportICSModal,
+  buildCalendarEvents,
   exportEventsToICS,
-  INITIAL_LEAVE_REQUESTS,
-  INITIAL_LEAVE_BALANCES,
-  INITIAL_CALENDAR_EVENTS,
-  INITIAL_RECURRING_TASKS,
-  type LeaveRequest,
-  type StaffLeaveBalance,
-  type PlanningCalendarEvent,
-  type RecurringTask,
-  type LeaveStatus,
-  type HolidayTerritory,
   getHolidaysForTerritory,
+  toLeaveRequest,
+  toRecurringTask,
+  toStaffLeaveBalance,
+  useCreateLeaveRequest,
+  useLeaveBalances,
+  useLeaveRequests,
+  useRecurringTasks,
+  useSetLeaveStatus,
+  type HolidayTerritory,
+  type ImportSubmission,
+  type LeaveStatus,
+  type NewEventSubmission,
+  type NewLeaveSubmission,
 } from '@/features/planning';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
+/**
+ * Planning & congés.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LE CALENDRIER N'A PAS DE TABLE
+ *
+ * Il compose trois sources : les missions planifiées, les congés accordés ou en
+ * attente, et les jours fériés calculés. Une table `calendar_events` aurait
+ * dupliqué des lignes qui existent déjà — et la copie qu'on n'affiche pas est
+ * toujours celle qui reste fausse le plus longtemps.
+ *
+ * C'est aussi ce qui explique que « Planifier » crée une MISSION : c'est la
+ * seule chose qu'un événement de calendrier puisse être ici.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export default function PlanningPage() {
   useDocumentTitle('Planning & Congés');
 
-  const [activeTab, setActiveTab] = useState<'calendar' | 'leaves' | 'recurring' | 'holidays'>('calendar');
-  const [events, setEvents] = useState<PlanningCalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
-  const [leaves, setLeaves] = useState<LeaveRequest[]>(INITIAL_LEAVE_REQUESTS);
-  const [balances, setBalances] = useState<StaffLeaveBalance[]>(INITIAL_LEAVE_BALANCES);
-  const [tasks] = useState<RecurringTask[]>(INITIAL_RECURRING_TASKS);
-  const [selectedTerritory, setSelectedTerritory] = useState<HolidayTerritory>('metropole');
-  const holidays = getHolidaysForTerritory(selectedTerritory);
+  const { user } = useAuth();
+  const { organization } = useCurrentOrganization();
+  const { can } = usePermission();
+  const organizationId = organization?.id ?? null;
 
+  const [activeTab, setActiveTab] = useState<'calendar' | 'leaves' | 'recurring' | 'holidays'>(
+    'calendar',
+  );
+  const [selectedTerritory, setSelectedTerritory] = useState<HolidayTerritory>('metropole');
   const [isNewLeaveOpen, setIsNewLeaveOpen] = useState(false);
   const [isNewEventOpen, setIsNewEventOpen] = useState(false);
   const [isImportICSOpen, setIsImportICSOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const pendingLeavesCount = leaves.filter((l) => l.status === 'pending').length;
+  const membersQuery = useMembers(organizationId);
+  const leavesQuery = useLeaveRequests(organizationId);
+  const balancesQuery = useLeaveBalances(organizationId, new Date().getFullYear());
+  const tasksQuery = useRecurringTasks(organizationId);
+  // Les missions du calendrier : celles qui portent une date. La limite évite
+  // de charger un historique entier pour afficher un mois.
+  const missionsQuery = useMissions(organizationId, { limit: 400 });
 
-  const showNotification = (msg: string) => {
-    setNotification(msg);
+  const createLeave = useCreateLeaveRequest(organizationId ?? '');
+  const setLeaveStatus = useSetLeaveStatus();
+  const createMission = useCreateMission();
+
+  const holidays = useMemo(
+    () => getHolidaysForTerritory(selectedTerritory),
+    [selectedTerritory],
+  );
+
+  const leaves = useMemo(
+    () => (leavesQuery.data ?? []).map(toLeaveRequest),
+    [leavesQuery.data],
+  );
+  const balances = useMemo(
+    () => (balancesQuery.data ?? []).map(toStaffLeaveBalance),
+    [balancesQuery.data],
+  );
+  const tasks = useMemo(() => (tasksQuery.data ?? []).map(toRecurringTask), [tasksQuery.data]);
+
+  const events = useMemo(
+    () =>
+      buildCalendarEvents({
+        missions: missionsQuery.data ?? [],
+        leaves: leavesQuery.data ?? [],
+        holidays,
+      }),
+    [missionsQuery.data, leavesQuery.data, holidays],
+  );
+
+  /** Sa propre ligne de membership : la présélection naturelle d'une demande. */
+  const ownMemberId =
+    (membersQuery.data ?? []).find((member) => member.user_id === user?.id)?.id ?? null;
+
+  const pendingLeavesCount = leaves.filter((leave) => leave.status === 'pending').length;
+
+  const showNotification = (message: string) => {
+    setNotification(message);
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleImportEvents = (imported: PlanningCalendarEvent[]) => {
-    setEvents((prev) => [...imported, ...prev]);
-    showNotification(`${imported.length} événement(s) iCal importé(s) avec succès dans le planning.`);
-  };
-
-  const handleAddLeave = (newLeave: LeaveRequest) => {
-    setLeaves((prev) => [newLeave, ...prev]);
-
-    // If approved, add to calendar events
-    if (newLeave.status === 'approved') {
-      const leaveEvent: PlanningCalendarEvent = {
-        id: `evt-${newLeave.id}`,
-        title: `Congé : ${newLeave.technicianName}`,
-        date: newLeave.startDate,
-        endDate: newLeave.endDate,
-        type: 'leave',
-        technicianId: newLeave.technicianId,
-        technicianName: newLeave.technicianName,
-        technicianInitials: newLeave.technicianInitials,
-        details: `${newLeave.reason} (${newLeave.daysCount} jour(s))`,
-      };
-      setEvents((prev) => [leaveEvent, ...prev]);
-
-      // Deduct from balance
-      setBalances((prev) =>
-        prev.map((b) => {
-          if (b.technicianId === newLeave.technicianId) {
-            if (newLeave.type === 'paid_leave') {
-              return { ...b, paidLeaveRemaining: Math.max(0, b.paidLeaveRemaining - newLeave.daysCount) };
-            }
-            if (newLeave.type === 'rtt') {
-              return { ...b, rttRemaining: Math.max(0, b.rttRemaining - newLeave.daysCount) };
-            }
-          }
-          return b;
-        }),
-      );
-    }
-
-    showNotification(
-      `Absence enregistrée pour ${newLeave.technicianName} (${newLeave.daysCount} jour(s)).`,
-    );
+  const handleAddLeave = (submission: NewLeaveSubmission) => {
+    createLeave.mutate(submission, {
+      onSuccess: () => {
+        setIsNewLeaveOpen(false);
+        showNotification('Demande enregistrée. Elle attend la validation d’un responsable.');
+      },
+    });
   };
 
   const handleUpdateLeaveStatus = (leaveId: string, newStatus: LeaveStatus) => {
-    setLeaves((prev) =>
-      prev.map((l) => {
-        if (l.id === leaveId) {
-          return {
-            ...l,
-            status: newStatus,
-            approvedBy: newStatus === 'approved' ? 'Gérant (Vous)' : undefined,
-            approvedAt: newStatus === 'approved' ? new Date().toISOString().split('T')[0] : undefined,
-          };
-        }
-        return l;
-      }),
-    );
+    if (newStatus === 'pending') return;
 
-    const leave = leaves.find((l) => l.id === leaveId);
-    if (leave && newStatus === 'approved') {
-      const leaveEvent: PlanningCalendarEvent = {
-        id: `evt-${leave.id}`,
-        title: `Congé : ${leave.technicianName}`,
-        date: leave.startDate,
-        endDate: leave.endDate,
-        type: 'leave',
-        technicianId: leave.technicianId,
-        technicianName: leave.technicianName,
-        technicianInitials: leave.technicianInitials,
-        details: `${leave.reason} (${leave.daysCount} jour(s))`,
-      };
-      setEvents((prev) => [leaveEvent, ...prev]);
-      showNotification(`Demande de congé validée pour ${leave.technicianName}.`);
-    } else if (leave && newStatus === 'rejected') {
-      showNotification(`Demande de congé refusée pour ${leave.technicianName}.`);
-    }
+    setLeaveStatus.mutate(
+      { leaveId, status: newStatus },
+      {
+        onSuccess: () => {
+          showNotification(
+            newStatus === 'approved' ? 'Demande de congé validée.' : 'Demande de congé refusée.',
+          );
+        },
+        // Le refus vient du serveur : un responsable qui vise ses propres
+        // congés, ou un chef d'équipe sans `leave.approve`, sera arrêté par le
+        // trigger. On le dit plutôt que de laisser l'écran muet.
+        onError: (error: unknown) => {
+          showNotification(
+            error instanceof Error ? error.message : 'Cette décision a été refusée.',
+          );
+        },
+      },
+    );
   };
 
-  const handleAddEvent = (newEvent: PlanningCalendarEvent) => {
-    setEvents((prev) => [newEvent, ...prev]);
-    showNotification(`Événement "${newEvent.title}" planifié au ${newEvent.date}.`);
+  const handleAddEvent = (submission: NewEventSubmission) => {
+    if (organizationId === null || user === null) return;
+
+    createMission.mutate(
+      {
+        organizationId,
+        createdBy: user.id,
+        title: submission.title,
+        priority: submission.priority,
+        scheduledStart: submission.scheduledStart,
+        ...(submission.scheduledEnd !== undefined
+          ? { scheduledEnd: submission.scheduledEnd }
+          : {}),
+        ...(submission.assignedMemberId !== null
+          ? { assignedUserId: submission.assignedMemberId }
+          : {}),
+        ...(submission.notes !== '' ? { notes: submission.notes } : {}),
+      },
+      {
+        onSuccess: () => {
+          setIsNewEventOpen(false);
+          showNotification(`Mission « ${submission.title} » planifiée.`);
+        },
+      },
+    );
+  };
+
+  /**
+   * L'import crée les missions une par une, en série.
+   *
+   * Volontairement séquentiel : la référence de mission est générée par un
+   * trigger qui incrémente un compteur par organisation. Vingt insertions
+   * lancées de front se disputeraient ce compteur, et l'échec ne serait ni
+   * lisible ni reproductible.
+   */
+  const handleImportEvents = async (submission: ImportSubmission) => {
+    if (organizationId === null || user === null) return;
+
+    let created = 0;
+    for (const event of submission.events) {
+      try {
+        await createMission.mutateAsync({
+          organizationId,
+          createdBy: user.id,
+          title: event.title,
+          priority: 'normal',
+          scheduledStart: new Date(`${event.date}T09:00:00`).toISOString(),
+          notes: event.details ?? `Importé depuis ${submission.sourceName}`,
+          ...(submission.assignedMemberId !== null
+            ? { assignedUserId: submission.assignedMemberId }
+            : {}),
+        });
+        created += 1;
+      } catch {
+        // Un événement mal formé ne doit pas emporter tout l'import : le
+        // décompte final dira combien sont réellement passés.
+      }
+    }
+
+    setIsImportICSOpen(false);
+    showNotification(
+      created === submission.events.length
+        ? `${String(created)} mission(s) créée(s) depuis ${submission.sourceName}.`
+        : `${String(created)} mission(s) sur ${String(submission.events.length)} créée(s) — les autres ont été refusées.`,
+    );
   };
 
   const handleExportICS = () => {
     exportEventsToICS(events);
-    showNotification('Fichier planning_nexoratech.ics téléchargé avec succès.');
+    showNotification('Fichier planning_nexoratech.ics téléchargé.');
   };
+
+  if (leavesQuery.isError) {
+    return <ErrorState error={leavesQuery.error} onRetry={() => void leavesQuery.refetch()} />;
+  }
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-10">
@@ -171,16 +261,18 @@ export default function PlanningPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsImportICSOpen(true)}
-            className="text-xs h-8 gap-1.5"
-            title="Importer un fichier iCalendar (.ics / .ical)"
-          >
-            <Upload className="size-3.5" />
-            <span className="hidden sm:inline">Importer</span> .ics
-          </Button>
+          {can(PERMISSIONS.missionCreate) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsImportICSOpen(true)}
+              className="text-xs h-8 gap-1.5"
+              title="Importer un fichier iCalendar (.ics / .ical)"
+            >
+              <Upload className="size-3.5" />
+              <span className="hidden sm:inline">Importer</span> .ics
+            </Button>
+          )}
 
           <Button
             size="sm"
@@ -193,25 +285,29 @@ export default function PlanningPage() {
             <span className="hidden sm:inline">Exporter</span> .ics
           </Button>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsNewLeaveOpen(true)}
-            className="text-xs h-8 gap-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
-          >
-            <Palmtree className="size-3.5" />
-            <span>Poser un congé</span>
-          </Button>
+          {can(PERMISSIONS.leaveRequest) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsNewLeaveOpen(true)}
+              className="text-xs h-8 gap-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            >
+              <Palmtree className="size-3.5" />
+              <span>Poser un congé</span>
+            </Button>
+          )}
 
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => setIsNewEventOpen(true)}
-            className="text-xs h-8 gap-1.5 shadow-xs"
-          >
-            <Plus className="size-3.5" />
-            <span>Planifier</span>
-          </Button>
+          {can(PERMISSIONS.missionCreate) && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => setIsNewEventOpen(true)}
+              className="text-xs h-8 gap-1.5 shadow-xs"
+            >
+              <Plus className="size-3.5" />
+              <span>Planifier</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -255,9 +351,7 @@ export default function PlanningPage() {
             <span
               className={cn(
                 'size-5 rounded-full flex items-center justify-center text-3xs font-extrabold',
-                activeTab === 'leaves'
-                  ? 'bg-white text-primary'
-                  : 'bg-amber-500 text-white',
+                activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-amber-500 text-white',
               )}
             >
               {pendingLeavesCount}
@@ -296,30 +390,20 @@ export default function PlanningPage() {
 
       {/* 3. Tab Content Display */}
       {activeTab === 'calendar' && (
-        <PlanningCalendarView
-          events={events}
-          leaves={leaves}
-          holidays={holidays}
-        />
+        <PlanningCalendarView events={events} leaves={leaves} holidays={holidays} />
       )}
 
       {activeTab === 'leaves' && (
         <LeavesManagementTab
           leaves={leaves}
           balances={balances}
+          canApprove={can(PERMISSIONS.leaveApprove)}
           onOpenNewLeave={() => setIsNewLeaveOpen(true)}
           onUpdateStatus={handleUpdateLeaveStatus}
         />
       )}
 
-      {activeTab === 'recurring' && (
-        <RecurringTasksTab
-          tasks={tasks}
-          onTriggerReminders={() => {
-            showNotification('Rappels J-4 traités pour toutes les visites périodiques.');
-          }}
-        />
-      )}
+      {activeTab === 'recurring' && <RecurringTasksTab tasks={tasks} />}
 
       {activeTab === 'holidays' && (
         <PublicHolidaysTab
@@ -333,19 +417,29 @@ export default function PlanningPage() {
       <NewLeaveModal
         open={isNewLeaveOpen}
         onOpenChange={setIsNewLeaveOpen}
-        onAddLeave={handleAddLeave}
+        members={membersQuery.data ?? []}
+        defaultMemberId={ownMemberId}
+        canRequestForOthers={can(PERMISSIONS.leaveApprove)}
+        submitting={createLeave.isPending}
+        error={createLeave.error}
+        onSubmit={handleAddLeave}
       />
 
       <NewEventModal
         open={isNewEventOpen}
         onOpenChange={setIsNewEventOpen}
-        onAddEvent={handleAddEvent}
+        members={membersQuery.data ?? []}
+        submitting={createMission.isPending}
+        error={createMission.error}
+        onSubmit={handleAddEvent}
       />
 
       <ImportICSModal
         open={isImportICSOpen}
         onOpenChange={setIsImportICSOpen}
-        onImportEvents={handleImportEvents}
+        members={membersQuery.data ?? []}
+        submitting={createMission.isPending}
+        onImport={(submission) => void handleImportEvents(submission)}
       />
     </div>
   );

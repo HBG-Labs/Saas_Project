@@ -42,6 +42,13 @@ export const FEATURES = {
   attachments: 'attachments',
   equipment: 'equipment',
   quotes: 'quotes',
+  planning: 'planning',
+  /**
+   * Suivi GPS des intervenants. Séparé de `planning` à dessein : une entreprise
+   * peut vouloir gérer les congés sans localiser ses salariés, et ce refus doit
+   * pouvoir s'exprimer.
+   */
+  liveTracking: 'live_tracking',
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -88,6 +95,8 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     attachments: null,
     equipment: null,
     quotes: null,
+    planning: null,
+    live_tracking: null,
   },
 
   ultimate: {
@@ -109,6 +118,8 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     attachments: null,
     equipment: null,
     quotes: null,
+    planning: null,
+    live_tracking: null,
   },
 };
 

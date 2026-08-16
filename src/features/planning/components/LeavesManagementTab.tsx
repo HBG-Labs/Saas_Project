@@ -17,6 +17,15 @@ import type { LeaveRequest, StaffLeaveBalance, LeaveStatus } from '../types';
 interface LeavesManagementTabProps {
   leaves: LeaveRequest[];
   balances: StaffLeaveBalance[];
+  /**
+   * Masque les boutons de décision pour qui n'a pas `leave.approve`.
+   *
+   * Cela ne SÉCURISE rien : le trigger `enforce_leave_decision` refuse de toute
+   * façon. Mais afficher « Valider le congé » à un technicien lui promettrait
+   * une action que le serveur lui refusera — un menu doit décrire le travail de
+   * qui le regarde, pas le produit.
+   */
+  canApprove: boolean;
   onOpenNewLeave: () => void;
   onUpdateStatus: (leaveId: string, status: LeaveStatus) => void;
 }
@@ -24,6 +33,7 @@ interface LeavesManagementTabProps {
 export function LeavesManagementTab({
   leaves,
   balances,
+  canApprove,
   onOpenNewLeave,
   onUpdateStatus,
 }: LeavesManagementTabProps) {
@@ -292,7 +302,7 @@ export function LeavesManagementTab({
 
                   {/* Actions for Pending Requests */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    {isPending ? (
+                    {isPending && canApprove ? (
                       <>
                         <Button
                           size="sm"
@@ -315,7 +325,7 @@ export function LeavesManagementTab({
                       </>
                     ) : (
                       <span className="text-3xs text-muted-foreground font-mono">
-                        Demande traitée
+                        {isPending ? 'En attente de validation' : 'Demande traitée'}
                       </span>
                     )}
                   </div>

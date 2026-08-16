@@ -1,30 +1,22 @@
-import { useState } from 'react';
-import {
-  RotateCcw,
-  Clock,
-  MapPin,
-  User,
-  CheckCircle2,
-  Calendar,
-} from 'lucide-react';
+import { Clock, MapPin, User, Calendar, AlarmClock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import type { RecurringTask } from '../types';
 
 interface RecurringTasksTabProps {
   tasks: RecurringTask[];
-  onTriggerReminders: () => void;
 }
 
-export function RecurringTasksTab({ tasks, onTriggerReminders }: RecurringTasksTabProps) {
-  const [remindersSent, setRemindersSent] = useState(false);
+/** Nombre d'échéances qui tombent dans les trente prochains jours. */
+function countDueSoon(tasks: readonly RecurringTask[]): number {
+  const horizon = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
 
-  const handleReminders = () => {
-    onTriggerReminders();
-    setRemindersSent(true);
-    setTimeout(() => setRemindersSent(false), 3500);
-  };
+  return tasks.filter((task) => task.nextDate >= today && task.nextDate <= horizon).length;
+}
+
+export function RecurringTasksTab({ tasks }: RecurringTasksTabProps) {
+  const dueSoon = countDueSoon(tasks);
 
   const getFrequencyLabel = (freq: string) => {
     switch (freq) {
@@ -34,7 +26,7 @@ export function RecurringTasksTab({ tasks, onTriggerReminders }: RecurringTasksT
         return 'Mensuel';
       case 'quarterly':
         return 'Trimestriel';
-      case 'bi-annual':
+      case 'bi_annual':
         return 'Semestriel';
       case 'yearly':
         return 'Annuel';
@@ -55,26 +47,22 @@ export function RecurringTasksTab({ tasks, onTriggerReminders }: RecurringTasksT
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleReminders}
-            className="text-xs h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-          >
-            <RotateCcw className="size-3.5" />
-            <span>Traiter les rappels J-4</span>
-          </Button>
-        </div>
+        {/* Une information mesurée sur les données affichées, et non une action
+            qui prétendrait envoyer des rappels : aucun service de notification
+            n'est branché, et l'annoncer serait mentir à l'utilisateur. */}
+        {dueSoon > 0 && (
+          <span className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1.5 rounded-lg shrink-0">
+            <AlarmClock className="size-3.5" />
+            {dueSoon} échéance{dueSoon > 1 ? 's' : ''} sous 30 jours
+          </span>
+        )}
       </div>
 
-      {remindersSent && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>
-            Rappels automatiques traités : 3 SMS et e-mails de confirmation envoyés aux clients.
-          </span>
-        </div>
+      {tasks.length === 0 && (
+        <p className="text-xs text-muted-foreground bg-surface border border-border rounded-2xl p-6 text-center">
+          Aucun contrat de maintenance enregistré. Les visites périodiques ajoutées ici
+          rappelleront leur prochaine échéance.
+        </p>
       )}
 
       {/* Grid of Recurring Tasks */}

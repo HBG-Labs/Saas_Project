@@ -3,20 +3,37 @@ import { Dialog } from 'radix-ui';
 import { Calendar, CheckCircle2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
-import type { LeaveRequest, LeaveType } from '../types';
+import { FormError } from '@/components/feedback/FormError';
+import { memberDisplayName, ROLE_LABELS } from '@/features/organizations';
+import type { MemberWithProfile } from '@/types/domain';
+
+import type { LeaveType } from '../types';
+
+export interface NewLeaveSubmission {
+  memberId: string;
+  type: LeaveType;
+  startDate: string;
+  endDate: string;
+  daysCount: number;
+  reason: string;
+}
 
 interface NewLeaveModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddLeave: (leave: LeaveRequest) => void;
+  /** Les membres réels de l'organisation. Vide tant qu'ils chargent. */
+  members: readonly MemberWithProfile[];
+  /** Présélection : sa propre ligne de membership, quand elle est connue. */
+  defaultMemberId?: string | null;
+  /**
+   * Faux pour qui ne peut déposer que ses propres congés. Le serveur applique
+   * la même règle ; le sélecteur est simplement inutile dans ce cas.
+   */
+  canRequestForOthers: boolean;
+  submitting: boolean;
+  error: unknown;
+  onSubmit: (submission: NewLeaveSubmission) => void;
 }
-
-const TECHNICIANS = [
-  { id: 'tech-1', name: 'Aurélie B.', role: 'Frigoriste & Climatisation', initials: 'AB' },
-  { id: 'tech-2', name: 'Thomas R.', role: 'Technicien Fibre & Réseaux', initials: 'TR' },
-  { id: 'tech-3', name: 'Karim M.', role: 'Électricien Tertiaire', initials: 'KM' },
-  { id: 'tech-4', name: 'Sophie L.', role: 'Plombière Chauffagiste', initials: 'SL' },
-];
 
 const LEAVE_TYPES: { value: LeaveType; label: string }[] = [
   { value: 'paid_leave', label: 'Congés Payés (CP)' },
@@ -27,13 +44,27 @@ const LEAVE_TYPES: { value: LeaveType; label: string }[] = [
   { value: 'unpaid', label: 'Congé sans solde' },
 ];
 
-export function NewLeaveModal({ open, onOpenChange, onAddLeave }: NewLeaveModalProps) {
-  const [selectedTechId, setSelectedTechId] = useState<string>('tech-1');
+export function NewLeaveModal({
+  open,
+  onOpenChange,
+  members,
+  defaultMemberId = null,
+  canRequestForOthers,
+  submitting,
+  error,
+  onSubmit,
+}: NewLeaveModalProps) {
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [leaveType, setLeaveType] = useState<LeaveType>('paid_leave');
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0] ?? '');
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0] ?? '');
   const [reason, setReason] = useState<string>('');
-  const [autoApprove, setAutoApprove] = useState<boolean>(true);
+
+  // Le membre par défaut n'est connu qu'une fois la liste chargée. Le résoudre
+  // au rendu plutôt que dans un effet évite un rendu intermédiaire avec un
+  // sélecteur vide — le motif déjà retenu dans `ReportEditorPage`.
+  const effectiveMemberId =
+    selectedMemberId !== '' ? selectedMemberId : (defaultMemberId ?? members[0]?.id ?? '');
 
   const calculateDays = () => {
     if (!startDate || !endDate) return 1;
@@ -46,28 +77,16 @@ export function NewLeaveModal({ open, onOpenChange, onAddLeave }: NewLeaveModalP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const tech = TECHNICIANS.find((t) => t.id === selectedTechId) ?? TECHNICIANS[0]!;
+    if (effectiveMemberId === '') return;
 
-    const newLeave: LeaveRequest = {
-      id: `leave-${Date.now()}`,
-      technicianId: tech.id,
-      technicianName: tech.name,
-      technicianRole: tech.role,
-      technicianInitials: tech.initials,
+    onSubmit({
+      memberId: effectiveMemberId,
       type: leaveType,
       startDate,
       endDate,
       daysCount: calculateDays(),
-      reason: reason.trim() || 'Absence planifiée',
-      status: autoApprove ? 'approved' : 'pending',
-      requestedAt: new Date().toISOString().split('T')[0] ?? '',
-      ...(autoApprove
-        ? { approvedBy: 'Gérant (Vous)', approvedAt: new Date().toISOString().split('T')[0] ?? '' }
-        : {}),
-    };
-
-    onAddLeave(newLeave);
-    onOpenChange(false);
+      reason: reason.trim(),
+    });
   };
 
   return (
@@ -96,6 +115,8 @@ export function NewLeaveModal({ open, onOpenChange, onAddLeave }: NewLeaveModalP
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <FormError error={error} />
+
             {/* Employé concerné */}
             <div>
               <label htmlFor="leave-tech-select" className="block text-xs font-semibold text-foreground mb-1.5">
@@ -103,16 +124,22 @@ export function NewLeaveModal({ open, onOpenChange, onAddLeave }: NewLeaveModalP
               </label>
               <select
                 id="leave-tech-select"
-                value={selectedTechId}
-                onChange={(e) => setSelectedTechId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                value={effectiveMemberId}
+                disabled={!canRequestForOthers}
+                onChange={(e) => setSelectedMemberId(e.target.value)}
+                className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden disabled:opacity-60"
               >
-                {TECHNICIANS.map((tech) => (
-                  <option key={tech.id} value={tech.id}>
-                    {tech.name} — {tech.role}
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {memberDisplayName(member)} — {ROLE_LABELS[member.role]}
                   </option>
                 ))}
               </select>
+              {!canRequestForOthers && (
+                <p className="text-3xs text-muted-foreground mt-1">
+                  Vous ne pouvez déposer une demande que pour vous-même.
+                </p>
+              )}
             </div>
 
             {/* Type de congé */}
@@ -185,25 +212,28 @@ export function NewLeaveModal({ open, onOpenChange, onAddLeave }: NewLeaveModalP
               />
             </div>
 
-            {/* Statut d'approbation direct */}
-            <label className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={autoApprove}
-                onChange={(e) => setAutoApprove(e.target.checked)}
-                className="size-4 rounded-sm border-border text-primary focus:ring-primary"
-              />
-              <span>Valider automatiquement ce congé sans passer par la file d'attente</span>
-            </label>
+            {/* La case « valider automatiquement » a disparu, et ce n'est pas
+                un oubli : le serveur crée TOUTE demande en attente, puis exige
+                que la décision vienne de quelqu'un d'autre que son titulaire.
+                Offrir la case aurait produit une erreur à chaque envoi. */}
+            <p className="text-3xs text-muted-foreground bg-surface-subtle border border-border/80 rounded-xl p-2.5">
+              La demande est enregistrée en attente de validation. Elle devra être approuvée
+              par un responsable — nul ne peut statuer sur ses propres congés.
+            </p>
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>
-              <Button type="submit" variant="primary" className="gap-1.5 font-semibold">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submitting || effectiveMemberId === ''}
+                className="gap-1.5 font-semibold"
+              >
                 <CheckCircle2 className="size-4" />
-                Enregistrer l'absence
+                {submitting ? 'Enregistrement…' : "Enregistrer l'absence"}
               </Button>
             </div>
           </form>

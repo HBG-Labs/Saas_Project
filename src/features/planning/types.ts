@@ -58,7 +58,8 @@ export interface PlanningCalendarEvent {
 export interface RecurringTask {
   id: string;
   title: string;
-  frequency: 'weekly' | 'monthly' | 'quarterly' | 'bi-annual' | 'yearly';
+  /** Aligné sur l'enum `recurrence_frequency` : `bi_annual`, pas `bi-annual`. */
+  frequency: 'weekly' | 'monthly' | 'quarterly' | 'bi_annual' | 'yearly';
   nextDate: string;
   clientName: string;
   clientAddress: string;

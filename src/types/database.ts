@@ -63,6 +63,18 @@ export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 
 export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
 
+export type LeaveType = 'paid_leave' | 'rtt' | 'sick_leave' | 'unpaid' | 'family' | 'recovery';
+
+/**
+ * `cancelled` n'est pas un refus : c'est un retrait par l'auteur. Les confondre
+ * fausserait autant les soldes que l'historique social.
+ */
+export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export type RecurrenceFrequency = 'weekly' | 'monthly' | 'quarterly' | 'bi_annual' | 'yearly';
+
+export type TechnicianPresence = 'on_road' | 'on_site' | 'available' | 'offline';
+
 /**
  * Types de champ d'un formulaire métier.
  *
@@ -1668,6 +1680,269 @@ export interface Database {
             foreignKeyName: 'audit_logs_organization_id_fkey';
             columns: ['organization_id'];
             referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      leave_requests: {
+        Row: {
+          id: string;
+          organization_id: string;
+          /**
+           * Vers le MEMBRE, pas vers l'utilisateur : une même personne peut
+           * appartenir à plusieurs entreprises et n'y a pas les mêmes congés.
+           */
+          member_id: string;
+          type: LeaveType;
+          start_date: string;
+          end_date: string;
+          /** Demi-journées comptées : décimal, pas entier. */
+          days_count: number;
+          reason: string | null;
+          status: LeaveStatus;
+          requested_at: string;
+          /** Posés par le SERVEUR, jamais par le client. */
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          review_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          member_id: string;
+          type: LeaveType;
+          start_date: string;
+          end_date: string;
+          days_count: number;
+          reason?: string | null;
+        };
+        Update: {
+          type?: LeaveType;
+          start_date?: string;
+          end_date?: string;
+          days_count?: number;
+          reason?: string | null;
+          status?: LeaveStatus;
+          review_note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'leave_requests_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'leave_requests_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      leave_balances: {
+        Row: {
+          id: string;
+          organization_id: string;
+          member_id: string;
+          year: number;
+          /**
+           * Seul l'ACQUIS est stocké. Le restant se déduit des congés
+           * approuvés : deux colonnes se contrediraient dès la première
+           * annulation.
+           */
+          paid_leave_acquired: number;
+          rtt_acquired: number;
+          recovery_hours: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          member_id: string;
+          year: number;
+          paid_leave_acquired?: number;
+          rtt_acquired?: number;
+          recovery_hours?: number;
+        };
+        Update: {
+          paid_leave_acquired?: number;
+          rtt_acquired?: number;
+          recovery_hours?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'leave_balances_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'leave_balances_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      recurring_tasks: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          frequency: RecurrenceFrequency;
+          next_date: string;
+          customer_id: string | null;
+          site_id: string | null;
+          assigned_member_id: string | null;
+          intervention_type_id: string | null;
+          estimated_minutes: number | null;
+          notes: string | null;
+          is_active: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          frequency: RecurrenceFrequency;
+          next_date: string;
+          customer_id?: string | null;
+          site_id?: string | null;
+          assigned_member_id?: string | null;
+          intervention_type_id?: string | null;
+          estimated_minutes?: number | null;
+          notes?: string | null;
+          is_active?: boolean;
+          created_by?: string | null;
+        };
+        Update: {
+          title?: string;
+          frequency?: RecurrenceFrequency;
+          next_date?: string;
+          customer_id?: string | null;
+          site_id?: string | null;
+          assigned_member_id?: string | null;
+          intervention_type_id?: string | null;
+          estimated_minutes?: number | null;
+          notes?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'recurring_tasks_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'recurring_tasks_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'recurring_tasks_assigned_member_id_fkey';
+            columns: ['assigned_member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      technician_locations: {
+        Row: {
+          /** Le membre EST la clé : une seule position courante par personne. */
+          member_id: string;
+          organization_id: string;
+          latitude: number;
+          longitude: number;
+          accuracy_m: number | null;
+          heading: number | null;
+          speed_kmh: number | null;
+          battery_pct: number | null;
+          presence: TechnicianPresence;
+          vehicle_plate: string | null;
+          /** Horodatage du relevé, distinct de `updated_at` : le réseau retarde. */
+          recorded_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          member_id: string;
+          organization_id: string;
+          latitude: number;
+          longitude: number;
+          accuracy_m?: number | null;
+          heading?: number | null;
+          speed_kmh?: number | null;
+          battery_pct?: number | null;
+          presence?: TechnicianPresence;
+          vehicle_plate?: string | null;
+          recorded_at?: string;
+        };
+        Update: {
+          latitude?: number;
+          longitude?: number;
+          accuracy_m?: number | null;
+          heading?: number | null;
+          speed_kmh?: number | null;
+          battery_pct?: number | null;
+          presence?: TechnicianPresence;
+          vehicle_plate?: string | null;
+          recorded_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'technician_locations_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      technician_location_pings: {
+        Row: {
+          id: string;
+          organization_id: string;
+          member_id: string;
+          latitude: number;
+          longitude: number;
+          heading: number | null;
+          speed_kmh: number | null;
+          battery_pct: number | null;
+          presence: TechnicianPresence;
+          note: string | null;
+          recorded_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          member_id: string;
+          latitude: number;
+          longitude: number;
+          heading?: number | null;
+          speed_kmh?: number | null;
+          battery_pct?: number | null;
+          presence?: TechnicianPresence;
+          note?: string | null;
+          recorded_at?: string;
+        };
+        /** Un relevé passé ne se réécrit pas : aucun UPDATE n'est accordé. */
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'technician_location_pings_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
             referencedColumns: ['id'];
           },
         ];

@@ -114,6 +114,8 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.ultimate,
       MIGRATION_FILES.equipment,
       MIGRATION_FILES.quotes,
+      MIGRATION_FILES.planning,
+      MIGRATION_FILES.locations,
     ],
     'plan_features',
   );

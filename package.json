@@ -31,7 +31,7 @@
     "check:deploy": "node scripts/check-deploy-package.mjs",
     "predeploy": "npm run typecheck && npm run test && npm run check:deploy && npm run build",
     "vercel:env": "node scripts/setup-vercel-env.mjs",
-    "test:sql": "npx supabase db query --linked --file supabase/tests/02_industries_scenario.sql"
+    "test:sql": "node scripts/run-sql-tests.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

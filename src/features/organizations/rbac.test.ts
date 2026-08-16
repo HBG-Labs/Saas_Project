@@ -61,8 +61,38 @@ describe('moindre privilège', () => {
     expect(roleHasPermission('technician', PERMISSIONS.memberInvite)).toBe(false);
   });
 
-  it("limite l'employé à la consultation", () => {
-    expect(ROLE_PERMISSIONS.employee).toEqual(['organization.view', 'member.view']);
+  it("limite l'employé à la consultation, hors demande de congé", () => {
+    // `leave.request` est la SEULE écriture ouverte à l'employé, et elle ne
+    // porte que sur lui-même : le trigger `enforce_leave_decision` refuse une
+    // demande déposée au nom d'un tiers sans `leave.approve`. Poser un congé
+    // n'est pas un acte de gestion, c'est un droit du salarié.
+    expect(ROLE_PERMISSIONS.employee).toEqual([
+      'organization.view',
+      'member.view',
+      'leave.request',
+    ]);
+  });
+
+  it("n'ouvre à personne l'écriture de la position d'autrui", () => {
+    // Il n'existe pas de `location.manage` : la seule permission de suivi
+    // concerne la LECTURE. Déclarer une position est affaire d'identité, pas de
+    // rôle — appliqué par `app.enforce_location_ownership`.
+    const all = Object.values(PERMISSIONS);
+    expect(all.filter((permission) => permission.startsWith('location.'))).toEqual([
+      'location.view_all',
+    ]);
+  });
+
+  it("ne laisse pas le technicien suivre ses collègues", () => {
+    expect(roleHasPermission('technician', PERMISSIONS.locationViewAll)).toBe(false);
+    expect(roleHasPermission('team_leader', PERMISSIONS.locationViewAll)).toBe(true);
+  });
+
+  it("n'accorde pas au chef d'équipe le droit de valider un congé", () => {
+    // Il constate les absences pour organiser ses semaines ; les accorder est
+    // une décision d'employeur.
+    expect(roleHasPermission('team_leader', PERMISSIONS.leaveView)).toBe(true);
+    expect(roleHasPermission('team_leader', PERMISSIONS.leaveApprove)).toBe(false);
   });
 
   it("ne donne pas la vue globale des missions au chef d'équipe", () => {
@@ -140,6 +170,8 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.rbacCustomers,
       MIGRATION_FILES.equipment,
       MIGRATION_FILES.quotes,
+      MIGRATION_FILES.planning,
+      MIGRATION_FILES.locations,
     ],
     'role_permissions',
   );

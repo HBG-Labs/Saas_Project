@@ -160,3 +160,48 @@ export interface QuoteWithItems extends Quote {
 
 // ----------------------------------------------------------------- bloc-notes
 export type Note = Tables<'notes'>;
+
+// ------------------------------------------------------------------- planning
+export type LeaveRequestRow = Tables<'leave_requests'>;
+export type LeaveBalanceRow = Tables<'leave_balances'>;
+export type RecurringTaskRow = Tables<'recurring_tasks'>;
+
+/** Demande de congé accompagnée de son titulaire — la forme affichée à l'écran. */
+export interface LeaveRequestWithMember extends LeaveRequestRow {
+  member: MemberWithProfile | null;
+}
+
+/**
+ * Solde consolidé : ce qui est acquis, ce qui est consommé, ce qui reste.
+ *
+ * Seul l'acquis est stocké. `taken` est la somme des congés APPROUVÉS de
+ * l'année, et `remaining` la différence. Ce type n'existe donc pas en base :
+ * c'est la vue qu'en a l'écran, calculée à la lecture pour qu'aucun solde ne
+ * puisse dériver de ses demandes.
+ */
+export interface ConsolidatedLeaveBalance {
+  memberId: string;
+  year: number;
+  paidLeaveAcquired: number;
+  paidLeaveTaken: number;
+  paidLeaveRemaining: number;
+  rttAcquired: number;
+  rttTaken: number;
+  rttRemaining: number;
+  recoveryHours: number;
+  member: MemberWithProfile | null;
+}
+
+export interface RecurringTaskWithRefs extends RecurringTaskRow {
+  customer: Pick<Customer, 'id' | 'name'> | null;
+  site: Pick<Site, 'id' | 'name' | 'address_line1' | 'city'> | null;
+  assigned_member: MemberWithProfile | null;
+}
+
+// --------------------------------------------------------------- cartographie
+export type TechnicianLocationRow = Tables<'technician_locations'>;
+export type TechnicianLocationPing = Tables<'technician_location_pings'>;
+
+export interface TechnicianLocationWithMember extends TechnicianLocationRow {
+  member: MemberWithProfile | null;
+}

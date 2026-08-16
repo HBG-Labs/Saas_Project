@@ -141,6 +141,15 @@ $$;
 -- =============================================================================
 -- Écrit en tant que `postgres` : `subscriptions` n'a AUCUNE policy d'écriture.
 -- En production, c'est le webhook du prestataire de paiement qui l'alimente.
+--
+-- La suppression préalable n'est pas une précaution de style : depuis
+-- `app.start_organization_trial`, créer une organisation lui ouvre AUSSI un
+-- essai. L'index partiel `subscriptions_active_org_idx` n'en tolère qu'un seul
+-- actif, et l'insertion sèche échouait donc — ce fichier datait d'avant le
+-- déclencheur.
+delete from public.subscriptions
+where organization_id in (select id from public.organizations where slug = 'fibre-atlantique');
+
 insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
 select id, 'business', 'active', now() + interval '30 days'
 from public.organizations where slug = 'fibre-atlantique';
@@ -236,10 +245,47 @@ where o.slug = 'fibre-atlantique';
 
 reset role;
 
+-- La mission de ce scénario, retenue une fois pour toutes.
+--
+-- Les blocs de vérification s'exécutent en tant que `postgres`, donc SANS RLS :
+-- un `from public.missions where id = pg_temp.mission_a()` y balaie la base entière et tombe sur
+-- n'importe quelle mission réelle. Ce fichier a été écrit contre une base
+-- vide ; il devient faux dès qu'elle ne l'est plus, et de la pire manière —
+-- l'assertion porte alors sur une donnée qui n'a rien à voir.
+-- Ancrée sur le TITRE, pas sur `created_at` : `now()` est figé pour toute la
+-- transaction, donc chaque ligne insérée par ce script porte exactement le même
+-- horodatage. Trier dessus revient à tirer au sort — ce qui donne un test qui
+-- passe ou échoue selon l'ordre physique des lignes.
+create function pg_temp.mission_a() returns uuid
+language sql stable as $$
+  select m.id
+  from public.missions m
+  join public.organizations o on o.id = m.organization_id
+  where o.slug = 'fibre-atlantique'
+    and m.title = 'Raccordement FTTH - Residence Les Tilleuls'
+  limit 1
+$$;
+
+/** L'intervention et le compte rendu de CETTE mission, mêmes raisons. */
+create function pg_temp.interv_a() returns uuid
+language sql stable as $$
+  select id from public.interventions
+  where mission_id = pg_temp.mission_a()
+  limit 1
+$$;
+
+create function pg_temp.report_a() returns uuid
+language sql stable as $$
+  select id from public.intervention_reports
+  where intervention_id = pg_temp.interv_a()
+  limit 1
+$$;
+
 do $$
 declare v_ref text; v_status public.mission_status;
 begin
-  select reference, status into v_ref, v_status from public.missions limit 1;
+  select reference, status into v_ref, v_status
+  from public.missions where id = pg_temp.mission_a();
 
   perform pg_temp.ok(v_status = 'draft', 'La mission nait en brouillon');
   perform pg_temp.ok(v_ref ~ ('^' || to_char(now(), 'YYYY') || '-\d{4}$'),
@@ -253,18 +299,21 @@ $$;
 select pg_temp.login('a_manager');
 set local role authenticated;
 
+-- Le `where` compte : sans lui, cet UPDATE porte sur TOUTES les missions que
+-- la RLS laisse voir au responsable, pas sur celle du scénario.
 update public.missions
 set assigned_team_id = (select id from public.teams where slug = 'equipe-fibre'),
-    status = 'assigned';
+    status = 'assigned'
+where id = pg_temp.mission_a();
 
 reset role;
 
 do $$
 begin
-  perform pg_temp.ok((select status from public.missions limit 1) = 'assigned',
+  perform pg_temp.ok((select status from public.missions where id = pg_temp.mission_a()) = 'assigned',
     'Le manager peut affecter la mission a l''equipe');
   perform pg_temp.ok(
-    (select count(*) from public.mission_status_events where to_status = 'assigned') = 1,
+    (select count(*) from public.mission_status_events where mission_id = pg_temp.mission_a() and to_status = 'assigned') = 1,
     'Le changement d''etat est journalise exactement une fois');
 end
 $$;
@@ -282,9 +331,9 @@ reset role;
 
 do $$
 begin
-  perform pg_temp.ok((select status from public.missions limit 1) = 'in_progress',
+  perform pg_temp.ok((select status from public.missions where id = pg_temp.mission_a()) = 'in_progress',
     'Le technicien affecte accepte puis demarre la mission');
-  perform pg_temp.ok((select actual_start from public.missions limit 1) is not null,
+  perform pg_temp.ok((select actual_start from public.missions where id = pg_temp.mission_a()) is not null,
     'actual_start est horodate par le trigger, pas declare par le client');
 end
 $$;
@@ -319,12 +368,12 @@ reset role;
 do $$
 declare v_mission public.mission_status; v_org uuid;
 begin
-  select status into v_mission from public.missions limit 1;
-  select organization_id into v_org from public.interventions limit 1;
+  select status into v_mission from public.missions where id = pg_temp.mission_a();
+  select organization_id into v_org from public.interventions where id = pg_temp.interv_a();
 
-  perform pg_temp.ok((select status from public.intervention_reports limit 1) = 'submitted',
+  perform pg_temp.ok((select status from public.intervention_reports where id = pg_temp.report_a()) = 'submitted',
     'Le compte rendu est soumis');
-  perform pg_temp.ok((select submitted_at from public.intervention_reports limit 1) is not null,
+  perform pg_temp.ok((select submitted_at from public.intervention_reports where id = pg_temp.report_a()) is not null,
     'submitted_at est horodate par le trigger');
   perform pg_temp.ok(v_mission = 'submitted',
     'La mission suit automatiquement l''etat du compte rendu');
@@ -340,7 +389,7 @@ $$;
 do $$
 declare v_report uuid;
 begin
-  select id into v_report from public.intervention_reports limit 1;
+  select id into v_report from public.intervention_reports where id = pg_temp.report_a();
 
   perform pg_temp.login('a_tech1');
   set local role authenticated;
@@ -374,20 +423,20 @@ reset role;
 do $$
 declare v_reviewer uuid; v_manager_member uuid;
 begin
-  select reviewed_by into v_reviewer from public.intervention_reports limit 1;
+  select reviewed_by into v_reviewer from public.intervention_reports where id = pg_temp.report_a();
   select id into v_manager_member from public.organization_members
   where user_id = pg_temp.uid('a_manager');
 
-  perform pg_temp.ok((select status from public.intervention_reports limit 1) = 'approved',
+  perform pg_temp.ok((select status from public.intervention_reports where id = pg_temp.report_a()) = 'approved',
     'Le manager valide le compte rendu');
   perform pg_temp.ok(v_reviewer = v_manager_member,
     'reviewed_by est renseigne par le trigger avec l''identite reelle du controleur');
-  perform pg_temp.ok((select reviewed_at from public.intervention_reports limit 1) is not null,
+  perform pg_temp.ok((select reviewed_at from public.intervention_reports where id = pg_temp.report_a()) is not null,
     'reviewed_at est horodate par le trigger');
-  perform pg_temp.ok((select status from public.missions limit 1) = 'approved',
+  perform pg_temp.ok((select status from public.missions where id = pg_temp.mission_a()) = 'approved',
     'La mission passe a validee');
   perform pg_temp.ok(
-    (select count(*) from public.mission_status_events where to_status = 'approved') = 1,
+    (select count(*) from public.mission_status_events where mission_id = pg_temp.mission_a() and to_status = 'approved') = 1,
     'La validation n''est journalisee qu''une seule fois');
 end
 $$;
@@ -435,6 +484,9 @@ insert into public.organizations (slug, name, created_by)
 values ('reseaux-du-sud', 'Reseaux du Sud SARL', pg_temp.uid('b_owner'));
 
 reset role;
+
+delete from public.subscriptions
+where organization_id in (select id from public.organizations where slug = 'reseaux-du-sud');
 
 insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
 select id, 'business', 'active', now() + interval '30 days'
@@ -501,7 +553,7 @@ do $$
 declare v_org_a uuid; v_mission uuid; v_raised boolean;
 begin
   select id into v_org_a from public.organizations where slug = 'fibre-atlantique';
-  select id into v_mission from public.missions limit 1;
+  select id into v_mission from public.missions where id = pg_temp.mission_a();
 
   v_raised := false;
   perform pg_temp.login('b_owner');
@@ -565,7 +617,7 @@ begin
   end;
   reset role;
   perform pg_temp.ok(
-    (select status from public.intervention_reports limit 1) = 'approved',
+    (select status from public.intervention_reports where id = pg_temp.report_a()) = 'approved',
     'Un technicien ne peut PAS refuser un compte rendu deja valide');
 
   -- Paramètres de l'organisation
@@ -899,25 +951,28 @@ do $$
 declare v_mission uuid; v_raised boolean; v_status public.mission_status;
 begin
   -- La mission de la Partie 1 s'est arrêtée à `approved`.
-  select id into v_mission
-  from public.missions where status = 'approved' limit 1;
+  v_mission := pg_temp.mission_a();
 
-  perform pg_temp.ok(v_mission is not null,
+  perform pg_temp.ok(
+    (select status from public.missions where id = v_mission) = 'approved',
     'Une mission validee est disponible pour la cloture');
 
   -- Un technicien ne clôture pas : il lui manque `mission.update`.
-  v_raised := false;
+  --
+  -- On teste le RÉSULTAT et non l'exception : selon que la policy exclut la
+  -- ligne ou qu'un trigger la refuse, le serveur lève ou ne lève pas. Les deux
+  -- refusent ; seule l'assertion sur l'état couvre les deux cas.
   begin
     perform pg_temp.login('a_tech1');
     set local role authenticated;
     update public.missions set status = 'closed' where id = v_mission;
     reset role;
   exception when others then
-    v_raised := true;
     reset role;
   end;
 
-  perform pg_temp.ok(v_raised, 'Un technicien ne peut pas cloturer une mission');
+  select status into v_status from public.missions where id = v_mission;
+  perform pg_temp.ok(v_status = 'approved', 'Un technicien ne peut pas cloturer une mission');
 
   -- Le responsable, si.
   perform pg_temp.login('a_manager');
@@ -929,18 +984,17 @@ begin
   perform pg_temp.ok(v_status = 'closed', 'Le responsable cloture la mission validee');
 
   -- État terminal : plus aucune sortie, pas même vers `cancelled`.
-  v_raised := false;
   begin
     perform pg_temp.login('a_manager');
     set local role authenticated;
     update public.missions set status = 'cancelled' where id = v_mission;
     reset role;
   exception when others then
-    v_raised := true;
     reset role;
   end;
 
-  perform pg_temp.ok(v_raised, 'Une mission cloturee ne peut plus changer d''etat');
+  select status into v_status from public.missions where id = v_mission;
+  perform pg_temp.ok(v_status = 'closed', 'Une mission cloturee ne peut plus changer d''etat');
 end
 $$;
 
@@ -1008,14 +1062,22 @@ $$;
 -- 5.2 — Quota de membres
 -- -----------------------------------------------------------------------------
 do $$
-declare v_org uuid; v_raised boolean; v_actifs int;
+declare v_org uuid; v_raised boolean; v_actifs int; v_plafond int;
 begin
   select id into v_org from public.organizations where slug = 'fibre-atlantique';
   select count(*) into v_actifs
   from public.organization_members where organization_id = v_org and status = 'active';
 
-  perform pg_temp.ok(app.org_feature_limit(v_org, 'members') = 25,
-    'Le plan business plafonne a 25 membres');
+  -- Le plafond est lu, pas écrit en dur : `20260812100100_ultimate_plan.sql`
+  -- l'a corrigé de 25 à 10 en introduisant l'offre supérieure, et ce test est
+  -- resté sur l'ancienne valeur. Ce qui compte ici est que le TRIGGER applique
+  -- le plafond, quel qu'il soit — la valeur elle-même est déjà vérifiée par
+  -- `entitlements.test.ts`, qui compare le miroir au seed.
+  select limit_value into v_plafond
+  from public.plan_features where plan_code = 'business' and feature_key = 'members';
+
+  perform pg_temp.ok(app.org_feature_limit(v_org, 'members') = v_plafond,
+    'Le plan business expose son plafond de membres : ' || v_plafond);
 
   -- Plutôt que de créer vingt-cinq comptes fictifs, on abaisse le plafond sous
   -- l'effectif courant. Le trigger est le même ; seule la borne change. Tout est
@@ -1033,7 +1095,7 @@ begin
 
   perform pg_temp.ok(v_raised, 'Le membre au-dela du quota est refuse');
 
-  update public.plan_features set limit_value = 25
+  update public.plan_features set limit_value = v_plafond
   where plan_code = 'business' and feature_key = 'members';
 end
 $$;
@@ -1354,7 +1416,7 @@ declare
   v_raised boolean; v_started timestamptz; v_net integer; v_ouverts int;
 begin
   select id into v_org from public.organizations where slug = 'fibre-atlantique';
-  select id into v_interv from public.interventions limit 1;
+  select id into v_interv from public.interventions where id = pg_temp.interv_a();
 
   perform pg_temp.ok(v_interv is not null, 'Une intervention existe pour le releve');
 
@@ -1464,7 +1526,7 @@ $$;
 do $$
 declare v_interv uuid; v_autre_mission uuid; v_raised boolean; v_avant timestamptz;
 begin
-  select id, start_time into v_interv, v_avant from public.interventions limit 1;
+  select id, start_time into v_interv, v_avant from public.interventions where id = pg_temp.interv_a();
   select id into v_autre_mission from public.missions
   where title like 'Raccordement annexe%' limit 1;
 

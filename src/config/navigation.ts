@@ -39,8 +39,25 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
     feature: 'missions',
     vocabulary: { term: 'job', plural: true },
   },
-  { to: ROUTES.planning, label: 'Planning & Congés', icon: 'calendar', feature: 'missions', primary: true },
-  { to: ROUTES.map, label: 'Cartographie & Live GPS', icon: 'map', feature: 'missions', primary: true },
+  {
+    to: ROUTES.planning,
+    label: 'Planning & Congés',
+    icon: 'calendar',
+    feature: 'planning',
+    permission: 'planning.view',
+    primary: true,
+  },
+  {
+    // `location.view_all` plutôt que `planning.view` : la carte sert à savoir
+    // où sont les AUTRES. Un technicien qui l'ouvrirait n'y verrait que
+    // lui-même, ce qui ne justifie pas une entrée de menu.
+    to: ROUTES.map,
+    label: 'Cartographie & Live GPS',
+    icon: 'map',
+    feature: 'live_tracking',
+    permission: 'location.view_all',
+    primary: true,
+  },
   { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
 ];
 

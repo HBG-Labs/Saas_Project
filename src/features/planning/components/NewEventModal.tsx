@@ -3,51 +3,73 @@ import { Dialog } from 'radix-ui';
 import { Calendar, Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
-import type { PlanningCalendarEvent, CalendarEventType } from '../types';
+import { FormError } from '@/components/feedback/FormError';
+import { memberDisplayName } from '@/features/organizations';
+import type { MissionPriority } from '@/types/database';
+import type { MemberWithProfile } from '@/types/domain';
+
+/**
+ * Planifier depuis le calendrier, c'est créer une MISSION.
+ *
+ * Le calendrier n'a pas de table à lui : il compose missions, congés et jours
+ * fériés. Un « événement » qui ne serait ni l'un ni l'autre n'aurait donc nulle
+ * part où être écrit — c'était le cas de la version précédente, dont les
+ * créations disparaissaient au rechargement.
+ *
+ * Les congés se posent par « Poser un congé », les fériés se calculent. Le
+ * sélecteur de type a disparu pour cette raison : il proposait trois
+ * destinations dont deux n'existaient pas.
+ */
+export interface NewEventSubmission {
+  title: string;
+  scheduledStart: string;
+  scheduledEnd?: string;
+  priority: MissionPriority;
+  assignedMemberId: string | null;
+  notes: string;
+}
 
 interface NewEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddEvent: (event: PlanningCalendarEvent) => void;
+  members: readonly MemberWithProfile[];
+  submitting: boolean;
+  error: unknown;
+  onSubmit: (submission: NewEventSubmission) => void;
 }
 
-const TECHNICIANS = [
-  { id: 'tech-1', name: 'Aurélie B.', role: 'Frigoriste & Climatisation', initials: 'AB' },
-  { id: 'tech-2', name: 'Thomas R.', role: 'Technicien Fibre & Réseaux', initials: 'TR' },
-  { id: 'tech-3', name: 'Karim M.', role: 'Électricien Tertiaire', initials: 'KM' },
-  { id: 'tech-4', name: 'Sophie L.', role: 'Plombière Chauffagiste', initials: 'SL' },
-];
+/** `2026-08-20` + `09:00` → instant ISO, en heure locale de qui saisit. */
+function toIso(date: string, time: string): string {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
 
-export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalProps) {
+export function NewEventModal({
+  open,
+  onOpenChange,
+  members,
+  submitting,
+  error,
+  onSubmit,
+}: NewEventModalProps) {
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<CalendarEventType>('intervention');
+  const [priority, setPriority] = useState<MissionPriority>('normal');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0] ?? '');
-  const [time, setTime] = useState('09:00 - 12:00');
-  const [technicianId, setTechnicianId] = useState('tech-1');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('12:00');
+  const [memberId, setMemberId] = useState('');
   const [details, setDetails] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const tech = TECHNICIANS.find((t) => t.id === technicianId);
 
-    const newEvent: PlanningCalendarEvent = {
-      id: `evt-${Date.now()}`,
+    onSubmit({
       title: title.trim(),
-      date,
-      type,
-      time,
-      details: details.trim(),
-      technicianId: tech?.id,
-      technicianName: tech?.name,
-      technicianInitials: tech?.initials,
-      status: 'planifie',
-      priority: 'medium',
-    };
-
-    onAddEvent(newEvent);
-    onOpenChange(false);
-    setTitle('');
-    setDetails('');
+      scheduledStart: toIso(date, startTime),
+      ...(endTime !== '' ? { scheduledEnd: toIso(date, endTime) } : {}),
+      priority,
+      assignedMemberId: memberId === '' ? null : memberId,
+      notes: details.trim(),
+    });
   };
 
   return (
@@ -76,6 +98,8 @@ export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalP
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <FormError error={error} />
+
             <div>
               <label htmlFor="evt-title" className="block text-xs font-semibold text-foreground mb-1.5">
                 Intitulé de l'intervention ou tâche
@@ -93,19 +117,19 @@ export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalP
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="evt-type" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Type d'événement
+                <label htmlFor="evt-priority" className="block text-xs font-semibold text-foreground mb-1.5">
+                  Priorité
                 </label>
                 <select
-                  id="evt-type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value as CalendarEventType)}
+                  id="evt-priority"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as MissionPriority)}
                   className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
                 >
-                  <option value="intervention">Intervention / Chantier</option>
-                  <option value="recurring_task">Tâche récurrente</option>
-                  <option value="leave">Congé / Absence</option>
-                  <option value="holiday">Jour férié</option>
+                  <option value="low">Basse</option>
+                  <option value="normal">Normale</option>
+                  <option value="high">Haute</option>
+                  <option value="urgent">Urgente</option>
                 </select>
               </div>
 
@@ -115,13 +139,14 @@ export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalP
                 </label>
                 <select
                   id="evt-tech"
-                  value={technicianId}
-                  onChange={(e) => setTechnicianId(e.target.value)}
+                  value={memberId}
+                  onChange={(e) => setMemberId(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
                 >
-                  {TECHNICIANS.map((tech) => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.name}
+                  <option value="">À affecter plus tard</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {memberDisplayName(member)}
                     </option>
                   ))}
                 </select>
@@ -143,18 +168,32 @@ export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalP
                 />
               </div>
 
-              <div>
-                <label htmlFor="evt-time" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Créneau horaire
-                </label>
-                <input
-                  id="evt-time"
-                  type="text"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  placeholder="Ex. 09:00 - 12:00"
-                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="evt-start" className="block text-xs font-semibold text-foreground mb-1.5">
+                    Début
+                  </label>
+                  <input
+                    id="evt-start"
+                    type="time"
+                    required
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="evt-end" className="block text-xs font-semibold text-foreground mb-1.5">
+                    Fin
+                  </label>
+                  <input
+                    id="evt-end"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                  />
+                </div>
               </div>
             </div>
 
@@ -176,9 +215,14 @@ export function NewEventModal({ open, onOpenChange, onAddEvent }: NewEventModalP
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>
-              <Button type="submit" variant="primary" className="gap-1.5 font-semibold">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submitting}
+                className="gap-1.5 font-semibold"
+              >
                 <Plus className="size-4" />
-                Planifier l'événement
+                {submitting ? 'Création…' : 'Planifier la mission'}
               </Button>
             </div>
           </form>

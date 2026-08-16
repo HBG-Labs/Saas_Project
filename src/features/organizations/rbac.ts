@@ -20,6 +20,8 @@ import type { OrgRole } from '@/types/database';
  *           supabase/migrations/20260809100300_rbac_customers.sql
  *           supabase/migrations/20260812100300_equipment.sql
  *           supabase/migrations/20260812100400_quotes.sql
+ *           supabase/migrations/20260816100000_planning.sql
+ *           supabase/migrations/20260816100100_technician_locations.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -62,6 +64,19 @@ export const PERMISSIONS = {
 
   quoteView: 'quote.view',
   quoteManage: 'quote.manage',
+
+  leaveView: 'leave.view',
+  leaveRequest: 'leave.request',
+  leaveApprove: 'leave.approve',
+
+  planningView: 'planning.view',
+  planningManage: 'planning.manage',
+
+  /**
+   * Voir la position des AUTRES. Il n'existe pas de pendant en écriture : une
+   * position ne se modifie pas au nom de quelqu'un, quel que soit le rôle.
+   */
+  locationViewAll: 'location.view_all',
 
   auditView: 'audit.view',
   statisticsView: 'statistics.view',
@@ -134,6 +149,12 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'quote.view',
     'quote.manage',
+    'leave.view',
+    'leave.request',
+    'leave.approve',
+    'planning.view',
+    'planning.manage',
+    'location.view_all',
     'audit.view',
     'statistics.view',
   ],
@@ -167,6 +188,12 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'quote.view',
     'quote.manage',
+    'leave.view',
+    'leave.request',
+    'leave.approve',
+    'planning.view',
+    'planning.manage',
+    'location.view_all',
     'audit.view',
     'statistics.view',
   ],
@@ -194,6 +221,15 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'quote.view',
     'quote.manage',
+    // Accorde les congés : c'est une décision d'employeur, et le responsable
+    // l'exerce au quotidien. Le trigger `enforce_leave_decision` lui interdit
+    // en revanche de statuer sur les siens.
+    'leave.view',
+    'leave.request',
+    'leave.approve',
+    'planning.view',
+    'planning.manage',
+    'location.view_all',
     'statistics.view',
   ],
 
@@ -213,6 +249,12 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // savoir ce qui a été vendu. Il ne fixe ni l'inventaire ni les prix.
     'equipment.view',
     'quote.view',
+    // Constate les absences pour organiser ses semaines, et voit qui est où
+    // pour répartir une urgence. Il n'ACCORDE pas les congés.
+    'leave.view',
+    'leave.request',
+    'planning.view',
+    'location.view_all',
     'statistics.view',
   ],
 
@@ -227,9 +269,21 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
   // `equipment.view` est la seule ouverture : il doit pouvoir vérifier que le
   // réflectomètre qu'on lui confie est encore étalonné. Aucun accès aux devis —
   // les tarifs de l'entreprise ne le regardent pas, comme le fichier client.
-  technician: ['organization.view', 'team.view', 'member.view', 'equipment.view'],
+  //
+  // `leave.request` en revanche est accordée à tous, technicien et employé
+  // compris : poser un congé n'est pas un privilège de gestion. Sans
+  // `leave.view`, chacun ne voit que ses propres demandes — la policy passe
+  // alors par `app.is_own_membership`, pas par une permission.
+  technician: [
+    'organization.view',
+    'team.view',
+    'member.view',
+    'equipment.view',
+    'leave.request',
+    'planning.view',
+  ],
 
-  employee: ['organization.view', 'member.view'],
+  employee: ['organization.view', 'member.view', 'leave.request'],
 };
 
 export function roleHasPermission(role: OrgRole | null, permission: Permission): boolean {

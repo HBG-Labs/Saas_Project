@@ -154,6 +154,37 @@ export const qk = {
     all: ['industries'] as const,
   },
 
+  // ----------------------------------------------------------------- planning
+  planning: {
+    all: ['planning'] as const,
+    leaves: (organizationId: string, filters?: unknown) =>
+      [...qk.planning.all, organizationId, 'leaves', filters ?? null] as const,
+    balances: (organizationId: string, year: number) =>
+      [...qk.planning.all, organizationId, 'balances', year] as const,
+    recurringTasks: (organizationId: string) =>
+      [...qk.planning.all, organizationId, 'recurring-tasks'] as const,
+    /**
+     * Les événements du calendrier ne sont pas une table : ils composent
+     * missions, congés et tâches récurrentes. La clé porte la fenêtre affichée,
+     * puisque c'est elle qui détermine ce qui est chargé.
+     */
+    calendar: (organizationId: string, from: string, to: string) =>
+      [...qk.planning.all, organizationId, 'calendar', from, to] as const,
+  },
+
+  // ----------------------------------------------------------- cartographie
+  locations: {
+    all: ['locations'] as const,
+    live: (organizationId: string) => [...qk.locations.all, organizationId, 'live'] as const,
+    /**
+     * La piste d'un intervenant, bornée dans le temps. Séparée de la position
+     * courante : on rafraîchit l'une toutes les minutes, l'autre à l'ouverture
+     * du tiroir d'historique.
+     */
+    trail: (memberId: string, sinceIso: string) =>
+      [...qk.locations.all, 'trail', memberId, sinceIso] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

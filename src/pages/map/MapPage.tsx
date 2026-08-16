@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   RefreshCw,
   Compass,
@@ -6,34 +6,73 @@ import {
   Map as MapIcon,
 } from 'lucide-react';
 
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useCurrentIndustry } from '@/features/industries';
+import { useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { GoogleMapView } from '@/features/map/components/GoogleMapView';
 import { DispatchSidebar } from '@/features/map/components/DispatchSidebar';
-import {
-  INITIAL_TECHNICIANS,
-  INITIAL_INTERVENTIONS,
-} from '@/features/map/mock-geo-data';
+import { toInterventionSite, toTechnicianLocation } from '@/features/map/adapters';
+import { useLiveLocations } from '@/features/map/hooks/useLocations';
+import { useDocumentTitle } from '@/lib/use-document-title';
 import type { MapLayerMode } from '@/features/map/types';
 
+/**
+ * Cartographie & suivi des intervenants.
+ *
+ * Les points de la carte sont des MISSIONS géolocalisées — elles portent déjà
+ * latitude, longitude, référence et client. Les intervenants viennent de
+ * `technician_locations`, alimentée par leurs propres appareils : nul ne
+ * déclare la position d'un autre, quel que soit son rôle.
+ *
+ * Une carte vide n'est donc pas une panne. Elle signifie que personne ne
+ * partage sa position — ce qui est l'état par défaut, et un droit.
+ */
 export default function MapPage() {
-  const { organization } = useCurrentOrganization();
+  useDocumentTitle('Cartographie & suivi');
 
-  const [technicians] = useState(INITIAL_TECHNICIANS);
-  const [interventions] = useState(INITIAL_INTERVENTIONS);
-  const [selectedTechId, setSelectedTechId] = useState<string | null>('tech-1');
+  const { organization } = useCurrentOrganization();
+  const { code: industry, label: industryLabel } = useCurrentIndustry();
+  const organizationId = organization?.id ?? null;
+
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [layerMode, setLayerMode] = useState<MapLayerMode>('roadmap');
   const [isLiveActive, setIsLiveActive] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
 
+  // Seules les missions en cours ou à venir ont leur place sur une carte de
+  // répartition : un chantier clos n'appelle plus aucune décision.
+  const missionsQuery = useMissions(organizationId, {
+    status: ['draft', 'assigned', 'accepted', 'in_progress'],
+    limit: 200,
+  });
+  const locationsQuery = useLiveLocations(organizationId, isLiveActive);
+
+  const missions = useMemo(() => missionsQuery.data ?? [], [missionsQuery.data]);
+
+  const technicians = useMemo(
+    () =>
+      (locationsQuery.data ?? []).map((row) =>
+        toTechnicianLocation(row, { industry, industryLabel, missions }),
+      ),
+    [locationsQuery.data, industry, industryLabel, missions],
+  );
+
+  const interventions = useMemo(
+    () =>
+      missions
+        .map((mission) => toInterventionSite(mission, { industry, industryLabel }))
+        .filter((site) => site !== null),
+    [missions, industry, industryLabel],
+  );
+
+  const isRefreshing = locationsQuery.isFetching;
+
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    void locationsQuery.refetch();
   };
 
   const handleSelectTech = (id: string) => {
@@ -46,13 +85,13 @@ export default function MapPage() {
   const handleSelectSite = (id: string) => {
     setSelectedSiteId(id);
     const site = interventions.find((s) => s.id === id);
-    if (site?.assignedTechnicianName) {
+    if (site?.assignedTechnicianName !== undefined) {
       const tech = technicians.find((t) => t.name === site.assignedTechnicianName);
       if (tech) setSelectedTechId(tech.id);
     }
   };
 
-  const organizationName = organization?.name ?? 'Île-de-France';
+  const organizationName = organization?.name ?? 'votre secteur';
 
   return (
     <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto pb-6">
@@ -71,7 +110,8 @@ export default function MapPage() {
             </Badge>
           </div>
           <p className="text-3xs sm:text-xs text-muted-foreground mt-0.5">
-            {technicians.length} intervenants · Secteur {organizationName}
+            {technicians.length} intervenant{technicians.length > 1 ? 's' : ''} en partage ·{' '}
+            {interventions.length} chantier{interventions.length > 1 ? 's' : ''} · {organizationName}
           </p>
         </div>
 
@@ -152,11 +192,19 @@ export default function MapPage() {
             mobileTab === 'list' ? 'block' : 'hidden lg:block'
           }`}
         >
-          <DispatchSidebar
-            technicians={technicians}
-            selectedTechId={selectedTechId}
-            onSelectTech={handleSelectTech}
-          />
+          {technicians.length === 0 && !locationsQuery.isLoading ? (
+            <EmptyState
+              icon={Users}
+              title="Personne ne partage sa position"
+              description="Le suivi GPS est déclaré par l'appareil de chaque intervenant, jamais activé à sa place. Tant qu'aucun ne l'a mis en route, la carte n'affiche que les chantiers."
+            />
+          ) : (
+            <DispatchSidebar
+              technicians={technicians}
+              selectedTechId={selectedTechId}
+              onSelectTech={handleSelectTech}
+            />
+          )}
         </div>
 
         {/* Center / Right Interactive Google Map Canvas: Hidden on mobile when mobileTab === 'list', visible on desktop */}

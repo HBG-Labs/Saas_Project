@@ -1,7 +1,7 @@
 import { Flag, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
-import { HOLIDAY_TERRITORIES } from '../mock-planning-data';
+import { HOLIDAY_TERRITORIES } from '../public-holidays';
 import type { PublicHoliday, HolidayTerritory } from '../types';
 
 interface PublicHolidaysTabProps {

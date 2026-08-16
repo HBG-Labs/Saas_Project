@@ -8,6 +8,8 @@ import ultimateSql from '../../supabase/migrations/20260812100100_ultimate_plan.
 import equipmentSql from '../../supabase/migrations/20260812100300_equipment.sql?raw';
 import quotesSql from '../../supabase/migrations/20260812100400_quotes.sql?raw';
 import industriesSql from '../../supabase/migrations/20260815100000_industries.sql?raw';
+import planningSql from '../../supabase/migrations/20260816100000_planning.sql?raw';
+import locationsSql from '../../supabase/migrations/20260816100100_technician_locations.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -45,6 +47,8 @@ const MIGRATIONS: Record<string, string> = {
   equipment: equipmentSql,
   quotes: quotesSql,
   industries: industriesSql,
+  planning: planningSql,
+  locations: locationsSql,
 };
 
 export const MIGRATION_FILES = {
@@ -58,6 +62,8 @@ export const MIGRATION_FILES = {
   equipment: 'equipment',
   quotes: 'quotes',
   industries: 'industries',
+  planning: 'planning',
+  locations: 'locations',
 } as const;
 
 /**
