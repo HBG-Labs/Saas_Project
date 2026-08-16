@@ -109,7 +109,36 @@ function mapPostgrestCode(error: SupabaseLikeError): AppErrorCode {
 
 /** Traduit une erreur d'authentification (GoTrue) en AppError. */
 export function mapAuthError(error: SupabaseLikeError): AppError {
-  if (error.status === 400 || error.code === 'invalid_credentials') {
+  const msg = (error.message ?? '').toLowerCase();
+  const code = (error.code ?? '').toLowerCase();
+
+  if (
+    code === 'same_password' ||
+    msg.includes('should be different') ||
+    msg.includes('same password') ||
+    msg.includes('same as the old password')
+  ) {
+    return new AppError(
+      'validation',
+      "Le nouveau mot de passe doit être différent de l'ancien mot de passe.",
+      { cause: error },
+    );
+  }
+
+  if (
+    code === 'weak_password' ||
+    msg.includes('weak password') ||
+    msg.includes('password should be at least') ||
+    msg.includes('pwned')
+  ) {
+    return new AppError(
+      'validation',
+      'Le mot de passe est trop simple ou ne respecte pas les critères de sécurité.',
+      { cause: error },
+    );
+  }
+
+  if (error.status === 400 || code === 'invalid_credentials') {
     return new AppError('validation', 'Identifiants incorrects.', { cause: error });
   }
   if (error.status === 401) {

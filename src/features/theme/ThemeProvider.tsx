@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import {
   ACCENT_STORAGE_KEY,
+  COMPACT_STORAGE_KEY,
   PRESET_STORAGE_KEY,
   THEME_STORAGE_KEY,
   ThemeContext,
@@ -35,9 +36,19 @@ function readStoredAccent(): AccentColorId {
   return 'auto';
 }
 
+function readStoredCompact(): boolean {
+  try {
+    return localStorage.getItem(COMPACT_STORAGE_KEY) === 'true';
+  } catch {
+    // Stockage inaccessible
+  }
+  return false;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preset, setPresetState] = useState<ThemePresetId>(readStoredPreset);
   const [accentColor, setAccentColorState] = useState<AccentColorId>(readStoredAccent);
+  const [compactMode, setCompactModeState] = useState<boolean>(readStoredCompact);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
 
   const activePreset = useMemo(
@@ -52,9 +63,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
 
-    // 1. Classe dark/light
+    // 1. Classe dark/light et mode compact haute densité
     root.classList.toggle('dark', resolvedTheme === 'dark');
+    root.classList.toggle('compact-mode', compactMode);
     root.setAttribute('data-theme', preset);
+    root.setAttribute('data-density', compactMode ? 'compact' : 'comfortable');
 
     // 2. Nettoyer les variables personnalisées précédentes
     const allCssVarKeys = new Set<string>();
@@ -83,7 +96,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         });
       }
     }
-  }, [preset, activePreset, resolvedTheme, accentColor]);
+  }, [preset, activePreset, resolvedTheme, accentColor, compactMode]);
 
   const setPreset = useCallback((next: ThemePresetId) => {
     setPresetState(next);
@@ -123,12 +136,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setCompactMode = useCallback((next: boolean) => {
+    setCompactModeState(next);
+    try {
+      localStorage.setItem(COMPACT_STORAGE_KEY, String(next));
+    } catch {
+      // Stockage inaccessible
+    }
+  }, []);
+
   const resetCustomization = useCallback(() => {
     setPresetState('default');
     setAccentColorState('auto');
+    setCompactModeState(false);
     try {
       localStorage.removeItem(PRESET_STORAGE_KEY);
       localStorage.removeItem(ACCENT_STORAGE_KEY);
+      localStorage.removeItem(COMPACT_STORAGE_KEY);
       localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     } catch {
       // Stockage inaccessible
@@ -141,9 +165,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       resolvedTheme,
       preset,
       accentColor,
+      compactMode,
       setTheme,
       setPreset,
       setAccentColor,
+      setCompactMode,
       resetCustomization,
       isCustomizerOpen,
       setIsCustomizerOpen,
@@ -153,9 +179,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       resolvedTheme,
       preset,
       accentColor,
+      compactMode,
       setTheme,
       setPreset,
       setAccentColor,
+      setCompactMode,
       resetCustomization,
       isCustomizerOpen,
       setIsCustomizerOpen,
@@ -164,3 +192,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return <ThemeContext value={value}>{children}</ThemeContext>;
 }
+

@@ -67,7 +67,7 @@ function SidebarLink({
           'group relative flex min-h-9 items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium',
           'transition-all duration-150',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-          collapsed && 'justify-center px-0',
+          collapsed ? 'justify-center px-0 size-9 mx-auto' : 'w-full',
           isActive
             ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
             : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -119,7 +119,7 @@ function CollapsibleSidebarSection({
           />
         </button>
       ) : (
-        <div className="h-px bg-border my-2" />
+        <div className="h-px bg-border/60 my-1.5 mx-1" />
       )}
 
       <div
@@ -128,7 +128,7 @@ function CollapsibleSidebarSection({
           !collapsed && !isOpen ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100',
         )}
       >
-        <ul className="space-y-0.5">{children}</ul>
+        <ul className="space-y-1">{children}</ul>
       </div>
     </div>
   );
@@ -159,13 +159,19 @@ export function Sidebar({
     <nav
       aria-label="Navigation principale"
       className={cn(
-        'flex h-full w-full flex-col justify-between p-3 transition-all duration-200 bg-surface border-border',
+        'flex h-full w-full flex-col justify-between transition-all duration-200 bg-surface border-border',
+        isCollapsed ? 'px-2 py-3' : 'p-3',
         className,
       )}
     >
-      <div className="space-y-4 overflow-y-auto overflow-x-hidden pr-0.5">
+      <div className="space-y-3 overflow-y-auto overflow-x-hidden pr-0.5">
         {/* En-tête Organisation & Métier */}
-        <div className="flex items-center justify-between px-1 pt-1 pb-1">
+        <div
+          className={cn(
+            'flex items-center pt-1 pb-1',
+            isCollapsed ? 'justify-center' : 'justify-between px-1',
+          )}
+        >
           {!isCollapsed ? (
             <NavLink
               to={ROUTES.organization}
@@ -189,7 +195,10 @@ export function Sidebar({
           <button
             type="button"
             onClick={handleToggle}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0"
+            className={cn(
+              'rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0',
+              isCollapsed && 'mx-auto',
+            )}
             title={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
             aria-label="Toggle Sidebar"
           >
@@ -216,7 +225,7 @@ export function Sidebar({
         ))}
       </div>
 
-      <div className="pt-3 border-t border-border">
+      <div className="pt-2 border-t border-border">
         <CollapsibleSidebarSection
           group={{ id: 'account', label: 'Compte & Paramètres', icon: 'settings', items: ACCOUNT_NAV }}
           collapsed={isCollapsed}

@@ -24,6 +24,11 @@
           if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
             document.documentElement.classList.add('dark');
           }
+          var storedCompact = localStorage.getItem('pref_compact_mode');
+          if (storedCompact === 'true') {
+            document.documentElement.classList.add('compact-mode');
+            document.documentElement.setAttribute('data-density', 'compact');
+          }
         } catch (error) {
           /* Navigation privée stricte : le thème clair par défaut reste utilisable. */
         }

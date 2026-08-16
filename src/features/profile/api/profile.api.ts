@@ -46,6 +46,7 @@ export async function updateMyProfile(
   patch: {
     identity?: TablesUpdate<'profiles'>;
     details?: Omit<TablesUpdate<'profile_details'>, 'user_id'>;
+    jobTitle?: string;
   },
 ): Promise<FullProfile> {
   if (patch.identity && Object.keys(patch.identity).length > 0) {
@@ -56,12 +57,24 @@ export async function updateMyProfile(
     // Les métadonnées de session suivent le profil, jamais l'inverse :
     // `profiles` fait foi. Sans cette recopie, l'en-tête continuerait d'afficher
     // l'ancien nom jusqu'à la prochaine reconnexion.
+    const authData: Record<string, unknown> = {};
     if (patch.identity.display_name !== undefined) {
+      authData['display_name'] = patch.identity.display_name;
+    }
+    if (patch.jobTitle !== undefined) {
+      authData['job_title'] = patch.jobTitle;
+    }
+    if (Object.keys(authData).length > 0) {
       const { error } = await supabase.auth.updateUser({
-        data: { display_name: patch.identity.display_name },
+        data: authData,
       });
       if (error) throw error;
     }
+  } else if (patch.jobTitle !== undefined) {
+    const { error } = await supabase.auth.updateUser({
+      data: { job_title: patch.jobTitle },
+    });
+    if (error) throw error;
   }
 
   if (patch.details && Object.keys(patch.details).length > 0) {

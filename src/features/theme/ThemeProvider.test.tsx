@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { THEME_STORAGE_KEY } from './theme-context';
+import { COMPACT_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
 import { ThemeProvider } from './ThemeProvider';
 import { useTheme } from './useTheme';
 
@@ -35,9 +35,11 @@ function Probe() {
     resolvedTheme,
     preset,
     accentColor,
+    compactMode,
     setTheme,
     setPreset,
     setAccentColor,
+    setCompactMode,
     resetCustomization,
   } = useTheme();
 
@@ -47,6 +49,7 @@ function Probe() {
       <span data-testid="resolved">{resolvedTheme}</span>
       <span data-testid="preset">{preset}</span>
       <span data-testid="accent">{accentColor}</span>
+      <span data-testid="compact">{String(compactMode)}</span>
       <button
         type="button"
         onClick={() => {
@@ -82,6 +85,22 @@ function Probe() {
       <button
         type="button"
         onClick={() => {
+          setCompactMode(true);
+        }}
+      >
+        Activer Compact
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setCompactMode(false);
+        }}
+      >
+        Désactiver Compact
+      </button>
+      <button
+        type="button"
+        onClick={() => {
           resetCustomization();
         }}
       >
@@ -94,6 +113,8 @@ function Probe() {
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.classList.remove('dark');
+  document.documentElement.classList.remove('compact-mode');
+  document.documentElement.removeAttribute('data-density');
 });
 
 afterEach(() => {
@@ -111,7 +132,9 @@ describe('ThemeProvider', () => {
 
     expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
+    expect(screen.getByTestId('compact')).toHaveTextContent('false');
     expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement).not.toHaveClass('compact-mode');
   });
 
   it('applique et persiste un choix explicite', async () => {
@@ -152,6 +175,31 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('accent')).toHaveTextContent('auto');
   });
 
+  it('permet d’activer et de persister le mode compact haute densité', async () => {
+    mockSystemDark(true);
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('compact')).toHaveTextContent('false');
+    expect(document.documentElement).not.toHaveClass('compact-mode');
+
+    await user.click(screen.getByRole('button', { name: 'Activer Compact' }));
+
+    expect(screen.getByTestId('compact')).toHaveTextContent('true');
+    expect(document.documentElement).toHaveClass('compact-mode');
+    expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+    expect(localStorage.getItem(COMPACT_STORAGE_KEY)).toBe('true');
+
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(screen.getByTestId('compact')).toHaveTextContent('false');
+    expect(document.documentElement).not.toHaveClass('compact-mode');
+  });
+
   it('reste utilisable si localStorage est inaccessible', () => {
     mockSystemDark(false);
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
@@ -169,4 +217,5 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('theme')).toHaveTextContent('dark');
   });
 });
+
 

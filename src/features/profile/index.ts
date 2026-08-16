@@ -34,6 +34,7 @@ export function useUpdateMyProfile() {
     mutationFn: (patch: {
       identity?: TablesUpdate<'profiles'>;
       details?: Omit<TablesUpdate<'profile_details'>, 'user_id'>;
+      jobTitle?: string;
     }) => {
       if (userId === null) {
         throw new Error('Vous devez être connecté pour modifier votre profil.');

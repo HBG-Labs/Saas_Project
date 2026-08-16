@@ -62,4 +62,15 @@ describe('mapAuthError', () => {
     expect(mapAuthError({ message: 'x', status: 400 }).message).toBe('Identifiants incorrects.');
     expect(mapAuthError({ message: 'x', status: 429 }).code).toBe('network');
   });
+
+  it('traduit les erreurs de mot de passe identique ou trop faible', () => {
+    expect(
+      mapAuthError({ message: 'New password should be different from the old password.', status: 422 }).message,
+    ).toBe("Le nouveau mot de passe doit être différent de l'ancien mot de passe.");
+
+    expect(
+      mapAuthError({ code: 'weak_password', message: 'Password should be at least 6 characters' }).message,
+    ).toBe('Le mot de passe est trop simple ou ne respecte pas les critères de sécurité.');
+  });
 });
+

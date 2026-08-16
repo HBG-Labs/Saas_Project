@@ -22,6 +22,7 @@ import { OrganizationSwitcher } from '@/features/organizations/components/Organi
 import { useAvatarStore } from '@/features/profile';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
+import { cn } from '@/lib/cn';
 
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
@@ -31,7 +32,10 @@ import { displayNameOf } from './user-display';
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('pref_sidebar_collapsed') === 'true';
+  });
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status, user, signOut } = useAuth();
   const { role } = usePermission();
@@ -43,6 +47,18 @@ export function AppLayout() {
   const { avatarUrl } = useAvatarStore();
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('pref_sidebar_collapsed', String(next));
+      } catch {
+        // Stockage inaccessible
+      }
+      return next;
+    });
+  };
 
   // Les sections « Espace Technicien » suivent le rôle RÉEL dans l'organisation
   // courante, pas une préférence d'affichage : un technicien connecté en
@@ -87,13 +103,29 @@ export function AppLayout() {
 
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
-                <Dialog.Content className="border-border bg-surface fixed inset-y-0 left-0 z-50 w-[min(17rem,85vw)] border-r shadow-xl lg:hidden">
+                <Dialog.Content
+                  className={cn(
+                    'border-border bg-surface fixed inset-y-0 left-0 z-50 border-r shadow-xl lg:hidden transition-all duration-200',
+                    sidebarCollapsed ? 'w-16' : 'w-[min(17rem,85vw)]',
+                  )}
+                >
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
-                  <div className="border-border flex h-14 items-center border-b px-4">
-                    <Logo to={ROUTES.home} />
+                  <div
+                    className={cn(
+                      'border-border flex h-14 items-center border-b',
+                      sidebarCollapsed ? 'justify-center px-1' : 'px-4',
+                    )}
+                  >
+                    {!sidebarCollapsed ? (
+                      <Logo to={ROUTES.home} />
+                    ) : (
+                      <Logo to={ROUTES.home} className="text-xs font-bold" />
+                    )}
                   </div>
                   <Sidebar
                     groups={activeSidebarGroups}
+                    collapsed={sidebarCollapsed}
+                    onToggleCollapse={handleToggleSidebar}
                     onNavigate={() => setDrawerOpen(false)}
                     onDownloadAppClick={() => {
                       setDrawerOpen(false);
@@ -207,14 +239,15 @@ export function AppLayout() {
 
       {/* ---------------------------------------------------- BARRE LATÉRALE DESKTOP */}
       <aside
-        className={`border-border bg-surface fixed inset-y-0 top-14 left-0 z-20 hidden border-r transition-all duration-200 lg:block ${
-          sidebarCollapsed ? 'w-16' : 'w-60'
-        }`}
+        className={cn(
+          'border-border bg-surface fixed inset-y-0 top-14 left-0 z-20 hidden border-r transition-all duration-200 lg:block',
+          sidebarCollapsed ? 'w-16' : 'w-60',
+        )}
       >
         <Sidebar
           groups={activeSidebarGroups}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+          onToggleCollapse={handleToggleSidebar}
           onDownloadAppClick={() => setIsDownloadModalOpen(true)}
         />
       </aside>

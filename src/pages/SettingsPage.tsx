@@ -52,6 +52,8 @@ export default function SettingsPage() {
     setPreset,
     accentColor,
     setAccentColor,
+    compactMode,
+    setCompactMode,
     resetCustomization,
   } = useTheme();
 
@@ -98,9 +100,6 @@ export default function SettingsPage() {
   const [defaultVat, setDefaultVat] = useState(() => {
     return localStorage.getItem('pref_default_vat') ?? '8.5';
   });
-  const [compactMode, setCompactMode] = useState(() => {
-    return localStorage.getItem('pref_compact_mode') === 'true';
-  });
 
   const triggerSaveFeedback = () => {
     setSavedFeedback(true);
@@ -119,7 +118,6 @@ export default function SettingsPage() {
     localStorage.setItem('pref_vehicle_type', vehicleType);
     localStorage.setItem('pref_gps_refresh', gpsRefreshRate);
     localStorage.setItem('pref_default_vat', defaultVat);
-    localStorage.setItem('pref_compact_mode', String(compactMode));
   }, [
     notifyNewMission,
     notifyMaintenanceDue,
@@ -132,7 +130,6 @@ export default function SettingsPage() {
     vehicleType,
     gpsRefreshRate,
     defaultVat,
-    compactMode,
   ]);
 
   return (

@@ -2,6 +2,7 @@ import { Check, Paintbrush, RotateCcw, Sparkles, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 
 import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/Switch';
 import { cn } from '@/lib/cn';
 
 import { ACCENT_COLORS } from './accent-colors';
@@ -12,8 +13,10 @@ export function CustomizerDrawer() {
   const {
     preset,
     accentColor,
+    compactMode,
     setPreset,
     setAccentColor,
+    setCompactMode,
     resetCustomization,
     isCustomizerOpen,
     setIsCustomizerOpen,
@@ -207,6 +210,28 @@ export function CustomizerDrawer() {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* SECTION 3 : DENSITÉ DE L'INTERFACE (MODE COMPACT HAUTE DENSITÉ) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Densité d'affichage
+                  </h4>
+                  <span className="text-3xs font-semibold px-1.5 py-0.2 rounded bg-surface-sunken text-muted-foreground">
+                    {compactMode ? 'Compact' : 'Normal'}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-lg border border-border/60 bg-surface-subtle">
+                  <Switch
+                    id="customizer-compact-mode"
+                    label="Mode Compact haute densité"
+                    description="Resserre les cartes, badges et marges pour maximiser l'espace d'affichage."
+                    checked={compactMode}
+                    onCheckedChange={setCompactMode}
+                  />
                 </div>
               </div>
             </div>

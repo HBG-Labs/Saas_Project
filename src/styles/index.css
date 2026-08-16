@@ -406,3 +406,113 @@
     -webkit-text-fill-color: transparent;
   }
 }
+
+/* =============================================================================
+   MODE COMPACT HAUTE DENSITÉ (OPTIMISATION ÉCRANS DE TERRAIN & TABLEAUX DE BORD)
+   ============================================================================= */
+.compact-mode {
+  --spacing-compact-card: 0.75rem;
+  --spacing-compact-gap: 0.5rem;
+}
+
+/* 1. Rayons et arrondis affinés */
+.compact-mode .rounded-2xl {
+  border-radius: var(--radius-lg, 0.75rem);
+}
+
+.compact-mode .rounded-xl {
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+/* 2. Cartes UI standard (CardHeader, CardContent, CardFooter) */
+.compact-mode .p-4.sm\:p-5,
+.compact-mode .p-5.sm\:p-6,
+.compact-mode .p-6 {
+  padding: 0.75rem 1rem !important;
+}
+
+.compact-mode .p-4.pt-0.sm\:p-5.sm\:pt-0,
+.compact-mode .p-5.pt-0.sm\:p-6.sm\:pt-0 {
+  padding: 0 1rem 0.625rem !important;
+}
+
+.compact-mode .gap-1.p-4.sm\:p-5 {
+  padding: 0.5rem 1rem 0.25rem !important;
+}
+
+/* 3. StatCards & indicateurs chiffrés haute densité */
+.compact-mode .min-h-\[152px\] {
+  min-height: 110px !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.compact-mode .min-h-\[152px\] .size-10 {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 0.5rem !important;
+}
+
+.compact-mode .min-h-\[152px\] .size-10 > svg,
+.compact-mode .min-h-\[152px\] .size-10 svg {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+.compact-mode .min-h-\[152px\] .text-2xl.sm\:text-3xl,
+.compact-mode .min-h-\[152px\] .text-3xl {
+  font-size: 1.375rem !important;
+  line-height: 1.75rem !important;
+}
+
+.compact-mode .min-h-\[152px\] .mt-3,
+.compact-mode .min-h-\[152px\] .pt-3 {
+  margin-top: 0.25rem !important;
+  padding-top: 0.25rem !important;
+}
+
+/* 4. Badges resserrés */
+.compact-mode .px-2\.5.py-0\.5 {
+  padding: 0.0625rem 0.375rem !important;
+  font-size: 0.625rem !important;
+}
+
+/* 5. Espacements verticaux & grilles */
+.compact-mode .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.875rem !important;
+}
+
+.compact-mode .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.625rem !important;
+}
+
+.compact-mode .gap-4 {
+  gap: 0.625rem !important;
+}
+
+.compact-mode .gap-5,
+.compact-mode .gap-6 {
+  gap: 0.875rem !important;
+}
+
+.compact-mode .gap-3 {
+  gap: 0.5rem !important;
+}
+
+/* 6. Lignes de tableaux haute densité */
+.compact-mode table th,
+.compact-mode table td {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* 7. En-têtes de section et cartes de paramètres */
+.compact-mode .py-3.px-4 {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
