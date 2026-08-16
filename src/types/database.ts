@@ -287,6 +287,8 @@ export interface Database {
           city: string | null;
           country: string | null;
           status: OrganizationStatus;
+          /** Métier exercé. `null` = cœur sans spécialisation. */
+          industry: string | null;
           /** Cache maintenu par trigger depuis `subscriptions`. Lecture seule. */
           plan_code: string | null;
           created_by: string | null;
@@ -308,6 +310,7 @@ export interface Database {
           postal_code?: string | null;
           city?: string | null;
           country?: string | null;
+          industry?: string | null;
           /** Imposé à `auth.uid()` par la policy `organizations_insert_self`. */
           created_by: string;
         };
@@ -324,6 +327,7 @@ export interface Database {
           postal_code?: string | null;
           city?: string | null;
           country?: string | null;
+          industry?: string | null;
           status?: OrganizationStatus;
         };
         Relationships: [];
@@ -406,6 +410,31 @@ export interface Database {
       // =======================================================================
       // Facturation
       // =======================================================================
+      /**
+       * Référentiel des métiers de terrain.
+       *
+       * `Insert` et `Update` sont `never`, comme pour `plans` : la table n'a
+       * aucune policy d'écriture, seule une migration l'alimente. Le type
+       * traduit la frontière de sécurité plutôt que de la laisser au hasard.
+       */
+      industries: {
+        Row: {
+          code: string;
+          label: string;
+          description: string | null;
+          icon: string;
+          sort_order: number;
+          status: ContentStatus;
+          /** Libellés propres au métier. Affichage uniquement. */
+          vocabulary: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
       plans: {
         Row: {
           code: string;

@@ -1,0 +1,71 @@
+/**
+ * Miroir typé du référentiel `industries`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UN MIROIR PLUTÔT QU'UNE SIMPLE REQUÊTE
+ *
+ * Les codes de métier apparaissent dans le registre d'outils (`industry: 'hvac'`),
+ * dans la navigation et dans les futurs packs métier. Ce sont des littéraux de
+ * code, écrits à la main : ils doivent être typés, sans quoi une faute de frappe
+ * produit un outil que personne ne verra jamais — et rien ne le signalera.
+ *
+ * Le libellé, l'icône et le vocabulaire, eux, viennent de la base : ils changent
+ * sans redéploiement.
+ *
+ * `industries.test.ts` lit la migration SQL et échoue si cette liste diverge du
+ * semis. Même garde-fou que `rbac.ts` et `entitlements.ts` : un miroir faux est
+ * pire que pas de miroir, puisqu'il répond avec assurance.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+export const INDUSTRY_CODES = [
+  'fiber_telecom',
+  'hvac',
+  'landscaping',
+  'electrical',
+  'plumbing',
+  'heating',
+  'pest_control',
+  'cleaning',
+  'home_care',
+  'it_networks',
+  'general',
+] as const;
+
+export type IndustryCode = (typeof INDUSTRY_CODES)[number];
+
+/**
+ * Métier appliqué quand l'organisation n'en déclare aucun.
+ *
+ * `general` donne accès au cœur entier sans spécialisation. Ce n'est pas un
+ * état dégradé : c'est le choix honnête d'une entreprise dont le métier n'est
+ * pas encore outillé.
+ */
+export const DEFAULT_INDUSTRY: IndustryCode = 'general';
+
+export function isIndustryCode(value: unknown): value is IndustryCode {
+  return typeof value === 'string' && (INDUSTRY_CODES as readonly string[]).includes(value);
+}
+
+/**
+ * Vocabulaire d'un métier.
+ *
+ * Trois clés seulement, et c'est volontaire. Chaque terme ajouté ici doit être
+ * traduit dans les onze métiers : la liste doit rester celle des mots qui
+ * changent VRAIMENT d'un corps de métier à l'autre. « Client », « site » ou
+ * « devis » se disent partout pareil.
+ */
+export interface IndustryVocabulary {
+  /** Celui qui intervient : technicien, frigoriste, jardinier… */
+  worker: string;
+  /** L'unité de travail vendue : mission, chantier, prestation. */
+  job: string;
+  /** Le déplacement sur place : intervention, passage, visite. */
+  visit: string;
+}
+
+export const DEFAULT_VOCABULARY: IndustryVocabulary = {
+  worker: 'Intervenant',
+  job: 'Mission',
+  visit: 'Intervention',
+};

@@ -7,6 +7,7 @@ import closureSql from '../../supabase/migrations/20260809100400_closure_entitle
 import ultimateSql from '../../supabase/migrations/20260812100100_ultimate_plan.sql?raw';
 import equipmentSql from '../../supabase/migrations/20260812100300_equipment.sql?raw';
 import quotesSql from '../../supabase/migrations/20260812100400_quotes.sql?raw';
+import industriesSql from '../../supabase/migrations/20260815100000_industries.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -43,6 +44,7 @@ const MIGRATIONS: Record<string, string> = {
   ultimate: ultimateSql,
   equipment: equipmentSql,
   quotes: quotesSql,
+  industries: industriesSql,
 };
 
 export const MIGRATION_FILES = {
@@ -55,6 +57,7 @@ export const MIGRATION_FILES = {
   ultimate: 'ultimate',
   equipment: 'equipment',
   quotes: 'quotes',
+  industries: 'industries',
 } as const;
 
 /**
