@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe,
   Lock,
+  LogOut,
   Moon,
   Palette,
   RotateCcw,
@@ -24,8 +25,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { FormError } from '@/components/feedback/FormError';
 import { Switch } from '@/components/ui/Switch';
 import { ROUTES } from '@/config/routes';
+import { TERRITORIES, useDefaultTerritory } from '@/config/territories';
+import { useAuth, signOutOtherDevices } from '@/features/auth';
 import { useCurrentIndustry } from '@/features/industries';
 import { useCurrentOrganization } from '@/features/organizations';
 import { AvatarPickerModal, useAvatarStore } from '@/features/profile';
@@ -58,12 +62,42 @@ export default function SettingsPage() {
   } = useTheme();
 
   const { organization } = useCurrentOrganization();
+  const { user } = useAuth();
   const { label: industryLabel } = useCurrentIndustry();
   const { avatarUrl } = useAvatarStore();
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
   const [savedFeedback, setSavedFeedback] = useState(false);
+
+  // Révocation des autres sessions — une vraie opération serveur, donc un état
+  // de chargement et une erreur remontée, pas un simple retour visuel.
+  const [isSigningOutOthers, setIsSigningOutOthers] = useState(false);
+  const [othersSignedOut, setOthersSignedOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<unknown>(null);
+
+  /** Date réelle de dernière connexion, telle que la connaît le serveur. */
+  const lastSignInLabel =
+    user?.last_sign_in_at == null
+      ? null
+      : new Date(user.last_sign_in_at).toLocaleString('fr-FR', {
+          dateStyle: 'long',
+          timeStyle: 'short',
+        });
+
+  const handleSignOutOthers = async () => {
+    setIsSigningOutOthers(true);
+    setSignOutError(null);
+    setOthersSignedOut(false);
+    try {
+      await signOutOtherDevices();
+      setOthersSignedOut(true);
+    } catch (error) {
+      setSignOutError(error);
+    } finally {
+      setIsSigningOutOthers(false);
+    }
+  };
 
   // Préférences persistées localement
   const [notifyNewMission, setNotifyNewMission] = useState(() => {
@@ -82,14 +116,9 @@ export default function SettingsPage() {
     return localStorage.getItem('pref_sms_urgent_alerts') === 'true';
   });
 
-  const [defaultTerritory, setDefaultTerritory] = useState(() => {
-    return localStorage.getItem('pref_default_territory') ?? '972';
-  });
+  const { territoryCode: defaultTerritory, setTerritoryCode: setDefaultTerritory } = useDefaultTerritory();
   const [trafficLayer, setTrafficLayer] = useState(() => {
     return localStorage.getItem('pref_traffic_layer') !== 'false';
-  });
-  const [showWeekends, setShowWeekends] = useState(() => {
-    return localStorage.getItem('pref_show_weekends') === 'true';
   });
   const [vehicleType, setVehicleType] = useState(() => {
     return localStorage.getItem('pref_vehicle_type') ?? 'van';
@@ -114,7 +143,6 @@ export default function SettingsPage() {
     localStorage.setItem('pref_sms_urgent_alerts', String(smsUrgentAlerts));
     localStorage.setItem('pref_default_territory', defaultTerritory);
     localStorage.setItem('pref_traffic_layer', String(trafficLayer));
-    localStorage.setItem('pref_show_weekends', String(showWeekends));
     localStorage.setItem('pref_vehicle_type', vehicleType);
     localStorage.setItem('pref_gps_refresh', gpsRefreshRate);
     localStorage.setItem('pref_default_vat', defaultVat);
@@ -126,7 +154,6 @@ export default function SettingsPage() {
     smsUrgentAlerts,
     defaultTerritory,
     trafficLayer,
-    showWeekends,
     vehicleType,
     gpsRefreshRate,
     defaultVat,
@@ -425,24 +452,17 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="px-4 pb-3.5 pt-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5">
-                  {[
-                    { id: 'FR', label: 'Métropole', flag: '🇫🇷' },
-                    { id: '971', label: 'Guadeloupe (971)', flag: '🇬🇵' },
-                    { id: '972', label: 'Martinique (972)', flag: '🇲🇶' },
-                    { id: '973', label: 'Guyane (973)', flag: '🇬🇫' },
-                    { id: '974', label: 'La Réunion (974)', flag: '🇷🇪' },
-                    { id: '976', label: 'Mayotte (976)', flag: '🇾🇹' },
-                  ].map((t) => (
+                  {TERRITORIES.map((t) => (
                     <button
-                      key={t.id}
+                      key={t.code}
                       type="button"
                       onClick={() => {
-                        setDefaultTerritory(t.id);
+                        setDefaultTerritory(t.code);
                         triggerSaveFeedback();
                       }}
                       className={cn(
                         'flex items-center gap-1.5 p-2 rounded-lg border text-2xs font-bold transition-all cursor-pointer',
-                        defaultTerritory === t.id
+                        defaultTerritory === t.code
                           ? 'border-primary bg-primary/10 text-primary shadow-2xs ring-1 ring-primary/30'
                           : 'border-border text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                       )}
@@ -524,29 +544,6 @@ export default function SettingsPage() {
                     }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="py-3 px-4 pb-2">
-                <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="size-3.5 text-primary" />
-                  <span>Affichage de l'Agenda & Planning</span>
-                </CardTitle>
-                <CardDescription className="text-3xs">
-                  Ajustez les options du calendrier mensuel et de la gestion des congés.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4 pb-3.5 pt-0">
-                <Switch
-                  label="Afficher les samedis et dimanches"
-                  description="Active la vue 7 jours sur la grille planning (recommandé pour les astreintes)."
-                  checked={showWeekends}
-                  onCheckedChange={(checked) => {
-                    setShowWeekends(checked);
-                    triggerSaveFeedback();
-                  }}
-                />
               </CardContent>
             </Card>
           </div>
@@ -755,29 +752,64 @@ export default function SettingsPage() {
 
             <Card>
               <CardHeader className="py-3 px-4 pb-2">
-                <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-                  <Smartphone className="size-3.5 text-primary" />
-                  <span>Sessions actives</span>
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xs font-bold flex items-center gap-1.5">
+                    <Smartphone className="size-3.5 text-primary" />
+                    <span>Sécurité de la session</span>
+                  </CardTitle>
+                </div>
                 <CardDescription className="text-3xs">
-                  Appareils et navigateurs actuellement connectés à votre compte.
+                  Compte {user?.email ?? 'utilisateur'}
+                  {lastSignInLabel !== null && ` · dernière connexion ${lastSignInLabel}`}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="px-4 pb-3.5 pt-0 space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface border border-border">
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs">
-                      💻
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-foreground">Navigateur Web (Session actuelle)</h4>
-                      <p className="text-3xs text-muted-foreground font-mono">Windows • En ligne maintenant</p>
-                    </div>
+              <CardContent className="px-4 pb-3.5 pt-0 space-y-3">
+                {/* La liste par appareil a été retirée : elle ne pouvait afficher
+                    que ce navigateur, et « Déconnecter » n'effaçait qu'une ligne
+                    locale sans toucher l'appareil visé. Ce bouton-ci révoque
+                    réellement les jetons côté serveur. */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-semibold text-foreground">
+                      Déconnecter tous les autres appareils
+                    </h4>
+                    <p className="text-3xs text-muted-foreground">
+                      Révoque les sessions ouvertes ailleurs. Celle-ci reste active. Les
+                      autres appareils sont déconnectés dans l’heure qui suit, au plus tard.
+                    </p>
                   </div>
-                  <Badge variant="success" className="text-4xs px-1.5 py-0.5">Actif</Badge>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSigningOutOthers}
+                    onClick={() => {
+                      void handleSignOutOthers();
+                    }}
+                    className="shrink-0 text-3xs text-rose-600 hover:text-rose-700 hover:border-rose-500/30 h-7 px-2.5"
+                  >
+                    <LogOut className="size-3 mr-1" />
+                    {isSigningOutOthers ? 'Révocation…' : 'Révoquer'}
+                  </Button>
                 </div>
+
+                {othersSignedOut && (
+                  <p className="text-3xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    Les autres sessions ont été révoquées.
+                  </p>
+                )}
+
+                <FormError error={signOutError} />
+
+                <p className="text-3xs text-muted-foreground border-t border-border pt-2.5">
+                  La liste des appareils connectés n’est pas affichée : le service
+                  d’authentification ne la met pas à disposition. L’annoncer à partir de
+                  ce seul navigateur donnerait une réponse rassurante et fausse à la
+                  question « suis-je connecté ailleurs ? ».
+                </p>
               </CardContent>
             </Card>
+
 
             <Card className="border-rose-500/30">
               <CardHeader className="py-3 px-4 pb-2">

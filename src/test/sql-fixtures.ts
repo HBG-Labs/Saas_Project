@@ -10,6 +10,7 @@ import quotesSql from '../../supabase/migrations/20260812100400_quotes.sql?raw';
 import industriesSql from '../../supabase/migrations/20260815100000_industries.sql?raw';
 import planningSql from '../../supabase/migrations/20260816100000_planning.sql?raw';
 import locationsSql from '../../supabase/migrations/20260816100100_technician_locations.sql?raw';
+import retireTrackingSql from '../../supabase/migrations/20260817100000_retire_live_tracking.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -49,6 +50,7 @@ const MIGRATIONS: Record<string, string> = {
   industries: industriesSql,
   planning: planningSql,
   locations: locationsSql,
+  retireTracking: retireTrackingSql,
 };
 
 export const MIGRATION_FILES = {
@@ -64,6 +66,7 @@ export const MIGRATION_FILES = {
   industries: 'industries',
   planning: 'planning',
   locations: 'locations',
+  retireTracking: 'retireTracking',
 } as const;
 
 /**
@@ -81,6 +84,44 @@ export function extractInsertTuplesAcross(
   table: string,
 ): string[][] {
   return keys.flatMap((key) => extractInsertTuples(readMigration(key), table));
+}
+
+/**
+ * Valeurs RETIRÉES d'une table de référence par un `delete ... where <col> = '...'`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CE COMPLÉMENT EST NÉCESSAIRE
+ *
+ * `extractInsertTuplesAcross` reconstitue l'état d'une table en cumulant les
+ * `insert`. Cela suppose qu'une ligne semée y reste — vrai jusqu'au jour où une
+ * capacité est ABANDONNÉE. Le retrait du suivi GPS supprime `location.view_all`
+ * de `role_permissions` et `live_tracking` de `plan_features`.
+ *
+ * Sans lire les suppressions, le miroir TypeScript — qui, lui, est à jour —
+ * paraîtrait incomplet, et le test réclamerait la réintroduction d'un droit que
+ * le produit vient de retirer. C'est le pire verdict possible : il pousse à
+ * « corriger » du code juste.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function extractDeletedValuesAcross(
+  keys: readonly (keyof typeof MIGRATION_FILES)[],
+  table: string,
+  column: string,
+): Set<string> {
+  const deleted = new Set<string>();
+  const pattern = new RegExp(
+    `delete\\s+from\\s+(?:public\\.)?${table}\\s+where\\s+${column}\\s*=\\s*'([^']+)'`,
+    'gi',
+  );
+
+  for (const key of keys) {
+    const sql = readMigration(key);
+    for (const match of sql.matchAll(pattern)) {
+      if (match[1] !== undefined) deleted.add(match[1]);
+    }
+  }
+
+  return deleted;
 }
 
 export function readMigration(key: keyof typeof MIGRATION_FILES): string {

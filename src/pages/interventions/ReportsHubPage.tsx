@@ -1,5 +1,6 @@
-import { CheckCircle2, ClipboardCheck, FileText, Send, Sparkles, Plus, AlertCircle, BookOpen } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, FileText, Send, Sparkles, Plus, AlertCircle, BookOpen, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -8,12 +9,14 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import {
   AttachmentGallery,
   useAttachments,
   useCreateReport,
   useIntervention,
+  useOrganizationInterventions,
   useSaveReport,
   useSubmitReport,
 } from '@/features/interventions';
@@ -44,19 +47,27 @@ export default function ReportsHubPage() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
 
-  const missions = useMissions(organizationId);
-  const missionList = missions.data ?? [];
+  const missionsQuery = useMissions(organizationId);
+  const interventionsQuery = useOrganizationInterventions(organizationId);
+  const missionList = missionsQuery.data ?? [];
+  const interventionList = interventionsQuery.data ?? [];
 
-  // Default demo intervention for report editing if none selected
-  const [selectedInterventionId, setSelectedInterventionId] = useState<string>('inter-001');
+  const [selectedInterventionId, setSelectedInterventionId] = useState<string>('');
 
-  const intervention = useIntervention(selectedInterventionId);
-  const attachments = useAttachments(selectedInterventionId);
-  const createReport = useCreateReport(selectedInterventionId);
-  const submitReport = useSubmitReport(selectedInterventionId);
+  // La première intervention sert de sélection par défaut — DÉDUITE, pas posée.
+  //
+  // Un effet s'en chargeait, en doublon avec la ligne ci-dessous qui appliquait
+  // déjà le même repli. Il ne produisait donc qu'un rendu supplémentaire, et un
+  // clignotement au chargement de la liste.
+  const activeInterventionId = selectedInterventionId || (interventionList[0]?.id ?? 'inter-001');
+
+  const intervention = useIntervention(activeInterventionId);
+  const attachments = useAttachments(activeInterventionId);
+  const createReport = useCreateReport(activeInterventionId);
+  const submitReport = useSubmitReport(activeInterventionId);
 
   const report = intervention.data?.report ?? null;
-  const saveReport = useSaveReport(report?.id ?? '');
+  const saveReport = useSaveReport(report?.id ?? '', activeInterventionId);
 
   const [workDescription, setWorkDescription] = useState('');
   const [observations, setObservations] = useState('');
@@ -82,8 +93,12 @@ export default function ReportsHubPage() {
     saveReport.mutate(
       { work_description: workDescription, observations },
       {
-        onSuccess: () => {
+        onSuccess: (updatedReport) => {
           setSavedAt(new Date());
+          if (updatedReport) {
+            setWorkDescription(updatedReport.work_description ?? '');
+            setObservations(updatedReport.observations ?? '');
+          }
         },
         onError: (mutationError) => {
           setError(mutationError);
@@ -101,30 +116,76 @@ export default function ReportsHubPage() {
 
       {/* Selecteur de mission/intervention */}
       <Card className="border-border/80 shadow-sm">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <ClipboardCheck className="size-4 text-primary" />
-            Sélectionner la mission à rédiger
+            Sélectionner l’intervention / chantier
           </CardTitle>
+          {activeInterventionId && (
+            <Button asChild variant="ghost" size="sm" className="text-xs gap-1 text-primary">
+              <Link to={ROUTES.interventionReport(activeInterventionId)}>
+                <ExternalLink className="size-3.5" />
+                Éditeur complet & Signatures
+              </Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {missionList.length === 0 ? (
+            {interventionList.length === 0 && missionList.length === 0 ? (
               <p className="text-xs text-muted-foreground col-span-full">
-                Chargement des missions attribuées...
+                Chargement des interventions et missions...
               </p>
+            ) : interventionList.length > 0 ? (
+              interventionList.map((item) => {
+                const isSelected = item.id === activeInterventionId;
+                const rep = item.report;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedInterventionId(item.id)}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 shadow-2xs font-semibold'
+                        : 'border-border/60 hover:border-primary/50 bg-surface'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-2xs mb-1 text-muted-foreground">
+                      <span className="font-mono font-bold text-foreground">
+                        {item.id.slice(0, 8)}
+                      </span>
+                      {rep !== null ? (
+                        <Badge
+                          variant={STATUS_BADGE_VARIANTS[rep.status]}
+                          className="text-3xs py-0"
+                        >
+                          {STATUS_LABELS[rep.status]}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-3xs py-0">
+                          Sans compte-rendu
+                        </Badge>
+                      )}
+                    </div>
+                    <h4 className="text-xs font-bold text-foreground truncate">
+                      Intervention du{' '}
+                      {item.start_time
+                        ? new Date(item.start_time).toLocaleDateString('fr-FR')
+                        : 'chantier'}
+                    </h4>
+                    <p className="text-2xs text-muted-foreground truncate mt-0.5">
+                      Statut intervention : {item.status}
+                    </p>
+                  </button>
+                );
+              })
             ) : (
               missionList.map((m) => (
-                <button
+                <Link
                   key={m.id}
-                  type="button"
-                  onClick={() => setSelectedInterventionId(m.id === 'mission-001' ? 'inter-001' : 'inter-004')}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary ${
-                    (selectedInterventionId === 'inter-001' && m.id === 'mission-001') ||
-                    (selectedInterventionId === 'inter-004' && m.id !== 'mission-001')
-                      ? 'border-primary bg-primary/10 shadow-2xs font-semibold'
-                      : 'border-border/60 hover:border-primary/50 bg-surface'
-                  }`}
+                  to={ROUTES.mission(m.id)}
+                  className="p-3.5 rounded-xl border border-border/60 hover:border-primary/50 bg-surface text-left transition-all block"
                 >
                   <div className="flex items-center justify-between text-2xs mb-1 text-muted-foreground">
                     <span className="font-mono font-bold text-foreground">{m.reference}</span>
@@ -133,10 +194,10 @@ export default function ReportsHubPage() {
                     </Badge>
                   </div>
                   <h4 className="text-xs font-bold text-foreground truncate">{m.title}</h4>
-                  <p className="text-2xs text-muted-foreground truncate mt-0.5">
-                    {m.city ? `Ville : ${m.city}` : 'Chantier terrain'}
+                  <p className="text-2xs text-primary truncate mt-1 font-medium">
+                    → Démarrer l’intervention sur la mission
                   </p>
-                </button>
+                </Link>
               ))
             )}
           </div>
@@ -266,9 +327,9 @@ export default function ReportsHubPage() {
               </CardHeader>
               <CardContent>
                 <AttachmentGallery
-                  interventionId={selectedInterventionId}
+                  interventionId={activeInterventionId}
                   organizationId={organization?.id ?? ''}
-                  missionId="mission-001"
+                  missionId={intervention.data?.mission_id ?? ''}
                   uploadedBy={user?.id ?? ''}
                   attachments={attachments.data ?? []}
                   canEdit={isEditable}

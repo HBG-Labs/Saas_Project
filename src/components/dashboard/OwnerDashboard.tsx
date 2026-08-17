@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuditLogs } from '@/features/audit';
-import { useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import {
@@ -108,7 +108,7 @@ export function OwnerDashboard() {
             <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
               <Link to={ROUTES.missionNew}>
                 <Plus className="size-4" />
-                Nouveau {jobSingular.toLowerCase()}
+                {formatNewNoun(jobSingular)}
               </Link>
             </Button>
           </div>

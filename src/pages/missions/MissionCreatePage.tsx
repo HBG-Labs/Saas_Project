@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
-import { useLabel } from '@/features/industries';
+import { forwardGeocode } from '@/features/geo';
+import { formatNewNoun, useLabel } from '@/features/industries';
 import {
   MissionFormFields,
   missionSchema,
@@ -23,13 +24,14 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 import type { MissionPriority } from '@/types/database';
 
 export default function MissionCreatePage() {
-  useDocumentTitle('Nouvelle mission');
-
   const navigate = useNavigate();
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const createMission = useCreateMission();
   const job = useLabel('job');
+  const titleText = formatNewNoun(job);
+
+  useDocumentTitle(titleText);
 
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -38,10 +40,13 @@ export default function MissionCreatePage() {
   const [assignedTeamId, setAssignedTeamId] = useState<string | null>(null);
   const [assignedMemberId, setAssignedMemberId] = useState<string | null>(null);
   const [interventionTypeId, setInterventionTypeId] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<MissionValues>({
     resolver: zodResolver(missionSchema),
@@ -67,6 +72,22 @@ export default function MissionCreatePage() {
       const scheduledStart = toIsoOrUndefined(values.scheduledStart);
       const scheduledEnd = toIsoOrUndefined(values.scheduledEnd);
 
+      let finalLat = coords?.latitude ?? null;
+      let finalLng = coords?.longitude ?? null;
+
+      // Si aucune coordonnée n'est saisie mais qu'une adresse / libellé de lieu est fourni, géocodage automatique
+      if (finalLat === null && locationLabel && locationLabel.length > 3) {
+        try {
+          const matches = await forwardGeocode(locationLabel);
+          if (matches.length > 0 && matches[0]) {
+            finalLat = matches[0].latitude;
+            finalLng = matches[0].longitude;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       const mission = await createMission.mutateAsync({
         organizationId: organization.id,
         createdBy: user.id,
@@ -82,6 +103,7 @@ export default function MissionCreatePage() {
         ...(assignedTeamId !== null ? { assignedTeamId } : {}),
         ...(assignedMemberId !== null ? { assignedUserId: assignedMemberId } : {}),
         ...(interventionTypeId !== null ? { interventionTypeId } : {}),
+        ...(finalLat !== null ? { latitude: finalLat, longitude: finalLng } : {}),
       });
 
       await navigate(ROUTES.mission(mission.id));
@@ -100,7 +122,7 @@ export default function MissionCreatePage() {
       </Button>
 
       <PageHeader
-        title={`Nouveau ${job.toLowerCase()}`}
+        title={titleText}
         description="Renseignez les détails de la mission et affectez directement une équipe ou un technicien responsable."
       />
 
@@ -113,6 +135,8 @@ export default function MissionCreatePage() {
               register={register}
               errors={errors}
               organizationId={organization?.id ?? null}
+              setValue={setValue}
+              watch={watch}
               priority={priority}
               onPriorityChange={setPriority}
               customerId={customerId}
@@ -125,6 +149,7 @@ export default function MissionCreatePage() {
               onAssignedMemberChange={setAssignedMemberId}
               interventionTypeId={interventionTypeId}
               onInterventionTypeChange={setInterventionTypeId}
+              onLocationSelect={(loc) => setCoords({ latitude: loc.latitude, longitude: loc.longitude })}
             />
           </CardContent>
         </Card>

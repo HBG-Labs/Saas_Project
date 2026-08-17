@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
 import type { Site } from '@/types/domain';
 
 import {
@@ -150,6 +151,11 @@ function SiteFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    site?.latitude != null && site?.longitude != null
+      ? { latitude: site.latitude, longitude: site.longitude }
+      : null,
+  );
   const createSite = useCreateSite(customerId);
   const updateSite = useUpdateSite(customerId);
   const isEdit = site !== undefined;
@@ -158,6 +164,8 @@ function SiteFormDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SiteValues>({
     resolver: zodResolver(siteSchema),
@@ -175,6 +183,18 @@ function SiteFormDialog({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
+      let finalLat = coords?.latitude ?? null;
+      let finalLng = coords?.longitude ?? null;
+
+      if (finalLat === null && values.addressLine1 && (values.city || values.postalCode)) {
+        const fullAddress = [values.addressLine1, values.postalCode, values.city].filter(Boolean).join(' ');
+        const matches = await forwardGeocode(fullAddress);
+        if (matches.length > 0 && matches[0]) {
+          finalLat = matches[0].latitude;
+          finalLng = matches[0].longitude;
+        }
+      }
+
       if (isEdit) {
         // `null` et non `undefined` : en édition, vider un champ doit l'effacer.
         await updateSite.mutateAsync({
@@ -187,6 +207,7 @@ function SiteFormDialog({
             city: emptyToNull(values.city),
             country: emptyToNull(values.country),
             access_notes: emptyToNull(values.accessNotes),
+            ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
           },
         });
       } else {
@@ -207,6 +228,7 @@ function SiteFormDialog({
           ...(city !== undefined ? { city } : {}),
           ...(country !== undefined ? { country } : {}),
           ...(accessNotes !== undefined ? { accessNotes } : {}),
+          ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
         reset();
       }
@@ -253,7 +275,28 @@ function SiteFormDialog({
           />
         </div>
 
-        <Input label="Adresse" {...register('addressLine1')} />
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-foreground">Adresse du site</span>
+            <MapLocationPickerDialog
+              initialLatitude={site?.latitude ?? undefined}
+              initialLongitude={site?.longitude ?? undefined}
+              initialAddress={
+                watch('addressLine1')
+                  ? `${watch('addressLine1')} ${watch('postalCode')} ${watch('city')}`
+                  : ''
+              }
+              onSelectLocation={(loc) => {
+                setCoords({ latitude: loc.latitude, longitude: loc.longitude });
+                if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
+                if (loc.postalCode) setValue('postalCode', loc.postalCode, { shouldDirty: true });
+                if (loc.city) setValue('city', loc.city, { shouldDirty: true });
+                if (loc.country) setValue('country', loc.country, { shouldDirty: true });
+              }}
+            />
+          </div>
+          <Input placeholder="Numéro et libellé de voie" {...register('addressLine1')} />
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Input label="Code postal" {...register('postalCode')} />

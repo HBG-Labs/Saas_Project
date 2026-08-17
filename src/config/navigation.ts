@@ -38,6 +38,7 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
     icon: 'clipboard',
     feature: 'missions',
     vocabulary: { term: 'job', plural: true },
+    primary: true,
   },
   {
     to: ROUTES.planning,
@@ -48,17 +49,14 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
     primary: true,
   },
   {
-    // `location.view_all` plutôt que `planning.view` : la carte sert à savoir
-    // où sont les AUTRES. Un technicien qui l'ouvrirait n'y verrait que
-    // lui-même, ce qui ne justifie pas une entrée de menu.
     to: ROUTES.map,
-    label: 'Cartographie & Live GPS',
+    label: 'Cartographie & Chantiers',
     icon: 'map',
-    feature: 'live_tracking',
-    permission: 'location.view_all',
+    feature: 'missions',
     primary: true,
   },
   { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
+  { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];
 
 export const STOCK_NAV: readonly NavItem[] = [
@@ -73,7 +71,6 @@ export const CLIENTS_NAV: readonly NavItem[] = [
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
   { to: ROUTES.analytics, label: 'Statistiques & Performance', icon: 'chart', feature: 'missions' },
   { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
-  { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [

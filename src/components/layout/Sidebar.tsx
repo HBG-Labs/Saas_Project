@@ -21,6 +21,8 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   onNavigate?: () => void;
   onDownloadAppClick?: () => void;
+  onClose?: () => void;
+  showCollapseButton?: boolean;
   className?: string;
   /**
    * Sections à afficher. Par défaut celles du pilotage ; `AppLayout` substitue
@@ -138,11 +140,13 @@ export function Sidebar({
   collapsed: externalCollapsed,
   onToggleCollapse,
   onNavigate,
+  onClose,
+  showCollapseButton = true,
   className,
   groups,
 }: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const isCollapsed = externalCollapsed ?? internalCollapsed;
+  const isCollapsed = showCollapseButton ? (externalCollapsed ?? internalCollapsed) : false;
   const activeGroups = useVisibleNavGroups(groups ?? SIDEBAR_GROUPS);
   const { organization } = useCurrentOrganization();
   const { label: industryLabel, isResolved } = useCurrentIndustry();
@@ -192,22 +196,34 @@ export function Sidebar({
             </NavLink>
           ) : null}
 
-          <button
-            type="button"
-            onClick={handleToggle}
-            className={cn(
-              'rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0',
-              isCollapsed && 'mx-auto',
-            )}
-            title={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
-            aria-label="Toggle Sidebar"
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
+          {showCollapseButton ? (
+            <button
+              type="button"
+              onClick={handleToggle}
+              className={cn(
+                'rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0',
+                isCollapsed && 'mx-auto',
+              )}
+              title={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
+              aria-label="Toggle Sidebar"
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen className="size-4" />
+              ) : (
+                <PanelLeftClose className="size-4" />
+              )}
+            </button>
+          ) : onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0"
+              title="Fermer le menu"
+              aria-label="Fermer le menu"
+            >
               <PanelLeftClose className="size-4" />
-            )}
-          </button>
+            </button>
+          ) : null}
         </div>
 
         {/* Sections de navigation accordéon */}

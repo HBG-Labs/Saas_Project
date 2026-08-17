@@ -94,3 +94,28 @@ export function pluralize(singular: string, override?: string): string {
   // Un mot déjà terminé par s, x ou z est invariable.
   return /[sxz]$/i.test(singular) ? singular : `${singular}s`;
 }
+
+const FEMININE_NOUNS = new Set([
+  'mission',
+  'prestation',
+  'visite',
+  'intervention',
+  'installation',
+  'expertise',
+  'maintenance',
+  'demande',
+]);
+
+/**
+ * Accorde « Nouveau » / « Nouvelle » avec le terme métier (ex: « Nouvelle mission », « Nouveau chantier »).
+ */
+export function formatNewNoun(noun: string): string {
+  if (!noun) return 'Nouveau';
+  const lower = noun.toLowerCase().trim();
+  const isFeminine =
+    FEMININE_NOUNS.has(lower) ||
+    lower.endsWith('tion') ||
+    lower.endsWith('sion') ||
+    lower.endsWith('ite');
+  return isFeminine ? `Nouvelle ${lower}` : `Nouveau ${lower}`;
+}

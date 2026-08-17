@@ -21,7 +21,7 @@ import type { OrgRole } from '@/types/database';
  *           supabase/migrations/20260812100300_equipment.sql
  *           supabase/migrations/20260812100400_quotes.sql
  *           supabase/migrations/20260816100000_planning.sql
- *           supabase/migrations/20260816100100_technician_locations.sql
+ *           supabase/migrations/20260817100000_retire_live_tracking.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -71,12 +71,6 @@ export const PERMISSIONS = {
 
   planningView: 'planning.view',
   planningManage: 'planning.manage',
-
-  /**
-   * Voir la position des AUTRES. Il n'existe pas de pendant en écriture : une
-   * position ne se modifie pas au nom de quelqu'un, quel que soit le rôle.
-   */
-  locationViewAll: 'location.view_all',
 
   auditView: 'audit.view',
   statisticsView: 'statistics.view',
@@ -154,7 +148,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.approve',
     'planning.view',
     'planning.manage',
-    'location.view_all',
     'audit.view',
     'statistics.view',
   ],
@@ -193,7 +186,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.approve',
     'planning.view',
     'planning.manage',
-    'location.view_all',
     'audit.view',
     'statistics.view',
   ],
@@ -229,7 +221,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.approve',
     'planning.view',
     'planning.manage',
-    'location.view_all',
     'statistics.view',
   ],
 
@@ -254,7 +245,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.view',
     'leave.request',
     'planning.view',
-    'location.view_all',
     'statistics.view',
   ],
 

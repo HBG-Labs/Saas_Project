@@ -13,6 +13,7 @@ import {
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useDefaultTerritory } from '@/config/territories';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/features/auth';
 import { useCreateMission } from '@/features/missions';
@@ -76,9 +77,25 @@ export default function PlanningPage() {
   const [activeTab, setActiveTab] = useState<'calendar' | 'leaves' | 'recurring' | 'holidays'>(
     'calendar',
   );
-  const [selectedTerritory, setSelectedTerritory] = useState<HolidayTerritory>('metropole');
+  // Le territoire affiché suit celui de l'ENTREPRISE, sauf choix explicite dans
+  // l'onglet « Jours fériés ». Le déduire au rendu évite le double affichage —
+  // les fériés de métropole une image, puis ceux de Martinique.
+  //
+  // C'est aussi le territoire qui gouverne le décompte des congés : il vient
+  // désormais de `organizations.holiday_territory`, et non plus d'une
+  // préférence par navigateur, qui donnait deux totaux pour la même demande.
+  const { territory: defaultTerritoryConfig } = useDefaultTerritory();
+  const organizationTerritory =
+    (organization?.holiday_territory as HolidayTerritory | undefined) ??
+    defaultTerritoryConfig.id;
+
+  const [chosenTerritory, setChosenTerritory] = useState<HolidayTerritory | null>(null);
+  const selectedTerritory = chosenTerritory ?? organizationTerritory;
+  const setSelectedTerritory = setChosenTerritory;
+
   const [isNewLeaveOpen, setIsNewLeaveOpen] = useState(false);
   const [isNewEventOpen, setIsNewEventOpen] = useState(false);
+  const [selectedPlanDate, setSelectedPlanDate] = useState<string | null>(null);
   const [isImportICSOpen, setIsImportICSOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -390,7 +407,17 @@ export default function PlanningPage() {
 
       {/* 3. Tab Content Display */}
       {activeTab === 'calendar' && (
-        <PlanningCalendarView events={events} leaves={leaves} holidays={holidays} />
+        <PlanningCalendarView
+          events={events}
+          leaves={leaves}
+          holidays={holidays}
+          members={membersQuery.data ?? []}
+          canCreateMission={can(PERMISSIONS.missionCreate)}
+          onNewMissionAtDate={(dateStr) => {
+            setSelectedPlanDate(dateStr);
+            setIsNewEventOpen(true);
+          }}
+        />
       )}
 
       {activeTab === 'leaves' && (
@@ -420,6 +447,7 @@ export default function PlanningPage() {
         members={membersQuery.data ?? []}
         defaultMemberId={ownMemberId}
         canRequestForOthers={can(PERMISSIONS.leaveApprove)}
+        territory={organizationTerritory}
         submitting={createLeave.isPending}
         error={createLeave.error}
         onSubmit={handleAddLeave}
@@ -427,7 +455,11 @@ export default function PlanningPage() {
 
       <NewEventModal
         open={isNewEventOpen}
-        onOpenChange={setIsNewEventOpen}
+        onOpenChange={(open) => {
+          setIsNewEventOpen(open);
+          if (!open) setSelectedPlanDate(null);
+        }}
+        initialDate={selectedPlanDate}
         members={membersQuery.data ?? []}
         submitting={createMission.isPending}
         error={createMission.error}

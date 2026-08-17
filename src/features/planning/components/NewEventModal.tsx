@@ -35,6 +35,7 @@ interface NewEventModalProps {
   members: readonly MemberWithProfile[];
   submitting: boolean;
   error: unknown;
+  initialDate?: string | null;
   onSubmit: (submission: NewEventSubmission) => void;
 }
 
@@ -49,15 +50,30 @@ export function NewEventModal({
   members,
   submitting,
   error,
+  initialDate,
   onSubmit,
 }: NewEventModalProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<MissionPriority>('normal');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0] ?? '');
+  const [date, setDate] = useState(
+    initialDate || (new Date().toISOString().split('T')[0] ?? ''),
+  );
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('12:00');
   const [memberId, setMemberId] = useState('');
   const [details, setDetails] = useState('');
+
+  // Synchronise la date si `initialDate` change — au RENDU, pas dans un effet.
+  //
+  // Un `setState` synchrone dans un effet provoque un second rendu visible :
+  // la modale s'ouvre un instant sur la date du jour avant d'afficher celle du
+  // créneau cliqué. React documente ce motif sous « ajuster l'état quand une
+  // prop change », et le dépôt l'emploie déjà dans `ReportEditorPage`.
+  const [syncedDate, setSyncedDate] = useState(initialDate);
+  if (open && initialDate != null && initialDate !== syncedDate) {
+    setSyncedDate(initialDate);
+    setDate(initialDate);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

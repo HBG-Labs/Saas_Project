@@ -39,6 +39,19 @@ export async function listInterventions(missionId: string): Promise<Intervention
   );
 }
 
+export async function listOrganizationInterventions(
+  organizationId: string,
+): Promise<InterventionWithReport[]> {
+  return unwrap(
+    supabase
+      .from('interventions')
+      .select('*, report:intervention_reports(*), attachments:intervention_attachments(*)')
+      .eq('organization_id', organizationId)
+      .order('start_time', { ascending: false, nullsFirst: false })
+      .returns<InterventionWithReport[]>(),
+  );
+}
+
 export async function getIntervention(id: string): Promise<InterventionWithReport | null> {
   return unwrapMaybe(
     supabase

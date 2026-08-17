@@ -164,22 +164,44 @@ export function buildCalendarEvents(params: {
     const member = mission.assigned_member;
     const name = member === null ? undefined : memberDisplayName(member);
 
+    const startTime = new Date(mission.scheduled_start).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const endTime = mission.scheduled_end
+      ? new Date(mission.scheduled_end).toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : undefined;
+
+    const address =
+      [mission.address_line1, mission.postal_code, mission.city]
+        .filter((part) => part != null && part !== '')
+        .join(' ') ||
+      (mission.location_label ?? undefined);
+
     events.push({
       id: `mission-${mission.id}`,
+      missionId: mission.id,
+      reference: mission.reference,
       title: mission.title,
       date: mission.scheduled_start.slice(0, 10),
       type: 'intervention',
       status: mission.status,
       priority: PRIORITY_MAP[mission.priority] ?? 'medium',
+      clientName: mission.customer?.name ?? mission.customer_name ?? undefined,
+      address,
+      phone: mission.customer_phone ?? undefined,
+      latitude: mission.latitude,
+      longitude: mission.longitude,
+      startTime,
+      endTime,
+      time: endTime ? `${startTime} - ${endTime}` : startTime,
+      details: mission.customer?.name ?? mission.customer_name ?? undefined,
       ...(mission.scheduled_end !== null ? { endDate: mission.scheduled_end.slice(0, 10) } : {}),
       ...(member !== null ? { technicianId: member.id } : {}),
       ...(name !== undefined ? { technicianName: name, technicianInitials: initialsOf(name) } : {}),
-      // L'heure affichée est celle du créneau, en heure locale de qui regarde.
-      time: new Date(mission.scheduled_start).toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      ...(mission.customer?.name != null ? { details: mission.customer.name } : {}),
     });
   }
 

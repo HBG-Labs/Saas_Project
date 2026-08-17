@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
 import type { Customer } from '@/types/domain';
 
 import { useCreateCustomer, useUpdateCustomer } from '../hooks/useCustomers';
@@ -25,7 +26,7 @@ export interface CustomerFormDialogProps {
 }
 
 /**
- * Création et édition d'une fiche client.
+ * Création et édition d', une fiche client.
  *
  * Un seul composant pour les deux : les champs sont identiques, et deux
  * formulaires jumeaux divergent toujours — l'un gagne un champ que l'autre
@@ -38,6 +39,7 @@ export function CustomerFormDialog({
 }: CustomerFormDialogProps) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer(customer?.id ?? '');
@@ -47,6 +49,8 @@ export function CustomerFormDialog({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CustomerValues>({
     resolver: zodResolver(customerSchema),
@@ -68,6 +72,19 @@ export function CustomerFormDialog({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
+      let finalLat = coords?.latitude ?? null;
+      let finalLng = coords?.longitude ?? null;
+
+      // Si aucune coordonnée n'a été saisie au clic mais qu'une adresse est renseignée, géocodage automatique
+      if (finalLat === null && values.addressLine1 && (values.city || values.postalCode)) {
+        const fullAddress = [values.addressLine1, values.postalCode, values.city].filter(Boolean).join(' ');
+        const matches = await forwardGeocode(fullAddress);
+        if (matches.length > 0 && matches[0]) {
+          finalLat = matches[0].latitude;
+          finalLng = matches[0].longitude;
+        }
+      }
+
       if (isEdit) {
         // `null` et non `undefined` : en édition, vider un champ doit l'effacer
         // en base, alors qu'`undefined` le laisserait inchangé.
@@ -83,6 +100,7 @@ export function CustomerFormDialog({
           city: emptyToNull(values.city),
           country: emptyToNull(values.country),
           notes: emptyToNull(values.notes),
+          ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
       } else {
         await createCustomer.mutateAsync({
@@ -96,9 +114,11 @@ export function CustomerFormDialog({
           ...defined('city', omitEmpty(values.city)),
           ...defined('country', omitEmpty(values.country)),
           ...defined('notes', omitEmpty(values.notes)),
+          ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
         reset();
       }
+      setCoords(null);
       setOpen(false);
     } catch (error) {
       setSubmitError(error);
@@ -145,7 +165,26 @@ export function CustomerFormDialog({
           <Input label="Téléphone" type="tel" {...register('phone')} />
         </div>
 
-        <Input label="Adresse" {...register('addressLine1')} />
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-foreground">Adresse postale</span>
+            <MapLocationPickerDialog
+              initialAddress={
+                watch('addressLine1')
+                  ? `${watch('addressLine1')} ${watch('postalCode')} ${watch('city')}`
+                  : ''
+              }
+              onSelectLocation={(loc) => {
+                setCoords({ latitude: loc.latitude, longitude: loc.longitude });
+                if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
+                if (loc.postalCode) setValue('postalCode', loc.postalCode, { shouldDirty: true });
+                if (loc.city) setValue('city', loc.city, { shouldDirty: true });
+                if (loc.country) setValue('country', loc.country, { shouldDirty: true });
+              }}
+            />
+          </div>
+          <Input placeholder="Numéro et libellé de voie" {...register('addressLine1')} />
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Input label="Code postal" {...register('postalCode')} />

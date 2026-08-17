@@ -1,51 +1,20 @@
 import type { IndustryCode } from '@/config/industries';
 
-export type TechnicianStatus = 'on_road' | 'on_site' | 'available' | 'offline';
-
-export interface GPSBreadcrumb {
-  lat: number;
-  lng: number;
-  time: string;
-  speedKmH: number;
-  heading: number; // degrees 0-360
-  batteryPct: number;
-  status: TechnicianStatus;
-  note?: string;
-}
-
-export interface TechnicianLocation {
-  id: string;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-  initials: string;
-  phone: string;
-  trade: IndustryCode;
-  tradeLabel: string;
-  status: TechnicianStatus;
-  currentLat: number;
-  currentLng: number;
-  heading: number;
-  speedKmH: number;
-  batteryPct: number;
-  lastPing: string;
-  vehiclePlate: string;
-  currentMission?: {
-    id: string;
-    title: string;
-    reference: string;
-    clientName: string;
-    clientAddress: string;
-    clientPhone: string;
-    destinationLat: number;
-    destinationLng: number;
-    etaMinutes: number;
-    estimatedArrival: string;
-    progressPct: number;
-  };
-  historyTrail: GPSBreadcrumb[];
-}
-
+/**
+ * Ce que la carte affiche.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * IL N'Y A PLUS DE POSITION D'INTERVENANT ICI
+ *
+ * `TechnicianLocation`, `GPSBreadcrumb` et `TechnicianStatus` décrivaient le
+ * suivi continu, abandonné. Les conserver « au cas où » aurait laissé un modèle
+ * complet et crédible pour une fonctionnalité qui n'existe plus — l'invitation
+ * la plus sûre à la reconstruire par inadvertance.
+ *
+ * La carte ne montre donc que des LIEUX : missions géolocalisées, sites et
+ * clients. Le GPS ne sert qu'à des relevés ponctuels, dans `features/geo`.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export interface InterventionSite {
   id: string;
   reference: string;
@@ -58,8 +27,11 @@ export interface InterventionSite {
   lng: number;
   priority: 'low' | 'normal' | 'high' | 'urgent';
   scheduledTime: string;
-  assignedTechnicianName?: string;
+  assignedTechnicianName?: string | undefined;
   status: 'planned' | 'in_progress' | 'completed';
+  kind?: 'mission' | 'client' | undefined;
+  customerId?: string | undefined;
+  phone?: string | undefined;
 }
 
 export type MapLayerMode = 'roadmap' | 'satellite' | 'dark_cockpit' | 'terrain';

@@ -71,6 +71,8 @@ export async function createCustomer(input: {
   postalCode?: string;
   city?: string;
   country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   notes?: string;
 }): Promise<Customer> {
   const { data: userData } = await supabase.auth.getUser();
@@ -79,7 +81,7 @@ export async function createCustomer(input: {
     throw new AppError('unauthenticated', 'Vous devez être connecté pour créer un client.');
   }
 
-  return unwrap(
+  const customer = await unwrap(
     supabase
       .from('customers')
       .insert({
@@ -98,6 +100,27 @@ export async function createCustomer(input: {
       .select('*')
       .single(),
   );
+
+  // Création automatique du site principal rattaché avec coordonnées pour affichage en cartographie
+  if (input.addressLine1 || input.city || input.postalCode || input.latitude != null) {
+    try {
+      await supabase.from('sites').insert({
+        customer_id: customer.id,
+        organization_id: input.organizationId,
+        name: 'Site Principal',
+        address_line1: input.addressLine1 ?? null,
+        postal_code: input.postalCode ?? null,
+        city: input.city ?? null,
+        country: input.country ?? 'FR',
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+      });
+    } catch {
+      // Ignorer si la création du site échoue
+    }
+  }
+
+  return customer;
 }
 
 export async function updateCustomer(
@@ -252,6 +275,8 @@ export async function createSite(input: {
   postalCode?: string;
   city?: string;
   country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   accessNotes?: string;
   contactId?: string;
 }): Promise<Site> {
@@ -267,6 +292,8 @@ export async function createSite(input: {
         ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
         ...(input.city !== undefined ? { city: input.city } : {}),
         ...(input.country !== undefined ? { country: input.country } : {}),
+        ...(input.latitude !== undefined ? { latitude: input.latitude } : {}),
+        ...(input.longitude !== undefined ? { longitude: input.longitude } : {}),
         ...(input.accessNotes !== undefined ? { access_notes: input.accessNotes } : {}),
         ...(input.contactId !== undefined ? { contact_id: input.contactId } : {}),
       })

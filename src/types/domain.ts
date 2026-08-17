@@ -199,9 +199,11 @@ export interface RecurringTaskWithRefs extends RecurringTaskRow {
 }
 
 // --------------------------------------------------------------- cartographie
-export type TechnicianLocationRow = Tables<'technician_locations'>;
-export type TechnicianLocationPing = Tables<'technician_location_pings'>;
-
-export interface TechnicianLocationWithMember extends TechnicianLocationRow {
-  member: MemberWithProfile | null;
-}
+//
+// Aucun type de position d'intervenant ici : le suivi GPS continu est abandonné
+// (`20260817100000_retire_live_tracking.sql`). La carte compose des LIEUX —
+// missions géolocalisées, sites, clients — à partir des types ci-dessus.
+//
+// Les tables `technician_locations` et `technician_location_pings` existent
+// encore en base, vides et inatteignables. Leur redonner un type exporté
+// reviendrait à rouvrir la porte par commodité.

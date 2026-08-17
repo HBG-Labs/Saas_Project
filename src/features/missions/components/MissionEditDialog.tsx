@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { forwardGeocode } from '@/features/geo';
 import type { MissionPriority } from '@/types/database';
 import type { MissionWithRelations } from '@/types/domain';
 
@@ -24,35 +25,25 @@ export interface MissionEditDialogProps {
   organizationId: string | null;
 }
 
-/**
- * Correction d'une mission après création.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * RÉSERVÉ À QUI DÉTIENT `mission.update`
- *
- * Le trigger `enforce_mission_assignee_scope` interdit à l'intervenant de
- * toucher à l'intitulé, au client, au site, à la planification, à l'affectation
- * et à la priorité — tout ce que ce formulaire modifie. Lui ouvrir la fenêtre
- * reviendrait à le laisser saisir dix champs pour se voir refuser à
- * l'enregistrement.
- *
- * L'appelant doit donc vérifier la permission AVANT de rendre ce composant.
- * Ce n'est pas une garantie de sécurité — le trigger l'est — mais une garantie
- * de ne pas faire perdre son temps.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 export function MissionEditDialog({ mission, organizationId }: MissionEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [priority, setPriority] = useState<MissionPriority>(mission.priority);
   const [customerId, setCustomerId] = useState<string | null>(mission.customer_id);
   const [siteId, setSiteId] = useState<string | null>(mission.site_id);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    mission.latitude != null && mission.longitude != null
+      ? { latitude: mission.latitude, longitude: mission.longitude }
+      : null,
+  );
 
   const updateMission = useUpdateMission(mission.id);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<MissionValues>({
     resolver: zodResolver(missionSchema),
@@ -76,6 +67,21 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
       const notes = values.notes?.trim();
       const locationLabel = values.locationLabel?.trim();
 
+      let finalLat = coords?.latitude ?? null;
+      let finalLng = coords?.longitude ?? null;
+
+      if (finalLat === null && locationLabel && locationLabel.length > 3) {
+        try {
+          const matches = await forwardGeocode(locationLabel);
+          if (matches.length > 0 && matches[0]) {
+            finalLat = matches[0].latitude;
+            finalLng = matches[0].longitude;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       await updateMission.mutateAsync({
         title: values.title,
         priority,
@@ -89,6 +95,8 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
         scheduled_end: toIsoOrUndefined(values.scheduledEnd) ?? null,
         customer_id: customerId,
         site_id: siteId,
+        latitude: finalLat,
+        longitude: finalLng,
       });
 
       setOpen(false);
@@ -118,12 +126,15 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
           register={register}
           errors={errors}
           organizationId={organizationId}
+          setValue={setValue}
+          watch={watch}
           priority={priority}
           onPriorityChange={setPriority}
           customerId={customerId}
           onCustomerChange={setCustomerId}
           siteId={siteId}
           onSiteChange={setSiteId}
+          onLocationSelect={(loc) => setCoords({ latitude: loc.latitude, longitude: loc.longitude })}
         />
 
         <div className="flex justify-end gap-2">

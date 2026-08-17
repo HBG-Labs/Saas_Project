@@ -4,6 +4,7 @@ import { qk } from '@/lib/query-keys';
 import type { LeaveStatus, TablesUpdate } from '@/types/database';
 
 import {
+  previewLeaveDays,
   createLeaveRequest,
   createRecurringTask,
   deleteRecurringTask,
@@ -34,6 +35,42 @@ export function useLeaveRequests(organizationId: string | null, filters: LeaveFi
     queryKey: qk.planning.leaves(organizationId ?? 'none', filters),
     queryFn: () => (organizationId === null ? [] : listLeaveRequests(organizationId, filters)),
     enabled: organizationId !== null,
+  });
+}
+
+/**
+ * Aperçu du décompte d'une période, calculé par le serveur.
+ *
+ * Interrogé à chaque changement de dates. C'est un aller-retour réseau pour
+ * afficher un nombre — assumé : l'alternative était un second moteur en
+ * TypeScript, dont la dérive se serait payée en jours de congé.
+ *
+ * `staleTime` élevé : pour un couple de dates donné, la réponse ne change qu'au
+ * changement de territoire de l'entreprise.
+ */
+export function useLeaveDaysPreview(params: {
+  startDate: string;
+  endDate: string;
+  territory: string;
+  halfDayStart: boolean;
+  halfDayEnd: boolean;
+  enabled?: boolean;
+}) {
+  const { enabled = true, ...args } = params;
+
+  return useQuery({
+    queryKey: [
+      ...qk.planning.all,
+      'preview',
+      args.startDate,
+      args.endDate,
+      args.territory,
+      args.halfDayStart,
+      args.halfDayEnd,
+    ],
+    queryFn: () => previewLeaveDays(args),
+    enabled: enabled && args.startDate !== '' && args.endDate !== '',
+    staleTime: 5 * 60_000,
   });
 }
 

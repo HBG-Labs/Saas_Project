@@ -130,20 +130,42 @@ export async function createMission(input: {
   scheduledStart?: string;
   scheduledEnd?: string;
   locationLabel?: string;
+  addressLine1?: string;
   city?: string;
   postalCode?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   customerName?: string;
   customerContact?: string;
   customerPhone?: string;
   notes?: string;
 }): Promise<Mission> {
-  // Une mission confiée dès sa création n'est plus un brouillon. Le trigger
-  // `enforce_mission_transition` accepte `draft → assigned`, mais poser le
-  // statut d'emblée évite une seconde écriture, et donc un état intermédiaire
-  // visible par le technicien.
-  // Payload construit à part et typé : les spreads conditionnels produisent une
-  // union d'objets que l'inférence de `.insert()` ne sait pas réconcilier avec
-  // les colonnes énumérées.
+  // Si un site est rattaché et que les coordonnées ne sont pas fournies, on hérite du site
+  let lat = input.latitude ?? null;
+  let lng = input.longitude ?? null;
+  let addressLine1 = input.addressLine1;
+  let postalCode = input.postalCode;
+  let city = input.city;
+
+  if (input.siteId && (lat === null || lng === null)) {
+    try {
+      const { data: site } = await supabase
+        .from('sites')
+        .select('latitude, longitude, address_line1, postal_code, city')
+        .eq('id', input.siteId)
+        .single();
+      if (site) {
+        if (lat === null) lat = site.latitude;
+        if (lng === null) lng = site.longitude;
+        if (!addressLine1) addressLine1 = site.address_line1 ?? undefined;
+        if (!postalCode) postalCode = site.postal_code ?? undefined;
+        if (!city) city = site.city ?? undefined;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const payload: TablesInsert<'missions'> = {
     organization_id: input.organizationId,
     created_by: input.createdBy,
@@ -159,8 +181,11 @@ export async function createMission(input: {
     ...(input.scheduledStart !== undefined ? { scheduled_start: input.scheduledStart } : {}),
     ...(input.scheduledEnd !== undefined ? { scheduled_end: input.scheduledEnd } : {}),
     ...(input.locationLabel !== undefined ? { location_label: input.locationLabel } : {}),
-    ...(input.city !== undefined ? { city: input.city } : {}),
-    ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
+    ...(addressLine1 !== undefined ? { address_line1: addressLine1 } : {}),
+    ...(city !== undefined ? { city: city } : {}),
+    ...(postalCode !== undefined ? { postal_code: postalCode } : {}),
+    ...(lat !== null && lat !== undefined ? { latitude: lat } : {}),
+    ...(lng !== null && lng !== undefined ? { longitude: lng } : {}),
     ...(input.customerName !== undefined ? { customer_name: input.customerName } : {}),
     ...(input.customerContact !== undefined ? { customer_contact: input.customerContact } : {}),
     ...(input.customerPhone !== undefined ? { customer_phone: input.customerPhone } : {}),

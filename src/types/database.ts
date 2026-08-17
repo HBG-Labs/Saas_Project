@@ -316,6 +316,14 @@ export interface Database {
           status: OrganizationStatus;
           /** Métier exercé. `null` = cœur sans spécialisation. */
           industry: string | null;
+          /**
+           * Territoire de référence pour les jours fériés.
+           *
+           * Donnée d'ENTREPRISE, pas préférence d'affichage : le décompte des
+           * congés en dépend, et deux gestionnaires de la même société doivent
+           * obtenir le même total.
+           */
+          holiday_territory: string;
           /** Cache maintenu par trigger depuis `subscriptions`. Lecture seule. */
           plan_code: string | null;
           created_by: string | null;
@@ -343,6 +351,7 @@ export interface Database {
         };
         Update: {
           name?: string;
+          holiday_territory?: string;
           legal_name?: string | null;
           logo_url?: string | null;
           registration_number?: string | null;
@@ -1698,7 +1707,10 @@ export interface Database {
           start_date: string;
           end_date: string;
           /** Demi-journées comptées : décimal, pas entier. */
+          /** Calculé par le serveur, jour par jour. Jamais déclaré par le client. */
           days_count: number;
+          half_day_start: boolean;
+          half_day_end: boolean;
           reason: string | null;
           status: LeaveStatus;
           requested_at: string;
@@ -1716,14 +1728,22 @@ export interface Database {
           type: LeaveType;
           start_date: string;
           end_date: string;
+          /**
+           * Écrasé par `app.set_leave_days_count`. La colonne est `not null`,
+           * il faut donc l'envoyer — mais sa valeur n'a aucun effet, exactement
+           * comme `reviewed_by`.
+           */
           days_count: number;
+          half_day_start?: boolean;
+          half_day_end?: boolean;
           reason?: string | null;
         };
         Update: {
           type?: LeaveType;
           start_date?: string;
           end_date?: string;
-          days_count?: number;
+          half_day_start?: boolean;
+          half_day_end?: boolean;
           reason?: string | null;
           status?: LeaveStatus;
           review_note?: string | null;
@@ -1980,6 +2000,31 @@ export interface Database {
       accept_organization_invitation: {
         Args: { p_token: string };
         Returns: string;
+      };
+
+      /**
+       * Décompte d'une période de congé, jour par jour.
+       *
+       * Expose le MÊME moteur que le trigger `leave_requests_days_count` :
+       * l'aperçu affiché et le total enregistré ne peuvent pas diverger, ce
+       * qu'un second calcul en TypeScript aurait fini par produire.
+       *
+       * Ne lit aucune table et ne reçoit aucune donnée d'entreprise.
+       */
+      preview_leave_days: {
+        Args: {
+          p_start: string;
+          p_end: string;
+          p_territory?: string;
+          p_half_day_start?: boolean;
+          p_half_day_end?: boolean;
+        };
+        Returns: {
+          day: string;
+          counted: boolean;
+          value: number;
+          reason: string;
+        }[];
       };
 
       /**

@@ -139,7 +139,8 @@ export function AddMemberDialog({
       }
       trigger={
         <Button variant="primary" size="sm" disabled={quotaReached}>
-          <UserPlus className="size-4" />+ Créer un compte
+          <UserPlus className="size-4" />
+          <span>Créer un compte</span>
         </Button>
       }
     >

@@ -65,14 +65,48 @@ export async function listLeaveRequests(
   );
 }
 
+/** Une journée de la période, telle que le serveur la décompte. */
+export interface LeaveDay {
+  day: string;
+  counted: boolean;
+  value: number;
+  reason: string;
+}
+
+/**
+ * Ce que la période coûtera réellement, avant de l'envoyer.
+ *
+ * Appelle le MÊME moteur que le trigger `leave_requests_days_count` — d'où la
+ * RPC plutôt qu'un calcul en TypeScript. Deux implémentations du même barème
+ * divergent toujours, et celle qui diverge en silence est celle qu'on affiche.
+ */
+export async function previewLeaveDays(params: {
+  startDate: string;
+  endDate: string;
+  territory?: string;
+  halfDayStart?: boolean;
+  halfDayEnd?: boolean;
+}): Promise<LeaveDay[]> {
+  return unwrap(
+    supabase.rpc('preview_leave_days', {
+      p_start: params.startDate,
+      p_end: params.endDate,
+      p_territory: params.territory ?? 'metropole',
+      p_half_day_start: params.halfDayStart ?? false,
+      p_half_day_end: params.halfDayEnd ?? false,
+    }),
+  );
+}
+
 export interface LeaveRequestInput {
   organizationId: string;
   memberId: string;
   type: LeaveType;
   startDate: string;
   endDate: string;
-  daysCount: number;
   reason?: string;
+  halfDayStart?: boolean;
+  halfDayEnd?: boolean;
 }
 
 export async function createLeaveRequest(
@@ -84,7 +118,12 @@ export async function createLeaveRequest(
     type: input.type,
     start_date: input.startDate,
     end_date: input.endDate,
-    days_count: input.daysCount,
+    // `days_count` n'est PAS transmis : le trigger `leave_requests_days_count`
+    // le calcule à partir des dates, du territoire de l'entreprise et des
+    // demi-journées. L'envoyer donnerait l'illusion de le maîtriser.
+    days_count: 1,
+    half_day_start: input.halfDayStart ?? false,
+    half_day_end: input.halfDayEnd ?? false,
     ...(input.reason !== undefined && input.reason !== '' ? { reason: input.reason } : {}),
   };
 

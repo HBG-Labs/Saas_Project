@@ -3,7 +3,6 @@ import {
   ClipboardList,
   KeyRound,
   MapPin,
-  Navigation,
   Phone,
   Trash2,
   User,
@@ -20,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
+import { LocateMissionButton, NavigationButton, MapLocationPickerDialog } from '@/features/geo';
 import {
   AssignMissionDialog,
   MISSION_STATUS_LABELS,
@@ -29,6 +29,7 @@ import {
   MissionTransitions,
   useDeleteMission,
   useMission,
+  useUpdateMission,
   useMissionAssignments,
   useMissionHistory,
 } from '@/features/missions';
@@ -147,6 +148,7 @@ export default function MissionDetailPage() {
   const teams = useTeams(organization?.id ?? null);
   const members = useMembers(organization?.id ?? null);
   const deleteMission = useDeleteMission();
+  const updateMission = useUpdateMission(missionId ?? '');
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -404,40 +406,63 @@ export default function MissionDetailPage() {
               </div>
             ) : null}
 
-            {/*
-              Itinéraire. `google.com/maps` plutôt qu'un schéma natif (`geo:`,
-              `maps://`) : cette URL s'ouvre dans l'application de cartes sur
-              Android et iOS, et dans le navigateur ailleurs — sans détection de
-              plateforme à maintenir.
-
-              Le bouton est TOUJOURS rendu. Il n'est désactivé que si la mission
-              ne porte strictement aucun repère : ni adresse, ni site, ni client.
-              Le masquer laissait le technicien sans explication.
-            */}
-            {mapsDestination === '' ? (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-                className="w-full justify-center gap-1.5"
-                title="Renseignez une adresse, un site ou un client pour activer l’itinéraire"
-              >
-                <Navigation className="size-3.5" aria-hidden="true" />
-                Itinéraire indisponible — aucun lieu renseigné
-              </Button>
-            ) : (
-              <Button asChild variant="outline" size="sm" className="w-full justify-center gap-1.5">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapsDestination)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={`Ouvrir Google Maps vers : ${mapsDestination}`}
-                >
-                  <Navigation className="size-3.5" aria-hidden="true" />
-                  Itinéraire vers le chantier
-                </a>
-              </Button>
+            {data.latitude != null && data.longitude != null && (
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-subtle border border-border/80 text-3xs font-mono text-muted-foreground">
+                <MapPin className="size-3 text-primary shrink-0" />
+                <span>GPS : {Number(data.latitude).toFixed(6)}, {Number(data.longitude).toFixed(6)}</span>
+              </div>
             )}
+
+            <div className="pt-2 space-y-2 border-t border-border">
+              {/* 1. Bouton Itinéraire */}
+              <NavigationButton
+                destination={{
+                  latitude: data.latitude,
+                  longitude: data.longitude,
+                  address: mapsDestination,
+                  label: data.title,
+                }}
+                className="w-full justify-center gap-1.5"
+                label="🧭 Itinéraire vers le chantier"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* 2. Bouton Localiser le chantier (GPS smartphone) */}
+                <LocateMissionButton
+                  missionId={data.id}
+                  currentLatitude={data.latitude}
+                  currentLongitude={data.longitude}
+                  className="w-full justify-center text-xs"
+                />
+
+                {/* 3. Bouton Pointer sur la carte (Clic sur carte Leaflet) */}
+                <MapLocationPickerDialog
+                  initialLatitude={data.latitude}
+                  initialLongitude={data.longitude}
+                  initialAddress={mapsDestination}
+                  title={`Position GPS — ${data.reference}`}
+                  description="Cliquez sur la carte pour définir ou ajuster les coordonnées exactes du chantier."
+                  onSelectLocation={async (loc) => {
+                    await updateMission.mutateAsync({
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                    });
+                  }}
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center text-xs gap-1.5"
+                      title="Choisir ou ajuster le repère en cliquant sur la carte"
+                    >
+                      <MapPin className="size-3.5 text-primary" />
+                      <span>Pointer sur la carte</span>
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 

@@ -58,3 +58,5 @@ export {
   toIsoOrUndefined,
   type MissionValues,
 } from './schemas/mission.schema';
+
+export { exportMissionsToCsv } from './utils/exportCsv';

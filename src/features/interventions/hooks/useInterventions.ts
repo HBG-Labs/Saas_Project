@@ -8,6 +8,7 @@ import {
   getIntervention,
   getWorkedSeconds,
   listInterventions,
+  listOrganizationInterventions,
   listTimeEntries,
   startIntervention,
   stopTimeTracking,
@@ -20,6 +21,14 @@ export function useMissionInterventions(missionId: string | undefined) {
     queryKey: qk.interventions.ofMission(missionId ?? 'none'),
     queryFn: () => (missionId === undefined ? [] : listInterventions(missionId)),
     enabled: missionId !== undefined,
+  });
+}
+
+export function useOrganizationInterventions(organizationId: string | null | undefined) {
+  return useQuery({
+    queryKey: [...qk.interventions.all, organizationId ?? 'none', 'all-org-interventions'],
+    queryFn: () => (organizationId ? listOrganizationInterventions(organizationId) : []),
+    enabled: Boolean(organizationId),
   });
 }
 

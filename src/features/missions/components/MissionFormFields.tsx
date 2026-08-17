@@ -1,4 +1,9 @@
-import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from 'react-hook-form';
 
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -7,6 +12,7 @@ import { CustomerPicker, SitePicker } from '@/features/customers';
 import { useInterventionTypes } from '@/features/industries';
 import { memberDisplayName, useMembers } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
+import { MapLocationPickerDialog, type GeocodedAddress } from '@/features/geo';
 import type { MissionPriority } from '@/types/database';
 
 import { MISSION_PRIORITY_LABELS } from '../priority-labels';
@@ -16,6 +22,8 @@ export interface MissionFormFieldsProps {
   register: UseFormRegister<MissionValues>;
   errors: FieldErrors<MissionValues>;
   organizationId: string | null;
+  setValue?: UseFormSetValue<MissionValues>;
+  watch?: UseFormWatch<MissionValues>;
 
   priority: MissionPriority;
   onPriorityChange: (priority: MissionPriority) => void;
@@ -34,12 +42,16 @@ export interface MissionFormFieldsProps {
 
   interventionTypeId?: string | null;
   onInterventionTypeChange?: (typeId: string | null) => void;
+
+  onLocationSelect?: (location: GeocodedAddress) => void;
 }
 
 export function MissionFormFields({
   register,
   errors,
   organizationId,
+  setValue,
+  watch,
   priority,
   onPriorityChange,
   customerId,
@@ -52,6 +64,7 @@ export function MissionFormFields({
   onAssignedMemberChange,
   interventionTypeId = null,
   onInterventionTypeChange,
+  onLocationSelect,
 }: MissionFormFieldsProps) {
   const teamsQuery = useTeams(organizationId);
   const typesQuery = useInterventionTypes();
@@ -154,12 +167,26 @@ export function MissionFormFields({
 
       <SitePicker customerId={customerId} value={siteId} onChange={onSiteChange} />
 
-      <Input
-        label="Précision de lieu"
-        placeholder="Armoire PM 12, trottoir pair"
-        hint="Complète l’adresse du site — laissez vide pour reprendre celle du site."
-        {...register('locationLabel')}
-      />
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-foreground">Précision de lieu / Adresse</span>
+          {setValue && (
+            <MapLocationPickerDialog
+              initialAddress={watch ? watch('locationLabel') : ''}
+              onSelectLocation={(loc) => {
+                onLocationSelect?.(loc);
+                const label = loc.label || [loc.addressLine1, loc.postalCode, loc.city].filter(Boolean).join(' ');
+                setValue('locationLabel', label, { shouldDirty: true });
+              }}
+            />
+          )}
+        </div>
+        <Input
+          placeholder="Armoire PM 12, trottoir pair ou adresse exacte"
+          hint="Complète l’adresse du site — ou cliquez pour pointer sur la carte GPS."
+          {...register('locationLabel')}
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Input

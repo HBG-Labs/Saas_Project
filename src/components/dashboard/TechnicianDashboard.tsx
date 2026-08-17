@@ -47,6 +47,30 @@ export function TechnicianDashboard() {
         <p className="text-xs text-muted-foreground sm:text-sm">
           Retrouvez vos {jobPlural.toLowerCase()} confiées et accédez directement à vos outils de terrain.
         </p>
+
+        {/* Raccourcis Terrain Rapides */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="text-xs">
+            <Link to={ROUTES.planning}>
+              <Calendar className="size-3.5 mr-1.5 text-primary" />
+              Mon Planning
+            </Link>
+          </Button>
+
+          <Button asChild variant="outline" size="sm" className="text-xs">
+            <Link to={ROUTES.map}>
+              <MapPin className="size-3.5 mr-1.5 text-primary" />
+              Carte des chantiers
+            </Link>
+          </Button>
+
+          <Button asChild variant="outline" size="sm" className="text-xs">
+            <Link to={ROUTES.missions}>
+              <ClipboardList className="size-3.5 mr-1.5 text-primary" />
+              Mes {jobPlural.toLowerCase()}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* 1. Mes Missions du Jour */}

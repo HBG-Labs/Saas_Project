@@ -1,5 +1,5 @@
-import { CheckCircle2, ClipboardCheck, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle2, ClipboardCheck, Search, XCircle, FileText } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -35,7 +35,7 @@ import { useDocumentTitle } from '@/lib/use-document-title';
  * traiter les derniers arrivés d'abord et vieillir indéfiniment les premiers.
  */
 export default function ReviewQueuePage() {
-  useDocumentTitle('Contrôle');
+  useDocumentTitle('Contrôle & Rapports');
 
   const { organization } = useCurrentOrganization();
   const reports = useReportsPendingReview(organization?.id ?? null);
@@ -44,21 +44,26 @@ export default function ReviewQueuePage() {
   const { role } = usePermission();
   const { approve, reject } = useReviewReport();
   const [error, setError] = useState<unknown>(null);
+  const [search, setSearch] = useState('');
 
-  const list = reports.data ?? [];
+  const rawList = reports.data ?? [];
 
-  /**
-   * « Rien à contrôler » est exact, et muet.
-   *
-   * Le responsable ne sait pas s'il n'y a aucun chantier en cours, ou si trois
-   * comptes rendus sont en cours de rédaction et arriveront sous peu — deux
-   * situations qui appellent des décisions opposées. Pire : celui qui vient de
-   * soumettre le sien et ne le voit pas apparaître conclut à une panne.
-   *
-   * Le rappel de la condition d'arrivée est là pour ce cas précis : un compte
-   * rendu ne rejoint cette file qu'une fois SOUMIS, ce qui suppose la mission
-   * terminée.
-   */
+  const list = useMemo(() => {
+    if (!search.trim()) return rawList;
+    const q = search.toLowerCase().trim();
+    return rawList.filter((r) => {
+      const ref = r.intervention?.mission?.reference?.toLowerCase() ?? '';
+      const title = r.intervention?.mission?.title?.toLowerCase() ?? '';
+      const tech = r.intervention?.technician
+        ? memberDisplayName(r.intervention.technician).toLowerCase()
+        : '';
+      const desc = r.work_description?.toLowerCase() ?? '';
+      return ref.includes(q) || title.includes(q) || tech.includes(q) || desc.includes(q);
+    });
+  }, [rawList, search]);
+
+  const isTechnicianOnly = role === 'technician';
+
   const byStatus: Record<string, number> = counts.data ?? {};
   const drafts = byStatus['draft'] ?? 0;
   const rejected = byStatus['rejected'] ?? 0;
@@ -83,9 +88,64 @@ export default function ReviewQueuePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contrôle"
+        title="Contrôle & Rapports"
         description="Les comptes rendus soumis attendent votre validation. Vous pouvez valider ou refuser en motivant — le contenu appartient à son auteur."
       />
+
+      {isTechnicianOnly && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">
+          <div className="flex items-center gap-2.5">
+            <FileText className="size-4 shrink-0 text-primary" />
+            <span>
+              <strong>Espace Technicien :</strong> Cette file est dédiée au contrôle par les responsables. Pour rédiger ou consulter vos comptes rendus, ouvrez vos missions assignées.
+            </span>
+          </div>
+          <Button asChild variant="outline" size="sm" className="text-3xs h-7 shrink-0">
+            <Link to={ROUTES.missions}>Mes missions</Link>
+          </Button>
+        </div>
+      )}
+
+      {/* Barre de stats & recherche */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-border">
+        <div className="flex items-center gap-2 flex-wrap text-2xs font-semibold">
+          <Badge variant="primary" className="text-3xs">
+            {rawList.length} en attente de contrôle
+          </Badge>
+          {drafts > 0 && (
+            <Badge variant="outline" className="text-3xs">
+              {drafts} en rédaction
+            </Badge>
+          )}
+          {approved > 0 && (
+            <Badge variant="success" className="text-3xs">
+              {approved} validé{approved > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+
+        {rawList.length > 0 && (
+          <div className="relative min-w-[200px] sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Filtrer par mission, technicien..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 rounded-lg border border-border bg-surface text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       <FormError error={error} />
 

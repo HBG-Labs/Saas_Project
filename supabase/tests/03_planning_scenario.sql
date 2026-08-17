@@ -1,10 +1,9 @@
 -- =============================================================================
--- SUITE DE TESTS — planning, congés et géolocalisation
+-- SUITE DE TESTS — planning et congés
 -- =============================================================================
 -- Rejoue les garanties posées par les migrations `20260816*` :
 --
---   demande de congé → décision par un tiers → solde ; position déclarée par
---   son seul titulaire → piste purgée automatiquement
+--   demande de congé → décision par un tiers → solde → tâches récurrentes
 --
 -- et vérifie que chacune tient CÔTÉ SERVEUR, indépendamment de l'interface.
 --
@@ -244,9 +243,15 @@ declare
   v_by     uuid;
   v_at     timestamptz;
   v_days   numeric;
+  v_avant  numeric;
 begin
-  select id into v_leave from public.leave_requests
+  select id, days_count into v_leave, v_avant from public.leave_requests
   where member_id = pg_temp.member('essai-planning', 'poseur');
+
+  -- La demande porte sur le 1er au 5 septembre 2026, dont un samedi : le moteur
+  -- en compte QUATRE, quel que soit le 5 annoncé à l'insertion.
+  perform pg_temp.ok(v_avant = 4,
+    'Le serveur a calcule la duree a l''insertion, samedi exclu');
 
   -- Le client tente de signer à la place de quelqu'un d'autre, et de réécrire
   -- la durée au passage. Les deux doivent être écrasés.
@@ -262,7 +267,7 @@ begin
   perform pg_temp.ok(v_by = pg_temp.uid('resp'),
     'Le decideur enregistre est l''appelant, pas celui qu''annonce le client');
   perform pg_temp.ok(v_at is not null, 'La decision est horodatee par le serveur');
-  perform pg_temp.ok(v_days = 5, 'Une decision ne reecrit pas la duree demandee');
+  perform pg_temp.ok(v_days = v_avant, 'Une decision ne reecrit pas la duree calculee');
 end
 $$;
 
@@ -338,154 +343,26 @@ $$;
 reset role;
 
 -- =============================================================================
-do $$ begin raise notice ''; raise notice '=== PARTIE 5 — Une position n''appartient qu''a son auteur ==='; end $$;
+-- PARTIES 5 et 6 — RETIRÉES avec l'abandon du suivi GPS continu
+-- =============================================================================
+--
+-- Elles vérifiaient qu'une position n'appartient qu'à son auteur, et que la
+-- piste se purge d'elle-même au-delà de soixante jours. Les deux garanties
+-- tenaient ; c'est la fonctionnalité qui a été abandonnée.
+--
+-- Les tables `technician_locations` et `technician_location_pings` subsistent,
+-- vides, et plus aucune policy de lecture ne peut être satisfaite depuis que
+-- `location.view_all` a disparu de `role_permissions`
+-- (`20260817100000_retire_live_tracking.sql`). Éprouver un chemin que personne
+-- ne peut plus emprunter donnerait au vert de cette suite un sens trompeur.
+--
+-- Le GPS ne sert plus qu'à des relevés ponctuels, côté client, sans écriture
+-- automatique : il n'y a donc rien à vérifier ici. `geolocation.test.ts` s'en
+-- charge en refusant tout appel à `watchPosition`.
 -- =============================================================================
 
-select pg_temp.login('poseur');
-set local role authenticated;
-
-do $$
-declare v_org uuid; v_moi uuid; v_collegue uuid;
-begin
-  select id into v_org from public.organizations where slug = 'essai-planning';
-  v_moi      := pg_temp.member('essai-planning', 'poseur');
-  v_collegue := pg_temp.member('essai-planning', 'resp');
-
-  insert into public.technician_locations
-    (member_id, organization_id, latitude, longitude, presence, battery_pct)
-  values (v_moi, v_org, 48.8566, 2.3522, 'on_road', 82);
-
-  perform pg_temp.ok(
-    exists (select 1 from public.technician_locations where member_id = v_moi),
-    'Un intervenant declare sa propre position'
-  );
-
-  -- Le geste que rien d'autre n'empêche : écrire pour un collègue.
-  perform pg_temp.refuses(
-    format(
-      $sql$ insert into public.technician_locations
-              (member_id, organization_id, latitude, longitude)
-            values (%L, %L, 48.0, 2.0) $sql$,
-      v_collegue, v_org
-    ),
-    'Nul ne declare la position d''un collegue'
-  );
-end
-$$;
-
-reset role;
-
--- Pas même le propriétaire de l'entreprise.
-select pg_temp.login('patron');
-set local role authenticated;
-
--- Attention au piège documenté dans ARCHITECTURE.md : quand la policy exclut
--- la ligne, l'UPDATE ne touche RIEN et ne lève AUCUNE exception. Attendre une
--- erreur ici ferait échouer un test alors que la garantie tient. On teste donc
--- le RÉSULTAT — la position est-elle inchangée ? — et non la manière.
-do $$
-declare v_poseur uuid; v_lat double precision;
-begin
-  v_poseur := pg_temp.member('essai-planning', 'poseur');
-
-  update public.technician_locations
-  set latitude = 0, longitude = 0
-  where member_id = v_poseur;
-
-  select latitude into v_lat from public.technician_locations where member_id = v_poseur;
-
-  perform pg_temp.ok(v_lat = 48.8566,
-    'Un proprietaire ne reecrit pas la position de ses salaries');
-  perform pg_temp.ok(v_lat is not null,
-    'Il la LIT en revanche : il a location.view_all');
-end
-$$;
-
-reset role;
-
 -- =============================================================================
-do $$ begin raise notice ''; raise notice '=== PARTIE 6 — La piste se purge toute seule ==='; end $$;
--- =============================================================================
-
-select pg_temp.login('poseur');
-set local role authenticated;
-
--- Un relevé ANTIDATÉ au-delà de la fenêtre est purgé par sa propre insertion.
--- Découvert en écrivant ce test, et c'est la bonne propriété : la durée de
--- conservation ne se contourne pas en falsifiant l'horodatage.
-do $$
-declare v_org uuid; v_moi uuid; v_count integer;
-begin
-  select id into v_org from public.organizations where slug = 'essai-planning';
-  v_moi := pg_temp.member('essai-planning', 'poseur');
-
-  insert into public.technician_location_pings
-    (organization_id, member_id, latitude, longitude, recorded_at)
-  values (v_org, v_moi, 48.85, 2.35, now() - interval '180 days');
-
-  select count(*) into v_count from public.technician_location_pings where member_id = v_moi;
-  perform pg_temp.ok(v_count = 0,
-    'Un releve antidate au-dela de la fenetre ne survit pas a son insertion');
-
-  insert into public.technician_location_pings
-    (organization_id, member_id, latitude, longitude)
-  values (v_org, v_moi, 48.86, 2.36);
-
-  select count(*) into v_count from public.technician_location_pings where member_id = v_moi;
-  perform pg_temp.ok(v_count = 1, 'Un releve du jour est conserve');
-end
-$$;
-
-reset role;
-
--- La piste vieillit ; le relevé suivant l'élague. On vieillit ici la ligne
--- hors session, faute de pouvoir attendre soixante jours.
-update public.technician_location_pings
-set recorded_at = now() - interval '90 days'
-where member_id = pg_temp.member('essai-planning', 'poseur');
-
-select pg_temp.login('poseur');
-set local role authenticated;
-
-do $$
-declare v_org uuid; v_moi uuid; v_count integer;
-begin
-  select id into v_org from public.organizations where slug = 'essai-planning';
-  v_moi := pg_temp.member('essai-planning', 'poseur');
-
-  insert into public.technician_location_pings
-    (organization_id, member_id, latitude, longitude)
-  values (v_org, v_moi, 48.87, 2.37);
-
-  select count(*) into v_count from public.technician_location_pings where member_id = v_moi;
-  perform pg_temp.ok(v_count = 1,
-    'Un nouveau releve purge ceux de plus de soixante jours (CNIL)');
-
-  select count(*) into v_count from public.technician_location_pings
-  where member_id = v_moi and recorded_at < now() - interval '60 days';
-  perform pg_temp.ok(v_count = 0, 'Plus aucun releve au-dela de la fenetre de conservation');
-end
-$$;
-
--- Cesser de partager est un droit : aucune permission demandée.
-do $$
-declare v_moi uuid;
-begin
-  v_moi := pg_temp.member('essai-planning', 'poseur');
-
-  delete from public.technician_locations where member_id = v_moi;
-
-  perform pg_temp.ok(
-    not exists (select 1 from public.technician_locations where member_id = v_moi),
-    'Un intervenant cesse de partager sa position quand il le decide'
-  );
-end
-$$;
-
-reset role;
-
--- =============================================================================
-do $$ begin raise notice ''; raise notice '=== PARTIE 7 — Coherence metier des taches recurrentes ==='; end $$;
+do $$ begin raise notice ''; raise notice '=== PARTIE 5 — Coherence metier des taches recurrentes ==='; end $$;
 -- =============================================================================
 
 select pg_temp.login('patron');
@@ -542,6 +419,113 @@ begin
       v_org
     ),
     'Le technicien ne cree pas de tache recurrente'
+  );
+end
+$$;
+
+reset role;
+
+-- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 6 — Le moteur de conges compte les JOURS ==='; end $$;
+-- =============================================================================
+--
+-- Le décompte était `fin − début + 1`, calculé par le navigateur. Ces
+-- assertions portent sur ce que cette formule se trompait à dire.
+
+do $$
+begin
+  -- Vendredi 4 → lundi 7 septembre 2026 : deux jours ouvrés, pas quatre.
+  perform pg_temp.ok(
+    app.compute_leave_days('2026-09-04', '2026-09-07') = 2,
+    'Un week-end au milieu d''une absence n''est pas decompte'
+  );
+
+  -- Lundi 27 avril → vendredi 1er mai 2026 : le 1er mai est férié.
+  perform pg_temp.ok(
+    app.compute_leave_days('2026-04-27', '2026-05-01') = 4,
+    'Un jour ferie n''est pas decompte'
+  );
+
+  -- Le 22 mai commémore l'abolition en Martinique, et nulle part ailleurs.
+  perform pg_temp.ok(
+    app.compute_leave_days('2026-05-22', '2026-05-22', 'metropole') = 1
+    and app.compute_leave_days('2026-05-22', '2026-05-22', 'martinique') = 0,
+    'Les feries d''outre-mer ne s''appliquent qu''a leur territoire'
+  );
+
+  perform pg_temp.ok(
+    app.compute_leave_days('2026-09-07', '2026-09-07', 'metropole', true) = 0.5,
+    'Une demi-journee vaut une demi-journee'
+  );
+
+  -- Pâques gouverne le lundi de Pâques, l'Ascension et la Pentecôte : la liste
+  -- figée qu'on remplace serait fausse dès 2027.
+  perform pg_temp.ok(
+    app.easter_sunday(2026) = date '2026-04-05' and app.easter_sunday(2027) = date '2027-03-28',
+    'Paques est calculee, pas recopiee'
+  );
+
+  perform pg_temp.ok(
+    (select count(*) from app.public_holidays(2026, 'metropole')) = 11,
+    'Le socle national compte onze feries'
+  );
+end
+$$;
+
+-- Le détail est vérifiable, jour par jour.
+do $$
+declare v_samedi record;
+begin
+  select * into v_samedi
+  from app.leave_day_breakdown('2026-09-04', '2026-09-07')
+  where day = date '2026-09-05';
+
+  perform pg_temp.ok(
+    v_samedi.counted = false and v_samedi.value = 0 and v_samedi.reason = 'Samedi',
+    'Chaque journee dit si elle compte, combien, et pourquoi'
+  );
+end
+$$;
+
+-- Le CLIENT ne décide pas de la durée.
+select pg_temp.login('poseur');
+set local role authenticated;
+
+do $$
+declare v_org uuid; v_me uuid; v_days numeric;
+begin
+  select id into v_org from public.organizations where slug = 'essai-planning';
+  v_me := pg_temp.member('essai-planning', 'poseur');
+
+  -- Le client annonce 99 jours sur une absence vendredi → lundi.
+  insert into public.leave_requests
+    (organization_id, member_id, type, start_date, end_date, days_count)
+  values (v_org, v_me, 'rtt', '2026-09-04', '2026-09-07', 99);
+
+  select days_count into v_days
+  from public.leave_requests
+  where member_id = v_me and type = 'rtt' and start_date = date '2026-09-04';
+
+  perform pg_temp.ok(v_days = 2,
+    'Le serveur ecrase la duree annoncee par le client');
+end
+$$;
+
+-- Une période sans aucun jour ouvré ne consomme rien, et se refuse.
+do $$
+declare v_org uuid; v_me uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-planning';
+  v_me := pg_temp.member('essai-planning', 'poseur');
+
+  perform pg_temp.refuses(
+    format(
+      $sql$ insert into public.leave_requests
+              (organization_id, member_id, type, start_date, end_date, days_count)
+            values (%L, %L, 'unpaid', '2026-09-05', '2026-09-06', 2) $sql$,
+      v_org, v_me
+    ),
+    'Un week-end entier ne peut pas etre pose comme conge'
   );
 end
 $$;

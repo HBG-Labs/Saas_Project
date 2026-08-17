@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
+import {
+  extractDeletedValuesAcross,
+  extractInsertTuplesAcross,
+  MIGRATION_FILES,
+  stripCast,
+} from '@/test/sql-fixtures';
 import type { OrgRole } from '@/types/database';
 
 import {
@@ -73,19 +78,14 @@ describe('moindre privilège', () => {
     ]);
   });
 
-  it("n'ouvre à personne l'écriture de la position d'autrui", () => {
-    // Il n'existe pas de `location.manage` : la seule permission de suivi
-    // concerne la LECTURE. Déclarer une position est affaire d'identité, pas de
-    // rôle — appliqué par `app.enforce_location_ownership`.
-    const all = Object.values(PERMISSIONS);
-    expect(all.filter((permission) => permission.startsWith('location.'))).toEqual([
-      'location.view_all',
-    ]);
-  });
-
-  it("ne laisse pas le technicien suivre ses collègues", () => {
-    expect(roleHasPermission('technician', PERMISSIONS.locationViewAll)).toBe(false);
-    expect(roleHasPermission('team_leader', PERMISSIONS.locationViewAll)).toBe(true);
+  it("n'accorde plus aucun droit de suivi de position", () => {
+    // Le suivi GPS continu est abandonné : le produit ne localise plus ses
+    // salariés. Ce test échouera si une permission `location.*` réapparaît —
+    // c'est-à-dire si quelqu'un rebranche le suivi sans que la décision ait été
+    // reprise. Une capacité retirée doit rester retirée, faute de quoi elle
+    // revient par un correctif de trois lignes.
+    const all: string[] = Object.values(PERMISSIONS);
+    expect(all.filter((permission) => permission.startsWith('location.'))).toEqual([]);
   });
 
   it("n'accorde pas au chef d'équipe le droit de valider un congé", () => {
@@ -172,14 +172,25 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.quotes,
       MIGRATION_FILES.planning,
       MIGRATION_FILES.locations,
+      MIGRATION_FILES.retireTracking,
     ],
     'role_permissions',
+  );
+
+  // Une permission peut être RETIRÉE : le suivi GPS abandonné emporte
+  // `location.view_all`. Cumuler les seuls `insert` décrirait un état que la
+  // base n'a plus.
+  const revoked = extractDeletedValuesAcross(
+    [MIGRATION_FILES.retireTracking],
+    'role_permissions',
+    'permission',
   );
 
   const seeded = new Map<OrgRole, Set<string>>();
   for (const tuple of tuples) {
     const role = stripCast(tuple[0] ?? '') as OrgRole;
     const permission = stripCast(tuple[1] ?? '');
+    if (revoked.has(permission)) continue;
     if (!seeded.has(role)) seeded.set(role, new Set());
     seeded.get(role)?.add(permission);
   }

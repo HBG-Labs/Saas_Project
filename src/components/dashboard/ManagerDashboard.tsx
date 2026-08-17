@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
-import { useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -56,7 +56,7 @@ export function ManagerDashboard() {
           <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
             <Link to={ROUTES.missionNew}>
               <Plus className="size-4 mr-1" />
-              Nouveau {jobSingular.toLowerCase()}
+              {formatNewNoun(jobSingular)}
             </Link>
           </Button>
         </div>

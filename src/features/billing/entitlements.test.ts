@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { PRICING_PLANS } from '@/config/pricing';
-import { extractInsertTuplesAcross, MIGRATION_FILES, stripCast } from '@/test/sql-fixtures';
+import {
+  extractDeletedValuesAcross,
+  extractInsertTuplesAcross,
+  MIGRATION_FILES,
+  stripCast,
+} from '@/test/sql-fixtures';
 
 import {
   DEFAULT_PLAN,
@@ -116,8 +121,16 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.quotes,
       MIGRATION_FILES.planning,
       MIGRATION_FILES.locations,
+      MIGRATION_FILES.retireTracking,
     ],
     'plan_features',
+  );
+
+  // `live_tracking` a été retiré des formules avec l'abandon du suivi GPS.
+  const revoked = extractDeletedValuesAcross(
+    [MIGRATION_FILES.retireTracking],
+    'plan_features',
+    'feature_key',
   );
 
   const seeded = new Map<string, Map<string, number | null>>();
@@ -127,6 +140,7 @@ describe('synchronisation avec le seed SQL', () => {
     const raw = stripCast(tuple[2] ?? 'null');
     const limit = raw === 'null' ? null : Number(raw);
 
+    if (revoked.has(feature)) continue;
     if (!seeded.has(plan)) seeded.set(plan, new Map());
     seeded.get(plan)?.set(feature, limit);
   }

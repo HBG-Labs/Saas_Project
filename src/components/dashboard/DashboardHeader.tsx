@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
-import { useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
 
 import { displayNameOf } from '@/components/layout/user-display';
@@ -67,7 +67,7 @@ export function DashboardHeader() {
         <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
           <Link to={can('mission.create') ? ROUTES.missionNew : ROUTES.missions}>
             <Plus className="mr-1.5 size-4" />
-            <span>Nouveau {jobSingular}</span>
+            <span>{formatNewNoun(jobSingular)}</span>
           </Link>
         </Button>
       </div>

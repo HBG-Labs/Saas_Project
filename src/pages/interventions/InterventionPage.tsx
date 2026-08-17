@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, KeyRound, MapPin, Wrench } from 'lucide-react';
+import { ArrowLeft, FileText, KeyRound, MapPin, Printer, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -11,14 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
+import { useAuth } from '@/features/auth';
+import { LocateMissionButton, NavigationButton, MapLocationPickerDialog } from '@/features/geo';
 import {
+  AttachmentGallery,
+  InterventionPdfModal,
   InterventionTimer,
+  useAttachments,
   useIntervention,
   useTimeEntries,
   useUpdateInterventionNotes,
   useWorkedSeconds,
 } from '@/features/interventions';
-import { useMission } from '@/features/missions';
+import { useMission, useUpdateMission } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -32,12 +37,17 @@ import { useDocumentTitle } from '@/lib/use-document-title';
  */
 export default function InterventionPage() {
   const { interventionId } = useParams<{ interventionId: string }>();
+  const { user } = useAuth();
   const { organization, membership } = useCurrentOrganization();
 
   const intervention = useIntervention(interventionId);
   const timeEntries = useTimeEntries(interventionId);
   const workedSeconds = useWorkedSeconds(interventionId);
+  const attachments = useAttachments(interventionId);
   const mission = useMission(intervention.data?.mission_id);
+  const updateMission = useUpdateMission(intervention.data?.mission_id ?? '');
+
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   useDocumentTitle(mission.data?.reference ?? 'Intervention');
 
@@ -132,12 +142,28 @@ export default function InterventionPage() {
             </p>
           </div>
 
-          <Button asChild variant={data.report === null ? 'primary' : 'outline'} size="sm">
-            <Link to={ROUTES.interventionReport(interventionId)}>
-              <FileText className="size-4" />
-              {data.report === null ? 'Rédiger' : 'Ouvrir'}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {data.report !== null && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPdfModalOpen(true)}
+                className="text-xs gap-1.5"
+                title="Prévisualiser le PV et imprimer en PDF"
+              >
+                <Printer className="size-3.5" />
+                <span>PV / PDF</span>
+              </Button>
+            )}
+
+            <Button asChild variant={data.report === null ? 'primary' : 'outline'} size="sm">
+              <Link to={ROUTES.interventionReport(interventionId)}>
+                <FileText className="size-4" />
+                {data.report === null ? 'Rédiger' : 'Ouvrir'}
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -186,6 +212,74 @@ export default function InterventionPage() {
                 {mission.data.description}
               </p>
             ) : null}
+
+            {mission.data.latitude != null && mission.data.longitude != null && (
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-subtle border border-border/80 text-3xs font-mono text-muted-foreground">
+                <MapPin className="size-3 text-primary shrink-0" />
+                <span>GPS : {Number(mission.data.latitude).toFixed(6)}, {Number(mission.data.longitude).toFixed(6)}</span>
+              </div>
+            )}
+
+            <div className="pt-2 space-y-2 border-t border-border">
+              <NavigationButton
+                destination={{
+                  latitude: mission.data.latitude,
+                  longitude: mission.data.longitude,
+                  address: [
+                    mission.data.site?.name,
+                    mission.data.address_line1,
+                    mission.data.postal_code,
+                    mission.data.city,
+                  ]
+                    .filter(Boolean)
+                    .join(', '),
+                  label: mission.data.title,
+                }}
+                className="w-full justify-center text-xs"
+                label="🧭 Itinéraire vers le site"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <LocateMissionButton
+                  missionId={mission.data.id}
+                  currentLatitude={mission.data.latitude}
+                  currentLongitude={mission.data.longitude}
+                  className="w-full justify-center text-xs"
+                />
+
+                <MapLocationPickerDialog
+                  initialLatitude={mission.data.latitude}
+                  initialLongitude={mission.data.longitude}
+                  initialAddress={[
+                    mission.data.address_line1,
+                    mission.data.postal_code,
+                    mission.data.city,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  title={`Position GPS — ${mission.data.reference}`}
+                  description="Cliquez sur la carte pour définir ou ajuster l'emplacement exact du chantier."
+                  onSelectLocation={async (loc) => {
+                    await updateMission.mutateAsync({
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                    });
+                  }}
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center text-xs gap-1.5"
+                      title="Choisir ou ajuster le repère en cliquant sur la carte"
+                    >
+                      <MapPin className="size-3.5 text-primary" />
+                      <span>Pointer sur la carte</span>
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : null}
@@ -203,6 +297,22 @@ export default function InterventionPage() {
         notes={data.notes}
         canEdit={canTrack && data.status !== 'completed'}
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Photos & Justificatifs terrain</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AttachmentGallery
+            interventionId={interventionId}
+            organizationId={organization?.id ?? ''}
+            missionId={data.mission_id}
+            uploadedBy={user?.id ?? ''}
+            attachments={attachments.data ?? []}
+            canEdit={canTrack && data.status !== 'completed'}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -242,6 +352,17 @@ export default function InterventionPage() {
           )}
         </CardContent>
       </Card>
+
+      <InterventionPdfModal
+        open={isPdfModalOpen}
+        onOpenChange={setIsPdfModalOpen}
+        organizationName={organization?.name}
+        mission={mission.data}
+        intervention={data}
+        report={data.report}
+        attachments={attachments.data ?? []}
+        workedSeconds={workedSeconds.data ?? 0}
+      />
     </div>
   );
 }

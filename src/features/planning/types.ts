@@ -50,9 +50,18 @@ export interface PlanningCalendarEvent {
   tradeLabel?: string | undefined;
   trade?: string | undefined;
   time?: string | undefined;
+  startTime?: string | undefined;
+  endTime?: string | undefined;
   details?: string | undefined;
   status?: string | undefined;
   priority?: ('low' | 'medium' | 'high' | 'urgent') | undefined;
+  missionId?: string | undefined;
+  reference?: string | undefined;
+  clientName?: string | undefined;
+  address?: string | undefined;
+  phone?: string | undefined;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
 }
 
 export interface RecurringTask {

@@ -1,4 +1,4 @@
-import { Archive, MapPin, Search } from 'lucide-react';
+import { Archive, Download, MapPin, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -6,11 +6,12 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { MissionStatusBadge, useMissions } from '@/features/missions';
+import { exportMissionsToCsv, MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -78,6 +79,31 @@ export default function ArchivedMissionsPage() {
       <PageHeader
         title="Dossiers clôturés"
         description="Les missions menées à terme, conservées pour la facturation et l’historique client."
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportMissionsToCsv(
+                  list,
+                  `missions-${scope}-${new Date().toISOString().slice(0, 10)}.csv`,
+                )
+              }
+              className="text-xs"
+              disabled={list.length === 0}
+              title="Exporter les dossiers en fichier CSV"
+            >
+              <Download className="size-3.5 mr-1" />
+              Exporter CSV
+            </Button>
+
+            <Button asChild variant="outline" size="sm" className="text-xs">
+              <Link to={ROUTES.missions}>← Missions actives</Link>
+            </Button>
+          </div>
+        }
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

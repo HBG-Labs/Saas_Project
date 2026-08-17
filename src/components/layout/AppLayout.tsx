@@ -1,6 +1,5 @@
 import { Building2, LogOut, Menu, Search, Settings, User } from 'lucide-react';
-import { Dialog } from 'radix-ui';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
@@ -26,6 +25,7 @@ import { cn } from '@/lib/cn';
 
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
+import { MobileDrawer } from './MobileDrawer';
 import { MobileNav } from './MobileNav';
 import { Sidebar } from './Sidebar';
 import { displayNameOf } from './user-display';
@@ -65,6 +65,53 @@ export function AppLayout() {
   // production doit voir sa navigation, et un dirigeant la sienne.
   const activeSidebarGroups = role === 'technician' ? TECHNICIAN_SIDEBAR_GROUPS : undefined;
 
+  // Permet d'ouvrir le tiroir en glissant le doigt depuis le bord gauche de l'écran (< 28px)
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let isEdgeTouch = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || drawerOpen) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      if (touch.clientX <= 28) {
+        isEdgeTouch = true;
+        startX = touch.clientX;
+        startY = touch.clientY;
+      } else {
+        isEdgeTouch = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isEdgeTouch || drawerOpen || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (deltaX > 35 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        setDrawerOpen(true);
+        isEdgeTouch = false;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isEdgeTouch = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [drawerOpen]);
+
   const handleSignOut = () => {
     void signOut().then(() => navigate(ROUTES.home));
   };
@@ -93,49 +140,32 @@ export function AppLayout() {
         */}
         <div className="flex h-14 items-center gap-1 px-3 sm:gap-3 sm:px-4">
           <div className="flex min-w-0 shrink-0 items-center gap-1">
-            <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-              <Dialog.Trigger
-                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -ml-1 flex size-touch shrink-0 items-center justify-center rounded-lg sm:size-9 lg:hidden"
-                aria-label="Ouvrir le menu"
-              >
-                <Menu className="size-5" aria-hidden="true" />
-              </Dialog.Trigger>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -ml-1 flex size-touch shrink-0 items-center justify-center rounded-lg sm:size-9 lg:hidden cursor-pointer"
+              aria-label="Ouvrir le menu"
+            >
+              <Menu className="size-5" aria-hidden="true" />
+            </button>
 
-              <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
-                <Dialog.Content
-                  className={cn(
-                    'border-border bg-surface fixed inset-y-0 left-0 z-50 border-r shadow-xl lg:hidden transition-all duration-200',
-                    sidebarCollapsed ? 'w-16' : 'w-[min(17rem,85vw)]',
-                  )}
-                >
-                  <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
-                  <div
-                    className={cn(
-                      'border-border flex h-14 items-center border-b',
-                      sidebarCollapsed ? 'justify-center px-1' : 'px-4',
-                    )}
-                  >
-                    {!sidebarCollapsed ? (
-                      <Logo to={ROUTES.home} />
-                    ) : (
-                      <Logo to={ROUTES.home} className="text-xs font-bold" />
-                    )}
-                  </div>
-                  <Sidebar
-                    groups={activeSidebarGroups}
-                    collapsed={sidebarCollapsed}
-                    onToggleCollapse={handleToggleSidebar}
-                    onNavigate={() => setDrawerOpen(false)}
-                    onDownloadAppClick={() => {
-                      setDrawerOpen(false);
-                      setIsDownloadModalOpen(true);
-                    }}
-                    className="h-[calc(100%-3.5rem)]"
-                  />
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
+            <MobileDrawer
+              isOpen={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              headerContent={<Logo to={ROUTES.home} />}
+            >
+              <Sidebar
+                groups={activeSidebarGroups}
+                collapsed={false}
+                showCollapseButton={false}
+                onNavigate={() => setDrawerOpen(false)}
+                onClose={() => setDrawerOpen(false)}
+                onDownloadAppClick={() => {
+                  setDrawerOpen(false);
+                  setIsDownloadModalOpen(true);
+                }}
+              />
+            </MobileDrawer>
 
             <Logo to={ROUTES.home} className="shrink-0 text-sm sm:text-base lg:text-lg" />
           </div>

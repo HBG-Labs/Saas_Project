@@ -27,7 +27,17 @@ export function useCreateReport(interventionId: string) {
 
   return useMutation({
     mutationFn: createReport,
-    onSuccess: async () => {
+    onSuccess: async (newReport) => {
+      queryClient.setQueryData(
+        qk.interventions.detail(interventionId),
+        (prev: unknown) => {
+          if (!prev || typeof prev !== 'object') return prev;
+          return {
+            ...prev,
+            report: newReport,
+          };
+        },
+      );
       await queryClient.invalidateQueries({
         queryKey: qk.interventions.detail(interventionId),
       });
@@ -38,13 +48,31 @@ export function useCreateReport(interventionId: string) {
 /**
  * Enregistre le brouillon.
  *
- * Aucune invalidation : le formulaire détient déjà la vérité de ce qu'il vient
- * d'écrire. Recharger à chaque frappe ferait sauter le curseur au milieu d'une
- * phrase — le défaut classique de l'enregistrement automatique.
+ * Met à jour le cache TanStack Query pour synchroniser immédiatement l'état du formulaire
+ * et dissiper l'indicateur de modifications non enregistrées.
  */
-export function useSaveReport(reportId: string) {
+export function useSaveReport(reportId: string, interventionId?: string) {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (patch: TablesUpdate<'intervention_reports'>) => updateReport(reportId, patch),
+    onSuccess: async (updatedReport) => {
+      if (interventionId) {
+        queryClient.setQueryData(
+          qk.interventions.detail(interventionId),
+          (prev: unknown) => {
+            if (!prev || typeof prev !== 'object') return prev;
+            return {
+              ...prev,
+              report: updatedReport,
+            };
+          },
+        );
+        await queryClient.invalidateQueries({
+          queryKey: qk.interventions.detail(interventionId),
+        });
+      }
+    },
   });
 }
 

@@ -57,6 +57,31 @@ export async function signOut(): Promise<void> {
   if (error) throw mapAuthError(error);
 }
 
+/**
+ * Déconnecte tous les AUTRES appareils, sans toucher à la session courante.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE `scope: 'others'` FAIT VRAIMENT
+ *
+ * Supabase révoque côté serveur tous les jetons de rafraîchissement de
+ * l'utilisateur, sauf celui de la session appelante. Les autres appareils
+ * restent utilisables jusqu'à l'expiration de leur jeton d'accès — une heure au
+ * plus — puis échouent à se renouveler et sont déconnectés.
+ *
+ * C'est une révocation RÉELLE, ce qui la distingue du dispositif qu'elle
+ * remplace : une liste d'appareils tenue dans `localStorage`, dont le bouton
+ * « Déconnecter » n'effaçait qu'une ligne de ce navigateur.
+ *
+ * Le SDK client ne sait pas révoquer UNE session précise — il faudrait l'API
+ * d'administration, donc une Edge Function et une table de sessions. Tant que
+ * cela n'existe pas, l'interface ne doit pas le proposer.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export async function signOutOtherDevices(): Promise<void> {
+  const { error } = await supabase.auth.signOut({ scope: 'others' });
+  if (error) throw mapAuthError(error);
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/auth/callback`,

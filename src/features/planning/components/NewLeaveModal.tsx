@@ -7,6 +7,7 @@ import { FormError } from '@/components/feedback/FormError';
 import { memberDisplayName, ROLE_LABELS } from '@/features/organizations';
 import type { MemberWithProfile } from '@/types/domain';
 
+import { useLeaveDaysPreview } from '../hooks/usePlanning';
 import type { LeaveType } from '../types';
 
 export interface NewLeaveSubmission {
@@ -14,8 +15,9 @@ export interface NewLeaveSubmission {
   type: LeaveType;
   startDate: string;
   endDate: string;
-  daysCount: number;
   reason: string;
+  halfDayStart: boolean;
+  halfDayEnd: boolean;
 }
 
 interface NewLeaveModalProps {
@@ -30,6 +32,8 @@ interface NewLeaveModalProps {
    * la même règle ; le sélecteur est simplement inutile dans ce cas.
    */
   canRequestForOthers: boolean;
+  /** Territoire de l'entreprise : il détermine les jours fériés décomptés. */
+  territory: string;
   submitting: boolean;
   error: unknown;
   onSubmit: (submission: NewLeaveSubmission) => void;
@@ -50,6 +54,7 @@ export function NewLeaveModal({
   members,
   defaultMemberId = null,
   canRequestForOthers,
+  territory,
   submitting,
   error,
   onSubmit,
@@ -59,6 +64,8 @@ export function NewLeaveModal({
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0] ?? '');
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0] ?? '');
   const [reason, setReason] = useState<string>('');
+  const [halfDayStart, setHalfDayStart] = useState(false);
+  const [halfDayEnd, setHalfDayEnd] = useState(false);
 
   // Le membre par défaut n'est connu qu'une fois la liste chargée. Le résoudre
   // au rendu plutôt que dans un effet évite un rendu intermédiaire avec un
@@ -66,14 +73,24 @@ export function NewLeaveModal({
   const effectiveMemberId =
     selectedMemberId !== '' ? selectedMemberId : (defaultMemberId ?? members[0]?.id ?? '');
 
-  const calculateDays = () => {
-    if (!startDate || !endDate) return 1;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = end.getTime() - start.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays > 0 ? diffDays : 1;
-  };
+  // Le décompte vient du SERVEUR, pas d'ici.
+  //
+  // La version précédente faisait `fin − début + 1` : une absence du vendredi au
+  // lundi coûtait quatre jours, et le 1er mai en coûtait un. Un solde de congés
+  // payés est une créance ; il ne se calcule pas dans le navigateur de
+  // l'intéressé.
+  const preview = useLeaveDaysPreview({
+    startDate,
+    endDate,
+    territory,
+    halfDayStart,
+    halfDayEnd,
+    enabled: open,
+  });
+
+  const days = preview.data ?? [];
+  const total = days.reduce((sum, day) => sum + Number(day.value), 0);
+  const excluded = days.filter((day) => !day.counted);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +101,9 @@ export function NewLeaveModal({
       type: leaveType,
       startDate,
       endDate,
-      daysCount: calculateDays(),
       reason: reason.trim(),
+      halfDayStart,
+      halfDayEnd,
     });
   };
 
@@ -191,10 +209,51 @@ export function NewLeaveModal({
               </div>
             </div>
 
-            {/* Durée estimée */}
-            <div className="p-3 rounded-xl bg-surface-subtle border border-border/80 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">Durée totale calculée :</span>
-              <span className="font-extrabold text-foreground">{calculateDays()} jour(s)</span>
+            {/* Demi-journées */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <label className="flex items-center gap-2 text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={halfDayStart}
+                  onChange={(e) => setHalfDayStart(e.target.checked)}
+                  className="size-4 rounded-sm border-border text-primary focus:ring-primary"
+                />
+                <span>Début l’après-midi</span>
+              </label>
+              <label className="flex items-center gap-2 text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={halfDayEnd}
+                  onChange={(e) => setHalfDayEnd(e.target.checked)}
+                  className="size-4 rounded-sm border-border text-primary focus:ring-primary"
+                />
+                <span>Fin le matin</span>
+              </label>
+            </div>
+
+            {/* Décompte — calculé par le serveur, détaillé pour être vérifiable */}
+            <div className="p-3 rounded-xl bg-surface-subtle border border-border/80 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Jours décomptés :</span>
+                <span className="font-extrabold text-foreground">
+                  {preview.isLoading ? '…' : `${String(total)} jour(s)`}
+                </span>
+              </div>
+
+              {excluded.length > 0 && (
+                <p className="text-3xs text-muted-foreground">
+                  Non décomptés :{' '}
+                  {excluded
+                    .map((day) => `${day.day.slice(8, 10)}/${day.day.slice(5, 7)} (${day.reason})`)
+                    .join(' · ')}
+                </p>
+              )}
+
+              {preview.isError && (
+                <p className="text-3xs font-semibold text-rose-600 dark:text-rose-400">
+                  Le décompte n’a pas pu être calculé. Vérifiez les dates avant d’enregistrer.
+                </p>
+              )}
             </div>
 
             {/* Motif / Commentaire */}

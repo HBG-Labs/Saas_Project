@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Pen, Printer, Send, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -17,11 +17,14 @@ import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
 import {
   AttachmentGallery,
+  InterventionPdfModal,
+  SignaturePadModal,
   useAttachments,
   useCreateReport,
   useIntervention,
   useSaveReport,
   useSubmitReport,
+  useWorkedSeconds,
 } from '@/features/interventions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -42,6 +45,7 @@ export default function ReportEditorPage() {
   const { organization, membership } = useCurrentOrganization();
 
   const intervention = useIntervention(interventionId);
+  const workedSecondsQuery = useWorkedSeconds(interventionId);
   // La mission porte le statut que la machine à états fait avancer ; le compte
   // rendu ne peut partir au contrôle que depuis `completed`.
   const mission = useMission(intervention.data?.mission_id);
@@ -51,13 +55,17 @@ export default function ReportEditorPage() {
   const submitReport = useSubmitReport(interventionId ?? '');
 
   const report = intervention.data?.report ?? null;
-  const saveReport = useSaveReport(report?.id ?? '');
+  const saveReport = useSaveReport(report?.id ?? '', interventionId);
 
   const [workDescription, setWorkDescription] = useState('');
   const [observations, setObservations] = useState('');
   const [error, setError] = useState<unknown>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [loadedReportId, setLoadedReportId] = useState<string | null>(null);
+
+  const [isCustomerSignOpen, setIsCustomerSignOpen] = useState(false);
+  const [isTechSignOpen, setIsTechSignOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   /**
    * Amorçage du formulaire à l'arrivée des données.
@@ -170,8 +178,12 @@ export default function ReportEditorPage() {
     saveReport.mutate(
       { work_description: workDescription, observations },
       {
-        onSuccess: () => {
+        onSuccess: (updatedReport) => {
           setSavedAt(new Date());
+          if (updatedReport) {
+            setWorkDescription(updatedReport.work_description ?? '');
+            setObservations(updatedReport.observations ?? '');
+          }
         },
         onError: (mutationError) => {
           setError(mutationError);
@@ -192,7 +204,23 @@ export default function ReportEditorPage() {
       <PageHeader
         title="Compte rendu"
         description="Ce que vous écrivez ici fait foi : le contrôleur peut le valider ou le refuser, il ne peut pas le réécrire."
-        actions={report !== null ? <Badge>{STATUS_LABELS[report.status]}</Badge> : null}
+        actions={
+          <div className="flex items-center gap-2">
+            {report !== null && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPdfModalOpen(true)}
+                className="text-xs gap-1.5"
+              >
+                <Printer className="size-3.5" />
+                <span>PV / PDF</span>
+              </Button>
+            )}
+            {report !== null ? <Badge>{STATUS_LABELS[report.status]}</Badge> : null}
+          </div>
+        }
       />
 
       <FormError error={error} />
@@ -257,17 +285,6 @@ export default function ReportEditorPage() {
               />
 
               {isEditable ? (
-                /*
-                  L'état de la saisie est dit explicitement.
-
-                  Le bouton avait la même apparence que le texte soit enregistré
-                  ou non. Sur un chantier, l'application passe en arrière-plan
-                  dès qu'on décroche, et rien ne signalait qu'un quart d'heure de
-                  rédaction n'était pas encore parti. Le bouton devient appelant
-                  tant qu'il reste quelque chose à envoyer, et l'indication
-                  d'enregistrement disparaît dès la frappe suivante — elle ne
-                  parlerait plus du texte affiché.
-                */
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     variant={hasUnsavedChanges ? 'primary' : 'outline'}
@@ -294,13 +311,6 @@ export default function ReportEditorPage() {
             </CardContent>
           </Card>
 
-          {/*
-            La check-list AVANT le relevé de mesures.
-
-            Elle porte les gestes ; le formulaire porte les grandeurs. Surtout,
-            c'est elle qui conditionne la transmission du compte rendu — la
-            placer en second reviendrait à annoncer le blocage après coup.
-          */}
           {organization !== null ? (
             <ChecklistCard
               interventionId={data.id}
@@ -312,14 +322,6 @@ export default function ReportEditorPage() {
             />
           ) : null}
 
-          {/*
-            Le relevé métier, entre le récit et les pièces jointes.
-
-            Il ne s'affiche que si la mission porte un type d'intervention ET
-            que ce type dispose d'un modèle. Sinon l'écran reste exactement ce
-            qu'il était — c'est le cas de quatre des sept types du pack fibre,
-            et de toute organisation sans métier déclaré.
-          */}
           {organization !== null ? (
             <InterventionFormCard
               interventionId={data.id}
@@ -344,6 +346,105 @@ export default function ReportEditorPage() {
                 attachments={attachments.data ?? []}
                 canEdit={isEditable}
               />
+            </CardContent>
+          </Card>
+
+          {/* ✍️ Signatures électroniques */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="size-4 text-primary" />
+                Signatures & Validation terrain
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Signature Technicien */}
+                <div className="p-3.5 rounded-xl border border-border bg-surface-subtle/50 flex flex-col justify-between min-h-[140px] space-y-2">
+                  <div>
+                    <span className="text-3xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                      Signature Intervenant / Technicien
+                    </span>
+                    <p className="text-xs font-bold text-foreground mt-0.5">
+                      {user?.email ?? 'Technicien'}
+                    </p>
+                  </div>
+
+                  {report.technician_signature_path ? (
+                    <div className="space-y-1">
+                      <div className="p-1 rounded bg-white dark:bg-slate-900 border border-border inline-block">
+                        <img
+                          src={report.technician_signature_path}
+                          alt="Signature technicien"
+                          className="max-h-14 object-contain"
+                        />
+                      </div>
+                      <p className="text-4xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="size-3" />
+                        Signature enregistrée
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-3xs text-muted-foreground italic">Non signée</p>
+                  )}
+
+                  {isEditable && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsTechSignOpen(true)}
+                      className="text-xs h-7 gap-1 self-start cursor-pointer"
+                    >
+                      <Pen className="size-3" />
+                      <span>{report.technician_signature_path ? 'Modifier' : 'Signer'}</span>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Signature Client */}
+                <div className="p-3.5 rounded-xl border border-border bg-surface-subtle/50 flex flex-col justify-between min-h-[140px] space-y-2">
+                  <div>
+                    <span className="text-3xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                      Signature Client / Réceptionnaire
+                    </span>
+                    <p className="text-xs font-bold text-foreground mt-0.5">
+                      {report.customer_signature_name || mission.data?.customer?.name || 'Client'}
+                    </p>
+                  </div>
+
+                  {report.customer_signature_path ? (
+                    <div className="space-y-1">
+                      <div className="p-1 rounded bg-white dark:bg-slate-900 border border-border inline-block">
+                        <img
+                          src={report.customer_signature_path}
+                          alt="Signature client"
+                          className="max-h-14 object-contain"
+                        />
+                      </div>
+                      <p className="text-4xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="size-3" />
+                        Signé par {report.customer_signature_name || 'le client'}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-3xs text-muted-foreground italic">En attente de signature</p>
+                  )}
+
+                  {isEditable && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setIsCustomerSignOpen(true)}
+                      className="text-xs h-7 gap-1 self-start cursor-pointer"
+                    >
+                      <Pen className="size-3" />
+                      <span>{report.customer_signature_path ? 'Faire re-signer' : 'Faire signer le client'}</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -382,9 +483,6 @@ export default function ReportEditorPage() {
                             disabled={advanceMission.isPending}
                             onClick={() => {
                               setError(null);
-                              // Le brouillon part AVANT la transition : sans cela,
-                              // la dernière frappe serait perdue si l'utilisateur
-                              // enchaîne aussitôt sur la soumission.
                               saveReport.mutate(
                                 { work_description: workDescription, observations },
                                 { onSuccess: () => setSavedAt(new Date()) },
@@ -412,8 +510,6 @@ export default function ReportEditorPage() {
                   className="w-full"
                   onClick={() => {
                     setError(null);
-                    // On enregistre AVANT de soumettre : sans cela, la dernière
-                    // frappe non sauvegardée partirait au contrôle sans y figurer.
                     saveReport.mutate(
                       { work_description: workDescription, observations },
                       {
@@ -445,6 +541,49 @@ export default function ReportEditorPage() {
           ) : null}
         </>
       )}
+
+      {/* Modales de Signature & PDF */}
+      <SignaturePadModal
+        open={isCustomerSignOpen}
+        onOpenChange={setIsCustomerSignOpen}
+        title="Signature du client / réceptionnaire"
+        description="Faites signer le client directement sur votre écran pour attester de la bonne réception des travaux."
+        defaultSignerName={report?.customer_signature_name || mission.data?.customer?.name || ''}
+        signerRoleLabel="Nom complet du signataire client"
+        onSaveSignature={({ signatureDataUrl, signerName }) => {
+          if (!report) return;
+          saveReport.mutate({
+            customer_signature_path: signatureDataUrl,
+            customer_signature_name: signerName,
+          });
+        }}
+      />
+
+      <SignaturePadModal
+        open={isTechSignOpen}
+        onOpenChange={setIsTechSignOpen}
+        title="Signature du technicien intervenant"
+        description="Apposez votre signature pour certifier l’exactitude du compte-rendu d’intervention."
+        defaultSignerName={user?.email || 'Technicien'}
+        signerRoleLabel="Nom du technicien"
+        onSaveSignature={({ signatureDataUrl }) => {
+          if (!report) return;
+          saveReport.mutate({
+            technician_signature_path: signatureDataUrl,
+          });
+        }}
+      />
+
+      <InterventionPdfModal
+        open={isPdfModalOpen}
+        onOpenChange={setIsPdfModalOpen}
+        organizationName={organization?.name}
+        mission={mission.data}
+        intervention={intervention.data}
+        report={report}
+        attachments={attachments.data ?? []}
+        workedSeconds={workedSecondsQuery.data ?? 0}
+      />
     </div>
   );
 }
