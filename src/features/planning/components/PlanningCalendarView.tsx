@@ -319,7 +319,13 @@ export function PlanningCalendarView({
     }));
   }, [filteredEvents, filteredHolidays, filteredLeaves, currentYear, currentMonthIndex]);
 
-  const todayStr = '2026-08-16';
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
 
   // Titre dynamique de la période
   const periodTitle = useMemo(() => {

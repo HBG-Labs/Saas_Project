@@ -82,6 +82,18 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
     feature: 'members',
     vocabulary: { term: 'worker', plural: true },
   },
+  {
+    to: ROUTES.organization,
+    label: 'Paramètres Entreprise',
+    icon: 'building',
+    permission: 'organization.update',
+  },
+  {
+    to: ROUTES.auditLog,
+    label: 'Journal d’activité',
+    icon: 'scroll',
+    permission: 'audit.view',
+  },
 ];
 
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [

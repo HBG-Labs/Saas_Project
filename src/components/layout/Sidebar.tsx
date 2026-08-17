@@ -5,7 +5,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
 import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/config/navigation';
@@ -56,6 +56,9 @@ function SidebarLink({
     if (item.to === ROUTES.dashboard) {
       return location.pathname === ROUTES.dashboard;
     }
+    if (item.to === ROUTES.organization) {
+      return location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew;
+    }
     return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
   })();
 
@@ -97,7 +100,26 @@ function CollapsibleSidebarSection({
   collapsed: boolean;
   children: React.ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const hasActiveItem = group.items.some((item) => {
+    if (item.to.includes('?')) {
+      return (location.pathname + location.search) === item.to;
+    }
+    if (item.to === ROUTES.organization) {
+      return location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew;
+    }
+    return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
+  });
+
+  const [isOpen, setIsOpen] = useState(hasActiveItem || group.id === 'interventions');
+
+  // Met à jour l'ouverture si on navigue vers un sous-menu de cette section
+  useEffect(() => {
+    if (hasActiveItem) {
+      setIsOpen(true);
+    }
+  }, [hasActiveItem]);
+
   const Icon = group.icon ? NAV_ICONS[group.icon] : null;
 
   return (

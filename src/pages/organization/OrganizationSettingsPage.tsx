@@ -15,7 +15,7 @@ import { FormError } from '@/components/feedback/FormError';
 import { ROUTES } from '@/config/routes';
 import { useIndustries } from '@/features/industries';
 import {
-  OwnershipCard,
+  OrganizationBillingCard,
   PERMISSIONS,
   useCurrentOrganization,
   useOrganization,
@@ -153,7 +153,7 @@ export default function OrganizationSettingsPage() {
         title="Paramètres de l'entreprise"
         description={
           canUpdate
-            ? 'Modifiez le nom, le secteur d’activité et les coordonnées de votre entreprise.'
+            ? 'Modifiez le nom, le secteur d’activité, les coordonnées et gérez la formule de votre entreprise.'
             : 'Consultation seule — seuls un propriétaire ou un administrateur peuvent modifier ces informations.'
         }
         actions={
@@ -170,7 +170,7 @@ export default function OrganizationSettingsPage() {
         }
       />
 
-      {organization !== null && <OwnershipCard organizationId={organization.id} />}
+      {organization !== null && <OrganizationBillingCard organizationId={organization.id} />}
 
       {query.isPending ? (
         <Card>

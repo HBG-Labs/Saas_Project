@@ -48,6 +48,13 @@ function formatDate(value: string | null): string {
   });
 }
 
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Starter (Gratuit)',
+  pro: 'Pro',
+  business: 'Business',
+  ultimate: 'Ultimate',
+};
+
 export default function BillingPage() {
   useDocumentTitle('Facturation');
 
@@ -91,8 +98,8 @@ export default function BillingPage() {
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-foreground text-lg font-semibold capitalize">
-                  {planCode === 'business' ? 'Entreprise' : planCode === 'pro' ? 'Pro' : 'Gratuit'}
+                <span className="text-foreground text-lg font-bold">
+                  {PLAN_LABELS[planCode] ?? 'Business'}
                 </span>
                 {data !== null ? (
                   <Badge variant={STATUS_VARIANTS[data.status]}>
@@ -121,7 +128,7 @@ export default function BillingPage() {
               ) : (
                 <p className="text-muted-foreground text-sm">
                   Cette entreprise n’a pas d’abonnement actif. Le module professionnel — missions,
-                  équipes, clients — nécessite la formule Entreprise.
+                  équipes, interventions — nécessite la formule Business ou Ultimate.
                 </p>
               )}
 
@@ -158,7 +165,7 @@ export default function BillingPage() {
         avec le rôle `service_role`, en Phase 12.
       */}
       <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6 sm:pt-6">
           <p className="text-muted-foreground text-sm">
             Le changement de formule en ligne arrive prochainement.
           </p>

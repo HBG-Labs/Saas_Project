@@ -55,7 +55,7 @@ export function PublicHolidaysTab({
           </div>
 
           <Badge variant="primary" className="text-3xs font-mono">
-            {holidays.length} Fériés 2026
+            {holidays.length} Fériés ({new Date().getFullYear()})
           </Badge>
         </div>
       </div>

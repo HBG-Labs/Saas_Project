@@ -76,5 +76,6 @@ export { MemberQuotaBar } from './components/MemberQuotaBar';
 export { MemberRow } from './components/MemberRow';
 export { OrganizationSwitcher } from './components/OrganizationSwitcher';
 export { OwnershipCard } from './components/OwnershipCard';
+export { OrganizationBillingCard } from './components/OrganizationBillingCard';
 export { RoleBadge } from './components/RoleBadge';
 export { RoleSelect } from './components/RoleSelect';
