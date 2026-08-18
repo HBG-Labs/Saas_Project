@@ -14,6 +14,7 @@ export {
 } from './entitlements';
 
 export {
+  getBillingSummary,
   getEffectiveFeatures,
   getMySubscription,
   getOrganizationSubscription,
@@ -21,6 +22,8 @@ export {
   listPlanFeatures,
   listPlans,
   resolvePlanCode,
+  syncSubscriptionSeats,
+  type BillingSummary,
 } from './api/billing.api';
 
 export {

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { syncSubscriptionSeats } from '@/features/billing';
 import { qk } from '@/lib/query-keys';
 import type { OrgRole } from '@/types/database';
 
@@ -117,6 +118,16 @@ export function useAcceptInvitation() {
     onSuccess: async (organizationId) => {
       select(organizationId);
       await queryClient.invalidateQueries({ queryKey: qk.organizations.all });
+      await queryClient.invalidateQueries({ queryKey: qk.billing.all });
+
+      // C'est ICI qu'un siège devient payant : `accept_organization_invitation`
+      // fait passer la ligne de `invited` à `active`, et seuls les membres
+      // actifs sont facturés. Sans cet appel, l'organisation grandirait sans
+      // que Stripe en sache rien.
+      //
+      // L'échec est absorbé : refuser l'entrée dans l'entreprise parce que la
+      // facturation n'a pas suivi serait absurde.
+      await syncSubscriptionSeats(organizationId);
     },
   });
 }

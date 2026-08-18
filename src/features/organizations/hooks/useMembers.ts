@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { syncSubscriptionSeats } from '@/features/billing';
 import { qk } from '@/lib/query-keys';
 import type { OrgRole } from '@/types/database';
 import type { MemberWithProfile } from '@/types/domain';
@@ -11,6 +12,21 @@ import {
   updateMemberDetails,
   updateMemberRole,
 } from '../api/organizations.api';
+
+/**
+ * Répercute l'effectif sur la facturation, après coup et sans bloquer.
+ *
+ * Un siège au-delà de ceux compris dans la formule coûte 5 € par mois. Si
+ * personne ne prévient Stripe, l'organisation grandit sans que la facture
+ * suive — le genre de dérive qu'on ne découvre qu'au moment du prélèvement,
+ * quand un client la signale.
+ *
+ * L'appel est délibérément « au mieux » : son échec n'annule pas l'ajout du
+ * membre. Voir `syncSubscriptionSeats` pour le raisonnement.
+ */
+async function repercuterSurLaFacturation(organizationId: string): Promise<void> {
+  await syncSubscriptionSeats(organizationId);
+}
 
 export function useMembers(organizationId: string | null) {
   return useQuery({
@@ -43,6 +59,8 @@ export function useCreateMemberAccount(organizationId: string) {
       await queryClient.invalidateQueries({
         queryKey: qk.organizations.members(organizationId),
       });
+      await queryClient.invalidateQueries({ queryKey: qk.billing.all });
+      await repercuterSurLaFacturation(organizationId);
     },
   });
 }
@@ -138,6 +156,8 @@ export function useRemoveMember(organizationId: string) {
       await queryClient.invalidateQueries({
         queryKey: qk.organizations.members(organizationId),
       });
+      await queryClient.invalidateQueries({ queryKey: qk.billing.all });
+      await repercuterSurLaFacturation(organizationId);
     },
   });
 }

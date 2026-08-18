@@ -1,21 +1,31 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Sparkles, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
+import { FormError } from '@/components/feedback/FormError';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { type PlanId, PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { FormError } from '@/components/feedback/FormError';
 import { registerSchema, type RegisterValues } from '@/features/auth/schemas/auth.schema';
 
 export default function RegisterPage() {
   const { signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const planParam = searchParams.get('plan') as PlanId | null;
+
+  const initialPlan = PRICING_PLANS.find((p) => p.id === planParam)?.id ?? 'free';
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(initialPlan);
+
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [emailSent, setEmailSent] = useState(false);
+
+  const activePlanInfo = PRICING_PLANS.find((p) => p.id === selectedPlan) ?? PRICING_PLANS[0]!;
 
   const {
     register,
@@ -60,7 +70,7 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Créer un compte"
-      description="Gratuit. Vos favoris et votre historique vous suivent partout."
+      description="Rejoignez REZO360 et accédez à vos outils techniques et calculs certifiés."
       footer={
         <>
           Déjà inscrit ?{' '}
@@ -70,53 +80,124 @@ export default function RegisterPage() {
         </>
       }
     >
-      <FormError error={submitError} />
+      <div className="space-y-4">
+        {/* Sélecteur de formule */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+            <span>Choisissez votre formule :</span>
+            <Link to={ROUTES.pricing} className="text-primary text-3xs hover:underline font-normal">
+              Voir le comparatif ↗
+            </Link>
+          </label>
 
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
-        <Input
-          label="Nom affiché"
-          autoComplete="name"
-          placeholder="Jean Dupont"
-          required
-          {...(errors.displayName?.message ? { error: errors.displayName.message } : {})}
-          {...register('displayName')}
-        />
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-xl bg-surface-sunken border border-border/80">
+            {PRICING_PLANS.map((plan) => {
+              const isSelected = selectedPlan === plan.id;
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlan(plan.id)}
+                  className={`flex flex-col items-center justify-center p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
+                      : 'bg-surface/50 border-border/40 text-muted-foreground hover:text-foreground hover:bg-surface'
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <span className="text-2xs font-bold">{plan.name}</span>
+                    {plan.popular ? (
+                      <span className="text-3xs text-amber-300 font-black">★</span>
+                    ) : null}
+                  </div>
+                  <span className="text-3xs opacity-80 font-mono">
+                    {plan.priceMonthly === 0 ? 'Gratuit' : `${plan.priceMonthly}€/m`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        <Input
-          label="Adresse e-mail"
-          type="email"
-          autoComplete="email"
-          placeholder="vous@exemple.fr"
-          required
-          {...(errors.email?.message ? { error: errors.email.message } : {})}
-          {...register('email')}
-        />
+          {/* Récapitulatif dynamique de la formule choisie */}
+          <div className="rounded-xl border border-border/80 bg-surface/60 p-2.5 text-2xs space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <Sparkles className="size-3 text-primary" />
+                <span>Formule {activePlanInfo.name}</span>
+                {activePlanInfo.popular ? (
+                  <Badge variant="primary" className="text-3xs py-0 px-1">
+                    Recommandé
+                  </Badge>
+                ) : null}
+              </div>
+              <span className="font-mono font-bold text-foreground">
+                {activePlanInfo.priceMonthly === 0 ? '0 €' : `${activePlanInfo.priceMonthly} € / mois`}
+              </span>
+            </div>
+            <p className="text-muted-foreground leading-relaxed flex items-center gap-1">
+              <Users className="size-3 shrink-0 text-muted-foreground" />
+              <span>
+                {activePlanInfo.includedUsers} utilisateur{activePlanInfo.includedUsers > 1 ? 's inclus' : ' inclus'}
+                {activePlanInfo.additionalUserPriceMonthly > 0 ? ' (+5 €/user supp.)' : ' (monocompte strict)'}.
+              </span>
+            </p>
+          </div>
+        </div>
 
-        <Input
-          label="Mot de passe"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••"
-          required
-          hint="8 caractères minimum. Privilégiez une phrase longue à une suite de symboles."
-          {...(errors.password?.message ? { error: errors.password.message } : {})}
-          {...register('password')}
-        />
+        <FormError error={submitError} />
 
-        <Input
-          label="Confirmer le mot de passe"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••"
-          required
-          {...(errors.confirmPassword?.message ? { error: errors.confirmPassword.message } : {})}
-          {...register('confirmPassword')}
-        />
+        <form onSubmit={onSubmit} noValidate className="space-y-4 pt-1">
+          <Input
+            label="Nom affiché"
+            autoComplete="name"
+            placeholder="Jean Dupont"
+            required
+            {...(errors.displayName?.message ? { error: errors.displayName.message } : {})}
+            {...register('displayName')}
+          />
 
-        <Button type="submit" size="lg" className="w-full" isLoading={isSubmitting}>
-          Créer mon compte
-        </Button>
-      </form>
+          <Input
+            label="Adresse e-mail"
+            type="email"
+            autoComplete="email"
+            placeholder="vous@exemple.fr"
+            required
+            {...(errors.email?.message ? { error: errors.email.message } : {})}
+            {...register('email')}
+          />
+
+          <Input
+            label="Mot de passe"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            required
+            hint="8 caractères minimum. Privilégiez une phrase longue à une suite de symboles."
+            {...(errors.password?.message ? { error: errors.password.message } : {})}
+            {...register('password')}
+          />
+
+          <Input
+            label="Confirmer le mot de passe"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            required
+            {...(errors.confirmPassword?.message ? { error: errors.confirmPassword.message } : {})}
+            {...register('confirmPassword')}
+          />
+
+          <Button type="submit" size="lg" className="w-full font-bold" isLoading={isSubmitting}>
+            {activePlanInfo.priceMonthly === 0
+              ? 'Créer mon compte gratuit'
+              : `Démarrer avec ${activePlanInfo.name}`}
+          </Button>
+
+          <p className="text-center text-3xs text-muted-foreground">
+            Aucun paiement requis immédiatement. Votre espace et vos accès s&apos;activent dès la validation de votre e-mail.
+          </p>
+        </form>
+      </div>
     </AuthCard>
   );
 }

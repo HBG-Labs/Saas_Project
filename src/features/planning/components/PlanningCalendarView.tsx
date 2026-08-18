@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   Calendar as CalendarIcon,
@@ -195,8 +195,14 @@ export function PlanningCalendarView({
     return holidays;
   }, [holidays, activityTypeFilter, selectedTechFilter, searchQuery]);
 
-  // Helper pour récupérer toutes les activités d'un jour précis
-  const getActivitiesForDay = (dateStr: string) => {
+  // Helper pour récupérer toutes les activités d'un jour précis.
+  //
+  // `useCallback` et non une fonction nue : le `useMemo` du calendrier
+  // l'appelle pour chaque jour affiché. Recréée à chaque rendu, elle ne pouvait
+  // pas figurer dans ses dépendances sans invalider le calcul en permanence —
+  // d'où l'avertissement, et un recalcul complet de la grille à chaque frappe
+  // dans la recherche.
+  const getActivitiesForDay = useCallback((dateStr: string) => {
     const dayEvents = filteredEvents.filter(
       (e) => e.date === dateStr && e.type !== 'holiday' && e.type !== 'leave',
     );
@@ -211,7 +217,7 @@ export function PlanningCalendarView({
       leaves: dayLeaves,
       totalCount: dayEvents.length + dayHolidays.length + dayLeaves.length,
     };
-  };
+  }, [filteredEvents, filteredHolidays, filteredLeaves]);
 
   // 2. Calcul des jours pour la vue Mois
   const monthDaysGrid = useMemo(() => {
@@ -317,7 +323,7 @@ export function PlanningCalendarView({
       dateStr,
       ...getActivitiesForDay(dateStr),
     }));
-  }, [filteredEvents, filteredHolidays, filteredLeaves, currentYear, currentMonthIndex]);
+  }, [filteredEvents, filteredHolidays, filteredLeaves, currentYear, currentMonthIndex, getActivitiesForDay]);
 
   const todayStr = useMemo(() => {
     const now = new Date();

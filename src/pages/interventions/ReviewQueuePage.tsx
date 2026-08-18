@@ -46,7 +46,11 @@ export default function ReviewQueuePage() {
   const [error, setError] = useState<unknown>(null);
   const [search, setSearch] = useState('');
 
-  const rawList = reports.data ?? [];
+  // `?? []` produit un tableau NEUF à chaque rendu quand la requête n'a pas
+  // encore répondu. Le `useMemo` ci-dessous voyait donc sa dépendance changer
+  // en permanence et recalculait le filtrage à chaque frappe, y compris quand
+  // rien n'avait bougé.
+  const rawList = useMemo(() => reports.data ?? [], [reports.data]);
 
   const list = useMemo(() => {
     if (!search.trim()) return rawList;

@@ -173,3 +173,40 @@ export async function getBillingSummary(organizationId: string): Promise<Billing
     maxUsers: row.max_users,
   };
 }
+
+/**
+ * Aligne la quantité de sièges facturés sur l'effectif réel.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CET APPEL NE DOIT JAMAIS FAIRE ÉCHOUER SON APPELANT
+ *
+ * Ajouter un technicien et synchroniser la facturation sont deux gestes de
+ * nature différente. Le premier est un acte métier que le dirigeant attend ; le
+ * second est une conséquence comptable. Faire dépendre l'un de l'autre
+ * reviendrait à empêcher l'embauche parce que Stripe est lent.
+ *
+ * Cette fonction absorbe donc ses propres échecs et renvoie `false`. La
+ * fonction Edge est idempotente — elle POSE une quantité au lieu de
+ * l'incrémenter — de sorte qu'une synchronisation manquée se rattrape au
+ * changement suivant.
+ *
+ * Reste un trou assumé, décrit dans `README-STRIPE.md` : un ajout isolé, suivi
+ * d'aucun autre mouvement, laisse Stripe en retard jusqu'à la prochaine
+ * modification d'effectif.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export async function syncSubscriptionSeats(organizationId: string): Promise<boolean> {
+  try {
+    // `invoke` déclare son retour en `any` : sans annotation explicite, la
+    // déstructuration propagerait ce `any` dans tout l'appelant.
+    const response: { data: { synced?: boolean } | null; error: unknown } =
+      await supabase.functions.invoke<{ synced?: boolean }>('sync-subscription-seats', {
+        body: { organizationId },
+      });
+
+    if (response.error !== null) return false;
+    return response.data?.synced === true;
+  } catch {
+    return false;
+  }
+}

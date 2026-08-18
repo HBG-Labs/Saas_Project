@@ -93,6 +93,16 @@ export function GoogleMapView({
         mapInstanceRef.current = null;
       }
     };
+    // Volontairement vide : cet effet CRÉE la carte Leaflet, une seule fois.
+    //
+    // Ajouter `territory`, `layerMode` ou les coordonnées initiales en
+    // dépendances détruirait et reconstruirait la carte à chaque changement de
+    // filtre — perdant le zoom, le centrage et la position que l'utilisateur
+    // vient de choisir. Ces valeurs sont appliquées par des effets SÉPARÉS, qui
+    // agissent sur l'instance existante.
+    //
+    // Le tableau vide est donc une décision, pas un oubli.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2. Mise à jour du calque de tuiles (mode satellite, roadmap, dark)
