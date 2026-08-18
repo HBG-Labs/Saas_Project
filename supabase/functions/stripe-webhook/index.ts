@@ -260,12 +260,32 @@ Deno.serve(async (request: Request): Promise<Response> => {
       }
 
       case 'invoice.payment_failed': {
+        // MÊME TRAITEMENT QUE LES ÉVÉNEMENTS D'ABONNEMENT, et pour les mêmes
+        // raisons. Cette branche écrivait `past_due` en dur, sans relire Stripe
+        // et sans vérifier son écriture. Deux défauts déjà payés ailleurs :
+        //
+        //   • déduire un statut de l'événement plutôt que de l'objet. Un échec
+        //     de paiement suivi d'un règlement produit trois `payment_failed`
+        //     puis un abonnement `active` — observé tel quel : trois échecs à
+        //     21:43, succès à 21:44. Qu'un rejeu tardif de l'un des trois
+        //     arrive après, et l'abonnement réglé repassait « en retard » ;
+        //   • ne pas contrôler le résultat de l'écriture. C'est exactement ce
+        //     qui avait laissé encaisser un paiement sans accorder de droits,
+        //     sans la moindre alarme.
+        //
+        // `applySubscription` fait les deux correctement : on relit, on lui
+        // passe l'objet courant, elle lève si l'écriture échoue — et
+        // l'événement est alors retiré du journal pour que Stripe rejoue.
         const invoice = event.data.object as { subscription?: string };
+
         if (invoice.subscription) {
-          await admin
-            .from('subscriptions')
-            .update({ status: 'past_due' })
-            .eq('provider_subscription_id', invoice.subscription);
+          const courant = (await stripeRequest(
+            `/v1/subscriptions/${invoice.subscription}`,
+            {},
+            'GET',
+          )) as unknown as StripeSubscription;
+
+          await applySubscription(admin, courant, event.id);
         }
         break;
       }
@@ -298,9 +318,30 @@ async function applySubscription(
   sub: StripeSubscription,
   eventId: string,
 ): Promise<void> {
-  const organizationId = sub.metadata?.organization_id;
+  let organizationId = sub.metadata?.organization_id;
+
   if (!organizationId) {
-    throw new Error(`Abonnement ${sub.id} sans organisation en métadonnées.`);
+    // REPLI PAR IDENTIFIANT. Nos sessions de paiement posent l'organisation en
+    // métadonnées, mais deux cas y échappent : un abonnement créé à la main
+    // depuis le tableau de bord Stripe, et `invoice.payment_failed`, dont
+    // l'objet est une facture — elle ne transporte pas les métadonnées de
+    // l'abonnement, seulement son identifiant.
+    //
+    // Si nous connaissons déjà cet abonnement, son organisation est inscrite
+    // chez nous : c'est une source aussi sûre que les métadonnées, et elle
+    // évite qu'un échec de paiement tourne en boucle de rejeu faute de savoir
+    // à qui l'imputer.
+    const { data: connu } = await admin
+      .from('subscriptions')
+      .select('organization_id')
+      .eq('provider_subscription_id', sub.id)
+      .maybeSingle();
+
+    organizationId = connu?.organization_id ?? undefined;
+  }
+
+  if (!organizationId) {
+    throw new Error(`Abonnement ${sub.id} sans organisation connue ni en métadonnées.`);
   }
 
   let planCode = sub.metadata?.plan_code;
