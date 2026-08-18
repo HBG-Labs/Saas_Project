@@ -481,6 +481,145 @@ select pg_temp.refuses(
 reset role;
 
 -- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 7 — L''ecriture du webhook, telle qu''elle se produit ==='; end $$;
+-- =============================================================================
+--
+-- CE QUE CETTE PARTIE PROTÈGE, ET POURQUOI ELLE EXISTE
+--
+-- Au premier paiement réel, le webhook a répondu 200, journalisé l'événement
+-- comme traité — et n'a rien écrit. Deux causes conjuguées :
+--
+--   1. `subscriptions_active_org_idx` n'admet qu'UN abonnement vivant par
+--      organisation, et `app.start_organization_trial` en avait déjà ouvert un.
+--      L'insertion violait l'index.
+--   2. L'erreur n'était pas contrôlée : `supabase-js` ne lève pas, il renvoie
+--      `{ data, error }`. L'échec passait en silence sur la seule écriture qui
+--      compte de tout le système de facturation.
+--
+-- Un paiement encaissé, aucun droit accordé, et aucune alarme. Le rejeu n'y
+-- pouvait rien : Stripe avait reçu un 200.
+--
+-- On reproduit ici la séquence exacte que la fonction exécute, en SQL, pour que
+-- la contrainte d'unicité soit éprouvée sans dépendre d'un paiement.
+
+do $$
+declare v_org uuid; v_vivants integer; v_essai text;
+begin
+  select id into v_org from public.organizations where slug = 'essai-factu';
+
+  -- Remise en situation : un essai en cours, comme après création d'entreprise.
+  delete from public.subscriptions where organization_id = v_org;
+  insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
+  values (v_org, 'starter', 'trialing', now() + interval '30 days');
+
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'starter',
+    'L''organisation est en essai avant paiement');
+
+  -- ÉTAPE 1 du webhook : refermer ce qui occupe la place unique.
+  --
+  -- Le FILTRE est reproduit tel quel, et pas seulement son intention. Le
+  -- webhook écrivait d'abord `neq(sub_id) AND is null` — deux conditions qui ne
+  -- peuvent jamais être vraies ensemble, puisque `NULL <> 'sub_x'` vaut NULL et
+  -- non TRUE. L'essai n'était donc jamais refermé, et l'insertion suivante
+  -- violait l'index.
+  --
+  -- Ce test ne l'avait pas vu parce qu'il reproduisait la SÉQUENCE sans le
+  -- filtre. Un test qui simplifie ce qu'il éprouve n'éprouve plus grand-chose.
+  update public.subscriptions
+  set status = 'canceled', canceled_at = now()
+  where organization_id = v_org
+    and status in ('trialing', 'active', 'past_due')
+    and (provider_subscription_id is null or provider_subscription_id <> 'sub_essai');
+
+  -- ÉTAPE 2 : écrire l'abonnement payé.
+  insert into public.subscriptions
+    (organization_id, plan_code, status, current_period_start, current_period_end,
+     provider, provider_customer_id, provider_subscription_id)
+  values (v_org, 'pro', 'active', now(), now() + interval '30 days',
+          'stripe', 'cus_essai', 'sub_essai')
+  on conflict (provider_subscription_id) do update set
+    plan_code = excluded.plan_code,
+    status    = excluded.status;
+
+  select count(*) into v_vivants from public.subscriptions
+  where organization_id = v_org and status in ('trialing', 'active', 'past_due');
+
+  perform pg_temp.ok(v_vivants = 1,
+    'Un seul abonnement vivant subsiste apres le paiement');
+
+  select status into v_essai from public.subscriptions
+  where organization_id = v_org and provider_subscription_id is null;
+
+  perform pg_temp.ok(v_essai = 'canceled', 'L''essai est referme, pas supprime');
+
+  -- La formulation fautive, mise à l'épreuve : elle ne doit toucher AUCUNE
+  -- ligne. Si un jour elle en touchait une, c'est que la logique à trois
+  -- valeurs de PostgreSQL aurait changé — et le webhook pourrait revenir à
+  -- l'ancienne écriture sans qu'on s'en aperçoive.
+  declare v_touchees integer;
+  begin
+    with faux as (
+      update public.subscriptions set status = status
+      where organization_id = v_org
+        and provider_subscription_id <> 'sub_essai'
+        and provider_subscription_id is null
+      returning 1
+    )
+    select count(*) into v_touchees from faux;
+
+    perform pg_temp.ok(v_touchees = 0,
+      '`neq` ET `is null` combines ne selectionnent rien : c''est la faute d''origine');
+  end;
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'pro',
+    'La formule payee gouverne desormais les droits');
+end
+$$;
+
+-- Le REJEU du même abonnement ne doit rien dupliquer.
+do $$
+declare v_org uuid; v_lignes integer;
+begin
+  select id into v_org from public.organizations where slug = 'essai-factu';
+
+  insert into public.subscriptions
+    (organization_id, plan_code, status, current_period_start, current_period_end,
+     provider, provider_customer_id, provider_subscription_id)
+  values (v_org, 'pro', 'active', now(), now() + interval '30 days',
+          'stripe', 'cus_essai', 'sub_essai')
+  on conflict (provider_subscription_id) do update set
+    plan_code = excluded.plan_code,
+    status    = excluded.status;
+
+  select count(*) into v_lignes from public.subscriptions
+  where provider_subscription_id = 'sub_essai';
+
+  perform pg_temp.ok(v_lignes = 1, 'Le rejeu du meme abonnement ne cree pas de doublon');
+end
+$$;
+
+-- Sans refermer l'essai, l'ecriture DOIT echouer : c'est la contrainte qui a
+-- fait echouer le premier paiement, et elle doit continuer de mordre.
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-voisin-b';
+
+  delete from public.subscriptions where organization_id = v_org;
+  insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
+  values (v_org, 'starter', 'trialing', now() + interval '30 days');
+
+  perform pg_temp.refuses(
+    format($sql$ insert into public.subscriptions
+                   (organization_id, plan_code, status, current_period_end,
+                    provider, provider_subscription_id)
+                 values (%L, 'pro', 'active', now() + interval '30 days',
+                         'stripe', 'sub_conflit') $sql$, v_org),
+    'Deux abonnements vivants sur la meme organisation sont refuses'
+  );
+end
+$$;
+
+-- =============================================================================
 do $$
 begin
   raise notice '';

@@ -153,7 +153,11 @@ if (checkout.status === 200) {
     `${attenduExtra} attendu, ${checkout.payload.extraSeats} reçu`,
   );
 
-  console.log(`        ${url.slice(0, 72)}…`);
+  // L'URL COMPLÈTE : tronquée, elle ne sert à rien. C'est par elle qu'on règle
+  // la session de test, et donc qu'on éprouve la moitié retour du circuit.
+  console.log(`
+        Régler avec la carte 4242 4242 4242 4242 :
+        ${url}`);
 }
 
 // --------------------------------------------------- 4. ce qui doit être refusé

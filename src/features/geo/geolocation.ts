@@ -2,7 +2,7 @@ import { GeoError } from './types';
 import type { GeoPosition, NavigationDestination } from './types';
 
 /**
- * Service GPS centralisé et ponctuel pour REZO360.
+ * Service GPS centralisé et ponctuel pour NexoraTech.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * RÈGLES DE CONFIDENTIALITÉ & FONCTIONNEMENT :

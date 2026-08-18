@@ -70,7 +70,11 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Créer un compte"
-      description="Rejoignez REZO360 et accédez à vos outils techniques et calculs certifiés."
+      description={
+        activePlanInfo.priceMonthly === 0
+          ? 'Gratuit à vie. Accédez à vos outils techniques et calculs certifiés.'
+          : `Rejoignez NexoraTech avec la formule ${activePlanInfo.name} pour équiper votre entreprise.`
+      }
       footer={
         <>
           Déjà inscrit ?{' '}
@@ -83,12 +87,16 @@ export default function RegisterPage() {
       <div className="space-y-4">
         {/* Sélecteur de formule */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+          {/* Intitulé de GROUPE, pas d'un contrôle : le choix se fait sur des
+              cartes cliquables, et il contient lui-même un lien. Un `<label>`
+              promettrait une association qui n'existe pas — et rendrait le lien
+              inatteignable au clavier dans certains lecteurs d'écran. */}
+          <div className="text-xs font-semibold text-foreground flex items-center justify-between">
             <span>Choisissez votre formule :</span>
             <Link to={ROUTES.pricing} className="text-primary text-3xs hover:underline font-normal">
               Voir le comparatif ↗
             </Link>
-          </label>
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-xl bg-surface-sunken border border-border/80">
             {PRICING_PLANS.map((plan) => {
@@ -98,19 +106,19 @@ export default function RegisterPage() {
                   key={plan.id}
                   type="button"
                   onClick={() => setSelectedPlan(plan.id)}
-                  className={`flex flex-col items-center justify-center p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center py-2 px-1.5 rounded-lg border text-center transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
                       : 'bg-surface/50 border-border/40 text-muted-foreground hover:text-foreground hover:bg-surface'
                   }`}
                 >
                   <div className="flex items-center gap-1">
-                    <span className="text-2xs font-bold">{plan.name}</span>
+                    <span className="text-2xs font-semibold">{plan.name}</span>
                     {plan.popular ? (
                       <span className="text-3xs text-amber-300 font-black">★</span>
                     ) : null}
                   </div>
-                  <span className="text-3xs opacity-80 font-mono">
+                  <span className={`text-xs font-mono font-extrabold tabular-nums tracking-tight ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}>
                     {plan.priceMonthly === 0 ? 'Gratuit' : `${plan.priceMonthly}€/m`}
                   </span>
                 </button>
@@ -194,7 +202,9 @@ export default function RegisterPage() {
           </Button>
 
           <p className="text-center text-3xs text-muted-foreground">
-            Aucun paiement requis immédiatement. Votre espace et vos accès s&apos;activent dès la validation de votre e-mail.
+            {activePlanInfo.priceMonthly === 0
+              ? 'Compte gratuit sans carte bancaire. Vos outils et calculs sont accessibles immédiatement.'
+              : 'Aucun paiement requis immédiatement. Vous configurerez votre abonnement après validation de votre e-mail.'}
           </p>
         </form>
       </div>

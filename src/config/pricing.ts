@@ -36,7 +36,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'Découverte de REZO360',
+    tagline: 'Découverte de NexoraTech',
     badge: 'Découverte',
     popular: false,
     priceMonthly: 0,

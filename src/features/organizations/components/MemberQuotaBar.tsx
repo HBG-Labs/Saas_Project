@@ -18,7 +18,7 @@ export interface MemberQuotaBarProps {
 /**
  * Consommation du quota d'utilisateurs et affichage des sièges supplémentaires.
  *
- * Règles d'affichage officielles REZO360 :
+ * Règles d'affichage officielles NexoraTech :
  * - Dans la limite : `2 / 2 utilisateurs`, `5 / 5 utilisateurs` ou `1 / 1 utilisateur` (Free).
  * - Avec sièges supplémentaires (+5 €/mois) : `7 utilisateurs — 5 inclus + 2 supplémentaires (+10 €/mois)`.
  * - Si le quota est atteint :

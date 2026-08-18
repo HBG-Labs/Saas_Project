@@ -219,7 +219,42 @@ Deno.serve(async (request: Request): Promise<Response> => {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        await applySubscription(admin, event.data.object as unknown as StripeSubscription, event.id);
+        // On RELIT l'abonnement chez Stripe au lieu de croire la charge utile.
+        //
+        // ─────────────────────────────────────────────────────────────────
+        // POURQUOI NE PAS FAIRE CONFIANCE À L'ÉVÉNEMENT REÇU
+        //
+        // Un événement décrit l'objet À L'INSTANT où il a été émis. Rien ne
+        // garantit l'ordre d'arrivée : Stripe rejoue après un échec, et un
+        // rejeu manuel se fait dans l'ordre où l'on clique.
+        //
+        // Mesuré : un `subscription.updated` reçu à 03:47:27, puis un
+        // `subscription.created` à 03:47:36. Le second est pourtant ANTÉRIEUR
+        // dans la vie de l'abonnement — il le décrivait `incomplete`, avant
+        // confirmation du paiement. En l'appliquant après, l'abonnement est
+        // repassé en « paiement en retard » alors qu'il était réglé.
+        //
+        // Une comparaison d'horodatages corrigerait ce cas précis. Relire
+        // l'objet supprime la classe entière : quel que soit l'événement, quel
+        // que soit son âge, on écrit l'état COURANT. Le coût est un appel
+        // d'API par événement — dérisoire au regard d'un abonnement affiché
+        // comme impayé.
+        // ─────────────────────────────────────────────────────────────────
+        const recu = event.data.object as unknown as StripeSubscription;
+
+        const courant = (await stripeRequest(
+          `/v1/subscriptions/${recu.id}`,
+          {},
+          'GET',
+        )) as unknown as StripeSubscription;
+
+        // Les métadonnées voyagent avec l'événement et peuvent manquer sur
+        // l'objet relu si elles ont été posées à la session : on les conserve.
+        await applySubscription(
+          admin,
+          { ...courant, metadata: courant.metadata ?? recu.metadata },
+          event.id,
+        );
         break;
       }
 
@@ -286,27 +321,73 @@ async function applySubscription(
   }
 
   const period = readPeriod(sub);
+  const status = STATUS_MAP[sub.status] ?? 'expired';
+  const estVivant = status === 'trialing' || status === 'active' || status === 'past_due';
 
-  await admin
-    .from('subscriptions')
-    .upsert(
-      {
-        organization_id: organizationId,
-        plan_code: planCode,
-        status: STATUS_MAP[sub.status] ?? 'expired',
-        current_period_start: period.start ?? new Date().toISOString(),
-        current_period_end: period.end,
-        trial_ends_at: iso(sub.trial_end),
-        canceled_at: iso(sub.canceled_at),
-        provider: 'stripe',
-        provider_customer_id: sub.customer,
-        provider_subscription_id: sub.id,
-      },
-      { onConflict: 'provider_subscription_id' },
-    );
+  // ---------------------------------------------------------------------------
+  // L'ESSAI EN COURS CÈDE LA PLACE À L'ABONNEMENT PAYÉ
+  // ---------------------------------------------------------------------------
+  //
+  // `subscriptions_active_org_idx` n'admet qu'UN abonnement vivant par
+  // organisation — sans quoi les droits dépendraient de l'ordre de lecture.
+  // Or `app.start_organization_trial` en a déjà ouvert un à la création de
+  // l'entreprise.
+  //
+  // Insérer l'abonnement Stripe sans refermer l'essai viole donc cet index.
+  // C'est exactement ce qui s'est produit au premier paiement réel : l'erreur
+  // n'était pas contrôlée, le webhook répondait 200, journalisait l'événement
+  // comme traité — et l'abonnement n'était écrit nulle part. Stripe ne
+  // rejouait jamais, puisqu'on lui avait dit que tout allait bien.
+  if (estVivant) {
+    const { error: closeError } = await admin
+      .from('subscriptions')
+      .update({ status: 'canceled', canceled_at: new Date().toISOString() })
+      .eq('organization_id', organizationId)
+      .in('status', ['trialing', 'active', 'past_due'])
+      // `or` et non deux filtres enchaînés. La version précédente combinait
+      // `.neq(sub.id)` ET `.is(null)` : sur une ligne dont la colonne vaut
+      // NULL, `NULL <> 'sub_x'` ne vaut pas TRUE mais NULL. Les deux
+      // conditions ne pouvaient donc JAMAIS être vraies ensemble, l'essai
+      // n'était jamais refermé, et l'insertion violait l'index d'unicité.
+      //
+      // Deux cas à fermer, et un seul s'exprime par une égalité : l'essai, qui
+      // n'a pas d'abonnement Stripe, et un éventuel abonnement Stripe
+      // ANTÉRIEUR, qui en a un différent.
+      .or(`provider_subscription_id.is.null,provider_subscription_id.neq.${sub.id}`);
 
-  // Rattache l'ÉVÉNEMENT à l'organisation, pour pouvoir diagnostiquer plus tard
-  // sans rejouer la charge utile. `sub.id` serait l'identifiant d'abonnement —
-  // aucune ligne ne serait touchée, en silence.
+    if (closeError) {
+      throw new Error(`Clôture de l'essai impossible : ${closeError.message}`);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // L'ÉCRITURE, ET SON ERREUR CONTRÔLÉE
+  // ---------------------------------------------------------------------------
+  //
+  // `supabase-js` ne LÈVE PAS : il renvoie `{ data, error }`. Un `await` sans
+  // vérification laisse donc passer un échec en silence — sur la seule écriture
+  // qui compte de tout le système de facturation.
+  const { error: upsertError } = await admin.from('subscriptions').upsert(
+    {
+      organization_id: organizationId,
+      plan_code: planCode,
+      status,
+      current_period_start: period.start ?? new Date().toISOString(),
+      current_period_end: period.end,
+      trial_ends_at: iso(sub.trial_end),
+      canceled_at: iso(sub.canceled_at),
+      provider: 'stripe',
+      provider_customer_id: sub.customer,
+      provider_subscription_id: sub.id,
+    },
+    { onConflict: 'provider_subscription_id' },
+  );
+
+  if (upsertError) {
+    // Relancé pour que l'appelant retire l'événement du journal : Stripe
+    // rejouera, au lieu de considérer un échec comme un succès.
+    throw new Error(`Écriture de l'abonnement ${sub.id} impossible : ${upsertError.message}`);
+  }
+
   await admin.from('stripe_events').update({ organization_id: organizationId }).eq('id', eventId);
 }
