@@ -100,22 +100,38 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     const seatItem = items.find((item) => item.price?.id === prices.extraSeatPriceId);
 
+    // AUCUN PRÉLÈVEMENT ICI, ET C'EST EXPLICITE.
+    //
+    // `create_prorations` inscrit l'écart au prorata sur la PROCHAINE facture
+    // mensuelle : ni carte demandée, ni paiement déclenché au moment où le
+    // dirigeant ajoute un collaborateur. Un ajout en milieu de mois est facturé
+    // pour les jours restants, un retrait produit un avoir de la même façon.
+    //
+    // C'est déjà le comportement par défaut de Stripe — raison de plus pour
+    // l'écrire. Un défaut implicite qui décide d'un prélèvement est un défaut
+    // qui peut changer sans nous, et le jour où il changerait, une carte serait
+    // débitée sans que personne ici ait rien demandé. Le poser coûte un
+    // paramètre ; ne pas le poser coûte une confiance.
+    const auProchainRelevé = { proration_behavior: 'create_prorations' };
+
     // Trois situations, et chacune demande une instruction Stripe différente.
     if (context.extraSeats > 0 && seatItem) {
       await stripeRequest(`/v1/subscription_items/${seatItem.id}`, {
         quantity: String(context.extraSeats),
+        ...auProchainRelevé,
       });
     } else if (context.extraSeats > 0) {
       await stripeRequest('/v1/subscription_items', {
         subscription: subscription.provider_subscription_id,
         price: prices.extraSeatPriceId,
         quantity: String(context.extraSeats),
+        ...auProchainRelevé,
       });
     } else if (seatItem) {
       // Retour sous le seuil : on SUPPRIME la ligne au lieu de la mettre à
       // zéro. Une ligne « 0 × siège supplémentaire » figure sur la facture et
       // fait douter le client de ce qu'il paie.
-      await stripeDelete(`/v1/subscription_items/${seatItem.id}`);
+      await stripeDelete(`/v1/subscription_items/${seatItem.id}`, auProchainRelevé);
     }
 
     // RELECTURE. Jusqu'ici cette fonction rendait compte de son INTENTION : elle

@@ -258,9 +258,20 @@ export async function stripeRequest(
   return payload;
 }
 
-/** Suppression d'une ressource Stripe — retirer une ligne d'abonnement, par exemple. */
-export async function stripeDelete(path: string): Promise<void> {
-  const response = await fetch(`https://api.stripe.com${path}`, {
+/**
+ * Suppression d'une ressource Stripe — retirer une ligne d'abonnement, par exemple.
+ *
+ * `params` passe en chaîne de requête : c'est ainsi que Stripe accepte des
+ * options sur un DELETE, et `proration_behavior` en est une.
+ */
+export async function stripeDelete(
+  path: string,
+  params: Record<string, string> = {},
+): Promise<void> {
+  const query = new URLSearchParams(params).toString();
+  const url = `https://api.stripe.com${path}${query === '' ? '' : `?${query}`}`;
+
+  const response = await fetch(url, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${env('STRIPE_SECRET_KEY')}`,
