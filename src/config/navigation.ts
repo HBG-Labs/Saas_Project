@@ -95,6 +95,14 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
     permission: 'organization.update',
   },
   {
+    // `billing.view` et non `billing.manage` : un administrateur consulte la
+    // formule et la consommation sans pouvoir changer le moyen de paiement.
+    to: ROUTES.organizationBilling,
+    label: 'Abonnement & Facturation',
+    icon: 'credit-card',
+    permission: 'billing.view',
+  },
+  {
     to: ROUTES.auditLog,
     label: 'Journal d’activité',
     icon: 'scroll',

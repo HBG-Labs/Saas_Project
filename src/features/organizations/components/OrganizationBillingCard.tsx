@@ -66,9 +66,13 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle>Formule & Propriété de l’entreprise</CardTitle>
+        {/* Mène là où l'on AGIT. « Comparer les formules » renvoyait vers la
+            page tarifaire publique — informative, mais sans aucun bouton pour
+            souscrire. La page Facturation, elle, ouvre la session de paiement
+            et le portail Stripe. */}
         <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
-          <Link to={ROUTES.pricing}>
-            <span>Comparer les formules</span>
+          <Link to={ROUTES.organizationBilling}>
+            <span>Gérer l’abonnement</span>
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>
