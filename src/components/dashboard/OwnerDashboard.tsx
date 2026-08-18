@@ -33,6 +33,8 @@ import {
 import { useTeams } from '@/features/teams';
 import { cn } from '@/lib/cn';
 
+import { FirstStepsCard } from './FirstStepsCard';
+
 export function OwnerDashboard() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
@@ -114,6 +116,10 @@ export function OwnerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Le parcours guidé, tant qu'il n'est pas bouclé. Placé avant les KPI :
+          une entreprise qui n'a pas encore de mission n'a pas de KPI à lire. */}
+      <FirstStepsCard />
 
       {/* 2. Grille de 4 KPIs Entreprise avec Dimensions Compactes & Épurées */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
