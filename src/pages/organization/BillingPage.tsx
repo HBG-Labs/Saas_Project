@@ -408,9 +408,15 @@ export default function BillingPage() {
             . À cette date, l’entreprise repasse en formule Gratuite.
           </p>
           <p className="text-muted-foreground">
-            Rien n’est supprimé : vos données restent en base et redeviennent visibles dès une
-            nouvelle souscription. Vous pouvez aussi revenir sur cette décision tant qu’elle n’a pas
-            pris effet.
+            Ensuite, vous gardez un accès Gratuit : les calculatrices, le catalogue d’outils, trois
+            favoris et dix calculs d’historique. Les modules Missions, Clients et Équipes se
+            ferment.
+          </p>
+          <p className="text-muted-foreground">
+            <strong className="text-foreground">Rien n’est supprimé.</strong> Vos missions et vos
+            clients restent en base — simplement invisibles — et réapparaissent dès une nouvelle
+            souscription. Vous pouvez aussi revenir sur cette décision tant qu’elle n’a pas pris
+            effet.
           </p>
           <FormError error={cancel.error} />
         </div>

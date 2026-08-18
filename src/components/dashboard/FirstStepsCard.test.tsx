@@ -15,6 +15,15 @@ const membres = vi.hoisted(() => ({ current: [] as { status: string }[] }));
 const clients = vi.hoisted(() => ({ current: [] as { id: string }[] }));
 const statuts = vi.hoisted<{ current: Record<string, number> }>(() => ({ current: {} }));
 const chargement = vi.hoisted(() => ({ current: false }));
+const moduleOuvert = vi.hoisted(() => ({ current: true }));
+
+vi.mock('@/features/billing', () => ({
+  FEATURES: { missions: 'missions' },
+  useOrganizationEntitlements: () => ({
+    has: () => moduleOuvert.current,
+    isLoading: chargement.current,
+  }),
+}));
 
 vi.mock('@/features/organizations', () => ({
   useCurrentOrganization: () => ({ organization: { id: 'org-1' } }),
@@ -45,6 +54,7 @@ describe('FirstStepsCard', () => {
     clients.current = [];
     statuts.current = {};
     chargement.current = false;
+    moduleOuvert.current = true;
   });
 
   it('guide une entreprise qui vient de s’inscrire, en commençant par l’équipe', () => {
@@ -84,6 +94,17 @@ describe('FirstStepsCard', () => {
     membres.current = [{ status: 'active' }, { status: 'active' }];
     clients.current = [{ id: 'c-1' }];
     statuts.current = { approved: 1 };
+    const { container } = afficher();
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('disparaît quand l’organisation retombe sur Gratuit', () => {
+    // Une entreprise dont l'essai s'achève garde ses données, mais ne les voit
+    // plus : missions et clients renvoient du vide. Sans ce garde, elle verrait
+    // « 0 / 5 » l'inviter à recréer ce qu'elle possède déjà — chaque étape
+    // butant sur le mur de RequirePlan.
+    moduleOuvert.current = false;
     const { container } = afficher();
 
     expect(container).toBeEmptyDOMElement();

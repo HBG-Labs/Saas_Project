@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
+import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
 import { useCustomers } from '@/features/customers';
 import { useLabel } from '@/features/industries';
 import { useMissionStatusCounts } from '@/features/missions';
@@ -58,6 +59,7 @@ export function FirstStepsCard() {
   const jobSingular = useLabel('job');
   const workerPlural = useLabel('worker', true);
 
+  const { has, isLoading: droitsEnCours } = useOrganizationEntitlements(organizationId);
   const members = useMembers(organizationId);
   const customers = useCustomers(organizationId);
   // La RÉPARTITION par statut, pas une page de missions : une entreprise dont
@@ -65,9 +67,16 @@ export function FirstStepsCard() {
   // Une liste tronquée ferait réapparaître ce guide chez un client aguerri.
   const missions = useMissionStatusCounts(organizationId);
 
-  // Tant que les trois requêtes n'ont pas répondu, on n'affiche rien : une
-  // carte qui apparaît puis disparaît au chargement est pire qu'une absence.
-  if (members.isPending || customers.isPending || missions.isPending) return null;
+  // Tant que les requêtes n'ont pas répondu, on n'affiche rien : une carte qui
+  // apparaît puis disparaît au chargement est pire qu'une absence.
+  if (droitsEnCours || members.isPending || customers.isPending || missions.isPending) return null;
+
+  // Sans le module professionnel, ce parcours ne mène nulle part : chacune de
+  // ses étapes bute sur le mur de `RequirePlan`. Le cas n'est pas théorique —
+  // une organisation dont l'essai s'achève retombe sur Gratuit avec ses données
+  // intactes mais invisibles, et verrait alors « Vos premiers pas 0 / 5 »
+  // l'inviter à recréer ce qu'elle possède déjà, derrière une porte fermée.
+  if (!has(FEATURES.missions)) return null;
 
   const equipe = (members.data ?? []).filter((m) => m.status === 'active').length;
   const parStatut: Record<string, number> = missions.data ?? {};

@@ -5,7 +5,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { useOrganizationEntitlements, type FeatureKey } from '@/features/billing';
-import { useCurrentOrganization } from '@/features/organizations';
+import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { ROUTES } from '@/config/routes';
 
 export interface RequirePlanProps {
@@ -35,6 +35,12 @@ export interface RequirePlanProps {
 export function RequirePlan({ feature, label }: RequirePlanProps) {
   const { organization } = useCurrentOrganization();
   const { has, isLoading } = useOrganizationEntitlements(organization?.id ?? null);
+  const { can } = usePermission();
+
+  // Le propriétaire est envoyé là où il peut AGIR ; un technicien, là où il peut
+  // comprendre. L'inverse le ferait buter sur un second mur — celui de la
+  // permission — juste après le premier.
+  const peutVoirFacturation = can(PERMISSIONS.billingView);
 
   if (isLoading) {
     return <LoadingScreen label="Vérification de votre formule…" />;
@@ -48,7 +54,11 @@ export function RequirePlan({ feature, label }: RequirePlanProps) {
         description="Cette section fait partie du module professionnel. Si votre entreprise y était abonnée, vérifiez l’état de la facturation : un abonnement expiré rend ces données inaccessibles sans les supprimer."
         action={
           <Button asChild variant="primary" size="sm">
-            <Link to={ROUTES.pricing}>Voir les formules</Link>
+            {peutVoirFacturation ? (
+              <Link to={ROUTES.organizationBilling}>Voir mon abonnement</Link>
+            ) : (
+              <Link to={ROUTES.pricing}>Voir les formules</Link>
+            )}
           </Button>
         }
       />

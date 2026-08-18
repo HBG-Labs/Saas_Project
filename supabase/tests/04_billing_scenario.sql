@@ -733,6 +733,94 @@ end
 $$;
 
 -- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 9 — Ce que Gratuit laisse, apres la resiliation ==='; end $$;
+-- =============================================================================
+--
+-- Une resiliation qui laisserait l'entreprise devant une application morte ne
+-- serait pas une sortie, mais une porte muree. On eprouve donc ce qui RESTE :
+-- les outils, la lisibilite de la facturation, et surtout le chemin du retour.
+-- Sans ce dernier, une organisation qui se ravise apres l'echeance serait
+-- enfermee dehors.
+
+-- On repart d'un etat propre : plus de Stripe, et l'echeance derriere nous.
+update public.subscriptions
+   set provider = null, provider_subscription_id = null,
+       cancel_at_period_end = true,
+       current_period_end = now() - interval '1 day',
+       trial_ends_at = now() - interval '1 day'
+ where organization_id in (select id from public.organizations where slug = 'essai-resil');
+
+-- Une mission ecrite AVANT l'echeance : elle doit survivre a la bascule.
+insert into public.missions (organization_id, created_by, title)
+select id, pg_temp.uid('patron_a'), 'Mission anterieure a la resiliation'
+from public.organizations where slug = 'essai-resil';
+
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-resil';
+
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'free',
+    'L''organisation est bien retombee sur Gratuit');
+
+  -- CE QUI RESTE. Gratuit n'est pas un mur : c'est l'offre calculatrices.
+  perform pg_temp.ok(app.org_has_feature(v_org, 'catalog_access'),
+    'Gratuit conserve l''acces au catalogue d''outils');
+  perform pg_temp.ok(app.org_feature_limit(v_org, 'favorites') = 3,
+    'Gratuit conserve trois favoris');
+  perform pg_temp.ok(app.org_feature_limit(v_org, 'calculation_history') = 10,
+    'Gratuit conserve dix calculs d''historique');
+
+  -- CE QUI SE FERME, et c'est voulu.
+  perform pg_temp.ok(not app.org_has_feature(v_org, 'missions'),
+    'Les modules professionnels sont bien fermes');
+
+  -- RIEN N'EST SUPPRIME : c'est ce que promet la fenetre de confirmation, et
+  -- une promesse d'interface qui n'est pas verifiee en base n'engage personne.
+  perform pg_temp.ok(
+    (select count(*) from public.missions m where m.organization_id = v_org) = 1,
+    'La mission ecrite avant l''echeance est toujours en base');
+
+  -- LE CHEMIN DU RETOUR. La synthese alimente l'ecran de facturation ET la
+  -- fonction de paiement : si elle ne repondait pas, l'organisation ne pourrait
+  -- plus se reabonner du tout.
+  perform pg_temp.ok(
+    (select count(*) from public.plans p where p.code = app.org_effective_plan(v_org)) = 1,
+    'La synthese de facturation trouve encore une formule a decrire');
+  perform pg_temp.ok(app.org_monthly_amount_cents(v_org) = 0,
+    'Et n''annonce aucun montant du');
+  perform pg_temp.ok(app.org_included_seats(v_org) = 1,
+    'Gratuit annonce son unique siege, et non zero');
+end
+$$;
+
+-- La synthese repond-elle a un VRAI appelant, et pas seulement a postgres ?
+-- C'est la question qui a deja piege une fois : la RPC est `security invoker`.
+select pg_temp.login('patron_a');
+set local role authenticated;
+
+do $$
+declare v_org uuid; v_plan text; v_total integer;
+begin
+  select id into v_org from public.organizations where slug = 'essai-resil';
+
+  select plan_code, total_cents into v_plan, v_total
+  from public.organization_billing_summary(v_org);
+
+  perform pg_temp.ok(v_plan = 'free',
+    'Le proprietaire lit sa formule Gratuite depuis l''ecran de facturation');
+  perform pg_temp.ok(v_total = 0, 'Aucun montant ne lui est reclame');
+
+  -- Et il ne voit plus ses missions : le cloisonnement par formule s'applique
+  -- a la lecture, pas seulement au menu.
+  perform pg_temp.ok(
+    (select count(*) from public.missions m where m.organization_id = v_org) = 0,
+    'Les missions lui sont invisibles, sans avoir ete effacees');
+end
+$$;
+reset role;
+
+-- =============================================================================
 do $$
 begin
   raise notice '';
