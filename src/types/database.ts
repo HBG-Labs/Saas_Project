@@ -771,6 +771,11 @@ export interface Database {
           current_period_end: string | null;
           trial_ends_at: string | null;
           canceled_at: string | null;
+          /**
+           * Résiliation demandée : l'accès court jusqu'à `current_period_end`,
+           * puis retombe sur Free. Même nom et même sens que chez Stripe.
+           */
+          cancel_at_period_end: boolean;
           provider: string | null;
           provider_customer_id: string | null;
           provider_subscription_id: string | null;
@@ -2030,6 +2035,16 @@ export interface Database {
        * en TypeScript à côté finirait par diverger — et ici, la divergence se
        * lirait sur une facture.
        */
+      /** Lève le drapeau de résiliation ; renvoie la date de fin d'accès. */
+      cancel_organization_subscription: {
+        Args: { p_organization_id: string };
+        Returns: string | null;
+      };
+      /** Annule une résiliation qui n'a pas encore pris effet. */
+      resume_organization_subscription: {
+        Args: { p_organization_id: string };
+        Returns: undefined;
+      };
       organization_billing_summary: {
         Args: { p_organization_id: string };
         Returns: {

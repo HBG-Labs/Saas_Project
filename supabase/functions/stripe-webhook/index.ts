@@ -99,6 +99,7 @@ interface StripeSubscription {
   current_period_end?: number;
   trial_end?: number | null;
   canceled_at?: number | null;
+  cancel_at_period_end?: boolean;
   metadata?: { organization_id?: string; plan_code?: string };
   items?: { data?: StripeSubscriptionItem[] };
 }
@@ -376,6 +377,12 @@ async function applySubscription(
       current_period_end: period.end,
       trial_ends_at: iso(sub.trial_end),
       canceled_at: iso(sub.canceled_at),
+      // Miroir du champ Stripe homonyme. Sans lui, une résiliation faite depuis
+      // le portail resterait invisible chez nous jusqu'à son échéance : Stripe
+      // n'envoie alors qu'un `subscription.updated` où seul ce drapeau change,
+      // et l'entreprise verrait son abonnement décrit comme actif jusqu'au jour
+      // où il s'éteint sans prévenir.
+      cancel_at_period_end: sub.cancel_at_period_end ?? false,
       provider: 'stripe',
       provider_customer_id: sub.customer,
       provider_subscription_id: sub.id,

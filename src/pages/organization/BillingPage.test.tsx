@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,7 +18,18 @@ import BillingPage from './BillingPage';
 const resume = vi.hoisted(() => ({
   current: null as null | { activeSeats: number; totalCents: number; extraSeats: number },
 }));
-const abonnement = vi.hoisted(() => ({ current: { status: 'active', provider: 'stripe' } }));
+interface Abo {
+  status: string;
+  provider: string | null;
+  provider_subscription_id: string | null;
+  cancel_at_period_end: boolean;
+  current_period_end: string | null;
+}
+const abonnement = vi.hoisted(() => ({
+  current: {} as Abo,
+}));
+const resilier = vi.hoisted(() => ({ mutate: vi.fn() }));
+const reprendre = vi.hoisted(() => ({ mutate: vi.fn() }));
 const droit = vi.hoisted(() => ({ current: true }));
 
 vi.mock('@/features/billing', () => ({
@@ -32,6 +44,8 @@ vi.mock('@/features/billing', () => ({
   useOrganizationEntitlements: () => ({ planCode: 'business' }),
   useCheckout: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useBillingPortal: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useCancelSubscription: () => ({ ...resilier, isPending: false, error: null }),
+  useResumeSubscription: () => ({ ...reprendre, isPending: false, error: null }),
 }));
 
 vi.mock('@/features/organizations', () => ({
@@ -53,7 +67,17 @@ function afficher() {
 describe('BillingPage — le choix de formule', () => {
   beforeEach(() => {
     resume.current = { activeSeats: 2, totalCents: 6900, extraSeats: 0 };
-    abonnement.current = { status: 'active', provider: 'stripe' };
+    abonnement.current = {
+      status: 'trialing',
+      provider: null,
+      provider_subscription_id: null,
+      cancel_at_period_end: false,
+      // Midi UTC, et non minuit : à minuit la date bascule d'un jour selon le
+      // fuseau de la machine, et le test passerait ici pour échouer ailleurs.
+      current_period_end: '2026-09-01T12:00:00Z',
+    };
+    resilier.mutate.mockClear();
+    reprendre.mutate.mockClear();
     droit.current = true;
   });
 
@@ -97,5 +121,70 @@ describe('BillingPage — le choix de formule', () => {
     for (const nom of ['Starter', 'Pro', 'Enterprise']) {
       expect(screen.getByRole('button', { name: new RegExp(nom) })).toBeDisabled();
     }
+  });
+});
+
+describe('BillingPage — la sortie', () => {
+  beforeEach(() => {
+    resume.current = { activeSeats: 2, totalCents: 6900, extraSeats: 0 };
+    abonnement.current = {
+      status: 'trialing',
+      provider: null,
+      provider_subscription_id: null,
+      cancel_at_period_end: false,
+      // Midi UTC, et non minuit : à minuit la date bascule d'un jour selon le
+      // fuseau de la machine, et le test passerait ici pour échouer ailleurs.
+      current_period_end: '2026-09-01T12:00:00Z',
+    };
+    droit.current = true;
+    resilier.mutate.mockClear();
+    reprendre.mutate.mockClear();
+  });
+
+  it('offre de résilier pendant l’essai, quand aucun portail Stripe n’existe', async () => {
+    // Le défaut d'origine : « Gérer mon abonnement » grisé, et aucune autre
+    // sortie. Une entreprise en essai n'avait AUCUN moyen de dire non.
+    const user = userEvent.setup();
+    afficher();
+
+    expect(screen.queryByRole('button', { name: /Gérer mon abonnement/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Résilier' }));
+
+    // Rien n'est engagé avant confirmation, et la fenêtre annonce la date
+    // jusqu'à laquelle l'accès est garanti — c'est tout l'objet du choix.
+    expect(resilier.mutate).not.toHaveBeenCalled();
+    const fenetre = within(screen.getByRole('dialog'));
+    expect(fenetre.getByText(/jusqu’au/)).toHaveTextContent('1 septembre 2026');
+
+    await user.click(screen.getByRole('button', { name: /Confirmer la résiliation/ }));
+    expect(resilier.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('annonce la date de fin d’accès et permet de se raviser', () => {
+    abonnement.current.cancel_at_period_end = true;
+    afficher();
+
+    expect(screen.getByText(/Résiliation programmée/)).toHaveTextContent('1 septembre 2026');
+    expect(screen.getByRole('button', { name: /Reprendre l’abonnement/ })).toBeEnabled();
+    // On ne propose pas de résilier deux fois.
+    expect(screen.queryByRole('button', { name: 'Résilier' })).not.toBeInTheDocument();
+  });
+
+  it('renvoie au portail Stripe, et pas à la résiliation locale, quand Stripe encaisse', () => {
+    abonnement.current.provider = 'stripe';
+    abonnement.current.provider_subscription_id = 'sub_123';
+    afficher();
+
+    // Stripe fait autorité sur ce qu'il encaisse : le serveur refuserait de
+    // toute façon une résiliation locale.
+    expect(screen.getByRole('button', { name: /Gérer mon abonnement/ })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Résilier' })).not.toBeInTheDocument();
+  });
+
+  it('ne propose aucune sortie à qui n’a pas le droit de facturer', () => {
+    droit.current = false;
+    afficher();
+
+    expect(screen.queryByRole('button', { name: 'Résilier' })).not.toBeInTheDocument();
   });
 });

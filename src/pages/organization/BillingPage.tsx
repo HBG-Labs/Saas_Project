@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -7,13 +8,16 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import {
   useBillingPortal,
   useBillingSummary,
+  useCancelSubscription,
   useCheckout,
+  useResumeSubscription,
   useOrganizationEntitlements,
   useOrganizationSubscription,
 } from '@/features/billing';
@@ -82,6 +86,10 @@ export default function BillingPage() {
   const summary = useBillingSummary(organizationId);
   const checkout = useCheckout(organizationId);
   const portal = useBillingPortal(organizationId);
+  const cancel = useCancelSubscription(organizationId);
+  const resume = useResumeSubscription(organizationId);
+
+  const [confirmerResiliation, setConfirmerResiliation] = useState(false);
 
   const { can } = usePermission();
   // Masque les actions à qui ne les obtiendra pas. Cela ne SÉCURISE rien :
@@ -95,6 +103,13 @@ export default function BillingPage() {
   const enEssai = subscription.data?.status === 'trialing';
 
   const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
+
+  // Trois situations, et une seule sortie par situation. Le portail Stripe ne
+  // s'ouvre que s'il y a quelque chose à y gérer ; sinon la résiliation se fait
+  // ici. Un bouton grisé n'est une réponse dans aucun des cas : il donne à voir
+  // une porte en interdisant de savoir pourquoi elle ne s'ouvre pas.
+  const gereParStripe = subscription.data?.provider_subscription_id != null;
+  const resiliationProgrammee = subscription.data?.cancel_at_period_end === true;
 
   if (subscription.isError) {
     return (
@@ -182,7 +197,9 @@ export default function BillingPage() {
           <CardTitle>Changer de formule</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FormError error={checkout.error ?? portal.error} />
+          {/* Lerreur de résiliation saffiche dans sa fenêtre ; celle de reprise
+              na pas de fenêtre, donc elle remonte ici. */}
+          <FormError error={checkout.error ?? portal.error ?? resume.error} />
 
           {summary.data !== null && summary.data !== undefined ? (
             <div className="space-y-3">
@@ -282,7 +299,19 @@ export default function BillingPage() {
 
           <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t pt-4">
             <p className="text-muted-foreground text-sm">
-              Moyen de paiement, factures et résiliation.
+              {gereParStripe ? (
+                'Moyen de paiement, factures et résiliation.'
+              ) : resiliationProgrammee ? (
+                <>
+                  Résiliation programmée. Vous gardez l’accès complet jusqu’au{' '}
+                  <strong className="text-foreground">
+                    {formatDate(data?.current_period_end ?? null)}
+                  </strong>
+                  , puis l’entreprise repasse en formule Gratuite.
+                </>
+              ) : (
+                'Le portail Stripe — cartes et factures — s’ouvrira dès votre premier paiement.'
+              )}
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -293,26 +322,99 @@ export default function BillingPage() {
                 </Link>
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={portal.isPending || !canManageBilling || data?.provider !== 'stripe'}
-                onClick={() => portal.mutate()}
-                title={
-                  data?.provider === 'stripe'
-                    ? undefined
-                    : 'Disponible une fois un abonnement payant souscrit.'
-                }
-              >
-                {portal.isPending ? 'Ouverture…' : 'Gérer mon abonnement'}
-                <ExternalLink className="size-3.5" />
-              </Button>
+              {gereParStripe ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={portal.isPending || !canManageBilling}
+                  onClick={() => portal.mutate()}
+                >
+                  {portal.isPending ? 'Ouverture…' : 'Gérer mon abonnement'}
+                  <ExternalLink className="size-3.5" />
+                </Button>
+              ) : resiliationProgrammee ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={resume.isPending || !canManageBilling}
+                  onClick={() => {
+                    resume.mutate();
+                  }}
+                >
+                  {resume.isPending ? 'Reprise…' : 'Reprendre l’abonnement'}
+                </Button>
+              ) : data !== null && canManageBilling ? (
+                <Button
+                  type="button"
+                  variant="danger-outline"
+                  size="sm"
+                  onClick={() => {
+                    setConfirmerResiliation(true);
+                  }}
+                >
+                  Résilier
+                </Button>
+              ) : null}
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* La résiliation ne coupe rien sur-le-champ, mais elle engage : mieux
+          vaut la dire en toutes lettres, avec la date, que de la faire tenir
+          dans un bouton. */}
+      <Modal
+        open={confirmerResiliation}
+        onOpenChange={setConfirmerResiliation}
+        title="Résilier l’abonnement"
+        description="Vous ne perdez rien aujourd’hui."
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={cancel.isPending}
+              onClick={() => {
+                setConfirmerResiliation(false);
+              }}
+            >
+              Revenir
+            </Button>
+            <Button
+              variant="danger-outline"
+              size="sm"
+              disabled={cancel.isPending}
+              onClick={() => {
+                cancel.mutate(undefined, {
+                  onSuccess: () => {
+                    setConfirmerResiliation(false);
+                  },
+                });
+              }}
+            >
+              {cancel.isPending ? 'Résiliation…' : 'Confirmer la résiliation'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-2 text-sm">
+          <p className="text-muted-foreground">
+            Vous conservez l’accès complet — missions, clients, équipes, comptes rendus — jusqu’au{' '}
+            <strong className="text-foreground">
+              {formatDate(data?.current_period_end ?? null)}
+            </strong>
+            . À cette date, l’entreprise repasse en formule Gratuite.
+          </p>
+          <p className="text-muted-foreground">
+            Rien n’est supprimé : vos données restent en base et redeviennent visibles dès une
+            nouvelle souscription. Vous pouvez aussi revenir sur cette décision tant qu’elle n’a pas
+            pris effet.
+          </p>
+          <FormError error={cancel.error} />
+        </div>
+      </Modal>
     </div>
   );
 }

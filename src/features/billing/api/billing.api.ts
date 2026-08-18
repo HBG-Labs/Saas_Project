@@ -321,3 +321,40 @@ export async function createBillingPortalSession(organizationId: string): Promis
 
   return url;
 }
+
+/**
+ * Résiliation : lève le drapeau, ne coupe rien.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * L'accès court jusqu'à la fin de la période déjà payée — ou, en essai, jusqu'à
+ * la date annoncée. C'est le serveur qui décide de tout : le droit de résilier,
+ * la date rendue, et le refus lorsque Stripe est l'autorité.
+ *
+ * Le montant, la date et la permission ne transitent jamais depuis ici. La RPC
+ * ne prend qu'un identifiant d'organisation.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * @returns la date de fin d'accès, ou `null` si la période est ouverte.
+ */
+export async function cancelSubscription(organizationId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('cancel_organization_subscription', {
+    p_organization_id: organizationId,
+  });
+
+  if (error !== null) {
+    throw new AppError('unknown', error.message);
+  }
+
+  return data;
+}
+
+/** Annule une résiliation qui n'a pas encore pris effet. */
+export async function resumeSubscription(organizationId: string): Promise<void> {
+  const { error } = await supabase.rpc('resume_organization_subscription', {
+    p_organization_id: organizationId,
+  });
+
+  if (error !== null) {
+    throw new AppError('unknown', error.message);
+  }
+}

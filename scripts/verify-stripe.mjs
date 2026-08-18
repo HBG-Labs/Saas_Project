@@ -212,6 +212,33 @@ if (portail.status === 400) {
   console.log('        (aucun client Stripe pour l’instant : attendu avant le premier paiement)');
 }
 
+// ------------------------------------------------------------- 6. resiliation
+console.log('\n▶ Résiliation');
+
+// Ce compte est celui d'une organisation dont Stripe encaisse réellement
+// l'abonnement. La résiliation locale doit donc être REFUSÉE et renvoyer au
+// portail : écrire ici une décision que la prochaine notification Stripe
+// écraserait produirait deux vérités sur le même abonnement.
+const { error: resiliationError } = await supabase.rpc('cancel_organization_subscription', {
+  p_organization_id: organizationId,
+});
+
+ok(
+  resiliationError !== null && /portail/i.test(resiliationError.message),
+  'Un abonnement Stripe ne se résilie pas hors du portail',
+  resiliationError?.message ?? 'la RPC a ACCEPTÉ',
+);
+
+const { error: repriseError } = await supabase.rpc('resume_organization_subscription', {
+  p_organization_id: organizationId,
+});
+
+ok(
+  repriseError !== null,
+  'Reprendre un abonnement qui n’a pas été résilié est refusé',
+  repriseError?.message ?? 'la RPC a ACCEPTÉ',
+);
+
 // ---------------------------------------------------------------------- bilan
 console.log(
   failures === 0

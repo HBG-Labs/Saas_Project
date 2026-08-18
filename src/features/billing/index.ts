@@ -30,8 +30,10 @@ export {
 
 export {
   useBillingPortal,
+  useCancelSubscription,
   useBillingSummary,
   useCheckout,
+  useResumeSubscription,
 } from './hooks/useCheckout';
 
 export {

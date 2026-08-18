@@ -620,6 +620,119 @@ end
 $$;
 
 -- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 8 — Resilier, et se raviser ==='; end $$;
+-- =============================================================================
+--
+-- La resiliation ne coupe rien : elle leve un drapeau, et c'est l'echeance deja
+-- inscrite qui eteint l'acces. On eprouve donc surtout ce qui NE doit PAS
+-- changer au moment du clic.
+
+select pg_temp.login('patron_a');
+set local role authenticated;
+insert into public.organizations (slug, name, created_by, industry)
+values ('essai-resil', 'Essai Resiliation', pg_temp.uid('patron_a'), 'hvac');
+reset role;
+
+do $$
+declare
+  v_org  uuid;
+  v_fin  timestamptz;
+  v_rend timestamptz;
+begin
+  select id into v_org from public.organizations where slug = 'essai-resil';
+  select current_period_end into v_fin from public.subscriptions where organization_id = v_org;
+
+  -- ---- le proprietaire resilie
+  perform pg_temp.login('patron_a');
+  v_rend := public.cancel_organization_subscription(v_org);
+
+  perform pg_temp.ok(v_rend = v_fin, 'La date de fin d''acces est rendue a l''appelant');
+  perform pg_temp.ok(
+    (select cancel_at_period_end from public.subscriptions where organization_id = v_org),
+    'Le drapeau de resiliation est leve');
+
+  -- CE QUI NE DOIT PAS AVOIR BOUGE : couper l'acces au clic serait une punition,
+  -- pas une resiliation. L'entreprise garde ce qui lui a ete promis.
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'business',
+    'La formule reste la meme jusqu''a l''echeance');
+  perform pg_temp.ok(app.org_has_feature(v_org, 'missions'),
+    'Les missions restent accessibles apres la resiliation');
+  perform pg_temp.ok(
+    (select current_period_end from public.subscriptions where organization_id = v_org) = v_fin,
+    'L''echeance n''est pas avancee');
+  perform pg_temp.ok(
+    (select status from public.subscriptions where organization_id = v_org) = 'trialing',
+    'Le statut n''est pas force a canceled');
+
+  -- ---- l'echeance passee, l'acces tombe de lui-meme
+  update public.subscriptions
+     set current_period_end = now() - interval '1 day',
+         trial_ends_at      = now() - interval '1 day'
+   where organization_id = v_org;
+
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'free',
+    'Passee l''echeance, l''organisation retombe sur Free');
+  perform pg_temp.ok(not app.org_has_feature(v_org, 'missions'),
+    'Et perd alors les modules professionnels');
+
+  -- ---- on ne reprend pas un abonnement deja eteint
+  perform pg_temp.refuses(
+    format($sql$ select public.resume_organization_subscription(%L) $sql$, v_org),
+    'Reprendre apres l''echeance est refuse');
+
+  -- ---- se raviser AVANT l'echeance, en revanche, doit marcher
+  update public.subscriptions
+     set current_period_end = now() + interval '10 days',
+         trial_ends_at      = now() + interval '10 days'
+   where organization_id = v_org;
+
+  perform public.resume_organization_subscription(v_org);
+  perform pg_temp.ok(
+    not (select cancel_at_period_end from public.subscriptions where organization_id = v_org),
+    'Le drapeau retombe quand on se ravise');
+end
+$$;
+
+-- ---- qui n'a pas le droit de facturer n'a pas le droit de resilier
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-resil';
+
+  insert into public.organization_members (organization_id, user_id, role, status)
+  values (v_org, pg_temp.uid('salarie'), 'technician', 'active');
+
+  perform pg_temp.login('salarie');
+  perform pg_temp.refuses(
+    format($sql$ select public.cancel_organization_subscription(%L) $sql$, v_org),
+    'Un technicien ne peut pas resilier');
+
+  -- Et un tiers complet ne peut rien non plus : le cloisonnement d'abord.
+  perform pg_temp.login('patron_b');
+  perform pg_temp.refuses(
+    format($sql$ select public.cancel_organization_subscription(%L) $sql$, v_org),
+    'Le patron d''une autre entreprise ne peut pas resilier celle-ci');
+end
+$$;
+
+-- ---- Stripe garde la main sur ce qu'il encaisse
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-resil';
+
+  update public.subscriptions
+     set provider = 'stripe', provider_subscription_id = 'sub_test_resil'
+   where organization_id = v_org;
+
+  perform pg_temp.login('patron_a');
+  perform pg_temp.refuses(
+    format($sql$ select public.cancel_organization_subscription(%L) $sql$, v_org),
+    'Un abonnement Stripe ne se resilie pas hors du portail');
+end
+$$;
+
+-- =============================================================================
 do $$
 begin
   raise notice '';
