@@ -236,6 +236,11 @@ export default function BillingPage() {
               // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
               // de paiement — et il vient de la même formule que le serveur.
               const projete = computeSubscriptionPrice(tier.id, seats);
+              // Ce qui SÉPARE les formules, c'est le nombre de comptes qu'elles
+              // incluent. Afficher à la place l'effectif actuel — le même sur
+              // les quatre lignes — n'apprenait rien et laissait croire que
+              // Starter et Enterprise logent autant de monde.
+              const auDela = Math.max(0, seats - tier.includedUsers);
 
               return (
                 <Button
@@ -251,8 +256,18 @@ export default function BillingPage() {
                     {isCurrent ? ' — formule actuelle' : ''}
                   </span>
                   <span className="text-2xs font-normal opacity-80">
-                    {projete} € / mois pour {seats} utilisateur{seats > 1 ? 's' : ''}
+                    {tier.priceMonthly} € / mois · {tier.includedUsers} utilisateur
+                    {tier.includedUsers > 1 ? 's' : ''} inclus
                   </span>
+                  {/* Le total projeté n'apparaît que s'il diffère du forfait :
+                      le répéter à l'identique sur les formules assez larges
+                      ferait du bruit là où il doit servir d'avertissement. */}
+                  {auDela > 0 ? (
+                    <span className="text-2xs font-normal opacity-70">
+                      {projete} € pour vos {seats} — {auDela} au-delà à{' '}
+                      {tier.additionalUserPriceMonthly} €
+                    </span>
+                  ) : null}
                 </Button>
               );
             })}
