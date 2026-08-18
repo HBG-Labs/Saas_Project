@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/features/auth';
-import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
+import { useOrganizationEntitlements, useSeatBilling } from '@/features/billing';
 import {
   AddMemberDialog,
   InvitationLink,
@@ -56,7 +56,7 @@ export default function MembersPage() {
   const teamMemberships = useTeamMembershipsByMember(
     can(PERMISSIONS.teamView) ? organizationId : null,
   );
-  const { planCode, limit } = useOrganizationEntitlements(organizationId);
+  const { planCode } = useOrganizationEntitlements(organizationId);
 
   const updateRole = useUpdateMemberRole(organizationId ?? '');
   const updateDetails = useUpdateMemberDetails(organizationId ?? '');
@@ -83,13 +83,12 @@ export default function MembersPage() {
     (member) => member.role === 'owner' && member.status === 'active',
   ).length;
 
-  const memberLimit = limit(FEATURES.members);
-  const isFree = planCode === 'free';
-  const isQuotaExceeded = memberLimit !== null && activeMembers.length >= memberLimit;
-  // Seul le plan Free (0 €) bloque strictement les ajouts (1 seul utilisateur max).
-  // Sur les plans payants, l'invitation reste ouverte avec mention du siège supp (+5 €/mois).
-  const quotaBlocked = isFree && isQuotaExceeded;
-  const isExtraSeat = !isFree && isQuotaExceeded;
+  // La règle vient du SERVEUR, via la fonction qui calcule le montant. La
+  // version précédente comptait les lignes non retirées — invitations
+  // comprises — contre une limite lue dans le paquet JavaScript, et annonçait
+  // donc un supplément pour des comptes qui n'étaient pas encore facturables.
+  const { quotaBlocked, isExtraSeat, activeSeats, includedSeats } =
+    useSeatBilling(organizationId);
 
   const busy = updateRole.isPending || updateDetails.isPending || removeMember.isPending;
 
@@ -121,10 +120,13 @@ export default function MembersPage() {
         }
       />
 
-      {memberLimit !== null ? (
+      {includedSeats !== null ? (
         <Card>
           <CardContent className="pt-6">
-            <MemberQuotaBar current={activeMembers.length} max={memberLimit} planCode={planCode} />
+            {/* Les mêmes chiffres que la facture : les comptes FACTURABLES, et
+                les sièges que la formule comprend. La barre montrait auparavant
+                les lignes non retirées contre une limite lue côté client. */}
+            <MemberQuotaBar current={activeSeats} max={includedSeats} planCode={planCode} />
           </CardContent>
         </Card>
       ) : null}

@@ -35,6 +35,7 @@ export {
   useCheckout,
   useResumeSubscription,
 } from './hooks/useCheckout';
+export { useSeatBilling, type SeatBilling } from './hooks/useSeatBilling';
 
 export {
   useOrganizationEntitlements,

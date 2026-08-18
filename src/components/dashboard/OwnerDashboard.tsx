@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuditLogs } from '@/features/audit';
+import { useSeatBilling } from '@/features/billing';
 import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
@@ -44,6 +45,7 @@ export function OwnerDashboard() {
   const jobSingular = useLabel('job');
   const workerPlural = useLabel('worker', true);
 
+  const sieges = useSeatBilling(organizationId);
   const members = useMembers(organizationId);
   const missions = useMissions(organizationId, { limit: 6 });
   const pendingReports = useReportsPendingReview(organizationId);
@@ -91,10 +93,14 @@ export function OwnerDashboard() {
           <div className="flex flex-wrap items-center gap-2.5">
             {organizationId ? (
               <>
+                {/* Les mêmes valeurs que sur l'écran des membres : un raccourci
+                    qui tairait le coût d'un siège supplémentaire ferait de ce
+                    bouton le chemin le moins informé vers la même dépense. */}
                 <AddMemberDialog
                   organizationId={organizationId}
                   viewerIsOwner={true}
-                  quotaReached={false}
+                  quotaReached={sieges.quotaBlocked}
+                  isExtraSeat={sieges.isExtraSeat}
                   onMemberAdded={() => {
                     void members.refetch();
                   }}

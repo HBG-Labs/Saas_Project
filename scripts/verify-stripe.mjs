@@ -212,6 +212,33 @@ if (portail.status === 400) {
   console.log('        (aucun client Stripe pour l’instant : attendu avant le premier paiement)');
 }
 
+// ------------------------------------------------ 5bis. sieges factures
+console.log('\n▶ Sièges supplémentaires réellement facturés');
+
+// La question que cette section tranche : ajouter un membre change-t-il ce que
+// STRIPE facture, ou seulement ce que nous affichons ? La fonction relit
+// l'abonnement après écriture et renvoie `stripeQuantity` ; sans cette
+// relecture, un « synced: true » ne prouvait que sa propre bonne volonté.
+const sieges = await callFunction('sync-subscription-seats', { organizationId }, token);
+
+ok(sieges.status === 200, 'La synchronisation des sièges répond', JSON.stringify(sieges.payload));
+
+if (sieges.status === 200 && sieges.payload.synced !== false) {
+  const p = sieges.payload;
+  console.log(
+    `        ${p.activeSeats} actifs − ${p.includedSeats} inclus = ${p.extraSeats} en supplément ; ` +
+      `Stripe en facture ${p.stripeQuantity}`,
+  );
+  ok(
+    p.stripeQuantity === p.extraSeats,
+    'Stripe facture exactement le nombre de sièges en dépassement',
+    `${p.extraSeats} attendu, ${p.stripeQuantity} chez Stripe`,
+  );
+  ok(p.synced === true, 'La fonction confirme l’alignement après relecture');
+} else if (sieges.status === 200) {
+  console.log(`        ${sieges.payload.reason ?? 'rien à synchroniser'}`);
+}
+
 // ------------------------------------------------------------- 6. resiliation
 console.log('\n▶ Résiliation');
 

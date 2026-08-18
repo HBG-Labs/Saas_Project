@@ -45,6 +45,7 @@ interface Body {
 
 interface StripeItem {
   id: string;
+  quantity?: number;
   price?: { id?: string };
 }
 
@@ -117,11 +118,33 @@ Deno.serve(async (request: Request): Promise<Response> => {
       await stripeDelete(`/v1/subscription_items/${seatItem.id}`);
     }
 
+    // RELECTURE. Jusqu'ici cette fonction rendait compte de son INTENTION : elle
+    // renvoyait le nombre de sièges qu'elle venait de demander, sans jamais
+    // vérifier que Stripe l'avait retenu. Une réponse « synced: true » ne
+    // prouvait donc rien — et c'est exactement l'angle mort qui avait laissé le
+    // webhook journaliser des événements sans rien écrire.
+    //
+    // On relit l'abonnement et on renvoie ce que Stripe DÉTIENT. Un écart entre
+    // `extraSeats` et `stripeQuantity` devient alors visible au lieu d'être
+    // silencieux.
+    const apres = (await stripeRequest(
+      `/v1/subscriptions/${subscription.provider_subscription_id}`,
+      {},
+      'GET',
+    )) as { items?: { data?: StripeItem[] } };
+
+    const ligneSiege = (apres.items?.data ?? []).find(
+      (item) => item.price?.id === prices.extraSeatPriceId,
+    );
+    const quantiteChezStripe = ligneSiege?.quantity ?? 0;
+
     return json({
-      synced: true,
+      synced: quantiteChezStripe === context.extraSeats,
       activeSeats: context.activeSeats,
       includedSeats: context.includedSeats,
       extraSeats: context.extraSeats,
+      /** Ce que Stripe facture réellement, relu après écriture. */
+      stripeQuantity: quantiteChezStripe,
       totalCents: context.totalCents,
     });
   } catch (error) {

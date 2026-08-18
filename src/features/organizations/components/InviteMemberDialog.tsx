@@ -101,9 +101,14 @@ export function InviteMemberDialog({
             <div className="border-primary/40 bg-primary/10 rounded-xl border p-3 text-xs flex items-start gap-2.5">
               <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-foreground font-semibold">Siège supplémentaire (+5,00 € / mois)</p>
+                <p className="text-foreground font-semibold">
+                  Siège supplémentaire à l’acceptation (+5,00 € / mois)
+                </p>
                 <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
-                  Vous avez atteint les utilisateurs inclus dans votre formule. L&apos;ajout de ce membre sera facturé <strong>+5 € / mois</strong> ajusté au prorata sur votre abonnement.
+                  Vous avez atteint les utilisateurs inclus dans votre formule.{' '}
+                  <strong>Rien n’est facturé aujourd’hui</strong> : une invitation en attente ne
+                  coûte rien. Le siège devient payable <strong>+5 € / mois</strong>, au prorata, le
+                  jour où cette personne accepte.
                 </p>
               </div>
             </div>
@@ -125,7 +130,7 @@ export function InviteMemberDialog({
             {isSubmitting
               ? 'Création…'
               : isExtraSeat
-                ? 'Créer l’invitation (+5 €/mois)'
+                ? 'Créer l’invitation (+5 €/mois à l’acceptation)'
                 : 'Créer l’invitation'}
           </Button>
         </form>
