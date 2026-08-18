@@ -85,8 +85,18 @@ $$;
 create function pg_temp.ok(p_condition boolean, p_label text) returns void
 language plpgsql as $$
 begin
-  if not p_condition then
-    raise exception 'ECHEC : %', p_label using errcode = 'assert_failure';
+  -- `is not true` et non `not p_condition` : en SQL, `not null` vaut `null`, et
+  -- un `if null then` ne s'exécute pas. La version précédente laissait donc
+  -- PASSER en silence toute assertion dont l'expression valait NULL — le cas le
+  -- plus courant étant une sous-requête qui ne ramène aucune ligne.
+  --
+  -- Trouvé en écrivant la suite 04 : `app.org_plan_code()` renvoyait NULL pour
+  -- une organisation sans abonnement, `NULL = 'free'` valait NULL, et le test
+  -- affichait « OK » sur une comparaison qui n'avait jamais été vraie.
+  if p_condition is not true then
+    raise exception 'ECHEC : % (condition %)', p_label,
+      coalesce(p_condition::text, 'NULL')
+      using errcode = 'assert_failure';
   end if;
   raise notice '  OK  %', p_label;
 end;
@@ -1061,41 +1071,51 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 5.2 — Quota de membres
 -- -----------------------------------------------------------------------------
+-- Ce bloc vérifiait autrefois qu'un membre au-delà du quota était REFUSÉ. Ce
+-- n'est plus la règle : depuis la grille à cinq paliers
+-- (`20260817101000_pricing_model.sql`), `plan_features.members` compte les
+-- sièges INCLUS, et le dépassement est facturé 5 € au lieu d'être bloqué.
+--
+-- Le plafond dur ne subsiste que pour Free, porté par `plans.max_users`. La
+-- suite 04 l'éprouve en détail ; on vérifie ici que le renversement s'applique
+-- bien à une organisation Business réelle du scénario.
 do $$
-declare v_org uuid; v_raised boolean; v_actifs int; v_plafond int;
+declare v_org uuid; v_actifs int; v_inclus int; v_apres int;
 begin
   select id into v_org from public.organizations where slug = 'fibre-atlantique';
   select count(*) into v_actifs
   from public.organization_members where organization_id = v_org and status = 'active';
 
-  -- Le plafond est lu, pas écrit en dur : `20260812100100_ultimate_plan.sql`
-  -- l'a corrigé de 25 à 10 en introduisant l'offre supérieure, et ce test est
-  -- resté sur l'ancienne valeur. Ce qui compte ici est que le TRIGGER applique
-  -- le plafond, quel qu'il soit — la valeur elle-même est déjà vérifiée par
-  -- `entitlements.test.ts`, qui compare le miroir au seed.
-  select limit_value into v_plafond
+  select limit_value into v_inclus
   from public.plan_features where plan_code = 'business' and feature_key = 'members';
 
-  perform pg_temp.ok(app.org_feature_limit(v_org, 'members') = v_plafond,
-    'Le plan business expose son plafond de membres : ' || v_plafond);
+  perform pg_temp.ok(app.org_feature_limit(v_org, 'members') = v_inclus,
+    'Business expose ses ' || v_inclus || ' sieges inclus');
 
-  -- Plutôt que de créer vingt-cinq comptes fictifs, on abaisse le plafond sous
-  -- l'effectif courant. Le trigger est le même ; seule la borne change. Tout est
-  -- annulé par le rollback final.
+  -- On abaisse le seuil sous l'effectif courant plutôt que de créer dix comptes.
+  -- Tout est annulé par le rollback final.
   update public.plan_features set limit_value = v_actifs
   where plan_code = 'business' and feature_key = 'members';
 
-  v_raised := false;
-  begin
-    insert into public.organization_members (organization_id, user_id, role, status, joined_at)
-    values (v_org, pg_temp.uid('b_tech'), 'technician', 'active', now());
-  exception when others then
-    v_raised := true;
-  end;
+  insert into public.organization_members (organization_id, user_id, role, status, joined_at)
+  values (v_org, pg_temp.uid('b_tech'), 'technician', 'active', now());
 
-  perform pg_temp.ok(v_raised, 'Le membre au-dela du quota est refuse');
+  select app.org_billable_seats(v_org) into v_apres;
 
-  update public.plan_features set limit_value = v_plafond
+  perform pg_temp.ok(v_apres = v_actifs + 1,
+    'Le membre au-dela des sieges inclus est ACCEPTE');
+  perform pg_temp.ok(app.org_extra_seats(v_org) = 1,
+    'Il est compte comme siege supplementaire');
+  perform pg_temp.ok(
+    app.org_monthly_amount_cents(v_org)
+      = (select price_monthly_cents + extra_user_price_cents
+         from public.plans where code = 'business'),
+    'Le montant du mois integre le siege supplementaire');
+
+  delete from public.organization_members
+  where organization_id = v_org and user_id = pg_temp.uid('b_tech');
+
+  update public.plan_features set limit_value = v_inclus
   where plan_code = 'business' and feature_key = 'members';
 end
 $$;

@@ -1,187 +1,304 @@
-import { ArrowRight, Check, Minus, Shield, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Minus, Shield, Sparkles, User, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PricingRoiCard } from '@/components/pricing/PricingRoiCard';
+import { PricingSimulator } from '@/components/pricing/PricingSimulator';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { type BillingInterval, PRICING_PLANS } from '@/config/pricing';
+import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const COMPARISON_FEATURES = [
-  { name: 'Nombre d’utilisateurs', free: '1 user (solo)', pro: '3 users (fixe)', business: '10 users + 5€/user', ultimate: '20 users + 5€/user' },
-  { name: 'Gestion du personnel & équipes', free: false, pro: 'Essentielle', business: 'Avancée & Plannings', ultimate: 'Multi-sites & SSO' },
-  { name: 'Accès au catalogue complet d’outils', free: true, pro: true, business: true, ultimate: true },
-  { name: 'Recherche universelle ⌘K', free: true, pro: true, business: true, ultimate: true },
-  { name: 'Calculs certifiés & formulaires métiers', free: true, pro: true, business: true, ultimate: true },
-  { name: 'Historique des calculs', free: '10 derniers', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
-  { name: 'Outils favoris', free: '3 favoris', pro: 'Illimité', business: 'Illimité', ultimate: 'Illimité' },
-  { name: 'Export de bilans (PDF certifié & CSV)', free: false, pro: true, business: true, ultimate: true },
-  { name: 'Sauvegarde auto des paramètres', free: false, pro: true, business: true, ultimate: true },
-  { name: 'Espace de travail partagé d’équipe', free: false, pro: false, business: true, ultimate: true },
-  { name: 'Multi-sites & Intégration SSO/API', free: false, pro: false, business: false, ultimate: true },
-  { name: 'Support technique', free: 'Communauté', pro: 'E-mail 24h', business: 'Prioritaire 24h', ultimate: 'Dédié + SLA 99.9%' },
+  {
+    name: 'Nombre d’utilisateurs inclus',
+    free: '1 utilisateur',
+    starter: '2 utilisateurs',
+    pro: '5 utilisateurs',
+    business: '10 utilisateurs',
+    enterprise: '20 utilisateurs',
+  },
+  {
+    name: 'Utilisateurs supplémentaires',
+    free: 'Aucun (Max 1)',
+    starter: '+5 €/user/mois',
+    pro: '+5 €/user/mois',
+    business: '+5 €/user/mois',
+    enterprise: '+5 €/user/mois (Illimité)',
+  },
+  {
+    name: 'Accès aux calculatrices & outils certifiés',
+    free: true,
+    starter: true,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Recherche universelle ⌘K',
+    free: true,
+    starter: true,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Historique des calculs',
+    free: '10 derniers',
+    starter: 'Illimité',
+    pro: 'Illimité',
+    business: 'Illimité',
+    enterprise: 'Illimité',
+  },
+  {
+    name: 'Outils favoris',
+    free: '3 favoris',
+    starter: 'Illimité',
+    pro: 'Illimité',
+    business: 'Illimité',
+    enterprise: 'Illimité',
+  },
+  {
+    name: 'Export de bilans (PDF certifié & CSV)',
+    free: false,
+    starter: true,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Sauvegarde auto des paramètres',
+    free: false,
+    starter: true,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Gestion du personnel & techniciens',
+    free: false,
+    starter: 'Essentielle',
+    pro: 'Complète',
+    business: 'Avancée',
+    enterprise: 'Multi-équipes & Rôles',
+  },
+  {
+    name: 'Gestion des missions & interventions',
+    free: false,
+    starter: false,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Matériel, outillage & flotte de véhicules',
+    free: false,
+    starter: false,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Devis & facturation certifiée',
+    free: false,
+    starter: false,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Plannings d’équipe & calendrier partagé',
+    free: false,
+    starter: false,
+    pro: false,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Statistiques & tableaux de bord avancés',
+    free: false,
+    starter: false,
+    pro: false,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Gouvernance, audit log & SLA 99.9%',
+    free: false,
+    starter: false,
+    pro: false,
+    business: false,
+    enterprise: true,
+  },
+  {
+    name: 'Support technique',
+    free: 'Communauté',
+    starter: 'E-mail 48h',
+    pro: 'Prioritaire 24h',
+    business: 'Dédié 24h',
+    enterprise: 'Dédié 24/7 + SLA',
+  },
 ] as const;
 
 export default function PricingPage() {
   useDocumentTitle('Tarifs');
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>('annual');
   const [proModalOpen, setProModalOpen] = useState(false);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
-      <PageHeader
-        title="Une offre claire et transparente pour tous les professionnels"
-        description="Choisissez la formule adaptée à vos besoins. Des offres claires, transparentes et sans engagement."
-      />
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-10">
+      <div className="space-y-6">
+        <PageHeader
+          title="Une offre claire et transparente pour tous les professionnels"
+          description="Choisissez la formule adaptée à vos besoins. Des offres sans engagement, ajustables selon la taille de votre équipe."
+        />
 
-      {/* Sélecteur Facturation Mensuelle / Annuelle */}
-      <div className="mb-12 flex justify-center">
-        <div className="bg-surface-sunken border-border/80 flex items-center rounded-xl border p-1">
-          <button
-            type="button"
-            onClick={() => setBillingInterval('monthly')}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
-              billingInterval === 'monthly'
-                ? 'bg-surface text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Facturation mensuelle
-          </button>
+        <p className="text-muted-foreground mt-4 text-center text-xs">
+          Facturation mensuelle, sans engagement. Au-delà des utilisateurs compris dans
+          la formule, chaque siège supplémentaire coûte 5 € par mois.
+        </p>
 
-          <button
-            type="button"
-            onClick={() => setBillingInterval('annual')}
-            className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
-              billingInterval === 'annual'
-                ? 'bg-surface text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <span>Facturation annuelle</span>
-            <Badge variant="primary" className="text-2xs py-0 px-1.5">
-              -20 %
-            </Badge>
-          </button>
+        {/* Grille des Cartes Tarifaires — 5 Formules */}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {PRICING_PLANS.map((tier) => {
+            const displayPrice = tier.priceMonthly;
+
+            return (
+              <Card
+                key={tier.id}
+                className={`relative flex flex-col justify-between transition-all duration-200 ${
+                  tier.popular
+                    ? 'border-primary/60 shadow-modal glow-primary bg-surface ring-2 ring-primary/20'
+                    : 'hover:border-border-strong bg-surface'
+                }`}
+              >
+                {tier.popular && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                    <Badge variant="primary" className="gap-1 shadow-sm py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide">
+                      <Sparkles className="size-3" />
+                      Recommandé
+                    </Badge>
+                  </div>
+                )}
+
+                <div>
+                  <CardHeader className="pt-6">
+                    <Badge variant="neutral" className="w-fit text-2xs mb-2">
+                      {tier.badge}
+                    </Badge>
+                    <CardTitle className="text-lg font-bold">{tier.name}</CardTitle>
+                    <p className="text-muted-foreground text-xs mt-1 min-h-[32px]">{tier.tagline}</p>
+
+                    <div className="mt-3 border-t border-border/40 pt-3">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
+                          {displayPrice === 0 ? '0 €' : `${displayPrice % 1 === 0 ? displayPrice : displayPrice.toFixed(2)} €`}
+                        </span>
+                        {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
+                      </div>
+                      <p className="text-subtle-foreground text-2xs mt-1">
+                        {tier.id === 'free' ? 'Accès gratuit permanent' : 'Facturé mensuellement'}
+                      </p>
+                    </div>
+
+                    {/* Quota utilisateurs & Sièges supplémentaires */}
+                    <div className="mt-3.5 p-2.5 rounded-xl bg-surface-hover/60 border border-border/60 text-2xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                        {tier.includedUsers === 1 ? <User className="size-3.5 text-primary" /> : <Users className="size-3.5 text-primary" />}
+                        <span>{tier.includedUsers} {tier.includedUsers > 1 ? 'utilisateurs inclus' : 'utilisateur inclus'}</span>
+                      </div>
+                      {tier.additionalUserPriceMonthly > 0 ? (
+                        <p className="text-muted-foreground font-medium">
+                          +5 € / utilisateur supp. / mois
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">
+                          Monocompte (Max 1)
+                        </p>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="mt-1 space-y-2.5">
+                    <p className="text-subtle-foreground text-3xs font-bold uppercase tracking-wider">
+                      Inclus dans cette offre :
+                    </p>
+                    <ul className="space-y-2 text-2xs">
+                      {tier.features.map((feat) => (
+                        <li key={feat} className="flex items-start gap-1.5 text-foreground leading-tight">
+                          <Check className={`size-3.5 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-rose-500' : 'text-primary'}`} />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </div>
+
+                <div className="p-5 pt-0">
+                  <Button
+                    asChild
+                    variant={tier.popular ? 'primary' : tier.ctaVariant}
+                    className={`w-full font-bold text-xs h-9 cursor-pointer ${
+                      tier.popular
+                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md'
+                        : tier.id === 'enterprise'
+                          ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20'
+                          : tier.id === 'business'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20'
+                            : ''
+                    }`}
+                  >
+                    <Link to={tier.ctaLink ?? ROUTES.register}>
+                      {tier.ctaText}
+                      <ArrowRight className="size-3.5 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
-      {/* Grille des Cartes Tarifaires */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {PRICING_PLANS.map((tier) => {
-          const isAnnual = billingInterval === 'annual';
-          const displayPrice = isAnnual ? tier.priceAnnualMonthly : tier.priceMonthly;
+      {/* Suggestion 1 : Simulateur interactif de taille d'équipe */}
+      <section>
+        <PricingSimulator />
+      </section>
 
-          return (
-            <Card
-              key={tier.id}
-              className={`relative flex flex-col justify-between transition-all duration-200 ${
-                tier.popular ? 'border-primary/50 shadow-modal glow-primary' : 'hover:border-border-strong'
-              }`}
-            >
-              {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge variant="primary" className="gap-1 shadow-sm py-0.5 px-3">
-                    <Sparkles className="size-3" />
-                    Le plus populaire
-                  </Badge>
-                </div>
-              )}
-
-              <div>
-                <CardHeader className="pt-6">
-                  <Badge variant="neutral" className="w-fit text-2xs mb-2">
-                    {tier.badge}
-                  </Badge>
-                  <CardTitle className="text-xl">{tier.name}</CardTitle>
-                  <p className="text-muted-foreground text-xs mt-1">{tier.tagline}</p>
-
-                  <div className="mt-4 border-t border-border/40 pt-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
-                        {displayPrice === 0 ? '0 €' : `${displayPrice % 1 === 0 ? displayPrice : displayPrice.toFixed(2)} €`}
-                      </span>
-                      {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
-                    </div>
-                    <p className="text-subtle-foreground text-2xs mt-1">
-                      {tier.id === 'free'
-                        ? 'Accès gratuit permanent'
-                        : isAnnual
-                          ? `Facturé ${tier.priceAnnualTotal} € par an`
-                          : 'Facturé mensuellement sans engagement'}
-                    </p>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="mt-2 space-y-3">
-                  <p className="text-subtle-foreground text-2xs font-semibold uppercase tracking-wider">
-                    Inclus dans cette offre :
-                  </p>
-                  <ul className="space-y-2.5 text-xs">
-                    {tier.features.map((feat) => (
-                      <li key={feat} className="flex items-start gap-2 text-foreground">
-                        <Check className={`size-4 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-rose-500' : 'text-primary'}`} />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </div>
-
-              <div className="p-6 pt-0">
-                <Button
-                  asChild
-                  variant={tier.id === 'business' || tier.id === 'ultimate' ? 'primary' : tier.ctaVariant}
-                  className={`w-full font-bold cursor-pointer ${
-                    tier.id === 'ultimate'
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20'
-                      : tier.id === 'business'
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20'
-                        : tier.id === 'pro'
-                          ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20'
-                          : ''
-                  }`}
-                >
-                  <Link to={tier.ctaLink ?? ROUTES.register}>
-                    {tier.ctaText}
-                    <ArrowRight className="size-4 ml-1.5" />
-                  </Link>
-                </Button>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Suggestion 2 : Calculateur et présentation du ROI Métier */}
+      <section>
+        <PricingRoiCard />
+      </section>
 
       {/* Tableau comparatif détaillé */}
-      <section className="mt-20">
+      <section>
         <div className="text-center mb-8">
-          <h2 className="text-foreground text-2xl font-bold tracking-tight">Comparatif détaillé des fonctionnalités</h2>
-          <p className="text-muted-foreground text-xs mt-1">Visualisez l&apos;ensemble des prestations incluses dans chaque formule.</p>
+          <h2 className="text-foreground text-2xl font-bold tracking-tight">Comparatif détaillé des 5 formules</h2>
+          <p className="text-muted-foreground text-xs mt-1">Visualisez l&apos;ensemble des prestations incluses et les fonctionnalités disponibles.</p>
         </div>
 
         <div className="bg-surface border-border/80 shadow-raised overflow-hidden rounded-2xl border">
           <div className="scroll-x">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="bg-surface-sunken border-b border-border/60">
                 <tr>
-                  <th scope="col" className="p-4 font-semibold text-foreground">Fonctionnalité</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-foreground w-1/5">Starter</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-blue-500 w-1/5">Pro</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-emerald-500 w-1/5">Business</th>
-                  <th scope="col" className="p-4 font-semibold text-center text-purple-500 w-1/5">Ultimate</th>
+                  <th scope="col" className="p-3.5 font-semibold text-foreground">Fonctionnalité</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-foreground w-[15%]">Free</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-blue-500 w-[15%]">Starter</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-primary font-bold w-[15%]">Pro ⭐</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-emerald-500 w-[15%]">Business</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-purple-500 w-[15%]">Enterprise</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
                 {COMPARISON_FEATURES.map((row) => (
                   <tr key={row.name} className="hover:bg-surface-hover/50 transition-colors">
-                    <td className="p-4 font-medium text-foreground">{row.name}</td>
+                    <td className="p-3.5 font-medium text-foreground">{row.name}</td>
 
-                    <td className="p-4 text-center text-muted-foreground">
+                    <td className="p-3.5 text-center text-muted-foreground">
                       {typeof row.free === 'boolean' ? (
                         row.free ? <Check className="size-4 text-success inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
@@ -189,15 +306,23 @@ export default function PricingPage() {
                       )}
                     </td>
 
-                    <td className="p-4 text-center text-foreground font-semibold">
-                      {typeof row.pro === 'boolean' ? (
-                        row.pro ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                    <td className="p-3.5 text-center text-foreground">
+                      {typeof row.starter === 'boolean' ? (
+                        row.starter ? <Check className="size-4 text-blue-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs text-primary">{row.pro}</span>
+                        <span className="font-mono text-2xs text-blue-500 font-semibold">{row.starter}</span>
                       )}
                     </td>
 
-                    <td className="p-4 text-center text-foreground font-semibold">
+                    <td className="p-3.5 text-center text-foreground bg-primary/5 font-semibold">
+                      {typeof row.pro === 'boolean' ? (
+                        row.pro ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                      ) : (
+                        <span className="font-mono text-2xs text-primary font-bold">{row.pro}</span>
+                      )}
+                    </td>
+
+                    <td className="p-3.5 text-center text-foreground font-semibold">
                       {typeof row.business === 'boolean' ? (
                         row.business ? <Check className="size-4 text-emerald-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
@@ -205,11 +330,11 @@ export default function PricingPage() {
                       )}
                     </td>
 
-                    <td className="p-4 text-center text-foreground font-semibold">
-                      {typeof row.ultimate === 'boolean' ? (
-                        row.ultimate ? <Check className="size-4 text-purple-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                    <td className="p-3.5 text-center text-foreground font-semibold">
+                      {typeof row.enterprise === 'boolean' ? (
+                        row.enterprise ? <Check className="size-4 text-purple-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs text-purple-500">{row.ultimate}</span>
+                        <span className="font-mono text-2xs text-purple-500">{row.enterprise}</span>
                       )}
                     </td>
                   </tr>
@@ -221,13 +346,13 @@ export default function PricingPage() {
       </section>
 
       {/* Garantie de transparence */}
-      <div className="bg-surface-sunken/60 border-border/60 mt-16 flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 sm:flex-row sm:p-8">
+      <div className="bg-surface-sunken/60 border-border/60 flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 sm:flex-row sm:p-8">
         <div className="flex items-center gap-3">
           <Shield className="size-6 text-primary shrink-0" />
           <div>
             <h3 className="text-foreground text-sm font-semibold">Paiements sécurisés & Sans engagement</h3>
             <p className="text-muted-foreground text-xs">
-              Abonnez-vous à la formule Pro en toute sérénité. Résiliable à tout moment en un clic depuis votre espace membre.
+              Abonnez-vous en toute sérénité. Toutes nos formules sont sans engagement et résiliables à tout moment en 1 clic.
             </p>
           </div>
         </div>
@@ -240,15 +365,15 @@ export default function PricingPage() {
       <Modal
         open={proModalOpen}
         onOpenChange={setProModalOpen}
-        title="Offre Pro — Fonctionnalités avancées"
-        description="Passez à l'offre Pro pour débloquer toutes les fonctionnalités avancées."
+        title="Offre Pro — Formule recommandée"
+        description="Le plan recommandé et cœur de cible de REZO360 pour artisans et équipes."
       >
         <div className="space-y-4 text-xs text-muted-foreground">
           <p>
-            La formule Pro débloque l&apos;historique de calculs illimité, l&apos;exportation des rapports en PDF certifiés et la sauvegarde automatique de vos paramètres d&apos;outils.
+            La formule Pro (39 € / mois) inclut 5 utilisateurs, la gestion complète des missions et interventions terrain, le suivi du matériel et des véhicules, ainsi que l&apos;exportation des rapports d&apos;intervention.
           </p>
           <div className="bg-surface-sunken rounded-lg p-3 border border-border/40 text-foreground font-medium">
-            💡 Accédez immédiatement aux calculatrices, exports PDF/CSV certifiés et à l'historique illimité.
+            💡 +5 € / utilisateur supplémentaire par mois au-delà des 5 utilisateurs inclus.
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setProModalOpen(false)}>
@@ -256,7 +381,7 @@ export default function PricingPage() {
             </Button>
             <Button asChild size="sm">
               <Link to={`${ROUTES.register}?plan=pro`} onClick={() => setProModalOpen(false)}>
-                Créer un compte Pro
+                Choisir le plan Pro
               </Link>
             </Button>
           </div>

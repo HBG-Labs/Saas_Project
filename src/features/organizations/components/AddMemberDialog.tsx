@@ -1,4 +1,4 @@
-import { Check, Copy, KeyRound, UserCheck, UserPlus } from 'lucide-react';
+import { Check, Copy, KeyRound, Sparkles, UserCheck, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { FormError } from '@/components/feedback/FormError';
@@ -16,57 +16,33 @@ import { RoleSelect } from './RoleSelect';
 export interface AddMemberDialogProps {
   organizationId: string;
   viewerIsOwner: boolean;
+  /** Quota bloquant (Free uniquement). */
   quotaReached: boolean;
+  /** Indique si cette création correspond à un siège supplémentaire (+5 €/mois). */
+  isExtraSeat?: boolean;
   onMemberAdded?: () => void;
 }
 
-/**
- * Crée directement le compte d'un collaborateur.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * UN SEUL CHEMIN ICI, L'INVITATION EST AILLEURS
- *
- * Cette boîte ne fait qu'une chose : créer le compte et remettre ses accès.
- * L'invitation par courriel a sa propre entrée, `InviteMemberDialog`, sur le
- * même écran. Proposer les deux ici les dupliquait — la page offrait deux fois
- * le même geste, à deux endroits, et il fallait comparer les libellés pour
- * comprendre lequel faisait quoi.
- *
- * Les deux chemins mènent au même résultat : l'employé obtient son PROPRE compte
- * `auth.users`, son profil et son rôle. Aucun ne fait de lui un souscripteur —
- * il travaille sous l'abonnement de l'entreprise. Ils diffèrent sur un point,
- * qui suffit à justifier leur coexistence :
- *
- *   ICI              — le dirigeant fixe les accès et les remet en main propre.
- *                      Indispensable quand le courriel n'est pas une option :
- *                      technicien sans adresse professionnelle, messagerie non
- *                      configurée, ou personne assise en face de soi.
- *
- *   INVITATION       — la personne s'inscrit elle-même et choisit son mot de
- *                      passe. Personne d'autre ne le connaît jamais.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 export function AddMemberDialog({
   organizationId,
   viewerIsOwner,
   quotaReached,
+  isExtraSeat = false,
   onMemberAdded,
 }: AddMemberDialogProps) {
   const [open, setOpen] = useState(false);
-
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<OrgRole>('technician');
-
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [account, setAccount] = useState<CreatedMemberAccount | null>(null);
   const [copied, setCopied] = useState(false);
 
   const createAccount = useCreateMemberAccount(organizationId);
 
-  const handleCreate = (event: React.FormEvent) => {
+  const handleCreate = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError(null);
 
@@ -82,8 +58,6 @@ export function AddMemberDialog({
         role,
         ...(displayName.trim() !== '' ? { displayName: displayName.trim() } : {}),
         ...(jobTitle.trim() !== '' ? { jobTitle: jobTitle.trim() } : {}),
-        // Champ laissé vide : le serveur produit un mot de passe solide et
-        // dictable. Mieux vaut cela qu'un « Nexora2026! » réutilisé partout.
         ...(password.trim() !== '' ? { password: password.trim() } : {}),
       },
       {
@@ -122,7 +96,6 @@ export function AddMemberDialog({
       setDisplayName('');
       setJobTitle('');
       setPassword('');
-      setCopied(false);
       setRole('technician');
     }
   };
@@ -190,6 +163,18 @@ export function AddMemberDialog({
         <form onSubmit={handleCreate} className="space-y-4">
           <FormError error={submitError} />
 
+          {isExtraSeat ? (
+            <div className="border-primary/40 bg-primary/10 rounded-xl border p-3 text-xs flex items-start gap-2.5">
+              <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-foreground font-semibold">Siège supplémentaire (+5,00 € / mois)</p>
+                <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
+                  Vous avez atteint les utilisateurs inclus dans votre formule. L&apos;ajout de ce membre sera facturé <strong>+5 € / mois</strong> ajusté au prorata sur votre abonnement.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
           <Input
             label="Adresse e-mail (servira d’identifiant)"
             type="email"
@@ -237,7 +222,11 @@ export function AddMemberDialog({
             className="w-full"
             disabled={createAccount.isPending}
           >
-            {createAccount.isPending ? 'Création du compte…' : 'Créer le compte'}
+            {createAccount.isPending
+              ? 'Création du compte…'
+              : isExtraSeat
+                ? 'Créer le compte (+5 €/mois)'
+                : 'Créer le compte'}
           </Button>
         </form>
       )}

@@ -33,10 +33,12 @@ const STATUS_VARIANTS: Record<SubscriptionStatus, NonNullable<BadgeProps['varian
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Starter (Gratuit)',
+  free: 'Free (Gratuit)',
+  starter: 'Starter',
   pro: 'Pro',
   business: 'Business',
-  ultimate: 'Ultimate',
+  enterprise: 'Enterprise',
+  ultimate: 'Enterprise',
 };
 
 function formatDate(value: string | null): string {
@@ -145,7 +147,7 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
             {members.isPending ? (
               <Skeleton className="h-6 w-full" />
             ) : (
-              <MemberQuotaBar current={activeMembers.length} max={memberLimit} />
+              <MemberQuotaBar current={activeMembers.length} max={memberLimit} planCode={planCode} />
             )}
           </div>
         ) : null}

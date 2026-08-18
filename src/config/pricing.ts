@@ -1,18 +1,31 @@
 import { ROUTES } from './routes';
 
-export type BillingInterval = 'monthly' | 'annual';
+/**
+ * La facturation est MENSUELLE, et seulement mensuelle.
+ *
+ * L'annuel a été retiré parce qu'un abonnement Stripe ne peut pas mélanger deux
+ * périodicités : tous ses articles partagent le même intervalle. Un forfait
+ * annuel avec des sièges supplémentaires facturés au mois n'est donc pas
+ * exprimable — et facturer les sièges à l'année n'était pas voulu.
+ *
+ * Le choix a été fait de ne pas proposer l'annuel plutôt que d'afficher un
+ * tarif qu'on ne saurait pas encaisser, ou de plafonner silencieusement
+ * l'effectif des abonnés annuels.
+ */
+
+export type PlanId = 'free' | 'starter' | 'pro' | 'business' | 'enterprise';
 
 export interface PricingTier {
-  id: 'free' | 'pro' | 'business' | 'ultimate';
+  id: PlanId;
   name: string;
   tagline: string;
   badge: string;
   popular: boolean;
   priceMonthly: number; // en euros
-  priceAnnualMonthly: number; // équivalent mensuel en facturation annuelle
-  priceAnnualTotal: number; // total annuel en euros
+  includedUsers: number; // utilisateurs inclus dans le forfait de base
+  additionalUserPriceMonthly: number; // coût par utilisateur supplémentaire par mois (+5 €)
+  maxUsers: number | null; // 1 pour Free, null pour illimité
   stripePriceIdMonthly?: string;
-  stripePriceIdAnnual?: string;
   ctaText: string;
   ctaLink: string | null;
   ctaVariant: 'primary' | 'outline' | 'secondary';
@@ -22,99 +35,142 @@ export interface PricingTier {
 export const PRICING_PLANS: readonly PricingTier[] = [
   {
     id: 'free',
-    name: 'Starter',
-    tagline: 'Pour techniciens solo et étudiants',
-    badge: 'Accès Libre',
+    name: 'Free',
+    tagline: 'Découverte de REZO360',
+    badge: 'Découverte',
     popular: false,
     priceMonthly: 0,
-    priceAnnualMonthly: 0,
-    priceAnnualTotal: 0,
+    includedUsers: 1,
+    additionalUserPriceMonthly: 0,
+    maxUsers: 1,
     ctaText: 'Créer un compte gratuit',
     ctaLink: ROUTES.register,
     ctaVariant: 'outline',
     features: [
-      '1 utilisateur (Monocompte strict)',
-      '❌ Gestion du personnel non autorisée',
+      '1 utilisateur inclus (1 utilisateur maximum)',
       'Accès complet aux calculatrices et outils',
       'Recherche universelle via ⌘K',
       'Calculs certifiés conformes UTE / ITU-T',
       'Historique des 10 derniers calculs',
       'Jusqu’à 3 outils favoris',
+      'Aucune facturation de siège supplémentaire',
+    ],
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    tagline: 'Indépendants et très petites entreprises',
+    badge: 'Indépendants',
+    popular: false,
+    priceMonthly: 19,
+    includedUsers: 2,
+    additionalUserPriceMonthly: 5,
+    maxUsers: null,
+    stripePriceIdMonthly: 'price_starter_monthly_v1',
+    ctaText: 'Choisir le plan Starter',
+    ctaLink: `${ROUTES.register}?plan=starter`,
+    ctaVariant: 'outline',
+    features: [
+      'Toutes les fonctionnalités du plan Free',
+      '2 utilisateurs inclus',
+      '+5 € / utilisateur supplémentaire / mois',
+      'Historique de calculs illimité',
+      'Exportation des rapports en PDF certifié & CSV',
+      'Sauvegarde automatique des paramètres',
+      'Gestion du personnel essentielle',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Pour artisans et micro-équipes',
-    badge: 'Artisans',
-    popular: false,
-    priceMonthly: 19,
-    priceAnnualMonthly: 15,
-    priceAnnualTotal: 180,
+    tagline: 'Plan recommandé et cœur de cible',
+    badge: 'Recommandé',
+    popular: true,
+    priceMonthly: 39,
+    includedUsers: 5,
+    additionalUserPriceMonthly: 5,
+    maxUsers: null,
     stripePriceIdMonthly: 'price_pro_monthly_v1',
-    stripePriceIdAnnual: 'price_pro_annual_v1',
-    ctaText: 'S’abonner au plan Pro',
+    ctaText: 'Choisir le plan Pro',
     ctaLink: `${ROUTES.register}?plan=pro`,
-    ctaVariant: 'outline',
+    ctaVariant: 'primary',
     features: [
       'Toutes les fonctionnalités du plan Starter',
-      'Jusqu’à 3 utilisateurs inclus (Fixe)',
-      '✅ Gestion du personnel essentielle',
-      'Historique de calculs illimité',
-      'Exportation des rapports en PDF certifié & CSV',
-      'Nombre d’outils favoris illimité',
-      'Sauvegarde automatique des paramètres',
+      '5 utilisateurs inclus',
+      '+5 € / utilisateur supplémentaire / mois',
+      'Gestion des missions & interventions',
+      'Gestion du matériel & flotte de véhicules',
+      'Génération de devis & factures',
+      'Support prioritaire par e-mail sous 24h',
     ],
   },
   {
     id: 'business',
     name: 'Business',
-    tagline: 'Pour PME et équipes terrain',
-    badge: 'Recommandé',
-    popular: true,
-    priceMonthly: 49,
-    priceAnnualMonthly: 39,
-    priceAnnualTotal: 468,
+    tagline: 'PME et équipes structurées',
+    badge: 'PME & Équipes',
+    popular: false,
+    priceMonthly: 69,
+    includedUsers: 10,
+    additionalUserPriceMonthly: 5,
+    maxUsers: null,
     stripePriceIdMonthly: 'price_business_monthly_v1',
-    stripePriceIdAnnual: 'price_business_annual_v1',
-    ctaText: 'S’abonner au plan Business',
+    ctaText: 'Choisir le plan Business',
     ctaLink: `${ROUTES.register}?plan=business`,
     ctaVariant: 'primary',
     features: [
       'Toutes les fonctionnalités du plan Pro',
       '10 utilisateurs inclus',
-      'Technicien supplémentaire à +5 € / mois',
-      '✅ Gestion du personnel avancée & plannings',
-      'Espace de travail partagé avec dossiers d’étude',
-      'Modèles de calculs et normes personnalisés',
-      'Support prioritaire par e-mail sous 24h',
+      '+5 € / utilisateur supplémentaire / mois',
+      'Planning avancé & calendrier d’équipe',
+      'Contrôle qualité & revue des interventions',
+      'Tableaux de bord & statistiques de rentabilité',
+      'Espace de travail collaboratif multi-équipes',
     ],
   },
   {
-    id: 'ultimate',
-    name: 'Ultimate',
-    tagline: 'Pour grands comptes et structures multi-sites',
-    badge: 'Haut de gamme',
+    id: 'enterprise',
+    name: 'Enterprise',
+    tagline: 'Entreprises avec des équipes importantes',
+    badge: 'Entreprises',
     popular: false,
     priceMonthly: 99,
-    priceAnnualMonthly: 79,
-    priceAnnualTotal: 948,
-    stripePriceIdMonthly: 'price_ultimate_monthly_v1',
-    stripePriceIdAnnual: 'price_ultimate_annual_v1',
-    ctaText: 'S’abonner au plan Ultimate',
-    ctaLink: `${ROUTES.register}?plan=ultimate`,
+    includedUsers: 20,
+    additionalUserPriceMonthly: 5,
+    maxUsers: null,
+    stripePriceIdMonthly: 'price_enterprise_monthly_v1',
+    ctaText: 'Choisir le plan Enterprise',
+    ctaLink: `${ROUTES.register}?plan=enterprise`,
     ctaVariant: 'primary',
     features: [
       'Toutes les fonctionnalités du plan Business',
       '20 utilisateurs inclus',
-      'Technicien supplémentaire à +5 € / mois',
-      '✅ Multi-sites & Intégration SSO / API',
-      'Gouvernance d’organisation & audit log',
+      '+5 € / utilisateur supplémentaire / mois',
+      'Aucune limite maximale de membres',
+      'Gouvernance d’organisation & audit log complet',
       'Garantie de service (SLA 99.9%)',
-      'Account Manager et support dédié',
+      'Account Manager et support dédié 24/7',
     ],
   },
 ] as const;
+
+/**
+ * Calcul du prix total affiché pour un plan et un nombre d'utilisateurs.
+ *
+ * Formule officielle :
+ * - Plan payant : prix_total = prix_plan + max(0, utilisateurs - utilisateurs_inclus) × 5
+ * - Free : prix_total = 0 € (max 1 utilisateur)
+ */
+export function computeSubscriptionPrice(planId: string, userCount: number): number {
+  const plan = PRICING_PLANS.find((p) => p.id === planId);
+  if (!plan || plan.id === 'free') return 0;
+
+  const basePrice = plan.priceMonthly;
+  const extraUsers = Math.max(0, userCount - plan.includedUsers);
+  const extraCost = extraUsers * plan.additionalUserPriceMonthly;
+
+  return basePrice + extraCost;
+}
 
 export function formatPrice(price: number): string {
   if (price === 0) return '0 €';

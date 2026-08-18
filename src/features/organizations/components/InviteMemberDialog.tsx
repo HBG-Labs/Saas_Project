@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { UserPlus } from 'lucide-react';
+import { Sparkles, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { FormError } from '@/components/feedback/FormError';
 import type { OrgRole } from '@/types/database';
 import type { OrganizationInvitation } from '@/types/domain';
 
@@ -20,23 +20,21 @@ export interface InviteMemberDialogProps {
   organizationId: string;
   /** Seul un propriétaire peut en inviter un autre. */
   viewerIsOwner: boolean;
-  /** Quota atteint : l'invitation serait refusée par le trigger. */
+  /** Quota bloquant (Free uniquement). */
   quotaReached: boolean;
+  /** Indique si cette invitation correspond à un siège supplémentaire (+5 €/mois). */
+  isExtraSeat?: boolean;
 }
 
 export function InviteMemberDialog({
   organizationId,
   viewerIsOwner,
   quotaReached,
+  isExtraSeat = false,
 }: InviteMemberDialogProps) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<OrgRole>('technician');
   const [submitError, setSubmitError] = useState<unknown>(null);
-  /**
-   * L'invitation créée reste affichée après soumission : c'est le seul moment
-   * où le lien est présenté. Refermer aussitôt la fenêtre ferait perdre la
-   * seule chose que l'utilisateur est venu chercher.
-   */
   const [created, setCreated] = useState<OrganizationInvitation | null>(null);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -82,8 +80,6 @@ export function InviteMemberDialog({
       open={open}
       onOpenChange={close}
       title={created === null ? 'Inviter un membre' : emailSent ? 'Invitation envoyée' : 'Invitation créée'}
-      // Propriété omise plutôt que passée à `undefined` : `exactOptionalPropertyTypes`
-      // distingue les deux, et la seconde forme est un type invalide.
       {...(created === null
         ? {
             description:
@@ -93,13 +89,25 @@ export function InviteMemberDialog({
       trigger={
         <Button variant="primary" size="sm" disabled={quotaReached}>
           <UserPlus className="size-4" />
-          Inviter
+          <span>Inviter</span>
         </Button>
       }
     >
       {created === null ? (
         <form onSubmit={onSubmit} noValidate className="space-y-4">
           <FormError error={submitError} />
+
+          {isExtraSeat ? (
+            <div className="border-primary/40 bg-primary/10 rounded-xl border p-3 text-xs flex items-start gap-2.5">
+              <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-foreground font-semibold">Siège supplémentaire (+5,00 € / mois)</p>
+                <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
+                  Vous avez atteint les utilisateurs inclus dans votre formule. L&apos;ajout de ce membre sera facturé <strong>+5 € / mois</strong> ajusté au prorata sur votre abonnement.
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           <Input
             label="Adresse e-mail"
@@ -114,7 +122,11 @@ export function InviteMemberDialog({
           <RoleSelect value={role} onChange={setRole} canAssignOwner={viewerIsOwner} />
 
           <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Création…' : 'Créer l’invitation'}
+            {isSubmitting
+              ? 'Création…'
+              : isExtraSeat
+                ? 'Créer l’invitation (+5 €/mois)'
+                : 'Créer l’invitation'}
           </Button>
         </form>
       ) : (

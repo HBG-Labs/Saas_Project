@@ -56,7 +56,7 @@ export default function MembersPage() {
   const teamMemberships = useTeamMembershipsByMember(
     can(PERMISSIONS.teamView) ? organizationId : null,
   );
-  const { limit } = useOrganizationEntitlements(organizationId);
+  const { planCode, limit } = useOrganizationEntitlements(organizationId);
 
   const updateRole = useUpdateMemberRole(organizationId ?? '');
   const updateDetails = useUpdateMemberDetails(organizationId ?? '');
@@ -84,7 +84,12 @@ export default function MembersPage() {
   ).length;
 
   const memberLimit = limit(FEATURES.members);
-  const quotaReached = memberLimit !== null && activeMembers.length >= memberLimit;
+  const isFree = planCode === 'free';
+  const isQuotaExceeded = memberLimit !== null && activeMembers.length >= memberLimit;
+  // Seul le plan Free (0 €) bloque strictement les ajouts (1 seul utilisateur max).
+  // Sur les plans payants, l'invitation reste ouverte avec mention du siège supp (+5 €/mois).
+  const quotaBlocked = isFree && isQuotaExceeded;
+  const isExtraSeat = !isFree && isQuotaExceeded;
 
   const busy = updateRole.isPending || updateDetails.isPending || removeMember.isPending;
 
@@ -99,7 +104,8 @@ export default function MembersPage() {
               <AddMemberDialog
                 organizationId={organizationId}
                 viewerIsOwner={viewerIsOwner}
-                quotaReached={quotaReached}
+                quotaReached={quotaBlocked}
+                isExtraSeat={isExtraSeat}
                 onMemberAdded={() => {
                   void members.refetch();
                 }}
@@ -107,7 +113,8 @@ export default function MembersPage() {
               <InviteMemberDialog
                 organizationId={organizationId}
                 viewerIsOwner={viewerIsOwner}
-                quotaReached={quotaReached}
+                quotaReached={quotaBlocked}
+                isExtraSeat={isExtraSeat}
               />
             </div>
           ) : null
@@ -117,7 +124,7 @@ export default function MembersPage() {
       {memberLimit !== null ? (
         <Card>
           <CardContent className="pt-6">
-            <MemberQuotaBar current={activeMembers.length} max={memberLimit} />
+            <MemberQuotaBar current={activeMembers.length} max={memberLimit} planCode={planCode} />
           </CardContent>
         </Card>
       ) : null}

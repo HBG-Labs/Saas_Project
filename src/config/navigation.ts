@@ -83,6 +83,12 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
     vocabulary: { term: 'worker', plural: true },
   },
   {
+    to: ROUTES.vehicles,
+    label: 'Véhicules',
+    icon: 'truck',
+    feature: 'members',
+  },
+  {
     to: ROUTES.organization,
     label: 'Paramètres Entreprise',
     icon: 'building',

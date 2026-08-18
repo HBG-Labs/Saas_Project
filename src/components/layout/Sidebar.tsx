@@ -5,7 +5,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
 import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/config/navigation';
@@ -111,14 +111,15 @@ function CollapsibleSidebarSection({
     return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
   });
 
-  const [isOpen, setIsOpen] = useState(hasActiveItem || group.id === 'interventions');
-
-  // Met à jour l'ouverture si on navigue vers un sous-menu de cette section
-  useEffect(() => {
-    if (hasActiveItem) {
-      setIsOpen(true);
-    }
-  }, [hasActiveItem]);
+  // Une section contenant la page courante est ouverte, point. Le repli manuel
+  // n'a de sens que sur les autres.
+  //
+  // Déduit au rendu plutôt que posé par un effet : `setIsOpen(true)` provoquait
+  // un second rendu à chaque navigation, et la section s'ouvrait une image
+  // après le changement de page.
+  const [manuallyToggled, setManuallyToggled] = useState<boolean | null>(null);
+  const isOpen = hasActiveItem || (manuallyToggled ?? group.id === 'interventions');
+  const toggleOpen = () => setManuallyToggled(!isOpen);
 
   const Icon = group.icon ? NAV_ICONS[group.icon] : null;
 
@@ -127,7 +128,7 @@ function CollapsibleSidebarSection({
       {!collapsed ? (
         <button
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={toggleOpen}
           className="flex w-full items-center justify-between px-2.5 py-1.5 text-2xs font-bold tracking-wider text-muted-foreground uppercase hover:text-foreground hover:bg-surface-hover/60 rounded-lg transition-colors group cursor-pointer select-none"
           aria-expanded={isOpen}
         >

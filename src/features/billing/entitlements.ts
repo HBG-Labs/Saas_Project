@@ -2,23 +2,16 @@
  * Fonctionnalités débloquées par plan — miroir de `plan_features`.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * CE QUI CHANGE PAR RAPPORT À L'EXISTANT
- *
- * Les limitations vivaient dans deux fichiers TypeScript et s'appliquaient dans
- * un `useState` : `useCalculationHistory` exposait `setUserPlan`, et un bouton
- * du composant `ScientificCalculatorTool` faisait passer l'utilisateur en Pro.
- * Autrement dit, le plan était une préférence locale.
- *
- * Désormais la décision appartient à PostgreSQL. Ce fichier ne fait que
- * REFLÉTER la table pour que l'interface sache quoi afficher — il ne décide
- * plus d'aucun droit. `entitlements.test.ts` vérifie l'égalité avec le seed
- * SQL, de sorte que le reflet ne puisse pas mentir.
- *
- * Source : supabase/migrations/20260808100300_billing.sql
+ * Grille tarifaire officielle REZO360 :
+ * - FREE       (0 €)  : 1 utilisateur (monocompte strict, pas de siège supp)
+ * - STARTER    (19 €) : 2 utilisateurs inclus (+5 €/user supp/mois)
+ * - PRO ⭐    (39 €) : 5 utilisateurs inclus (+5 €/user supp/mois, Recommandé)
+ * - BUSINESS   (69 €) : 10 utilisateurs inclus (+5 €/user supp/mois)
+ * - ENTERPRISE (99 €) : 20 utilisateurs inclus (+5 €/user supp/mois, illimité)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export const PLAN_CODES = ['free', 'pro', 'business', 'ultimate'] as const;
+export const PLAN_CODES = ['free', 'starter', 'pro', 'business', 'enterprise'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
 
 export const FEATURES = {
@@ -29,7 +22,7 @@ export const FEATURES = {
   exportPdf: 'export_pdf',
   exportCsv: 'export_csv',
 
-  // Module professionnel — réservé aux plans `business` et `ultimate`.
+  // Module professionnel — organisations, équipes, missions, membres, etc.
   organizations: 'organizations',
   customers: 'customers',
   teams: 'teams',
@@ -61,6 +54,17 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     favorites: 3,
   },
 
+  starter: {
+    catalog_access: null,
+    calculation_history: null,
+    favorites: null,
+    pro_tools: null,
+    export_pdf: null,
+    export_csv: null,
+    organizations: null,
+    members: 2,
+  },
+
   pro: {
     catalog_access: null,
     calculation_history: null,
@@ -68,6 +72,14 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     pro_tools: null,
     export_pdf: null,
     export_csv: null,
+    organizations: null,
+    customers: null,
+    teams: null,
+    members: 5,
+    missions: null,
+    interventions: null,
+    equipment: null,
+    quotes: null,
   },
 
   business: {
@@ -92,7 +104,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     planning: null,
   },
 
-  ultimate: {
+  enterprise: {
     catalog_access: null,
     calculation_history: null,
     favorites: null,
@@ -117,27 +129,14 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
 
 /**
  * Plan retenu en l'absence d'abonnement lisible.
- *
- * `free`, et pas autre chose : une organisation sans abonnement n'a AUCUNE
- * fonctionnalité professionnelle côté serveur — `app.org_plan_code()` renvoie
- * NULL et `can_use_pro_module` refuse tout. Annoncer `business` par défaut, comme
- * le faisait la version précédente, ouvrait des sections que la base laissait
- * désespérément vides, sans dire pourquoi.
  */
 export const DEFAULT_PLAN: PlanCode = 'free';
 
 /**
  * La fonctionnalité est-elle incluse dans le plan ?
- *
- * Trois cas distincts, et la nuance compte pour le message affiché :
- *   • clé absente  → la formule ne comprend pas la fonctionnalité ;
- *   • `0`          → comprise mais explicitement interdite ;
- *   • `null` ou n  → disponible, éventuellement plafonnée.
- *
- * Reproduit exactement `app.org_has_feature`, qui applique la même règle en SQL.
  */
 export function planHasFeature(plan: PlanCode | null, feature: FeatureKey): boolean {
-  const matrix = PLAN_FEATURES[plan ?? DEFAULT_PLAN];
+  const matrix = PLAN_FEATURES[plan ?? DEFAULT_PLAN] ?? PLAN_FEATURES.free;
 
   if (!(feature in matrix)) return false;
 
@@ -150,7 +149,7 @@ export function planHasFeature(plan: PlanCode | null, feature: FeatureKey): bool
  * plan — les deux cas se distinguent par `planHasFeature`.
  */
 export function planFeatureLimit(plan: PlanCode | null, feature: FeatureKey): number | null {
-  return PLAN_FEATURES[plan ?? DEFAULT_PLAN][feature] ?? null;
+  return (PLAN_FEATURES[plan ?? DEFAULT_PLAN] ?? PLAN_FEATURES.free)[feature] ?? null;
 }
 
 /** Le plan débloque-t-il le module professionnel (organisations, équipes, missions) ? */

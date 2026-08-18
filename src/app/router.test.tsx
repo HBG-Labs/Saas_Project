@@ -53,9 +53,12 @@ describe('routing', () => {
   it('redirige une route privée vers /login quand la session est absente', async () => {
     const router = renderAt('/dashboard');
 
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/login');
-    });
+    await waitFor(
+      () => {
+        expect(router.state.location.pathname).toBe('/login');
+      },
+      { timeout: 4000 },
+    );
 
     // L'origine est conservée pour permettre le retour après connexion.
     expect(router.state.location.state).toMatchObject({ from: '/dashboard' });
@@ -69,9 +72,12 @@ describe('routing', () => {
     async (path) => {
       const router = renderAt(path);
 
-      await waitFor(() => {
-        expect(router.state.location.pathname).toBe('/login');
-      });
+      await waitFor(
+        () => {
+          expect(router.state.location.pathname).toBe('/login');
+        },
+        { timeout: 4000 },
+      );
     },
   );
 

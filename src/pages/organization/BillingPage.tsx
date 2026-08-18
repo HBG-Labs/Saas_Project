@@ -49,10 +49,12 @@ function formatDate(value: string | null): string {
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Starter (Gratuit)',
+  free: 'Free (Gratuit)',
+  starter: 'Starter',
   pro: 'Pro',
   business: 'Business',
-  ultimate: 'Ultimate',
+  enterprise: 'Enterprise',
+  ultimate: 'Enterprise',
 };
 
 export default function BillingPage() {
@@ -128,7 +130,7 @@ export default function BillingPage() {
               ) : (
                 <p className="text-muted-foreground text-sm">
                   Cette entreprise n’a pas d’abonnement actif. Le module professionnel — missions,
-                  équipes, interventions — nécessite la formule Business ou Ultimate.
+                  équipes, interventions — nécessite la formule Pro, Business ou Enterprise.
                 </p>
               )}
 
@@ -152,7 +154,11 @@ export default function BillingPage() {
             {members.isPending ? (
               <Skeleton className="h-12 w-full" />
             ) : (
-              <MemberQuotaBar current={activeMembers.length} max={memberLimit} />
+              <MemberQuotaBar
+                current={activeMembers.length}
+                max={memberLimit}
+                planCode={planCode}
+              />
             )}
           </CardContent>
         </Card>

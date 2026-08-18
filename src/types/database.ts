@@ -722,6 +722,18 @@ export interface Database {
           description: string | null;
           price_monthly_cents: number;
           price_annual_cents: number;
+          /**
+           * Coût d'un siège au-delà de ceux inclus. Les sièges INCLUS, eux,
+           * vivent dans `plan_features.members` — la valeur que lit
+           * `app.org_feature_limit`, donc toute la chaîne d'entitlements. Les
+           * dupliquer ici créerait deux vérités pour la même donnée.
+           */
+          extra_user_price_cents: number;
+          /** Plafond DUR. Renseigné pour Free (1) seulement ; `null` = illimité, le dépassement est facturé. */
+          max_users: number | null;
+          /** Lus par le webhook pour retrouver le plan depuis un Price ID Stripe. */
+          stripe_price_id_monthly: string | null;
+          stripe_price_id_annual: string | null;
           currency: string;
           is_organization_plan: boolean;
           sort_order: number;
@@ -2011,6 +2023,28 @@ export interface Database {
        *
        * Ne lit aucune table et ne reçoit aucune donnée d'entreprise.
        */
+      /**
+       * Situation de facturation d'une organisation.
+       *
+       * Le SERVEUR calcule sièges et montant ; l'interface affiche. Un calcul
+       * en TypeScript à côté finirait par diverger — et ici, la divergence se
+       * lirait sur une facture.
+       */
+      organization_billing_summary: {
+        Args: { p_organization_id: string };
+        Returns: {
+          plan_code: string;
+          plan_name: string;
+          included_seats: number;
+          active_seats: number;
+          extra_seats: number;
+          extra_seat_cents: number;
+          base_cents: number;
+          total_cents: number;
+          max_users: number | null;
+        }[];
+      };
+
       preview_leave_days: {
         Args: {
           p_start: string;

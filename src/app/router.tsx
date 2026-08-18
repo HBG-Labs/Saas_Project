@@ -229,6 +229,10 @@ export const routes: RouteObject[] = [
                         path: ROUTES.organizationMembers,
                         lazy: lazyPage(() => import('@/pages/organization/MembersPage')),
                       },
+                      {
+                        path: ROUTES.vehicles,
+                        lazy: lazyPage(() => import('@/pages/vehicles/VehiclesPage')),
+                      },
                     ],
                   },
                   {

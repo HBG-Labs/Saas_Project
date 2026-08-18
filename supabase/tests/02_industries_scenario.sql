@@ -65,8 +65,18 @@ $$;
 create function pg_temp.ok(p_condition boolean, p_label text) returns void
 language plpgsql as $$
 begin
-  if not p_condition then
-    raise exception 'ECHEC : %', p_label using errcode = 'assert_failure';
+  -- `is not true` et non `not p_condition` : en SQL, `not null` vaut `null`, et
+  -- un `if null then` ne s'exécute pas. La version précédente laissait donc
+  -- PASSER en silence toute assertion dont l'expression valait NULL — le cas le
+  -- plus courant étant une sous-requête qui ne ramène aucune ligne.
+  --
+  -- Trouvé en écrivant la suite 04 : `app.org_plan_code()` renvoyait NULL pour
+  -- une organisation sans abonnement, `NULL = 'free'` valait NULL, et le test
+  -- affichait « OK » sur une comparaison qui n'avait jamais été vraie.
+  if p_condition is not true then
+    raise exception 'ECHEC : % (condition %)', p_label,
+      coalesce(p_condition::text, 'NULL')
+      using errcode = 'assert_failure';
   end if;
   raise notice '  OK  %', p_label;
 end;

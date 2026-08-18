@@ -100,7 +100,10 @@ export async function getOrganizationPlanCode(organizationId: string): Promise<P
 export function resolvePlanCode(subscription: Subscription | null): PlanCode {
   if (subscription === null) return DEFAULT_PLAN;
 
-  const known = PLAN_CODES.find((code) => code === subscription.plan_code);
+  const rawCode = subscription.plan_code;
+  if (rawCode === 'ultimate') return 'enterprise';
+
+  const known = PLAN_CODES.find((code) => code === rawCode);
   return known ?? DEFAULT_PLAN;
 }
 
@@ -118,4 +121,55 @@ export async function getEffectiveFeatures(planCode: PlanCode): Promise<Set<Feat
       .filter((feature) => feature.limit_value === null || feature.limit_value > 0)
       .map((feature) => feature.feature_key as FeatureKey),
   );
+}
+
+/**
+ * Situation de facturation d'une organisation, calculée par le SERVEUR.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CETTE FONCTION NE CALCULE RIEN
+ *
+ * Sièges inclus, effectif, dépassement et montant viennent tous de la RPC
+ * `organization_billing_summary`. La tentation serait de les recomposer ici à
+ * partir de `PRICING_PLANS` et du nombre de membres — c'est une multiplication,
+ * après tout.
+ *
+ * Mais deux implémentations du même barème divergent, et celle qui diverge en
+ * silence est celle qu'on affiche. Ici, ce serait le montant d'une facture :
+ * l'écran annoncerait 39 € et le prélèvement serait de 49 €. `computeSubscriptionPrice`
+ * de `config/pricing.ts` reste utile pour la page tarifaire PUBLIQUE, où aucune
+ * organisation n'existe encore — jamais pour un montant réellement dû.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export interface BillingSummary {
+  planCode: PlanCode;
+  planName: string;
+  includedSeats: number;
+  activeSeats: number;
+  extraSeats: number;
+  extraSeatCents: number;
+  baseCents: number;
+  totalCents: number;
+  /** `null` = aucun plafond ; le dépassement est facturé, pas refusé. */
+  maxUsers: number | null;
+}
+
+export async function getBillingSummary(organizationId: string): Promise<BillingSummary | null> {
+  const row = await unwrapMaybe(
+    supabase.rpc('organization_billing_summary', { p_organization_id: organizationId }).maybeSingle(),
+  );
+
+  if (row === null) return null;
+
+  return {
+    planCode: resolvePlanCode({ plan_code: row.plan_code } as Subscription),
+    planName: row.plan_name,
+    includedSeats: row.included_seats,
+    activeSeats: row.active_seats,
+    extraSeats: row.extra_seats,
+    extraSeatCents: row.extra_seat_cents,
+    baseCents: row.base_cents,
+    totalCents: row.total_cents,
+    maxUsers: row.max_users,
+  };
 }
