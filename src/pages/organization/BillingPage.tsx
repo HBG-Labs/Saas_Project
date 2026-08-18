@@ -56,6 +56,17 @@ const STATUS_VARIANTS: Record<SubscriptionStatus, NonNullable<BadgeProps['varian
   expired: 'error',
 };
 
+/**
+ * Jours entiers d'ici l'échéance, `0` si elle est absente ou passée.
+ *
+ * Hors du composant : `Date.now()` rend le rendu impur, ce que le compilateur
+ * React refuse à juste titre. Même parti que `daysUntil` dans `TrialBanner`.
+ */
+function joursRestants(iso: string | null): number {
+  if (iso === null) return 0;
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+}
+
 function formatDate(value: string | null): string {
   if (value === null) return '—';
   return new Date(value).toLocaleDateString('fr-FR', {
@@ -101,6 +112,9 @@ export default function BillingPage() {
   // Pendant un essai, l'entreprise ne doit RIEN. Afficher « 69 € par mois » à
   // côté d'un badge « Période d'essai » laisse croire à un prélèvement en cours.
   const enEssai = subscription.data?.status === 'trialing';
+
+  const finDEssai = subscription.data?.trial_ends_at ?? subscription.data?.current_period_end ?? null;
+  const joursDEssaiRestants = joursRestants(finDEssai);
 
   const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
 
@@ -231,7 +245,22 @@ export default function BillingPage() {
                     <strong className="text-foreground">
                       {formatDate(data?.trial_ends_at ?? data?.current_period_end ?? null)}
                     </strong>
-                    , puis {(summary.data.totalCents / 100).toFixed(2)} € par mois.
+                    {/* « puis X € par mois » n'est vrai QUE si une carte est
+                        enregistrée. Sans elle, l'échéance ne déclenche aucun
+                        prélèvement : elle ferme les modules. Annoncer un prix
+                        qui ne sera pas réclamé, c'est le travers déjà corrigé
+                        sur la fenêtre d'invitation et la barre de quota. */}
+                    {gereParStripe ? (
+                      <>
+                        , puis {(summary.data.totalCents / 100).toFixed(2)} € par mois, prélevés
+                        automatiquement. Résiliable jusque-là depuis le portail.
+                      </>
+                    ) : (
+                      <>
+                        . Aucun moyen de paiement n’est enregistré : à cette date, l’entreprise
+                        repasse en formule Gratuite tant que vous n’avez pas souscrit.
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -244,6 +273,22 @@ export default function BillingPage() {
                 )}
               </p>
             </div>
+          ) : null}
+
+          {/* LE MESSAGE QUI LÈVE LE FREIN. Souscrire pendant l'essai reprend
+              désormais les jours restants : la carte est enregistrée, mais rien
+              n'est prélevé avant la date déjà promise. Sans cette phrase, le
+              dirigeant suppose l'inverse — c'était d'ailleurs vrai jusqu'ici,
+              et attendre le dernier jour lui coûtait moins cher. */}
+          {enEssai && !gereParStripe && joursDEssaiRestants > 2 ? (
+            <p className="border-primary/30 bg-primary/[0.06] text-muted-foreground rounded-xl border px-3 py-2 text-xs">
+              Vous gardez vos <strong className="text-foreground">{joursDEssaiRestants} jours
+              d’essai</strong> : en souscrivant maintenant, rien n’est prélevé avant le{' '}
+              <strong className="text-foreground">
+                {formatDate(data?.trial_ends_at ?? data?.current_period_end ?? null)}
+              </strong>
+              , et vous pouvez renoncer d’ici là.
+            </p>
           ) : null}
 
           <div className="grid gap-2 sm:grid-cols-2">

@@ -124,6 +124,61 @@ describe('BillingPage — le choix de formule', () => {
   });
 });
 
+describe('BillingPage — l’essai et son issue', () => {
+  beforeEach(() => {
+    resume.current = { activeSeats: 2, totalCents: 6900, extraSeats: 0 };
+    abonnement.current = {
+      status: 'trialing',
+      provider: null,
+      provider_subscription_id: null,
+      cancel_at_period_end: false,
+      current_period_end: '2026-09-01T12:00:00Z',
+    };
+    droit.current = true;
+  });
+
+  it('promet de garder les jours d’essai à qui souscrit maintenant', () => {
+    // Le frein levé : jusqu'ici, souscrire au jour 3 fermait l'essai et
+    // débitait aussitôt — quatorze jours perdus, mesurés. Le dire AVANT le clic
+    // est tout l'intérêt du changement.
+    afficher();
+
+    const promesse = screen.getByText(/rien n’est prélevé avant/);
+    expect(promesse).toHaveTextContent('14 jours');
+    expect(promesse).toHaveTextContent('1 septembre 2026');
+  });
+
+  it('sans carte, annonce le retour en Gratuit et non un prélèvement', () => {
+    afficher();
+
+    const phrase = screen.getByText(/Gratuit jusqu’au/);
+    expect(phrase).toHaveTextContent('repasse en formule Gratuite');
+    // Le travers déjà corrigé ailleurs : annoncer un prix qui ne sera pas réclamé.
+    expect(phrase).not.toHaveTextContent('prélevés automatiquement');
+  });
+
+  it('avec carte, annonce le prélèvement automatique et la sortie possible', () => {
+    abonnement.current.provider = 'stripe';
+    abonnement.current.provider_subscription_id = 'sub_essai';
+    afficher();
+
+    const phrase = screen.getByText(/Gratuit jusqu’au/);
+    expect(phrase).toHaveTextContent('prélevés automatiquement');
+    expect(phrase).toHaveTextContent('Résiliable jusque-là');
+    // L'incitation n'a plus lieu d'être : la carte est déjà posée.
+    expect(screen.queryByText(/rien n’est prélevé avant/)).not.toBeInTheDocument();
+  });
+
+  it('se tait quand l’essai est trop court pour que Stripe le reprenne', () => {
+    // Moins de 48 h : le serveur ne transmet aucun report, le prélèvement est
+    // immédiat. Promettre l'inverse serait pire que se taire.
+    abonnement.current.current_period_end = new Date(Date.now() + 3_600_000).toISOString();
+    afficher();
+
+    expect(screen.queryByText(/rien n’est prélevé avant/)).not.toBeInTheDocument();
+  });
+});
+
 describe('BillingPage — la sortie', () => {
   beforeEach(() => {
     resume.current = { activeSeats: 2, totalCents: 6900, extraSeats: 0 };

@@ -44,6 +44,13 @@ export function TrialBanner({ organizationId }: { organizationId: string | null 
   const subscription = useOrganizationSubscription(organizationId);
   const row = subscription.data ?? null;
 
+  // DEUX ESSAIS DE NATURE DIFFÉRENTE, et ils ne finissent pas pareil : celui
+  // ouvert à la création de l'entreprise s'éteint et referme les modules ;
+  // celui qui suit une souscription porte une carte et se transforme en
+  // prélèvement. Annoncer l'un pour l'autre, c'est promettre une coupure à qui
+  // va être débité, ou l'inverse.
+  const avecCarte = row?.provider_subscription_id != null;
+
   if (row === null || row.status !== 'trialing') return null;
 
   // `trial_ends_at` peut être NULL sur un abonnement posé à la main. Sans date,
@@ -99,8 +106,10 @@ export function TrialBanner({ organizationId }: { organizationId: string | null 
             <strong className="font-semibold">
               {remaining === 1 ? 'Dernier jour d’essai' : `Essai : ${remaining} jours restants`}
             </strong>{' '}
-            — jusqu’au {formattedDate}. Passé cette date, les modules professionnels sont
-            suspendus jusqu’à la souscription.
+            — jusqu’au {formattedDate}.{' '}
+            {avecCarte
+              ? 'Votre abonnement démarrera automatiquement à cette date. Vous pouvez y renoncer d’ici là depuis le portail de facturation.'
+              : 'Passé cette date, les modules professionnels sont suspendus jusqu’à la souscription.'}
           </>
         )}
       </p>

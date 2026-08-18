@@ -40,6 +40,53 @@ interface Body {
   cancelUrl?: string;
 }
 
+/** Minimum imposé par Stripe entre maintenant et un `trial_end` accepté. */
+const MINIMUM_ESSAI_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * L'échéance d'essai à reprendre dans l'abonnement Stripe, en secondes.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI LE RELIQUAT SUIT LE CLIENT
+ *
+ * Sans ce paramètre, souscrire pendant l'essai le referme et débite aussitôt.
+ * Mesuré : une organisation créée à 21:41, avec un essai courant jusqu'au 1er
+ * septembre, a été prélevée à 21:43 — quatorze jours d'essai perdus pour avoir
+ * décidé trop tôt.
+ *
+ * Le produit punissait donc celui qui s'abonne vite, et le client rationnel
+ * attendait le dernier jour — jour où il n'est pas connecté. En reprenant
+ * l'échéance déjà annoncée, s'abonner ne coûte plus rien avant la date promise,
+ * puis le renouvellement se fait tout seul. On garde l'inscription sans carte,
+ * et on gagne la conversion automatique.
+ *
+ * UN HORODATAGE ABSOLU, PAS UN NOMBRE DE JOURS
+ *
+ * `trial_period_days` ne prend qu'un entier : il arrondirait, et déplacerait la
+ * date affichée à l'écran. On promet une date, on transmet cette date.
+ *
+ * LE SEUIL DE 48 HEURES
+ *
+ * Stripe refuse un `trial_end` trop proche. En deçà, on n'envoie rien et le
+ * prélèvement est immédiat — comportement d'aujourd'hui. Le dire ici évite un
+ * refus opaque au moment du paiement, sur un message qui ne désigne rien.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function resolveTrialEnd(
+  essai: { status?: string | null; trial_ends_at?: string | null; current_period_end?: string | null } | null,
+): number | null {
+  if (!essai || essai.status !== 'trialing') return null;
+
+  const brut = essai.trial_ends_at ?? essai.current_period_end;
+  if (brut == null) return null;
+
+  const echeance = new Date(brut).getTime();
+  if (Number.isNaN(echeance)) return null;
+
+  if (echeance - Date.now() < MINIMUM_ESSAI_MS) return null;
+
+  return Math.floor(echeance / 1000);
+}
 
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
@@ -105,6 +152,20 @@ Deno.serve(async (request: Request): Promise<Response> => {
     .not('provider_customer_id', 'is', null)
     .maybeSingle();
 
+  // L'essai EN COURS, s'il y en a un. Lu séparément de `existing`, qui ne
+  // retient que les lignes portant déjà un client Stripe : une organisation en
+  // essai n'en a précisément aucun.
+  const { data: essai } = await caller
+    .from('subscriptions')
+    .select('status, trial_ends_at, current_period_end')
+    .eq('organization_id', organizationId)
+    .eq('status', 'trialing')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const finEssai = resolveTrialEnd(essai);
+
   const origin = request.headers.get('origin');
   const successUrl = resolveReturnUrl(
     body.successUrl,
@@ -141,7 +202,22 @@ Deno.serve(async (request: Request): Promise<Response> => {
     'metadata[plan_code]': planCode,
     'subscription_data[metadata][organization_id]': organizationId,
     'subscription_data[metadata][plan_code]': planCode,
+    // EXPLICITE, et non laissé au défaut de Stripe. Avec un essai, Checkout
+    // peut décider de ne pas réclamer de carte ; sans carte, l'abonnement
+    // s'éteindrait à l'échéance au lieu de se renouveler, et toute l'opération
+    // perdrait son objet. Même principe que `proration_behavior` : un défaut
+    // implicite qui décide d'un prélèvement peut changer sans nous.
+    payment_method_collection: 'always',
   };
+
+  if (finEssai !== null) {
+    params['subscription_data[trial_end]'] = String(finEssai);
+    // À l'échéance, sans moyen de paiement valide, on s'ARRÊTE plutôt que
+    // d'émettre une facture impayée. Une créance ouverte sur un client qui
+    // n'a jamais payé n'apporte rien ; l'organisation retombe sur Gratuit par
+    // le chemin déjà éprouvé, ses données intactes.
+    params['subscription_data[trial_settings][end_behavior][missing_payment_method]'] = 'cancel';
+  }
 
   // La seconde ligne n'existe que s'il y a un dépassement : une quantité nulle
   // ferait apparaître « 0 × siège supplémentaire » sur la facture du client.
@@ -165,6 +241,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
       includedSeats,
       activeSeats: access.context.activeSeats,
       extraSeats,
+      /**
+       * Date jusqu'à laquelle rien ne sera prélevé, ou `null` si le paiement
+       * est immédiat. Renvoyée pour que l'écran puisse le dire AVANT la
+       * redirection : « vous ne serez pas débité avant le 1er septembre » n'a
+       * de valeur qu'annoncé au moment du choix.
+       */
+      trialEnd: finEssai === null ? null : new Date(finEssai * 1000).toISOString(),
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Échec Stripe.' }, 502);

@@ -821,6 +821,80 @@ $$;
 reset role;
 
 -- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 10 — L essai porte par Stripe ==='; end $$;
+-- =============================================================================
+--
+-- Souscrire pendant l'essai ne ferme plus l'essai : la session de paiement
+-- reprend le reliquat, et l'abonnement Stripe naît en `trialing`. Deux essais
+-- coexistent donc dans la base, de meme statut mais d'issue opposee — l'un
+-- s'eteint sur Gratuit, l'autre se transforme en prelevement. On eprouve que la
+-- base sait les distinguer, et qu'elle traite le second comme un abonnement.
+
+select pg_temp.login('patron_a');
+set local role authenticated;
+insert into public.organizations (slug, name, created_by, industry)
+values ('essai-stripe', 'Essai Paye', pg_temp.uid('patron_a'), 'hvac');
+reset role;
+
+-- L'essai d'origine est remplace par celui que Stripe porte : meme echeance,
+-- mais desormais adosse a une carte.
+update public.subscriptions
+   set plan_code = 'pro', status = 'trialing',
+       provider = 'stripe', provider_subscription_id = 'sub_essai_paye'
+ where organization_id in (select id from public.organizations where slug = 'essai-stripe');
+
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-stripe';
+
+  -- L'ACCES EST OUVERT PENDANT L'ESSAI PAYE, comme pendant l'autre.
+  perform pg_temp.ok(app.org_effective_plan(v_org) = 'pro',
+    'Un essai porte par Stripe donne les droits de sa formule');
+  perform pg_temp.ok(app.org_has_feature(v_org, 'missions'),
+    'Les modules professionnels sont ouverts des l''essai');
+
+  -- ET LA BASE SAIT QU'UNE CARTE REPOND. C'est ce signal qui permet a
+  -- l'interface d'annoncer un prelevement plutot qu'un retour sur Gratuit.
+  perform pg_temp.ok(app.org_is_billed(v_org),
+    'La synthese signale que l''essai est adosse a un moyen de paiement');
+  perform pg_temp.ok(app.org_subscription_status(v_org) = 'trialing',
+    'Le statut reste bien un essai');
+
+  -- LA SORTIE PASSE PAR STRIPE. Resilier ici ecrirait une decision que la
+  -- prochaine notification ecraserait.
+  perform pg_temp.login('patron_a');
+  perform pg_temp.refuses(
+    format($sql$ select public.cancel_organization_subscription(%L) $sql$, v_org),
+    'Un essai paye ne se resilie pas hors du portail');
+end
+$$;
+
+-- Contre-exemple : l'essai SANS carte de la creation, qui lui doit rester
+-- resiliable ici. Sans cette assertion, la precedente ne prouverait rien.
+select pg_temp.login('patron_a');
+set local role authenticated;
+insert into public.organizations (slug, name, created_by, industry)
+values ('essai-sans-carte', 'Essai Sans Carte', pg_temp.uid('patron_a'), 'hvac');
+reset role;
+
+do $$
+declare v_org uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-sans-carte';
+
+  perform pg_temp.ok(not app.org_is_billed(v_org),
+    'Un essai ouvert a la creation n''est adosse a aucune carte');
+
+  perform pg_temp.login('patron_a');
+  perform public.cancel_organization_subscription(v_org);
+  perform pg_temp.ok(
+    (select cancel_at_period_end from public.subscriptions where organization_id = v_org),
+    'Et il se resilie, lui, sans passer par Stripe');
+end
+$$;
+
+-- =============================================================================
 do $$
 begin
   raise notice '';

@@ -144,6 +144,16 @@ if (checkout.status === 200) {
   const url = String(checkout.payload.url ?? '');
   ok(url.startsWith('https://checkout.stripe.com/'), 'Une URL de paiement est renvoyée');
   ok(checkout.payload.planCode === 'pro', 'Le plan retenu est bien celui demandé');
+
+  // RELIQUAT D'ESSAI. Ce compte est déjà abonné : aucun report ne doit être
+  // demandé à Stripe. Le cas inverse — une organisation en essai dont la
+  // session porte l'échéance déjà promise — a été éprouvé sur une organisation
+  // jetable ; ici on garde la moitié qui se vérifie sans rien créer.
+  ok(
+    checkout.payload.trialEnd === null,
+    'Une organisation déjà abonnée ne réclame aucun report de prélèvement',
+    `trialEnd = ${String(checkout.payload.trialEnd)}`,
+  );
   ok(checkout.payload.includedSeats === 5, 'Pro annonce cinq sièges inclus');
 
   const attenduExtra = Math.max(0, checkout.payload.activeSeats - 5);
