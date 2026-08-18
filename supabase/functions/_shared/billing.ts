@@ -127,6 +127,45 @@ export async function requireBillingAccess(
   };
 }
 
+/**
+ * Adresse de retour, après paiement ou après passage au portail.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CE N'EST PAS UNE SIMPLE CONCATÉNATION
+ *
+ * La première version écrivait `${origin}/organisation/facturation`. Quand
+ * l'en-tête `Origin` est absent — appel hors navigateur, script, certains
+ * clients mobiles — la chaîne devenait `/organisation/facturation`, une URL
+ * relative que Stripe refuse avec « Not a valid URL ».
+ *
+ * L'échec survenait donc au moment du paiement, sur un message qui ne désigne
+ * rien de ce qui est en cause. Mesuré par `scripts/verify-stripe.mjs`.
+ *
+ * Trois sources, dans l'ordre : ce que l'appelant demande, l'origine de la
+ * requête, puis `APP_URL`. Et une validation, parce qu'une URL de redirection
+ * non contrôlée est un tremplin d'hameçonnage : on n'accepte que `http` et
+ * `https`.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function resolveReturnUrl(
+  explicite: string | undefined,
+  origin: string | null,
+  chemin: string,
+): string | null {
+  const candidat =
+    explicite ?? (origin !== null && origin !== '' ? `${origin}${chemin}` : undefined) ??
+    (Deno.env.get('APP_URL') !== undefined ? `${Deno.env.get('APP_URL') ?? ''}${chemin}` : undefined);
+
+  if (candidat === undefined) return null;
+
+  try {
+    const url = new URL(candidat);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface StripePrices {
   planPriceId: string;
   extraSeatPriceId: string;

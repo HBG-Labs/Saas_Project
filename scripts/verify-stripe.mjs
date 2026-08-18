@@ -198,7 +198,11 @@ ok(sansJeton.status === 401, 'Un appel sans session est refusé');
 // ------------------------------------------------------------- 5. portail client
 console.log('\n▶ Portail de facturation');
 
-const portail = await callFunction('create-billing-portal-session', { organizationId }, token);
+const portail = await callFunction(
+  'create-billing-portal-session',
+  { organizationId, returnUrl: 'https://nexoratech.example/organisation/facturation' },
+  token,
+);
 ok(
   portail.status === 400 || portail.status === 200,
   'Le portail répond de façon exploitable',

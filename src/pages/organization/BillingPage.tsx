@@ -2,18 +2,32 @@ import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import {
   FEATURES,
+  useBillingPortal,
+  useBillingSummary,
+  useCheckout,
   useOrganizationEntitlements,
   useOrganizationSubscription,
 } from '@/features/billing';
-import { MemberQuotaBar, useCurrentOrganization, useMembers } from '@/features/organizations';
+import {
+  MemberQuotaBar,
+  PERMISSIONS,
+  useCurrentOrganization,
+  useMembers,
+  usePermission,
+} from '@/features/organizations';
+
+/** Les formules souscriptibles : Free est l'état par défaut, pas une offre. */
+const PAYABLE_PLANS = PRICING_PLANS.filter((tier) => tier.id !== 'free');
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { SubscriptionStatus } from '@/types/database';
 
@@ -66,6 +80,16 @@ export default function BillingPage() {
   const subscription = useOrganizationSubscription(organizationId);
   const { planCode, limit } = useOrganizationEntitlements(organizationId);
   const members = useMembers(organizationId);
+  const summary = useBillingSummary(organizationId);
+  const checkout = useCheckout(organizationId);
+  const portal = useBillingPortal(organizationId);
+
+  const { can } = usePermission();
+  // Masque les actions à qui ne les obtiendra pas. Cela ne SÉCURISE rien :
+  // `requireBillingAccess` refuse de toute façon côté serveur. Mais proposer un
+  // bouton que le serveur refusera décrit le produit, pas le travail de qui le
+  // regarde.
+  const canManageBilling = can(PERMISSIONS.billingManage);
 
   const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
   const memberLimit = limit(FEATURES.members);
@@ -165,24 +189,106 @@ export default function BillingPage() {
       ) : null}
 
       {/*
-        Aucune action de paiement : `subscriptions` est fermée en écriture au
-        client — l'y autoriser reviendrait à laisser chacun s'attribuer la
-        formule Entreprise. L'abonnement sera alimenté par le webhook Stripe,
-        avec le rôle `service_role`, en Phase 12.
+        Le paiement est possible, et il l'est SANS que le client puisse décider
+        de son montant : `subscriptions` reste fermée en écriture, et
+        `create-checkout-session` recalcule plan, sièges et prix depuis la base.
+        Ce que le navigateur envoie ici, c'est une intention — pas un tarif.
       */}
       <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6 sm:pt-6">
-          <p className="text-muted-foreground text-sm">
-            Le changement de formule en ligne arrive prochainement.
-          </p>
-          <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.pricing}>
-              Comparer les formules
-              <ExternalLink className="size-3.5" />
-            </Link>
-          </Button>
+        <CardHeader>
+          <CardTitle>Changer de formule</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <FormError error={checkout.error ?? portal.error} />
+
+          {summary.data !== null && summary.data !== undefined ? (
+            <p className="text-muted-foreground text-sm">
+              {summary.data.activeSeats} utilisateur{summary.data.activeSeats > 1 ? 's' : ''} actif
+              {summary.data.activeSeats > 1 ? 's' : ''} · {summary.data.includedSeats} compris dans
+              la formule
+              {summary.data.extraSeats > 0
+                ? ` · ${String(summary.data.extraSeats)} en supplément à ${String(
+                    summary.data.extraSeatCents / 100,
+                  )} €`
+                : ''}
+              {' — soit '}
+              <strong className="text-foreground">
+                {(summary.data.totalCents / 100).toFixed(2)} € par mois
+              </strong>
+              .
+            </p>
+          ) : null}
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PAYABLE_PLANS.map((tier) => {
+              const isCurrent = tier.id === planCode;
+              const seats = summary.data?.activeSeats ?? activeMembers.length;
+              // Ce que coûterait CETTE formule à l'effectif actuel. Un montant
+              // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
+              // de paiement — et il vient de la même formule que le serveur.
+              const projete = computeSubscriptionPrice(tier.id, seats);
+
+              return (
+                <Button
+                  key={tier.id}
+                  type="button"
+                  variant={tier.popular ? 'primary' : 'outline'}
+                  disabled={isCurrent || checkout.isPending || !canManageBilling}
+                  onClick={() => checkout.mutate(tier.id)}
+                  className="h-auto flex-col items-start gap-0.5 py-2.5"
+                >
+                  <span className="font-semibold">
+                    {tier.name}
+                    {isCurrent ? ' — formule actuelle' : ''}
+                  </span>
+                  <span className="text-2xs font-normal opacity-80">
+                    {projete} € / mois pour {seats} utilisateur{seats > 1 ? 's' : ''}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+
+          {!canManageBilling ? (
+            <p className="text-muted-foreground text-xs">
+              Seul le propriétaire de l’entreprise peut modifier l’abonnement. Le serveur applique
+              la même règle : un autre rôle serait refusé.
+            </p>
+          ) : null}
+
+          <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <p className="text-muted-foreground text-sm">
+              Moyen de paiement, factures et résiliation.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="ghost" size="sm">
+                <Link to={ROUTES.pricing}>
+                  Comparer les formules
+                  <ExternalLink className="size-3.5" />
+                </Link>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={portal.isPending || !canManageBilling || data?.provider !== 'stripe'}
+                onClick={() => portal.mutate()}
+                title={
+                  data?.provider === 'stripe'
+                    ? undefined
+                    : 'Disponible une fois un abonnement payant souscrit.'
+                }
+              >
+                {portal.isPending ? 'Ouverture…' : 'Gérer mon abonnement'}
+                <ExternalLink className="size-3.5" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
     </div>
   );
 }

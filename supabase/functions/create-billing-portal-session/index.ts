@@ -3,6 +3,7 @@ import {
   callerClient,
   json,
   requireBillingAccess,
+  resolveReturnUrl,
   stripeRequest,
 } from '../_shared/billing.ts';
 
@@ -67,10 +68,23 @@ Deno.serve(async (request: Request): Promise<Response> => {
     );
   }
 
+  const returnUrl = resolveReturnUrl(
+    body.returnUrl,
+    request.headers.get('origin'),
+    '/organisation/facturation',
+  );
+
+  if (returnUrl === null) {
+    return json(
+      { error: 'Adresse de retour introuvable. Transmettez `returnUrl` absolue.' },
+      400,
+    );
+  }
+
   try {
     const session = await stripeRequest('/v1/billing_portal/sessions', {
       customer: subscription.provider_customer_id,
-      return_url: body.returnUrl ?? `${request.headers.get('origin') ?? ''}/organisation/facturation`,
+      return_url: returnUrl,
     });
 
     return json({ url: session.url });

@@ -1,4 +1,5 @@
-import { mapPostgrestError } from '@/lib/errors';
+import { ROUTES } from '@/config/routes';
+import { AppError, mapPostgrestError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { Plan, PlanFeature, PlanWithFeatures, Subscription } from '@/types/domain';
 
@@ -209,4 +210,80 @@ export async function syncSubscriptionSeats(organizationId: string): Promise<boo
   } catch {
     return false;
   }
+}
+
+/**
+ * Ouvre une session de paiement Stripe et renvoie l'adresse de redirection.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE L'APPELANT NE TRANSMET PAS
+ *
+ * Ni prix, ni nombre de sièges, ni montant. La fonction Edge les recalcule
+ * depuis la base et ignore tout ce qui ressemblerait à une valeur imposée. Le
+ * client annonce une intention — « je veux Pro » — et le serveur en tire les
+ * conséquences.
+ *
+ * Les adresses de retour sont fournies explicitement plutôt que déduites de
+ * l'en-tête `Origin` : celui-ci manque hors navigateur, et Stripe refuse alors
+ * la session avec un message qui ne désigne rien.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export async function createCheckoutSession(params: {
+  organizationId: string;
+  planCode: PlanCode;
+}): Promise<string> {
+  const base = window.location.origin;
+
+  const response: { data: { url?: string; error?: string } | null; error: unknown } =
+    await supabase.functions.invoke<{ url?: string; error?: string }>('create-checkout-session', {
+      body: {
+        organizationId: params.organizationId,
+        planCode: params.planCode,
+        successUrl: `${base}${ROUTES.organizationBilling}?paiement=ok`,
+        cancelUrl: `${base}${ROUTES.organizationBilling}?paiement=annule`,
+      },
+    });
+
+  const url = response.data?.url;
+
+  if (response.error !== null || url === undefined) {
+    // Le message de la fonction est bien plus utile que « Edge Function
+    // returned a non-2xx status code » : il nomme le tarif absent, le droit
+    // manquant ou la formule inconnue.
+    throw new AppError(
+      'unknown',
+      response.data?.error ?? "La session de paiement n'a pas pu être ouverte.",
+    );
+  }
+
+  return url;
+}
+
+/**
+ * Ouvre le portail de facturation Stripe : moyen de paiement, factures,
+ * résiliation.
+ *
+ * Déléguer plutôt que reconstruire : refaire ces écrans supposerait de
+ * manipuler des moyens de paiement dans notre interface, donc d'entrer dans le
+ * périmètre PCI-DSS pour n'apporter aucun service de plus.
+ */
+export async function createBillingPortalSession(organizationId: string): Promise<string> {
+  const response: { data: { url?: string; error?: string } | null; error: unknown } =
+    await supabase.functions.invoke<{ url?: string; error?: string }>(
+      'create-billing-portal-session',
+      {
+        body: { organizationId, returnUrl: `${window.location.origin}${ROUTES.organizationBilling}` },
+      },
+    );
+
+  const url = response.data?.url;
+
+  if (response.error !== null || url === undefined) {
+    throw new AppError(
+      'unknown',
+      response.data?.error ?? "Le portail de facturation n'a pas pu être ouvert.",
+    );
+  }
+
+  return url;
 }

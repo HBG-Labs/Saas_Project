@@ -14,6 +14,8 @@ export {
 } from './entitlements';
 
 export {
+  createBillingPortalSession,
+  createCheckoutSession,
   getBillingSummary,
   getEffectiveFeatures,
   getMySubscription,
@@ -25,6 +27,12 @@ export {
   syncSubscriptionSeats,
   type BillingSummary,
 } from './api/billing.api';
+
+export {
+  useBillingPortal,
+  useBillingSummary,
+  useCheckout,
+} from './hooks/useCheckout';
 
 export {
   useOrganizationEntitlements,
