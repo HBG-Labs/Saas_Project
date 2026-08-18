@@ -6,14 +6,9 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import {
-  FEATURES,
-  useOrganizationEntitlements,
-  useOrganizationSubscription,
-} from '@/features/billing';
+import { useOrganizationEntitlements, useOrganizationSubscription } from '@/features/billing';
 import type { SubscriptionStatus } from '@/types/database';
 
-import { MemberQuotaBar } from './MemberQuotaBar';
 import { memberDisplayName, useMembers } from '../hooks/useMembers';
 
 const STATUS_LABELS: Record<SubscriptionStatus, string> = {
@@ -41,25 +36,15 @@ const PLAN_LABELS: Record<string, string> = {
   ultimate: 'Enterprise',
 };
 
-function formatDate(value: string | null): string {
-  if (value === null) return '—';
-  return new Date(value).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
 
 export function OrganizationBillingCard({ organizationId }: { organizationId: string }) {
   const subscription = useOrganizationSubscription(organizationId);
-  const { planCode, limit } = useOrganizationEntitlements(organizationId);
+  const { planCode } = useOrganizationEntitlements(organizationId);
   const members = useMembers(organizationId);
 
   const owners = (members.data ?? []).filter(
     (member) => member.role === 'owner' && member.status === 'active',
   );
-  const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
-  const memberLimit = limit(FEATURES.members);
   const data = subscription.data ?? null;
 
   return (
@@ -124,37 +109,15 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
           </div>
         </div>
 
-        {/* Dates de période */}
-        {data !== null ? (
-          <dl className="grid gap-3 text-sm sm:grid-cols-2 bg-surface-hover/50 p-3 rounded-lg border border-border/60">
-            <div>
-              <dt className="text-muted-foreground text-xs">Début de période</dt>
-              <dd className="text-foreground font-mono text-xs tabular-nums font-semibold mt-0.5">
-                {formatDate(data.current_period_start)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground text-xs">Fin de période</dt>
-              <dd className="text-foreground font-mono text-xs tabular-nums font-semibold mt-0.5">
-                {formatDate(data.current_period_end)}
-              </dd>
-            </div>
-          </dl>
-        ) : null}
+        {/* Ni période, ni jauge de consommation ICI.
+            ─────────────────────────────────────────────────────────────────
+            Les deux figuraient à l'identique sur la page Facturation. Deux
+            affichages de la même donnée finissent par diverger — et celui
+            qu'on met à jour n'est jamais celui que l'utilisateur regarde.
 
-        {/* Note explicative & Jauge de membres */}
-        {memberLimit !== null ? (
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-xs font-medium">Consommation des membres & techniciens</span>
-            </div>
-            {members.isPending ? (
-              <Skeleton className="h-6 w-full" />
-            ) : (
-              <MemberQuotaBar current={activeMembers.length} max={memberLimit} planCode={planCode} />
-            )}
-          </div>
-        ) : null}
+            Cet écran répond à « qui possède l'entreprise ». La page Facturation
+            répond à « que paie-t-elle ». La formule apparaît ici parce qu'elle
+            situe l'entreprise, pas pour être administrée. */}
 
         <p className="text-subtle-foreground text-2xs leading-relaxed border-t border-border/40 pt-2.5">
           L’abonnement est rattaché à l’entreprise, jamais aux comptes individuels. Les

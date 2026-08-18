@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import {
-  FEATURES,
   useBillingPortal,
   useBillingSummary,
   useCheckout,
@@ -78,7 +77,7 @@ export default function BillingPage() {
   const organizationId = organization?.id ?? null;
 
   const subscription = useOrganizationSubscription(organizationId);
-  const { planCode, limit } = useOrganizationEntitlements(organizationId);
+  const { planCode } = useOrganizationEntitlements(organizationId);
   const members = useMembers(organizationId);
   const summary = useBillingSummary(organizationId);
   const checkout = useCheckout(organizationId);
@@ -91,8 +90,11 @@ export default function BillingPage() {
   // regarde.
   const canManageBilling = can(PERMISSIONS.billingManage);
 
+  // Pendant un essai, l'entreprise ne doit RIEN. Afficher « 69 € par mois » à
+  // côté d'un badge « Période d'essai » laisse croire à un prélèvement en cours.
+  const enEssai = subscription.data?.status === 'trialing';
+
   const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
-  const memberLimit = limit(FEATURES.members);
 
   if (subscription.isError) {
     return (
@@ -169,25 +171,6 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {memberLimit !== null ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Consommation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {members.isPending ? (
-              <Skeleton className="h-12 w-full" />
-            ) : (
-              <MemberQuotaBar
-                current={activeMembers.length}
-                max={memberLimit}
-                planCode={planCode}
-              />
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
       {/*
         Le paiement est possible, et il l'est SANS que le client puisse décider
         de son montant : `subscriptions` reste fermée en écriture, et
@@ -202,21 +185,47 @@ export default function BillingPage() {
           <FormError error={checkout.error ?? portal.error} />
 
           {summary.data !== null && summary.data !== undefined ? (
-            <p className="text-muted-foreground text-sm">
-              {summary.data.activeSeats} utilisateur{summary.data.activeSeats > 1 ? 's' : ''} actif
-              {summary.data.activeSeats > 1 ? 's' : ''} · {summary.data.includedSeats} compris dans
-              la formule
-              {summary.data.extraSeats > 0
-                ? ` · ${String(summary.data.extraSeats)} en supplément à ${String(
-                    summary.data.extraSeatCents / 100,
-                  )} €`
-                : ''}
-              {' — soit '}
-              <strong className="text-foreground">
-                {(summary.data.totalCents / 100).toFixed(2)} € par mois
-              </strong>
-              .
-            </p>
+            <div className="space-y-3">
+              {/* La jauge vit ICI, au moment de choisir — et non dans une carte
+                  « Consommation » séparée qui répétait la même donnée deux
+                  centimètres plus haut. */}
+              {members.isPending ? (
+                <Skeleton className="h-12 w-full" />
+              ) : (
+                <MemberQuotaBar
+                  current={summary.data.activeSeats}
+                  max={summary.data.includedSeats}
+                  planCode={planCode}
+                />
+              )}
+
+              <p className="text-muted-foreground text-sm">
+                {summary.data.extraSeats > 0
+                  ? `${String(summary.data.extraSeats)} utilisateur${
+                      summary.data.extraSeats > 1 ? 's' : ''
+                    } au-delà des ${String(summary.data.includedSeats)} compris, à ${String(
+                      summary.data.extraSeatCents / 100,
+                    )} € chacun. `
+                  : ''}
+                {enEssai ? (
+                  <>
+                    Gratuit jusqu’au{' '}
+                    <strong className="text-foreground">
+                      {formatDate(data?.trial_ends_at ?? data?.current_period_end ?? null)}
+                    </strong>
+                    , puis {(summary.data.totalCents / 100).toFixed(2)} € par mois.
+                  </>
+                ) : (
+                  <>
+                    Soit{' '}
+                    <strong className="text-foreground">
+                      {(summary.data.totalCents / 100).toFixed(2)} € par mois
+                    </strong>
+                    .
+                  </>
+                )}
+              </p>
+            </div>
           ) : null}
 
           <div className="grid gap-2 sm:grid-cols-2">

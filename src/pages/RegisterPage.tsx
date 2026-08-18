@@ -98,6 +98,16 @@ export default function RegisterPage() {
             </Link>
           </div>
 
+          {/* L'essai était accordé par `app.start_organization_trial` sans que
+              rien ne l'annonce. Un avantage que le visiteur ignore ne le
+              décide pas — et il découvrait une échéance dont on ne lui avait
+              jamais parlé. */}
+          <p className="text-2xs text-muted-foreground">
+            Quatorze jours d’essai gratuit sur les formules payantes, sans carte bancaire. À
+            l’échéance, l’entreprise revient en formule Gratuite : vos données sont conservées,
+            seuls les modules métier se referment.
+          </p>
+
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-xl bg-surface-sunken border border-border/80">
             {PRICING_PLANS.map((plan) => {
               const isSelected = selectedPlan === plan.id;

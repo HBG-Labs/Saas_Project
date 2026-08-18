@@ -731,7 +731,12 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h4 className="text-xs font-semibold text-foreground">Mot de passe</h4>
-                    <p className="text-3xs text-muted-foreground">Dernière modification il y a 14 jours.</p>
+                    {/* « Il y a 14 jours » était écrit en dur, quelle que soit
+                        la réalité. Une information fausse sur la sécurité d'un
+                        compte est pire qu'une information absente. */}
+                    <p className="text-3xs text-muted-foreground">
+                      Choisissez un mot de passe long et propre à ce service.
+                    </p>
                   </div>
                   <NavLink to={ROUTES.profile}>
                     <Button variant="outline" size="sm" className="text-2xs h-7 px-2.5">

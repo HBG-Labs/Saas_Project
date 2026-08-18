@@ -24,8 +24,10 @@ export function Pricing() {
           </p>
 
           <p className="text-muted-foreground mt-4 text-xs">
-            Facturation mensuelle, sans engagement. Les utilisateurs au-delà de ceux
-            compris dans la formule sont facturés 5 € par mois.
+            Facturation mensuelle, sans engagement.{' '}
+            <strong className="text-foreground">Quatorze jours d’essai gratuit</strong> sur toutes
+            les formules payantes, sans carte bancaire. Les utilisateurs au-delà de ceux compris
+            dans la formule sont facturés 5 € par mois.
           </p>
         </div>
 
