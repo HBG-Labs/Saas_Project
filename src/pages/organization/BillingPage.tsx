@@ -213,6 +213,7 @@ export default function BillingPage() {
                   current={summary.data.activeSeats}
                   max={summary.data.includedSeats}
                   planCode={planCode}
+                  isBilled={summary.data.isBilled}
                 />
               )}
 

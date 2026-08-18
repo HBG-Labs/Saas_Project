@@ -37,6 +37,13 @@ export interface SeatBilling {
   activeSeats: number;
   /** Sièges compris dans la formule ; `null` tant que la synthèse n'a pas répondu. */
   includedSeats: number | null;
+  /**
+   * Le supplément est-il RÉELLEMENT prélevé aujourd'hui ? `false` pendant
+   * l'essai : le montant est juste, mais il ne sera dû qu'à la souscription.
+   * Annoncer « +5 € / mois » au présent a déjà fait croire à une panne de
+   * synchronisation chez Stripe, où il n'y avait rien à synchroniser.
+   */
+  isBilled: boolean;
   isLoading: boolean;
 }
 
@@ -57,6 +64,7 @@ export function useSeatBilling(organizationId: string | null): SeatBilling {
     extraSeatPrice: (data?.extraSeatCents ?? 500) / 100,
     activeSeats: data?.activeSeats ?? 0,
     includedSeats: data?.includedSeats ?? null,
+    isBilled: data?.isBilled ?? false,
     isLoading: summary.isPending,
   };
 }

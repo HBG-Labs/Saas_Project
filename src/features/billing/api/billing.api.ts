@@ -153,6 +153,15 @@ export interface BillingSummary {
   totalCents: number;
   /** `null` = aucun plafond ; le dépassement est facturé, pas refusé. */
   maxUsers: number | null;
+  /** Statut de l'abonnement retenu ; `null` s'il n'y en a aucun. */
+  subscriptionStatus: string | null;
+  /**
+   * Un prestataire encaisse-t-il réellement ? `false` pendant l'essai, sur
+   * Gratuit, et sur un compte accordé à la main. Dans ces cas, un changement
+   * d'effectif ne produit AUCUN mouvement chez Stripe : l'interface doit
+   * annoncer un montant à venir, jamais un prélèvement en cours.
+   */
+  isBilled: boolean;
 }
 
 export async function getBillingSummary(organizationId: string): Promise<BillingSummary | null> {
@@ -172,6 +181,8 @@ export async function getBillingSummary(organizationId: string): Promise<Billing
     baseCents: row.base_cents,
     totalCents: row.total_cents,
     maxUsers: row.max_users,
+    subscriptionStatus: row.subscription_status,
+    isBilled: row.is_billed,
   };
 }
 

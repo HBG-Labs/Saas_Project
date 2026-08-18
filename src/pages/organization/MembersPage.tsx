@@ -87,7 +87,7 @@ export default function MembersPage() {
   // version précédente comptait les lignes non retirées — invitations
   // comprises — contre une limite lue dans le paquet JavaScript, et annonçait
   // donc un supplément pour des comptes qui n'étaient pas encore facturables.
-  const { quotaBlocked, isExtraSeat, activeSeats, includedSeats } =
+  const { quotaBlocked, isExtraSeat, activeSeats, includedSeats, isBilled } =
     useSeatBilling(organizationId);
 
   const busy = updateRole.isPending || updateDetails.isPending || removeMember.isPending;
@@ -126,7 +126,12 @@ export default function MembersPage() {
             {/* Les mêmes chiffres que la facture : les comptes FACTURABLES, et
                 les sièges que la formule comprend. La barre montrait auparavant
                 les lignes non retirées contre une limite lue côté client. */}
-            <MemberQuotaBar current={activeSeats} max={includedSeats} planCode={planCode} />
+            <MemberQuotaBar
+              current={activeSeats}
+              max={includedSeats}
+              planCode={planCode}
+              isBilled={isBilled}
+            />
           </CardContent>
         </Card>
       ) : null}

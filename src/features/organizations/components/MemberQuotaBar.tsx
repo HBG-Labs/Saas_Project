@@ -13,6 +13,12 @@ export interface MemberQuotaBarProps {
   included?: number;
   /** Code du plan actuel pour adapter les messages (ex: 'free'). */
   planCode?: string;
+  /**
+   * Un prestataire encaisse-t-il déjà ? Pendant l'essai, le supplément est
+   * calculé mais rien n'est prélevé, et rien ne bouge chez Stripe. Le dire au
+   * présent a déjà fait conclure à une panne de synchronisation.
+   */
+  isBilled?: boolean;
 }
 
 /**
@@ -25,7 +31,13 @@ export interface MemberQuotaBarProps {
  *   - Pour Free : CTA « Passer au plan supérieur » (car monocompte strict).
  *   - Pour plans payants : Indique que les prochains collaborateurs seront à +5 €/mois, et bouton « Passer au plan supérieur ».
  */
-export function MemberQuotaBar({ current, max, included, planCode }: MemberQuotaBarProps) {
+export function MemberQuotaBar({
+  current,
+  max,
+  included,
+  planCode,
+  isBilled = false,
+}: MemberQuotaBarProps) {
   const baseIncluded = included ?? max ?? 1;
   const isFree = planCode === 'free' || max === 1;
 
@@ -46,7 +58,9 @@ export function MemberQuotaBar({ current, max, included, planCode }: MemberQuota
             <span>
               {current} utilisateurs — <span className="text-muted-foreground font-normal">{baseIncluded} inclus</span>{' '}
               <span className="text-primary font-semibold">+{extraCount} supplémentaires</span>{' '}
-              <span className="text-emerald-500 font-bold">(+{extraCostEur} €/mois)</span>
+              <span className="text-emerald-500 font-bold">
+                (+{extraCostEur} €/mois{isBilled ? '' : ' à la souscription'})
+              </span>
             </span>
           ) : (
             <span>
@@ -95,7 +109,12 @@ export function MemberQuotaBar({ current, max, included, planCode }: MemberQuota
       ) : isQuotaReached && !hasExtraUsers ? (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1">
           <p className="text-muted-foreground text-2xs">
-            Limite incluse atteinte ({baseIncluded} {baseIncluded > 1 ? 'utilisateurs' : 'utilisateur'}). Vos prochaines invitations ajouteront un utilisateur supplémentaire à <strong>+5 €/mois</strong>.
+            Limite incluse atteinte ({baseIncluded}{' '}
+            {baseIncluded > 1 ? 'utilisateurs' : 'utilisateur'}). Chaque compte actif
+            supplémentaire coûte <strong>+5 €/mois</strong>
+            {isBilled
+              ? ', ajouté au prorata sur votre prochaine facture.'
+              : ' — décompté à partir de votre souscription, rien n’est prélevé pendant l’essai.'}
           </p>
           <Button asChild variant="outline" size="sm" className="text-2xs h-7 gap-1 shrink-0">
             <Link to={ROUTES.pricing}>

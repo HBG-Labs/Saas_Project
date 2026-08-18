@@ -35,6 +35,8 @@ function resume(over: Record<string, unknown> = {}) {
     baseCents: 6900,
     totalCents: 6900,
     maxUsers: null,
+    subscriptionStatus: 'active',
+    isBilled: true,
     ...over,
   };
 }
@@ -92,6 +94,40 @@ describe('useSeatBilling', () => {
     expect(r.quotaBlocked).toBe(false);
     expect(r.includedSeats).toBeNull();
     expect(r.isLoading).toBe(true);
+  });
+
+  it('distingue un supplément DÛ d’un supplément à venir', () => {
+    // Le cas qui a fait conclure à une panne : onze comptes pour dix inclus,
+    // pendant l'essai. Le montant est juste, mais aucun abonnement Stripe
+    // n'existe — rien n'y sera modifié, et rien ne sera prélevé avant la
+    // souscription. L'écran doit pouvoir le dire.
+    synthese.current = resume({
+      activeSeats: 11,
+      extraSeats: 1,
+      subscriptionStatus: 'trialing',
+      isBilled: false,
+    });
+    const r = lire();
+
+    expect(r.isExtraSeat).toBe(true);
+    expect(r.isBilled).toBe(false);
+  });
+
+  it('signale un supplément réellement prélevé quand un prestataire encaisse', () => {
+    synthese.current = resume({ activeSeats: 11, extraSeats: 1, isBilled: true });
+    const r = lire();
+
+    expect(r.isExtraSeat).toBe(true);
+    expect(r.isBilled).toBe(true);
+  });
+
+  it('ne suppose jamais qu’on est facturé faute de réponse', () => {
+    synthese.current = null;
+    synthese.isPending = true;
+
+    // Le défaut sûr est l'absence de prélèvement : annoncer à tort un débit
+    // inquiète, taire un débit réel se corrige à la réponse suivante.
+    expect(lire().isBilled).toBe(false);
   });
 
   it('prend le prix du siège dans la synthèse, et non dans une constante', () => {

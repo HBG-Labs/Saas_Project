@@ -2057,6 +2057,10 @@ export interface Database {
           base_cents: number;
           total_cents: number;
           max_users: number | null;
+          /** Statut de l'abonnement retenu, ou `null` s'il n'y en a aucun. */
+          subscription_status: string | null;
+          /** Un prestataire encaisse-t-il ? `false` en essai et sur Gratuit. */
+          is_billed: boolean;
         }[];
       };
 
