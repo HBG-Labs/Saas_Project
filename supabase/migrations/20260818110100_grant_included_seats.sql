@@ -1,0 +1,21 @@
+-- =============================================================================
+-- Droit d'exécution manquant sur app.org_included_seats
+-- =============================================================================
+--
+-- `20260818110000` a créé la fonction avec le `revoke` d'usage mais sans le
+-- `grant` qui l'accompagne toujours dans ce schéma. Or
+-- `public.organization_billing_summary` est `security invoker` : elle s'exécute
+-- avec les droits de l'appelant, qui doit donc pouvoir exécuter chacune des
+-- fonctions `app.*` qu'elle appelle.
+--
+-- Résultat : « permission denied for function org_included_seats » sur TOUT
+-- appel authentifié à la synthèse de facturation — donc écran de facturation
+-- illisible, et fonctions Edge en erreur 400. Attrapé par la suite
+-- `04_billing_scenario.sql`, qui interroge la RPC sous une vraie identité et
+-- non en tant que `postgres` : c'est exactement ce qu'elle est là pour voir.
+--
+-- La migration précédente n'est pas retouchée : elle est appliquée, et une
+-- migration appliquée ne se réécrit pas. Correction par ajout.
+-- =============================================================================
+
+grant execute on function app.org_included_seats(uuid) to authenticated;
