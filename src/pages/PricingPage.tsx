@@ -179,8 +179,10 @@ export default function PricingPage() {
               >
                 {tier.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <Badge variant="primary" className="gap-1 shadow-sm py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide">
-                      <Sparkles className="size-3" />
+                    <Badge
+                      className="gap-1 bg-surface border-2 border-primary text-primary dark:text-blue-400 py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide shadow-xs"
+                    >
+                      <Sparkles className="size-3 text-primary dark:text-blue-400" />
                       Recommandé
                     </Badge>
                   </div>

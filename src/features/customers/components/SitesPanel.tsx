@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Archive, KeyRound, MapPin, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -165,7 +165,7 @@ function SiteFormDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SiteValues>({
     resolver: zodResolver(siteSchema),
@@ -238,6 +238,15 @@ function SiteFormDialog({
     }
   });
 
+  const [addressLine1, postalCode, city] = useWatch({
+    control,
+    name: ['addressLine1', 'postalCode', 'city'],
+  });
+
+  const initialAddress = addressLine1
+    ? `${addressLine1} ${postalCode ?? ''} ${city ?? ''}`.trim()
+    : '';
+
   return (
     <Modal
       open={open}
@@ -249,9 +258,9 @@ function SiteFormDialog({
             <Pencil className="size-4" />
           </Button>
         ) : (
-          <Button variant="outline" size="sm">
+          <Button size="sm">
             <Plus className="size-4" />
-            Ajouter un site
+            Nouveau site
           </Button>
         )
       }
@@ -281,11 +290,7 @@ function SiteFormDialog({
             <MapLocationPickerDialog
               initialLatitude={site?.latitude ?? undefined}
               initialLongitude={site?.longitude ?? undefined}
-              initialAddress={
-                watch('addressLine1')
-                  ? `${watch('addressLine1')} ${watch('postalCode')} ${watch('city')}`
-                  : ''
-              }
+              initialAddress={initialAddress}
               onSelectLocation={(loc) => {
                 setCoords({ latitude: loc.latitude, longitude: loc.longitude });
                 if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });

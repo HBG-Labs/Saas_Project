@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
@@ -50,7 +50,7 @@ export function CustomerFormDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CustomerValues>({
     resolver: zodResolver(customerSchema),
@@ -125,6 +125,15 @@ export function CustomerFormDialog({
     }
   });
 
+  const [addressLine1, postalCode, city] = useWatch({
+    control,
+    name: ['addressLine1', 'postalCode', 'city'],
+  });
+
+  const initialAddress = addressLine1
+    ? `${addressLine1} ${postalCode ?? ''} ${city ?? ''}`.trim()
+    : '';
+
   return (
     <Modal
       open={open}
@@ -169,11 +178,7 @@ export function CustomerFormDialog({
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground">Adresse postale</span>
             <MapLocationPickerDialog
-              initialAddress={
-                watch('addressLine1')
-                  ? `${watch('addressLine1')} ${watch('postalCode')} ${watch('city')}`
-                  : ''
-              }
+              initialAddress={initialAddress}
               onSelectLocation={(loc) => {
                 setCoords({ latitude: loc.latitude, longitude: loc.longitude });
                 if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });

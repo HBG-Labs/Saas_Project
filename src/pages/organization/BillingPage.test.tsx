@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import BillingPage from './BillingPage';
 
@@ -92,6 +92,13 @@ describe('BillingPage — le choix de formule', () => {
     expect(screen.getByText(/99 € \/ mois/)).toHaveTextContent('20 utilisateurs inclus');
   });
 
+  it('annonce le coût des utilisateurs supplémentaires (+5 € / mois) sur toutes les formules', () => {
+    afficher();
+
+    const supplements = screen.getAllByText(/\+5 € \/ mois par utilisateur supplémentaire/);
+    expect(supplements).toHaveLength(4);
+  });
+
   it('ne parle pas de dépassement quand l’effectif tient dans le forfait', () => {
     // Deux comptes : aucune formule payante n'est dépassée. Répéter le total à
     // l'identique sur les quatre lignes ferait du bruit.
@@ -101,6 +108,9 @@ describe('BillingPage — le choix de formule', () => {
   });
 
   it('chiffre le dépassement, formule par formule, quand l’effectif le dépasse', () => {
+    // Le tarif unitaire seul ne dit pas la facture : « +5 € par utilisateur
+    // supplémentaire » laisse le calcul au client, formule par formule. Le
+    // total projeté le fait pour lui, AVANT la page de paiement.
     resume.current = { activeSeats: 7, totalCents: 4900, extraSeats: 2 };
     afficher();
 
@@ -126,6 +136,8 @@ describe('BillingPage — le choix de formule', () => {
 
 describe('BillingPage — l’essai et son issue', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T12:00:00Z'));
     resume.current = { activeSeats: 2, totalCents: 6900, extraSeats: 0 };
     abonnement.current = {
       status: 'trialing',
@@ -135,6 +147,10 @@ describe('BillingPage — l’essai et son issue', () => {
       current_period_end: '2026-09-01T12:00:00Z',
     };
     droit.current = true;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('promet de garder les jours d’essai à qui souscrit maintenant', () => {

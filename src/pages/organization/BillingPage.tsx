@@ -1,6 +1,6 @@
-import { ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -88,6 +88,9 @@ const PLAN_LABELS: Record<string, string> = {
 export default function BillingPage() {
   useDocumentTitle('Facturation');
 
+  const [searchParams] = useSearchParams();
+  const paymentStatus = searchParams.get('paiement');
+
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
 
@@ -116,6 +119,8 @@ export default function BillingPage() {
   const finDEssai = subscription.data?.trial_ends_at ?? subscription.data?.current_period_end ?? null;
   const joursDEssaiRestants = joursRestants(finDEssai);
 
+  // Repli quand le résumé de facturation n'est pas encore chargé : compter les
+  // membres actifs donne le même effectif que le serveur facturera.
   const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
 
   // Trois situations, et une seule sortie par situation. Le portail Stripe ne
@@ -144,6 +149,28 @@ export default function BillingPage() {
         title="Facturation"
         description="Formule de l’entreprise et consommation associée."
       />
+
+      {paymentStatus === 'ok' ? (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
+          <CheckCircle2 className="size-5 shrink-0 text-emerald-500 mt-0.5" />
+          <div>
+            <p className="font-semibold">Paiement validé avec succès !</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Votre abonnement a été pris en compte. Vos nouvelles fonctionnalités et vos quotas sont immédiatement actifs.
+            </p>
+          </div>
+        </div>
+      ) : paymentStatus === 'annule' ? (
+        <div className="rounded-xl border border-warning/40 bg-warning-subtle p-4 text-sm text-foreground flex items-start gap-3">
+          <AlertCircle className="size-5 shrink-0 text-warning mt-0.5" />
+          <div>
+            <p className="font-semibold">Paiement non finalisé</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              La session de paiement Stripe a été interrompue. Aucun prélèvement n'a été effectué.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -291,46 +318,58 @@ export default function BillingPage() {
             </p>
           ) : null}
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {PAYABLE_PLANS.map((tier) => {
               const isCurrent = tier.id === planCode;
               const seats = summary.data?.activeSeats ?? activeMembers.length;
               // Ce que coûterait CETTE formule à l'effectif actuel. Un montant
               // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
               // de paiement — et il vient de la même formule que le serveur.
+              // N'apparaît que s'il dépasse le forfait : le répéter à
+              // l'identique sur les formules assez larges ferait du bruit là où
+              // il doit servir d'avertissement.
               const projete = computeSubscriptionPrice(tier.id, seats);
-              // Ce qui SÉPARE les formules, c'est le nombre de comptes qu'elles
-              // incluent. Afficher à la place l'effectif actuel — le même sur
-              // les quatre lignes — n'apprenait rien et laissait croire que
-              // Starter et Enterprise logent autant de monde.
               const auDela = Math.max(0, seats - tier.includedUsers);
 
               return (
                 <Button
                   key={tier.id}
                   type="button"
-                  variant={tier.popular ? 'primary' : 'outline'}
+                  variant="outline"
                   disabled={isCurrent || checkout.isPending || !canManageBilling}
                   onClick={() => checkout.mutate(tier.id)}
-                  className="h-auto flex-col items-start gap-0.5 py-2.5"
+                  className={`h-auto sm:h-auto min-h-[82px] whitespace-normal flex-col items-start justify-center gap-1.5 p-4 text-left w-full transition-all ${
+                    isCurrent
+                      ? 'border-primary/60 bg-primary/5 cursor-default'
+                      : 'hover:border-primary/40 hover:bg-surface-hover'
+                  }`}
                 >
-                  <span className="font-semibold">
-                    {tier.name}
-                    {isCurrent ? ' — formule actuelle' : ''}
-                  </span>
-                  <span className="text-2xs font-normal opacity-80">
-                    {tier.priceMonthly} € / mois · {tier.includedUsers} utilisateur
-                    {tier.includedUsers > 1 ? 's' : ''} inclus
-                  </span>
-                  {/* Le total projeté n'apparaît que s'il diffère du forfait :
-                      le répéter à l'identique sur les formules assez larges
-                      ferait du bruit là où il doit servir d'avertissement. */}
-                  {auDela > 0 ? (
-                    <span className="text-2xs font-normal opacity-70">
-                      {projete} € pour vos {seats} — {auDela} au-delà à{' '}
-                      {tier.additionalUserPriceMonthly} €
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className="font-semibold text-sm">
+                      {tier.name}
+                      {isCurrent ? ' — formule actuelle' : ''}
                     </span>
-                  ) : null}
+                    {tier.popular && !isCurrent ? (
+                      <span className="text-[10px] font-bold text-primary border border-primary/30 bg-primary/10 rounded-md px-1.5 py-0.5">
+                        Populaire
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-2xs">
+                    <span className="font-medium text-foreground">
+                      {tier.priceMonthly} € / mois · {tier.includedUsers} utilisateur
+                      {tier.includedUsers > 1 ? 's' : ''} inclus
+                    </span>
+                    <span className="font-normal text-muted-foreground">
+                      +{tier.additionalUserPriceMonthly} € / mois par utilisateur supplémentaire
+                    </span>
+                    {auDela > 0 ? (
+                      <span className="font-semibold text-warning">
+                        {projete} € pour vos {seats} — {auDela} au-delà à{' '}
+                        {tier.additionalUserPriceMonthly} €
+                      </span>
+                    ) : null}
+                  </div>
                 </Button>
               );
             })}

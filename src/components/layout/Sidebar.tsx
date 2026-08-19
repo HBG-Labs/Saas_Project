@@ -5,14 +5,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
 import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
-import { cn } from '@/lib/cn';
 import { useCurrentIndustry } from '@/features/industries';
 import { useCurrentOrganization, useVisibleNavGroups } from '@/features/organizations';
+import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
@@ -29,6 +29,25 @@ interface SidebarProps {
    * courante est `technician`.
    */
   groups?: readonly NavGroup[] | undefined;
+}
+
+function isGroupActive(group: NavGroup, pathname: string, search: string): boolean {
+  const currentFullPath = pathname + search;
+  return group.items.some((item) => {
+    if (item.to.includes('?')) {
+      return currentFullPath === item.to;
+    }
+    if (item.to === ROUTES.organization) {
+      return pathname === ROUTES.organization || pathname === ROUTES.organizationNew;
+    }
+    if (item.to === ROUTES.tools) {
+      return pathname === ROUTES.tools && (!search || search === '?cat=all');
+    }
+    if (item.to === ROUTES.dashboard) {
+      return pathname === ROUTES.dashboard;
+    }
+    return pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to + '/'));
+  });
 }
 
 function SidebarLink({
@@ -93,33 +112,16 @@ function SidebarLink({
 function CollapsibleSidebarSection({
   group,
   collapsed,
+  isOpen,
+  onToggle,
   children,
 }: {
   group: NavGroup;
   collapsed: boolean;
-  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: ReactNode;
 }) {
-  const location = useLocation();
-  const hasActiveItem = group.items.some((item) => {
-    if (item.to.includes('?')) {
-      return (location.pathname + location.search) === item.to;
-    }
-    if (item.to === ROUTES.organization) {
-      return location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew;
-    }
-    return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
-  });
-
-  // Une section contenant la page courante est ouverte, point. Le repli manuel
-  // n'a de sens que sur les autres.
-  //
-  // Déduit au rendu plutôt que posé par un effet : `setIsOpen(true)` provoquait
-  // un second rendu à chaque navigation, et la section s'ouvrait une image
-  // après le changement de page.
-  const [manuallyToggled, setManuallyToggled] = useState<boolean | null>(null);
-  const isOpen = hasActiveItem || (manuallyToggled ?? group.id === 'interventions');
-  const toggleOpen = () => setManuallyToggled(!isOpen);
-
   const Icon = group.icon ? NAV_ICONS[group.icon] : null;
 
   return (
@@ -127,7 +129,7 @@ function CollapsibleSidebarSection({
       {!collapsed ? (
         <button
           type="button"
-          onClick={toggleOpen}
+          onClick={onToggle}
           className="flex w-full items-center justify-between px-2.5 py-1.5 text-2xs font-bold tracking-wider text-muted-foreground uppercase hover:text-foreground hover:bg-surface-hover/60 rounded-lg transition-colors group cursor-pointer select-none"
           aria-expanded={isOpen}
         >
@@ -143,13 +145,32 @@ function CollapsibleSidebarSection({
           />
         </button>
       ) : (
-        <div className="h-px bg-border/60 my-1.5 mx-1" />
+        <button
+          type="button"
+          onClick={onToggle}
+          className={cn(
+            'flex size-9 mx-auto items-center justify-center rounded-xl transition-all cursor-pointer group',
+            isOpen
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+          )}
+          title={`${group.label} (${isOpen ? 'fermer' : 'ouvrir'})`}
+          aria-label={group.label}
+          aria-expanded={isOpen}
+        >
+          {Icon ? (
+            <Icon className="size-4 shrink-0 transition-transform group-hover:scale-110" />
+          ) : (
+            <div className="size-2 rounded-full bg-border group-hover:bg-primary" />
+          )}
+        </button>
       )}
 
+      {/* Contenu déroulant accordéon contrôlé par isOpen */}
       <div
         className={cn(
           'transition-all duration-200 overflow-hidden',
-          !collapsed && !isOpen ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100',
+          !isOpen ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[600px] opacity-100',
         )}
       >
         <ul className="space-y-1">{children}</ul>
@@ -172,6 +193,47 @@ export function Sidebar({
   const activeGroups = useVisibleNavGroups(groups ?? SIDEBAR_GROUPS);
   const { organization } = useCurrentOrganization();
   const { label: industryLabel, isResolved } = useCurrentIndustry();
+  const location = useLocation();
+
+  const accountGroup: NavGroup = {
+    id: 'account',
+    label: 'Compte & Paramètres',
+    icon: 'settings',
+    items: ACCOUNT_NAV,
+  };
+
+  const allGroups = [...activeGroups, accountGroup];
+  const currentFullPath = location.pathname + location.search;
+
+  // Un seul volet ouvert à la fois : celui qui contient la page courante.
+  const activeGroupId =
+    allGroups.find((g) => isGroupActive(g, location.pathname, location.search))?.id ??
+    activeGroups[0]?.id ??
+    'interventions';
+
+  // Le repli manuel ne vaut QUE pour la page où il a été fait. Mémoriser le
+  // chemin avec le choix suffit à le périmer à la navigation suivante, sans
+  // effet de synchronisation.
+  //
+  // Déduit au rendu, et non posé par un `useEffect` : `setOpenGroupId` dans un
+  // effet provoquait un second rendu à chaque navigation, et le volet s'ouvrait
+  // une image après le changement de page. C'est le défaut que le code
+  // précédent documentait avoir corrigé — et que la règle ESLint
+  // `react-hooks/set-state-in-effect` signalait ici.
+  const [manualOverride, setManualOverride] = useState<{
+    path: string;
+    openId: string | null;
+  } | null>(null);
+
+  const openGroupId =
+    manualOverride?.path === currentFullPath ? manualOverride.openId : activeGroupId;
+
+  const handleToggleGroup = (groupId: string) => {
+    setManualOverride({
+      path: currentFullPath,
+      openId: openGroupId === groupId ? null : groupId,
+    });
+  };
 
   const handleToggle = () => {
     if (onToggleCollapse) {
@@ -248,9 +310,15 @@ export function Sidebar({
           ) : null}
         </div>
 
-        {/* Sections de navigation accordéon */}
+        {/* Sections de navigation accordéon (un seul volet ouvert à la fois) */}
         {activeGroups.map((group) => (
-          <CollapsibleSidebarSection key={group.id} group={group} collapsed={isCollapsed}>
+          <CollapsibleSidebarSection
+            key={group.id}
+            group={group}
+            collapsed={isCollapsed}
+            isOpen={openGroupId === group.id}
+            onToggle={() => handleToggleGroup(group.id)}
+          >
             {group.items.map((item) => (
               <SidebarLink
                 key={`${group.id}-${item.to}-${item.label}`}
@@ -265,8 +333,10 @@ export function Sidebar({
 
       <div className="pt-2 border-t border-border">
         <CollapsibleSidebarSection
-          group={{ id: 'account', label: 'Compte & Paramètres', icon: 'settings', items: ACCOUNT_NAV }}
+          group={accountGroup}
           collapsed={isCollapsed}
+          isOpen={openGroupId === 'account'}
+          onToggle={() => handleToggleGroup('account')}
         >
           {ACCOUNT_NAV.map((item) => (
             <SidebarLink key={item.to} item={item} collapsed={isCollapsed} onNavigate={onNavigate} />
