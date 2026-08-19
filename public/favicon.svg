@@ -2,14 +2,25 @@
   <!--
     Pas de logotype dessiné : le projet assume de n'avoir qu'un contraste
     typographique pour identité (voir src/components/layout/Logo.tsx). L'icône
-    reprend la même idée — le N de la marque sur le bleu primaire.
+    reprend la même idée — l'initiale de la marque sur le bleu primaire.
+
+    LA LETTRE EST UN TRACÉ, PAS DU TEXTE, et c'est pour cela que le renommage
+    global de NexoraTech en REZO360 ne l'avait pas atteinte : le « N » a survécu
+    dans les onglets alors que tout le reste avait changé. Un `<text>` aurait
+    suivi la recherche-remplacement, mais dépendrait d'une police que le
+    navigateur ne garantit pas dans le contexte isolé d'une favicon.
+
+    Pourquoi « R » seul : à seize pixels — la taille réelle d'un onglet — trois
+    caractères sont illisibles. Une seule lettre est le seul choix qui se
+    reconnaisse, et c'est déjà la convention qu'appliquait l'icône précédente.
 
     Fond opaque et non transparent : une favicon transparente devient invisible
     dans un onglet sombre.
   -->
   <rect width="64" height="64" rx="14" fill="#2563eb" />
   <path
-    d="M18 46V18h6.4l15.2 18.6V18H46v28h-6.4L24.4 27.4V46H18Z"
+    fill-rule="evenodd"
     fill="#ffffff"
+    d="M18 18h14.5c6.9 0 11.5 3.9 11.5 9.8 0 4.4-2.6 7.7-6.8 9L46 46h-8.2L30 37.4h-5.6V46H18V18Zm6.4 6.2v7.2h8.1c3.4 0 5.6-1.4 5.6-3.6s-2.2-3.6-5.6-3.6h-8.1Z"
   />
 </svg>
