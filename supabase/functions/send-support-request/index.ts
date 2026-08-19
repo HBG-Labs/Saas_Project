@@ -45,21 +45,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-interface Attachment {
-  name?: string;
-  path?: string;
-  size?: number;
-  type?: string;
-}
-
-/** Taille lisible : « 2,4 Mo » plutôt que « 2517312 ». */
-function taille(octets: number | undefined): string {
-  if (octets === undefined) return '';
-  if (octets < 1024) return `${String(octets)} o`;
-  if (octets < 1024 * 1024) return `${(octets / 1024).toFixed(0)} Ko`;
-  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
-}
-
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
   if (request.method !== 'POST') return json({ error: 'Méthode non autorisée.' }, 405);
@@ -84,7 +69,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const { data: demande, error: readError } = await admin
     .from('support_requests')
-    .select('id, name, email, phone, message, attachments, user_id, created_at')
+    .select('id, name, email, phone, message, user_id, created_at')
     .eq('id', requestId)
     .single();
 
@@ -103,25 +88,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
       notified: false,
       reason: `Envoi non configuré : ${state.missing.join(', ')}.`,
     });
-  }
-
-  const pieces = Array.isArray(demande.attachments) ? (demande.attachments as Attachment[]) : [];
-
-  // URL signées plutôt que publiques : le dépôt est privé, et une capture
-  // d'assistance peut montrer des données client. Sept jours suffisent pour
-  // traiter une demande, et le lien s'éteint ensuite de lui-même.
-  const liens: string[] = [];
-  for (const piece of pieces) {
-    if (typeof piece.path !== 'string') continue;
-    const { data: signed } = await admin.storage
-      .from('support-attachments')
-      .createSignedUrl(piece.path, 7 * 24 * 3600);
-    if (signed?.signedUrl) {
-      liens.push(
-        `<li><a href="${signed.signedUrl}">${escapeHtml(piece.name ?? piece.path)}</a>` +
-          ` <span style="color:#64748b">${taille(piece.size)}</span></li>`,
-      );
-    }
   }
 
   const recu = new Date(demande.created_at as string).toLocaleString('fr-FR');
@@ -146,14 +112,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
       <tr><td style="padding:16px 28px 0">
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;font-size:14px;line-height:1.65;white-space:pre-wrap">${escapeHtml(demande.message as string)}</div>
       </td></tr>
-      ${
-        liens.length > 0
-          ? `<tr><td style="padding:16px 28px 0;font-size:13px;color:#334155">
-               <p style="margin:0 0 6px"><strong>Pièces jointes</strong> <span style="color:#64748b">(liens valables 7 jours)</span></p>
-               <ul style="margin:0;padding-left:18px">${liens.join('')}</ul>
-             </td></tr>`
-          : ''
-      }
       <tr><td style="padding:20px 28px 26px;font-size:12px;line-height:1.6;color:#64748b">
         <p style="margin:0">Répondez directement à ce message : il part vers ${escapeHtml(demande.email as string)}.</p>
       </td></tr>
@@ -166,8 +124,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     `Adresse : ${demande.email as string}\n` +
     `${demande.phone ? `Téléphone : ${demande.phone as string}\n` : ''}` +
     `Reçu le : ${recu} (${origine})\n\n` +
-    `${demande.message as string}\n` +
-    `${pieces.length > 0 ? `\n${String(pieces.length)} pièce(s) jointe(s) — voir la version HTML.\n` : ''}`;
+    `${demande.message as string}\n`;
 
   try {
     await sendMessage(
@@ -234,11 +191,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
       <tr><td style="padding:8px 28px 0;font-size:13px;color:#64748b">
         <p style="margin:0 0 6px"><strong>Ce que vous nous avez écrit</strong> — le ${escapeHtml(recu)}</p>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap">${escapeHtml(demande.message as string)}</div>
-        ${
-          pieces.length > 0
-            ? `<p style="margin:10px 0 0">${String(pieces.length)} pièce(s) jointe(s) transmise(s) avec votre demande.</p>`
-            : ''
-        }
       </td></tr>
       <tr><td style="padding:20px 28px 26px;font-size:12px;line-height:1.6;color:#64748b">
         <p style="margin:0">
@@ -264,9 +216,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
     `--- Ce que vous nous avez écrit, le ${recu} ---
 ${demande.message as string}
 ` +
-    `${pieces.length > 0 ? `
-${String(pieces.length)} piece(s) jointe(s).
-` : ''}` +
     `
 Vous nous joignez aussi directement à ${destination}.
 `;

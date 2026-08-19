@@ -10,7 +10,7 @@
  * celui qu'aucun test d'écran ne couvre : les policies s'y appliquent pour de
  * bon.
  *
- * Il dépose un fichier, écrit la demande, demande la notification, et lit ce
+ * Il écrit la demande, demande la notification, et lit ce
  * que la fonction répond — `notified: true`, ou le motif exact. Puis il vérifie
  * que la demande est bien ILLISIBLE, y compris pour lui qui vient de l'écrire.
  *
@@ -72,22 +72,6 @@ const fournie = process.argv.slice(2).find((a) => a.includes('@'));
 const adresse = fournie ?? `${marqueur}@exemple.invalid`;
 const adresseDelivrable = fournie !== undefined;
 
-// ------------------------------------------------------- 1. la pièce jointe
-console.log('\n▶ Dépôt d’une pièce jointe, en visiteur anonyme');
-
-// Un PNG minimal valide : 1 pixel transparent.
-const png = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-  'base64',
-);
-const chemin = `${marqueur}/capture.png`;
-
-const { error: uploadError } = await anon.storage
-  .from('support-attachments')
-  .upload(chemin, png, { contentType: 'image/png', upsert: false });
-
-ok(!uploadError, 'Un visiteur peut joindre un fichier', uploadError?.message);
-
 // ---------------------------------------------------------- 2. la demande
 console.log('\n▶ Écriture de la demande');
 
@@ -103,9 +87,6 @@ const { error: insertError } = await anon
     email: adresse,
     phone: '0600000000',
     message: `Demande de vérification ${marqueur}. Si vous lisez ceci, la chaîne fonctionne.`,
-    attachments: uploadError
-      ? []
-      : [{ name: 'capture.png', path: chemin, size: png.length, type: 'image/png' }],
   });
 
 ok(!insertError, 'La demande est enregistrée', insertError?.message);
@@ -183,7 +164,6 @@ const secret = env.SUPABASE_SERVICE_ROLE_KEY;
 if (secret && !insertError) {
   const admin = createClient(env.VITE_SUPABASE_URL, secret, { auth: { persistSession: false } });
   await admin.from('support_requests').delete().eq('id', requestId);
-  await admin.storage.from('support-attachments').remove([chemin]);
   console.log('\n  (demande et pièce jointe de test retirées)');
 } else {
   console.log(

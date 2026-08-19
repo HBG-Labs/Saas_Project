@@ -1,0 +1,45 @@
+-- =============================================================================
+-- Retrait des pièces jointes du centre d'assistance
+-- =============================================================================
+--
+-- La possibilité de joindre un fichier est retirée du formulaire. Ce qui la
+-- servait doit disparaître avec elle, et pas seulement le bouton.
+--
+-- CE QUI COMPTE ICI N'EST PAS LE NETTOYAGE, C'EST LA PORTE
+--
+-- `support-attachments` acceptait les dépôts ANONYMES — nécessaire tant que le
+-- formulaire s'adressait aussi aux visiteurs non connectés. Laisser cette
+-- policy alors que plus rien ne l'utilise reviendrait à maintenir un point de
+-- dépôt ouvert à tous, sans usage légitime pour distinguer un abus. Un
+-- hébergement gratuit que personne ne surveillerait.
+--
+-- La retirer suffit : sans policy d'écriture ET sans policy de lecture, le
+-- dépôt devient inerte pour tout client. Seul `service_role` y accède encore.
+--
+-- CE QUE CETTE MIGRATION NE FAIT PAS, ET POURQUOI
+--
+-- Elle ne supprime ni les fichiers ni le dépôt. Une première version essayait,
+-- et PostgreSQL l'a refusée :
+--
+--   ERROR: Direct deletion from storage tables is not allowed.
+--          Use the Storage API instead. (SQLSTATE 42501)
+--
+-- Le garde-fou est justifié — supprimer une ligne de `storage.objects` sans
+-- retirer l'objet correspondant laisserait un fichier facturé que plus rien ne
+-- référence. La suppression passe donc par l'API de stockage, depuis le tableau
+-- de bord ou avec `service_role`.
+--
+-- Dix fichiers y dorment, tous issus des vérifications automatiques : aucune
+-- demande réelle n'a jamais porté de pièce jointe — vérifié sur les onze
+-- demandes enregistrées avant d'écrire ceci. Ils sont désormais inaccessibles ;
+-- les effacer est un geste de propreté, pas de sécurité.
+--
+-- Le patron de dépôt reste disponible dans `20260808100800_storage.sql` si la
+-- fonctionnalité devait revenir.
+-- =============================================================================
+
+drop policy if exists "support_attachments_upload" on storage.objects;
+
+-- La colonne suit : plus rien ne l'écrit, plus rien ne la lit, et une colonne
+-- toujours vide finit par faire croire qu'une fonctionnalité existe.
+alter table public.support_requests drop column if exists attachments;
