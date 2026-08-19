@@ -23,7 +23,6 @@ import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
 import { cn } from '@/lib/cn';
 
-import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileNav } from './MobileNav';
@@ -36,7 +35,6 @@ export function AppLayout() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('pref_sidebar_collapsed') === 'true';
   });
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status, user, signOut } = useAuth();
   const { role } = usePermission();
   const { organization } = useCurrentOrganization();
@@ -160,10 +158,6 @@ export function AppLayout() {
                 showCollapseButton={false}
                 onNavigate={() => setDrawerOpen(false)}
                 onClose={() => setDrawerOpen(false)}
-                onDownloadAppClick={() => {
-                  setDrawerOpen(false);
-                  setIsDownloadModalOpen(true);
-                }}
               />
             </MobileDrawer>
 
@@ -278,7 +272,6 @@ export function AppLayout() {
           groups={activeSidebarGroups}
           collapsed={sidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
-          onDownloadAppClick={() => setIsDownloadModalOpen(true)}
         />
       </aside>
 
@@ -312,11 +305,6 @@ export function AppLayout() {
       {/* Navigation basse mobile */}
       <MobileNav />
 
-      {/* Modale de Téléchargement de l'Application (Mobile APK & Windows Desktop) */}
-      <DownloadAppModal
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-      />
     </div>
   );
 }

@@ -70,10 +70,10 @@ export function PublicLayout() {
               type="button"
               onClick={() => setIsDownloadModalOpen(true)}
               className="hidden items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-600 shadow-xs transition-all hover:bg-blue-500/20 cursor-pointer sm:flex dark:text-blue-400"
-              aria-label="Télécharger l'application mobile ou desktop"
+              aria-label="Installer l'application sur votre appareil"
             >
               <Smartphone className="size-4 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Télécharger l'App</span>
+              <span className="hidden sm:inline">Installer l’app</span>
             </button>
 
             <ThemeToggle />
@@ -151,7 +151,8 @@ export function PublicLayout() {
 
       <PublicFooter />
 
-      {/* Modale Télécharger l'App (Mobile APK & Windows Desktop) */}
+      {/* Installation sur l'appareil — REZO360 est une application web installable,
+          il n'y a rien à télécharger. Voir le commentaire de `DownloadAppModal`. */}
       <DownloadAppModal
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}

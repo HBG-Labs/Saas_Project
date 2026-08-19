@@ -58,8 +58,8 @@ export function Hero() {
               className="rounded-2xl border-blue-500/30 bg-blue-500/10 px-6 py-3.5 sm:px-8 font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all cursor-pointer gap-2"
             >
               <Smartphone className="size-4" />
-              <span className="lg:hidden">Télécharger l&apos;App</span>
-              <span className="hidden lg:inline">Télécharger l&apos;App Mobile (Android &amp; iOS)</span>
+              <span className="lg:hidden">Installer l&apos;app</span>
+              <span className="hidden lg:inline">Installer sur mobile (Android &amp; iPhone)</span>
             </Button>
             <Button
               asChild
@@ -74,7 +74,7 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Modale de Téléchargement de l'App */}
+        {/* Installation sur l'appareil : application web installable, rien à télécharger. */}
         <DownloadAppModal
           isOpen={isDownloadModalOpen}
           onClose={() => setIsDownloadModalOpen(false)}

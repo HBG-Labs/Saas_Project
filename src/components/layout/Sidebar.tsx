@@ -20,7 +20,6 @@ interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   onNavigate?: () => void;
-  onDownloadAppClick?: () => void;
   onClose?: () => void;
   showCollapseButton?: boolean;
   className?: string;
