@@ -239,5 +239,14 @@ Deno.serve(async (request) => {
     );
   }
 
-  return json({ sent: true, email: invitation.email, transport });
+  // `state.transport`, et non `transport` : la variable locale a disparu lors de
+  // l'extraction du transport vers `_shared/email.ts`, mais cette ligne — la
+  // seule du chemin de SUCCÈS — y faisait encore référence.
+  //
+  // Conséquence exacte : le courriel PARTAIT, puis la fonction levait une
+  // ReferenceError en composant sa réponse. Le serveur rendait un 500 sans
+  // corps, et l'écran annonçait « Aucun e-mail n'a été envoyé » à quelqu'un qui
+  // venait de le recevoir. Un chemin d'échec bien couvert n'avait rien vu :
+  // c'est le succès qui était cassé.
+  return json({ sent: true, email: invitation.email, transport: state.transport });
 });

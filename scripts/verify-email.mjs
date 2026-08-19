@@ -124,7 +124,16 @@ try {
   });
 
   status = response.status;
-  payload = await response.json();
+  // Lire le TEXTE d'abord. Un 500 de la plateforme rend « Internal Server
+  // Error » en clair, et `response.json()` levait alors une SyntaxError qui
+  // remplaçait le diagnostic par une trace de pile : on apprenait que le
+  // script avait planté, pas ce que le serveur avait répondu.
+  const brut = await response.text();
+  try {
+    payload = brut === '' ? { error: 'réponse vide' } : JSON.parse(brut);
+  } catch {
+    payload = { error: brut.slice(0, 160) };
+  }
 } catch (error) {
   ok(false, 'La fonction répond', String(error));
 }

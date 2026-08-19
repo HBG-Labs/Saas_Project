@@ -258,12 +258,18 @@ export function horodatage(iso: string): string {
   });
 }
 
-/** Date seule, dans le fuseau de l'équipe. */
+/**
+ * Date seule, dans le fuseau de l'équipe.
+ *
+ * `dateStyle` plutôt que `day`/`month`/`year` : la seconde forme, combinée à un
+ * `timeZone`, faisait LEVER la fonction Edge — HTTP 500 sans corps, la
+ * bibliothèque ICU réduite du runtime ne servant pas toutes les combinaisons.
+ * `horodatage` employait déjà `dateStyle` et fonctionnait ; on s'aligne sur ce
+ * qui est prouvé plutôt que sur ce qui devrait marcher.
+ */
 export function dateLisible(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', {
     timeZone: fuseau(),
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    dateStyle: 'long',
   });
 }
