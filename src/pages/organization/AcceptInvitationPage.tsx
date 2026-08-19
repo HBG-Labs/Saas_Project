@@ -1,6 +1,6 @@
 import { Building2, MailWarning } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
@@ -18,6 +18,7 @@ export default function AcceptInvitationPage() {
   const { token } = useParams<{ token: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const preview = useInvitationPreview(token);
   const acceptInvitation = useAcceptInvitation();
   const [submitError, setSubmitError] = useState<unknown>(null);
@@ -89,32 +90,70 @@ export default function AcceptInvitationPage() {
 
           <FormError error={submitError} />
 
-          <div className="space-y-2">
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={() => {
-                void accept();
-              }}
-              disabled={acceptInvitation.isPending}
-            >
-              {acceptInvitation.isPending ? 'Acceptation…' : 'Accepter l’invitation'}
-            </Button>
-
-            <Button asChild variant="ghost" size="sm" className="w-full">
-              <Link to={ROUTES.dashboard}>Plus tard</Link>
-            </Button>
-          </div>
-
           {/*
-            L'adresse connectée est rappelée : c'est LA cause d'échec la plus
-            fréquente, et la voir avant de cliquer évite un refus incompris.
+            DEUX SITUATIONS, ET LA SECONDE EST LA PLUS COURANTE. Cette page
+            s'adresse d'abord à quelqu'un qui n'a pas encore de compte — c'est
+            la définition même d'une invitation. Lui montrer un bouton
+            « Accepter » qu'il ne peut pas utiliser, ou le renvoyer à la
+            connexion sans explication, était le défaut d'origine.
           */}
-          <p className="text-subtle-foreground text-2xs">
-            Connecté en tant que {user?.email ?? 'inconnu'}. L’invitation ne fonctionnera que si
-            cette adresse est celle qui a été invitée.
-          </p>
+          {user === null ? (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Button asChild variant="primary" size="lg" className="w-full">
+                  <Link to={ROUTES.register}>Créer mon compte</Link>
+                </Button>
+
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  {/* `state.from` : la connexion sait déjà y revenir. */}
+                  <Link to={ROUTES.login} state={{ from: location.pathname }}>
+                    J’ai déjà un compte
+                  </Link>
+                </Button>
+              </div>
+
+              {/*
+                L'aperçu ne révèle PAS l'adresse invitée — c'est délibéré, il est
+                lisible sans compte. On ne peut donc pas la préremplir : autant
+                dire clairement laquelle utiliser, sinon le refus arrivera après
+                l'inscription, au pire moment.
+              */}
+              <p className="text-subtle-foreground text-2xs leading-relaxed">
+                Utilisez l’adresse à laquelle vous avez reçu cette invitation : elle ne
+                fonctionnera avec aucune autre. Revenez ensuite sur ce lien pour rejoindre
+                l’équipe.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    void accept();
+                  }}
+                  disabled={acceptInvitation.isPending}
+                >
+                  {acceptInvitation.isPending ? 'Acceptation…' : 'Accepter l’invitation'}
+                </Button>
+
+                <Button asChild variant="ghost" size="sm" className="w-full">
+                  <Link to={ROUTES.dashboard}>Plus tard</Link>
+                </Button>
+              </div>
+
+              {/*
+                L'adresse connectée est rappelée : c'est LA cause d'échec la plus
+                fréquente, et la voir avant de cliquer évite un refus incompris.
+              */}
+              <p className="text-subtle-foreground text-2xs">
+                Connecté en tant que {user.email ?? 'inconnu'}. L’invitation ne fonctionnera que
+                si cette adresse est celle qui a été invitée.
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

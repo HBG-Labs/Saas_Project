@@ -17,6 +17,11 @@ const envSchema = z.object({
   }),
   VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1, 'VITE_SUPABASE_PUBLISHABLE_KEY est requis'),
   VITE_APP_ENV: z.enum(['development', 'staging', 'production']).default('development'),
+  /**
+   * Adresse publique de l'application, si elle diffère de celle qui sert la
+   * page. Facultative — voir `buildInvitationUrl`.
+   */
+  VITE_PUBLIC_APP_URL: z.url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,0 +1,39 @@
+-- =============================================================================
+-- L'aperçu d'invitation doit être lisible SANS compte
+-- =============================================================================
+--
+-- CE QUI ÉTAIT SUPPOSÉ, ET QUI ÉTAIT FAUX
+--
+-- `20260810100000_invitation_preview.sql` refusait l'accès à `anon`, avec ce
+-- raisonnement :
+--
+--   « accepter suppose un compte, et l'aperçu n'est utile qu'à qui s'apprête à
+--     accepter. Un visiteur non connecté est de toute façon redirigé vers la
+--     connexion avant d'atteindre l'écran. »
+--
+-- La redirection n'était pas une justification : c'était le défaut. La route
+-- `/invitations/:token` vivait sous `ProtectedRoute`, or la personne invitée
+-- n'a par définition PAS ENCORE DE COMPTE. Elle cliquait, arrivait sur un
+-- écran de connexion sans explication, et n'avait aucun moyen de comprendre ce
+-- qu'on lui proposait ni de quelle entreprise il s'agissait.
+--
+-- Le parcours entier reposait donc sur une condition que son destinataire ne
+-- peut pas remplir. Signalé après réception d'une vraie invitation.
+--
+-- POURQUOI L'OUVERTURE EST SANS DANGER
+--
+-- La fonction ne révèle ni l'identifiant de l'organisation, ni l'adresse
+-- invitée : seulement le nom de l'entreprise, le rôle proposé et l'échéance.
+-- Elle ne prend aucun critère de recherche — impossible de demander « les
+-- invitations de telle entreprise ».
+--
+-- Ce qui protège est le jeton : un UUID v4, 122 bits d'entropie. Le connaître
+-- n'est pas une coïncidence, c'est qu'on vous l'a transmis. C'est exactement le
+-- raisonnement du fichier d'origine ; seule sa conclusion changeait.
+--
+-- ACCEPTER RESTE FERMÉ. `accept_organization_invitation` exige toujours une
+-- session dont l'adresse correspond à celle invitée. Voir n'a jamais valu
+-- accepter, et cette migration ne touche pas à cette règle.
+-- =============================================================================
+
+grant execute on function public.get_invitation_preview(uuid) to anon;

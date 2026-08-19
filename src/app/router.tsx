@@ -62,6 +62,22 @@ export const routes: RouteObject[] = [
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
 
+          // HORS de `ProtectedRoute`, et c'est tout l'enjeu : la personne
+          // invitée n'a par définition PAS ENCORE DE COMPTE. Sous protection,
+          // elle était renvoyée à la connexion sans savoir qui l'invitait ni
+          // pourquoi — le parcours reposait sur une condition que son unique
+          // destinataire ne peut pas remplir.
+          //
+          // La page distingue elle-même les deux cas : elle propose de créer un
+          // compte ou de se connecter à qui n'en a pas, et le bouton
+          // d'acceptation à qui est déjà entré. Accepter reste fermé côté
+          // serveur — `accept_organization_invitation` exige une session dont
+          // l'adresse correspond à celle invitée.
+          {
+            path: ROUTE_PATTERNS.invitation,
+            lazy: lazyPage(() => import('@/pages/organization/AcceptInvitationPage')),
+          },
+
           {
             element: <ProtectedRoute />,
             children: [
@@ -82,10 +98,6 @@ export const routes: RouteObject[] = [
               {
                 path: ROUTES.organizationNew,
                 lazy: lazyPage(() => import('@/pages/organization/CreateOrganizationPage')),
-              },
-              {
-                path: ROUTE_PATTERNS.invitation,
-                lazy: lazyPage(() => import('@/pages/organization/AcceptInvitationPage')),
               },
 
               {
