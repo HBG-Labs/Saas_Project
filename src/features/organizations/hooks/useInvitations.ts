@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { syncSubscriptionSeats } from '@/features/billing';
 import { qk } from '@/lib/query-keys';
+import { supabase } from '@/services/supabase';
 import type { OrgRole } from '@/types/database';
 
 import {
   acceptInvitation,
+  acceptInvitationWithSignup,
   getInvitationPreview,
   inviteMember,
   listInvitations,
@@ -128,6 +130,48 @@ export function useAcceptInvitation() {
       // L'échec est absorbé : refuser l'entrée dans l'entreprise parce que la
       // facturation n'a pas suivi serait absurde.
       await syncSubscriptionSeats(organizationId);
+    },
+  });
+}
+
+/**
+ * Crée le compte de l'invité, puis ouvre sa session.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI LA CONNEXION SUIT IMMÉDIATEMENT
+ *
+ * Le compte est créé déjà confirmé, et la personne vient de choisir son mot de
+ * passe : lui demander de le ressaisir sur un écran de connexion serait lui
+ * faire refaire ce qu'elle vient de faire. On enchaîne donc, et elle arrive
+ * dans l'entreprise.
+ *
+ * `signInWithPassword` plutôt qu'une session renvoyée par la fonction : la
+ * bibliothèque doit poser elle-même le jeton et son rafraîchissement.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function useAcceptInvitationWithSignup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { token: string; password: string; displayName?: string }) => {
+      const { email } = await acceptInvitationWithSignup(input);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: input.password,
+      });
+
+      // Le compte EXISTE et a rejoint l'entreprise : un échec de connexion ici
+      // n'annule rien, il demande seulement de se connecter à la main.
+      if (error) {
+        throw new Error(
+          'Votre compte est créé et rattaché à l’entreprise, mais la connexion automatique a échoué. Connectez-vous avec l’adresse invitée.',
+        );
+      }
+
+      return email;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.organizations.all });
     },
   });
 }

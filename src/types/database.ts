@@ -2127,6 +2127,8 @@ export interface Database {
         Returns: {
           organization_name: string;
           invited_role: OrgRole;
+          /** L'écran crée le compte : il doit dire pour quelle adresse. */
+          invited_email: string;
           expires_at: string;
         }[];
       };

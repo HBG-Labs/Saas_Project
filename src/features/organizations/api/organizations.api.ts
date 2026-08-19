@@ -1,5 +1,5 @@
 import { AppError, mapPostgrestError } from '@/lib/errors';
-import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type {
   MemberWithProfile,
   Organization,
@@ -495,6 +495,8 @@ export async function revokeInvitation(invitationId: string): Promise<void> {
 export interface InvitationPreview {
   organizationName: string;
   role: OrgRole;
+  /** Adresse à laquelle l'invitation a été envoyée, et seule qui l'accepte. */
+  invitedEmail: string;
   expiresAt: string;
 }
 
@@ -520,6 +522,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
   return {
     organizationName: row.organization_name,
     role: row.invited_role,
+    invitedEmail: row.invited_email,
     expiresAt: row.expires_at,
   };
 }
@@ -543,4 +546,32 @@ export async function acceptInvitation(token: string): Promise<string> {
   if (error) throw mapPostgrestError(error);
 
   return data;
+}
+
+/**
+ * Crée le compte de l'invité et le rattache à l'entreprise, d'un seul appel.
+ *
+ * Passe par une Edge Function : créer un compte déjà confirmé suppose la clé
+ * `service_role`, qui ne peut pas vivre dans le navigateur. L'adresse n'est pas
+ * transmise — le serveur la lit à partir du jeton, de sorte que l'appelant ne
+ * puisse créer un compte que pour celle qui a été invitée.
+ */
+export async function acceptInvitationWithSignup(input: {
+  token: string;
+  password: string;
+  displayName?: string;
+}): Promise<{ email: string }> {
+  const response: {
+    data: { email?: string; error?: string; accountExists?: boolean } | null;
+    error: unknown;
+  } = await supabase.functions.invoke('accept-invitation-signup', { body: input });
+
+  if (response.error !== null || response.data?.email === undefined) {
+    throw new AppError(
+      'unknown',
+      await messageDeLaFonction(response.error, response.data?.error ?? 'Création impossible.'),
+    );
+  }
+
+  return { email: response.data.email };
 }

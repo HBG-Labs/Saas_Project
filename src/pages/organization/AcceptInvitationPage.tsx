@@ -9,7 +9,14 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { FormError } from '@/components/feedback/FormError';
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, useAcceptInvitation, useInvitationPreview } from '@/features/organizations';
+import {
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  useAcceptInvitation,
+  useAcceptInvitationWithSignup,
+  useInvitationPreview,
+} from '@/features/organizations';
+import { Input } from '@/components/ui/Input';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function AcceptInvitationPage() {
@@ -21,6 +28,8 @@ export default function AcceptInvitationPage() {
   const location = useLocation();
   const preview = useInvitationPreview(token);
   const acceptInvitation = useAcceptInvitation();
+  const rejoindre = useAcceptInvitationWithSignup();
+  const [motDePasse, setMotDePasse] = useState('');
   const [submitError, setSubmitError] = useState<unknown>(null);
 
   if (preview.isPending) {
@@ -98,32 +107,71 @@ export default function AcceptInvitationPage() {
             connexion sans explication, était le défaut d'origine.
           */}
           {user === null ? (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Button asChild variant="primary" size="lg" className="w-full">
-                  <Link to={ROUTES.register}>Créer mon compte</Link>
-                </Button>
+            <form
+              className="space-y-3 text-left"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (token === undefined) return;
+                setSubmitError(null);
+                rejoindre.mutate(
+                  { token, password: motDePasse },
+                  {
+                    onSuccess: () => {
+                      void navigate(ROUTES.dashboard);
+                    },
+                    onError: setSubmitError,
+                  },
+                );
+              }}
+            >
+              {/*
+                UN SEUL CHAMP, ET AUCUN CHOIX DE FORMULE. L'invité rejoint une
+                entreprise qui a déjà la sienne : le tunnel d'inscription
+                générique lui faisait choisir un abonnement qu'il ne paiera
+                jamais, confirmer son adresse, se reconnecter, puis revenir sur
+                ce lien. Six étapes pour une décision qui n'était pas la sienne.
 
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  {/* `state.from` : la connexion sait déjà y revenir. */}
-                  <Link to={ROUTES.login} state={{ from: location.pathname }}>
-                    J’ai déjà un compte
-                  </Link>
-                </Button>
+                L'adresse est imposée et non modifiable : c'est celle qui a reçu
+                l'invitation, et le serveur n'en acceptera aucune autre — il la
+                relit lui-même à partir du jeton.
+              */}
+              <div className="space-y-1.5">
+                <span className="text-foreground block text-xs font-semibold">Votre adresse</span>
+                <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border px-3 py-2 text-sm">
+                  {invitation.invitedEmail}
+                </p>
               </div>
 
-              {/*
-                L'aperçu ne révèle PAS l'adresse invitée — c'est délibéré, il est
-                lisible sans compte. On ne peut donc pas la préremplir : autant
-                dire clairement laquelle utiliser, sinon le refus arrivera après
-                l'inscription, au pire moment.
-              */}
-              <p className="text-subtle-foreground text-2xs leading-relaxed">
-                Utilisez l’adresse à laquelle vous avez reçu cette invitation : elle ne
-                fonctionnera avec aucune autre. Revenez ensuite sur ce lien pour rejoindre
-                l’équipe.
-              </p>
-            </div>
+              <Input
+                label="Choisissez un mot de passe"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                value={motDePasse}
+                onChange={(e) => {
+                  setMotDePasse(e.target.value);
+                }}
+                hint="Huit caractères au minimum."
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                disabled={rejoindre.isPending}
+              >
+                {rejoindre.isPending ? 'Création…' : `Rejoindre ${invitation.organizationName}`}
+              </Button>
+
+              <Button asChild variant="ghost" size="sm" className="w-full">
+                {/* `state.from` : la connexion sait déjà y revenir. */}
+                <Link to={ROUTES.login} state={{ from: location.pathname }}>
+                  J’ai déjà un compte
+                </Link>
+              </Button>
+            </form>
           ) : (
             <>
               <div className="space-y-2">

@@ -59,6 +59,7 @@ export {
 } from './hooks/useMembers';
 export {
   useAcceptInvitation,
+  useAcceptInvitationWithSignup,
   useInvitationPreview,
   useInvitations,
   useInviteMember,
