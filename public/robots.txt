@@ -13,6 +13,12 @@ Allow: /tools
 Allow: /categories
 Allow: /references
 
+# Les pages légales doivent être trouvables : un prospect les cherche avant de
+# signer, et un tiers doit pouvoir consulter les mentions sans créer de compte.
+Allow: /mentions-legales
+Allow: /confidentialite
+Allow: /conditions-generales
+
 Disallow: /dashboard
 Disallow: /missions
 Disallow: /interventions

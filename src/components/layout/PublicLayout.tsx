@@ -178,6 +178,14 @@ const FOOTER_SECTIONS = [
       { to: ROUTES.register, label: 'Créer un compte' },
     ],
   },
+  {
+    title: 'Légal',
+    links: [
+      { to: ROUTES.legalNotice, label: 'Mentions légales' },
+      { to: ROUTES.privacy, label: 'Confidentialité' },
+      { to: ROUTES.terms, label: 'Conditions générales' },
+    ],
+  },
 ] as const;
 
 function PublicFooter() {
@@ -190,10 +198,12 @@ function PublicFooter() {
             <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               REZO360 est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
             </p>
-            <div className="mt-4 flex items-center gap-2 text-2xs text-emerald-600 dark:text-emerald-400">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono font-semibold">Tous les services sont 100% opérationnels</span>
-            </div>
+            {/*
+              « Tous les services sont 100% opérationnels » a été retiré :
+              aucune supervision ne le mesure. Un voyant vert qui ne regarde
+              rien reste vert pendant la panne — c'est précisément le moment où
+              on le consulte.
+            */}
           </div>
 
           {FOOTER_SECTIONS.map((section) => (
@@ -219,7 +229,7 @@ function PublicFooter() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-6 text-xs text-slate-400 sm:flex-row dark:border-slate-800/60">
           <span>© {new Date().getFullYear()} REZO360 SaaS. Tous droits réservés.</span>
-          <span className="font-mono text-2xs">REZO360 Engine v2.4</span>
+          {/* « Engine v2.4 » retiré : cette version n'a jamais existé. */}
         </div>
       </div>
     </footer>
