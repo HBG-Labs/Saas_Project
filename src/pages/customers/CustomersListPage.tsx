@@ -1,4 +1,4 @@
-import { Archive, Building2, MapPin, Phone, Plus, Search } from 'lucide-react';
+import { Archive, Building2, Download, MapPin, Phone, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -14,6 +14,7 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { CustomerFormDialog, useCustomers } from '@/features/customers';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
+import { exportToCsv } from '@/lib/csv-export';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { ContentStatus } from '@/types/database';
 
@@ -41,6 +42,26 @@ export default function CustomersListPage() {
   const canViewAll = can(PERMISSIONS.customerView);
   const list = customers.data ?? [];
 
+  const handleExportCsv = () => {
+    exportToCsv(
+      `clients-${new Date().toISOString().slice(0, 10)}`,
+      [
+        { header: 'Nom', accessor: (c) => c.name },
+        { header: 'Raison sociale', accessor: (c) => c.legal_name ?? '' },
+        { header: 'Numéro SIREN/SIRET', accessor: (c) => c.registration_number ?? '' },
+        { header: 'Numéro TVA', accessor: (c) => c.vat_number ?? '' },
+        { header: 'Email', accessor: (c) => c.email ?? '' },
+        { header: 'Téléphone', accessor: (c) => c.phone ?? '' },
+        { header: 'Adresse', accessor: (c) => c.address_line1 ?? '' },
+        { header: 'Code postal', accessor: (c) => c.postal_code ?? '' },
+        { header: 'Ville', accessor: (c) => c.city ?? '' },
+        { header: 'Pays', accessor: (c) => c.country ?? 'FR' },
+        { header: 'Statut', accessor: (c) => c.status },
+      ],
+      list
+    );
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -51,17 +72,32 @@ export default function CustomersListPage() {
             : 'Les clients chez qui vous intervenez.'
         }
         actions={
-          canCreate && organizationId !== null ? (
-            <CustomerFormDialog
-              organizationId={organizationId}
-              trigger={
-                <Button variant="primary" size="sm">
-                  <Plus className="size-4" />
-                  Nouveau client
-                </Button>
-              }
-            />
-          ) : null
+          <div className="flex items-center gap-2">
+            {list.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleExportCsv}
+                title="Exporter les clients en CSV"
+              >
+                <Download className="size-4" />
+                <span className="hidden sm:inline">Exporter CSV</span>
+              </Button>
+            )}
+            {canCreate && organizationId !== null && (
+              <CustomerFormDialog
+                organizationId={organizationId}
+                trigger={
+                  <Button variant="primary" size="sm">
+                    <Plus className="size-4" />
+                    Nouveau client
+                  </Button>
+                }
+              />
+            )}
+          </div>
         }
       />
 

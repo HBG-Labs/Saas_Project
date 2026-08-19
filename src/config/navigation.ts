@@ -32,6 +32,7 @@ export const ROOT_NAV: readonly NavItem[] = [
 
 export const INTERVENTIONS_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
+  { to: ROUTES.aiAssistant, label: 'Assistant IA', icon: 'sparkles' },
   {
     to: ROUTES.missions,
     label: 'Missions',

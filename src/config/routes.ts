@@ -36,6 +36,11 @@ export const ROUTES = {
   /** Acceptation d'une invitation — le jeton est dans l'URL. */
   invitation: (token: string) => `/invitations/${token}`,
 
+  /** Pages légales — publiques, indexables, liées depuis le pied de page. */
+  legalNotice: '/mentions-legales',
+  privacy: '/confidentialite',
+  terms: '/conditions-generales',
+
   customers: '/clients',
   customer: (customerId: string) => `/clients/${customerId}`,
 
@@ -55,6 +60,7 @@ export const ROUTES = {
 
   dashboard: '/dashboard',
   analytics: '/analytics',
+  aiAssistant: '/assistant-ia',
   planning: '/planning',
   map: '/carte',
   tools: '/tools',

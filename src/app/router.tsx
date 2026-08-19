@@ -62,6 +62,16 @@ export const routes: RouteObject[] = [
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
 
+          // Publiques et sans session : un prospect doit pouvoir lire les
+          // conditions AVANT de créer un compte, et un tiers doit pouvoir
+          // consulter les mentions légales sans en avoir un.
+          {
+            path: ROUTES.legalNotice,
+            lazy: lazyPage(() => import('@/pages/legal/LegalNoticePage')),
+          },
+          { path: ROUTES.privacy, lazy: lazyPage(() => import('@/pages/legal/PrivacyPage')) },
+          { path: ROUTES.terms, lazy: lazyPage(() => import('@/pages/legal/TermsPage')) },
+
           // HORS de `ProtectedRoute`, et c'est tout l'enjeu : la personne
           // invitée n'a par définition PAS ENCORE DE COMPTE. Sous protection,
           // elle était renvoyée à la connexion sans savoir qui l'invitait ni
@@ -103,6 +113,10 @@ export const routes: RouteObject[] = [
               {
                 element: <RequireOrganization />,
                 children: [
+                  {
+                    path: ROUTES.aiAssistant,
+                    lazy: lazyPage(() => import('@/pages/ai/AiAssistantPage')),
+                  },
                   {
                     element: <RequirePlan feature={FEATURES.customers} label="Le module Clients" />,
                     children: [

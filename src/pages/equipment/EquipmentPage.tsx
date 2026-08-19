@@ -3,6 +3,7 @@ import {
   Calendar,
   CheckCircle2,
   Cpu,
+  Download,
   Pencil,
   Plus,
   Search,
@@ -21,6 +22,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { exportToCsv } from '@/lib/csv-export';
 import {
   EQUIPMENT_CATEGORY_LABELS,
   EQUIPMENT_STATUS_LABELS,
@@ -185,6 +187,32 @@ export default function EquipmentPage() {
   const list = equipmentQuery.data ?? [];
   const parc = parcQuery.data ?? [];
 
+  const handleExportCsv = () => {
+    exportToCsv(
+      `parc-materiel-${new Date().toISOString().slice(0, 10)}`,
+      [
+        { header: 'Nom du matériel', accessor: (eq) => eq.name },
+        { header: 'Marque', accessor: (eq) => eq.brand ?? '' },
+        { header: 'Numéro de série / Matricule', accessor: (eq) => eq.serial_number ?? '' },
+        {
+          header: 'Catégorie',
+          accessor: (eq) =>
+            EQUIPMENT_CATEGORY_LABELS[eq.category_id as keyof typeof EQUIPMENT_CATEGORY_LABELS] ??
+            eq.category_id ??
+            '',
+        },
+        { header: 'Statut', accessor: (eq) => EQUIPMENT_STATUS_LABELS[eq.status] ?? eq.status },
+        {
+          header: 'Technicien assigné',
+          accessor: (eq) => (eq.assigned_member ? memberDisplayName(eq.assigned_member) : 'Non assigné'),
+        },
+        { header: 'Prochain contrôle', accessor: (eq) => eq.next_calibration ?? '' },
+        { header: 'État étalonnage', accessor: (eq) => calibrationState(eq.next_calibration) },
+      ],
+      list
+    );
+  };
+
   const totalCount = parc.length;
   const assignedCount = parc.filter((eq) => eq.status === 'assigned').length;
   const availableCount = parc.filter((eq) => eq.status === 'available').length;
@@ -310,6 +338,19 @@ export default function EquipmentPage() {
                 </option>
               ))}
             </select>
+
+            {list.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExportCsv}
+                title="Exporter le matériel en CSV"
+                className="col-span-2 min-h-touch cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
+              >
+                <Download className="size-4" />
+                <span className="hidden sm:inline">Exporter CSV</span>
+              </Button>
+            )}
 
             {canManage && (
               <Button

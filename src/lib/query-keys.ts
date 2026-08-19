@@ -133,6 +133,15 @@ export const qk = {
     detail: (equipmentId: string) => [...qk.equipment.all, 'detail', equipmentId] as const,
   },
 
+  // -------------------------------------------------------------------- stock
+  stock: {
+    all: ['stock'] as const,
+    consumables: (organizationId: string) =>
+      [...qk.stock.all, organizationId, 'consumables'] as const,
+    movements: (organizationId: string) =>
+      [...qk.stock.all, organizationId, 'movements'] as const,
+  },
+
   // -------------------------------------------------------------------- devis
   quotes: {
     all: ['quotes'] as const,

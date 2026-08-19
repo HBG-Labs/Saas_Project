@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
+import { compressImage } from '@/lib/image-compression';
 import type { AttachmentKind } from '@/types/database';
 import type { InterventionAttachment } from '@/types/domain';
 
@@ -132,15 +133,18 @@ export function AttachmentGallery({
     if (files === null || files.length === 0) return;
 
     setError(null);
-    for (const file of Array.from(files)) {
-      upload.mutate(
-        { organizationId, missionId, interventionId, file, kind, uploadedBy },
-        {
-          onError: (mutationError) => {
-            setError(mutationError);
+    for (const rawFile of Array.from(files)) {
+      void (async () => {
+        const file = await compressImage(rawFile);
+        upload.mutate(
+          { organizationId, missionId, interventionId, file, kind, uploadedBy },
+          {
+            onError: (mutationError) => {
+              setError(mutationError);
+            },
           },
-        },
-      );
+        );
+      })();
     }
   };
 

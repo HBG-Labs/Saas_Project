@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   Car,
   CheckCircle2,
+  Download,
   Plus,
   Search,
   Truck,
@@ -23,6 +24,7 @@ import {
   useVehicles,
 } from '@/features/vehicles';
 import { cn } from '@/lib/cn';
+import { exportToCsv } from '@/lib/csv-export';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function VehiclesPage() {
@@ -102,6 +104,25 @@ export default function VehiclesPage() {
     });
   }, [vehicles, searchQuery, statusFilter, typeFilter]);
 
+  const handleExportCsv = () => {
+    exportToCsv(
+      `flotte-vehicules-${new Date().toISOString().slice(0, 10)}`,
+      [
+        { header: 'Immatriculation', accessor: (v) => v.plate },
+        { header: 'Marque', accessor: (v) => v.brand },
+        { header: 'Modèle', accessor: (v) => v.model },
+        { header: 'Type', accessor: (v) => v.type },
+        { header: 'Statut', accessor: (v) => v.status },
+        { header: 'Kilométrage (km)', accessor: (v) => v.mileage },
+        { header: 'Conducteur assigné', accessor: (v) => v.assignedMemberName ?? 'Non assigné' },
+        { header: 'Prochain Contrôle Technique', accessor: (v) => v.nextCtDate },
+        { header: 'Prochaine Révision', accessor: (v) => v.nextRevisionDate },
+        { header: 'Notes', accessor: (v) => v.notes ?? '' },
+      ],
+      filteredVehicles
+    );
+  };
+
   // Le parc est désormais lu en base : une attente et une panne réseau sont
   // possibles, là où `localStorage` répondait toujours et instantanément. Les
   // taire afficherait une flotte vide, indistinguable d'une entreprise qui n'a
@@ -121,15 +142,29 @@ export default function VehiclesPage() {
         title="Flotte & Véhicules d'intervention"
         description="Parc automobile, affectations des techniciens terrain, contrôle technique et suivi de maintenance."
         actions={
-          <Button
-            type="button"
-            variant="primary"
-            className="gap-2"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <Plus className="size-4" />
-            <span>Ajouter un véhicule</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {vehicles.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={handleExportCsv}
+                title="Exporter la liste en CSV"
+              >
+                <Download className="size-4" />
+                <span className="hidden sm:inline">Exporter CSV</span>
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="primary"
+              className="gap-2"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <Plus className="size-4" />
+              <span>Ajouter un véhicule</span>
+            </Button>
+          </div>
         }
       />
 

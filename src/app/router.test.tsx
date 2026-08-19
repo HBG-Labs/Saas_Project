@@ -67,7 +67,7 @@ describe('routing', () => {
   // `it.each` plutôt qu'une boucle dans un seul test : chaque cas bénéficie du
   // nettoyage automatique entre les tests. Une boucle empilerait quatre
   // applications dans le même document, source d'échecs intermittents.
-  it.each(['/favorites', '/history', '/profile', '/settings'])(
+  it.each(['/favorites', '/history', '/profile', '/settings', '/assistant-ia'])(
     'protège la route privée %s',
     async (path) => {
       const router = renderAt(path);
