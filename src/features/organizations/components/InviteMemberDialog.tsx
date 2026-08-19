@@ -7,6 +7,7 @@ import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { cn } from '@/lib/cn';
 import type { OrgRole } from '@/types/database';
 import type { OrganizationInvitation } from '@/types/domain';
 
@@ -136,8 +137,19 @@ export function InviteMemberDialog({
         </form>
       ) : (
         <div className="space-y-4">
-          <div className="border-warning/40 bg-warning-subtle rounded-lg border p-3">
-            <p className="text-foreground text-sm font-medium">Aucun e-mail n’a été envoyé</p>
+          {/* Le ton du bloc suit le résultat. Ce titre était fixe — « Aucun
+              e-mail n'a été envoyé » — du temps où l'envoi n'était pas
+              configuré et échouait toujours. Maintenant qu'il part, il
+              contredisait la phrase suivante, qui annonçait l'expédition. */}
+          <div
+            className={cn(
+              'rounded-lg border p-3',
+              emailSent ? 'border-success/40 bg-success-subtle' : 'border-warning/40 bg-warning-subtle',
+            )}
+          >
+            <p className="text-foreground text-sm font-medium">
+              {emailSent ? `Invitation envoyée à ${created.email}` : 'Aucun e-mail n’a été envoyé'}
+            </p>
             <p className="text-muted-foreground mt-1 text-xs">
               {emailSent ? (
                 <>
