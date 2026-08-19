@@ -89,24 +89,37 @@ export async function submitSupportRequest(input: {
       type: file.type,
     }));
 
-    const { data, error } = await supabase
+    /**
+     * L'IDENTIFIANT EST FORGÉ ICI, et non lu en retour.
+     *
+     * Demander `.select('id')` après l'insertion produit un `RETURNING`, que
+     * PostgreSQL soumet aux policies de LECTURE — or il n'y en a aucune, par
+     * conception. L'insertion réussissait donc et l'appel échouait quand même,
+     * sur un message trompeur : « new row violates row-level security policy ».
+     * Mesuré en visiteur anonyme, seul chemin où les policies s'appliquent
+     * vraiment.
+     *
+     * Le forger de ce côté-ci lève l'obstacle sans rouvrir la lecture des
+     * demandes à qui que ce soit.
+     */
+    const requestId = crypto.randomUUID();
+
+    const { error } = await supabase
       .from('support_requests')
       .insert({
+        id: requestId,
         user_id: input.userId,
         name: input.name.trim(),
         email: input.email.trim().toLowerCase(),
         phone: input.phone?.trim() === '' ? null : (input.phone?.trim() ?? null),
         message: input.message.trim(),
         attachments,
-      })
-      .select('id')
-      .single();
+      });
 
     if (error) throw mapPostgrestError(error);
 
     // À partir d'ici la demande EXISTE. Plus rien ne doit la faire disparaître,
     // pas même l'échec de sa notification.
-    const requestId = data.id;
 
     try {
       const { data: envoi } = (await supabase.functions.invoke('send-support-request', {
