@@ -392,8 +392,16 @@ export async function sendInvitationEmail(
     const response: unknown = (error as { context?: unknown }).context;
     if (response instanceof Response) {
       try {
-        const body = (await response.clone().json()) as { error?: string };
+        const body = (await response.clone().json()) as { error?: string; reason?: string };
         if (typeof body.error === 'string') reason = body.error;
+        // `reason` porte le motif du SERVEUR DE MESSAGERIE — « 535 : Invalid login
+        // or password », par exemple — là où `error` reste générique. C'est lui qui
+        // dit quoi corriger : sans lui, l'écran annonce un échec sans en désigner
+        // la cause, et l'on cherche dans le code un défaut qui est chez le
+        // fournisseur.
+        if (typeof body.reason === 'string' && body.reason !== '') {
+          reason = `${reason} (${body.reason})`;
+        }
       } catch {
         // Réponse non-JSON (502 d'infrastructure, coupure) : le message
         // générique reste la meilleure information disponible.

@@ -211,11 +211,30 @@ Deno.serve(async (request) => {
   try {
     await sendMessage(message, state);
   } catch (thrown) {
-    // Le détail du fournisseur part dans les journaux, PAS dans la réponse : il
-    // contient l'adresse du serveur, l'identifiant du compte, parfois le motif
-    // exact du refus. Consultable par `supabase functions logs send-invitation`.
+    // LE MOTIF DU FOURNISSEUR EST RENDU À L'APPELANT, et non seulement journalisé.
+    //
+    // La version précédente le gardait pour les journaux, en renvoyant vers
+    // `supabase functions logs send-invitation` — commande qui N'EXISTE PAS
+    // dans le CLI. L'échappatoire documentée était fictive, et l'écran
+    // n'affichait que « L'envoi du courriel a échoué », sans rien pour agir.
+    //
+    // Mesuré : il a fallu déployer une variante temporaire pour apprendre que
+    // le serveur répondait « 535 : Invalid login or password ». Une demi-heure
+    // pour un renseignement que le fournisseur donnait dès la première tentative.
+    //
+    // Ce motif décrit NOTRE configuration, pas les données de qui que ce soit,
+    // et cet appel exige déjà d'être membre de l'organisation. Le taire coûte
+    // plus qu'il ne protège.
     console.error(`Envoi ${String(state.transport)} refusé`, thrown);
-    return json({ error: "L'envoi du courriel a échoué.", transport: state.transport }, 502);
+    return json(
+      {
+        error: "L'envoi du courriel a échoué.",
+        transport: state.transport,
+        // Borné : un serveur bavard ne doit pas remplir l'écran.
+        reason: (thrown instanceof Error ? thrown.message : String(thrown)).slice(0, 200),
+      },
+      502,
+    );
   }
 
   return json({ sent: true, email: invitation.email, transport });
