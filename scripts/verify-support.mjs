@@ -22,7 +22,8 @@
  * n'accordant aucun droit de suppression au client. Le script le dit s'il ne
  * peut pas nettoyer.
  *
- *   node scripts/verify-support.mjs
+ *   node scripts/verify-support.mjs                    sans accusé de réception
+ *   node scripts/verify-support.mjs vous@exemple.fr    avec accusé, vers vous
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { readFileSync } from 'node:fs';
@@ -57,7 +58,19 @@ function ok(condition, label, detail = '') {
 }
 
 const marqueur = `verif-${Date.now()}`;
-const adresse = `${marqueur}@exemple.invalid`;
+
+/**
+ * Adresse de l'expéditeur simulé.
+ *
+ * Par défaut `.invalid` — un domaine réservé qui ne résout JAMAIS, ce qui
+ * garantit qu'aucun inconnu ne reçoive un courriel de test. La contrepartie est
+ * que l'accusé de réception ne peut pas être délivré : on ne l'exige donc pas.
+ *
+ * Passez une vraie adresse en argument pour éprouver aussi cette moitié-là.
+ */
+const fournie = process.argv.slice(2).find((a) => a.includes('@'));
+const adresse = fournie ?? `${marqueur}@exemple.invalid`;
+const adresseDelivrable = fournie !== undefined;
 
 // ------------------------------------------------------- 1. la pièce jointe
 console.log('\n▶ Dépôt d’une pièce jointe, en visiteur anonyme');
@@ -145,6 +158,23 @@ if (!insertError) {
     'Le serveur de messagerie a accepté le message',
     payload.reason ?? payload.error ?? '',
   );
+
+  // L'accusé part vers l'EXPÉDITEUR, et seulement si l'équipe a bien été
+  // prévenue : promettre une réponse que personne n'a reçue serait le mensonge
+  // que ce chantier corrige.
+  if (adresseDelivrable) {
+    ok(
+      payload.acknowledged === true,
+      `Un accusé de réception part vers ${adresse}`,
+      payload.acknowledged === undefined ? 'champ absent de la réponse' : '',
+    );
+  } else {
+    console.log(
+      `        accusé de réception non éprouvé : ${adresse} ne peut rien recevoir.` +
+        `
+        Passez une vraie adresse en argument pour le vérifier.`,
+    );
+  }
 }
 
 // ------------------------------------------------------------- 5. nettoyage

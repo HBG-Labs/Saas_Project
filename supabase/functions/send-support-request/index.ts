@@ -190,5 +190,105 @@ Deno.serve(async (request: Request): Promise<Response> => {
     });
   }
 
-  return json({ stored: true, notified: true });
+  // ---------------------------------------------------------------------------
+  // ACCUSÉ DE RÉCEPTION À L'EXPÉDITEUR
+  // ---------------------------------------------------------------------------
+  //
+  // POURQUOI SEULEMENT MAINTENANT, et jamais avant.
+  //
+  // Cet accusé promet une réponse. Le poster alors que l'équipe n'a rien reçu
+  // serait exactement le mensonge que tout ce chantier corrige : un écran qui
+  // affichait « envoyé » sans que rien ne parte. Tant que la notification
+  // échoue, on ne promet donc rien — la demande reste enregistrée, et l'écran
+  // le dit honnêtement.
+  //
+  // SON ÉCHEC N'ANNULE RIEN. L'important est parti : l'équipe est prévenue et
+  // peut répondre. Si la politesse ne trouve pas son destinataire — adresse
+  // saisie de travers, boîte pleine — cela ne doit pas transformer une demande
+  // traitée en demande perdue.
+  //
+  // UN MOT SUR L'ABUS : rien ne prouve que l'adresse saisie appartienne à
+  // l'expéditeur, et quelqu'un pourrait s'en servir pour faire écrire à un
+  // tiers. Le plafond de cinq demandes par heure et par adresse borne le
+  // procédé, et le contenu se limite à ce que l'auteur a lui-même tapé.
+  const copie = `
+<!doctype html>
+<html lang="fr">
+  <body style="margin:0;padding:24px;background:#f1f5f9;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a">
+    <table role="presentation" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0">
+      <tr><td style="padding:28px 28px 8px">
+        <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2563eb">REZO360</p>
+        <h1 style="margin:12px 0 0;font-size:20px;line-height:1.35">Nous avons bien reçu votre message</h1>
+      </td></tr>
+      <tr><td style="padding:12px 28px 0;font-size:14px;line-height:1.65;color:#334155">
+        <p style="margin:0 0 14px">Bonjour ${escapeHtml((demande.name as string).split(' ')[0] ?? '')},</p>
+        <p style="margin:0 0 14px">
+          Votre demande est enregistrée. <strong>Une personne la lira</strong> — ce message-ci est
+          automatique, la réponse ne le sera pas. Elle vous parviendra à cette adresse.
+        </p>
+        <p style="margin:0 0 14px">
+          Vous n'avez rien d'autre à faire. Si vous pensez à un détail utile entre-temps,
+          répondez simplement à ce message : il nous parviendra.
+        </p>
+      </td></tr>
+      <tr><td style="padding:8px 28px 0;font-size:13px;color:#64748b">
+        <p style="margin:0 0 6px"><strong>Ce que vous nous avez écrit</strong> — le ${escapeHtml(recu)}</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap">${escapeHtml(demande.message as string)}</div>
+        ${
+          pieces.length > 0
+            ? `<p style="margin:10px 0 0">${String(pieces.length)} pièce(s) jointe(s) transmise(s) avec votre demande.</p>`
+            : ''
+        }
+      </td></tr>
+      <tr><td style="padding:20px 28px 26px;font-size:12px;line-height:1.6;color:#64748b">
+        <p style="margin:0">
+          Vous nous joignez aussi directement à
+          <a href="mailto:${escapeHtml(destination)}" style="color:#2563eb">${escapeHtml(destination)}</a>.
+        </p>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const copieTexte =
+    `Bonjour ${(demande.name as string).split(' ')[0] ?? ''},
+
+` +
+    `Nous avons bien reçu votre message. Une personne le lira — celui-ci est ` +
+    `automatique, la réponse ne le sera pas. Elle vous parviendra à cette adresse.
+
+` +
+    `Vous n'avez rien d'autre à faire. Si un détail vous revient, répondez à ce message.
+
+` +
+    `--- Ce que vous nous avez écrit, le ${recu} ---
+${demande.message as string}
+` +
+    `${pieces.length > 0 ? `
+${String(pieces.length)} piece(s) jointe(s).
+` : ''}` +
+    `
+Vous nous joignez aussi directement à ${destination}.
+`;
+
+  let acknowledged = true;
+
+  try {
+    await sendMessage(
+      {
+        to: demande.email as string,
+        subject: 'Nous avons bien reçu votre message — REZO360',
+        html: copie,
+        text: copieTexte,
+        // Répondre à l'accusé doit atteindre l'ÉQUIPE, pas la boîte d'envoi.
+        replyTo: destination,
+      },
+      state,
+    );
+  } catch (error) {
+    console.error('Accusé de réception non délivré', error);
+    acknowledged = false;
+  }
+
+  return json({ stored: true, notified: true, acknowledged });
 });
