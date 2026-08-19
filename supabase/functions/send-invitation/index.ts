@@ -162,12 +162,25 @@ Deno.serve(async (request) => {
   const transport = smtpHost ? 'smtp' : resendKey ? 'resend' : null;
 
   if (transport === null || !fromAddress || !appUrl) {
-    // Message explicite plutôt qu'un échec opaque : c'est une erreur de
-    // déploiement, et celui qui la lit est celui qui peut la corriger.
+    // NOMMER CE QUI MANQUE, et non tout ce qui serait requis.
+    //
+    // La version précédente énumérait les cinq variables à chaque échec. Avec
+    // cinq secrets posés sur six, elle envoyait chercher du mauvais côté :
+    // celui qui lit ce message est celui qui peut le corriger, encore
+    // faut-il lui dire quoi. Mesuré sur ce déploiement — seul `APP_URL`
+    // manquait, et rien ne le disait.
+    const manquants: string[] = [];
+    if (!fromAddress) manquants.push('INVITATION_FROM_EMAIL');
+    if (!appUrl) manquants.push('APP_URL');
+    if (transport === null) {
+      manquants.push('SMTP_HOST (+ SMTP_USER, SMTP_PASSWORD) ou RESEND_API_KEY');
+    }
+
     return json(
       {
         error:
-          'Envoi non configuré. Définissez INVITATION_FROM_EMAIL, APP_URL, et soit SMTP_HOST/SMTP_USER/SMTP_PASSWORD, soit RESEND_API_KEY.',
+          `Envoi non configuré : ${manquants.join(', ')} ` +
+          `${manquants.length > 1 ? 'sont absents' : 'est absent'} des secrets de la fonction.`,
       },
       500,
     );
