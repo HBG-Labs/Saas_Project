@@ -1,9 +1,9 @@
 {
-  "name": "nexoratech",
+  "name": "rezo360",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "NexoraTech — plateforme SaaS de boîte à outils techniques",
+  "description": "REZO360 — plateforme SaaS de boîte à outils techniques",
   "engines": {
     "node": ">=20.19.0"
   },

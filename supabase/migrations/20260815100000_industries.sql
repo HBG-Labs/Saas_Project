@@ -137,7 +137,7 @@ values
    jsonb_build_object('worker', 'Technicien', 'job', 'Mission', 'visit', 'Intervention')),
 
   ('general', 'Autre métier de terrain',
-   'Cœur NexoraTech sans spécialisation. Convient à tout métier d''intervention.',
+   'Cœur REZO360 sans spécialisation. Convient à tout métier d''intervention.',
    'briefcase', 999,
    jsonb_build_object('worker', 'Intervenant', 'job', 'Mission', 'visit', 'Intervention'))
 on conflict (code) do update

@@ -1,6 +1,6 @@
 # Déploiement sur Vercel
 
-NexoraTech est une application monopage : Vite produit des fichiers statiques,
+REZO360 est une application monopage : Vite produit des fichiers statiques,
 et toute la logique serveur vit dans Supabase — policies RLS, triggers, et une
 Edge Function pour l'envoi des invitations. Vercel n'a donc rien à exécuter : il
 compile, sert des fichiers et redirige les routes. **Aucun secret ne lui est
@@ -165,7 +165,7 @@ npx supabase secrets set SMTP_HOST=smtp.gmail.com
 npx supabase secrets set SMTP_PORT=465
 npx supabase secrets set SMTP_USER=votre.adresse@gmail.com
 npx supabase secrets set SMTP_PASSWORD=abcdefghijklmnop
-npx supabase secrets set INVITATION_FROM_EMAIL="NexoraTech <votre.adresse@gmail.com>"
+npx supabase secrets set INVITATION_FROM_EMAIL="REZO360 <votre.adresse@gmail.com>"
 npx supabase secrets set APP_URL=https://votre-domaine.vercel.app
 ```
 
@@ -192,7 +192,7 @@ négociation qui échoue sans message clair.
 
 ### B. Resend — pour un expéditeur à votre nom d'entreprise
 
-À faire quand vous aurez un domaine (`nexoratech.fr`, `hbzindustrie.fr`…).
+À faire quand vous aurez un domaine (`rezo360.fr`, `hbzindustrie.fr`…).
 
 1. Compte sur [resend.com](https://resend.com), puis *Domains → Add Domain*.
 2. Ajoutez les trois enregistrements DNS proposés (SPF, DKIM, DMARC) chez votre
@@ -202,7 +202,7 @@ négociation qui échoue sans message clair.
 ```bash
 npx supabase secrets unset SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD
 npx supabase secrets set RESEND_API_KEY=re_xxxxxxxxxxxx
-npx supabase secrets set INVITATION_FROM_EMAIL="NexoraTech <invitations@votre-domaine.fr>"
+npx supabase secrets set INVITATION_FROM_EMAIL="REZO360 <invitations@votre-domaine.fr>"
 ```
 
 La fonction bascule d'elle-même : `SMTP_HOST` défini l'emporte, sinon
@@ -326,9 +326,9 @@ un second temps, en mode `Content-Security-Policy-Report-Only` d'abord.
    ```
 5. Onglet Réseau : aucune requête vers un domaine autre que
    `<projet>.supabase.co` et le domaine Vercel.
-6. `localStorage` : ne doivent subsister que `nexoratech-theme`,
-   `nexoratech_current_organization`, `nexoratech_calculation_history_v1` et le
-   drapeau `nexoratech_demo_storage_purged_v2`. Toute clé `nexoratech_local_*`
+6. `localStorage` : ne doivent subsister que `rezo360-theme`,
+   `rezo360_current_organization`, `rezo360_calculation_history_v1` et le
+   drapeau `rezo360_demo_storage_purged_v2`. Toute clé `rezo360_local_*`
    signalerait un reliquat non purgé.
 7. Recharger en thème clair : **aucun clignotement sombre** au premier affichage.
    S'il subsiste, le script en ligne de `index.html` n'a pas été servi.

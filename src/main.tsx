@@ -25,14 +25,21 @@ async function boot(): Promise<void> {
   }
 
   try {
-    const [{ App }, { applyStoredTheme }, { purgeDemoStorage }] = await Promise.all([
+    const [{ App }, { applyStoredTheme }, { purgeDemoStorage }, { migrateStorageKeys }] =
+      await Promise.all([
       import('@/app/App'),
       import('@/features/theme/theme-script'),
       import('@/lib/purge-demo-storage'),
+      import('@/lib/migrate-storage-keys'),
       // Enregistre tous les outils présents dans src/tools/ (auto-découverte).
       // Doit précéder le premier rendu : le catalogue lit le registry.
       import('@/tools'),
     ]);
+
+    // AVANT TOUT LE RESTE : les préférences écrites sous l'ancien nom de marque
+    // sont recopiées sous le nouveau. Ce qui suit les lit — les laisser passer
+    // après reviendrait à lire des clés encore vides.
+    migrateStorageKeys();
 
     // Le thème est déjà posé par le script en ligne de `index.html`, avant même
     // le premier octet de JavaScript. Cet appel reste comme filet : il couvre le

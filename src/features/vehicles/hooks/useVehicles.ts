@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Vehicle, VehicleMaintenanceRecord } from '../types';
 
-const STORAGE_PREFIX = 'nexora_fleet_vehicles_';
+const STORAGE_PREFIX = 'rezo360_fleet_vehicles_';
 
 function getInitialVehicles(orgId: string): Vehicle[] {
   return [

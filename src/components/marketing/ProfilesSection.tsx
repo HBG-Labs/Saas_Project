@@ -39,7 +39,7 @@ export function ProfilesSection() {
             Une plateforme adaptée à chaque profil technique
           </h2>
           <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-base">
-            Que vous soyez sur le terrain, au bureau ou en formation, NexoraTech répond à vos besoins spécifiques.
+            Que vous soyez sur le terrain, au bureau ou en formation, REZO360 répond à vos besoins spécifiques.
           </p>
         </div>
 

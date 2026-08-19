@@ -61,7 +61,7 @@ export function DashboardShowcase() {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-500" />
               <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Dashboard Cockpit NexoraTech
+                Dashboard Cockpit REZO360
               </span>
             </div>
             <span className="text-2xs font-mono font-medium text-muted-foreground">

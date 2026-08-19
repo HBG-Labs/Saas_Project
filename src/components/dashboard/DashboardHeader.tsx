@@ -53,7 +53,7 @@ export function DashboardHeader() {
           <Calendar className="size-4 text-subtle-foreground shrink-0" />
           <span>{formattedDate}</span>
           <span className="text-border-strong">•</span>
-          <span>{organization?.name ?? 'NexoraTech'}</span>
+          <span>{organization?.name ?? 'REZO360'}</span>
         </p>
       </div>
 

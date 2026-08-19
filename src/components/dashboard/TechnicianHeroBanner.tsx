@@ -189,7 +189,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
                     <CheckCircle2 className="size-3" />
                     {currentImg.badgeText}
                   </span>
-                  <span className="text-muted-foreground">NexoraTech® Field</span>
+                  <span className="text-muted-foreground">REZO360® Field</span>
                 </div>
               </div>
             </div>
@@ -246,7 +246,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="size-1.5 rounded-full bg-primary" />
-                Tablette durcie IP65 avec logiciel NexoraTech
+                Tablette durcie IP65 avec logiciel REZO360
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="size-1.5 rounded-full bg-primary" />

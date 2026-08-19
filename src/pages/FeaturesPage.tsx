@@ -102,7 +102,7 @@ export default function FeaturesPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <PageHeader
         title="Toutes les fonctionnalités de votre cockpit"
-        description="Découvrez comment NexoraTech simplifie et sécurise le travail quotidien des techniciens et ingénieurs."
+        description="Découvrez comment REZO360 simplifie et sécurise le travail quotidien des techniciens et ingénieurs."
         actions={
           <Button asChild size="lg" className="glow-primary">
             <Link to={ROUTES.tools}>

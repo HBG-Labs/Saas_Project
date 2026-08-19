@@ -11,7 +11,7 @@ export function ProblemSection() {
             Ne perdez plus votre temps entre 10 outils différents
           </h2>
           <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-base sm:text-lg">
-            Sur le terrain ou en bureau d&apos;études, l&apos;imprécision et la dispersion des outils de calcul réduisent l&apos;efficacité. NexoraTech rassemble tout au même endroit.
+            Sur le terrain ou en bureau d&apos;études, l&apos;imprécision et la dispersion des outils de calcul réduisent l&apos;efficacité. REZO360 rassemble tout au même endroit.
           </p>
         </div>
 
@@ -48,14 +48,14 @@ export function ProblemSection() {
             </ul>
           </div>
 
-          {/* L'espace NexoraTech */}
+          {/* L'espace REZO360 */}
           <div className="bg-surface border-glow glow-cyan shadow-modal relative rounded-2xl border border-primary/30 p-6 sm:p-8">
             <div className="flex items-center gap-3">
               <span className="bg-success/10 text-success flex size-9 items-center justify-center rounded-lg">
                 <CheckCircle className="size-5" />
               </span>
               <div>
-                <h3 className="text-foreground font-semibold text-lg">L&apos;espace unifié NexoraTech</h3>
+                <h3 className="text-foreground font-semibold text-lg">L&apos;espace unifié REZO360</h3>
                 <p className="text-subtle-foreground text-xs">Précision, rapidité et traçabilité immédiates</p>
               </div>
             </div>

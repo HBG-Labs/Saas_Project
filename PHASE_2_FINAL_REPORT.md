@@ -1,4 +1,4 @@
-# NexoraTech — Rapport de fin de Phase 2
+# REZO360 — Rapport de fin de Phase 2
 
 **Date :** 7 août 2026
 **Périmètre :** Design System, identité visuelle, bibliothèque de composants, interfaces publiques et applicatives
@@ -138,7 +138,7 @@ appliquée via `@supports (-webkit-touch-callout: none)`.
 ### 3.8 Aucun logotype graphique
 
 Un symbole mal dessiné nuit plus qu'il n'apporte. Le contraste typographique
-entre **Nexora** et **Tech** suffit à créer une identité reconnaissable, et
+entre **REZO360** et **Tech** suffit à créer une identité reconnaissable, et
 laisse le champ libre à un vrai travail de marque.
 
 ---

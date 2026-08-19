@@ -198,7 +198,7 @@ export function AppLayout() {
             aria-label="Rechercher"
           >
             <Search className="size-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">Rechercher dans NexoraTech…</span>
+            <span className="truncate">Rechercher dans REZO360…</span>
             <Kbd className="ml-auto hidden sm:inline-flex">⌘K</Kbd>
           </button>
 

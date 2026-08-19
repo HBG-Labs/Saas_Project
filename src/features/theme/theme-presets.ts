@@ -27,7 +27,7 @@ export interface ThemePreset {
 export const DEFAULT_THEME_PRESET: ThemePreset = {
   id: 'default',
   label: 'Cockpit Cobalt (Défaut)',
-  description: 'Ambiance signature NexoraTech, sombre & haute précision',
+  description: 'Ambiance signature REZO360, sombre & haute précision',
   baseMode: 'dark',
   preview: {
     primary: '#3b82f6',

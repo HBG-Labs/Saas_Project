@@ -1,5 +1,5 @@
 /**
- * Module d'images pour la Landing Page de NexoraTech.
+ * Module d'images pour la Landing Page de REZO360.
  * Photos d'ingénieurs et techniciens de terrain équipés de casques de sécurité.
  */
 
@@ -23,7 +23,7 @@ export const FIELD_TECHNICIANS: FieldTechnician[] = [
     imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80',
     alt: 'Technicien avec casque de sécurité blanc et tablette dans un datacenter',
     badge: 'Habilitation Électrique & Optique',
-    quote: 'NexoraTech me permet de calculer le bilan d\'atténuation optique directement au pied de la baie de brassage.',
+    quote: 'REZO360 me permet de calculer le bilan d\'atténuation optique directement au pied de la baie de brassage.',
   },
   {
     id: 'tech-industrial-duo',

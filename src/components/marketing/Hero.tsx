@@ -37,7 +37,7 @@ export function Hero() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-slate-600 sm:text-xl dark:text-slate-300">
-            NexoraTech réunit vos missions, interventions, équipes, clients et outils techniques dans un espace professionnel unique.
+            REZO360 réunit vos missions, interventions, équipes, clients et outils techniques dans un espace professionnel unique.
           </p>
 
           <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
@@ -90,7 +90,7 @@ export function Hero() {
                 <span className="size-3 rounded-full bg-amber-500/80" />
                 <span className="size-3 rounded-full bg-emerald-500/80" />
                 <span className="ml-2 font-mono text-xs font-semibold text-muted-foreground">
-                  nexoratech-cockpit.saas // v2.4
+                  rezo360-cockpit.saas // v2.4
                 </span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">

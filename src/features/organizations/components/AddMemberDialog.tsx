@@ -75,7 +75,7 @@ export function AddMemberDialog({
 
     void navigator.clipboard
       .writeText(
-        `Accès NexoraTech\nIdentifiant : ${account.email}\nMot de passe provisoire : ${account.password}`,
+        `Accès REZO360\nIdentifiant : ${account.email}\nMot de passe provisoire : ${account.password}`,
       )
       .then(() => {
         setCopied(true);

@@ -8,7 +8,7 @@ import { getMyMembership, listMyOrganizations } from '../api/organizations.api';
 
 import { OrganizationContext, type OrganizationContextValue } from './organization-context';
 
-const STORAGE_KEY = 'nexoratech_current_organization';
+const STORAGE_KEY = 'rezo360_current_organization';
 
 /**
  * Lecture du dernier choix d'organisation.

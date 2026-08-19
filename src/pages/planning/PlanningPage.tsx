@@ -248,7 +248,7 @@ export default function PlanningPage() {
 
   const handleExportICS = () => {
     exportEventsToICS(events);
-    showNotification('Fichier planning_nexoratech.ics téléchargé.');
+    showNotification('Fichier planning_rezo360.ics téléchargé.');
   };
 
   if (leavesQuery.isError) {

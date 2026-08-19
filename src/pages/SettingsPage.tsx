@@ -650,7 +650,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-lg bg-surface border border-border">
                   <div>
                     <span className="text-4xs text-muted-foreground uppercase font-bold tracking-wider">Nom Commercial</span>
-                    <p className="text-xs font-bold text-foreground mt-0.5">{organization?.name ?? 'NexoraTech'}</p>
+                    <p className="text-xs font-bold text-foreground mt-0.5">{organization?.name ?? 'REZO360'}</p>
                   </div>
                   <div>
                     <span className="text-4xs text-muted-foreground uppercase font-bold tracking-wider">Secteur d'activité</span>

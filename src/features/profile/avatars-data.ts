@@ -147,7 +147,7 @@ export const PROFILE_AVATARS: readonly ProfileAvatar[] = [
   },
 ];
 
-const AVATAR_STORAGE_KEY = 'nexoratech_active_avatar_url';
+const AVATAR_STORAGE_KEY = 'rezo360_active_avatar_url';
 
 let currentAvatarUrl: string | null =
   typeof window !== 'undefined'

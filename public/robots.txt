@@ -1,4 +1,4 @@
-# NexoraTech
+# REZO360
 #
 # La vitrine est indexable ; les écrans de travail ne le sont pas. Ils exigent
 # une session de toute façon — un robot n'y verrait qu'une redirection — mais

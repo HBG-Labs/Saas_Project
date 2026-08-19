@@ -2,7 +2,7 @@
  * Fonctionnalités débloquées par plan — miroir de `plan_features`.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * Grille tarifaire officielle NexoraTech :
+ * Grille tarifaire officielle REZO360 :
  * - FREE       (0 €)  : 1 utilisateur (monocompte strict, pas de siège supp)
  * - STARTER    (19 €) : 2 utilisateurs inclus (+5 €/user supp/mois)
  * - PRO ⭐    (39 €) : 5 utilisateurs inclus (+5 €/user supp/mois, Recommandé)

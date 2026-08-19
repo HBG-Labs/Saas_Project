@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 /**
- * Configuration ESLint de NexoraTech.
+ * Configuration ESLint de REZO360.
  *
  * Au-delà des règles de style, ce fichier fait respecter MÉCANIQUEMENT
  * l'architecture en couches décrite dans ARCHITECTURE.md :

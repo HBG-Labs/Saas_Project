@@ -7,14 +7,14 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 const FAQ_ITEMS = [
   {
-    id: 'what-is-nexoratech',
-    question: 'Qu’est-ce que NexoraTech ?',
+    id: 'what-is-rezo360',
+    question: 'Qu’est-ce que REZO360 ?',
     answer:
-      'NexoraTech est une plateforme SaaS de gestion d’interventions et d’outils techniques destinée aux techniciens, artisans, chefs d’équipe et entreprises multi-métiers (CVC/climatisation, électricité, fibre & télécoms, paysage, plomberie, maintenance). Elle centralise vos missions, vos rapports terrain et vos calculatrices d’ingénierie dans un espace numérique unique.',
+      'REZO360 est une plateforme SaaS de gestion d’interventions et d’outils techniques destinée aux techniciens, artisans, chefs d’équipe et entreprises multi-métiers (CVC/climatisation, électricité, fibre & télécoms, paysage, plomberie, maintenance). Elle centralise vos missions, vos rapports terrain et vos calculatrices d’ingénierie dans un espace numérique unique.',
   },
   {
     id: 'who-is-it-for',
-    question: 'À qui s’adresse NexoraTech ?',
+    question: 'À qui s’adresse REZO360 ?',
     answer:
       'L’application est conçue pour les professionnels et entreprises techniques : entreprises du bâtiment, installateurs de climatisation/CVC, électriciens, techniciens télécoms, paysagistes, plombiers, et équipes de maintenance multi-sites.',
   },
@@ -28,7 +28,7 @@ const FAQ_ITEMS = [
     id: 'is-it-free',
     question: 'Quelles sont les différentes formules et est-ce gratuit ?',
     answer:
-      'NexoraTech propose une formule 100 % Gratuite sans limitation de durée vous donnant accès à tout le catalogue d’outils. La formule Pro (14,99 €/mois ou 149 €/an) ajoute l’historique illimité, l’export PDF/CSV et les favoris illimités. Une formule Équipe (39,99 €/mois/utilisateur) permet la gestion centralisée d’entreprise.',
+      'REZO360 propose une formule 100 % Gratuite sans limitation de durée vous donnant accès à tout le catalogue d’outils. La formule Pro (14,99 €/mois ou 149 €/an) ajoute l’historique illimité, l’export PDF/CSV et les favoris illimités. Une formule Équipe (39,99 €/mois/utilisateur) permet la gestion centralisée d’entreprise.',
   },
   {
     id: 'reliability',
@@ -38,7 +38,7 @@ const FAQ_ITEMS = [
   },
   {
     id: 'mobile-use',
-    question: 'Peut-on utiliser NexoraTech sur mobile sur le terrain ?',
+    question: 'Peut-on utiliser REZO360 sur mobile sur le terrain ?',
     answer:
       'Oui, l’application est entièrement optimisée pour le terrain. L’interface s’adapte automatiquement aux écrans de smartphones (iOS et Android) avec des boutons faciles à toucher à une main.',
   },
@@ -63,11 +63,11 @@ export default function FaqPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <PageHeader
         title="Foire aux questions & Réponses"
-        description="Retrouvez ici toutes les explications sur le fonctionnement de NexoraTech, la précision des calculs et la gestion de vos outils."
+        description="Retrouvez ici toutes les explications sur le fonctionnement de REZO360, la précision des calculs et la gestion de vos outils."
       />
 
       <div className="bg-surface/90 border-border/80 shadow-raised rounded-2xl border p-6 sm:p-8 backdrop-blur-md">
-        <Accordion.Root type="single" defaultValue="what-is-nexoratech" collapsible className="space-y-4">
+        <Accordion.Root type="single" defaultValue="what-is-rezo360" collapsible className="space-y-4">
           {FAQ_ITEMS.map((item) => (
             <Accordion.Item
               key={item.id}
@@ -107,7 +107,7 @@ export default function FaqPage() {
         </div>
 
         <Button asChild size="sm">
-          <a href="mailto:contact@nexoratech.fr?subject=Question%20NexoraTech">Nous contacter par e-mail</a>
+          <a href="mailto:contact@rezo360.fr?subject=Question%20REZO360">Nous contacter par e-mail</a>
         </Button>
       </div>
     </div>

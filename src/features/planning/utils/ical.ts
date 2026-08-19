@@ -12,17 +12,17 @@ export function exportEventsToICS(events: PlanningCalendarEvent[]): void {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//NexoraTech//Planning Module//FR',
+    'PRODID:-//REZO360//Planning Module//FR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:NexoraTech - Planning & Interventions',
+    'X-WR-CALNAME:REZO360 - Planning & Interventions',
     'X-WR-TIMEZONE:Europe/Paris',
   ];
 
   events.forEach((evt) => {
     const formattedDate = evt.date.replace(/-/g, '');
     lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${evt.id}@nexoratech.fr`);
+    lines.push(`UID:${evt.id}@rezo360.fr`);
     lines.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
     lines.push(`DTSTART;VALUE=DATE:${formattedDate}`);
     lines.push(`SUMMARY:${evt.title}`);
@@ -30,7 +30,7 @@ export function exportEventsToICS(events: PlanningCalendarEvent[]): void {
       lines.push(`DESCRIPTION:${evt.details}`);
     }
     if (evt.technicianName) {
-      lines.push(`ATTENDEE;CN=${evt.technicianName}:mailto:dispatch@nexoratech.fr`);
+      lines.push(`ATTENDEE;CN=${evt.technicianName}:mailto:dispatch@rezo360.fr`);
     }
     lines.push('STATUS:CONFIRMED');
     lines.push('END:VEVENT');
@@ -42,7 +42,7 @@ export function exportEventsToICS(events: PlanningCalendarEvent[]): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', `planning_nexoratech_${new Date().toISOString().split('T')[0]}.ics`);
+  link.setAttribute('download', `planning_rezo360_${new Date().toISOString().split('T')[0]}.ics`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

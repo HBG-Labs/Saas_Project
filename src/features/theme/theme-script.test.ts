@@ -25,6 +25,14 @@ describe('script de thème en ligne', () => {
     expect(html).toContain(`localStorage.getItem('${THEME_STORAGE_KEY}')`);
   });
 
+  it("retombe sur l'ancienne clé, le temps de la transition de marque", () => {
+    // Ce script précède tout module, donc la reprise de
+    // `migrate-storage-keys.ts`. Sans ce repli, la première visite après le
+    // changement de nom repeint l'écran dans le mauvais thème — le
+    // clignotement même que ce script existe pour éviter.
+    expect(html).toContain("localStorage.getItem('nexoratech-theme')");
+  });
+
   it("s'exécute avant le bundle, sinon il ne sert à rien", () => {
     const inlineScript = html.indexOf('localStorage.getItem(');
     const bundle = html.indexOf('<script type="module"');

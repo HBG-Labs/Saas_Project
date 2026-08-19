@@ -96,7 +96,7 @@ export function FeaturesBento() {
               <div className="max-w-md text-left">
                 <h3 className="text-white text-2xl font-black mb-3">Prêt à prendre le contrôle ?</h3>
                 <p className="text-white/90 text-sm leading-relaxed mb-6">
-                  Rejoignez des milliers de techniciens et d&apos;ingénieurs qui utilisent NexoraTech pour piloter leur infrastructure technique.
+                  Rejoignez des milliers de techniciens et d&apos;ingénieurs qui utilisent REZO360 pour piloter leur infrastructure technique.
                 </p>
                 <Button asChild size="md" variant="secondary" className="bg-white text-primary hover:bg-white/90 font-bold shadow-md">
                   <Link to={ROUTES.register}>Créer un compte gratuit</Link>

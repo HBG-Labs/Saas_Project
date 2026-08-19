@@ -33,14 +33,14 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
       let message = '';
 
       if (type === 'apk') {
-        filename = 'NexoraTech-Mobile-Android-v2.4.apk';
-        message = 'Téléchargement de NexoraTech Mobile pour Android (.APK) démarré !';
+        filename = 'REZO360-Mobile-Android-v2.4.apk';
+        message = 'Téléchargement de REZO360 Mobile pour Android (.APK) démarré !';
       } else {
-        filename = 'NexoraTech-iOS-Enterprise-v2.4.mobileconfig';
+        filename = 'REZO360-iOS-Enterprise-v2.4.mobileconfig';
         message = 'Profil d’installation iOS (iPhone/iPad) téléchargé !';
       }
 
-      const fileContent = `PACKAGE INSTALLATEUR MOBILE NEXORATECH ${type.toUpperCase()}\nVersion: 2.4.0-release\nOrg ID: org-demo\nTimestamp: ${new Date().toISOString()}`;
+      const fileContent = `PACKAGE INSTALLATEUR MOBILE REZO360 ${type.toUpperCase()}\nVersion: 2.4.0-release\nOrg ID: org-demo\nTimestamp: ${new Date().toISOString()}`;
       
       const file = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
       element.href = URL.createObjectURL(file);
@@ -72,7 +72,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                Télécharger l'Application Mobile NexoraTech
+                Télécharger l'Application Mobile REZO360
                 <span className="text-2xs font-mono font-medium text-muted-foreground border-l border-border-strong pl-2">
                   v2.4.0
                 </span>

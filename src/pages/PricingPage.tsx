@@ -368,7 +368,7 @@ export default function PricingPage() {
         open={proModalOpen}
         onOpenChange={setProModalOpen}
         title="Offre Pro — Formule recommandée"
-        description="Le plan recommandé et cœur de cible de NexoraTech pour artisans et équipes."
+        description="Le plan recommandé et cœur de cible de REZO360 pour artisans et équipes."
       >
         <div className="space-y-4 text-xs text-muted-foreground">
           <p>

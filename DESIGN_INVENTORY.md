@@ -1,4 +1,4 @@
-# DESIGN_INVENTORY — Cartographie de NexoraTech
+# DESIGN_INVENTORY — Cartographie de REZO360
 
 > Audit réalisé le 9 août 2026, sur l'état `f5659ea` (branche `phase-2/application-foundation`).
 > **Aucun fichier applicatif n'a été modifié pour produire ce document.**

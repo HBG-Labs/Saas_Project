@@ -1,4 +1,4 @@
-# DESIGN_HANDOFF — NexoraTech
+# DESIGN_HANDOFF — REZO360
 
 > **Destinataire : Gemini.** Ce document est l'inventaire complet de l'application au
 > 9 août 2026, état `57d5d1b`, branche `phase-2/application-foundation`.
@@ -10,7 +10,7 @@
 
 ## ⚠️ À LIRE EN PREMIER — la frontière
 
-NexoraTech a un backend fini et prouvé : 28 migrations appliquées, 26 tables, des policies
+REZO360 a un backend fini et prouvé : 28 migrations appliquées, 26 tables, des policies
 RLS et des triggers PostgreSQL, 171 tests automatisés, **huit failles de sécurité trouvées
 et fermées**, chacune mesurée sur la base avant et après correction.
 
@@ -66,7 +66,7 @@ Impact supposé :   … (métier ? sécurité ? aucun ?)
 
 ---
 
-## 1. Vue d'ensemble NexoraTech
+## 1. Vue d'ensemble REZO360
 
 ### Ce que c'est
 

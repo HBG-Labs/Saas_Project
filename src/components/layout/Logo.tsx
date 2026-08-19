@@ -4,7 +4,7 @@ import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
 /**
- * Marque NexoraTech.
+ * Marque REZO360.
  *
  * Pas de logotype graphique en Phase 2 : un symbole mal dessiné nuit plus qu'il
  * n'apporte. Le contraste typographique entre les deux moitiés du nom suffit à
@@ -20,7 +20,7 @@ export function Logo({ className, to = ROUTES.home }: { className?: string; to?:
         className,
       )}
     >
-      Nexora<span className="text-primary">Tech</span>
+      REZO<span className="text-primary">360</span>
     </Link>
   );
 }

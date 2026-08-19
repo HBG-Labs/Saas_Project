@@ -14,7 +14,7 @@ interface ToolErrorBoundaryProps {
  * Isolation des pannes d'un outil.
  *
  * Les outils sont la partie la plus volumineuse et la plus changeante de
- * NexoraTech, et chacun est chargé dynamiquement. Un calcul qui déborde ou un
+ * REZO360, et chacun est chargé dynamiquement. Un calcul qui déborde ou un
  * rendu invalide ne doit pas emporter l'application entière.
  *
  * Cette frontière est placée AU PLUS PRÈS de la zone d'affichage de l'outil,

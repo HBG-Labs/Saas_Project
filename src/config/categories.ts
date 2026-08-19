@@ -46,7 +46,7 @@ export interface CategoryDefinition {
 }
 
 /**
- * Les huit domaines techniques de NexoraTech.
+ * Les huit domaines techniques de REZO360.
  *
  * ⚠️ Les slugs `electrical`, `fiber-optics`, `networking` et `general`
  * PRÉEXISTENT et sont référencés par les `defineTool()` des outils déjà livrés

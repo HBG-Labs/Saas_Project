@@ -63,7 +63,7 @@ export function Testimonials() {
             Dix-huit outils, et la manière dont ils sont tenus
           </h2>
           <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
-            NexoraTech est un jeune produit. Plutôt que des éloges, voici ce qui se vérifie.
+            REZO360 est un jeune produit. Plutôt que des éloges, voici ce qui se vérifie.
           </p>
         </div>
 

@@ -64,7 +64,7 @@ export function InteractivePlayground() {
         <div className="mx-auto max-w-3xl text-center space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-600 backdrop-blur-md dark:border-blue-500/30 dark:text-blue-400">
             <Sparkles className="size-4 animate-pulse text-blue-600 dark:text-cyan-400" />
-            <span>Testez la puissance de NexoraTech en direct</span>
+            <span>Testez la puissance de REZO360 en direct</span>
           </div>
 
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white">
@@ -281,7 +281,7 @@ export function InteractivePlayground() {
                 <div>
                   <div className="flex items-center gap-2 border-b border-slate-200 pb-3 text-xs font-mono text-cyan-600 font-bold dark:border-slate-800 dark:text-cyan-400">
                     <Zap className="size-4 animate-bounce" />
-                    <span>NexoraAI Copilot Engine v4.2</span>
+                    <span>REZO360 Copilot Engine v4.2</span>
                   </div>
 
                   <div className="mt-4 font-mono text-sm leading-relaxed text-slate-800 dark:text-slate-200">

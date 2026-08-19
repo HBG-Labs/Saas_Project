@@ -1,4 +1,4 @@
-# NexoraTech
+# REZO360
 
 Plateforme SaaS de boîte à outils technique destinée aux techniciens,
 ingénieurs et étudiants techniques : fibre optique, réseaux, électricité et

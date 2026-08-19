@@ -4,9 +4,9 @@ import { expect, test } from '@playwright/test';
  * Test de fumée — Vérification de la disponibilité des routes principales, marketing et des 4 outils d'ingénierie.
  */
 test.describe('Parcours de base & navigation marketing', () => {
-  test("L'accueil s'affiche et contient le branding NexoraTech", async ({ page }) => {
+  test("L'accueil s'affiche et contient le branding REZO360", async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /nexoratech/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /rezo360/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /commencer/i }).first()).toBeVisible();
   });
 
@@ -25,7 +25,7 @@ test.describe('Parcours de base & navigation marketing', () => {
   test('La page FAQ (/faq) est accessible et les accordéons s’ouvrent', async ({ page }) => {
     await page.goto('/faq');
     await expect(page.getByRole('heading', { name: /foire aux questions/i })).toBeVisible();
-    const firstQuestion = page.getByRole('button', { name: /Qu’est-ce que NexoraTech/i });
+    const firstQuestion = page.getByRole('button', { name: /Qu’est-ce que REZO360/i });
     await expect(firstQuestion).toBeVisible();
     await firstQuestion.click();
     await expect(page.getByText(/plateforme SaaS de boîte à outils/i)).toBeVisible();

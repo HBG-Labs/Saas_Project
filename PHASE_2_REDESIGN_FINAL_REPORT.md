@@ -1,4 +1,4 @@
-# NexoraTech — Rapport de Refonte Visuelle & Direction Artistique « Cockpit Numérique »
+# REZO360 — Rapport de Refonte Visuelle & Direction Artistique « Cockpit Numérique »
 
 **Date :** 7 août 2026
 **Rôle :** Creative Director SaaS, Senior Product Designer, Frontend Lead
@@ -9,7 +9,7 @@
 
 ## 1. Direction Artistique : « Le Cockpit Numérique »
 
-La refonte visuelle transforme l'interface de NexoraTech pour lui donner le rang d'un **SaaS technique de niveau mondial**, évoquant la précision, l'ingénierie, la clarté et la puissance de calcul.
+La refonte visuelle transforme l'interface de REZO360 pour lui donner le rang d'un **SaaS technique de niveau mondial**, évoquant la précision, l'ingénierie, la clarté et la puissance de calcul.
 
 ### Identité & Éléments Visuels Majeurs
 - **Palette chromatique** : Bleu technique profond (`oklch`) équilibré par des lueurs d'accentuation Cyan (`#06b6d4`), des fonds ardoise et une gestion de la profondeur de surface en mode sombre (`surface-raised`, `shadow-bevel`).
@@ -24,7 +24,7 @@ La refonte visuelle transforme l'interface de NexoraTech pour lui donner le rang
 La page d'accueil a été intégralement reconstruite pour offrir une proposition de valeur spécifique et percutante :
 
 1. **Header & Navigation Sticky Glassmorphic**
-   - Logo NexoraTech rénové, navigation aérée, sélecteur de thème sans flash, et déclencheur de recherche universelle **⌘K**.
+   - Logo REZO360 rénové, navigation aérée, sélecteur de thème sans flash, et déclencheur de recherche universelle **⌘K**.
 
 2. **Hero — Headline & Live Workspace Product Mockup**
    - Headline percutant : *"Tous vos outils techniques. Un seul cockpit."*
@@ -32,7 +32,7 @@ La page d'accueil a été intégralement reconstruite pour offrir une propositio
    - **Maquette vivante et interactive (Live Workspace Preview)** : Représentation visuelle d'un véritable outil de calcul de bilan optique FTTH, de découpage sous-réseau IPv4/v6 et de puissance électrique triphasée avec indicateurs de conformité ISO/IEC et UTE.
 
 3. **Nouvelle Section Problème (« Centralisez vos outils »)**
-   - Comparaison visuelle entre *« L'ancienne méthode dispersée »* (Excel corrompus, calculettes sans historique, favoris perdus) et *« L'espace unifié NexoraTech »* (formules certifiées, recherche ⌘K, sauvegardes cloud).
+   - Comparaison visuelle entre *« L'ancienne méthode dispersée »* (Excel corrompus, calculettes sans historique, favoris perdus) et *« L'espace unifié REZO360 »* (formules certifiées, recherche ⌘K, sauvegardes cloud).
 
 4. **Présentation du Catalogue par Domaine**
    - Cartes de catégories interactives (Fibre Optique, Réseaux, Électricité, Mathématiques) avec micro-animations au survol et comptage dynamique d'outils.

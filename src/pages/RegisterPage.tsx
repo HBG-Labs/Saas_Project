@@ -73,7 +73,7 @@ export default function RegisterPage() {
       description={
         activePlanInfo.priceMonthly === 0
           ? 'Gratuit à vie. Accédez à vos outils techniques et calculs certifiés.'
-          : `Rejoignez NexoraTech avec la formule ${activePlanInfo.name} pour équiper votre entreprise.`
+          : `Rejoignez REZO360 avec la formule ${activePlanInfo.name} pour équiper votre entreprise.`
       }
       footer={
         <>

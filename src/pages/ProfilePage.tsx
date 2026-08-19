@@ -628,7 +628,7 @@ export default function ProfilePage() {
                 Sécurité du Compte & Mot de Passe
               </CardTitle>
               <CardDescription className="mt-1">
-                Protégez l'accès à votre espace NexoraTech avec un mot de passe robuste.
+                Protégez l'accès à votre espace REZO360 avec un mot de passe robuste.
               </CardDescription>
             </div>
 

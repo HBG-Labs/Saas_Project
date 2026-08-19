@@ -15,7 +15,7 @@ export const TOOL_CATEGORIES: readonly CategorySlug[] = CATEGORY_SLUGS;
 export type ToolCategorySlug = CategorySlug;
 
 /**
- * Contrat que doit respecter tout outil de NexoraTech.
+ * Contrat que doit respecter tout outil de REZO360.
  *
  * `Component` est OBLIGATOIREMENT un composant paresseux. C'est ce qui préserve
  * le code splitting : `src/tools/index.ts` charge tous les `index.ts` d'outils

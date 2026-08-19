@@ -657,7 +657,7 @@ export default function QuotesPage() {
             {/* Header Document */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-blue-900">NEXORATECH CARAÏBES</h2>
+                <h2 className="text-xl font-bold tracking-tight text-blue-900">REZO360 CARAÏBES</h2>
                 <p className="text-xs text-slate-500 font-medium">Ingénierie Réseaux, Fibre Optique & Électricité BT</p>
                 <p className="text-2xs text-slate-500 mt-1">SIRET : 849 204 192 00018 • TVA : FR 49 849204192</p>
               </div>

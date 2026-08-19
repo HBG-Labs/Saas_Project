@@ -1,4 +1,4 @@
-# NexoraTech — Rapport de fin de Phase 1
+# REZO360 — Rapport de fin de Phase 1
 
 **Date :** 7 août 2026
 **Commit :** `8326d5e` — branche `main`
@@ -619,7 +619,7 @@ Retirer alors les exclusions de `e2e/` et `playwright.config.ts` dans
 ## 10. État Git
 
 ```
-Commit  : 8326d5e  feat: fondations Phase 1 de NexoraTech
+Commit  : 8326d5e  feat: fondations Phase 1 de REZO360
 Branche : main
 Fichiers: 90
 Statut  : arbre de travail propre

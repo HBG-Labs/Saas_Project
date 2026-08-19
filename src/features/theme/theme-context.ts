@@ -25,8 +25,8 @@ export interface ThemeContextValue {
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export const THEME_STORAGE_KEY = 'nexoratech-theme';
-export const PRESET_STORAGE_KEY = 'nexoratech-theme-preset';
-export const ACCENT_STORAGE_KEY = 'nexoratech-accent-color';
+export const THEME_STORAGE_KEY = 'rezo360-theme';
+export const PRESET_STORAGE_KEY = 'rezo360-theme-preset';
+export const ACCENT_STORAGE_KEY = 'rezo360-accent-color';
 export const COMPACT_STORAGE_KEY = 'pref_compact_mode';
 

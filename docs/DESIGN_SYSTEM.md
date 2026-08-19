@@ -1,4 +1,4 @@
-# NexoraTech — Design System
+# REZO360 — Design System
 
 **Version 1.0** — Phase 2
 Document de référence pour toute décision visuelle et d'interaction.
@@ -7,7 +7,7 @@ Document de référence pour toute décision visuelle et d'interaction.
 
 ## 1. Vision design
 
-NexoraTech est un **instrument de travail**, pas une vitrine. Un technicien
+REZO360 est un **instrument de travail**, pas une vitrine. Un technicien
 l'ouvre sur un chantier, en atelier ou en salle de cours, souvent dans l'urgence,
 parfois sur un téléphone avec des gants. L'interface doit disparaître derrière le
 résultat.
@@ -91,7 +91,7 @@ travail longues sans fatigue, et offre un excellent contraste dans les deux
 thèmes.
 
 Un accent **cyan** intervient avec parcimonie : indicateurs de données, graphes,
-états actifs. Il évoque le signal optique, cœur de métier NexoraTech.
+états actifs. Il évoque le signal optique, cœur de métier REZO360.
 
 ### 3.2 Espace colorimétrique — OKLCH
 
@@ -104,7 +104,7 @@ HSL.
 
 ### 3.3 Logo et marque
 
-Le nom s'écrit **Nexora**Tech, la première partie en `--foreground`, la seconde en
+Le nom s'écrit **REZO**360, la première partie en `--foreground`, la seconde en
 `--primary`. Pas de logotype graphique en Phase 2 : un faux logo mal dessiné nuit
 plus qu'il n'apporte.
 

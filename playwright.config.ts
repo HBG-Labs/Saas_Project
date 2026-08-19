@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Configuration Playwright E2E pour NexoraTech.
+ * Configuration Playwright E2E pour REZO360.
  *
  * Exécution :
  * - `npm run test:e2e` (mode headless)

@@ -1,4 +1,4 @@
-# Architecture de NexoraTech
+# Architecture de REZO360
 
 ## Principe directeur
 
@@ -136,7 +136,7 @@ journalisation.
 
 ## Le module professionnel (multi-tenant)
 
-NexoraTech comporte deux produits dans une même application :
+REZO360 comporte deux produits dans une même application :
 
 | | Catalogue d'outils | Module professionnel |
 |---|---|---|
@@ -185,7 +185,7 @@ fichier.
 
 ## Le métier est une donnée, jamais un chemin de code
 
-NexoraTech sert des fibreurs, des frigoristes et des paysagistes avec le même
+REZO360 sert des fibreurs, des frigoristes et des paysagistes avec le même
 cœur applicatif. Une organisation exerce **un** métier, porté par une colonne
 `organizations.industry` — nullable, et rétro-remplie à `fiber_telecom` pour les
 entreprises antérieures, ce qui est un fait et non une commodité.

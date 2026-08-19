@@ -41,10 +41,10 @@ export function Benefits() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Les Bénéfices NexoraTech
+            Les Bénéfices REZO360
           </h2>
           <p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            Pourquoi choisir NexoraTech pour votre entreprise ?
+            Pourquoi choisir REZO360 pour votre entreprise ?
           </p>
         </div>
 

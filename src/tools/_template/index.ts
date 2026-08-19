@@ -17,7 +17,7 @@ export default defineTool({
   slug: 'template',
   category: 'general',
   title: "Gabarit d'outil",
-  description: 'Squelette à copier pour créer un nouvel outil NexoraTech.',
+  description: 'Squelette à copier pour créer un nouvel outil REZO360.',
   keywords: ['gabarit', 'exemple'],
   icon: 'puzzle',
   Component: lazy(() => import('./TemplateTool')),

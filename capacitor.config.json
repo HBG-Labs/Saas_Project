@@ -1,6 +1,6 @@
 {
-  "appId": "fr.nexoratech.app",
-  "appName": "NexoraTech",
+  "appId": "fr.rezo360.app",
+  "appName": "REZO360",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

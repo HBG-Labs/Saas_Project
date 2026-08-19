@@ -65,7 +65,7 @@ test.describe('Parcours utilisateur complet', () => {
   }) => {
     // ------------------------------------------------------------- 1. Arrivée (Landing Page)
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /nexoratech/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /rezo360/i })).toBeVisible();
 
     // Clic vers la page d'inscription depuis l'en-tête ou le CTA Hero
     const registerLink = page.getByRole('link', { name: /créer un compte|commencer/i }).first();

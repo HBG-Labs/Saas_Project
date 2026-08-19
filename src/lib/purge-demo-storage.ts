@@ -25,6 +25,23 @@
 const PURGE_FLAG = 'nexoratech_demo_storage_purged_v2';
 
 /**
+ * POURQUOI CE FICHIER GARDE L'ANCIEN PRÉFIXE, alors que la marque a changé.
+ *
+ * Toutes les clés nommées ici désignent des données HÉRITÉES : elles ont été
+ * écrites sous `nexoratech_` par du code qui n'existe plus, et ne le seront
+ * jamais sous un autre nom. Les renommer en `rezo360_` ferait chercher au
+ * nettoyage des clés qui n'existent dans aucun navigateur — le ménage
+ * s'annoncerait fait sans avoir rien retiré, et les mégaoctets morts
+ * survivraient exactement comme avant.
+ *
+ * Le drapeau reste ancien pour la même raison : le renommer relancerait la
+ * purge chez tout le monde, et laisserait deux drapeaux au lieu d'un.
+ *
+ * Les préférences VIVANTES — thème, organisation courante, avatar, véhicules —
+ * sont un autre sujet : elles sont reprises par `migrate-storage-keys.ts`.
+ */
+
+/**
  * Clés écrites par l'ancienne couche de démonstration.
  *
  * Volontairement énumérées plutôt que devinées par préfixe : `nexoratech_theme`

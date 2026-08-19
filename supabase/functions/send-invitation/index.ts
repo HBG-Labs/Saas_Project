@@ -227,7 +227,7 @@ Deno.serve(async (request) => {
   <body style="margin:0;padding:24px;background:#f1f5f9;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a">
     <table role="presentation" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0">
       <tr><td style="padding:28px 28px 8px">
-        <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2563eb">NexoraTech</p>
+        <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2563eb">REZO360</p>
         <h1 style="margin:12px 0 0;font-size:20px;line-height:1.35">
           ${escapeHtml(organizationName)} vous invite à rejoindre son espace de travail
         </h1>
@@ -259,7 +259,7 @@ Deno.serve(async (request) => {
 </html>`.trim();
 
   const text = [
-    `${organizationName} vous invite à rejoindre son espace de travail NexoraTech.`,
+    `${organizationName} vous invite à rejoindre son espace de travail REZO360.`,
     ``,
     `Rôle attribué : ${roleLabel}`,
     `Lien d'acceptation : ${link}`,
@@ -270,7 +270,7 @@ Deno.serve(async (request) => {
 
   const message: Message = {
     to: invitation.email,
-    subject: `${organizationName} vous invite sur NexoraTech`,
+    subject: `${organizationName} vous invite sur REZO360`,
     html,
     text,
   };

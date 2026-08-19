@@ -1,4 +1,4 @@
-# NexoraTech — Rapport d'Implémentation Marketing 100 % Opérationnel & Plan Tarifaire SaaS
+# REZO360 — Rapport d'Implémentation Marketing 100 % Opérationnel & Plan Tarifaire SaaS
 
 **Date :** 7 août 2026
 **Périmètre :** Routes marketing dédiées, navigation fonctionnelle sans liens morts, filtrage dynamique du catalogue via URL, grille tarifaire SaaS B2B/Prosumer cohérente et extensible Stripe, accessibilité ARIA & SEO.
@@ -38,7 +38,7 @@ Les mentions "À définir" ont été remplacées par une structure tarifaire **r
    - Clic sur n'importe quelle carte de catégorie (`CategoryCard`) sur la page d'accueil = ouverture directe de `/tools?category={category.slug}` avec filtrage automatique.
 
 4. **SEO & Titres de Documents**
-   - Hook [`useDocumentTitle`](file:///c:/Users/HBZ/OneDrive/Documents/ApplicationTech/src/lib/use-document-title.ts) assurant un titre `<title>` dynamique sur chaque page (`NexoraTech — Tarifs`, `NexoraTech — Fonctionnalités`, etc.).
+   - Hook [`useDocumentTitle`](file:///c:/Users/HBZ/OneDrive/Documents/ApplicationTech/src/lib/use-document-title.ts) assurant un titre `<title>` dynamique sur chaque page (`REZO360 — Tarifs`, `REZO360 — Fonctionnalités`, etc.).
 
 ---
 
@@ -46,14 +46,14 @@ Les mentions "À définir" ont été remplacées par une structure tarifaire **r
 
 | Route | Composant | Titre Document | Rôle & Action |
 |---|---|---|---|
-| `/` | `LandingPage` | `NexoraTech — Accueil` | Vitrine SaaS principale avec Live Workspace Preview |
-| `/features` | `FeaturesPage` | `NexoraTech — Fonctionnalités` | Les 8 fonctionnalités avec CTA vers `/tools` |
-| `/tools` | `ToolsPage` | `NexoraTech — Catalogue des outils` | Marketplace avec 4 outils fonctionnels et filtres `?category=...` |
-| `/pricing` | `PricingPage` | `NexoraTech — Tarifs` | Tarifs réels (0€, 14.99€, 39.99€) & Tableau comparatif |
-| `/faq` | `FaqPage` | `NexoraTech — FAQ` | Accordéon interactif avec 8 réponses techniques |
-| `/login` | `LoginPage` | `NexoraTech — Connexion` | Formulaire d'authentification |
-| `/register` | `RegisterPage` | `NexoraTech — Inscription` | Formulaire de création de compte |
-| `/dashboard` | `DashboardPage` | `NexoraTech — Tableau de bord` | Cockpit membre connecté avec recherche ⌘K |
+| `/` | `LandingPage` | `REZO360 — Accueil` | Vitrine SaaS principale avec Live Workspace Preview |
+| `/features` | `FeaturesPage` | `REZO360 — Fonctionnalités` | Les 8 fonctionnalités avec CTA vers `/tools` |
+| `/tools` | `ToolsPage` | `REZO360 — Catalogue des outils` | Marketplace avec 4 outils fonctionnels et filtres `?category=...` |
+| `/pricing` | `PricingPage` | `REZO360 — Tarifs` | Tarifs réels (0€, 14.99€, 39.99€) & Tableau comparatif |
+| `/faq` | `FaqPage` | `REZO360 — FAQ` | Accordéon interactif avec 8 réponses techniques |
+| `/login` | `LoginPage` | `REZO360 — Connexion` | Formulaire d'authentification |
+| `/register` | `RegisterPage` | `REZO360 — Inscription` | Formulaire de création de compte |
+| `/dashboard` | `DashboardPage` | `REZO360 — Tableau de bord` | Cockpit membre connecté avec recherche ⌘K |
 
 ---
 

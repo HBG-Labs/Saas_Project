@@ -34,7 +34,7 @@ function formatDuration(totalSeconds: number): string {
 export function InterventionPdfModal({
   open,
   onOpenChange,
-  organizationName = 'NexoraTech Pro',
+  organizationName = 'REZO360 Pro',
   mission,
   intervention: _intervention,
   report,

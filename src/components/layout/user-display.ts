@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js';
  * ─────────────────────────────────────────────────────────────────────────────
  * LA SOURCE EST LA SESSION, PLUS LE STOCKAGE LOCAL
  *
- * La version précédente lisait d'abord `nexoratech_user_profile` dans le
+ * La version précédente lisait d'abord `rezo360_user_profile` dans le
  * navigateur. Deux conséquences : le nom d'un compte survivait à la déconnexion
  * et s'affichait pour le suivant, et un nom modifié sur un autre appareil ne
  * remontait jamais.

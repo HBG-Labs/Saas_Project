@@ -208,7 +208,7 @@ export function Sidebar({
             >
               <div className="flex items-center gap-1.5 text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
                 <Building2 className="size-3.5 text-primary shrink-0" />
-                <span className="truncate">{organization?.name ?? 'NexoraTech'}</span>
+                <span className="truncate">{organization?.name ?? 'REZO360'}</span>
               </div>
               {isResolved && industryLabel ? (
                 <div className="mt-0.5 flex items-center gap-1 text-2xs text-muted-foreground group-hover:text-foreground/80 transition-colors truncate">

@@ -1,10 +1,10 @@
 # ==============================================================================
-# Script d'automatisation Git Push pour NexoraTech -> GitHub (ApplicationTechFinal)
+# Script d'automatisation Git Push pour REZO360 -> GitHub (ApplicationTechFinal)
 # ==============================================================================
 
 $RepoUrl = "https://github.com/HBZ/ApplicationTechFinal.git"
 
-Write-Host "`n🚀 Publication de NexoraTech sur GitHub ($RepoUrl)..." -ForegroundColor Cyan
+Write-Host "`n🚀 Publication de REZO360 sur GitHub ($RepoUrl)..." -ForegroundColor Cyan
 
 # 1. Configuration du remote origin
 $remotes = git remote
@@ -26,7 +26,7 @@ $status = git status --porcelain
 if ($status) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     Write-Host "[3/4] 📝 Enregistrement du commit..." -ForegroundColor Yellow
-    git commit -m "feat(nexoratech): mise à jour complète du projet - $timestamp"
+    git commit -m "feat(rezo360): mise à jour complète du projet - $timestamp"
 } else {
     Write-Host "[3/4] ℹ Tous les fichiers sont déjà commités." -ForegroundColor Green
 }

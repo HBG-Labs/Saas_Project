@@ -4,7 +4,7 @@ import { FEATURES, useUserEntitlements } from '@/features/billing';
 
 import { type HistoryEntry } from './types';
 
-const STORAGE_KEY = 'nexoratech_calculation_history_v1';
+const STORAGE_KEY = 'rezo360_calculation_history_v1';
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ export function useCalculationHistory(toolSlug?: string) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `nexoratech_historique_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `rezo360_historique_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }, [filteredEntries]);

@@ -19,9 +19,9 @@ const FAQS: FaqItem[] = [
   {
     id: '1',
     category: 'platform',
-    question: "Qu'est-ce que NexoraTech exactement ?",
+    question: "Qu'est-ce que REZO360 exactement ?",
     answer:
-      "NexoraTech est la plateforme SaaS tout-en-un centralisant des calculateurs normés, des assistants numériques alimentés par l'IA et un hub de gestion technique pour les techniciens, ingénieurs et entreprises.",
+      "REZO360 est la plateforme SaaS tout-en-un centralisant des calculateurs normés, des assistants numériques alimentés par l'IA et un hub de gestion technique pour les techniciens, ingénieurs et entreprises.",
   },
   {
     id: '2',
@@ -35,14 +35,14 @@ const FAQS: FaqItem[] = [
     category: 'platform',
     question: 'Comment fonctionne le mode hors-ligne (Offline) ?',
     answer:
-      "NexoraTech s'appuie sur la technologie PWA. Vos données et outils clés sont stockés localement sur votre appareil. Vous travaillez sans réseau et l'application se synchronise automatiquement au retour de la connexion.",
+      "REZO360 s'appuie sur la technologie PWA. Vos données et outils clés sont stockés localement sur votre appareil. Vous travaillez sans réseau et l'application se synchronise automatiquement au retour de la connexion.",
   },
   {
     id: '4',
     category: 'platform',
     question: 'Est-ce compatible avec mon smartphone iOS ou Android ?',
     answer:
-      'Oui, NexoraTech est 100% responsive et optimisé pour tous les navigateurs mobiles ainsi que sous forme d’application PWA installable en 1 clic sur votre écran d’accueil.',
+      'Oui, REZO360 est 100% responsive et optimisé pour tous les navigateurs mobiles ainsi que sous forme d’application PWA installable en 1 clic sur votre écran d’accueil.',
   },
   {
     id: '5',
@@ -61,7 +61,7 @@ const FAQS: FaqItem[] = [
   {
     id: '7',
     category: 'billing',
-    question: 'Puis-je utiliser NexoraTech gratuitement ?',
+    question: 'Puis-je utiliser REZO360 gratuitement ?',
     answer:
       'Absolument. Le plan Gratuit est accessible sans limite de temps et sans carte bancaire pour découvrir les outils et effectuer vos premiers calculs.',
   },
@@ -104,7 +104,7 @@ export function Faq() {
             Foire Aux Questions
           </span>
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            Tout ce que vous devez savoir sur NexoraTech
+            Tout ce que vous devez savoir sur REZO360
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
             Trouvez rapidement des réponses claires sur nos outils, la sécurité de vos données et nos offres.

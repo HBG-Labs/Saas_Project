@@ -162,7 +162,7 @@ export function PublicLayout() {
 
 const FOOTER_SECTIONS = [
   {
-    title: 'Plateforme NexoraTech',
+    title: 'Plateforme REZO360',
     links: [
       { to: ROUTES.features, label: 'Fonctionnalités' },
       { to: ROUTES.tools, label: 'Catalogue d’outils' },
@@ -187,7 +187,7 @@ function PublicFooter() {
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              NexoraTech est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
+              REZO360 est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
             </p>
             <div className="mt-4 flex items-center gap-2 text-2xs text-emerald-600 dark:text-emerald-400">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -217,8 +217,8 @@ function PublicFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-6 text-xs text-slate-400 sm:flex-row dark:border-slate-800/60">
-          <span>© {new Date().getFullYear()} NexoraTech SaaS. Tous droits réservés.</span>
-          <span className="font-mono text-2xs">NexoraTech Engine v2.4</span>
+          <span>© {new Date().getFullYear()} REZO360 SaaS. Tous droits réservés.</span>
+          <span className="font-mono text-2xs">REZO360 Engine v2.4</span>
         </div>
       </div>
     </footer>

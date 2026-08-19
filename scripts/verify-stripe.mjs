@@ -127,8 +127,8 @@ const checkout = await callFunction(
     // Hors navigateur, il n'y a pas d'en-tête `Origin` : les adresses de retour
     // doivent être fournies. C'est précisément ce que la fonction exige
     // désormais, au lieu de forger une URL relative que Stripe refuse.
-    successUrl: 'https://nexoratech.example/organisation/facturation?paiement=ok',
-    cancelUrl: 'https://nexoratech.example/organisation/facturation?paiement=annule',
+    successUrl: 'https://rezo360.example/organisation/facturation?paiement=ok',
+    cancelUrl: 'https://rezo360.example/organisation/facturation?paiement=annule',
     // Valeurs que le serveur doit IGNORER : si elles étaient lues, le montant
     // renvoyé s'en trouverait changé.
     price: 1,
@@ -210,7 +210,7 @@ console.log('\n▶ Portail de facturation');
 
 const portail = await callFunction(
   'create-billing-portal-session',
-  { organizationId, returnUrl: 'https://nexoratech.example/organisation/facturation' },
+  { organizationId, returnUrl: 'https://rezo360.example/organisation/facturation' },
   token,
 );
 ok(

@@ -19,7 +19,14 @@
         try {
           /* Clé dupliquée depuis THEME_STORAGE_KEY (src/features/theme/theme-context.ts).
              Un test la vérifie : voir src/features/theme/theme-script.test.ts. */
-          var stored = localStorage.getItem('nexoratech-theme');
+          /* Le repli sur l'ancien nom de marque est INDISPENSABLE ICI : ce
+             script s'exécute avant tout module, donc avant que
+             migrate-storage-keys.ts ait recopié la préférence. Sans lui, la
+             première visite après le renommage repeint l'écran dans le mauvais
+             thème — exactement le clignotement que ce script existe pour
+             éviter. À retirer en même temps que la reprise, pas avant. */
+          var stored =
+            localStorage.getItem('rezo360-theme') || localStorage.getItem('nexoratech-theme');
           var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
             document.documentElement.classList.add('dark');
@@ -45,22 +52,22 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
     <meta
       name="description"
-      content="NexoraTech — boîte à outils technique pour les professionnels de la fibre, des réseaux et de l'électricité."
+      content="REZO360 — boîte à outils technique pour les professionnels de la fibre, des réseaux et de l'électricité."
     />
     <!-- Polices auto-hébergées : voir les imports @fontsource de src/styles/index.css. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="NexoraTech" />
-    <meta property="og:title" content="NexoraTech — le cockpit des équipes terrain" />
+    <meta property="og:site_name" content="REZO360" />
+    <meta property="og:title" content="REZO360 — le cockpit des équipes terrain" />
     <meta
       property="og:description"
       content="Missions, interventions, comptes rendus, devis et parc matériel pour les professionnels de la fibre, des réseaux et de l'électricité."
     />
     <meta name="twitter:card" content="summary" />
 
-    <title>NexoraTech</title>
+    <title>REZO360</title>
   </head>
   <body>
     <div id="root"></div>

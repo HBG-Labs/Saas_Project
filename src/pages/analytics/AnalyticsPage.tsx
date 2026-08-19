@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
       return;
     }
 
-    const orgName = organization?.name ?? 'NexoraTech SaaS';
+    const orgName = organization?.name ?? 'REZO360 SaaS';
     const exportDate = new Date().toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'long',
@@ -572,7 +572,7 @@ export default function AnalyticsPage() {
       </head>
       <body>
         <div class="header">
-          <div class="brand">NexoraTech — Operational Intelligence</div>
+          <div class="brand">REZO360 — Operational Intelligence</div>
           <div class="doc-title">
             <strong>Réf: REF-ANALYTICS-2026-08</strong><br />
             Édité le : ${exportDate}
@@ -689,7 +689,7 @@ export default function AnalyticsPage() {
         <div class="signature-block">
           <div class="sign-box">
             Responsable des Opérations<br />
-            Signé électriquement via NexoraTech
+            Signé électriquement via REZO360
           </div>
           <div class="sign-box" style="text-align:right;">
             Direction Technique & Qualité<br />
@@ -698,7 +698,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div class="footer">
-          <div>Document généré par NexoraTech SaaS — Tous droits réservés</div>
+          <div>Document généré par REZO360 SaaS — Tous droits réservés</div>
           <div>Confidentiel & Usage Interne uniquement</div>
         </div>
 
