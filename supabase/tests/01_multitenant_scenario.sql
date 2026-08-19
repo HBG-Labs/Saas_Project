@@ -102,6 +102,24 @@ begin
 end;
 $$;
 
+/**
+ * Éprouve qu'une instruction est REFUSÉE.
+ *
+ * Même dispositif que la suite 04 : sans cela, on ne peut vérifier que ce qui
+ * réussit — or la moitié d'un cloisonnement consiste en ce qu'il empêche.
+ */
+create function pg_temp.refuses(p_sql text, p_label text) returns void
+language plpgsql as $$
+begin
+  execute p_sql;
+  raise exception 'ECHEC : % (l''instruction a ete ACCEPTEE)', p_label
+    using errcode = 'assert_failure';
+exception
+  when assert_failure then raise;
+  when others then raise notice '  OK  % (refuse : %)', p_label, left(sqlerrm, 70);
+end;
+$$;
+
 -- -----------------------------------------------------------------------------
 -- Comptes utilisateurs
 -- -----------------------------------------------------------------------------
@@ -1720,6 +1738,73 @@ begin
   raise notice '';
 end
 $$;
+
+-- =============================================================================
+do $$ begin raise notice ''; raise notice '=== Le parc ROULANT est cloisonne comme le reste ==='; end $$;
+-- =============================================================================
+--
+-- Les vehicules viennent d'entrer en base : ils vivaient dans le navigateur,
+-- hors RLS, avec une flotte semee d'office chez chaque entreprise. On eprouve
+-- le cloisonnement AVANT qu'un vrai client y saisisse sa flotte.
+
+do $$
+declare
+  v_org_a uuid;
+  v_org_b uuid;
+  v_veh_a uuid;
+begin
+  select id into v_org_a from public.organizations where slug = 'fibre-atlantique';
+  select id into v_org_b from public.organizations where slug = 'reseaux-du-sud';
+
+  insert into public.vehicles (organization_id, plate, brand, model, mileage)
+  values (v_org_a, 'AA-111-AA', 'Renault', 'Master', 42000)
+  returning id into v_veh_a;
+
+  perform pg_temp.ok(v_veh_a is not null, 'Un vehicule s''ecrit en base');
+
+  -- L'immatriculation est unique DANS l'organisation, casse comprise.
+  perform pg_temp.refuses(
+    format($sql$ insert into public.vehicles (organization_id, plate, brand, model)
+                 values (%L, 'aa-111-aa', 'Iveco', 'Daily') $sql$, v_org_a),
+    'La meme plaque est refusee dans la meme organisation');
+
+  -- Mais deux entreprises peuvent detenir la meme plaque : un vehicule se revend.
+  insert into public.vehicles (organization_id, plate, brand, model)
+  values (v_org_b, 'AA-111-AA', 'Renault', 'Master');
+  perform pg_temp.ok(
+    (select count(*) from public.vehicles where upper(plate) = 'AA-111-AA') = 2,
+    'La meme plaque est acceptee dans une AUTRE organisation');
+
+  -- Un conducteur d'une autre entreprise est refuse par le trigger, meme si la
+  -- policy laisse passer l'organisation.
+  perform pg_temp.refuses(
+    format($sql$ update public.vehicles set assigned_member_id =
+                 (select id from public.organization_members where organization_id = %L limit 1)
+                 where id = %L $sql$, v_org_b, v_veh_a),
+    'Un conducteur d''une autre entreprise est refuse');
+end
+$$;
+
+-- L'identifiant de A est mis de cote AVANT de changer d'identite : B ne peut pas
+-- lire `organizations`, et une jointure a travers elle renverrait zero quelle
+-- que soit la policy des vehicules. Une premiere version faisait cette
+-- jointure — elle passait meme en retirant tout cloisonnement des vehicules,
+-- donc elle ne prouvait rien.
+insert into t_ids (k, v)
+select 'org_a', id from public.organizations where slug = 'fibre-atlantique';
+
+-- Le cloisonnement vu depuis un VRAI appelant : c'est la seule mesure qui vaille.
+select pg_temp.login('b_owner');
+set local role authenticated;
+
+do $$
+begin
+  perform pg_temp.ok(
+    (select count(*) from public.vehicles where organization_id = pg_temp.uid('org_a')) = 0,
+    'B ne voit AUCUN vehicule de A');
+end
+$$;
+reset role;
 
 rollback;
 

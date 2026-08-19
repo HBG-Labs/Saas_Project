@@ -55,6 +55,18 @@ export type AttachmentKind = 'before' | 'after' | 'document' | 'proof' | 'signat
 /** Nature d'un segment de temps : travail effectif ou interruption. */
 export type TimeEntryKind = 'work' | 'pause';
 
+export type VehicleType = 'van' | 'truck' | 'car' | 'aerial_lift' | 'utility';
+export type VehicleFuel = 'diesel' | 'essence' | 'electric' | 'hybrid';
+export type VehicleStatus = 'in_service' | 'available' | 'maintenance' | 'out_of_service';
+export type VehicleMaintenanceType =
+  | 'revision'
+  | 'controle_technique'
+  | 'pneus'
+  | 'freins'
+  | 'vidange'
+  | 'reparation'
+  | 'autre';
+
 export type EquipmentCategory = 'optique' | 'electricite' | 'radio' | 'securite' | 'autre';
 export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expired';
 export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
@@ -1432,6 +1444,113 @@ export interface Database {
       // =======================================================================
       // Parc materiel
       // =======================================================================
+      /**
+       * Parc ROULANT. Droits communs avec `equipment` — qui voit l'outillage
+       * voit les véhicules — mais table distincte : une immatriculation, un
+       * contrôle technique et un conducteur n'ont pas d'équivalent sur une
+       * soudeuse.
+       */
+      vehicles: {
+        Row: {
+          id: string;
+          organization_id: string;
+          plate: string;
+          brand: string;
+          model: string;
+          type: VehicleType;
+          fuel: VehicleFuel;
+          status: VehicleStatus;
+          mileage: number;
+          assigned_member_id: string | null;
+          next_ct_date: string | null;
+          next_revision_date: string | null;
+          next_revision_mileage: number | null;
+          insurance_expiry_date: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          plate: string;
+          brand: string;
+          model: string;
+          type?: VehicleType;
+          fuel?: VehicleFuel;
+          status?: VehicleStatus;
+          mileage?: number;
+          assigned_member_id?: string | null;
+          next_ct_date?: string | null;
+          next_revision_date?: string | null;
+          next_revision_mileage?: number | null;
+          insurance_expiry_date?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          plate?: string;
+          brand?: string;
+          model?: string;
+          type?: VehicleType;
+          fuel?: VehicleFuel;
+          status?: VehicleStatus;
+          mileage?: number;
+          assigned_member_id?: string | null;
+          next_ct_date?: string | null;
+          next_revision_date?: string | null;
+          next_revision_mileage?: number | null;
+          insurance_expiry_date?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vehicles_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /** Entretiens d'un véhicule. La portée se lit à travers lui. */
+      vehicle_maintenance_records: {
+        Row: {
+          id: string;
+          vehicle_id: string;
+          performed_on: string;
+          type: VehicleMaintenanceType;
+          description: string;
+          mileage: number;
+          cost_cents: number | null;
+          performed_by: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id: string;
+          performed_on: string;
+          type?: VehicleMaintenanceType;
+          description: string;
+          mileage: number;
+          cost_cents?: number | null;
+          performed_by?: string | null;
+          created_by?: string | null;
+        };
+        /** Un entretien passé ne se réécrit pas : aucune policy UPDATE. */
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_maintenance_records_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       equipment: {
         Row: {
           id: string;

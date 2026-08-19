@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
 import {
   AddVehicleModal,
@@ -31,6 +33,8 @@ export default function VehiclesPage() {
 
   const {
     vehicles,
+    isLoading,
+    error,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -97,6 +101,18 @@ export default function VehiclesPage() {
       return true;
     });
   }, [vehicles, searchQuery, statusFilter, typeFilter]);
+
+  // Le parc est désormais lu en base : une attente et une panne réseau sont
+  // possibles, là où `localStorage` répondait toujours et instantanément. Les
+  // taire afficherait une flotte vide, indistinguable d'une entreprise qui n'a
+  // pas encore de véhicule.
+  if (isLoading) {
+    return <ListSkeleton />;
+  }
+
+  if (error !== null && vehicles.length === 0) {
+    return <ErrorState error={error} />;
+  }
 
   return (
     <div className="space-y-6">

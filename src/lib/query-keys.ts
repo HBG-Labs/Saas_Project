@@ -116,6 +116,16 @@ export const qk = {
   },
 
   // ----------------------------------------------------------- parc matériel
+  /**
+   * Le parc ROULANT, distinct de l'outillage malgré des droits communs : les
+   * deux écrans s'invalident séparément, et confondre leurs clés ferait
+   * recharger l'un à chaque écriture sur l'autre.
+   */
+  vehicles: {
+    all: ['vehicles'] as const,
+    list: (organizationId: string) => [...qk.vehicles.all, organizationId] as const,
+  },
+
   equipment: {
     all: ['equipment'] as const,
     list: (organizationId: string, filters?: unknown) =>
