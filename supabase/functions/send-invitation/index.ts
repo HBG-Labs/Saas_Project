@@ -1,6 +1,12 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-import { escapeHtml, readTransport, sendMessage, type Message } from '../_shared/email.ts';
+import {
+  dateLisible,
+  escapeHtml,
+  readTransport,
+  sendMessage,
+  type Message,
+} from '../_shared/email.ts';
 
 /**
  * Envoi du courriel d'invitation.
@@ -148,11 +154,7 @@ Deno.serve(async (request) => {
     (invitation.organization as { name?: string } | null)?.name ?? 'votre entreprise';
   const roleLabel = ROLE_LABELS[invitation.role] ?? invitation.role;
   const link = `${appUrl.replace(/\/$/, '')}/invitations/${invitation.token}`;
-  const expires = new Date(invitation.expires_at).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const expires = dateLisible(invitation.expires_at as string);
 
   const html = `
 <!doctype html>

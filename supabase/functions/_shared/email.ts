@@ -79,6 +79,47 @@ export function readTransport(fromVariable: string): TransportState {
 }
 
 /**
+ * Une partie de message encodée en base64.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI PAS L'ENCODAGE PAR DÉFAUT DE LA BIBLIOTHÈQUE
+ *
+ * `denomailer` encode en quoted-printable, et son encodeur a deux défauts que
+ * les destinataires ont vus avant nous :
+ *
+ *   • `data.replaceAll("=", "=3D")` — le résultat n'est jamais RÉAFFECTÉ. Les
+ *     `=` littéraux ne sont donc pas échappés, et notre HTML en est truffé
+ *     (`style="…"`, `href="…"`). Le décodeur lit alors des séquences invalides.
+ *     C'est de là que vient le `=20` visible en tête des messages reçus.
+ *
+ *   • le repli de ligne peut placer une coupure douce juste avant un point,
+ *     produisant une ligne qui COMMENCE par « . ». En SMTP, un point en début
+ *     de ligne doit être doublé ; sans cela le serveur le mange. C'est ainsi
+ *     que `aurelie.belli@gmail.com` est arrivé en `gmail` puis `com` recollés
+ *     sans leur point.
+ *
+ * L'alphabet base64 ne contient ni `=` en milieu de flux, ni point : les deux
+ * défauts disparaissent par construction, plutôt que d'être contournés. Le
+ * repli à 76 caractères suit la RFC 2045.
+ *
+ * `mimeContent` est la porte prévue par la bibliothèque pour cela : elle écrit
+ * l'en-tête `Content-Transfer-Encoding` à partir de ce qu'on lui donne.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function enBase64(mimeType: string, contenu: string) {
+  const octets = new TextEncoder().encode(contenu);
+
+  let binaire = '';
+  for (const octet of octets) binaire += String.fromCharCode(octet);
+
+  const encode = btoa(binaire);
+  const lignes: string[] = [];
+  for (let i = 0; i < encode.length; i += 76) lignes.push(encode.slice(i, i + 76));
+
+  return { mimeType, content: lignes.join('\r\n'), transferEncoding: 'base64' };
+}
+
+/**
  * Envoi par SMTP, sur une boîte existante.
  *
  * `from` doit correspondre au compte authentifié, ou à l'un de ses alias : la
@@ -104,8 +145,11 @@ async function sendViaSmtp(message: Message, from: string): Promise<void> {
       from,
       to: message.to,
       subject: message.subject,
-      content: message.text,
-      html: message.html,
+      // `mimeContent` PLUTÔT QUE `content` et `html` — voir `enBase64`.
+      mimeContent: [
+        enBase64('text/plain; charset="utf-8"', message.text),
+        enBase64('text/html; charset="utf-8"', message.html),
+      ],
       ...(message.replyTo === undefined ? {} : { replyTo: message.replyTo }),
     });
   } finally {
@@ -189,4 +233,37 @@ export function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * Fuseau dans lequel les dates des courriels sont écrites.
+ *
+ * Une fonction Edge tourne en UTC. Sans ce réglage, un message reçu à 00 h 33
+ * en Martinique était horodaté « 04:33 » — quatre heures d'écart, sur la seule
+ * information dont le lecteur se sert pour savoir si la demande est fraîche.
+ *
+ * Réglable par le secret `SUPPORT_TIMEZONE` : la valeur par défaut vaut pour
+ * l'équipe d'aujourd'hui, elle ne doit pas devenir une hypothèse figée.
+ */
+export function fuseau(): string {
+  return Deno.env.get('SUPPORT_TIMEZONE') ?? 'America/Martinique';
+}
+
+/** Date et heure lisibles, dans le fuseau de l'équipe. */
+export function horodatage(iso: string): string {
+  return new Date(iso).toLocaleString('fr-FR', {
+    timeZone: fuseau(),
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+}
+
+/** Date seule, dans le fuseau de l'équipe. */
+export function dateLisible(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    timeZone: fuseau(),
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }

@@ -1,6 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-import { escapeHtml, readTransport, sendMessage } from '../_shared/email.ts';
+import { escapeHtml, horodatage, readTransport, sendMessage } from '../_shared/email.ts';
 
 /**
  * Notifie l'équipe d'une demande d'assistance déjà enregistrée.
@@ -90,7 +90,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
     });
   }
 
-  const recu = new Date(demande.created_at as string).toLocaleString('fr-FR');
+  // Dans le fuseau de l'équipe, et non en UTC : quatre heures d'écart sur la
+  // seule information qui dit si la demande est fraîche.
+  const recu = horodatage(demande.created_at as string);
   const origine = demande.user_id ? 'client connecté' : 'visiteur non connecté';
 
   const html = `
