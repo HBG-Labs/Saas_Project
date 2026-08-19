@@ -135,16 +135,50 @@ async function sendViaResend(message: Message, from: string, apiKey: string): Pr
   }
 }
 
-/** Achemine par le transport configuré. Lève si l'envoi échoue. */
+/**
+ * Délai au-delà duquel on cesse d'attendre le serveur de messagerie.
+ *
+ * MESURÉ, et non choisi par prudence : un serveur SMTP qui accepte la connexion
+ * puis ne répond plus laissait la fonction tourner jusqu'à ce que la plateforme
+ * la tue. L'appelant recevait alors un HTTP 503 AU CORPS VIDE — ni motif, ni
+ * indication, et l'écran ne pouvait rien dire d'utile.
+ *
+ * Quinze secondes : largement au-dessus d'un envoi normal, largement en dessous
+ * de la limite de la plateforme. Ce qui compte n'est pas la valeur exacte, mais
+ * que l'échec soit NOTRE décision, rendue avec un motif, plutôt qu'une
+ * exécution interrompue de l'extérieur.
+ */
+const DELAI_ENVOI_MS = 15_000;
+
+/** Achemine par le transport configuré. Lève si l'envoi échoue ou s'éternise. */
 export async function sendMessage(message: Message, state: TransportState): Promise<void> {
   if (state.transport === null || state.from === undefined) {
     throw new Error(`Envoi non configuré : ${state.missing.join(', ')}.`);
   }
 
-  if (state.transport === 'smtp') {
-    await sendViaSmtp(message, state.from);
-  } else {
-    await sendViaResend(message, state.from, Deno.env.get('RESEND_API_KEY') ?? '');
+  const envoi =
+    state.transport === 'smtp'
+      ? sendViaSmtp(message, state.from)
+      : sendViaResend(message, state.from, Deno.env.get('RESEND_API_KEY') ?? '');
+
+  let minuterie: number | undefined;
+  const expiration = new Promise<never>((_, rejeter) => {
+    minuterie = setTimeout(() => {
+      rejeter(
+        new Error(
+          `Le serveur de messagerie n'a pas répondu en ${String(DELAI_ENVOI_MS / 1000)} s.`,
+        ),
+      );
+    }, DELAI_ENVOI_MS);
+  });
+
+  try {
+    await Promise.race([envoi, expiration]);
+  } finally {
+    if (minuterie !== undefined) clearTimeout(minuterie);
+    // L'envoi continue peut-être en arrière-plan ; on ne le laisse pas faire
+    // échouer le processus par un rejet non capté.
+    void envoi.catch(() => undefined);
   }
 }
 

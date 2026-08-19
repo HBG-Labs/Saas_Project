@@ -118,7 +118,25 @@ if (!insertError) {
     body: JSON.stringify({ requestId }),
   });
 
-  const payload = await response.json();
+  // Lire le TEXTE d'abord, puis tenter le JSON.
+  //
+  // `response.json()` sur un corps vide lève, et l'exception remplaçait le
+  // diagnostic par une trace de pile : on apprenait que le script avait planté,
+  // pas ce que la fonction avait répondu. Or un corps vide EST l'information —
+  // il signe un délai dépassé ou un plantage, là où un 502 bavard signerait un
+  // refus du fournisseur. Un outil de vérification qui s'effondre en dit moins
+  // que celui qui rapporte.
+  const brut = await response.text();
+  let payload = {};
+  try {
+    payload = brut === '' ? {} : JSON.parse(brut);
+  } catch {
+    payload = { error: `réponse illisible : ${brut.slice(0, 120)}` };
+  }
+
+  if (brut === '') {
+    payload = { error: 'la fonction n’a rien renvoyé (délai dépassé, ou plantage)' };
+  }
 
   ok(response.status === 200, 'La fonction répond', `HTTP ${String(response.status)}`);
   ok(payload.stored === true, 'Elle confirme que la demande est conservée');
