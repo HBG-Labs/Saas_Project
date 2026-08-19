@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/features/auth';
+import { submitSupportRequest } from '@/features/support';
 import { cn } from '@/lib/cn';
 
 export function SupportBubble() {
@@ -21,6 +22,9 @@ export function SupportBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  /** Vrai quand la demande est enregistrée mais que la notification n'est pas partie. */
+  const [notifieEnEchec, setNotifieEnEchec] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState(() => user?.email ?? '');
@@ -52,22 +56,55 @@ export function SupportBubble() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Envoi RÉEL.
+   *
+   * La version précédente attendait neuf cents millisecondes puis affichait un
+   * succès, sans rien transmettre : le message, le téléphone et les fichiers
+   * étaient abandonnés en mémoire. Quelqu'un ayant un vrai problème écrivait,
+   * lisait la confirmation, et attendait une réponse qui ne pouvait pas venir.
+   *
+   * Trois issues désormais, parce qu'il y en a trois : transmise, enregistrée
+   * sans notification, ou refusée. En cas de refus la SAISIE EST CONSERVÉE —
+   * faire retaper un message parce que le serveur a répondu 500 achèverait
+   * d'exaspérer quelqu'un qui écrivait déjà pour se plaindre.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || isSubmitting) return;
 
+    setErreur(null);
     setIsSubmitting(true);
-    // Simulation d'envoi API
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      const resultat = await submitSupportRequest({
+        name: name.trim(),
+        email: email.trim(),
+        phone,
+        message,
+        files,
+        userId: user?.id ?? null,
+      });
+
+      setNotifieEnEchec(!resultat.notified);
       setIsSuccess(true);
-    }, 900);
+    } catch (thrown) {
+      setErreur(
+        thrown instanceof Error
+          ? thrown.message
+          : "Votre demande n'a pas pu être envoyée. Réessayez, ou écrivez à contact@rezo360.fr.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setMessage('');
     setFiles([]);
     setIsSuccess(false);
+    setNotifieEnEchec(false);
+    setErreur(null);
   };
 
   return (
@@ -146,13 +183,38 @@ export function SupportBubble() {
           <div className="flex-1 overflow-y-auto p-4">
             {isSuccess ? (
               <div className="space-y-4 py-6 text-center">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                {/* Deux succès distincts, et il faut les distinguer : la demande
+                    est enregistrée dans les deux cas, mais dans l'un elle nous
+                    a été signalée et dans l'autre non. Annoncer « transmise »
+                    quand la notification a échoué serait retomber dans le
+                    travers qu'on corrige. */}
+                <div
+                  className={cn(
+                    'mx-auto flex size-12 items-center justify-center rounded-full',
+                    notifieEnEchec
+                      ? 'bg-warning/10 text-warning'
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                  )}
+                >
                   <CheckCircle2 className="size-6" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-foreground">Message envoyé avec succès</h4>
+                  <h4 className="text-sm font-bold text-foreground">
+                    {notifieEnEchec ? 'Message enregistré' : 'Message envoyé avec succès'}
+                  </h4>
                   <p className="text-2xs text-muted-foreground leading-relaxed px-2">
-                    Votre demande a bien été transmise à nos équipes techniques. Nous vous répondrons par e-mail dans les plus brefs délais.
+                    {notifieEnEchec ? (
+                      <>
+                        Votre demande est bien conservée et ne sera pas perdue, mais notre
+                        notification n’a pas pu partir. Si c’est urgent, écrivez-nous directement à{' '}
+                        <strong className="text-foreground">contact@rezo360.fr</strong>.
+                      </>
+                    ) : (
+                      <>
+                        Votre demande a bien été transmise à nos équipes techniques. Nous vous
+                        répondrons par e-mail dans les plus brefs délais.
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="pt-2 flex gap-2 justify-center">
@@ -176,7 +238,23 @@ export function SupportBubble() {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form
+                onSubmit={(e) => {
+                  void handleSubmit(e);
+                }}
+                className="space-y-3"
+              >
+                {/* Le refus laisse le formulaire INTACT : faire retaper son
+                    message à quelqu'un qui écrivait déjà pour se plaindre
+                    achèverait de l'exaspérer. */}
+                {erreur !== null ? (
+                  <p
+                    role="alert"
+                    className="border-error-border bg-error-subtle text-foreground rounded-xl border px-3 py-2 text-2xs leading-relaxed"
+                  >
+                    {erreur}
+                  </p>
+                ) : null}
                 {/* Champ Nom */}
                 <div className="space-y-1">
                   <label htmlFor="support-name" className="block text-2xs font-semibold text-foreground">

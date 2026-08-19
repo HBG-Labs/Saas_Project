@@ -1644,6 +1644,39 @@ export interface Database {
       // =======================================================================
       // Bloc-notes personnel
       // =======================================================================
+      /**
+       * Demandes envoyées depuis le centre d'assistance.
+       *
+       * `Row` est déclaré pour la forme : AUCUNE policy de lecture n'existe,
+       * et c'est délibéré — il n'y a pas d'arrière-guichet dans l'application.
+       * Une requête de lecture compile, et ne renvoie rien.
+       */
+      support_requests: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          name: string;
+          email: string;
+          phone: string | null;
+          message: string;
+          attachments: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          /** Doit valoir `auth.uid()` ou `null` : la policy refuse une usurpation. */
+          user_id?: string | null;
+          name: string;
+          email: string;
+          phone?: string | null;
+          message: string;
+          attachments?: Json;
+        };
+        /** Une demande d'assistance ne se modifie ni ne s'efface depuis le client. */
+        Update: never;
+        Relationships: [];
+      };
+
       notes: {
         Row: {
           id: string;

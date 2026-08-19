@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+
+import { escapeHtml, readTransport, sendMessage, type Message } from '../_shared/email.ts';
 
 /**
  * Envoi du courriel d'invitation.
@@ -62,15 +63,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-/** Neutralise le HTML : les libellés viennent de la base, pas de nous. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Propriétaire',
   admin: 'Administrateur',
@@ -80,88 +72,18 @@ const ROLE_LABELS: Record<string, string> = {
   employee: 'Employé',
 };
 
-interface Message {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-}
-
-/**
- * Envoi par SMTP, sur une boîte existante.
- *
- * `from` doit correspondre au compte authentifié : la plupart des serveurs
- * refusent d'expédier au nom d'une autre adresse, et ceux qui l'acceptent
- * verront leurs messages rejetés par SPF côté destinataire.
- *
- * Port 465 : TLS d'emblée. Port 587 : connexion en clair puis STARTTLS. C'est le
- * numéro de port qui détermine le mode, pas un réglage séparé — s'y tromper
- * produit une négociation qui échoue sans message clair.
- */
-async function sendViaSmtp(message: Message, from: string): Promise<void> {
-  const hostname = Deno.env.get('SMTP_HOST') ?? '';
-  const port = Number(Deno.env.get('SMTP_PORT') ?? '465');
-  const username = Deno.env.get('SMTP_USER') ?? '';
-  const password = Deno.env.get('SMTP_PASSWORD') ?? '';
-
-  const client = new SMTPClient({
-    connection: {
-      hostname,
-      port,
-      tls: port === 465,
-      auth: { username, password },
-    },
-  });
-
-  try {
-    await client.send({
-      from,
-      to: message.to,
-      subject: message.subject,
-      content: message.text,
-      html: message.html,
-    });
-  } finally {
-    // Fermeture systématique : une connexion laissée ouverte épuise le quota de
-    // sessions simultanées du fournisseur, et les envois suivants échouent.
-    await client.close();
-  }
-}
-
-/** Envoi par l'API HTTP de Resend. */
-async function sendViaResend(message: Message, from: string, apiKey: string): Promise<void> {
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from,
-      to: [message.to],
-      subject: message.subject,
-      html: message.html,
-      text: message.text,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Resend ${response.status} : ${await response.text()}`);
-  }
-}
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
   }
 
-  const smtpHost = Deno.env.get('SMTP_HOST');
-  const resendKey = Deno.env.get('RESEND_API_KEY');
-  const fromAddress = Deno.env.get('INVITATION_FROM_EMAIL');
+  // Le choix du transport et la lecture de l'expéditeur vivent dans
+  // `_shared/email.ts` : deux fonctions écrivent désormais, et deux copies de
+  // cette logique auraient divergé au premier correctif.
+  const state = readTransport('INVITATION_FROM_EMAIL');
   const appUrl = Deno.env.get('APP_URL');
 
-  // SMTP l'emporte quand il est configuré : c'est le choix explicite de celui
-  // qui a posé le secret. Sans lui, on retombe sur Resend.
-  const transport = smtpHost ? 'smtp' : resendKey ? 'resend' : null;
-
-  if (transport === null || !fromAddress || !appUrl) {
+  if (state.missing.length > 0 || !appUrl) {
     // NOMMER CE QUI MANQUE, et non tout ce qui serait requis.
     //
     // La version précédente énumérait les cinq variables à chaque échec. Avec
@@ -169,12 +91,10 @@ Deno.serve(async (request) => {
     // celui qui lit ce message est celui qui peut le corriger, encore
     // faut-il lui dire quoi. Mesuré sur ce déploiement — seul `APP_URL`
     // manquait, et rien ne le disait.
-    const manquants: string[] = [];
-    if (!fromAddress) manquants.push('INVITATION_FROM_EMAIL');
+    // `APP_URL` s'ajoute aux manques que le socle détecte : lui seul est propre
+    // à l'invitation, qui doit construire un lien cliquable.
+    const manquants = [...state.missing];
     if (!appUrl) manquants.push('APP_URL');
-    if (transport === null) {
-      manquants.push('SMTP_HOST (+ SMTP_USER, SMTP_PASSWORD) ou RESEND_API_KEY');
-    }
 
     return json(
       {
@@ -289,17 +209,13 @@ Deno.serve(async (request) => {
   };
 
   try {
-    if (transport === 'smtp') {
-      await sendViaSmtp(message, fromAddress);
-    } else {
-      await sendViaResend(message, fromAddress, resendKey ?? '');
-    }
+    await sendMessage(message, state);
   } catch (thrown) {
     // Le détail du fournisseur part dans les journaux, PAS dans la réponse : il
     // contient l'adresse du serveur, l'identifiant du compte, parfois le motif
     // exact du refus. Consultable par `supabase functions logs send-invitation`.
-    console.error(`Envoi ${transport} refusé`, thrown);
-    return json({ error: "L'envoi du courriel a échoué.", transport }, 502);
+    console.error(`Envoi ${String(state.transport)} refusé`, thrown);
+    return json({ error: "L'envoi du courriel a échoué.", transport: state.transport }, 502);
   }
 
   return json({ sent: true, email: invitation.email, transport });
