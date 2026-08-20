@@ -31,7 +31,7 @@ import { ROUTES } from '@/config/routes';
 import { TERRITORIES, useDefaultTerritory } from '@/config/territories';
 import { useAuth, signOutOtherDevices } from '@/features/auth';
 import { useCurrentIndustry } from '@/features/industries';
-import { useCurrentOrganization } from '@/features/organizations';
+import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { AvatarPickerModal, useAvatarStore } from '@/features/profile';
 import { ACCENT_COLORS } from '@/features/theme/accent-colors';
 import { THEME_PRESETS } from '@/features/theme/theme-presets';
@@ -40,7 +40,7 @@ import { cn } from '@/lib/cn';
 
 type SettingsTab = 'appearance' | 'planning_gps' | 'notifications' | 'organization_billing' | 'security';
 
-const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const ALL_TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'appearance', label: 'Apparence & Cockpit', icon: Palette },
   { id: 'planning_gps', label: 'Planning & Cartographie', icon: Calendar },
   { id: 'notifications', label: 'Alertes & Notifications', icon: Bell },
@@ -63,9 +63,18 @@ export default function SettingsPage() {
 
   const { organization } = useCurrentOrganization();
   const { user } = useAuth();
+  const { can } = usePermission();
   const { label: industryLabel } = useCurrentIndustry();
   const { avatarUrl } = useAvatarStore();
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
+
+  const canManageOrg = can(PERMISSIONS.organizationUpdate);
+  const tabs = ALL_TABS.filter((t) => {
+    if (t.id === 'organization_billing' && !canManageOrg) {
+      return false;
+    }
+    return true;
+  });
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
   const [savedFeedback, setSavedFeedback] = useState(false);
@@ -176,7 +185,7 @@ export default function SettingsPage() {
 
       {/* Navigation par Onglets Compacts */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-border scrollbar-none">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const Icon = t.icon;
           const isActive = activeTab === t.id;
 
@@ -624,7 +633,7 @@ export default function SettingsPage() {
         {/* ========================================================================= */}
         {/* 4. ENTREPRISE & FACTURATION */}
         {/* ========================================================================= */}
-        {activeTab === 'organization_billing' && (
+        {activeTab === 'organization_billing' && canManageOrg && (
           <div className="space-y-4 animate-in fade-in">
             {/* Carte synthétique entreprise avec lien direct */}
             <Card className="border-primary/40 bg-gradient-to-br from-primary/5 via-surface to-surface">
