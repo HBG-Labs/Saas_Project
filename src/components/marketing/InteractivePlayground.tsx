@@ -1,23 +1,31 @@
 import { useState } from 'react';
-import { Calculator, Bot, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, Zap, RefreshCw } from 'lucide-react';
+import {
+  ArrowRight,
+  Bot,
+  Calculator,
+  CheckCircle2,
+  RefreshCw,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 
 export function InteractivePlayground() {
   const [activeTab, setActiveTab] = useState<'calc' | 'ai'>('calc');
 
-  // État pour le calculateur de bilan d'atténuation optique
-  const [fiberDistance, setFiberDistance] = useState<number>(12.5); // km
-  const [wavelength, setWavelength] = useState<'1310' | '1550'>('1310'); // nm
-  const [splicesCount, setSplicesCount] = useState<number>(6); // nb d'épissures
-  const [connectorsCount, setConnectorsCount] = useState<number>(4); // nb de connecteurs
+  // État pour le simulateur de puissance & énergie (Outil Universel)
+  const [powerKw, setPowerKw] = useState<number>(15); // kW
+  const [powerFactor, setPowerFactor] = useState<number>(0.85); // cos phi
+  const [voltageType, setVoltageType] = useState<'tri' | 'mono'>('tri'); // 400V ou 230V
+  const [hoursPerDay, setHoursPerDay] = useState<number>(8); // h/jour
 
-  // Calcul du bilan d'atténuation optique : Atténuation = (L * alpha) + (Ne * 0.05) + (Nc * 0.5) + Marge (1.5 dB)
-  const fiberCoeff = wavelength === '1310' ? 0.35 : 0.21;
-  const fiberLoss = fiberDistance * fiberCoeff;
-  const splicesLoss = splicesCount * 0.05;
-  const connectorsLoss = connectorsCount * 0.5;
-  const safetyMargin = 1.5;
-  const totalAttenuationDb = fiberLoss + splicesLoss + connectorsLoss + safetyMargin;
-  const isFiberConform = totalAttenuationDb <= 15.0; // Conforme FTTH ITU-T G.652 si <= 15 dB
+  // Calculs en temps réel
+  const apparentPowerKva = powerFactor > 0 ? powerKw / powerFactor : 0;
+  const voltage = voltageType === 'tri' ? 400 : 230;
+  const currentAmperes =
+    voltageType === 'tri'
+      ? (powerKw * 1000) / (Math.sqrt(3) * voltage * powerFactor)
+      : (powerKw * 1000) / (voltage * powerFactor);
+  const monthlyEnergyKwh = powerKw * hoursPerDay * 30;
 
   // État pour la démo Assistant IA
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
@@ -27,7 +35,7 @@ export function InteractivePlayground() {
   const prompts = [
     {
       id: 'err42',
-      label: 'Code Erreur E42 - Variateur ABB',
+      label: 'Code Erreur E42 — Variateur de vitesse moteur',
       response: `[DIAGNOSTIC EN TEMPS RÉEL]
 • Cause probable : Surintensité passagère en sortie de variateur (Fréquence > 50Hz).
 • Procédure de résolution recommandée :
@@ -37,11 +45,18 @@ export function InteractivePlayground() {
     },
     {
       id: 'hvac',
-      label: 'Pression de surchauffe PAC R32',
+      label: 'Pression de surchauffe PAC / Climatisation',
       response: `[ANALYSE THERMIQUE CYBER-IA]
 • Valeur mesurée : Pression d'évaporation à 8.2 bar (Température saturée +4°C).
 • Recommandation : Surchauffe cible = 5K à 8K.
-• Diagnostic : Si la surchauffe mesurée est > 12K, rajouter de la charge d'éluant R32 par fractions de 50g.`,
+• Diagnostic : Si la surchauffe mesurée est > 12K, rajouter de la charge d'éluant par fractions de 50g.`,
+    },
+    {
+      id: 'slope',
+      label: 'Norme d’accessibilité PMR — Rampe d’accès',
+      response: `[RÉGLEMENTATION CHANTIER & ACCESSIBILITÉ]
+• Règle PMR : Pente max = 5% sans palier de repos, ou jusqu'à 8% sur une longueur maximale de 2 mètres.
+• Calcul : Pour un dénivelé de 40 cm, prévoir une rampe minimale de 8,00 mètres linéaires.`,
     },
   ];
 
@@ -52,7 +67,7 @@ export function InteractivePlayground() {
     setTimeout(() => {
       setAiResponse(p.response);
       setIsTyping(false);
-    }, 600);
+    }, 500);
   };
 
   return (
@@ -68,11 +83,14 @@ export function InteractivePlayground() {
           </div>
 
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white">
-            Votre Studio d&apos;Ingénierie Technique, <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-300 dark:to-cyan-400">Partout Avec Vous</span>
+            Votre Studio d’Ingénierie Technique,{' '}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-300 dark:to-cyan-400">
+              Partout Avec Vous
+            </span>
           </h2>
 
           <p className="text-base text-slate-600 sm:text-lg dark:text-slate-400">
-            Testez nos moteurs de calcul certifiés et simulez vos bilans directement sur le terrain ou au bureau.
+            Simulez instantanément vos calculs d’ingénierie et testez l’assistance technique intelligente.
           </p>
         </div>
 
@@ -89,7 +107,7 @@ export function InteractivePlayground() {
               }`}
             >
               <Calculator className="size-4" />
-              <span>Atténuation Optique Fibre Live</span>
+              <span>Simulateur Puissance &amp; Énergie Live</span>
             </button>
 
             <button
@@ -101,113 +119,118 @@ export function InteractivePlayground() {
               }`}
             >
               <Bot className="size-4" />
-              <span>Assistant IA & Diagnostic Panne</span>
+              <span>Assistant IA &amp; Diagnostic Technique</span>
             </button>
           </div>
 
-          {/* Onglet 1 : Calculateur Live */}
+          {/* Onglet 1 : Simulateur Puissance & Énergie */}
           {activeTab === 'calc' && (
             <div className="grid gap-8 p-6 lg:grid-cols-12 lg:p-10">
               {/* Entrées / Sliders */}
               <div className="space-y-6 lg:col-span-7">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bilan d&apos;Atténuation Optique (FTTH)</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Dimensionnement Puissance &amp; Ampérage
+                  </h3>
                   <span className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-mono font-semibold text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-cyan-400">
-                    Monomode (SMF)
+                    Outil Universel
                   </span>
                 </div>
 
-                {/* Choix 1 : Longueur d'onde */}
+                {/* Choix 1 : Régime de tension */}
                 <div className="space-y-2">
-                  <span className="text-sm text-slate-700 dark:text-slate-300 block">Longueur d&apos;onde (nm)</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300 block">
+                    Régime d’alimentation électrique
+                  </span>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setWavelength('1310')}
-                      className={`rounded-lg py-2.5 px-3 text-xs font-mono font-bold transition-all cursor-pointer ${
-                        wavelength === '1310'
+                      onClick={() => setVoltageType('tri')}
+                      className={`rounded-lg py-2.5 px-3 text-xs font-bold transition-all cursor-pointer ${
+                        voltageType === 'tri'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                       }`}
                     >
-                      1310 nm (0.35 dB/km)
+                      Triphasé (400 V)
                     </button>
                     <button
                       type="button"
-                      onClick={() => setWavelength('1550')}
-                      className={`rounded-lg py-2.5 px-3 text-xs font-mono font-bold transition-all cursor-pointer ${
-                        wavelength === '1550'
+                      onClick={() => setVoltageType('mono')}
+                      className={`rounded-lg py-2.5 px-3 text-xs font-bold transition-all cursor-pointer ${
+                        voltageType === 'mono'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                       }`}
                     >
-                      1550 nm (0.21 dB/km)
+                      Monophasé (230 V)
                     </button>
                   </div>
                 </div>
 
-                {/* Slider : Distance */}
+                {/* Slider : Puissance active (kW) */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-700 dark:text-slate-300">Distance de la liaison (km)</span>
-                    <span className="font-mono font-bold text-blue-600 dark:text-indigo-400">{fiberDistance} km</span>
+                    <span className="text-slate-700 dark:text-slate-300">Puissance active nominale (P)</span>
+                    <span className="font-mono font-bold text-blue-600 dark:text-cyan-400">
+                      {powerKw} kW
+                    </span>
                   </div>
                   <input
                     type="range"
                     min="1"
-                    max="50"
-                    step="0.5"
-                    value={fiberDistance}
-                    onChange={(e) => setFiberDistance(Number(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 dark:bg-slate-800 dark:accent-indigo-500"
+                    max="120"
+                    step="1"
+                    value={powerKw}
+                    onChange={(e) => setPowerKw(Number(e.target.value))}
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 dark:bg-slate-800 dark:accent-cyan-500"
                   />
                 </div>
 
-                {/* Choix : Épissures & Connecteurs */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-xs text-slate-700 dark:text-slate-300 block">Épissures fusion (0.05 dB)</span>
-                    <div className="flex gap-1.5">
-                      {[2, 4, 6, 8, 12].map((cnt) => (
-                        <button
-                          key={cnt}
-                          type="button"
-                          onClick={() => setSplicesCount(cnt)}
-                          className={`flex-1 rounded-md py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
-                            splicesCount === cnt
-                              ? 'bg-blue-600 text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
-                          }`}
-                        >
-                          {cnt}x
-                        </button>
-                      ))}
-                    </div>
+                {/* Choix : Facteur de puissance (cos phi) */}
+                <div className="space-y-2">
+                  <span className="text-xs text-slate-700 dark:text-slate-300 block">
+                    Facteur de puissance (cos φ)
+                  </span>
+                  <div className="flex gap-2">
+                    {[0.8, 0.85, 0.9, 0.95, 1.0].map((pf) => (
+                      <button
+                        key={pf}
+                        type="button"
+                        onClick={() => setPowerFactor(pf)}
+                        className={`flex-1 rounded-md py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                          powerFactor === pf
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                      >
+                        {pf.toFixed(2)}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <span className="text-xs text-slate-700 dark:text-slate-300 block">Connecteurs SC/APC (0.5 dB)</span>
-                    <div className="flex gap-1.5">
-                      {[2, 4, 6].map((cnt) => (
-                        <button
-                          key={cnt}
-                          type="button"
-                          onClick={() => setConnectorsCount(cnt)}
-                          className={`flex-1 rounded-md py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
-                            connectorsCount === cnt
-                              ? 'bg-blue-600 text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
-                          }`}
-                        >
-                          {cnt}x
-                        </button>
-                      ))}
-                    </div>
+                {/* Slider : Heures / jour */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-700 dark:text-slate-300">Fonctionnement quotidien</span>
+                    <span className="font-mono font-bold text-blue-600 dark:text-cyan-400">
+                      {hoursPerDay} h / jour
+                    </span>
                   </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="24"
+                    step="1"
+                    value={hoursPerDay}
+                    onChange={(e) => setHoursPerDay(Number(e.target.value))}
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 dark:bg-slate-800 dark:accent-cyan-500"
+                  />
                 </div>
               </div>
 
-              {/* Résultat / Jauge */}
+              {/* Résultat / Synthèse */}
               <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-950 lg:col-span-5">
                 <div className="space-y-4">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -216,37 +239,22 @@ export function InteractivePlayground() {
 
                   <div className="space-y-1">
                     <div className="text-4xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
-                      −{totalAttenuationDb.toFixed(2)} dB
+                      {apparentPowerKva.toFixed(2)} kVA
                     </div>
                     <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                      Perte fibre : <span className="text-blue-600 font-bold dark:text-indigo-300">−{fiberLoss.toFixed(2)} dB</span> | Marge : <span className="text-slate-700 font-bold dark:text-slate-300">+1.5 dB</span>
+                      Courant de ligne : <span className="text-blue-600 font-bold dark:text-cyan-300">{currentAmperes.toFixed(1)} A</span> | Énergie : <span className="text-slate-700 font-bold dark:text-slate-300">{monthlyEnergyKwh.toLocaleString('fr-FR')} kWh/mois</span>
                     </div>
                   </div>
 
-                  {/* Badge de Conformité */}
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold border transition-all ${
-                      isFiberConform
-                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                        : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                    }`}
-                  >
-                    {isFiberConform ? (
-                      <>
-                        <CheckCircle2 className="size-5 shrink-0" />
-                        <span>Conforme ITU-T G.652 (≤ 15 dB)</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle className="size-5 shrink-0" />
-                        <span>Non-conforme (&gt; 15 dB) — Réduire la distance</span>
-                      </>
-                    )}
+                  {/* Badge de Recommandation */}
+                  <div className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="size-5 shrink-0" />
+                    <span>Calibre disjoncteur recommandé : {Math.ceil(currentAmperes * 1.25)} A</span>
                   </div>
                 </div>
 
                 <div className="mt-6 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800">
-                  ⚡ Formule normée : <code className="text-slate-700 font-mono dark:text-slate-400">A = (L · α) + N_e · 0.05 + N_c · 0.5 + M</code>
+                  ⚡ Formule : <code className="text-slate-700 font-mono dark:text-slate-400">{voltageType === 'tri' ? 'S = P / cos φ  |  I = P / (√3 · U · cos φ)' : 'S = P / cos φ  |  I = P / (U · cos φ)'}</code>
                 </div>
               </div>
             </div>
@@ -256,7 +264,9 @@ export function InteractivePlayground() {
           {activeTab === 'ai' && (
             <div className="grid gap-8 p-6 lg:grid-cols-12 lg:p-10">
               <div className="space-y-4 lg:col-span-5">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Sélectionnez un scénario de test IA :</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Sélectionnez un scénario de test IA :
+                </h3>
                 <div className="space-y-3">
                   {prompts.map((p) => (
                     <button
@@ -293,12 +303,14 @@ export function InteractivePlayground() {
                     )}
 
                     {!isTyping && aiResponse && (
-                      <pre className="whitespace-pre-wrap font-sans text-sm text-slate-800 dark:text-slate-300">{aiResponse}</pre>
+                      <pre className="whitespace-pre-wrap font-sans text-sm text-slate-800 dark:text-slate-300">
+                        {aiResponse}
+                      </pre>
                     )}
 
                     {!isTyping && !aiResponse && (
                       <p className="text-slate-500 italic">
-                        Cliquez sur l&apos;un des scénarios ci-contre pour voir l&apos;assistance IA en action.
+                        Cliquez sur l’un des scénarios ci-contre pour voir l’assistance IA en action.
                       </p>
                     )}
                   </div>
@@ -308,7 +320,7 @@ export function InteractivePlayground() {
                   <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-emerald-600 font-bold dark:border-slate-800 dark:text-emerald-400">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle2 className="size-4" />
-                      <span>Diagnostic certifié conforme aux notices constructeur</span>
+                      <span>Recommandation technique conforme aux règles de l'art</span>
                     </div>
                   </div>
                 )}

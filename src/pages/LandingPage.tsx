@@ -48,7 +48,7 @@ export default function LandingPage() {
               </h2>
 
               <p className="text-base text-slate-600 sm:text-lg dark:text-slate-300">
-                Rejoignez plus de 10 000 techniciens, ingénieurs et entreprises qui automatisent leurs calculs et bilans au quotidien.
+                Centralisez vos interventions, vos stocks et vos calculs d’ingénierie sur une plateforme unique conçue pour le terrain.
               </p>
 
               <div className="pt-3">

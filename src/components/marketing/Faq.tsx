@@ -26,9 +26,9 @@ const FAQS: FaqItem[] = [
   {
     id: '2',
     category: 'platform',
-    question: 'Les calculateurs sont-ils conformes aux normes ?',
+    question: 'Les calculateurs sont-ils conformes et vérifiables ?',
     answer:
-      'Oui. Tous nos algorithmes sont audités et mis à jour selon les normes officielles ISO, NF C 15-100, CEI et IEEE. Les formules exactes sont affichées en direct dans chaque outil.',
+      'Oui. Tous nos algorithmes s’appuient sur les formules mathématiques et physiques standardisées (Système International d’Unités, trigonométrie, bilans de puissance et de pression). Les formules exactes et les conversions sont affichées en direct dans chaque outil.',
   },
   {
     id: '3',
