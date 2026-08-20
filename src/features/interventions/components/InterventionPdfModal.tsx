@@ -67,6 +67,10 @@ export function InterventionPdfModal({
   const technicianName =
     mission?.assigned_member ? memberDisplayName(mission.assigned_member) : 'Technicien qualifié';
 
+  const attachedCalcNotes = typeof window !== 'undefined' && mission?.id
+    ? localStorage.getItem(`mission_calc_note_${mission.id}`)
+    : null;
+
   return (
     <Modal
       open={open}
@@ -183,6 +187,18 @@ export function InterventionPdfModal({
             </div>
           )}
 
+          {/* Notes & Justificatifs de calculs attachés */}
+          {attachedCalcNotes && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                5. Justificatifs &amp; Notes de Calculs d’Ingénierie (REZO360)
+              </h3>
+              <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200/80 text-xs font-mono text-slate-800 leading-relaxed whitespace-pre-line">
+                {attachedCalcNotes}
+              </div>
+            </div>
+          )}
+
           {/* ✍️ DOUBLE ZONE DE SIGNATURE */}
           <div className="pt-4 border-t border-slate-200">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,6 +240,12 @@ export function InterventionPdfModal({
                 <p className="text-4xs text-slate-400">Fait le {dateStr}</p>
               </div>
             </div>
+          </div>
+
+          {/* Sceau de conformité & traçabilité */}
+          <div className="pt-3 flex items-center justify-between text-4xs text-slate-400 border-t border-slate-100">
+            <span>Certifié conforme — Plateforme d’exploitation technique REZO360 — Document officiel</span>
+            <span>Réf : {reference}</span>
           </div>
         </div>
 

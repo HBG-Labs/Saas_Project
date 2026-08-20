@@ -4,6 +4,7 @@ import {
   Clock,
   Copy,
   RotateCcw,
+  Send,
   Star,
   Wrench,
 } from 'lucide-react';
@@ -15,6 +16,8 @@ import { Card } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useToolFavorites } from '../hooks/useToolFavorites';
 import { useToolHistory } from '../hooks/useToolHistory';
+import type { CalculationHistoryEntry } from '../types/tools.types';
+import { AttachCalculationModal } from './AttachCalculationModal';
 
 interface ToolLayoutProps {
   toolSlug: string;
@@ -36,6 +39,7 @@ export function ToolLayout({
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [attachingCalculation, setAttachingCalculation] = useState<CalculationHistoryEntry | null>(null);
 
   const favorite = isFavorite(toolSlug);
   const toolHistory = history.filter((h) => h.toolSlug === toolSlug);
@@ -168,20 +172,40 @@ export function ToolLayout({
                       })}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeHistoryEntry(entry.id)}
-                    className="text-muted-foreground hover:text-error text-3xs p-1 cursor-pointer"
-                    title="Supprimer cette entrée"
-                  >
-                    ×
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAttachingCalculation(entry)}
+                      className="h-7 px-2 text-3xs font-bold gap-1 cursor-pointer"
+                      title="Joindre ce calcul à une mission ou un devis"
+                    >
+                      <Send className="size-3 text-primary" />
+                      <span className="hidden sm:inline">Joindre</span>
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => removeHistoryEntry(entry.id)}
+                      className="text-muted-foreground hover:text-error text-3xs p-1 cursor-pointer"
+                      title="Supprimer cette entrée"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </Card>
       )}
+
+      {/* Modale de liaison calcul ➔ Mission / Devis */}
+      <AttachCalculationModal
+        isOpen={Boolean(attachingCalculation)}
+        onClose={() => setAttachingCalculation(null)}
+        calculation={attachingCalculation}
+      />
 
       {/* Contenu interactif de l'outil */}
       <div className="space-y-5">{children}</div>

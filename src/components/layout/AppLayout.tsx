@@ -46,6 +46,21 @@ export function AppLayout() {
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
 
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const handleToggleSidebar = () => {
     setSidebarCollapsed((prev) => {
       const next = !prev;
@@ -198,6 +213,12 @@ export function AppLayout() {
 
           {/* Actions utilisateur et thème */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {!isOnline && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-3xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
+                Mode Hors-ligne (PWA)
+              </span>
+            )}
             <ThemeToggle />
 
             {isAuthenticated ? (
