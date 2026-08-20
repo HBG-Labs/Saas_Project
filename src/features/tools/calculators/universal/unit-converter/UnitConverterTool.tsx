@@ -95,7 +95,7 @@ export default function UnitConverterTool() {
         <div
           role="group"
           aria-labelledby="convertisseur-grandeur-libelle"
-          className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+          className="flex flex-wrap gap-2"
         >
           {(Object.keys(UNIT_CATEGORIES) as UnitCategory[]).map((catKey) => {
             const cat = UNIT_CATEGORIES[catKey];
@@ -105,10 +105,10 @@ export default function UnitConverterTool() {
                 key={catKey}
                 type="button"
                 onClick={() => handleCategoryChange(catKey)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'bg-surface-raised text-muted-foreground hover:text-foreground hover:bg-surface-hover'
+                    : 'bg-surface-raised text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/50'
                 }`}
               >
                 {cat.label}
