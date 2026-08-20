@@ -191,31 +191,6 @@ export function TechnicianDashboard() {
           </Link>
         </div>
       </div>
-
-      {/* 3. Bloc-notes & Aide-mémoire Terrain */}
-      <Card className="border-border bg-surface p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              <FileText className="size-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-foreground flex items-center gap-2">
-                Mon Bloc-notes & Aide-mémoire Terrain
-              </p>
-              <p className="text-2xs text-muted-foreground">
-                Consignez vos digicodes, mémos de chantier et notes d&apos;intervention.
-              </p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
-            <Link to={ROUTES.notes}>
-              Ouvrir mon Bloc-notes
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 }
