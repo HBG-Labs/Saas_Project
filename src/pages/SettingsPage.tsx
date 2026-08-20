@@ -73,6 +73,9 @@ export default function SettingsPage() {
     if (t.id === 'organization_billing' && !canManageOrg) {
       return false;
     }
+    if (t.id === 'notifications' && !canManageOrg) {
+      return false;
+    }
     return true;
   });
 
@@ -561,7 +564,7 @@ export default function SettingsPage() {
         {/* ========================================================================= */}
         {/* 3. ALERTES & NOTIFICATIONS */}
         {/* ========================================================================= */}
-        {activeTab === 'notifications' && (
+        {activeTab === 'notifications' && canManageOrg && (
           <div className="space-y-4 animate-in fade-in">
             <Card>
               <CardHeader className="py-3 px-4 pb-2">
