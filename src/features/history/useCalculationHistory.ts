@@ -1,43 +1,22 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 
+import { AuthContext } from '@/features/auth/context/auth-context';
 import { FEATURES, useUserEntitlements } from '@/features/billing';
 
 import { type HistoryEntry } from './types';
 
-const STORAGE_KEY = 'rezo360_calculation_history_v1';
+function getStorageKey(userId: string | null | undefined): string {
+  if (!userId) return 'rezo360_calculation_history_anonymous';
+  return `rezo360_calculation_history_${userId}`;
+}
 
 /**
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI CET HISTORIQUE RESTE LOCAL
- *
- * À ne pas confondre avec `tool_history`, qui vit bien en base et alimente la
- * page Historique : cette table consigne QUELS outils ont été ouverts, pas ce
- * qu'ils ont calculé. Elle n'a pas de colonne pour un résultat.
- *
- * Le ruban ci-dessous garde les CALCULS eux-mêmes — saisies et résultats — au
- * fil d'une session de travail. Deux raisons de ne pas le déplacer :
- *
- *   • il doit fonctionner hors ligne. Un technicien en gaine technique ou en
- *     sous-sol n'a pas de réseau, et c'est précisément là qu'il calcule ;
- *   • une écriture réseau par touche de calculatrice serait absurde.
- *
- * Le déplacer en base demanderait une table dédiée avec une charge utile
- * `jsonb`. Tant que ce besoin n'est pas exprimé, le stockage local est le bon
- * choix — assumé, pas subi.
- * ─────────────────────────────────────────────────────────────────────────────
+ * Lecture de l'historique persisté pour la clé de compte donnée.
  */
-
-/**
- * Lecture de l'historique persisté.
- *
- * Appelée comme initialiseur paresseux de `useState` plutôt que depuis un effet
- * de montage : écrire l'état dans un effet provoquait un second rendu immédiat
- * à chaque montage — l'historique s'affichait vide puis se remplissait. Le
- * `localStorage` étant synchrone, rien ne justifie de différer sa lecture.
- */
-function readStoredEntries(): HistoryEntry[] {
+function readStoredEntries(key: string): HistoryEntry[] {
+  if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
 
     const parsed: unknown = JSON.parse(raw);
@@ -48,25 +27,35 @@ function readStoredEntries(): HistoryEntry[] {
 }
 
 export function useCalculationHistory(toolSlug?: string) {
-  const [entries, setEntries] = useState<HistoryEntry[]>(readStoredEntries);
+  const auth = useContext(AuthContext);
+  const userId = auth?.user?.id ?? null;
+  const storageKey = getStorageKey(userId);
 
-  // Le plan vient du serveur. Il n'est plus modifiable depuis l'interface :
-  // c'était une auto-attribution de droits déguisée en sélecteur de test.
+  const [entries, setEntries] = useState<HistoryEntry[]>(() => readStoredEntries(storageKey));
+
+  // Dès qu'on change de compte connecté ou déconnecté, on recharge l'historique étanche de ce compte
+  useEffect(() => {
+    setEntries(readStoredEntries(storageKey));
+  }, [storageKey]);
+
+  // Le plan vient du serveur. Il n'est plus modifiable depuis l'interface
   const { planCode, limit: featureLimit } = useUserEntitlements();
 
-  // `null` signifie « illimité » côté entitlements ; le reste du hook raisonne
-  // en `Infinity`, plus commode pour comparer et tronquer.
   const rawLimit = featureLimit(FEATURES.calculationHistory);
   const limit = rawLimit === null ? Infinity : rawLimit;
 
-  // Sauvegarde dans localStorage à chaque mise à jour
-  const persistEntries = useCallback((newEntries: HistoryEntry[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newEntries));
-    } catch {
-      // Ignore les erreurs de quota localStorage
-    }
-  }, []);
+  // Sauvegarde dans localStorage pour le compte actif
+  const persistEntries = useCallback(
+    (newEntries: HistoryEntry[]) => {
+      if (typeof window === 'undefined') return;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(newEntries));
+      } catch {
+        // Ignore les erreurs de quota localStorage
+      }
+    },
+    [storageKey],
+  );
 
   const addEntry = useCallback(
     (item: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
@@ -100,16 +89,19 @@ export function useCalculationHistory(toolSlug?: string) {
 
   const clearHistory = useCallback(() => {
     setEntries([]);
-    persistEntries([]);
-  }, [persistEntries]);
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // Ignore
+    }
+  }, [storageKey]);
 
   // Filtrage optionnel par outil
   const filteredEntries = toolSlug
     ? entries.filter((item) => item.toolSlug === toolSlug)
     : entries;
 
-  // Exprimé à partir de la limite effective plutôt que d'un test sur le nom du
-  // plan : ajouter une offre intermédiaire ne demandera pas de repasser ici.
   const isLimitReached = limit !== Infinity && filteredEntries.length >= limit;
 
   const exportCsv = useCallback(() => {
@@ -139,7 +131,6 @@ export function useCalculationHistory(toolSlug?: string) {
     removeEntry,
     clearHistory,
     exportCsv,
-    /** Lecture seule : `setUserPlan` n'existe plus, volontairement. */
     userPlan: planCode,
     maxLimit: limit,
     isLimitReached,
