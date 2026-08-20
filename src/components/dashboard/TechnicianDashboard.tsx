@@ -42,7 +42,7 @@ export function TechnicianDashboard() {
           {organization ? <span className="text-xs text-muted-foreground">• {organization.name}</span> : null}
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Bonjour, {nameToDisplay} 👋
+          Bonjour, {nameToDisplay}
         </h1>
         <p className="text-xs text-muted-foreground sm:text-sm">
           Retrouvez vos {jobPlural.toLowerCase()} confiées et accédez directement à vos outils de terrain.
