@@ -6,6 +6,7 @@ import { Categories } from '@/components/marketing/Categories';
 import { Faq } from '@/components/marketing/Faq';
 import { Hero } from '@/components/marketing/Hero';
 import { InteractivePlayground } from '@/components/marketing/InteractivePlayground';
+import { PlatformModulesBento } from '@/components/marketing/PlatformModulesBento';
 import { Pricing } from '@/components/marketing/Pricing';
 import { Testimonials } from '@/components/marketing/Testimonials';
 import { Button } from '@/components/ui/Button';
@@ -20,22 +21,25 @@ export default function LandingPage() {
       {/* 2. PREUVE SOCIALE & DOMAINES D'EXPERTISES */}
       <BuiltForTech />
 
-      {/* 3. CATALOGUE D'OUTILS PAR CATÉGORIES (Réseaux, Électricité, Télécoms, Fibre, Généraux) */}
+      {/* 3. COCKPIT SAAS : GESTION DES ÉQUIPES, STOCKS, ACHATS & PARC */}
+      <PlatformModulesBento />
+
+      {/* 4. BOÎTE À OUTILS D'INGÉNIERIE & CALCUL (13 outils universels) */}
       <Categories />
 
-      {/* 4. DÉMONSTRATION INTERACTIVE LIVE (Calculateur NF C 15-100 & Assistant IA) */}
+      {/* 5. DÉMONSTRATION INTERACTIVE LIVE (Simulateur Puissance & Assistant IA) */}
       <InteractivePlayground />
 
-      {/* 5. TÉMOIGNAGES CLIENTS & CERTIFICATIONS NORMÉES */}
+      {/* 6. GARANTIES TECHNIQUES & QUALITÉ DES CALCULS */}
       <Testimonials />
 
-      {/* 6. GRILLE TARIFAIRE SAAS TRANSPARENTE (Gratuit / Pro / Équipe) */}
+      {/* 7. GRILLE TARIFAIRE SAAS TRANSPARENTE (Gratuit / Pro / Équipe) */}
       <Pricing />
 
-      {/* 7. FOIRE AUX QUESTIONS */}
+      {/* 8. FOIRE AUX QUESTIONS */}
       <Faq />
 
-      {/* BANNIÈRE CONVERSION FINALE */}
+      {/* 9. BANNIÈRE CONVERSION FINALE */}
       <section className="py-16 sm:py-24 border-t border-border/60 bg-surface">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 px-6 py-16 text-center shadow-2xl backdrop-blur-xl transition-all duration-300 dark:border-transparent dark:bg-slate-950/90 dark:shadow-none sm:px-12 sm:py-20">
