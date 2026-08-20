@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth';
+import { usePermission } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 import type { LeaveRequest, StaffLeaveBalance, LeaveStatus } from '../types';
 
@@ -39,6 +40,8 @@ export function LeavesManagementTab({
   onUpdateStatus,
 }: LeavesManagementTabProps) {
   const { user } = useAuth();
+  const { role } = usePermission();
+  const isOwner = role === 'owner';
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const pendingLeaves = leaves.filter((l) => l.status === 'pending');
@@ -306,23 +309,7 @@ export function LeavesManagementTab({
                   {/* Actions for Pending Requests */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                     {isPending ? (
-                      isSelf ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-3xs text-muted-foreground font-medium italic bg-surface-sunken px-2.5 py-1 rounded-md border border-border">
-                            Votre demande (en attente)
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onUpdateStatus(leave.id, 'rejected')}
-                            className="text-xs h-7 px-2 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
-                            title="Annuler ma demande de congé"
-                          >
-                            <X className="size-3 mr-1" />
-                            Annuler
-                          </Button>
-                        </div>
-                      ) : canApprove ? (
+                      canApprove && (isOwner || !isSelf) ? (
                         <>
                           <Button
                             size="sm"
@@ -343,6 +330,22 @@ export function LeavesManagementTab({
                             Valider le congé
                           </Button>
                         </>
+                      ) : isSelf ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-3xs text-muted-foreground font-medium italic bg-surface-sunken px-2.5 py-1 rounded-md border border-border">
+                            Votre demande (en attente)
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdateStatus(leave.id, 'rejected')}
+                            className="text-xs h-7 px-2 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                            title="Annuler ma demande de congé"
+                          >
+                            <X className="size-3 mr-1" />
+                            Annuler
+                          </Button>
+                        </div>
                       ) : (
                         <span className="text-3xs text-muted-foreground font-mono">
                           En attente de validation
