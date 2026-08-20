@@ -16,6 +16,7 @@ import { ROUTES } from '@/config/routes';
 import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 import { useAuth } from '@/features/auth';
 import { TrialBanner } from '@/features/billing';
+import { NotificationBell } from '@/features/notifications';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useAvatarStore } from '@/features/profile';
@@ -219,6 +220,7 @@ export function AppLayout() {
                 Mode Hors-ligne (PWA)
               </span>
             )}
+            {isAuthenticated && <NotificationBell />}
             <ThemeToggle />
 
             {isAuthenticated ? (
