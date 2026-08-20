@@ -66,6 +66,7 @@ export function toLeaveRequest(row: LeaveRequestWithMember): LeaveRequest {
   return {
     id: row.id,
     technicianId: member.id,
+    ...(row.member?.user_id ? { userId: row.member.user_id } : {}),
     technicianName: member.name,
     technicianRole: member.role,
     technicianInitials: member.initials,

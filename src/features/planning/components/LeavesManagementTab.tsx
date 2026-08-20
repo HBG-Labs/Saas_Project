@@ -11,6 +11,7 @@ import {
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/cn';
 import type { LeaveRequest, StaffLeaveBalance, LeaveStatus } from '../types';
 
@@ -37,6 +38,7 @@ export function LeavesManagementTab({
   onOpenNewLeave,
   onUpdateStatus,
 }: LeavesManagementTabProps) {
+  const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const pendingLeaves = leaves.filter((l) => l.status === 'pending');
@@ -249,6 +251,7 @@ export function LeavesManagementTab({
             filteredLeaves.map((leave) => {
               const typeInfo = getLeaveTypeLabel(leave.type);
               const isPending = leave.status === 'pending';
+              const isSelf = Boolean(leave.userId && user?.id && leave.userId === user.id);
 
               return (
                 <div
@@ -302,30 +305,52 @@ export function LeavesManagementTab({
 
                   {/* Actions for Pending Requests */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    {isPending && canApprove ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onUpdateStatus(leave.id, 'rejected')}
-                          className="text-xs h-8 px-2.5 gap-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10"
-                        >
-                          <X className="size-3.5" />
-                          Refuser
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => onUpdateStatus(leave.id, 'approved')}
-                          className="text-xs h-8 px-3 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          <Check className="size-3.5" />
-                          Valider le congé
-                        </Button>
-                      </>
+                    {isPending ? (
+                      isSelf ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-3xs text-muted-foreground font-medium italic bg-surface-sunken px-2.5 py-1 rounded-md border border-border">
+                            Votre demande (en attente)
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdateStatus(leave.id, 'rejected')}
+                            className="text-xs h-7 px-2 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                            title="Annuler ma demande de congé"
+                          >
+                            <X className="size-3 mr-1" />
+                            Annuler
+                          </Button>
+                        </div>
+                      ) : canApprove ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdateStatus(leave.id, 'rejected')}
+                            className="text-xs h-8 px-2.5 gap-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                          >
+                            <X className="size-3.5" />
+                            Refuser
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => onUpdateStatus(leave.id, 'approved')}
+                            className="text-xs h-8 px-3 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                          >
+                            <Check className="size-3.5" />
+                            Valider le congé
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-3xs text-muted-foreground font-mono">
+                          En attente de validation
+                        </span>
+                      )
                     ) : (
                       <span className="text-3xs text-muted-foreground font-mono">
-                        {isPending ? 'En attente de validation' : 'Demande traitée'}
+                        Demande traitée
                       </span>
                     )}
                   </div>

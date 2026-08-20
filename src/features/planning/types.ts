@@ -11,6 +11,7 @@ export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 export interface LeaveRequest {
   id: string;
   technicianId: string;
+  userId?: string | undefined;
   technicianName: string;
   technicianRole: string;
   technicianInitials: string;
