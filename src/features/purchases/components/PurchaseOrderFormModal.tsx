@@ -256,10 +256,10 @@ export function PurchaseOrderFormModal({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
+              <label htmlFor="purchaseorderformmodal-fournisseur-partenaire" className="block text-xs font-semibold text-foreground mb-1.5">
                 Fournisseur Partenaire *
               </label>
-              <select
+              <select id="purchaseorderformmodal-fournisseur-partenaire"
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
                 required
@@ -275,10 +275,10 @@ export function PurchaseOrderFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
+              <label htmlFor="purchaseorderformmodal-n-reference-bon-de-commande" className="block text-xs font-semibold text-foreground mb-1.5">
                 N° Référence Bon de Commande *
               </label>
-              <Input
+              <Input id="purchaseorderformmodal-n-reference-bon-de-commande"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="Ex: CMD-2026-001"
@@ -290,10 +290,10 @@ export function PurchaseOrderFormModal({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-1">
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
+              <label htmlFor="purchaseorderformmodal-date-d-emission" className="block text-xs font-semibold text-foreground mb-1.5">
                 Date d'émission *
               </label>
-              <Input
+              <Input id="purchaseorderformmodal-date-d-emission"
                 type="date"
                 value={orderDate}
                 onChange={(e) => setOrderDate(e.target.value)}
@@ -303,10 +303,10 @@ export function PurchaseOrderFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
+              <label htmlFor="purchaseorderformmodal-livraison-estimee" className="block text-xs font-semibold text-foreground mb-1.5">
                 Livraison estimée
               </label>
-              <Input
+              <Input id="purchaseorderformmodal-livraison-estimee"
                 type="date"
                 value={expectedDeliveryDate}
                 onChange={(e) => setExpectedDeliveryDate(e.target.value)}
@@ -315,10 +315,10 @@ export function PurchaseOrderFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
+              <label htmlFor="purchaseorderformmodal-ref-chantier-optionnel" className="block text-xs font-semibold text-foreground mb-1.5">
                 Réf. Chantier (Optionnel)
               </label>
-              <Input
+              <Input id="purchaseorderformmodal-ref-chantier-optionnel"
                 value={missionRef}
                 onChange={(e) => setMissionRef(e.target.value)}
                 placeholder="Ex: INT-2026-081"
@@ -414,10 +414,10 @@ export function PurchaseOrderFormModal({
 
                   {/* Ligne 1 : Désignation complète de l'article */}
                   <div>
-                    <label className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                    <label htmlFor="purchaseorderformmodal-designation-nom-complet-de-l-article" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                       Désignation / Nom complet de l'article *
                     </label>
-                    <Input
+                    <Input id="purchaseorderformmodal-designation-nom-complet-de-l-article"
                       placeholder="Ex: Câble Fibre Optique 4 FO G.657.A2 (500m)"
                       value={item.description}
                       onChange={(e) =>
@@ -432,10 +432,10 @@ export function PurchaseOrderFormModal({
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
                     {/* Référence SKU */}
                     <div className="sm:col-span-4">
-                      <label className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      <label htmlFor="purchaseorderformmodal-reference-sku-code" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         Référence SKU / Code *
                       </label>
-                      <Input
+                      <Input id="purchaseorderformmodal-reference-sku-code"
                         placeholder="Ex: FBR-CAB-4FO"
                         value={item.reference}
                         onChange={(e) =>
@@ -448,10 +448,10 @@ export function PurchaseOrderFormModal({
 
                     {/* Unité */}
                     <div className="sm:col-span-3">
-                      <label className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      <label htmlFor="purchaseorderformmodal-unite-de-mesure" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         Unité de mesure
                       </label>
-                      <select
+                      <select id="purchaseorderformmodal-unite-de-mesure"
                         value={item.unit || 'pièce'}
                         onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                         className="w-full h-10 rounded-xl border border-border bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none font-medium"
@@ -466,10 +466,10 @@ export function PurchaseOrderFormModal({
 
                     {/* Quantité commandée */}
                     <div className="sm:col-span-2">
-                      <label className="block text-3xs font-bold text-primary uppercase tracking-wider mb-1">
+                      <label htmlFor="purchaseorderformmodal-quantite" className="block text-3xs font-bold text-primary uppercase tracking-wider mb-1">
                         Quantité *
                       </label>
-                      <Input
+                      <Input id="purchaseorderformmodal-quantite"
                         type="number"
                         min={0.01}
                         step="any"
@@ -489,11 +489,11 @@ export function PurchaseOrderFormModal({
 
                     {/* Prix Unitaire HT */}
                     <div className="sm:col-span-3">
-                      <label className="block text-3xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                      <label htmlFor="purchaseorderformmodal-prix-unit-ht" className="block text-3xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">
                         Prix Unit. HT (€) *
                       </label>
                       <div className="relative">
-                        <Input
+                        <Input id="purchaseorderformmodal-prix-unit-ht"
                           type="number"
                           min={0}
                           step="any"
@@ -598,10 +598,10 @@ export function PurchaseOrderFormModal({
         {/* 4. Statut & Remarques */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+            <label htmlFor="purchaseorderformmodal-statut-initial-de-la-commande" className="block text-xs font-semibold text-foreground mb-1.5">
               Statut initial de la commande
             </label>
-            <select
+            <select id="purchaseorderformmodal-statut-initial-de-la-commande"
               value={status}
               onChange={(e) => setStatus(e.target.value as 'draft' | 'sent')}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none font-medium"
@@ -612,10 +612,10 @@ export function PurchaseOrderFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+            <label htmlFor="purchaseorderformmodal-instructions-de-livraison-remarques" className="block text-xs font-semibold text-foreground mb-1.5">
               Instructions de livraison / Remarques
             </label>
-            <Input
+            <Input id="purchaseorderformmodal-instructions-de-livraison-remarques"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Livrer au quai B avant 12h"

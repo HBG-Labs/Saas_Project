@@ -52,11 +52,11 @@ export default function PressureCalculatorTool() {
       {/* Formulaire */}
       <Card className="border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground">
+          <label htmlFor="pressurecalculatortool-valeur-de-pression-a-convertir" className="text-xs font-bold text-foreground">
             Valeur de pression à convertir :
           </label>
           <div className="flex gap-2">
-            <input
+            <input id="pressurecalculatortool-valeur-de-pression-a-convertir"
               type="number"
               inputMode="decimal"
               value={valueStr}

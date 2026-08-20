@@ -158,12 +158,12 @@ export default function SurfaceCalculatorTool() {
       {/* 2. Formulaire des dimensions */}
       <Card className="border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+          <label htmlFor="surfacecalculatortool-dimensions" className="text-xs font-bold text-foreground uppercase tracking-wider">
             Dimensions ({shape.toUpperCase()}) :
           </label>
           <div className="flex items-center gap-1.5 text-xs font-semibold">
             <span className="text-muted-foreground">Unité de saisie :</span>
-            <select
+            <select id="surfacecalculatortool-dimensions"
               value={inputUnit}
               onChange={(e) => setInputUnit(e.target.value as 'm' | 'cm' | 'mm')}
               className="h-8 rounded-lg border border-border bg-surface-raised px-2 text-xs font-bold text-foreground"
@@ -179,8 +179,8 @@ export default function SurfaceCalculatorTool() {
           {shape === 'rectangle' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Longueur :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-longueur" className="text-xs font-bold text-foreground">Longueur :</label>
+                <input id="surfacecalculatortool-longueur"
                   type="number"
                   inputMode="decimal"
                   value={length}
@@ -190,8 +190,8 @@ export default function SurfaceCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Largeur :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-largeur" className="text-xs font-bold text-foreground">Largeur :</label>
+                <input id="surfacecalculatortool-largeur"
                   type="number"
                   inputMode="decimal"
                   value={width}
@@ -205,8 +205,8 @@ export default function SurfaceCalculatorTool() {
 
           {shape === 'square' && (
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-bold text-foreground">Longueur d'un côté :</label>
-              <input
+              <label htmlFor="surfacecalculatortool-longueur-d-un-cote" className="text-xs font-bold text-foreground">Longueur d'un côté :</label>
+              <input id="surfacecalculatortool-longueur-d-un-cote"
                 type="number"
                 inputMode="decimal"
                 value={side}
@@ -219,8 +219,8 @@ export default function SurfaceCalculatorTool() {
 
           {shape === 'circle' && (
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-bold text-foreground">Rayon (r) :</label>
-              <input
+              <label htmlFor="surfacecalculatortool-rayon-r" className="text-xs font-bold text-foreground">Rayon (r) :</label>
+              <input id="surfacecalculatortool-rayon-r"
                 type="number"
                 inputMode="decimal"
                 value={radius}
@@ -235,8 +235,8 @@ export default function SurfaceCalculatorTool() {
           {shape === 'triangle' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Base (b) :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-base-b" className="text-xs font-bold text-foreground">Base (b) :</label>
+                <input id="surfacecalculatortool-base-b"
                   type="number"
                   inputMode="decimal"
                   value={base}
@@ -246,8 +246,8 @@ export default function SurfaceCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Hauteur (h) :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-hauteur-h" className="text-xs font-bold text-foreground">Hauteur (h) :</label>
+                <input id="surfacecalculatortool-hauteur-h"
                   type="number"
                   inputMode="decimal"
                   value={height}
@@ -262,8 +262,8 @@ export default function SurfaceCalculatorTool() {
           {shape === 'trapezoid' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Petite Base (a) :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-petite-base-a" className="text-xs font-bold text-foreground">Petite Base (a) :</label>
+                <input id="surfacecalculatortool-petite-base-a"
                   type="number"
                   inputMode="decimal"
                   value={base}
@@ -273,8 +273,8 @@ export default function SurfaceCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Grande Base (b) :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-grande-base-b" className="text-xs font-bold text-foreground">Grande Base (b) :</label>
+                <input id="surfacecalculatortool-grande-base-b"
                   type="number"
                   inputMode="decimal"
                   value={base2}
@@ -284,8 +284,8 @@ export default function SurfaceCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-xs font-bold text-foreground">Hauteur (h) :</label>
-                <input
+                <label htmlFor="surfacecalculatortool-hauteur-h-2" className="text-xs font-bold text-foreground">Hauteur (h) :</label>
+                <input id="surfacecalculatortool-hauteur-h-2"
                   type="number"
                   inputMode="decimal"
                   value={height}

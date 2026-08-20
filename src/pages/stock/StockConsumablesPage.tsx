@@ -66,7 +66,7 @@ export default function StockConsumablesPage() {
   };
 
   const handleOrderConsumable = (article: StockConsumable) => {
-    navigate(ROUTES.purchaseOrders, {
+    void navigate(ROUTES.purchaseOrders, {
       state: { prefillConsumable: article },
     });
   };

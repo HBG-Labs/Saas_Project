@@ -157,8 +157,8 @@ export default function RatioCalculatorTool() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Si Valeur A :</label>
-                <input
+                <label htmlFor="ratiocalculatortool-si-valeur-a" className="text-xs font-bold text-foreground">Si Valeur A :</label>
+                <input id="ratiocalculatortool-si-valeur-a"
                   type="number"
                   inputMode="decimal"
                   value={valA}
@@ -169,8 +169,8 @@ export default function RatioCalculatorTool() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Donne Valeur B :</label>
-                <input
+                <label htmlFor="ratiocalculatortool-donne-valeur-b" className="text-xs font-bold text-foreground">Donne Valeur B :</label>
+                <input id="ratiocalculatortool-donne-valeur-b"
                   type="number"
                   inputMode="decimal"
                   value={valB}
@@ -181,8 +181,8 @@ export default function RatioCalculatorTool() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Alors Valeur C :</label>
-                <input
+                <label htmlFor="ratiocalculatortool-alors-valeur-c" className="text-xs font-bold text-foreground">Alors Valeur C :</label>
+                <input id="ratiocalculatortool-alors-valeur-c"
                   type="number"
                   inputMode="decimal"
                   value={valC}
@@ -198,8 +198,8 @@ export default function RatioCalculatorTool() {
         {mode === 'simplify_ratio' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Valeur A (Largeur / Part 1) :</label>
-              <input
+              <label htmlFor="ratiocalculatortool-valeur-a-largeur-part-1" className="text-xs font-bold text-foreground">Valeur A (Largeur / Part 1) :</label>
+              <input id="ratiocalculatortool-valeur-a-largeur-part-1"
                 type="number"
                 inputMode="decimal"
                 value={ratioA}
@@ -209,8 +209,8 @@ export default function RatioCalculatorTool() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Valeur B (Hauteur / Part 2) :</label>
-              <input
+              <label htmlFor="ratiocalculatortool-valeur-b-hauteur-part-2" className="text-xs font-bold text-foreground">Valeur B (Hauteur / Part 2) :</label>
+              <input id="ratiocalculatortool-valeur-b-hauteur-part-2"
                 type="number"
                 inputMode="decimal"
                 value={ratioB}
@@ -226,8 +226,8 @@ export default function RatioCalculatorTool() {
           <div className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Total à répartir :</label>
-                <input
+                <label htmlFor="ratiocalculatortool-total-a-repartir" className="text-xs font-bold text-foreground">Total à répartir :</label>
+                <input id="ratiocalculatortool-total-a-repartir"
                   type="number"
                   inputMode="decimal"
                   value={totalAmount}
@@ -237,8 +237,8 @@ export default function RatioCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Clé de répartition (ratios séparés par virgules) :</label>
-                <input
+                <label htmlFor="ratiocalculatortool-cle-de-repartition-ratios-separes-par-vi" className="text-xs font-bold text-foreground">Clé de répartition (ratios séparés par virgules) :</label>
+                <input id="ratiocalculatortool-cle-de-repartition-ratios-separes-par-vi"
                   type="text"
                   value={partsStr}
                   onChange={(e) => setPartsStr(e.target.value)}

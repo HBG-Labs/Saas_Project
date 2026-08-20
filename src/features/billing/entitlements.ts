@@ -34,6 +34,7 @@ export const FEATURES = {
   statistics: 'statistics',
   attachments: 'attachments',
   equipment: 'equipment',
+  stock: 'stock',
   quotes: 'quotes',
   planning: 'planning',
 } as const;
@@ -79,6 +80,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     missions: null,
     interventions: null,
     equipment: null,
+    stock: null,
     quotes: null,
   },
 
@@ -100,6 +102,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     statistics: null,
     attachments: null,
     equipment: null,
+    stock: null,
     quotes: null,
     planning: null,
   },
@@ -122,6 +125,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     statistics: null,
     attachments: null,
     equipment: null,
+    stock: null,
     quotes: null,
     planning: null,
   },

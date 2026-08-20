@@ -113,7 +113,7 @@ export function OwnerDashboard() {
               </>
             ) : null}
 
-            <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
+            <Button asChild size="sm" className="shadow-xs">
               <Link to={ROUTES.missionNew}>
                 <Plus className="size-4" />
                 {formatNewNoun(jobSingular)}

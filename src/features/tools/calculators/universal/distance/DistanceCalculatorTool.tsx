@@ -112,11 +112,11 @@ export default function DistanceCalculatorTool() {
         /* Formulaire Distance Simple */
         <Card className="border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="distancecalculatortool-distance-a-convertir" className="text-xs font-bold text-foreground">
               Distance à convertir :
             </label>
             <div className="flex gap-2">
-              <input
+              <input id="distancecalculatortool-distance-a-convertir"
                 type="number"
                 inputMode="decimal"
                 value={distanceStr}
@@ -160,8 +160,8 @@ export default function DistanceCalculatorTool() {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-3xs text-muted-foreground">X1 :</label>
-                  <input
+                  <label htmlFor="distancecalculatortool-x1" className="text-3xs text-muted-foreground">X1 :</label>
+                  <input id="distancecalculatortool-x1"
                     type="number"
                     inputMode="decimal"
                     value={x1}
@@ -170,8 +170,8 @@ export default function DistanceCalculatorTool() {
                   />
                 </div>
                 <div>
-                  <label className="text-3xs text-muted-foreground">Y1 :</label>
-                  <input
+                  <label htmlFor="distancecalculatortool-y1" className="text-3xs text-muted-foreground">Y1 :</label>
+                  <input id="distancecalculatortool-y1"
                     type="number"
                     inputMode="decimal"
                     value={y1}
@@ -190,8 +190,8 @@ export default function DistanceCalculatorTool() {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-3xs text-muted-foreground">X2 :</label>
-                  <input
+                  <label htmlFor="distancecalculatortool-x2" className="text-3xs text-muted-foreground">X2 :</label>
+                  <input id="distancecalculatortool-x2"
                     type="number"
                     inputMode="decimal"
                     value={x2}
@@ -200,8 +200,8 @@ export default function DistanceCalculatorTool() {
                   />
                 </div>
                 <div>
-                  <label className="text-3xs text-muted-foreground">Y2 :</label>
-                  <input
+                  <label htmlFor="distancecalculatortool-y2" className="text-3xs text-muted-foreground">Y2 :</label>
+                  <input id="distancecalculatortool-y2"
                     type="number"
                     inputMode="decimal"
                     value={y2}

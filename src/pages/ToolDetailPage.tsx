@@ -17,7 +17,7 @@ import {
 } from '@/features/catalog';
 import { getCategoryMetadata } from '@/features/tools/catalog-metadata';
 import { getUniversalTool } from '@/features/tools/calculators/universal';
-import { ToolErrorBoundary } from '@/features/tools';
+import { getTool, ToolErrorBoundary } from '@/features/tools';
 import { cn } from '@/lib/cn';
 
 /**
@@ -34,7 +34,20 @@ import { cn } from '@/lib/cn';
  */
 export default function ToolDetailPage() {
   const { toolSlug } = useParams<{ toolSlug: string }>();
-  const tool = toolSlug ? (getUniversalTool(toolSlug) as any) : undefined;
+
+  /*
+    Le catalogue a DEUX sources, et la page doit interroger les deux.
+
+    `getTool()` couvre les outils métier de `src/tools/<slug>/`, enregistrés au
+    démarrage par auto-découverte. `getUniversalTool()` couvre les calculateurs
+    universels, déclarés dans un tableau à part.
+
+    N'interroger que la seconde rendait toute la première injoignable : les
+    liens du CommandBar et des pages de catégorie menaient à « Outil
+    introuvable ». Le registry est consulté en premier, car c'est lui que
+    référencent les URL publiques déjà indexées.
+  */
+  const tool = toolSlug ? (getTool(toolSlug) ?? getUniversalTool(toolSlug)) : undefined;
 
   /**
    * Le favori vient du serveur, il n'est plus un état local.

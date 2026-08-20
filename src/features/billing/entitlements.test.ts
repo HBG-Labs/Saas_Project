@@ -137,7 +137,12 @@ describe('synchronisation avec le seed SQL', () => {
   // La matrice est REMISE À PLAT par `20260817101000_pricing_model.sql` : ce
   // fichier supprime les cinq plans puis les réinsère d'un bloc. Lire les
   // migrations antérieures reconstituerait un état que la base n'a plus.
-  const tuples = extractInsertTuplesAcross([MIGRATION_FILES.pricingModel], 'plan_features');
+  // `stock` est arrivé après cette remise à plat, dans sa propre migration :
+  // il s'ajoute à la grille sans la redéfinir.
+  const tuples = extractInsertTuplesAcross(
+    [MIGRATION_FILES.pricingModel, MIGRATION_FILES.stock],
+    'plan_features',
+  );
 
   const seeded = new Map<string, Map<string, number | null>>();
   for (const tuple of tuples) {

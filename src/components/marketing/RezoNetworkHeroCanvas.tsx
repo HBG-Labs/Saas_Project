@@ -86,8 +86,8 @@ export function RezoNetworkHeroCanvas() {
       hubGlow: 'rgba(99, 102, 241, 0.35)',
       grid: 'rgba(59, 130, 246, 0.04)',
       lineBase: '56, 189, 248',
-      halo0: 'rgba(56, 189, 248, 0.12)',
-      halo1: 'rgba(37, 99, 235, 0.05)',
+      halo0: 'rgba(56, 189, 248, 0.14)',
+      halo1: 'rgba(37, 99, 235, 0.06)',
       halo2: 'rgba(15, 23, 42, 0)',
       coreOuterRing: 'rgba(56, 189, 248, 0.4)',
       coreInnerRing: 'rgba(6, 182, 212, 0.35)',
@@ -108,10 +108,10 @@ export function RezoNetworkHeroCanvas() {
       maintenanceGlow: 'rgba(5, 150, 105, 0.20)',
       hub: '#4f46e5', // Indigo 600
       hubGlow: 'rgba(79, 70, 229, 0.20)',
-      grid: 'rgba(148, 163, 184, 0.12)', // Grille cartographique gris-bleutée fine
+      grid: 'rgba(148, 163, 184, 0.12)', // Grille cartographique fine
       lineBase: '37, 99, 235',
-      halo0: 'rgba(37, 99, 235, 0.07)',
-      halo1: 'rgba(14, 165, 233, 0.03)',
+      halo0: 'rgba(37, 99, 235, 0.08)',
+      halo1: 'rgba(14, 165, 233, 0.04)',
       halo2: 'rgba(248, 250, 252, 0)',
       coreOuterRing: 'rgba(2, 132, 199, 0.4)',
       coreInnerRing: 'rgba(8, 145, 178, 0.35)',
@@ -126,10 +126,10 @@ export function RezoNetworkHeroCanvas() {
     let edges: NetworkEdge[] = [];
     let packets: DataPacket[] = [];
 
-    // Configuration selon la taille d'écran (mobile vs desktop)
+    // Configuration adaptative selon la taille d'écran et l'orientation
     const initNetwork = () => {
-      const isMobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      const isMobile = width < 768;
+      const isTablet = width >= 768 && width < 1024;
       const currentTheme = getTheme();
 
       nodes = [];
@@ -137,9 +137,16 @@ export function RezoNetworkHeroCanvas() {
       packets = [];
 
       // 1. Nœud Central "REZO CORE" — Orchestrateur
-      // Positionné légèrement en haut à droite pour équilibrer le titre à gauche sur desktop
-      const coreX = isMobile ? 0.5 : 0.68;
-      const coreY = isMobile ? 0.22 : 0.28;
+      // Sur mobile : positionné plus haut, exactement au niveau de "Connectez tout votre réseau." à droite
+      // Sur desktop : positionné en haut à droite pour équilibrer le titre à gauche
+      const coreX = isMobile ? 0.78 : isTablet ? 0.72 : 0.68;
+      const coreY = isMobile
+        ? height > 0
+          ? Math.max(0.06, Math.min(0.12, 165 / height))
+          : 0.09
+        : isTablet
+          ? 0.22
+          : 0.28;
 
       nodes.push({
         id: 'rezo-core',
@@ -149,7 +156,7 @@ export function RezoNetworkHeroCanvas() {
         type: 'core',
         label: 'REZO CORE',
         code: 'HUB-ORCHESTRATION',
-        radius: isMobile ? 7 : 9,
+        radius: isMobile ? 6 : 9,
         basePulse: 1.0,
         pulseSpeed: 0.03,
         pulsePhase: 0,
@@ -159,15 +166,37 @@ export function RezoNetworkHeroCanvas() {
       });
 
       // 2. Nœuds d'interventions et points terrain
-      const nodePresets: Array<{
+      // Sur mobile : répartition périphérique (flancs latéraux + haut/bas) pour garder le centre lisible
+      // Sur desktop : maillage cartographique riche sur toute la largeur
+      type Preset = {
         x: number;
         y: number;
         depth: number;
         type: NetworkNode['type'];
         label: string;
         code: string;
-      }> = [
-        // Flanc gauche (derrière et autour du titre)
+      };
+
+      const mobilePresets: Preset[] = [
+        // Flanc gauche
+        { x: 0.06, y: height > 0 ? Math.min(0.08, 110 / height) : 0.06, depth: 0.7, type: 'fibre', label: 'Point NRO', code: 'OPT-75A' },
+        { x: 0.10, y: height > 0 ? Math.min(0.20, 320 / height) : 0.18, depth: 0.9, type: 'telecom', label: 'Site Relais 5G', code: 'TEL-892' },
+        { x: 0.07, y: 0.52, depth: 0.5, type: 'elec', label: 'Poste HTA/BT', code: 'ELEC-14' },
+        { x: 0.14, y: 0.82, depth: 0.8, type: 'maintenance', label: 'Chantier Raccordement', code: 'INT-3401' },
+
+        // Flanc droit
+        { x: 0.92, y: height > 0 ? Math.min(0.07, 100 / height) : 0.05, depth: 0.8, type: 'fibre', label: 'Backbone Fibre', code: 'BB-OPT-01' },
+        { x: 0.94, y: height > 0 ? Math.min(0.25, 420 / height) : 0.22, depth: 0.6, type: 'telecom', label: 'Station Télécom', code: 'ST-54B' },
+        { x: 0.88, y: 0.60, depth: 0.7, type: 'elec', label: 'Armoire Distribution', code: 'TGBT-09' },
+        { x: 0.92, y: 0.88, depth: 0.9, type: 'fibre', label: 'Point de Mutualisation', code: 'PM-93' },
+
+        // Arrière-plan haut / bas
+        { x: 0.30, y: 0.03, depth: 0.4, type: 'hub', label: 'Centre Opérations', code: 'HUB-CENTRAL' },
+        { x: 0.50, y: 0.94, depth: 0.45, type: 'maintenance', label: 'Contrôle Qualité', code: 'QC-44' },
+      ];
+
+      const desktopPresets: Preset[] = [
+        // Flanc gauche
         { x: 0.12, y: 0.18, depth: 0.7, type: 'fibre', label: 'Point NRO', code: 'OPT-75A' },
         { x: 0.24, y: 0.32, depth: 0.9, type: 'telecom', label: 'Site Relais 5G', code: 'TEL-892' },
         { x: 0.08, y: 0.48, depth: 0.5, type: 'elec', label: 'Poste HTA/BT', code: 'ELEC-14' },
@@ -180,7 +209,7 @@ export function RezoNetworkHeroCanvas() {
         { x: 0.48, y: 0.74, depth: 0.8, type: 'maintenance', label: 'Intervention CVC', code: 'INT-8902' },
         { x: 0.52, y: 0.92, depth: 0.5, type: 'elec', label: 'Conformité NF C 15-100', code: 'AUDIT-02' },
 
-        // Flanc droit (focalisé autour du REZO CORE et vers le bas)
+        // Flanc droit
         { x: 0.86, y: 0.15, depth: 0.8, type: 'fibre', label: 'Backbone Fibre', code: 'BB-OPT-01' },
         { x: 0.92, y: 0.38, depth: 0.6, type: 'telecom', label: 'Station Télécom', code: 'ST-54B' },
         { x: 0.78, y: 0.48, depth: 1.1, type: 'maintenance', label: 'Équipe Tech Terrain', code: 'EQ-NORD' },
@@ -188,18 +217,16 @@ export function RezoNetworkHeroCanvas() {
         { x: 0.72, y: 0.82, depth: 0.9, type: 'fibre', label: 'Point de Mutualisation', code: 'PM-93' },
         { x: 0.85, y: 0.90, depth: 0.6, type: 'hub', label: 'Dépôt Matériel & Flotte', code: 'DEPOT-01' },
 
-        // Nœuds d'ambiance lointains (profondeur < 0.5)
+        // Nœuds d'ambiance lointains
         { x: 0.04, y: 0.30, depth: 0.3, type: 'telecom', label: 'Liaison FH', code: 'FH-01' },
         { x: 0.62, y: 0.08, depth: 0.35, type: 'hub', label: 'Serveur Métier', code: 'SRV-SEC' },
         { x: 0.96, y: 0.78, depth: 0.4, type: 'elec', label: 'Transformateur', code: 'TR-11' },
         { x: 0.35, y: 0.95, depth: 0.45, type: 'maintenance', label: 'Contrôle Qualité', code: 'QC-44' },
       ];
 
-      // Filtrer pour alléger sur mobile / tablette
-      const maxNodes = isMobile ? 8 : isTablet ? 14 : nodePresets.length;
-      const selectedPresets = nodePresets.slice(0, maxNodes);
+      const activePresets = isMobile ? mobilePresets : desktopPresets;
 
-      selectedPresets.forEach((p, idx) => {
+      activePresets.forEach((p, idx) => {
         const themeColor = currentTheme[p.type];
         const themeGlow = currentTheme[`${p.type}Glow` as keyof typeof currentTheme];
 
@@ -211,7 +238,7 @@ export function RezoNetworkHeroCanvas() {
           type: p.type,
           label: p.label,
           code: p.code,
-          radius: (isMobile ? 3.5 : 4.5) * Math.max(0.6, p.depth),
+          radius: (isMobile ? 3 : 4.5) * Math.max(0.6, p.depth),
           basePulse: 0.8,
           pulseSpeed: 0.02 + Math.random() * 0.02,
           pulsePhase: Math.random() * Math.PI * 2,
@@ -221,7 +248,7 @@ export function RezoNetworkHeroCanvas() {
         });
       });
 
-      // 3. Construction des connexions logiques (Topologie du réseau)
+      // 3. Construction des connexions logiques (Topologie adaptée en pixels réels)
       const connect = (from: number, to: number, strength = 0.25, curvature = 0) => {
         if (from >= nodes.length || to >= nodes.length) return;
         edges.push({
@@ -233,35 +260,38 @@ export function RezoNetworkHeroCanvas() {
         });
       };
 
+      // Calcul des distances en pixels réels pour éviter les distorsions sur écrans verticaux
+      const maxConnectPx = isMobile ? Math.min(width, height) * 0.65 : Math.min(width, height) * 0.48;
+
       // Connexions depuis le Core (index 0)
       const core = nodes[0];
       if (core) {
         for (let i = 1; i < nodes.length; i++) {
           const target = nodes[i];
           if (!target) continue;
-          const dist = Math.hypot(core.x - target.x, core.y - target.y);
-          if (dist < (isMobile ? 0.6 : 0.45)) {
-            connect(0, i, 0.35, (Math.random() - 0.5) * 0.08);
+          const distPx = Math.hypot((core.x - target.x) * width, (core.y - target.y) * height);
+          if (distPx < maxConnectPx * 1.2) {
+            connect(0, i, 0.32, (Math.random() - 0.5) * 0.08);
           }
         }
       }
 
-      // Connexions secondaires entre nœuds proches pour créer un maillage
+      // Connexions secondaires entre nœuds voisins
       for (let i = 1; i < nodes.length; i++) {
         const nodeA = nodes[i];
         if (!nodeA) continue;
         for (let j = i + 1; j < nodes.length; j++) {
           const nodeB = nodes[j];
           if (!nodeB) continue;
-          const dist = Math.hypot(nodeA.x - nodeB.x, nodeA.y - nodeB.y);
-          if (dist < (isMobile ? 0.35 : 0.28)) {
-            connect(i, j, 0.18, (Math.random() - 0.5) * 0.12);
+          const distPx = Math.hypot((nodeA.x - nodeB.x) * width, (nodeA.y - nodeB.y) * height);
+          if (distPx < maxConnectPx) {
+            connect(i, j, 0.18, (Math.random() - 0.5) * 0.10);
           }
         }
       }
 
       // 4. Initialisation des paquets de données en circulation
-      const packetCount = isMobile ? 6 : 16;
+      const packetCount = isMobile ? 6 : 14;
       for (let k = 0; k < packetCount; k++) {
         if (edges.length === 0) break;
         const edgeIdx = Math.floor(Math.random() * edges.length);
@@ -272,7 +302,7 @@ export function RezoNetworkHeroCanvas() {
           edgeIndex: edgeIdx,
           progress: Math.random(),
           speed: 0.003 + Math.random() * 0.004,
-          size: 2.2 + Math.random() * 1.5,
+          size: isMobile ? 2.0 : 2.5,
           color: sourceNode ? sourceNode.color : currentTheme.core,
           reverse: Math.random() > 0.5,
         });
@@ -359,14 +389,14 @@ export function RezoNetworkHeroCanvas() {
 
       // Calcul des coordonnées réelles avec parallaxe de profondeur
       const computedNodes = nodes.map((node) => {
-        const parallaxFactor = node.depth * 24;
+        const parallaxFactor = node.depth * 20;
         const px = node.x * width + currentMouseX * parallaxFactor;
         const py = node.y * height + currentMouseY * parallaxFactor + scrollProgress * 40;
         return { ...node, px, py };
       });
 
-      // 1. Grille cartographique technique discrète (Perspective 3D légère)
-      const gridSize = 70;
+      // 1. Grille cartographique technique discrète
+      const gridSize = width < 768 ? 50 : 70;
       ctx.strokeStyle = currentTheme.grid;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -383,13 +413,14 @@ export function RezoNetworkHeroCanvas() {
       // 2. Halo atmosphérique sous le REZO CORE
       const coreNode = computedNodes[0];
       if (coreNode) {
+        const haloRadius = width < 768 ? width * 0.45 : width * 0.35;
         const haloGrad = ctx.createRadialGradient(
           coreNode.px,
           coreNode.py,
           10,
           coreNode.px,
           coreNode.py,
-          width * 0.35
+          haloRadius
         );
         haloGrad.addColorStop(0, currentTheme.halo0);
         haloGrad.addColorStop(0.5, currentTheme.halo1);
@@ -397,7 +428,7 @@ export function RezoNetworkHeroCanvas() {
 
         ctx.fillStyle = haloGrad;
         ctx.beginPath();
-        ctx.arc(coreNode.px, coreNode.py, width * 0.35, 0, Math.PI * 2);
+        ctx.arc(coreNode.px, coreNode.py, haloRadius, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -412,7 +443,7 @@ export function RezoNetworkHeroCanvas() {
 
         ctx.beginPath();
         ctx.strokeStyle = `rgba(${currentTheme.lineBase}, ${dynamicAlpha.toFixed(3)})`;
-        ctx.lineWidth = Math.max(0.8, ((from.depth + to.depth) / 2) * 1.2);
+        ctx.lineWidth = Math.max(0.7, ((from.depth + to.depth) / 2) * 1.1);
 
         // Ligne avec courbure quadratique élégante
         if (Math.abs(edge.curvature) > 0.01) {
@@ -446,13 +477,11 @@ export function RezoNetworkHeroCanvas() {
 
           // Gestion de l'arrivée au bout du segment
           if (packet.progress >= 1 || packet.progress <= 0) {
-            // Déclenche une onde lumineuse sur le nœud d'arrivée
             const targetNode = packet.progress >= 1 ? nodes[edge.toIndex] : nodes[edge.fromIndex];
             if (targetNode) {
               targetNode.activeRipple = 1.0;
             }
 
-            // Choisit un nouveau segment connecté pour poursuivre le voyage du paquet
             const nextNodeIdx = packet.progress >= 1 ? edge.toIndex : edge.fromIndex;
             const connectedEdgeIndices: number[] = [];
             edges.forEach((e, idx) => {
@@ -499,7 +528,7 @@ export function RezoNetworkHeroCanvas() {
 
           const packetColor = currentTheme[from.type];
 
-          // Dessin du paquet lumineux avec tête brillante et halo
+          // Dessin du paquet lumineux
           ctx.beginPath();
           const pGlow = ctx.createRadialGradient(posX, posY, 0, posX, posY, packet.size * 3.5);
           pGlow.addColorStop(0, packetColor);
@@ -547,7 +576,7 @@ export function RezoNetworkHeroCanvas() {
           if (node.activeRipple < 0) node.activeRipple = 0;
         }
 
-        // Cas Particulier : Le REZO CORE (Anneaux concentriques gyro & halo pulsant)
+        // Cas Particulier : Le REZO CORE
         if (node.type === 'core') {
           // Anneau orbital externe en pointillés
           ctx.save();
@@ -557,7 +586,7 @@ export function RezoNetworkHeroCanvas() {
           ctx.setLineDash([4, 6]);
           ctx.strokeStyle = currentTheme.coreOuterRing;
           ctx.lineWidth = 1.2;
-          ctx.arc(0, 0, node.radius * 3.2, 0, Math.PI * 2);
+          ctx.arc(0, 0, node.radius * 3.0, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
@@ -566,10 +595,10 @@ export function RezoNetworkHeroCanvas() {
           ctx.translate(node.px, node.py);
           ctx.rotate(-time * 0.0004);
           ctx.beginPath();
-          ctx.setLineDash([8, 12]);
+          ctx.setLineDash([6, 10]);
           ctx.strokeStyle = currentTheme.coreInnerRing;
           ctx.lineWidth = 1.0;
-          ctx.arc(0, 0, node.radius * 2.2, 0, Math.PI * 2);
+          ctx.arc(0, 0, node.radius * 2.0, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
@@ -624,7 +653,7 @@ export function RezoNetworkHeroCanvas() {
         ctx.arc(node.px, node.py, currentRadius * 0.45, 0, Math.PI * 2);
         ctx.fill();
 
-        // Micro-étiquettes techniques (uniquement sur grand écran pour les nœuds au premier plan)
+        // Micro-étiquettes techniques (sur grand écran uniquement)
         if (width >= 1024 && node.depth >= 0.7) {
           ctx.font = '600 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
           ctx.fillStyle = currentTheme.labelColor;
@@ -663,7 +692,7 @@ export function RezoNetworkHeroCanvas() {
         className="absolute inset-0 size-full transition-opacity duration-700"
       />
 
-      {/* Masque dégradé radial pour garantir une lisibilité absolue des textes en mode clair et sombre */}
+      {/* Masque dégradé radial pour garantir une lisibilité absolue des textes en mode clair et sombre (Capture 1) */}
       <div className="pointer-events-none absolute inset-0 bg-radial-[ellipse_80%_60%_at_50%_35%] from-white/20 via-white/70 to-white/95 dark:from-slate-950/20 dark:via-slate-950/70 dark:to-slate-950" />
 
       {/* Dégradé doux en pied de section pour fondre le réseau dans la section suivante */}

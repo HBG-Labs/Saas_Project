@@ -28,7 +28,7 @@ export function computeBetweenTimes(
     };
   }
 
-  let startTotal = h1 * 60 + m1;
+  const startTotal = h1 * 60 + m1;
   let endTotal = h2 * 60 + m2;
 
   // Si l'heure de fin est inférieure à l'heure de début, on passe minuit (+24h)

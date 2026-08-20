@@ -121,9 +121,9 @@ export default function FlowCalculatorTool() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Volume */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Volume écoulé :</label>
+              <label htmlFor="flowcalculatortool-volume-ecoule" className="text-xs font-bold text-foreground">Volume écoulé :</label>
               <div className="flex gap-2">
-                <input
+                <input id="flowcalculatortool-volume-ecoule"
                   type="number"
                   inputMode="decimal"
                   value={volume1}
@@ -144,9 +144,9 @@ export default function FlowCalculatorTool() {
 
             {/* Temps */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Durée d'écoulement :</label>
+              <label htmlFor="flowcalculatortool-duree-d-ecoulement" className="text-xs font-bold text-foreground">Durée d'écoulement :</label>
               <div className="flex gap-2">
-                <input
+                <input id="flowcalculatortool-duree-d-ecoulement"
                   type="number"
                   inputMode="decimal"
                   value={time1}
@@ -170,9 +170,9 @@ export default function FlowCalculatorTool() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Volume à remplir */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Volume de la cuve / conduite :</label>
+              <label htmlFor="flowcalculatortool-volume-de-la-cuve-conduite" className="text-xs font-bold text-foreground">Volume de la cuve / conduite :</label>
               <div className="flex gap-2">
-                <input
+                <input id="flowcalculatortool-volume-de-la-cuve-conduite"
                   type="number"
                   inputMode="decimal"
                   value={volume2}
@@ -193,9 +193,9 @@ export default function FlowCalculatorTool() {
 
             {/* Débit de la pompe */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Débit de la pompe / arrivée :</label>
+              <label htmlFor="flowcalculatortool-debit-de-la-pompe-arrivee" className="text-xs font-bold text-foreground">Débit de la pompe / arrivée :</label>
               <div className="flex gap-2">
-                <input
+                <input id="flowcalculatortool-debit-de-la-pompe-arrivee"
                   type="number"
                   inputMode="decimal"
                   value={flow2}

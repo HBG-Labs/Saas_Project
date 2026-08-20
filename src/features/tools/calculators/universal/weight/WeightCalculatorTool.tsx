@@ -56,10 +56,10 @@ export default function WeightCalculatorTool() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Quantité */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="weightcalculatortool-nombre-d-unites-quantite" className="text-xs font-bold text-foreground">
               Nombre d'unités (Quantité) :
             </label>
-            <input
+            <input id="weightcalculatortool-nombre-d-unites-quantite"
               type="number"
               inputMode="numeric"
               value={quantity}
@@ -71,11 +71,11 @@ export default function WeightCalculatorTool() {
 
           {/* Poids unitaire */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="weightcalculatortool-poids-d-une-unite" className="text-xs font-bold text-foreground">
               Poids d'une unité :
             </label>
             <div className="flex gap-2">
-              <input
+              <input id="weightcalculatortool-poids-d-une-unite"
                 type="number"
                 inputMode="decimal"
                 value={unitWeight}

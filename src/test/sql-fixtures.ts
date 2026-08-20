@@ -12,6 +12,7 @@ import planningSql from '../../supabase/migrations/20260816100000_planning.sql?r
 import locationsSql from '../../supabase/migrations/20260816100100_technician_locations.sql?raw';
 import retireTrackingSql from '../../supabase/migrations/20260817100000_retire_live_tracking.sql?raw';
 import pricingModelSql from '../../supabase/migrations/20260817101000_pricing_model.sql?raw';
+import stockSql from '../../supabase/migrations/20260820110000_stock.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -53,6 +54,7 @@ const MIGRATIONS: Record<string, string> = {
   locations: locationsSql,
   retireTracking: retireTrackingSql,
   pricingModel: pricingModelSql,
+  stock: stockSql,
 };
 
 export const MIGRATION_FILES = {
@@ -70,6 +72,7 @@ export const MIGRATION_FILES = {
   locations: 'locations',
   retireTracking: 'retireTracking',
   pricingModel: 'pricingModel',
+  stock: 'stock',
 } as const;
 
 /**

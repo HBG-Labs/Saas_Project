@@ -22,6 +22,7 @@ import type { OrgRole } from '@/types/database';
  *           supabase/migrations/20260812100400_quotes.sql
  *           supabase/migrations/20260816100000_planning.sql
  *           supabase/migrations/20260817100000_retire_live_tracking.sql
+ *           supabase/migrations/20260820110000_stock.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -61,6 +62,9 @@ export const PERMISSIONS = {
 
   equipmentView: 'equipment.view',
   equipmentManage: 'equipment.manage',
+
+  stockView: 'stock.view',
+  stockManage: 'stock.manage',
 
   quoteView: 'quote.view',
   quoteManage: 'quote.manage',
@@ -141,6 +145,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'intervention.review',
     'equipment.view',
     'equipment.manage',
+    'stock.view',
+    'stock.manage',
     'quote.view',
     'quote.manage',
     'leave.view',
@@ -179,6 +185,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'intervention.review',
     'equipment.view',
     'equipment.manage',
+    'stock.view',
+    'stock.manage',
     'quote.view',
     'quote.manage',
     'leave.view',
@@ -211,6 +219,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'intervention.review',
     'equipment.view',
     'equipment.manage',
+    'stock.view',
+    'stock.manage',
     'quote.view',
     'quote.manage',
     // Accorde les congés : c'est une décision d'employeur, et le responsable
@@ -239,6 +249,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // Consulte le parc pour préparer une intervention, et un devis accepté pour
     // savoir ce qui a été vendu. Il ne fixe ni l'inventaire ni les prix.
     'equipment.view',
+    // Tient le stock de son équipe : il sort les consommables d'un chantier et
+    // régularise l'inventaire de son véhicule.
+    'stock.view',
+    'stock.manage',
     'quote.view',
     // Constate les absences pour organiser ses semaines, et voit qui est où
     // pour répartir une urgence. Il n'ACCORDE pas les congés.
@@ -269,6 +283,11 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'team.view',
     'member.view',
     'equipment.view',
+    // `stock.manage` et non `stock.view` seul : déclarer ce qu'il consomme sur
+    // chantier est l'usage principal du module sur le terrain. Sans l'écriture,
+    // le stock serait tenu par quelqu'un qui n'y touche jamais.
+    'stock.view',
+    'stock.manage',
     'leave.request',
     'planning.view',
   ],

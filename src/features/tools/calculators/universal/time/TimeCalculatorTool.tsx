@@ -151,8 +151,8 @@ export default function TimeCalculatorTool() {
           <div className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Heure de début :</label>
-                <input
+                <label htmlFor="timecalculatortool-heure-de-debut" className="text-xs font-bold text-foreground">Heure de début :</label>
+                <input id="timecalculatortool-heure-de-debut"
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
@@ -160,8 +160,8 @@ export default function TimeCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Heure de fin :</label>
-                <input
+                <label htmlFor="timecalculatortool-heure-de-fin" className="text-xs font-bold text-foreground">Heure de fin :</label>
+                <input id="timecalculatortool-heure-de-fin"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
@@ -171,10 +171,10 @@ export default function TimeCalculatorTool() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="timecalculatortool-pause-a-deduire-minutes" className="text-xs font-bold text-foreground">
                 Pause à déduire (minutes) :
               </label>
-              <input
+              <input id="timecalculatortool-pause-a-deduire-minutes"
                 type="number"
                 inputMode="numeric"
                 value={breakMin}
@@ -215,8 +215,8 @@ export default function TimeCalculatorTool() {
                 <p className="text-xs font-bold text-foreground">Durée 1 :</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-3xs text-muted-foreground">Heures :</label>
-                    <input
+                    <label htmlFor="timecalculatortool-heures" className="text-3xs text-muted-foreground">Heures :</label>
+                    <input id="timecalculatortool-heures"
                       type="number"
                       value={h1}
                       onChange={(e) => setH1(e.target.value)}
@@ -224,8 +224,8 @@ export default function TimeCalculatorTool() {
                     />
                   </div>
                   <div>
-                    <label className="text-3xs text-muted-foreground">Minutes :</label>
-                    <input
+                    <label htmlFor="timecalculatortool-minutes" className="text-3xs text-muted-foreground">Minutes :</label>
+                    <input id="timecalculatortool-minutes"
                       type="number"
                       value={m1}
                       onChange={(e) => setM1(e.target.value)}
@@ -240,8 +240,8 @@ export default function TimeCalculatorTool() {
                 <p className="text-xs font-bold text-foreground">Durée 2 :</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-3xs text-muted-foreground">Heures :</label>
-                    <input
+                    <label htmlFor="timecalculatortool-heures-2" className="text-3xs text-muted-foreground">Heures :</label>
+                    <input id="timecalculatortool-heures-2"
                       type="number"
                       value={h2}
                       onChange={(e) => setH2(e.target.value)}
@@ -249,8 +249,8 @@ export default function TimeCalculatorTool() {
                     />
                   </div>
                   <div>
-                    <label className="text-3xs text-muted-foreground">Minutes :</label>
-                    <input
+                    <label htmlFor="timecalculatortool-minutes-2" className="text-3xs text-muted-foreground">Minutes :</label>
+                    <input id="timecalculatortool-minutes-2"
                       type="number"
                       value={m2}
                       onChange={(e) => setM2(e.target.value)}
@@ -265,11 +265,11 @@ export default function TimeCalculatorTool() {
 
         {mode === 'decimal_conversion' && (
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="timecalculatortool-heures-en-format-decimal" className="text-xs font-bold text-foreground">
               Heures en format décimal :
             </label>
             <div className="relative">
-              <input
+              <input id="timecalculatortool-heures-en-format-decimal"
                 type="number"
                 inputMode="decimal"
                 value={decimalHours}

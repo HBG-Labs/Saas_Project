@@ -100,6 +100,11 @@ export default function EquipmentPage() {
   // parce qu'un filtre est actif n'aurait aucun sens sur un indicateur de parc.
   const parcQuery = useEquipmentList(organizationId);
 
+  // Alimente le badge « sous le seuil » de StockNavTabs. Appelé ici, avec les
+  // autres hooks de données : plus bas, il se serait trouvé derrière le retour
+  // anticipé d'erreur, et l'ordre des hooks aurait changé d'un rendu à l'autre.
+  const { lowStockArticles } = useStock(organizationId);
+
   const membersQuery = useMembers(organizationId);
   const members = (membersQuery.data ?? []).filter((member) => member.status === 'active');
 
@@ -232,8 +237,6 @@ export default function EquipmentPage() {
       </div>
     );
   }
-
-  const { lowStockArticles } = useStock(organizationId);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">

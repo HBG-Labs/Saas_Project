@@ -53,7 +53,7 @@ export function ManagerDashboard() {
             </p>
           </div>
 
-          <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
+          <Button asChild size="sm" className="shadow-xs">
             <Link to={ROUTES.missionNew}>
               <Plus className="size-4 mr-1" />
               {formatNewNoun(jobSingular)}

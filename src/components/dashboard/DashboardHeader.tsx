@@ -58,13 +58,13 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-2.5 flex-wrap">
-        <Button asChild variant="outline" size="sm" className="rounded-xl font-medium">
+        <Button asChild variant="outline" size="sm" className="font-medium">
           <Link to={ROUTES.tools}>
             <Wrench className="mr-1.5 size-3.5" />
             <span>Outils métier</span>
           </Link>
         </Button>
-        <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
+        <Button asChild size="sm" className="shadow-xs">
           <Link to={can('mission.create') ? ROUTES.missionNew : ROUTES.missions}>
             <Plus className="mr-1.5 size-4" />
             <span>{formatNewNoun(jobSingular)}</span>

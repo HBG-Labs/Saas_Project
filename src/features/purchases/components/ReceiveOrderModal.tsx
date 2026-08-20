@@ -130,11 +130,19 @@ export function ReceiveOrderModal({
 
         {/* Tableau des articles à réceptionner */}
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+          {/* Intitulé d'un tableau de saisie, pas d'un champ unique. */}
+          <span
+            id="pointage-articles-libelle"
+            className="block text-xs font-bold text-foreground uppercase tracking-wider"
+          >
             Pointage des articles livrés
-          </label>
+          </span>
 
-          <div className="rounded-xl border border-border overflow-hidden">
+          <div
+            role="group"
+            aria-labelledby="pointage-articles-libelle"
+            className="rounded-xl border border-border overflow-hidden"
+          >
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-surface-raised/60 text-muted-foreground text-3xs font-bold uppercase tracking-wider">
@@ -203,10 +211,10 @@ export function ReceiveOrderModal({
 
         {/* N° BL / Remarques */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="receiveordermodal-n-bon-de-livraison-bl-remarques-de-recep" className="block text-xs font-semibold text-foreground mb-1">
             N° Bon de Livraison (BL) / Remarques de réception
           </label>
-          <Input
+          <Input id="receiveordermodal-n-bon-de-livraison-bl-remarques-de-recep"
             value={deliveryNotes}
             onChange={(e) => setDeliveryNotes(e.target.value)}
             placeholder="Ex: BL-89402 — Colis intact, vérifié au quai"

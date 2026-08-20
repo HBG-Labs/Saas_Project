@@ -16,6 +16,7 @@ export {
 
 export {
   useCatalogTool,
+  useCatalogTools,
   useFavorites,
   useRecordToolUsage,
   useToggleFavorite,

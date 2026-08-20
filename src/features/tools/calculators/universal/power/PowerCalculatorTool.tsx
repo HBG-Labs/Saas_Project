@@ -106,9 +106,9 @@ export default function PowerCalculatorTool() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Puissance */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">Puissance de l'équipement :</label>
+            <label htmlFor="powercalculatortool-puissance-de-l-equipement" className="text-xs font-bold text-foreground">Puissance de l'équipement :</label>
             <div className="flex gap-2">
-              <input
+              <input id="powercalculatortool-puissance-de-l-equipement"
                 type="number"
                 inputMode="decimal"
                 value={powerStr}
@@ -133,9 +133,9 @@ export default function PowerCalculatorTool() {
           {/* Durée (si mode énergie) */}
           {mode === 'energy' && (
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Durée de fonctionnement :</label>
+              <label htmlFor="powercalculatortool-duree-de-fonctionnement" className="text-xs font-bold text-foreground">Durée de fonctionnement :</label>
               <div className="relative">
-                <input
+                <input id="powercalculatortool-duree-de-fonctionnement"
                   type="number"
                   inputMode="decimal"
                   value={durationStr}

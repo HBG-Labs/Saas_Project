@@ -144,10 +144,22 @@ export function RecordMovementModal({
 
         {/* Choix du type de mouvement (Boutons Onglets) */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1.5">
+          {/*
+            Un groupe de boutons, pas un champ : `<label>` n'aurait pas de
+            contrôle unique à désigner. `role="group"` + `aria-labelledby`
+            annoncent l'intitulé une fois pour les quatre boutons.
+          */}
+          <span
+            id="mouvement-type-libelle"
+            className="block text-xs font-semibold text-foreground mb-1.5"
+          >
             Type d’opération *
-          </label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          </span>
+          <div
+            role="group"
+            aria-labelledby="mouvement-type-libelle"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+          >
             <button
               type="button"
               onClick={() => setType('in')}
@@ -204,7 +216,7 @@ export function RecordMovementModal({
 
         {/* Sélection de l'article */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="recordmovementmodal-article-concerne" className="block text-xs font-semibold text-foreground mb-1">
             Article concerné *
           </label>
           {consumables.length === 0 ? (
@@ -212,7 +224,7 @@ export function RecordMovementModal({
               Aucun article enregistré dans le stock. Veuillez d'abord ajouter un article.
             </div>
           ) : (
-            <select
+            <select id="recordmovementmodal-article-concerne"
               value={selectedConsumableId}
               onChange={(e) => handleConsumableChange(e.target.value)}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-medium"
@@ -230,11 +242,11 @@ export function RecordMovementModal({
         {/* Quantité & Simulation visuelle */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="recordmovementmodal-champ" className="block text-xs font-semibold text-foreground mb-1">
               {type === 'adjustment' ? 'Nouveau stock réel compté *' : 'Quantité du mouvement *'}
             </label>
             <div className="relative">
-              <Input
+              <Input id="recordmovementmodal-champ"
                 type="number"
                 min={0}
                 step={
@@ -275,10 +287,10 @@ export function RecordMovementModal({
 
         {/* Motif / Référence */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="recordmovementmodal-motif-justificatif" className="block text-xs font-semibold text-foreground mb-1">
             Motif / Justificatif
           </label>
-          <Input
+          <Input id="recordmovementmodal-motif-justificatif"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder={getDefaultReason(type)}
@@ -289,10 +301,10 @@ export function RecordMovementModal({
         {(type === 'out' || type === 'transfer') && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
+              <label htmlFor="recordmovementmodal-technicien-beneficiaire" className="block text-xs font-semibold text-foreground mb-1">
                 Technicien / Bénéficiaire
               </label>
-              <Input
+              <Input id="recordmovementmodal-technicien-beneficiaire"
                 value={technicianName}
                 onChange={(e) => setTechnicianName(e.target.value)}
                 placeholder="Ex: Thomas Martin"
@@ -300,10 +312,10 @@ export function RecordMovementModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">
+              <label htmlFor="recordmovementmodal-champ-2" className="block text-xs font-semibold text-foreground mb-1">
                 {type === 'out' ? 'Réf. Intervention / Dossier' : 'Véhicule de destination'}
               </label>
-              <Input
+              <Input id="recordmovementmodal-champ-2"
                 value={type === 'out' ? interventionRef : locationTo}
                 onChange={(e) =>
                   type === 'out' ? setInterventionRef(e.target.value) : setLocationTo(e.target.value)

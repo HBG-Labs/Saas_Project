@@ -144,11 +144,11 @@ export default function SlopeCalculatorTool() {
         {mode === 'direct' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-denivele-hauteur-h" className="text-xs font-bold text-foreground">
                 Dénivelé / Hauteur (H) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-denivele-hauteur-h"
                   type="number"
                   inputMode="decimal"
                   value={heightDiff}
@@ -163,11 +163,11 @@ export default function SlopeCalculatorTool() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-distance-horizontale-d" className="text-xs font-bold text-foreground">
                 Distance horizontale (D) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-distance-horizontale-d"
                   type="number"
                   inputMode="decimal"
                   value={horizDist}
@@ -186,11 +186,11 @@ export default function SlopeCalculatorTool() {
         {mode === 'inverse_percent' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-pente-souhaitee" className="text-xs font-bold text-foreground">
                 Pente souhaitée (%) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-pente-souhaitee"
                   type="number"
                   inputMode="decimal"
                   value={targetSlope}
@@ -205,11 +205,11 @@ export default function SlopeCalculatorTool() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-distance-horizontale-d-2" className="text-xs font-bold text-foreground">
                 Distance horizontale (D) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-distance-horizontale-d-2"
                   type="number"
                   inputMode="decimal"
                   value={horizDist}
@@ -228,11 +228,11 @@ export default function SlopeCalculatorTool() {
         {mode === 'inverse_degrees' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-angle-d-inclinaison" className="text-xs font-bold text-foreground">
                 Angle d'inclinaison (°) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-angle-d-inclinaison"
                   type="number"
                   inputMode="decimal"
                   value={targetAngle}
@@ -247,11 +247,11 @@ export default function SlopeCalculatorTool() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="slopecalculatortool-distance-horizontale-d-3" className="text-xs font-bold text-foreground">
                 Distance horizontale (D) :
               </label>
               <div className="relative">
-                <input
+                <input id="slopecalculatortool-distance-horizontale-d-3"
                   type="number"
                   inputMode="decimal"
                   value={horizDist}

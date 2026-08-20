@@ -133,12 +133,12 @@ export default function VolumeCalculatorTool() {
       {/* 2. Formulaire des dimensions */}
       <Card className="border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+          <label htmlFor="volumecalculatortool-dimensions" className="text-xs font-bold text-foreground uppercase tracking-wider">
             Dimensions ({shape.toUpperCase()}) :
           </label>
           <div className="flex items-center gap-1.5 text-xs font-semibold">
             <span className="text-muted-foreground">Unité :</span>
-            <select
+            <select id="volumecalculatortool-dimensions"
               value={inputUnit}
               onChange={(e) => setInputUnit(e.target.value as 'm' | 'cm' | 'mm')}
               className="h-8 rounded-lg border border-border bg-surface-raised px-2 text-xs font-bold text-foreground"
@@ -154,8 +154,8 @@ export default function VolumeCalculatorTool() {
           {shape === 'cuboid' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Longueur :</label>
-                <input
+                <label htmlFor="volumecalculatortool-longueur" className="text-xs font-bold text-foreground">Longueur :</label>
+                <input id="volumecalculatortool-longueur"
                   type="number"
                   inputMode="decimal"
                   value={length}
@@ -165,8 +165,8 @@ export default function VolumeCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Largeur :</label>
-                <input
+                <label htmlFor="volumecalculatortool-largeur" className="text-xs font-bold text-foreground">Largeur :</label>
+                <input id="volumecalculatortool-largeur"
                   type="number"
                   inputMode="decimal"
                   value={width}
@@ -176,8 +176,8 @@ export default function VolumeCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Hauteur :</label>
-                <input
+                <label htmlFor="volumecalculatortool-hauteur" className="text-xs font-bold text-foreground">Hauteur :</label>
+                <input id="volumecalculatortool-hauteur"
                   type="number"
                   inputMode="decimal"
                   value={height}
@@ -192,8 +192,8 @@ export default function VolumeCalculatorTool() {
           {(shape === 'cylinder' || shape === 'cone') && (
             <>
               <div className="space-y-1.5 sm:col-span-1">
-                <label className="text-xs font-bold text-foreground">Rayon (r) :</label>
-                <input
+                <label htmlFor="volumecalculatortool-rayon-r" className="text-xs font-bold text-foreground">Rayon (r) :</label>
+                <input id="volumecalculatortool-rayon-r"
                   type="number"
                   inputMode="decimal"
                   value={radius}
@@ -204,8 +204,8 @@ export default function VolumeCalculatorTool() {
                 <p className="text-3xs text-muted-foreground">Rayon = Diamètre / 2</p>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-xs font-bold text-foreground">Hauteur (h) :</label>
-                <input
+                <label htmlFor="volumecalculatortool-hauteur-h" className="text-xs font-bold text-foreground">Hauteur (h) :</label>
+                <input id="volumecalculatortool-hauteur-h"
                   type="number"
                   inputMode="decimal"
                   value={height}
@@ -219,8 +219,8 @@ export default function VolumeCalculatorTool() {
 
           {shape === 'sphere' && (
             <div className="space-y-1.5 sm:col-span-3">
-              <label className="text-xs font-bold text-foreground">Rayon de la sphère :</label>
-              <input
+              <label htmlFor="volumecalculatortool-rayon-de-la-sphere" className="text-xs font-bold text-foreground">Rayon de la sphère :</label>
+              <input id="volumecalculatortool-rayon-de-la-sphere"
                 type="number"
                 inputMode="decimal"
                 value={radius}

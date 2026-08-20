@@ -85,10 +85,18 @@ export default function UnitConverterTool() {
     >
       {/* 1. Sélecteur de catégorie (scroll horizontal sur mobile) */}
       <Card className="border-border bg-surface p-3 sm:p-4 shadow-xs space-y-2">
-        <label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+        {/* Groupe de boutons, pas un champ : voir la note de RecordMovementModal. */}
+        <span
+          id="convertisseur-grandeur-libelle"
+          className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground"
+        >
           Grandeur physique :
-        </label>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        </span>
+        <div
+          role="group"
+          aria-labelledby="convertisseur-grandeur-libelle"
+          className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+        >
           {(Object.keys(UNIT_CATEGORIES) as UnitCategory[]).map((catKey) => {
             const cat = UNIT_CATEGORIES[catKey];
             const isSelected = category === catKey;
@@ -115,11 +123,11 @@ export default function UnitConverterTool() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Valeur & Unité Source */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="unitconvertertool-valeur-a-convertir" className="text-xs font-bold text-foreground">
               Valeur à convertir :
             </label>
             <div className="flex gap-2">
-              <input
+              <input id="unitconvertertool-valeur-a-convertir"
                 type="number"
                 inputMode="decimal"
                 value={valueStr}
@@ -144,7 +152,7 @@ export default function UnitConverterTool() {
           {/* Bouton d'inversion & Unité Cible */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-foreground">
+              <label htmlFor="unitconvertertool-convertir-vers" className="text-xs font-bold text-foreground">
                 Convertir vers :
               </label>
               <button
@@ -156,7 +164,7 @@ export default function UnitConverterTool() {
                 <span>Intervertir</span>
               </button>
             </div>
-            <select
+            <select id="unitconvertertool-convertir-vers"
               value={toUnit}
               onChange={(e) => setToUnit(e.target.value)}
               className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"

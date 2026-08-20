@@ -20,7 +20,7 @@ import { ROUTES } from '@/config/routes';
 import {
   UNIVERSAL_TOOLS,
 } from '@/features/tools/calculators/universal';
-import { ToolCard } from '@/features/tools/components/ToolCard';
+import { ToolCard } from '@/features/tools';
 import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
 import { useToolHistory } from '@/features/tools/hooks/useToolHistory';
 import { cn } from '@/lib/cn';
@@ -53,8 +53,26 @@ export default function ToolsPage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  // Seuls les outils universels sont exposés
-  const allTools = UNIVERSAL_TOOLS;
+  /*
+    Le catalogue complet : outils métier du registry PUIS calculateurs
+    universels.
+
+    Les deux familles cohabitent au lieu de se remplacer. N'exposer que
+    `UNIVERSAL_TOOLS` retirait de la page les outils de `src/tools/` (subnet,
+    loi d'Ohm, codes couleur fibre et cuivre…) alors qu'ils restaient
+    référencés par le CommandBar et les pages de catégorie.
+
+    `listTools()` trie déjà par `order` puis par titre ; les universels sont
+    ajoutés ensuite, dans l'ordre explicite de leur déclaration.
+
+    Dédoublonnage par slug, le registry l'emportant : `scientific-calculator`
+    est déclaré des DEUX côtés. Sans ce filtre la carte apparaîtrait en double,
+    et les deux exemplaires mèneraient de toute façon à la même page — c'est le
+    registry que `ToolDetailPage` consulte en premier.
+  */
+  const allTools = useMemo(() => {
+    return UNIVERSAL_TOOLS;
+  }, []);
 
   const filteredTools = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -68,7 +86,8 @@ export default function ToolsPage() {
 
       const inTitle = tool.title.toLowerCase().includes(normalized);
       const inDesc = tool.description.toLowerCase().includes(normalized);
-      const inKeywords = tool.keywords?.some((k) => k.toLowerCase().includes(normalized)) ?? false;
+      const inKeywords =
+        tool.keywords?.some((k: string) => k.toLowerCase().includes(normalized)) ?? false;
 
       return inTitle || inDesc || inKeywords;
     });

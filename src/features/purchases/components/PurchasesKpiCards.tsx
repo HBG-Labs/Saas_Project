@@ -228,10 +228,10 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
                 <DropdownSeparator />
 
                 <div className="p-2 space-y-1.5">
-                  <label className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <label htmlFor="purchaseskpicards-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
                     Choisir un mois précis :
                   </label>
-                  <input
+                  <input id="purchaseskpicards-choisir-un-mois-precis"
                     type="month"
                     value={customMonth}
                     onChange={(e) => {

@@ -8,6 +8,7 @@ import {
   addFavorite,
   getToolBySlug,
   listFavorites,
+  listTools,
   listToolHistory,
   recordToolUsage,
   removeFavorite,
@@ -39,6 +40,25 @@ export function useCatalogTool(slug: string | undefined) {
     queryFn: () => (slug === undefined ? null : getToolBySlug(slug)),
     enabled: slug !== undefined,
     // Le catalogue bouge à chaque déploiement, pas à chaque minute.
+    staleTime: 10 * 60_000,
+  });
+}
+
+/**
+ * Le catalogue entier, pour résoudre un slug en identifiant.
+ *
+ * Poser un favori demande un `tool_id` ; une page qui ne connaît ses outils
+ * que par leur slug — la liste du catalogue, par exemple — n'en dispose pas.
+ * `useCatalogTool` répondrait, mais une requête par carte affichée : ici une
+ * seule requête sert toute la grille.
+ *
+ * Le catalogue ne bouge qu'au déploiement, d'où le même `staleTime` que
+ * `useCatalogTool`. Pas de `enabled` : la lecture du catalogue est publique.
+ */
+export function useCatalogTools() {
+  return useQuery({
+    queryKey: qk.catalog.tools(),
+    queryFn: listTools,
     staleTime: 10 * 60_000,
   });
 }

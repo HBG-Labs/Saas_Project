@@ -173,6 +173,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.planning,
       MIGRATION_FILES.locations,
       MIGRATION_FILES.retireTracking,
+      MIGRATION_FILES.stock,
     ],
     'role_permissions',
   );

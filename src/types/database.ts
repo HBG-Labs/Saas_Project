@@ -67,6 +67,8 @@ export type VehicleMaintenanceType =
   | 'reparation'
   | 'autre';
 
+export type StockMovementType = 'in' | 'out' | 'transfer' | 'adjustment';
+
 export type EquipmentCategory = 'optique' | 'electricite' | 'radio' | 'securite' | 'autre';
 export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expired';
 export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
@@ -1551,6 +1553,134 @@ export interface Database {
         ];
       };
 
+      /**
+       * Consommables tenus en stock.
+       *
+       * Les montants sont en EUROS (`numeric(12,2)`) et non en centimes,
+       * contrairement au reste du projet : écart assumé, documenté dans
+       * `20260820110000_stock.sql`. Les quantités sont `numeric` car un câble
+       * se stocke au mètre.
+       */
+      stock_consumables: {
+        Row: {
+          id: string;
+          organization_id: string;
+          reference: string;
+          name: string;
+          category: string;
+          unit: string;
+          quantity_in_stock: number;
+          min_threshold: number;
+          unit_price_eur: number | null;
+          selling_price_eur: number | null;
+          location: string;
+          supplier: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          reference: string;
+          name: string;
+          category?: string;
+          unit?: string;
+          quantity_in_stock?: number;
+          min_threshold?: number;
+          unit_price_eur?: number | null;
+          selling_price_eur?: number | null;
+          location?: string;
+          supplier?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          reference?: string;
+          name?: string;
+          category?: string;
+          unit?: string;
+          quantity_in_stock?: number;
+          min_threshold?: number;
+          unit_price_eur?: number | null;
+          selling_price_eur?: number | null;
+          location?: string;
+          supplier?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_consumables_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /**
+       * Journal des mouvements de stock.
+       *
+       * `consumable_name` et `consumable_reference` sont des INSTANTANÉS : ils
+       * survivent au renommage comme à la suppression de l'article, dont la clé
+       * étrangère est `on delete set null`.
+       *
+       * Ce journal ne s'écrit pas directement : la quantité de l'article et le
+       * mouvement doivent bouger ensemble, ce que garantit la fonction
+       * `record_stock_movement`.
+       */
+      stock_movements: {
+        Row: {
+          id: string;
+          organization_id: string;
+          consumable_id: string | null;
+          consumable_name: string;
+          consumable_reference: string;
+          type: StockMovementType;
+          /** Toujours positive : c'est `type` qui porte le sens. */
+          quantity: number;
+          reason: string;
+          technician_id: string | null;
+          technician_name: string | null;
+          intervention_ref: string | null;
+          location_from: string | null;
+          location_to: string | null;
+          occurred_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          consumable_id?: string | null;
+          consumable_name: string;
+          consumable_reference: string;
+          type: StockMovementType;
+          quantity: number;
+          reason?: string;
+          technician_id?: string | null;
+          technician_name?: string | null;
+          intervention_ref?: string | null;
+          location_from?: string | null;
+          location_to?: string | null;
+          occurred_at?: string;
+        };
+        /** Un mouvement passé ne se réécrit pas : aucune policy UPDATE. */
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'stock_movements_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_consumable_id_fkey';
+            columns: ['consumable_id'];
+            referencedRelation: 'stock_consumables';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       equipment: {
         Row: {
           id: string;
@@ -2158,6 +2288,31 @@ export interface Database {
     };
 
     Functions: {
+      /**
+       * Enregistre un mouvement et met à jour la quantité, dans la même
+       * transaction.
+       *
+       * Le faire en deux appels laisserait une fenêtre où le journal et l'état
+       * divergent, et deux techniciens servant le même article au même instant
+       * perdraient une décrémentation. La fonction est `security invoker` : les
+       * policies de `stock_consumables` et `stock_movements` s'appliquent
+       * normalement.
+       */
+      record_stock_movement: {
+        Args: {
+          p_consumable_id: string;
+          p_type: StockMovementType;
+          p_quantity: number;
+          p_reason?: string;
+          p_technician_id?: string | null;
+          p_technician_name?: string | null;
+          p_intervention_ref?: string | null;
+          p_location_from?: string | null;
+          p_location_to?: string | null;
+        };
+        Returns: Database['public']['Tables']['stock_movements']['Row'];
+      };
+
       /**
        * Accepte une invitation et crée l'appartenance. Renvoie l'identifiant de
        * l'organisation rejointe.

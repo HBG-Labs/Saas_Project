@@ -118,10 +118,10 @@ export function ConsumableFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Référence */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-reference-sku" className="block text-xs font-semibold text-foreground mb-1">
               Référence / SKU *
             </label>
-            <Input
+            <Input id="consumableformmodal-reference-sku"
               value={formData.reference}
               onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
               placeholder="Ex: FBR-PTO-01, DISJ-16A"
@@ -131,10 +131,10 @@ export function ConsumableFormModal({
 
           {/* Catégorie */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-categorie" className="block text-xs font-semibold text-foreground mb-1">
               Catégorie *
             </label>
-            <select
+            <select id="consumableformmodal-categorie"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -150,10 +150,10 @@ export function ConsumableFormModal({
 
         {/* Nom / Désignation */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="consumableformmodal-designation-de-l-article" className="block text-xs font-semibold text-foreground mb-1">
             Désignation de l’article *
           </label>
-          <Input
+          <Input id="consumableformmodal-designation-de-l-article"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ex: Câble Fibre Optique 4 FO G.657.A2 (500m)"
@@ -164,10 +164,10 @@ export function ConsumableFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {/* Unité */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-unite" className="block text-xs font-semibold text-foreground mb-1">
               Unité *
             </label>
-            <select
+            <select id="consumableformmodal-unite"
               value={formData.unit}
               onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -182,10 +182,10 @@ export function ConsumableFormModal({
 
           {/* Quantité initiale / en stock */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-quantite-en-stock" className="block text-xs font-semibold text-foreground mb-1">
               Quantité en stock *
             </label>
-            <Input
+            <Input id="consumableformmodal-quantite-en-stock"
               type="number"
               min={0}
               step={formData.unit === 'm' || formData.unit === 'kg' || formData.unit === 'litre' ? '0.1' : '1'}
@@ -199,10 +199,10 @@ export function ConsumableFormModal({
 
           {/* Seuil minimum critique */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-seuil-d-alerte-min" className="block text-xs font-semibold text-foreground mb-1">
               Seuil d’alerte min. *
             </label>
-            <Input
+            <Input id="consumableformmodal-seuil-d-alerte-min"
               type="number"
               min={0}
               step={1}
@@ -218,10 +218,10 @@ export function ConsumableFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Prix d'achat unitaire HT */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-prix-d-achat-unitaire-ht" className="block text-xs font-semibold text-foreground mb-1">
               Prix d’achat unitaire HT (€)
             </label>
-            <Input
+            <Input id="consumableformmodal-prix-d-achat-unitaire-ht"
               type="number"
               min={0}
               step="0.01"
@@ -238,10 +238,10 @@ export function ConsumableFormModal({
 
           {/* Prix de vente unitaire HT */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-prix-de-facturation-ht" className="block text-xs font-semibold text-foreground mb-1">
               Prix de facturation HT (€)
             </label>
-            <Input
+            <Input id="consumableformmodal-prix-de-facturation-ht"
               type="number"
               min={0}
               step="0.01"
@@ -260,10 +260,10 @@ export function ConsumableFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Emplacement */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-emplacement-de-stockage" className="block text-xs font-semibold text-foreground mb-1">
               Emplacement de stockage
             </label>
-            <Input
+            <Input id="consumableformmodal-emplacement-de-stockage"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="Ex: Dépôt Central - Allée B, Véhicule 01..."
@@ -272,10 +272,10 @@ export function ConsumableFormModal({
 
           {/* Fournisseur */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="consumableformmodal-fournisseur-habituel" className="block text-xs font-semibold text-foreground mb-1">
               Fournisseur habituel
             </label>
-            <Input
+            <Input id="consumableformmodal-fournisseur-habituel"
               value={formData.supplier ?? ''}
               onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
               placeholder="Ex: Rexel, Sonepar, CEDEO, Wurth..."
@@ -285,10 +285,10 @@ export function ConsumableFormModal({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="consumableformmodal-notes-amp-remarques" className="block text-xs font-semibold text-foreground mb-1">
             Notes &amp; Remarques
           </label>
-          <textarea
+          <textarea id="consumableformmodal-notes-amp-remarques"
             value={formData.notes ?? ''}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             placeholder="Informations utiles, fiche technique, équivalences..."

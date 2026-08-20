@@ -3,6 +3,33 @@ import type { UniversalToolDefinition } from '../../types/tools.types';
 
 export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
   {
+    id: 'scientific-calculator',
+    slug: 'scientific-calculator',
+    name: 'Calculatrice Scientifique',
+    title: 'Calculatrice Scientifique',
+    category: 'universal',
+    description:
+      'Calculatrice scientifique complète d’ingénierie : trigonométrie (deg/rad), puissances, racines, logarithmes (ln/log), factorielle et mémoire.',
+    keywords: [
+      'calculatrice',
+      'scientifique',
+      'trigonometrie',
+      'sin',
+      'cos',
+      'tan',
+      'log',
+      'ln',
+      'racine',
+      'puissance',
+      'factorielle',
+      'maths',
+      'ingenierie',
+    ],
+    icon: 'calculator',
+    order: 1,
+    Component: lazy(() => import('@/tools/scientific-calculator/ScientificCalculatorTool')),
+  },
+  {
     id: 'unit-converter',
     slug: 'unit-converter',
     name: "Convertisseur d'unités",
@@ -24,7 +51,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'puissance',
     ],
     icon: 'arrow-left-right',
-    order: 1,
+    order: 2,
     Component: lazy(() => import('./unit-converter/UnitConverterTool')),
   },
   {
@@ -37,7 +64,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Conversions de distances, mesures de longueurs et calcul de distance euclidienne 2D entre coordonnées.',
     keywords: ['distance', 'longueur', 'metre', 'kilometre', 'pouce', 'pied', 'coordonnees', 'point'],
     icon: 'ruler',
-    order: 2,
+    order: 3,
     Component: lazy(() => import('./distance/DistanceCalculatorTool')),
   },
   {
@@ -50,7 +77,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul précis des surfaces géométriques (rectangle, carré, cercle, triangle, trapèze) avec équivalences d’unités.',
     keywords: ['surface', 'aire', 'rectangle', 'carre', 'cercle', 'triangle', 'trapeze', 'm2', 'hectare'],
     icon: 'square',
-    order: 3,
+    order: 4,
     Component: lazy(() => import('./surface/SurfaceCalculatorTool')),
   },
   {
@@ -63,7 +90,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul de volumes géométriques (parallélépipède, cylindre, cuve, sphère) avec équivalence en litres et m³.',
     keywords: ['volume', 'capacite', 'litre', 'm3', 'cubage', 'cylindre', 'cuve', 'sphere', 'contenance'],
     icon: 'box',
-    order: 4,
+    order: 5,
     Component: lazy(() => import('./volume/VolumeCalculatorTool')),
   },
   {
@@ -76,7 +103,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul direct et inverse de pente en %, angle en degrés, dénivelé et longueur de rampe pour le terrassement, voirie et toitures.',
     keywords: ['pente', 'denivele', 'inclinaison', 'pourcentage', 'degres', 'angle', 'rampe', 'toiture', 'ecoulement'],
     icon: 'trending-up',
-    order: 5,
+    order: 6,
     Component: lazy(() => import('./slope/SlopeCalculatorTool')),
   },
   {
@@ -89,7 +116,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul de part, taux d’évolution (+/-%), remise commerciale, majoration / TVA et proportionnalité.',
     keywords: ['pourcentage', 'tva', 'remise', 'evolution', 'taux', 'reduction', 'majoration', 'proportion'],
     icon: 'percent',
-    order: 6,
+    order: 7,
     Component: lazy(() => import('./percentage/PercentageCalculatorTool')),
   },
   {
@@ -102,7 +129,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul de durée de travail, intervalle horaire, pointage, conversion en heures décimales et cumul de durées.',
     keywords: ['temps', 'duree', 'heures', 'minutes', 'pointage', 'horaire', 'pause', 'decimales', 'chrono'],
     icon: 'clock',
-    order: 7,
+    order: 8,
     Component: lazy(() => import('./time/TimeCalculatorTool')),
   },
   {
@@ -115,7 +142,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul de charge totale, conversion de masse (kg, tonnes, grammes, livres) et estimation de poids pour le transport.',
     keywords: ['poids', 'masse', 'charge', 'kg', 'tonne', 'gramme', 'livre', 'transport', 'manutention'],
     icon: 'scale',
-    order: 8,
+    order: 9,
     Component: lazy(() => import('./weight/WeightCalculatorTool')),
   },
   {
@@ -128,7 +155,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Conversion instantanée de pressions pour les réseaux hydrauliques, pneumatiques, gaz, CVC et compresseurs.',
     keywords: ['pression', 'bar', 'psi', 'kpa', 'pascal', 'mbar', 'hydraulique', 'pneumatique', 'compresseur'],
     icon: 'gauge',
-    order: 9,
+    order: 10,
     Component: lazy(() => import('./pressure/PressureCalculatorTool')),
   },
   {
@@ -141,7 +168,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Calcul de débit volumique (L/min, L/h, m³/h), conversion et estimation du temps de remplissage ou de vidange.',
     keywords: ['debit', 'pompe', 'litres', 'm3/h', 'remplissage', 'vidange', 'conduite', 'ecoulement', 'tuyau'],
     icon: 'droplets',
-    order: 10,
+    order: 11,
     Component: lazy(() => import('./flow/FlowCalculatorTool')),
   },
   {
@@ -154,7 +181,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Conversions de puissance universelle (W, kW, MW, VA, kVA, chevaux) et calcul d’énergie consommée en kWh.',
     keywords: ['puissance', 'energie', 'watt', 'kw', 'kwh', 'mwh', 'joule', 'consommation', 'rendement'],
     icon: 'zap',
-    order: 11,
+    order: 12,
     Component: lazy(() => import('./power/PowerCalculatorTool')),
   },
   {
@@ -167,7 +194,7 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
       'Résolution rapide de règles de trois directes, simplification de ratios d’aspect et répartition proportionnelle de charges.',
     keywords: ['ratio', 'rapport', 'regle de trois', 'proportion', 'dosage', 'repartition', 'echelle'],
     icon: 'calculator',
-    order: 12,
+    order: 13,
     Component: lazy(() => import('./ratio/RatioCalculatorTool')),
   },
 ];

@@ -11,13 +11,7 @@ import { registerTool, type ToolDefinition } from '@/features/tools/registry';
  */
 const modules = import.meta.glob<{ default: ToolDefinition }>(
   [
-    './*/index.ts',
-    '!./_*/**',
-    '!./fiber-attenuation/**',
-    '!./dns-ttl-calculator/**',
-    '!./dbm-mw-converter/**',
-    '!./rf-calculators/**',
-    '!./ohm-law-power/**',
+    './scientific-calculator/index.ts',
   ],
   {
     eager: true,

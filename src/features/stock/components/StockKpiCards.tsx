@@ -252,10 +252,10 @@ export function StockKpiCards({
                 <DropdownSeparator />
 
                 <div className="p-2 space-y-1.5">
-                  <label className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <label htmlFor="stockkpicards-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
                     Choisir un mois précis :
                   </label>
-                  <input
+                  <input id="stockkpicards-choisir-un-mois-precis"
                     type="month"
                     value={customMonth}
                     onChange={(e) => {

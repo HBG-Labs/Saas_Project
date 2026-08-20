@@ -132,10 +132,10 @@ export function SupplierFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Nom du fournisseur */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-raison-sociale-nom" className="block text-xs font-semibold text-foreground mb-1">
               Raison sociale / Nom *
             </label>
-            <Input
+            <Input id="supplierformmodal-raison-sociale-nom"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Rexel, Sonepar, Foliatec..."
@@ -145,10 +145,10 @@ export function SupplierFormModal({
 
           {/* Code fournisseur */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-code-fournisseur-interne" className="block text-xs font-semibold text-foreground mb-1">
               Code Fournisseur (Interne)
             </label>
-            <Input
+            <Input id="supplierformmodal-code-fournisseur-interne"
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               placeholder="Ex: SUP-REXEL"
@@ -159,10 +159,10 @@ export function SupplierFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {/* Contact */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-interlocuteur-commercial" className="block text-xs font-semibold text-foreground mb-1">
               Interlocuteur / Commercial
             </label>
-            <Input
+            <Input id="supplierformmodal-interlocuteur-commercial"
               value={formData.contactName}
               onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
               placeholder="Ex: Marc Delorme"
@@ -171,10 +171,10 @@ export function SupplierFormModal({
 
           {/* Email */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-email-commandes" className="block text-xs font-semibold text-foreground mb-1">
               Email commandes
             </label>
-            <Input
+            <Input id="supplierformmodal-email-commandes"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -184,10 +184,10 @@ export function SupplierFormModal({
 
           {/* Téléphone */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-telephone" className="block text-xs font-semibold text-foreground mb-1">
               Téléphone
             </label>
-            <Input
+            <Input id="supplierformmodal-telephone"
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -199,10 +199,10 @@ export function SupplierFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {/* Adresse */}
           <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-adresse" className="block text-xs font-semibold text-foreground mb-1">
               Adresse
             </label>
-            <Input
+            <Input id="supplierformmodal-adresse"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="12 Avenue des Métiers"
@@ -211,10 +211,10 @@ export function SupplierFormModal({
 
           {/* Ville / CP */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-code-postal-amp-ville" className="block text-xs font-semibold text-foreground mb-1">
               Code Postal &amp; Ville
             </label>
-            <Input
+            <Input id="supplierformmodal-code-postal-amp-ville"
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               placeholder="75009 Paris"
@@ -225,10 +225,10 @@ export function SupplierFormModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Modalités de paiement */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-conditions-de-reglement" className="block text-xs font-semibold text-foreground mb-1">
               Conditions de règlement
             </label>
-            <Input
+            <Input id="supplierformmodal-conditions-de-reglement"
               value={formData.defaultPaymentTerms}
               onChange={(e) =>
                 setFormData({ ...formData, defaultPaymentTerms: e.target.value })
@@ -239,10 +239,10 @@ export function SupplierFormModal({
 
           {/* Site Web */}
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label htmlFor="supplierformmodal-site-internet-e-shop" className="block text-xs font-semibold text-foreground mb-1">
               Site Internet / E-Shop
             </label>
-            <Input
+            <Input id="supplierformmodal-site-internet-e-shop"
               type="url"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
@@ -253,10 +253,10 @@ export function SupplierFormModal({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">
+          <label htmlFor="supplierformmodal-notes-amp-tarifs-negocies" className="block text-xs font-semibold text-foreground mb-1">
             Notes &amp; Tarifs négociés
           </label>
-          <textarea
+          <textarea id="supplierformmodal-notes-amp-tarifs-negocies"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             placeholder="Numéro de compte client, franco de port, remise négociée..."

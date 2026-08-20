@@ -199,9 +199,9 @@ export default function PercentageCalculatorTool() {
           {mode === 'percent_of' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Pourcentage (%) :</label>
+                <label htmlFor="percentagecalculatortool-pourcentage" className="text-xs font-bold text-foreground">Pourcentage (%) :</label>
                 <div className="relative">
-                  <input
+                  <input id="percentagecalculatortool-pourcentage"
                     type="number"
                     inputMode="decimal"
                     value={val1}
@@ -213,8 +213,8 @@ export default function PercentageCalculatorTool() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">De la valeur :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-de-la-valeur" className="text-xs font-bold text-foreground">De la valeur :</label>
+                <input id="percentagecalculatortool-de-la-valeur"
                   type="number"
                   inputMode="decimal"
                   value={val2}
@@ -229,8 +229,8 @@ export default function PercentageCalculatorTool() {
           {mode === 'evolution' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Valeur Initiale :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-valeur-initiale" className="text-xs font-bold text-foreground">Valeur Initiale :</label>
+                <input id="percentagecalculatortool-valeur-initiale"
                   type="number"
                   inputMode="decimal"
                   value={val1}
@@ -240,8 +240,8 @@ export default function PercentageCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Valeur Finale :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-valeur-finale" className="text-xs font-bold text-foreground">Valeur Finale :</label>
+                <input id="percentagecalculatortool-valeur-finale"
                   type="number"
                   inputMode="decimal"
                   value={val2}
@@ -256,8 +256,8 @@ export default function PercentageCalculatorTool() {
           {mode === 'subtract_percent' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Montant initial :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-montant-initial" className="text-xs font-bold text-foreground">Montant initial :</label>
+                <input id="percentagecalculatortool-montant-initial"
                   type="number"
                   inputMode="decimal"
                   value={val1}
@@ -267,9 +267,9 @@ export default function PercentageCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Pourcentage à déduire :</label>
+                <label htmlFor="percentagecalculatortool-pourcentage-a-deduire" className="text-xs font-bold text-foreground">Pourcentage à déduire :</label>
                 <div className="relative">
-                  <input
+                  <input id="percentagecalculatortool-pourcentage-a-deduire"
                     type="number"
                     inputMode="decimal"
                     value={val2}
@@ -286,8 +286,8 @@ export default function PercentageCalculatorTool() {
           {mode === 'add_percent' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Montant initial :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-montant-initial-2" className="text-xs font-bold text-foreground">Montant initial :</label>
+                <input id="percentagecalculatortool-montant-initial-2"
                   type="number"
                   inputMode="decimal"
                   value={val1}
@@ -297,9 +297,9 @@ export default function PercentageCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Pourcentage à ajouter :</label>
+                <label htmlFor="percentagecalculatortool-pourcentage-a-ajouter" className="text-xs font-bold text-foreground">Pourcentage à ajouter :</label>
                 <div className="relative">
-                  <input
+                  <input id="percentagecalculatortool-pourcentage-a-ajouter"
                     type="number"
                     inputMode="decimal"
                     value={val2}
@@ -316,8 +316,8 @@ export default function PercentageCalculatorTool() {
           {mode === 'part_of_total' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Valeur partielle :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-valeur-partielle" className="text-xs font-bold text-foreground">Valeur partielle :</label>
+                <input id="percentagecalculatortool-valeur-partielle"
                   type="number"
                   inputMode="decimal"
                   value={val1}
@@ -327,8 +327,8 @@ export default function PercentageCalculatorTool() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Total de référence :</label>
-                <input
+                <label htmlFor="percentagecalculatortool-total-de-reference" className="text-xs font-bold text-foreground">Total de référence :</label>
+                <input id="percentagecalculatortool-total-de-reference"
                   type="number"
                   inputMode="decimal"
                   value={val2}
