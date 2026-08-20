@@ -17,7 +17,7 @@ import { Link } from 'react-router';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useLabel } from '@/features/industries';
+import { formatNoneNoun, useLabel } from '@/features/industries';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -55,6 +55,7 @@ export default function MissionsListPage() {
   const statusCounts = useMissionStatusCounts(organizationId);
   // « Missions » chez un fibreur, « Chantiers » chez un paysagiste.
   const jobPlural = useLabel('job', true);
+  const jobSingular = useLabel('job');
 
   useDocumentTitle(jobPlural);
 
@@ -156,7 +157,7 @@ export default function MissionsListPage() {
         <div className="space-y-4">
           <EmptyState
             icon={ClipboardList}
-            title={activeFilters > 0 ? 'Aucun résultat' : `Aucun ${jobPlural.toLowerCase()} en cours`}
+            title={activeFilters > 0 ? 'Aucun résultat' : formatNoneNoun(jobSingular, 'en cours')}
             description={
               activeFilters > 0
                 ? 'Aucune intervention ne correspond aux filtres appliqués.'

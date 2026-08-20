@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuditLogs } from '@/features/audit';
 import { useSeatBilling } from '@/features/billing';
-import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNewNoun, formatNoneNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import {
@@ -358,13 +358,13 @@ export function OwnerDashboard() {
               {missionList.length === 0 ? (
                 <div className="text-muted-foreground flex flex-col items-center justify-center py-10 text-center">
                   <ClipboardList className="size-10 text-subtle-foreground/50 mb-2" />
-                  <p className="text-sm font-medium">Aucun {jobSingular.toLowerCase()} enregistré</p>
+                  <p className="text-sm font-medium">{formatNoneNoun(jobSingular, 'enregistré')}</p>
                   <p className="text-xs text-subtle-foreground mt-1">
                     Créez votre première mission pour commencer le suivi d&apos;intervention.
                   </p>
                   <Button asChild variant="outline" size="sm" className="mt-4">
                     <Link to={ROUTES.missionNew}>
-                      <Plus className="size-3.5 mr-1" /> Créer un {jobSingular.toLowerCase()}
+                      <Plus className="size-3.5 mr-1" /> {formatNewNoun(jobSingular)}
                     </Link>
                   </Button>
                 </div>

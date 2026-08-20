@@ -7,7 +7,7 @@ import {
   stripCast,
 } from '@/test/sql-fixtures';
 
-import { DEFAULT_INDUSTRY, INDUSTRY_CODES, isIndustryCode, pluralize } from './industries';
+import { DEFAULT_INDUSTRY, formatNewNoun, formatNoneNoun, INDUSTRY_CODES, isFeminineNoun, isIndustryCode, pluralize } from './industries';
 
 /**
  * Le miroir TypeScript des métiers ne doit pas diverger du semis SQL.
@@ -125,5 +125,20 @@ describe('vocabulaire métier', () => {
   it('privilégie la forme explicite quand elle existe', () => {
     // Le recours prévu pour un pluriel que la règle ne sait pas produire.
     expect(pluralize('Cheval', 'Chevaux')).toBe('Chevaux');
+  });
+
+  it('accorde correctement « Nouveau » / « Nouvelle » et « Aucun » / « Aucune »', () => {
+    expect(isFeminineNoun('Mission')).toBe(true);
+    expect(isFeminineNoun('Chantier')).toBe(false);
+
+    expect(formatNewNoun('Mission')).toBe('Nouvelle mission');
+    expect(formatNewNoun('Chantier')).toBe('Nouveau chantier');
+
+    expect(formatNoneNoun('Mission', 'planifié')).toBe('Aucune mission planifiée');
+    expect(formatNoneNoun('Chantier', 'planifié')).toBe('Aucun chantier planifié');
+    expect(formatNoneNoun('Mission', 'en cours')).toBe('Aucune mission en cours');
+    expect(formatNoneNoun('Chantier', 'en cours')).toBe('Aucun chantier en cours');
+    expect(formatNoneNoun('Intervention', 'enregistré')).toBe('Aucune intervention enregistrée');
+    expect(formatNoneNoun('Passage', 'enregistré')).toBe('Aucun passage enregistré');
   });
 });

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
-import { useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNoneNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 
@@ -91,7 +91,7 @@ export function TechnicianDashboard() {
           {myMissions.length === 0 ? (
             <div className="py-8 text-center space-y-2">
               <Calendar className="size-8 text-subtle-foreground/60 mx-auto" />
-              <p className="text-xs text-muted-foreground font-medium">Aucun {jobSingular.toLowerCase()} planifié pour le moment.</p>
+              <p className="text-xs text-muted-foreground font-medium">{formatNoneNoun(jobSingular, 'planifié')} pour le moment.</p>
               <p className="text-2xs text-subtle-foreground">Vos prochaines interventions attribuées par votre responsable apparaîtront ici.</p>
             </div>
           ) : (

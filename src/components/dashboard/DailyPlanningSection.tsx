@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
-import { useLabel } from '@/features/industries';
+import { formatNewNoun, formatNoneNoun, useLabel } from '@/features/industries';
 import { MissionStatusBadge } from '@/features/missions';
 import type { MissionWithRelations } from '@/types/domain';
 
@@ -18,20 +18,14 @@ export function DailyPlanningSection({
   const jobSingular = useLabel('job');
 
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between border-b pb-3.5">
-        <div>
-          <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-            <Calendar className="size-4.5 text-primary" />
-            Planning & {jobPlural} récentes
-          </CardTitle>
-          <p className="text-2xs text-muted-foreground mt-0.5">
-            Suivi des statuts et avancement en temps réel
-          </p>
-        </div>
-
+    <Card className="border-border bg-surface shadow-xs">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Calendar className="size-4 text-primary" />
+          Planning & {jobPlural} du jour
+        </CardTitle>
         <Link
-          to={ROUTES.missions}
+          to={ROUTES.planning}
           className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
         >
           Voir tout
@@ -43,13 +37,13 @@ export function DailyPlanningSection({
         {missions.length === 0 ? (
           <div className="py-8 text-center space-y-2">
             <Calendar className="size-8 text-subtle-foreground/60 mx-auto" />
-            <p className="text-xs font-medium text-muted-foreground">Aucun {jobSingular.toLowerCase()} planifié</p>
+            <p className="text-xs font-medium text-muted-foreground">{formatNoneNoun(jobSingular, 'planifié')}</p>
             <p className="text-2xs text-subtle-foreground">
               Créez une intervention pour l'assigner à une équipe.
             </p>
             <Button asChild variant="outline" size="sm" className="mt-2">
               <Link to={ROUTES.missionNew}>
-                <Plus className="size-3.5 mr-1" /> Créer un {jobSingular.toLowerCase()}
+                <Plus className="size-3.5 mr-1" /> {formatNewNoun(jobSingular)}
               </Link>
             </Button>
           </div>

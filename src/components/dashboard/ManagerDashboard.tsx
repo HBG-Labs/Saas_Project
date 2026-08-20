@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
-import { formatNewNoun, useCurrentIndustry, useLabel } from '@/features/industries';
+import { formatNewNoun, formatNoneNoun, useCurrentIndustry, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
 import { MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -174,7 +174,7 @@ export function ManagerDashboard() {
         </CardHeader>
         <CardContent className="pt-4">
           {missionList.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">Aucun {jobSingular.toLowerCase()} actuellement attribué.</p>
+            <p className="text-xs text-muted-foreground py-4 text-center">{formatNoneNoun(jobSingular, 'attribué')} actuellement.</p>
           ) : (
             <div className="divide-y divide-border space-y-1">
               {missionList.map((m) => (

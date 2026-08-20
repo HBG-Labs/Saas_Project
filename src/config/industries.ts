@@ -106,16 +106,44 @@ const FEMININE_NOUNS = new Set([
   'demande',
 ]);
 
+export function isFeminineNoun(noun: string): boolean {
+  if (!noun) return false;
+  const lower = noun.toLowerCase().trim();
+  return (
+    FEMININE_NOUNS.has(lower) ||
+    lower.endsWith('tion') ||
+    lower.endsWith('sion') ||
+    lower.endsWith('ite')
+  );
+}
+
 /**
  * Accorde « Nouveau » / « Nouvelle » avec le terme métier (ex: « Nouvelle mission », « Nouveau chantier »).
  */
 export function formatNewNoun(noun: string): string {
   if (!noun) return 'Nouveau';
   const lower = noun.toLowerCase().trim();
-  const isFeminine =
-    FEMININE_NOUNS.has(lower) ||
-    lower.endsWith('tion') ||
-    lower.endsWith('sion') ||
-    lower.endsWith('ite');
-  return isFeminine ? `Nouvelle ${lower}` : `Nouveau ${lower}`;
+  return isFeminineNoun(noun) ? `Nouvelle ${lower}` : `Nouveau ${lower}`;
+}
+
+/**
+ * Accorde « Aucun » / « Aucune » avec le terme métier et son qualificatif optionnel.
+ * Exemples :
+ * - formatNoneNoun('mission', 'planifié') => "Aucune mission planifiée"
+ * - formatNoneNoun('chantier', 'planifié') => "Aucun chantier planifié"
+ * - formatNoneNoun('mission', 'en cours') => "Aucune mission en cours"
+ * - formatNoneNoun('mission') => "Aucune mission"
+ */
+export function formatNoneNoun(
+  noun: string,
+  stateEnding?: 'planifié' | 'attribué' | 'enregistré' | 'en cours' | 'trouvé',
+): string {
+  if (!noun) return 'Aucun';
+  const lower = noun.toLowerCase().trim();
+  const fem = isFeminineNoun(noun);
+  const prefix = fem ? `Aucune ${lower}` : `Aucun ${lower}`;
+  if (!stateEnding) return prefix;
+  if (stateEnding === 'en cours') return `${prefix} en cours`;
+  const agreedState = fem ? `${stateEnding}e` : stateEnding;
+  return `${prefix} ${agreedState}`;
 }

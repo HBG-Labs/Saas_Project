@@ -15,7 +15,7 @@ export {
   useLabel,
   type CurrentIndustry,
 } from './hooks/useIndustries';
-export { formatNewNoun } from '@/config/industries';
+export { formatNewNoun, formatNoneNoun, isFeminineNoun } from '@/config/industries';
 
 export {
   getFormResponse,
