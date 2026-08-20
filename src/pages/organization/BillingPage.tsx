@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
+import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import {
   useBillingPortal,
@@ -25,7 +25,6 @@ import {
   MemberQuotaBar,
   PERMISSIONS,
   useCurrentOrganization,
-  useMembers,
   usePermission,
 } from '@/features/organizations';
 
@@ -96,7 +95,6 @@ export default function BillingPage() {
 
   const subscription = useOrganizationSubscription(organizationId);
   const { planCode } = useOrganizationEntitlements(organizationId);
-  const members = useMembers(organizationId);
   const summary = useBillingSummary(organizationId);
   const checkout = useCheckout(organizationId);
   const portal = useBillingPortal(organizationId);
@@ -118,10 +116,6 @@ export default function BillingPage() {
 
   const finDEssai = subscription.data?.trial_ends_at ?? subscription.data?.current_period_end ?? null;
   const joursDEssaiRestants = joursRestants(finDEssai);
-
-  // Repli quand le résumé de facturation n'est pas encore chargé : compter les
-  // membres actifs donne le même effectif que le serveur facturera.
-  const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
 
   // Trois situations, et une seule sortie par situation. Le portail Stripe ne
   // s'ouvre que s'il y a quelque chose à y gérer ; sinon la résiliation se fait
@@ -247,7 +241,7 @@ export default function BillingPage() {
               {/* La jauge vit ICI, au moment de choisir — et non dans une carte
                   « Consommation » séparée qui répétait la même donnée deux
                   centimètres plus haut. */}
-              {members.isPending ? (
+              {summary.isPending ? (
                 <Skeleton className="h-12 w-full" />
               ) : (
                 <MemberQuotaBar
@@ -321,15 +315,6 @@ export default function BillingPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {PAYABLE_PLANS.map((tier) => {
               const isCurrent = tier.id === planCode;
-              const seats = summary.data?.activeSeats ?? activeMembers.length;
-              // Ce que coûterait CETTE formule à l'effectif actuel. Un montant
-              // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
-              // de paiement — et il vient de la même formule que le serveur.
-              // N'apparaît que s'il dépasse le forfait : le répéter à
-              // l'identique sur les formules assez larges ferait du bruit là où
-              // il doit servir d'avertissement.
-              const projete = computeSubscriptionPrice(tier.id, seats);
-              const auDela = Math.max(0, seats - tier.includedUsers);
 
               return (
                 <Button
@@ -363,12 +348,6 @@ export default function BillingPage() {
                     <span className="font-normal text-muted-foreground">
                       +{tier.additionalUserPriceMonthly} € / mois par utilisateur supplémentaire
                     </span>
-                    {auDela > 0 ? (
-                      <span className="font-semibold text-warning">
-                        {projete} € pour vos {seats} — {auDela} au-delà à{' '}
-                        {tier.additionalUserPriceMonthly} €
-                      </span>
-                    ) : null}
                   </div>
                 </Button>
               );

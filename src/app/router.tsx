@@ -195,12 +195,20 @@ export const routes: RouteObject[] = [
 
                   {
                     element: (
-                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />
+                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel & stock" />
                     ),
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
                         children: [
+                          {
+                            path: ROUTES.stock,
+                            lazy: lazyPage(() => import('@/pages/stock/StockConsumablesPage')),
+                          },
+                          {
+                            path: ROUTES.stockMovements,
+                            lazy: lazyPage(() => import('@/pages/stock/StockMovementsPage')),
+                          },
                           {
                             path: ROUTES.equipment,
                             lazy: lazyPage(() => import('@/pages/equipment/EquipmentPage')),
@@ -211,7 +219,7 @@ export const routes: RouteObject[] = [
                   },
 
                   {
-                    element: <RequirePlan feature={FEATURES.quotes} label="Le module Devis" />,
+                    element: <RequirePlan feature={FEATURES.quotes} label="Le module Achats & Devis" />,
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.quoteView} />,
@@ -219,6 +227,18 @@ export const routes: RouteObject[] = [
                           {
                             path: ROUTES.quotes,
                             lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')),
+                          },
+                          {
+                            path: ROUTES.purchases,
+                            lazy: lazyPage(() => import('@/pages/purchases/PurchaseOrdersPage')),
+                          },
+                          {
+                            path: ROUTES.purchaseOrders,
+                            lazy: lazyPage(() => import('@/pages/purchases/PurchaseOrdersPage')),
+                          },
+                          {
+                            path: ROUTES.suppliers,
+                            lazy: lazyPage(() => import('@/pages/purchases/SuppliersPage')),
                           },
                         ],
                       },

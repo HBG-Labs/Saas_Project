@@ -1,287 +1,319 @@
-import { Briefcase, LayoutGrid, LayoutList, Search, Wrench, X } from 'lucide-react';
+import {
+  Clock,
+  LayoutGrid,
+  LayoutList,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Star,
+  X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { CATEGORY_METADATA } from '@/features/tools/catalog-metadata';
-import { CategoryCard } from '@/features/tools/components/CategoryCard';
-import { ToolCard } from '@/features/tools/components/ToolCard';
-import { useCurrentIndustry } from '@/features/industries';
+import { ROUTES } from '@/config/routes';
 import {
-  countOutsideIndustry,
-  listTools,
-  servesIndustry,
-  sortByIndustryRelevance,
-  type ToolCategorySlug,
-} from '@/features/tools';
+  UNIVERSAL_TOOLS,
+} from '@/features/tools/calculators/universal';
+import { ToolCard } from '@/features/tools/components/ToolCard';
+import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
+import { useToolHistory } from '@/features/tools/hooks/useToolHistory';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
-type Filter = ToolCategorySlug | 'all';
-type ViewMode = 'list' | 'grid';
-
-const LEGACY_SLUG_MAP: Record<string, ToolCategorySlug> = {
-  reseaux: 'networking',
-  electricite: 'electrical',
-  telecoms: 'telecom',
-  fibre: 'fiber-optics',
-};
+type ViewMode = 'grid' | 'list';
+type FilterTab = 'all' | 'favorites';
 
 export default function ToolsPage() {
-  useDocumentTitle('Catalogue des outils');
+  useDocumentTitle('Boîte à Outils Universelle — REZO360 Tools');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [showHistory, setShowHistory] = useState(false);
 
-  // Catégorie lue depuis les paramètres d'URL (ex: ?category=fiber-optics ou ?cat=fibre)
-  const rawParam = searchParams.get('category') ?? searchParams.get('cat');
-  const resolvedSlug = rawParam ? (LEGACY_SLUG_MAP[rawParam] ?? rawParam) : null;
-  const filter: Filter =
-    resolvedSlug && CATEGORY_METADATA.some((c) => c.slug === resolvedSlug)
-      ? (resolvedSlug as ToolCategorySlug)
-      : 'all';
+  const { isFavorite, toggleFavorite } = useToolFavorites();
+  const { history, clearHistory, removeHistoryEntry } = useToolHistory();
 
-  const handleFilterChange = (newFilter: Filter) => {
-    if (newFilter === 'all') {
-      searchParams.delete('category');
+  const tabParam = (searchParams.get('tab') as FilterTab) || 'all';
+  const activeTab: FilterTab = ['all', 'favorites'].includes(tabParam)
+    ? tabParam
+    : 'all';
+
+  const handleTabChange = (tab: FilterTab) => {
+    if (tab === 'all') {
+      searchParams.delete('tab');
     } else {
-      searchParams.set('category', newFilter);
+      searchParams.set('tab', tab);
     }
     setSearchParams(searchParams, { replace: true });
   };
 
-  const allTools = listTools();
+  // Seuls les outils universels sont exposés
+  const allTools = UNIVERSAL_TOOLS;
 
-  /*
-    Le metier ORDONNE le catalogue, il ne le tronque pas par defaut.
-
-    `/tools` est public : un visiteur sans compte n'a pas de metier, et lui
-    servir un catalogue ampute n'aurait aucun sens. Une entreprise, elle, voit
-    d'abord ce qui la concerne — mais garde tout le reste a portee d'un clic,
-    parce que les corps de metier se recouvrent : l'entreprise qui utilise ce
-    produit fait de la fibre ET de l'electricite.
-  */
-  const { code: industry, label: industryLabel, isResolved } = useCurrentIndustry();
-  const [industryOnly, setIndustryOnly] = useState(false);
-
-  const outsideCount = useMemo(
-    () => (isResolved ? countOutsideIndustry(allTools, industry) : 0),
-    [allTools, industry, isResolved],
-  );
-
-  const tools = useMemo(() => {
+  const filteredTools = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
-    const filtered = allTools.filter((tool) => {
-      const matchesCategory = filter === 'all' || tool.category === filter;
-      if (!matchesCategory) return false;
-      if (industryOnly && !servesIndustry(tool, industry)) return false;
+    return allTools.filter((tool) => {
+      // Filtrage par onglet
+      if (activeTab === 'favorites' && !isFavorite(tool.slug)) return false;
+
+      // Filtrage par recherche
       if (normalized === '') return true;
 
-      return (
-        tool.title.toLowerCase().includes(normalized) ||
-        tool.description.toLowerCase().includes(normalized) ||
-        tool.keywords.some((keyword) => keyword.toLowerCase().includes(normalized))
-      );
+      const inTitle = tool.title.toLowerCase().includes(normalized);
+      const inDesc = tool.description.toLowerCase().includes(normalized);
+      const inKeywords = tool.keywords?.some((k) => k.toLowerCase().includes(normalized)) ?? false;
+
+      return inTitle || inDesc || inKeywords;
     });
+  }, [allTools, activeTab, isFavorite, query]);
 
-    // Tri prioritaire : Calculatrice Scientifique TOUJOURS en position #1
-    const ordered = [...filtered].sort((a, b) => {
-      if (a.slug === 'scientific-calculator') return -1;
-      if (b.slug === 'scientific-calculator') return 1;
-      return (a.order ?? 99) - (b.order ?? 99);
-    });
-
-    // Puis remontee des outils du metier, en tri STABLE : le classement
-    // ci-dessus survit intact a l'interieur de chaque groupe.
-    return isResolved ? sortByIndustryRelevance(ordered, industry) : ordered;
-  }, [allTools, query, filter, industry, industryOnly, isResolved]);
-
-  const hasTools = allTools.length > 0;
-  const isFiltering = query.trim() !== '' || filter !== 'all';
+  const favoriteToolsCount = useMemo(
+    () => allTools.filter((t) => isFavorite(t.slug)).length,
+    [allTools, isFavorite],
+  );
 
   return (
     <>
       <PageHeader
-        title="Catalogue des outils d’ingénierie & calcul"
-        description="Calculatrices scientifiques, convertisseurs techniques et utilitaires de dimensionnement pour vos opérations terrain."
+        title="Catalogue des outils d’ingénierie & calcul — REZO360 Tools"
+        description="Boîte à outils de calculs et conversions pour techniciens et ingénieurs de terrain. Utile à tous les corps de métier."
       />
 
-      {hasTools ? (
-        <>
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <Input
-                label="Rechercher un outil"
-                hideLabel
-                placeholder="Rechercher un outil par nom, mot-clé ou norme (ex: atténuation, CIDR)..."
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                }}
-                leadingIcon={<Search />}
-                className="max-w-xl"
-                {...(query
-                  ? {
-                      trailingSlot: (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setQuery('');
-                          }}
-                          aria-label="Effacer la recherche"
-                          className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded"
-                        >
-                          <X className="size-4" aria-hidden="true" />
-                        </button>
-                      ),
-                    }
-                  : {})}
-              />
-
-              {/* Sélecteur de vue (Liste / Grille) */}
-              <div className="flex items-center gap-1 bg-surface border border-border/80 rounded-lg p-1 shrink-0 self-start sm:self-auto shadow-xs">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                    viewMode === 'list'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  <LayoutList className="size-4" />
-                  <span>Liste</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                    viewMode === 'grid'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  <LayoutGrid className="size-4" />
-                  <span>Grille</span>
-                </button>
-              </div>
-            </div>
-
-            {/*
-              Restriction au metier : proposee, jamais imposee.
-
-              Le bouton n'apparait que si l'organisation exerce un metier ET
-              qu'il y a effectivement quelque chose a ecarter. Il annonce le
-              nombre d'outils concernes : « masquer 3 outils » se decide, « voir
-              moins » se subit.
-            */}
-            {isResolved && outsideCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setIndustryOnly((only) => !only)}
-                aria-pressed={industryOnly}
-                className={cn(
-                  'flex min-h-touch items-center gap-2 rounded-lg border px-3.5 text-xs font-medium transition-all cursor-pointer sm:min-h-9',
-                  'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-                  industryOnly
-                    ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
-                    : 'border-border/70 bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
-                )}
-              >
-                <Briefcase className="size-4 shrink-0" aria-hidden="true" />
-                {industryOnly
-                  ? `Métier « ${industryLabel} » — afficher les ${outsideCount} autres outils`
-                  : `Limiter au métier « ${industryLabel} » (${outsideCount} outils masqués)`}
-              </button>
-            ) : null}
-
-            {/* Boutons de catégories synchronisés avec l'URL */}
-            <div role="group" aria-label="Filtrer par domaine" className="flex flex-wrap gap-2">
-              {(['all', ...CATEGORY_METADATA.map((c) => c.slug)] as Filter[]).map((value) => {
-                const label =
-                  value === 'all'
-                    ? 'Toutes les catégories'
-                    : (CATEGORY_METADATA.find((c) => c.slug === value)?.name ?? value);
-                const isActive = filter === value;
-
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      handleFilterChange(value);
-                    }}
-                    aria-pressed={isActive}
-                    className={cn(
-                      'h-9 rounded-lg border px-3.5 text-xs font-medium transition-all cursor-pointer',
-                      'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-                      isActive
-                        ? 'border-primary bg-primary/10 text-primary font-semibold shadow-sm'
-                        : 'border-border/70 bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
-                    )}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {tools.length > 0 ? (
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
-              )}
-            >
-              {tools.map((tool) => (
-                <ToolCard key={tool.slug} tool={tool} variant={viewMode} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={Search}
-              title="Aucun outil trouvé"
-              description="Aucune calculatrice ne correspond à vos critères de recherche actuels."
-              action={
-                isFiltering ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setQuery('');
-                      handleFilterChange('all');
-                    }}
-                  >
-                    Réinitialiser tous les filtres
-                  </Button>
-                ) : undefined
-              }
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <EmptyState
-            icon={Wrench}
-            title="Le catalogue se construit"
-            description="Aucun outil n’est encore publié. Les catégories ci-dessous sont prêtes à les accueillir, et chaque outil sera disponible dès sa mise en service."
-            className="mb-8"
+      <div className="mb-6 space-y-4">
+        {/* Barre d'outils supérieure : Recherche + Historique + Vue */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <Input
+            label="Rechercher un outil"
+            hideLabel
+            placeholder="Rechercher un outil (nom, formule, unité, ex: pente, m², bar, litre)..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            leadingIcon={<Search />}
+            className="max-w-xl"
+            {...(query
+              ? {
+                  trailingSlot: (
+                    <button
+                      type="button"
+                      onClick={() => setQuery('')}
+                      aria-label="Effacer la recherche"
+                      className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded"
+                    >
+                      <X className="size-4" aria-hidden="true" />
+                    </button>
+                  ),
+                }
+              : {})}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {CATEGORY_METADATA.map((category) => (
-              <CategoryCard key={category.slug} category={category} />
-            ))}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {/* Bouton Historique des calculs */}
+            <Button
+              type="button"
+              variant={showHistory ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setShowHistory((v) => !v)}
+              className="gap-1.5 text-xs font-semibold cursor-pointer shadow-xs"
+            >
+              <Clock className="size-4" />
+              <span>Historique</span>
+              {history.length > 0 && (
+                <span className="rounded-full bg-primary-foreground/20 dark:bg-primary-foreground/30 px-1.5 py-0.2 text-3xs font-bold">
+                  {history.length}
+                </span>
+              )}
+            </Button>
+
+            {/* Sélecteur de vue (Grille / Liste) */}
+            <div className="flex items-center gap-1 bg-surface border border-border rounded-lg p-1 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  viewMode === 'grid'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                title="Affichage en grille"
+              >
+                <LayoutGrid className="size-4" />
+                <span className="hidden sm:inline">Grille</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  viewMode === 'list'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                title="Affichage en liste"
+              >
+                <LayoutList className="size-4" />
+                <span className="hidden sm:inline">Liste</span>
+              </button>
+            </div>
           </div>
-        </>
+        </div>
+
+        {/* Volet Historique déroulant global */}
+        {showHistory && (
+          <Card className="border-border bg-surface p-4 space-y-3 shadow-md animate-in fade-in-50 duration-200">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <Clock className="size-4 text-primary" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Derniers calculs effectués
+                </h2>
+              </div>
+              {history.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearHistory}
+                  className="text-3xs text-error hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                >
+                  <RotateCcw className="size-3" />
+                  <span>Vider tout l'historique</span>
+                </button>
+              )}
+            </div>
+
+            {history.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                Aucun calcul récent. Utilisez les outils de calcul pour enregistrer automatiquement vos résultats.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+                {history.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex flex-col justify-between p-3 rounded-xl bg-surface-raised border border-border text-xs gap-2"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-bold text-primary text-2xs uppercase tracking-wider truncate">
+                          {entry.toolName}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeHistoryEntry(entry.id)}
+                          className="text-muted-foreground hover:text-error text-xs px-1 cursor-pointer"
+                          title="Supprimer"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <p className="font-mono font-extrabold text-foreground text-sm mt-1">
+                        {entry.result}
+                      </p>
+                      <p className="text-3xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {entry.summary}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border/60 text-3xs text-subtle-foreground">
+                      <span>
+                        {new Date(entry.timestamp).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      <Link
+                        to={ROUTES.tool(entry.toolSlug)}
+                        className="text-primary font-bold hover:underline"
+                      >
+                        Ouvrir l'outil →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Onglets de filtrage */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleTabChange('all')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'all'
+                ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Sparkles className="size-3.5" />
+            <span>Tous les outils ({allTools.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('favorites')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'favorites'
+                ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Star className={cn('size-3.5', favoriteToolsCount > 0 && 'fill-amber-500 text-amber-500')} />
+            <span>Mes Favoris ({favoriteToolsCount})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Grille / Liste des outils */}
+      {filteredTools.length > 0 ? (
+        <div
+          className={cn(
+            viewMode === 'grid'
+              ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+              : 'space-y-3 max-w-4xl',
+          )}
+        >
+          {filteredTools.map((tool) => (
+            <ToolCard
+              key={tool.slug}
+              tool={tool}
+              variant={viewMode}
+              isFavorite={isFavorite(tool.slug)}
+              onToggleFavorite={toggleFavorite}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={activeTab === 'favorites' ? Star : Search}
+          title={activeTab === 'favorites' ? 'Aucun favori enregistré' : 'Aucun outil trouvé'}
+          description={
+            activeTab === 'favorites'
+              ? 'Cliquez sur l’étoile ⭐ d’un outil pour l’ajouter à vos favoris et y accéder rapidement.'
+              : 'Aucun outil ne correspond à vos termes de recherche.'
+          }
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setQuery('');
+                handleTabChange('all');
+              }}
+            >
+              Voir tous les outils
+            </Button>
+          }
+        />
       )}
     </>
   );

@@ -60,11 +60,20 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
   { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];
 
+export const TOOLS_NAV: readonly NavItem[] = [
+  { to: ROUTES.tools, label: 'Catalogue Universel', icon: 'wrench', primary: true },
+  { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
+];
+
 export const STOCK_NAV: readonly NavItem[] = [
+  { to: ROUTES.stock, label: 'Fournitures & Consommables', icon: 'package', primary: true },
+  { to: ROUTES.stockMovements, label: 'Mouvements & Historique', icon: 'arrow-left-right' },
   { to: ROUTES.equipment, label: 'Parc Matériel & Outillage', icon: 'wrench' },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [
+  { to: ROUTES.purchaseOrders, label: 'Commandes Fournisseurs', icon: 'shopping-cart', primary: true },
+  { to: ROUTES.suppliers, label: 'Fournisseurs & Tarifs', icon: 'store' },
   { to: ROUTES.quotes, label: 'Devis & Chiffrage Express', icon: 'calculator' },
 ];
 
@@ -113,16 +122,18 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
 
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'interventions', label: 'Interventions', icon: 'clipboard', items: INTERVENTIONS_NAV },
-  { id: 'stock', label: 'Stock', icon: 'wrench', items: STOCK_NAV },
+  { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
   { id: 'achats', label: 'Achats', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
   { id: 'clients', label: 'Clients & Suivi', icon: 'contact', items: CLIENTS_NAV },
+  { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
 ];
 
 export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...INTERVENTIONS_NAV,
   ...ADMINISTRATION_NAV,
   ...CLIENTS_NAV,
+  ...TOOLS_NAV,
 ];
 
 export const GESTION_NAV: readonly NavItem[] = [
@@ -131,11 +142,7 @@ export const GESTION_NAV: readonly NavItem[] = [
 ];
 
 export const TOOLS_CATEGORIES_NAV: readonly NavItem[] = [
-  { to: `${ROUTES.tools}?cat=reseaux`, label: 'Réseaux & IT', icon: 'cpu' },
-  { to: `${ROUTES.tools}?cat=telecoms`, label: 'Télécoms', icon: 'network' },
-  { to: `${ROUTES.tools}?cat=fibre`, label: 'Fibre optique', icon: 'cable' },
-  { to: `${ROUTES.tools}?cat=electricite`, label: 'Électricité', icon: 'zap' },
-  { to: ROUTES.tools, label: 'Outils généraux', icon: 'tools', primary: true },
+  { to: ROUTES.tools, label: 'Boîte à outils universelle', icon: 'wrench', primary: true },
 ];
 
 export const APP_NAV: readonly NavItem[] = [...ROOT_NAV, ...TOOLS_CATEGORIES_NAV];
@@ -145,6 +152,7 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
   ...ACHATS_NAV,
   ...ADMINISTRATION_NAV,
   ...CLIENTS_NAV,
+  ...TOOLS_NAV,
 ];
 export const ACCOUNT_NAV: readonly NavItem[] = [
   { to: ROUTES.profile, label: 'Profil', icon: 'user' },

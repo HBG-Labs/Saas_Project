@@ -16,7 +16,8 @@ import {
   useToggleFavorite,
 } from '@/features/catalog';
 import { getCategoryMetadata } from '@/features/tools/catalog-metadata';
-import { getTool, ToolErrorBoundary } from '@/features/tools';
+import { getUniversalTool } from '@/features/tools/calculators/universal';
+import { ToolErrorBoundary } from '@/features/tools';
 import { cn } from '@/lib/cn';
 
 /**
@@ -33,7 +34,7 @@ import { cn } from '@/lib/cn';
  */
 export default function ToolDetailPage() {
   const { toolSlug } = useParams<{ toolSlug: string }>();
-  const tool = toolSlug ? getTool(toolSlug) : undefined;
+  const tool = toolSlug ? (getUniversalTool(toolSlug) as any) : undefined;
 
   /**
    * Le favori vient du serveur, il n'est plus un état local.

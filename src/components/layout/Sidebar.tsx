@@ -46,6 +46,9 @@ function isGroupActive(group: NavGroup, pathname: string, search: string): boole
     if (item.to === ROUTES.dashboard) {
       return pathname === ROUTES.dashboard;
     }
+    if (item.to === ROUTES.stock) {
+      return pathname === ROUTES.stock;
+    }
     return pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to + '/'));
   });
 }
@@ -76,6 +79,9 @@ function SidebarLink({
     }
     if (item.to === ROUTES.organization) {
       return location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew;
+    }
+    if (item.to === ROUTES.stock) {
+      return location.pathname === ROUTES.stock;
     }
     return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
   })();

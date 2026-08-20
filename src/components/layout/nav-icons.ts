@@ -29,6 +29,8 @@ import {
   ArrowLeftRight,
   Boxes,
   Package,
+  ShoppingCart,
+  Store,
   Wrench,
   Zap,
   type LucideIcon,
@@ -68,6 +70,8 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   package: Package,
   boxes: Boxes,
   'arrow-left-right': ArrowLeftRight,
+  'shopping-cart': ShoppingCart,
+  store: Store,
 };
 
 export const FALLBACK_NAV_ICON: LucideIcon = Wrench;

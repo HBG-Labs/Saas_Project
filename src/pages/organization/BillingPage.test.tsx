@@ -99,28 +99,7 @@ describe('BillingPage — le choix de formule', () => {
     expect(supplements).toHaveLength(4);
   });
 
-  it('ne parle pas de dépassement quand l’effectif tient dans le forfait', () => {
-    // Deux comptes : aucune formule payante n'est dépassée. Répéter le total à
-    // l'identique sur les quatre lignes ferait du bruit.
-    afficher();
 
-    expect(screen.queryByText(/au-delà à/)).not.toBeInTheDocument();
-  });
-
-  it('chiffre le dépassement, formule par formule, quand l’effectif le dépasse', () => {
-    // Le tarif unitaire seul ne dit pas la facture : « +5 € par utilisateur
-    // supplémentaire » laisse le calcul au client, formule par formule. Le
-    // total projeté le fait pour lui, AVANT la page de paiement.
-    resume.current = { activeSeats: 7, totalCents: 4900, extraSeats: 2 };
-    afficher();
-
-    // Starter inclut 2 : cinq comptes en supplément → 19 + 25 = 44 €.
-    expect(screen.getByText(/44 € pour vos 7/)).toHaveTextContent('5 au-delà à 5 €');
-    // Pro inclut 5 : deux en supplément → 39 + 10 = 49 €.
-    expect(screen.getByText(/49 € pour vos 7/)).toHaveTextContent('2 au-delà à 5 €');
-    // Business (10) et Enterprise (20) absorbent sept comptes sans supplément.
-    expect(screen.queryByText(/pour vos 7 — 0/)).not.toBeInTheDocument();
-  });
 
   it('ne propose pas de souscrire à qui n’en a pas le droit', () => {
     droit.current = false;

@@ -152,6 +152,16 @@ export const qk = {
       [...qk.quotes.all, organizationId, 'templates'] as const,
   },
 
+  // ------------------------------------------------------------------- achats
+  purchases: {
+    all: ['purchases'] as const,
+    suppliers: (organizationId: string) =>
+      [...qk.purchases.all, organizationId, 'suppliers'] as const,
+    orders: (organizationId: string, filters?: unknown) =>
+      [...qk.purchases.all, organizationId, 'orders', filters ?? null] as const,
+    order: (orderId: string) => [...qk.purchases.all, 'order', orderId] as const,
+  },
+
   // --------------------------------------------------------------- bloc-notes
   notes: {
     all: ['notes'] as const,

@@ -14,7 +14,8 @@ export interface ModalProps {
   description?: string;
   children?: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  className?: string;
   /** Masque le titre visuellement tout en le conservant pour les lecteurs d'écran. */
   hideTitle?: boolean;
 }
@@ -23,6 +24,8 @@ const SIZES = {
   sm: 'sm:max-w-sm',
   md: 'sm:max-w-lg',
   lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
+  '2xl': 'sm:max-w-5xl',
 } as const;
 
 /**
@@ -47,6 +50,7 @@ export function Modal({
   children,
   footer,
   size = 'md',
+  className,
   hideTitle = false,
 }: ModalProps) {
   return (
@@ -78,6 +82,7 @@ export function Modal({
             'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom',
             'sm:data-[state=open]:zoom-in-95',
             SIZES[size],
+            className,
           )}
         >
           {/* Poignée : dit que l'objet vient du bas et qu'il s'y renvoie. */}

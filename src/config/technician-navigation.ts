@@ -11,12 +11,11 @@ export const TECHNICIAN_PRINCIPAL_NAV: readonly NavItem[] = [
 ];
 
 export const TECHNICIAN_TOOLS_NAV: readonly NavItem[] = [
-  { to: `${ROUTES.tools}?cat=reseaux`, label: 'Réseaux & IT', icon: 'cpu' },
-  { to: `${ROUTES.tools}?cat=telecoms`, label: 'Télécoms', icon: 'network' },
-  { to: `${ROUTES.tools}?cat=fibre`, label: 'Fibre optique', icon: 'cable' },
-  { to: `${ROUTES.tools}?cat=electricite`, label: 'Électricité BT', icon: 'zap' },
+  { to: ROUTES.tools, label: 'Catalogue Universel', icon: 'wrench', primary: true },
+  { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
 ];
 
 export const TECHNICIAN_SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'principal', label: 'Espace Technicien', items: TECHNICIAN_PRINCIPAL_NAV },
+  { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TECHNICIAN_TOOLS_NAV },
 ];

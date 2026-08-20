@@ -1,0 +1,177 @@
+import { lazy } from 'react';
+import type { UniversalToolDefinition } from '../../types/tools.types';
+
+export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
+  {
+    id: 'unit-converter',
+    slug: 'unit-converter',
+    name: "Convertisseur d'unités",
+    title: "Convertisseur d'unités",
+    category: 'universal',
+    description:
+      'Conversions universelles et rapides de longueurs, surfaces, volumes, masses, températures, pressions, vitesses, débits et puissances.',
+    keywords: [
+      'conversion',
+      'unites',
+      'longueur',
+      'surface',
+      'volume',
+      'masse',
+      'temperature',
+      'pression',
+      'vitesse',
+      'debit',
+      'puissance',
+    ],
+    icon: 'arrow-left-right',
+    order: 1,
+    Component: lazy(() => import('./unit-converter/UnitConverterTool')),
+  },
+  {
+    id: 'distance-calculator',
+    slug: 'distance-calculator',
+    name: 'Calculateur de Distance',
+    title: 'Calculateur de Distance',
+    category: 'universal',
+    description:
+      'Conversions de distances, mesures de longueurs et calcul de distance euclidienne 2D entre coordonnées.',
+    keywords: ['distance', 'longueur', 'metre', 'kilometre', 'pouce', 'pied', 'coordonnees', 'point'],
+    icon: 'ruler',
+    order: 2,
+    Component: lazy(() => import('./distance/DistanceCalculatorTool')),
+  },
+  {
+    id: 'surface-calculator',
+    slug: 'surface-calculator',
+    name: 'Calculateur de Surface',
+    title: 'Calculateur de Surface',
+    category: 'universal',
+    description:
+      'Calcul précis des surfaces géométriques (rectangle, carré, cercle, triangle, trapèze) avec équivalences d’unités.',
+    keywords: ['surface', 'aire', 'rectangle', 'carre', 'cercle', 'triangle', 'trapeze', 'm2', 'hectare'],
+    icon: 'square',
+    order: 3,
+    Component: lazy(() => import('./surface/SurfaceCalculatorTool')),
+  },
+  {
+    id: 'volume-calculator',
+    slug: 'volume-calculator',
+    name: 'Calculateur de Volume',
+    title: 'Calculateur de Volume',
+    category: 'universal',
+    description:
+      'Calcul de volumes géométriques (parallélépipède, cylindre, cuve, sphère) avec équivalence en litres et m³.',
+    keywords: ['volume', 'capacite', 'litre', 'm3', 'cubage', 'cylindre', 'cuve', 'sphere', 'contenance'],
+    icon: 'box',
+    order: 4,
+    Component: lazy(() => import('./volume/VolumeCalculatorTool')),
+  },
+  {
+    id: 'slope-calculator',
+    slug: 'slope-calculator',
+    name: 'Calculateur de Pente',
+    title: 'Calculateur de Pente',
+    category: 'universal',
+    description:
+      'Calcul direct et inverse de pente en %, angle en degrés, dénivelé et longueur de rampe pour le terrassement, voirie et toitures.',
+    keywords: ['pente', 'denivele', 'inclinaison', 'pourcentage', 'degres', 'angle', 'rampe', 'toiture', 'ecoulement'],
+    icon: 'trending-up',
+    order: 5,
+    Component: lazy(() => import('./slope/SlopeCalculatorTool')),
+  },
+  {
+    id: 'percentage-calculator',
+    slug: 'percentage-calculator',
+    name: 'Calculateur de Pourcentage',
+    title: 'Calculateur de Pourcentage',
+    category: 'universal',
+    description:
+      'Calcul de part, taux d’évolution (+/-%), remise commerciale, majoration / TVA et proportionnalité.',
+    keywords: ['pourcentage', 'tva', 'remise', 'evolution', 'taux', 'reduction', 'majoration', 'proportion'],
+    icon: 'percent',
+    order: 6,
+    Component: lazy(() => import('./percentage/PercentageCalculatorTool')),
+  },
+  {
+    id: 'time-calculator',
+    slug: 'time-calculator',
+    name: 'Calculateur de Temps',
+    title: 'Calculateur de Temps',
+    category: 'universal',
+    description:
+      'Calcul de durée de travail, intervalle horaire, pointage, conversion en heures décimales et cumul de durées.',
+    keywords: ['temps', 'duree', 'heures', 'minutes', 'pointage', 'horaire', 'pause', 'decimales', 'chrono'],
+    icon: 'clock',
+    order: 7,
+    Component: lazy(() => import('./time/TimeCalculatorTool')),
+  },
+  {
+    id: 'weight-calculator',
+    slug: 'weight-calculator',
+    name: 'Calculateur de Poids',
+    title: 'Calculateur de Poids',
+    category: 'universal',
+    description:
+      'Calcul de charge totale, conversion de masse (kg, tonnes, grammes, livres) et estimation de poids pour le transport.',
+    keywords: ['poids', 'masse', 'charge', 'kg', 'tonne', 'gramme', 'livre', 'transport', 'manutention'],
+    icon: 'scale',
+    order: 8,
+    Component: lazy(() => import('./weight/WeightCalculatorTool')),
+  },
+  {
+    id: 'pressure-calculator',
+    slug: 'pressure-calculator',
+    name: 'Calculateur de Pression',
+    title: 'Calculateur de Pression',
+    category: 'universal',
+    description:
+      'Conversion instantanée de pressions pour les réseaux hydrauliques, pneumatiques, gaz, CVC et compresseurs.',
+    keywords: ['pression', 'bar', 'psi', 'kpa', 'pascal', 'mbar', 'hydraulique', 'pneumatique', 'compresseur'],
+    icon: 'gauge',
+    order: 9,
+    Component: lazy(() => import('./pressure/PressureCalculatorTool')),
+  },
+  {
+    id: 'flow-calculator',
+    slug: 'flow-calculator',
+    name: 'Calculateur de Débit',
+    title: 'Calculateur de Débit',
+    category: 'universal',
+    description:
+      'Calcul de débit volumique (L/min, L/h, m³/h), conversion et estimation du temps de remplissage ou de vidange.',
+    keywords: ['debit', 'pompe', 'litres', 'm3/h', 'remplissage', 'vidange', 'conduite', 'ecoulement', 'tuyau'],
+    icon: 'droplets',
+    order: 10,
+    Component: lazy(() => import('./flow/FlowCalculatorTool')),
+  },
+  {
+    id: 'power-calculator',
+    slug: 'power-calculator',
+    name: 'Calculateur de Puissance',
+    title: 'Calculateur de Puissance',
+    category: 'universal',
+    description:
+      'Conversions de puissance universelle (W, kW, MW, VA, kVA, chevaux) et calcul d’énergie consommée en kWh.',
+    keywords: ['puissance', 'energie', 'watt', 'kw', 'kwh', 'mwh', 'joule', 'consommation', 'rendement'],
+    icon: 'zap',
+    order: 11,
+    Component: lazy(() => import('./power/PowerCalculatorTool')),
+  },
+  {
+    id: 'ratio-calculator',
+    slug: 'ratio-calculator',
+    name: 'Calculateur de Rapport / Ratio',
+    title: 'Calculateur de Rapport & Ratio',
+    category: 'universal',
+    description:
+      'Résolution rapide de règles de trois directes, simplification de ratios d’aspect et répartition proportionnelle de charges.',
+    keywords: ['ratio', 'rapport', 'regle de trois', 'proportion', 'dosage', 'repartition', 'echelle'],
+    icon: 'calculator',
+    order: 12,
+    Component: lazy(() => import('./ratio/RatioCalculatorTool')),
+  },
+];
+
+export function getUniversalTool(slug: string): UniversalToolDefinition | undefined {
+  return UNIVERSAL_TOOLS.find((t) => t.slug === slug);
+}

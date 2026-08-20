@@ -40,6 +40,7 @@ import {
   usePermission,
 } from '@/features/organizations';
 import { useEquipmentCategories } from '@/features/industries';
+import { StockNavTabs, useStock } from '@/features/stock';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { EquipmentStatus } from '@/types/database';
 import type { EquipmentWithAssignee } from '@/types/domain';
@@ -232,12 +233,17 @@ export default function EquipmentPage() {
     );
   }
 
+  const { lowStockArticles } = useStock(organizationId);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       <PageHeader
         title="Parc Matériel & Outillage"
         description="Inventaire en direct des appareils de mesure, soudeuses optiques, outils électriques et état d'étalonnage."
       />
+
+      {/* Onglets de navigation Stock unifiés */}
+      <StockNavTabs lowStockCount={lowStockArticles.length} />
 
       {/* KPI Cards Header */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -426,7 +432,7 @@ export default function EquipmentPage() {
                         <span>
                           Catégorie :{' '}
                           <strong className="text-muted-foreground">
-                            {categories.find((c) => c.id === eq.category_id)?.label ?? EQUIPMENT_CATEGORY_LABELS[eq.category]}
+                            {categories.find((c) => c.id === eq.category_id)?.label ?? (eq.category ? EQUIPMENT_CATEGORY_LABELS[eq.category] : 'Général')}
                           </strong>
                         </span>
                         <span className="hidden sm:inline">•</span>
@@ -469,7 +475,11 @@ export default function EquipmentPage() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => removeEquipment.mutate(eq.id)}
+                        onClick={() => {
+                          if (confirm(`Êtes-vous sûr de vouloir supprimer l'équipement « ${eq.name} » ?`)) {
+                            removeEquipment.mutate(eq.id);
+                          }
+                        }}
                         className="cursor-pointer text-muted-foreground hover:text-error"
                         title="Supprimer"
                       >

@@ -7,10 +7,15 @@ import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
 import { getCategoryMetadata } from '../catalog-metadata';
-import type { ToolDefinition } from '../registry';
 
 export interface ToolCardProps {
-  tool: Pick<ToolDefinition, 'slug' | 'title' | 'description' | 'category' | 'icon'>;
+  tool: {
+    slug: string;
+    title: string;
+    description: string;
+    category: string;
+    icon: string;
+  };
   isFavorite?: boolean;
   onToggleFavorite?: (slug: string) => void;
   variant?: 'grid' | 'list';
@@ -25,7 +30,11 @@ export function ToolCard({
   className,
 }: ToolCardProps) {
   const Icon = TOOL_ICONS[tool.icon] ?? FALLBACK_TOOL_ICON;
-  const category = getCategoryMetadata(tool.category);
+  const category =
+    getCategoryMetadata(tool.category) ??
+    (tool.category === 'universal'
+      ? { name: 'Universel', tint: 'bg-primary-subtle text-primary' }
+      : undefined);
 
   if (variant === 'list') {
     return (
