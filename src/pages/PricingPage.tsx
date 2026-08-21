@@ -190,9 +190,11 @@ export default function PricingPage() {
 
                 <div>
                   <CardHeader className="pt-6">
-                    <Badge variant="neutral" className="w-fit text-2xs mb-2">
-                      {tier.badge}
-                    </Badge>
+                    {!tier.popular && (
+                      <Badge variant="neutral" className="w-fit text-2xs mb-2">
+                        {tier.badge}
+                      </Badge>
+                    )}
                     <CardTitle className="text-lg font-bold">{tier.name}</CardTitle>
                     <p className="text-muted-foreground text-xs mt-1 min-h-[32px]">{tier.tagline}</p>
 
