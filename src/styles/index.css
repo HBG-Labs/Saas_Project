@@ -560,8 +560,72 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
-  .animate-marquee-reverse {
+  .animate-marquee-reverse,
+  .animate-float-slow,
+  .animate-glow-pulse {
     animation: none;
   }
 }
+
+/* =============================================================================
+   ANIMATIONS CTA & EFFETS VISUELS HIGH-TECH
+   ============================================================================= */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(15px, -15px) scale(1.08);
+  }
+}
+
+@keyframes float-slow-reverse {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate(-18px, 12px) scale(0.95);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+@keyframes cta-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-slow-reverse {
+  animation: float-slow-reverse 12s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-cta-shimmer {
+  animation: cta-shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
 
