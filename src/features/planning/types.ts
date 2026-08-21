@@ -6,7 +6,7 @@ export type LeaveType =
   | 'family'
   | 'recovery';
 
-export type LeaveStatus = 'pending' | 'approved' | 'rejected';
+export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export interface LeaveRequest {
   id: string;

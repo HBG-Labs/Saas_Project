@@ -47,6 +47,7 @@ export function LeavesManagementTab({
   const pendingLeaves = leaves.filter((l) => l.status === 'pending');
   const approvedLeaves = leaves.filter((l) => l.status === 'approved');
   const rejectedLeaves = leaves.filter((l) => l.status === 'rejected');
+  const cancelledLeaves = leaves.filter((l) => l.status === 'cancelled');
 
   const filteredLeaves = leaves.filter((l) => {
     if (filterStatus === 'all') return true;
@@ -241,6 +242,20 @@ export function LeavesManagementTab({
             >
               Refusées ({rejectedLeaves.length})
             </button>
+            {cancelledLeaves.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilterStatus('cancelled')}
+                className={cn(
+                  'px-3 py-1 text-xs font-semibold rounded-lg transition-all',
+                  filterStatus === 'cancelled'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                Annulées ({cancelledLeaves.length})
+              </button>
+            )}
           </div>
         </div>
 
@@ -278,7 +293,9 @@ export function LeavesManagementTab({
                               ? 'success'
                               : leave.status === 'rejected'
                                 ? 'error'
-                                : 'warning'
+                                : leave.status === 'cancelled'
+                                  ? 'outline'
+                                  : 'warning'
                           }
                           className="text-3xs"
                         >
@@ -286,7 +303,9 @@ export function LeavesManagementTab({
                             ? 'Validé'
                             : leave.status === 'rejected'
                               ? 'Refusé'
-                              : 'En attente'}
+                              : leave.status === 'cancelled'
+                                ? 'Annulé'
+                                : 'En attente'}
                         </Badge>
                       </div>
 
@@ -306,7 +325,7 @@ export function LeavesManagementTab({
                     </div>
                   </div>
 
-                  {/* Actions for Pending Requests */}
+                  {/* Actions for Pending & Processed Requests */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                     {isPending ? (
                       canApprove && (isOwner || !isSelf) ? (
@@ -350,6 +369,30 @@ export function LeavesManagementTab({
                         <span className="text-3xs text-muted-foreground font-mono">
                           En attente de validation
                         </span>
+                      )
+                    ) : isOwner ? (
+                      leave.status === 'approved' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onUpdateStatus(leave.id, 'cancelled')}
+                          className="text-xs h-7 px-2.5 gap-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                          title="Révoquer ce congé et libérer le planning"
+                        >
+                          <X className="size-3" />
+                          Révoquer le congé
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onUpdateStatus(leave.id, 'approved')}
+                          className="text-xs h-7 px-2.5 gap-1 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 cursor-pointer"
+                          title="Réexaminer et valider ce congé"
+                        >
+                          <Check className="size-3" />
+                          Valider le congé
+                        </Button>
                       )
                     ) : (
                       <span className="text-3xs text-muted-foreground font-mono">
