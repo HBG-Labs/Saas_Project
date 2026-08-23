@@ -22,16 +22,17 @@ import type { HolidayTerritory, PublicHoliday } from './types';
 export const HOLIDAY_TERRITORIES: {
   id: HolidayTerritory;
   label: string;
+  shortLabel: string;
   code: string;
   flag: string;
 }[] = [
-  { id: 'metropole', label: 'France Métropolitaine', code: 'FR', flag: '🇫🇷' },
-  { id: 'guadeloupe', label: 'Guadeloupe (971)', code: '971', flag: '🇬🇵' },
-  { id: 'martinique', label: 'Martinique (972)', code: '972', flag: '🇲🇶' },
-  { id: 'guyane', label: 'Guyane (973)', code: '973', flag: '🇬🇫' },
-  { id: 'reunion', label: 'La Réunion (974)', code: '974', flag: '🇷🇪' },
-  { id: 'mayotte', label: 'Mayotte (976)', code: '976', flag: '🇾🇹' },
-  { id: 'alsace_moselle', label: 'Alsace-Moselle', code: 'ALS', flag: '🇫🇷' },
+  { id: 'metropole', label: 'France Métropolitaine', shortLabel: 'Métropole', code: 'FR', flag: '🇫🇷' },
+  { id: 'guadeloupe', label: 'Guadeloupe (971)', shortLabel: 'Guadeloupe', code: '971', flag: '🇬🇵' },
+  { id: 'martinique', label: 'Martinique (972)', shortLabel: 'Martinique', code: '972', flag: '🇲🇶' },
+  { id: 'guyane', label: 'Guyane (973)', shortLabel: 'Guyane', code: '973', flag: '🇬🇫' },
+  { id: 'reunion', label: 'La Réunion (974)', shortLabel: 'La Réunion', code: '974', flag: '🇷🇪' },
+  { id: 'mayotte', label: 'Mayotte (976)', shortLabel: 'Mayotte', code: '976', flag: '🇾🇹' },
+  { id: 'alsace_moselle', label: 'Alsace-Moselle', shortLabel: 'Alsace', code: 'ALS', flag: '🇫🇷' },
 ];
 
 /**

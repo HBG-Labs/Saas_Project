@@ -41,27 +41,35 @@ export function PublicHolidaysTab({
         </Badge>
       </div>
 
-      {/* 2. Quick Territory Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-        {HOLIDAY_TERRITORIES.map((t) => {
-          const isSelected = selectedTerritory === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onSelectTerritory(t.id)}
-              className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer active:scale-[0.98]',
-                isSelected
-                  ? 'bg-primary text-primary-foreground border-primary shadow-xs'
-                  : 'bg-surface text-muted-foreground border-border hover:text-foreground hover:bg-surface-hover',
-              )}
-            >
-              <span>{t.flag}</span>
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
+      {/* 2. Quick Territory Filter Chips with Scroll Affordance on Mobile */}
+      <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap pb-1 pr-6 sm:pr-0">
+          {HOLIDAY_TERRITORIES.map((t) => {
+            const isSelected = selectedTerritory === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onSelectTerritory(t.id)}
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer active:scale-[0.98]',
+                  isSelected
+                    ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                    : 'bg-surface text-muted-foreground border-border hover:text-foreground hover:bg-surface-hover',
+                )}
+              >
+                <span>{t.flag}</span>
+                <span className="sm:hidden">{t.shortLabel}</span>
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile subtle gradient scroll fade cue */}
+        <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none sm:hidden flex items-center justify-end pr-1 text-primary/70 text-xs font-bold">
+          ›
+        </div>
       </div>
 
       {/* 3. Holidays Grid Compact Cards */}
