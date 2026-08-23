@@ -20,7 +20,8 @@ vi.mock('@/features/organizations', () => ({
   useMembers: () => ({
     data: [{ id: 'member_123', user_id: 'user_123', full_name: 'Test Owner' }],
   }),
-  memberDisplayName: (m: any) => m?.full_name || m?.email || 'Membre',
+  memberDisplayName: (m: { full_name?: string; email?: string } | null | undefined) =>
+    m?.full_name || m?.email || 'Membre',
   PERMISSIONS: {
     leaveApprove: 'leave.approve',
   },

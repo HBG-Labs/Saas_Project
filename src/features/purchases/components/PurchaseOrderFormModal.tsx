@@ -1,10 +1,10 @@
 import { Package, Plus, Sparkles, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import type { StockConsumable } from '@/features/stock/types/stock.types';
+import type { StockConsumable } from '@/features/stock';
 
 import type {
   PurchaseOrder,
@@ -48,79 +48,64 @@ export function PurchaseOrderFormModal({
 }: PurchaseOrderFormModalProps) {
   const isEditing = Boolean(orderToEdit);
 
-  const [supplierId, setSupplierId] = useState<string>('');
-  const [reference, setReference] = useState<string>('');
-  const [orderDate, setOrderDate] = useState<string>('');
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>('');
-  const [missionRef, setMissionRef] = useState<string>('');
-  const [taxRate, setTaxRate] = useState<number>(0.2);
-  const [notes, setNotes] = useState<string>('');
-  const [status, setStatus] = useState<'draft' | 'sent'>('draft');
+  /*
+    L'état part des props, sans effet de resynchronisation : la page ne monte
+    cette modale que lorsqu'elle est ouverte, donc React la remonte à chaque
+    ouverture. La version précédente recopiait les props dans l'état par un
+    `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
 
-  const [items, setItems] = useState<PurchaseOrderItemInput[]>([
-    {
-      reference: '',
-      description: '',
-      unit: 'pièce',
-      quantityOrdered: 1,
-      unitPriceEur: 0,
-    },
-  ]);
+    La référence reste VIDE à la création : le serveur la numérote au format
+    `CMD-AAAA-NNN`. La version précédente tirait ici un nombre AU HASARD entre
+    100 et 999, ce qui finissait par produire deux commandes homonymes.
+  */
+  const [supplierId, setSupplierId] = useState<string>(
+    orderToEdit?.supplierId ?? initialSupplierId ?? suppliers[0]?.id ?? '',
+  );
+  const [reference, setReference] = useState<string>(orderToEdit?.reference ?? '');
+  const [orderDate, setOrderDate] = useState<string>(
+    orderToEdit?.orderDate ?? new Date().toISOString().slice(0, 10),
+  );
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>(
+    orderToEdit?.expectedDeliveryDate ?? '',
+  );
+  const [missionRef, setMissionRef] = useState<string>(orderToEdit?.missionRef ?? '');
+  const [taxRate, setTaxRate] = useState<number>(orderToEdit?.taxRate ?? 0.2);
+  const [notes, setNotes] = useState<string>(orderToEdit?.notes ?? '');
+  const [status, setStatus] = useState<'draft' | 'sent'>(
+    orderToEdit?.status === 'sent' ? 'sent' : 'draft',
+  );
+
+  const [items, setItems] = useState<PurchaseOrderItemInput[]>(() => {
+    if (orderToEdit) {
+      return orderToEdit.items.map((i) => ({
+        id: i.id,
+        consumableId: i.consumableId,
+        reference: i.reference,
+        description: i.description,
+        unit: i.unit || 'pièce',
+        quantityOrdered: i.quantityOrdered,
+        quantityReceived: i.quantityReceived,
+        unitPriceEur: i.unitPriceEur,
+      }));
+    }
+
+    if (initialItems && initialItems.length > 0) return initialItems;
+
+    return [
+      {
+        reference: '',
+        description: '',
+        unit: 'pièce',
+        quantityOrdered: 1,
+        unitPriceEur: 0,
+      },
+    ];
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
 
-    if (orderToEdit) {
-      setSupplierId(orderToEdit.supplierId);
-      setReference(orderToEdit.reference);
-      setOrderDate(orderToEdit.orderDate);
-      setExpectedDeliveryDate(orderToEdit.expectedDeliveryDate ?? '');
-      setMissionRef(orderToEdit.missionRef ?? '');
-      setTaxRate(orderToEdit.taxRate);
-      setNotes(orderToEdit.notes ?? '');
-      setStatus(orderToEdit.status === 'sent' ? 'sent' : 'draft');
-      setItems(
-        orderToEdit.items.map((i) => ({
-          id: i.id,
-          consumableId: i.consumableId,
-          reference: i.reference,
-          description: i.description,
-          unit: i.unit || 'pièce',
-          quantityOrdered: i.quantityOrdered,
-          quantityReceived: i.quantityReceived,
-          unitPriceEur: i.unitPriceEur,
-        })),
-      );
-    } else {
-      const year = new Date().getFullYear();
-      setSupplierId(initialSupplierId || (suppliers[0]?.id ?? ''));
-      setReference(`CMD-${year}-${String(Math.floor(Math.random() * 900) + 100)}`);
-      setOrderDate(today);
-      setExpectedDeliveryDate('');
-      setMissionRef('');
-      setTaxRate(0.2);
-      setNotes('');
-      setStatus('draft');
-
-      if (initialItems && initialItems.length > 0) {
-        setItems(initialItems);
-      } else {
-        setItems([
-          {
-            reference: '',
-            description: '',
-            unit: 'pièce',
-            quantityOrdered: 1,
-            unitPriceEur: 0,
-          },
-        ]);
-      }
-    }
-    setError(null);
-  }, [orderToEdit, initialSupplierId, initialItems, suppliers, isOpen]);
 
   const handleAddItem = () => {
     setItems((prev) => [
@@ -281,8 +266,7 @@ export function PurchaseOrderFormModal({
               <Input id="purchaseorderformmodal-n-reference-bon-de-commande"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                placeholder="Ex: CMD-2026-001"
-                required
+                placeholder="Attribuée automatiquement"
                 className="h-10 font-mono font-bold"
               />
             </div>

@@ -138,23 +138,26 @@ export default function SuppliersPage() {
         onCreateOrder={handleOpenCreateOrderForSupplier}
       />
 
-      {/* Modale de création / édition de fournisseur */}
-      <SupplierFormModal
-        isOpen={isSupplierModalOpen}
-        onClose={() => setIsSupplierModalOpen(false)}
-        onSubmit={handleSupplierSubmit}
-        supplierToEdit={selectedSupplier}
-      />
+      {/* Montées seulement lorsqu'elles sont ouvertes — voir PurchaseOrdersPage. */}
+      {isSupplierModalOpen ? (
+        <SupplierFormModal
+          isOpen
+          onClose={() => setIsSupplierModalOpen(false)}
+          onSubmit={handleSupplierSubmit}
+          supplierToEdit={selectedSupplier}
+        />
+      ) : null}
 
-      {/* Modale de création de commande pour ce fournisseur */}
-      <PurchaseOrderFormModal
-        isOpen={isOrderModalOpen}
-        onClose={() => setIsOrderModalOpen(false)}
-        onSubmit={handleOrderSubmit}
-        suppliers={suppliers}
-        consumables={consumables}
-        initialSupplierId={selectedSupplier?.id}
-      />
+      {isOrderModalOpen ? (
+        <PurchaseOrderFormModal
+          isOpen
+          onClose={() => setIsOrderModalOpen(false)}
+          onSubmit={handleOrderSubmit}
+          suppliers={suppliers}
+          consumables={consumables}
+          initialSupplierId={selectedSupplier?.id}
+        />
+      ) : null}
     </div>
   );
 }

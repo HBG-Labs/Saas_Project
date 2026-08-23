@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -21,61 +21,31 @@ export function SupplierFormModal({
 }: SupplierFormModalProps) {
   const isEditing = Boolean(supplierToEdit);
 
-  const [formData, setFormData] = useState<SupplierInput>({
-    name: '',
-    code: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    siret: '',
-    vatNumber: '',
-    website: '',
-    defaultPaymentTerms: '30 jours fin de mois',
-    notes: '',
-  });
-
+  const [formData, setFormData] = useState<SupplierInput>(() => ({
+    name: supplierToEdit?.name ?? '',
+    code: supplierToEdit?.code ?? '',
+    contactName: supplierToEdit?.contactName ?? '',
+    email: supplierToEdit?.email ?? '',
+    phone: supplierToEdit?.phone ?? '',
+    address: supplierToEdit?.address ?? '',
+    city: supplierToEdit?.city ?? '',
+    postalCode: supplierToEdit?.postalCode ?? '',
+    siret: supplierToEdit?.siret ?? '',
+    vatNumber: supplierToEdit?.vatNumber ?? '',
+    website: supplierToEdit?.website ?? '',
+    defaultPaymentTerms: supplierToEdit?.defaultPaymentTerms ?? '30 jours fin de mois',
+    notes: supplierToEdit?.notes ?? '',
+  }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (supplierToEdit) {
-      setFormData({
-        name: supplierToEdit.name,
-        code: supplierToEdit.code ?? '',
-        contactName: supplierToEdit.contactName ?? '',
-        email: supplierToEdit.email ?? '',
-        phone: supplierToEdit.phone ?? '',
-        address: supplierToEdit.address ?? '',
-        city: supplierToEdit.city ?? '',
-        postalCode: supplierToEdit.postalCode ?? '',
-        siret: supplierToEdit.siret ?? '',
-        vatNumber: supplierToEdit.vatNumber ?? '',
-        website: supplierToEdit.website ?? '',
-        defaultPaymentTerms: supplierToEdit.defaultPaymentTerms ?? '30 jours fin de mois',
-        notes: supplierToEdit.notes ?? '',
-      });
-    } else {
-      setFormData({
-        name: '',
-        code: '',
-        contactName: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        siret: '',
-        vatNumber: '',
-        website: '',
-        defaultPaymentTerms: '30 jours fin de mois',
-        notes: '',
-      });
-    }
-    setError(null);
-  }, [supplierToEdit, isOpen]);
+  /*
+    L'état part directement des props : la modale n'est montée que lorsqu'elle
+    est ouverte, donc React la remonte à chaque ouverture. La version précédente
+    la laissait montée en permanence et recopiait les props dans l'état par un
+    `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
+  */
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

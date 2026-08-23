@@ -84,40 +84,42 @@ export function DispatchSidebar({
   };
 
   return (
-    <aside className="flex flex-col h-full bg-surface rounded-2xl border border-border shadow-xs overflow-hidden">
-      {/* 1. Header avec Recherche et Actions */}
-      <div className="p-3 border-b border-border/80 bg-surface-subtle/30 space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Chantiers & Clients ({filtered.length})
+    <aside className="w-full h-full flex flex-col bg-surface-subtle/50 rounded-2xl border border-border overflow-hidden shadow-xs">
+      {/* 1. Header de Recherche & Filtres */}
+      <div className="p-3 border-b border-border bg-surface space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h3 className="font-extrabold text-xs text-foreground tracking-tight truncate">
+              Chantiers & Clients
             </h3>
-            <p className="text-3xs text-muted-foreground">Lieux géolocalisés sur le secteur</p>
+            <Badge variant="outline" className="text-4xs font-mono font-bold px-1.5 py-0">
+              {filtered.length}
+            </Badge>
           </div>
 
           {onLocateUser && (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={onLocateUser}
               disabled={isLocatingUser}
-              className="text-3xs h-7 px-2 gap-1"
-              title="Calculer la distance depuis ma position"
+              className="text-3xs h-6 px-2 gap-1 text-primary hover:text-primary hover:bg-primary/10"
+              title="Calculer les distances depuis ma position"
             >
-              <Crosshair className="size-3 text-primary" />
-              <span>{isLocatingUser ? 'Localisation...' : 'À proximité'}</span>
+              <Crosshair className={cn('size-2.5', isLocatingUser && 'animate-spin')} />
+              <span>Proximité</span>
             </Button>
           )}
         </div>
 
-        {/* Onglets Filtres (Tous / Missions / Clients) */}
-        <div className="flex items-center bg-surface-subtle p-0.5 rounded-xl border border-border text-3xs">
+        {/* Onglets Filtres */}
+        <div className="grid grid-cols-3 gap-1 p-0.5 bg-surface-subtle rounded-xl border border-border text-3xs">
           <button
             type="button"
             onClick={() => setActiveTab('all')}
             className={cn(
-              'flex-1 py-1 font-semibold rounded-lg transition-all text-center',
+              'py-1 font-semibold rounded-lg transition-all text-center truncate px-1',
               activeTab === 'all'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -129,27 +131,27 @@ export function DispatchSidebar({
             type="button"
             onClick={() => setActiveTab('missions')}
             className={cn(
-              'flex-1 py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1',
+              'py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1 truncate px-1',
               activeTab === 'missions'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <Briefcase className="size-2.5" />
-            <span>Missions ({missionsCount})</span>
+            <Briefcase className="size-2.5 shrink-0" />
+            <span className="truncate">Missions ({missionsCount})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('clients')}
             className={cn(
-              'flex-1 py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1',
+              'py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1 truncate px-1',
               activeTab === 'clients'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <Building2 className="size-2.5" />
-            <span>Clients ({clientsCount})</span>
+            <Building2 className="size-2.5 shrink-0" />
+            <span className="truncate">Clients ({clientsCount})</span>
           </button>
         </div>
 
@@ -164,8 +166,7 @@ export function DispatchSidebar({
           />
         </div>
       </div>
-
-      {/* 2. Liste des Lieux & Chantiers */}
+      {/* 2. Liste des éléments */}
       <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">

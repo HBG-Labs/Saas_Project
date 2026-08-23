@@ -69,6 +69,12 @@ export const organizationSettingsSchema = z.object({
   addressLine2: z.string().trim().max(150).optional().or(z.literal('')),
   postalCode: z.string().trim().max(20).optional().or(z.literal('')),
   city: z.string().trim().max(100).optional().or(z.literal('')),
+  defaultVatRate: z
+    .coerce
+    .number({ message: 'Le taux de TVA doit être un nombre.' })
+    .min(0, { error: 'Le taux de TVA ne peut pas être négatif.' })
+    .max(100, { error: 'Le taux de TVA ne peut pas dépasser 100 %.' })
+    .optional(),
   // `char_length(country) = 2` en base : un code ISO, pas un nom de pays.
   country: z
     .string()

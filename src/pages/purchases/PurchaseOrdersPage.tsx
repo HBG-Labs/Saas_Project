@@ -1,6 +1,6 @@
 import { Download, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +25,7 @@ import {
 export default function PurchaseOrdersPage() {
   useDocumentTitle('Commandes Fournisseurs');
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
@@ -45,46 +46,60 @@ export default function PurchaseOrdersPage() {
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
-  const [initialSupplierId, setInitialSupplierId] = useState<string | undefined>(undefined);
-  const [initialItems, setInitialItems] = useState<PurchaseOrderItemInput[] | undefined>(undefined);
 
-  useEffect(() => {
-    const prefill = (
-      location.state as { prefillConsumable?: StockConsumable } | undefined
-    )?.prefillConsumable;
+  /*
+    Le préremplissage vient de la navigation depuis la page Stock (« Commander
+    cet article »). Il est DÉRIVÉ de `location.state`, pas recopié dedans : la
+    version précédente le transvasait dans trois `useState` depuis un effet, ce
+    qui déclenchait un rendu en cascade à chaque arrivée sur la page.
 
-    if (prefill && suppliers.length > 0) {
-      const matchedSupplier = suppliers.find(
-        (s) =>
-          prefill.supplier &&
-          s.name.trim().toLowerCase().includes(prefill.supplier.trim().toLowerCase()),
-      );
+    Fermer la modale efface l'état de navigation ; le brouillon disparaît donc
+    de lui-même, sans drapeau supplémentaire à tenir.
+  */
+  const prefill = (location.state as { prefillConsumable?: StockConsumable } | undefined)
+    ?.prefillConsumable;
 
-      const qty = Math.max(1, (prefill.minThreshold || 5) * 2 - prefill.quantityInStock);
+  const brouillon = useMemo(() => {
+    if (!prefill || suppliers.length === 0) return null;
 
-      setInitialSupplierId(matchedSupplier?.id || suppliers[0]?.id);
-      setInitialItems([
+    const fournisseurTrouve = suppliers.find(
+      (s) =>
+        prefill.supplier &&
+        s.name.trim().toLowerCase().includes(prefill.supplier.trim().toLowerCase()),
+    );
+
+    // De quoi repasser au double du seuil d'alerte, au minimum une unité.
+    const quantite = Math.max(1, (prefill.minThreshold || 5) * 2 - prefill.quantityInStock);
+
+    return {
+      supplierId: fournisseurTrouve?.id ?? suppliers[0]?.id,
+      items: [
         {
           consumableId: prefill.id,
           reference: prefill.reference,
           description: prefill.name,
           unit: prefill.unit || 'pièce',
-          quantityOrdered: qty,
+          quantityOrdered: quantite,
           unitPriceEur: prefill.unitPriceEur ?? 0,
         },
-      ]);
-      setSelectedOrder(null);
-      setIsFormModalOpen(true);
+      ] satisfies PurchaseOrderItemInput[],
+    };
+  }, [prefill, suppliers]);
 
-      // Nettoyer l'état pour éviter de réouvrir au rechargement
-      window.history.replaceState({}, document.title);
+  // Le brouillon venu du Stock ouvre la modale de lui-même.
+  const formulaireOuvert = isFormModalOpen || brouillon !== null;
+
+  const fermerFormulaire = () => {
+    setIsFormModalOpen(false);
+    // Efface le brouillon de navigation, sans quoi revenir sur la page — ou
+    // simplement recharger — rouvrirait la modale.
+    if (brouillon !== null) {
+      void navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.state, suppliers]);
+  };
 
   const handleOpenCreateModal = () => {
     setSelectedOrder(null);
-    setInitialSupplierId(undefined);
-    setInitialItems(undefined);
     setIsFormModalOpen(true);
   };
 
@@ -197,25 +212,33 @@ export default function PurchaseOrdersPage() {
         onSend={handleSendOrder}
       />
 
-      {/* Modale de création / édition de commande */}
-      <PurchaseOrderFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSubmit={handleFormSubmit}
-        orderToEdit={selectedOrder}
-        suppliers={suppliers}
-        consumables={consumables}
-        initialSupplierId={initialSupplierId}
-        initialItems={initialItems}
-      />
+      {/*
+        Montées seulement lorsqu'elles sont ouvertes : elles repartent ainsi
+        d'un formulaire vierge à chaque ouverture, sans recopier leurs props
+        dans leur état par un effet.
+      */}
+      {formulaireOuvert ? (
+        <PurchaseOrderFormModal
+          isOpen
+          onClose={fermerFormulaire}
+          onSubmit={handleFormSubmit}
+          orderToEdit={selectedOrder}
+          suppliers={suppliers}
+          consumables={consumables}
+          initialSupplierId={brouillon?.supplierId}
+          initialItems={brouillon?.items}
+        />
+      ) : null}
 
       {/* Modale de réception de commande (Pointage BL) */}
-      <ReceiveOrderModal
-        isOpen={isReceiveModalOpen}
-        onClose={() => setIsReceiveModalOpen(false)}
-        onSubmit={handleReceiveSubmit}
-        order={selectedOrder}
-      />
+      {isReceiveModalOpen ? (
+        <ReceiveOrderModal
+          isOpen
+          onClose={() => setIsReceiveModalOpen(false)}
+          onSubmit={handleReceiveSubmit}
+          order={selectedOrder}
+        />
+      ) : null}
 
       {/* Modale de consultation & impression du Bon de Commande */}
       <PurchaseOrderViewModal

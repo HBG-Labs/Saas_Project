@@ -11,7 +11,7 @@ import {
   User,
   Wrench,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -79,6 +79,7 @@ export default function EquipmentPage() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | EquipmentStatus>('all');
+  const [filterCalibration, setFilterCalibration] = useState<'all' | 'valid' | 'due_soon' | 'expired'>('all');
 
   /*
     Categories du metier de l'entreprise, plus les communes.
@@ -190,7 +191,12 @@ export default function EquipmentPage() {
     );
   };
 
-  const list = equipmentQuery.data ?? [];
+  const rawList = equipmentQuery.data ?? [];
+  const list = useMemo(() => {
+    if (filterCalibration === 'all') return rawList;
+    return rawList.filter((eq) => calibrationState(eq.next_calibration) === filterCalibration);
+  }, [rawList, filterCalibration]);
+
   const parc = parcQuery.data ?? [];
 
   const handleExportCsv = () => {
@@ -225,6 +231,13 @@ export default function EquipmentPage() {
   const maintenanceCount = parc.filter(
     (eq) => eq.status === 'maintenance' || eq.status === 'expired',
   ).length;
+
+  const calibrationAlertsCount = useMemo(() => {
+    return parc.filter((eq) => {
+      const state = calibrationState(eq.next_calibration);
+      return state === 'due_soon' || state === 'expired';
+    }).length;
+  }, [parc]);
 
   if (equipmentQuery.isError) {
     return (
@@ -348,6 +361,18 @@ export default function EquipmentPage() {
               ))}
             </select>
 
+            <select
+              value={filterCalibration}
+              onChange={(e) => setFilterCalibration(e.target.value as 'all' | 'valid' | 'due_soon' | 'expired')}
+              aria-label="Filtrer par conformité étalonnage"
+              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto font-medium"
+            >
+              <option value="all">Tous contrôles</option>
+              <option value="valid">✅ Étalonnage Conforme</option>
+              <option value="due_soon">⚠️ Échéance &lt; 30 jours</option>
+              <option value="expired">🚫 Étalonnage Expiré</option>
+            </select>
+
             {list.length > 0 && (
               <Button
                 type="button"
@@ -373,6 +398,15 @@ export default function EquipmentPage() {
             )}
           </div>
         </div>
+
+        {calibrationAlertsCount > 0 && (
+          <div className="mt-3 flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs font-semibold">
+            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>
+              <strong>Alerte Réglementaire :</strong> {calibrationAlertsCount} appareil(s) de mesure nécessite(nt) un étalonnage ou un contrôle périodique urgent pour rester conformes aux exigences des donneurs d'ordre.
+            </span>
+          </div>
+        )}
       </Card>
 
       {/* Liste du Parc Matériel */}

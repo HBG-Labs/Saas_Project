@@ -1,19 +1,69 @@
 {
-  "name": "REZO360",
+  "name": "REZO360 — Le Cockpit des Équipes Terrain",
   "short_name": "REZO360",
-  "description": "Missions, interventions et outils techniques pour les équipes terrain.",
+  "description": "Missions, interventions, planning, devis, stocks et outils techniques pour les professionnels du terrain.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "orientation": "any",
+  "background_color": "#0f172a",
   "theme_color": "#2563eb",
   "lang": "fr",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouvelle Intervention",
+      "short_name": "Intervention",
+      "description": "Créer une nouvelle mission technique",
+      "url": "/missions/nouvelle",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Devis Express",
+      "short_name": "Devis",
+      "description": "Créer un chiffrage ou un devis rapide",
+      "url": "/devis",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Planning & Tournée",
+      "short_name": "Planning",
+      "description": "Consulter le calendrier des interventions",
+      "url": "/planning",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Pointage des Heures",
+      "short_name": "Pointage",
+      "description": "Saisir les heures de travail",
+      "url": "/pointage",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]
 }

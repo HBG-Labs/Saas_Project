@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { memberDisplayName, useMembers } from '@/features/organizations';
 import { qk } from '@/lib/query-keys';
 
 import {
@@ -71,10 +72,27 @@ export function useVehicles(organizationId: string | null) {
     onSuccess: rafraichir,
   });
 
+  const membersQuery = useMembers(organizationId);
+  const members = membersQuery.data ?? [];
+
   // `useMemo` et non `?? []` directement : un tableau neuf à chaque rendu
   // change l'identité des dépendances de `addMaintenanceRecord`, qui se
   // recrée alors sans cesse et fait re-rendre les modales qui le reçoivent.
-  const vehicles: Vehicle[] = useMemo(() => query.data ?? [], [query.data]);
+  const vehicles: Vehicle[] = useMemo(() => {
+    const rawVehicles = query.data ?? [];
+    if (members.length === 0) return rawVehicles;
+
+    const membersMap = new Map(
+      members.map((m) => [m.id, memberDisplayName(m)]),
+    );
+
+    return rawVehicles.map((v) => ({
+      ...v,
+      assignedMemberName: v.assignedMemberId
+        ? (membersMap.get(v.assignedMemberId) ?? v.assignedMemberName ?? null)
+        : null,
+    }));
+  }, [query.data, members]);
 
   const addVehicle = useCallback(
     (input: VehicleInput) => {

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { PRICING_PLANS } from '@/config/pricing';
+import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import {
   useBillingPortal,
@@ -25,6 +25,7 @@ import {
   MemberQuotaBar,
   PERMISSIONS,
   useCurrentOrganization,
+  useMembers,
   usePermission,
 } from '@/features/organizations';
 
@@ -97,6 +98,14 @@ export default function BillingPage() {
   const { planCode } = useOrganizationEntitlements(organizationId);
   const summary = useBillingSummary(organizationId);
   const checkout = useCheckout(organizationId);
+
+  /*
+    L'effectif sert de REPLI au décompte de sièges du serveur : tant que la
+    synthèse de facturation n'est pas revenue, la projection s'appuie sur les
+    membres actifs plutôt que d'annoncer un montant pour zéro utilisateur.
+  */
+  const members = useMembers(organizationId);
+  const activeMembers = (members.data ?? []).filter((member) => member.status === 'active');
   const portal = useBillingPortal(organizationId);
   const cancel = useCancelSubscription(organizationId);
   const resume = useResumeSubscription(organizationId);
@@ -315,6 +324,15 @@ export default function BillingPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {PAYABLE_PLANS.map((tier) => {
               const isCurrent = tier.id === planCode;
+              const seats = summary.data?.activeSeats ?? activeMembers.length;
+              // Ce que coûterait CETTE formule à l'effectif actuel. Un montant
+              // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
+              // de paiement — et il vient de la même formule que le serveur.
+              // N'apparaît que s'il dépasse le forfait : le répéter à
+              // l'identique sur les formules assez larges ferait du bruit là où
+              // il doit servir d'avertissement.
+              const projete = computeSubscriptionPrice(tier.id, seats);
+              const auDela = Math.max(0, seats - tier.includedUsers);
 
               return (
                 <Button
@@ -348,6 +366,12 @@ export default function BillingPage() {
                     <span className="font-normal text-muted-foreground">
                       +{tier.additionalUserPriceMonthly} € / mois par utilisateur supplémentaire
                     </span>
+                    {auDela > 0 ? (
+                      <span className="font-semibold text-warning">
+                        {projete} € pour vos {seats} — {auDela} au-delà à{' '}
+                        {tier.additionalUserPriceMonthly} €
+                      </span>
+                    ) : null}
                   </div>
                 </Button>
               );

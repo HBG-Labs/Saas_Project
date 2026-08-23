@@ -96,6 +96,7 @@ export const routes: RouteObject[] = [
               // laisser publics ne montrerait qu'une coquille vide.
               { path: ROUTES.dashboard, Component: DashboardPage },
               { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
+              { path: '/statistiques', lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
               { path: ROUTES.planning, lazy: lazyPage(() => import('@/pages/planning/PlanningPage')) },
               { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
@@ -219,7 +220,7 @@ export const routes: RouteObject[] = [
                   },
 
                   {
-                    element: <RequirePlan feature={FEATURES.quotes} label="Le module Achats & Devis" />,
+                    element: <RequirePlan feature={FEATURES.quotes} label="Le module Devis" />,
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.quoteView} />,
@@ -228,6 +229,24 @@ export const routes: RouteObject[] = [
                             path: ROUTES.quotes,
                             lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')),
                           },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    /*
+                      Les Achats ont leur propre formule et leurs propres
+                      permissions. Ils empruntaient celles des Devis faute de
+                      mieux : engager une dépense chez un fournisseur et établir
+                      un devis client sont deux responsabilités distinctes, et un
+                      magasinier n'a pas à voir les prix de vente.
+                    */
+                    element: <RequirePlan feature={FEATURES.purchases} label="Le module Achats" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.purchaseView} />,
+                        children: [
                           {
                             path: ROUTES.purchases,
                             lazy: lazyPage(() => import('@/pages/purchases/PurchaseOrdersPage')),

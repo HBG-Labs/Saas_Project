@@ -52,52 +52,33 @@ export default function OrganizationSettingsPage() {
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
 
+  const data = query.data;
+
   const {
     register,
     handleSubmit,
     control,
-    reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<OrganizationSettingsValues>({
-    resolver: zodResolver(organizationSettingsSchema),
-    defaultValues: {
-      name: '',
-      industry: '',
-      legalName: '',
-      registrationNumber: '',
-      vatNumber: '',
-      email: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      postalCode: '',
-      city: '',
-      country: '',
-    },
+    resolver: zodResolver(organizationSettingsSchema) as any,
+    values: data
+      ? {
+          name: data.name,
+          industry: toFormValue(data.industry),
+          legalName: toFormValue(data.legal_name),
+          registrationNumber: toFormValue(data.registration_number),
+          vatNumber: toFormValue(data.vat_number),
+          defaultVatRate: data.default_vat_rate ?? 20,
+          email: toFormValue(data.email),
+          phone: toFormValue(data.phone),
+          addressLine1: toFormValue(data.address_line1),
+          addressLine2: toFormValue(data.address_line2),
+          postalCode: toFormValue(data.postal_code),
+          city: toFormValue(data.city),
+          country: toFormValue(data.country),
+        }
+      : undefined,
   });
-
-  // Le formulaire est renseigné à l'arrivée des données, pas à la construction :
-  // la requête n'est pas résolue au premier rendu, et `defaultValues` ne serait
-  // plus relu ensuite.
-  const data = query.data;
-  useEffect(() => {
-    if (!data) return;
-
-    reset({
-      name: data.name,
-      industry: toFormValue(data.industry),
-      legalName: toFormValue(data.legal_name),
-      registrationNumber: toFormValue(data.registration_number),
-      vatNumber: toFormValue(data.vat_number),
-      email: toFormValue(data.email),
-      phone: toFormValue(data.phone),
-      addressLine1: toFormValue(data.address_line1),
-      addressLine2: toFormValue(data.address_line2),
-      postalCode: toFormValue(data.postal_code),
-      city: toFormValue(data.city),
-      country: toFormValue(data.country),
-    });
-  }, [data, reset]);
 
   const navigate = useNavigate();
 
@@ -119,6 +100,7 @@ export default function OrganizationSettingsPage() {
         legal_name: toPatchValue(values.legalName),
         registration_number: toPatchValue(values.registrationNumber),
         vat_number: toPatchValue(values.vatNumber),
+        default_vat_rate: values.defaultVatRate !== undefined ? Number(values.defaultVatRate) : 20,
         email: toPatchValue(values.email),
         phone: toPatchValue(values.phone),
         address_line1: toPatchValue(values.addressLine1),
@@ -211,7 +193,7 @@ export default function OrganizationSettingsPage() {
                         value: item.code,
                         label: item.label,
                       }))}
-                      {...(field.value ? { value: field.value } : {})}
+                      value={field.value || undefined}
                       onValueChange={(value) => field.onChange(value)}
                       {...(errors.industry?.message ? { error: errors.industry.message } : {})}
                     />
@@ -226,13 +208,24 @@ export default function OrganizationSettingsPage() {
                 {...(errors.legalName?.message ? { error: errors.legalName.message } : {})}
                 {...register('legalName')}
               />
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <Input
                   label="SIRET"
                   disabled={!canUpdate}
                   {...register('registrationNumber')}
                 />
-                <Input label="N° TVA" disabled={!canUpdate} {...register('vatNumber')} />
+                <Input label="N° TVA intracommunautaire" disabled={!canUpdate} {...register('vatNumber')} />
+                <Input
+                  label="Taux TVA par défaut (%)"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  hint="Appliqué aux devis et chiffrages"
+                  disabled={!canUpdate}
+                  {...(errors.defaultVatRate?.message ? { error: errors.defaultVatRate.message } : {})}
+                  {...register('defaultVatRate')}
+                />
               </div>
             </CardContent>
           </Card>

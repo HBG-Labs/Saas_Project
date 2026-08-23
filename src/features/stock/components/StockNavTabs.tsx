@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Boxes, Wrench } from 'lucide-react';
+import { ArrowLeftRight, Boxes, ShoppingCart, Truck, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
@@ -24,9 +24,19 @@ export function StockNavTabs({ lowStockCount = 0 }: StockNavTabsProps) {
       icon: ArrowLeftRight,
     },
     {
+      to: ROUTES.purchaseOrders,
+      label: 'Achats & Commandes',
+      icon: ShoppingCart,
+    },
+    {
       to: ROUTES.equipment,
       label: 'Parc Matériel & Outillage',
       icon: Wrench,
+    },
+    {
+      to: ROUTES.vehicles,
+      label: 'Flotte & Véhicules',
+      icon: Truck,
     },
   ];
 

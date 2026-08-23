@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Calculator,
   Plus,
@@ -62,7 +62,16 @@ export default function QuotesPage() {
 
   const [clientName, setClientName] = useState('');
   const [siteName, setSiteName] = useState('');
-  const [vatInput, setVatInput] = useState<string>('8.5');
+  const [vatInput, setVatInput] = useState<string>(() =>
+    organization?.default_vat_rate != null ? String(organization.default_vat_rate) : '20',
+  );
+
+  useEffect(() => {
+    if (organization?.default_vat_rate != null) {
+      setVatInput(String(organization.default_vat_rate));
+    }
+  }, [organization?.default_vat_rate]);
+
   const vatRate = parseFloat(vatInput.replace(',', '.')) || 0;
 
   /**
@@ -657,9 +666,24 @@ export default function QuotesPage() {
             {/* Header Document */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-blue-900">REZO360 CARAÏBES</h2>
-                <p className="text-xs text-slate-500 font-medium">Ingénierie Réseaux, Fibre Optique & Électricité BT</p>
-                <p className="text-2xs text-slate-500 mt-1">SIRET : 849 204 192 00018 • TVA : FR 49 849204192</p>
+                <h2 className="text-xl font-bold tracking-tight text-blue-900">
+                  {organization?.name ?? 'REZO360 Pro'}
+                </h2>
+                {organization?.legal_name && organization.legal_name !== organization.name && (
+                  <p className="text-xs text-slate-600 font-semibold">{organization.legal_name}</p>
+                )}
+                <p className="text-2xs text-slate-500 mt-1">
+                  {organization?.registration_number ? `SIRET : ${organization.registration_number}` : ''}
+                  {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
+                  {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
+                </p>
+                {(organization?.address_line1 || organization?.city) && (
+                  <p className="text-3xs text-slate-500">
+                    {[organization?.address_line1, organization?.postal_code, organization?.city]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </p>
+                )}
               </div>
 
               <div className="text-right sm:text-right">

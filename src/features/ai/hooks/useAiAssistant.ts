@@ -110,17 +110,53 @@ export function useAiAssistant() {
 
       if (targetAction && confirmed) {
         switch (targetAction.actionType) {
+          case 'view_technicians':
+          case 'view_members':
+            void navigate(ROUTES.organizationMembers);
+            break;
+          case 'view_teams':
+            void navigate(ROUTES.teams);
+            break;
           case 'view_late_interventions':
             void navigate(ROUTES.review);
+            break;
+          case 'view_missions':
+            void navigate(ROUTES.missions);
             break;
           case 'view_planning':
             void navigate(ROUTES.planning);
             break;
           case 'check_equipment_alerts':
+          case 'view_stock':
+            void navigate(ROUTES.stock);
+            break;
+          case 'view_equipment':
             void navigate(ROUTES.equipment);
             break;
+          case 'view_vehicles':
+            void navigate(ROUTES.vehicles);
+            break;
+          case 'view_suppliers':
+            void navigate(ROUTES.suppliers);
+            break;
+          case 'view_purchases':
+            void navigate(ROUTES.purchaseOrders);
+            break;
+          case 'view_quotes':
+            void navigate(ROUTES.quotes);
+            break;
+          case 'view_customers':
+            void navigate(ROUTES.customers);
+            break;
           case 'summarize_week_missions':
+          case 'view_analytics':
             void navigate(ROUTES.analytics);
+            break;
+          case 'view_billing':
+            void navigate(ROUTES.organizationBilling);
+            break;
+          case 'view_tools':
+            void navigate(ROUTES.tools);
             break;
           case 'draft_intervention_report':
             void navigate(ROUTES.reports);

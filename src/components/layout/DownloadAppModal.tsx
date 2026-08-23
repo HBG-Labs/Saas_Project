@@ -1,35 +1,8 @@
-import { Apple, Globe, MonitorSmartphone, Smartphone, X } from 'lucide-react';
+import { useState } from 'react';
+import { Apple, CheckCircle2, Download, Globe, MonitorSmartphone, Smartphone, X } from 'lucide-react';
 
+import { usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
 import { Button } from '@/components/ui/Button';
-
-/**
- * Installer REZO360 sur un téléphone.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * CE QUE CETTE MODALE PROMETTAIT, ET QUI N'EXISTAIT PAS
- *
- * Elle proposait « Télécharger l'APK Android (84 MB) ». Le clic fabriquait un
- * FICHIER TEXTE nommé `REZO360-Mobile-Android-v2.4.apk`, contenant trois lignes
- * dont `Org ID: org-demo`. Le client tentait de l'installer, échouait, et se
- * retrouvait avec un `.apk` non installable — ce qui, pour un utilisateur
- * averti, ressemble à un logiciel malveillant.
- *
- * Quatre autres affirmations étaient fausses : une version « v2.4.0 » qui
- * n'existe pas, une taille de 84 Mo, un « QR Code » qui n'était qu'un dessin de
- * rectangles impossible à scanner, et une mention « Certifié Google Play
- * Protect & Apple Enterprise Signed ».
- *
- * Aucun projet natif n'existe : ni `android/`, ni `ios/`. Il n'y a rien à
- * télécharger, et il n'y aura rien avant qu'on ait décidé d'en construire.
- *
- * CE QU'ELLE DIT MAINTENANT, ET QUI EST VRAI
- *
- * REZO360 est une application web installable — `site.webmanifest` la déclare
- * en `display: standalone`. Ajoutée à l'écran d'accueil, elle s'ouvre en plein
- * écran, sans barre d'adresse, avec son icône. C'est la seule chose que nous
- * savons offrir aujourd'hui ; c'est donc la seule que nous proposons.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 
 interface DownloadAppModalProps {
   isOpen: boolean;
@@ -70,10 +43,25 @@ const PARCOURS = [
 ] as const;
 
 export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
+  const { isInstallable, isInstalled, installPwa } = usePwaInstall();
+  const [browserHelp, setBrowserHelp] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
+  const handleDirectInstall = async () => {
+    setBrowserHelp(null);
+    const success = await installPwa();
+    if (success) {
+      onClose();
+    } else {
+      setBrowserHelp(
+        "💡 Astuce d'installation : Cliquez sur la petite icône d'installation 📥 ou ⊕ située tout à droite dans la barre d'adresse de votre navigateur Chrome / Edge (ou via le menu ⋮ > « Installer l’application »)."
+      );
+    }
+  };
+
   return (
-    <div className="bg-surface-sunken animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md duration-200">
+    <div className="bg-surface-sunken/80 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md duration-200">
       <div
         role="dialog"
         aria-modal="true"
@@ -89,10 +77,10 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </div>
             <div>
               <h2 id="install-title" className="text-foreground text-lg font-bold">
-                Installer REZO360 sur votre téléphone
+                Installer REZO360 sur votre appareil
               </h2>
               <p className="text-muted-foreground text-xs">
-                Vos interventions et vos outils de calcul, en plein écran, comme une application.
+                Vos interventions et vos outils de calcul, en plein écran, comme une application native.
               </p>
             </div>
           </div>
@@ -106,13 +94,48 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
           </button>
         </div>
 
-        <div className="space-y-3 p-5">
-          {/*
-            Dit d'emblée, et non en petits caractères : quelqu'un qui ouvre
-            cette fenêtre cherche un magasin d'applications. Lui laisser lire
-            trois marches à suivre avant de comprendre qu'il n'y en a pas
-            serait une perte de temps déguisée en explication.
-          */}
+        <div className="space-y-4 p-5">
+          {/* Bouton d'installation permanent */}
+          {!isInstalled && (
+            <div className="flex flex-col gap-3 p-4 rounded-xl bg-primary/10 border border-primary/30 shadow-xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Installation rapide sur cet appareil
+                  </h3>
+                  <p className="text-2xs text-muted-foreground">
+                    {isInstallable
+                      ? "Votre navigateur est prêt pour l'installation instantanée en 1 clic."
+                      : "Installez REZO360 en mode application plein écran pour vos interventions."}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={handleDirectInstall}
+                  className="w-full sm:w-auto font-bold gap-2 shadow-sm cursor-pointer shrink-0"
+                >
+                  <Download className="size-4" />
+                  <span>Installer maintenant</span>
+                </Button>
+              </div>
+
+              {browserHelp && (
+                <div className="p-3 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-900 dark:text-blue-200 text-xs font-medium animate-in fade-in">
+                  {browserHelp}
+                </div>
+              )}
+            </div>
+          )}
+
+          {isInstalled && (
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+              <CheckCircle2 className="size-4 shrink-0" />
+              <span>REZO360 est déjà installé sur cet appareil en mode application.</span>
+            </div>
+          )}
+
           <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border px-3.5 py-2.5 text-xs leading-relaxed">
             REZO360 ne passe pas par les magasins d’applications. Il s’installe{' '}
             <strong className="text-foreground">directement depuis votre navigateur</strong> — rien

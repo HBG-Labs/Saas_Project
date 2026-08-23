@@ -243,23 +243,27 @@ export default function ProfilePage() {
 
     const trimmedJobTitle = dataToSave.jobTitle.trim();
     const trimmedDisplayName = dataToSave.displayName.trim();
+    const trimmedPhone = dataToSave.phone.trim();
 
-    // 1. Sauvegarde locale immédiate
+    // 1. Sauvegarde locale de confort
     try {
       localStorage.setItem('user_job_title', trimmedJobTitle);
     } catch {
       // Stockage inaccessible
     }
 
-    // 2. Synchronisation du poste dans l'organisation courante si membre actif
+    // 2. Synchronisation du poste et du téléphone dans l'organisation courante (grâce à la policy organization_members_update_self)
     if (membership?.id) {
       try {
         await supabase
           .from('organization_members')
-          .update({ job_title: trimmedJobTitle === '' ? null : trimmedJobTitle })
+          .update({
+            job_title: trimmedJobTitle === '' ? null : trimmedJobTitle,
+            phone: trimmedPhone === '' ? null : trimmedPhone,
+          })
           .eq('id', membership.id);
-      } catch {
-        // En cas de droits limités, on continue l'enregistrement
+      } catch (err) {
+        console.warn('Synchronisation membership:', err);
       }
     }
 

@@ -14,10 +14,11 @@ export function ScientificCalculatorDocsModal() {
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-1.5 text-xs border-primary/40 text-primary hover:bg-primary/10"
+        className="gap-1.5 text-xs border-primary/40 text-primary hover:bg-primary/10 h-8 px-2 sm:px-3 shrink-0"
+        title="Guide & documentation complet"
       >
-        <BookOpen className="size-4" />
-        <span>Guide & Documentation complet</span>
+        <BookOpen className="size-3.5 shrink-0" />
+        <span className="hidden sm:inline">Documentation</span>
       </Button>
 
       <Modal

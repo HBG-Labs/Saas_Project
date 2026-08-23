@@ -28,6 +28,7 @@ export interface InterventionSite {
   priority: 'low' | 'normal' | 'high' | 'urgent';
   scheduledTime: string;
   assignedTechnicianName?: string | undefined;
+  assignedMemberId?: string | undefined;
   status: 'planned' | 'in_progress' | 'completed';
   kind?: 'mission' | 'client' | undefined;
   customerId?: string | undefined;

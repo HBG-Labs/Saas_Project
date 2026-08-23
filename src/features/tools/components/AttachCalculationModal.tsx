@@ -49,9 +49,17 @@ Synthèse & Résultat : ${calculation.summary} => ${calculation.result}
 Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
 
   const handleCopyNote = () => {
-    navigator.clipboard.writeText(technicalNote);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // Le presse-papiers peut refuser (permission, contexte non sécurisé) :
+    // n'annoncer « Copié » qu'une fois l'écriture réellement acceptée.
+    void navigator.clipboard.writeText(technicalNote).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {
+        setCopied(false);
+      },
+    );
   };
 
   const handleAttachToMission = () => {
@@ -66,7 +74,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
     }
 
     onClose();
-    navigate(`${ROUTES.missions}/${selectedMissionId}`);
+    void navigate(`${ROUTES.missions}/${selectedMissionId}`);
   };
 
   const handleCreateQuoteWithCalc = () => {
@@ -76,7 +84,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
       // Ignore
     }
     onClose();
-    navigate(ROUTES.quotes);
+    void navigate(ROUTES.quotes);
   };
 
   return (

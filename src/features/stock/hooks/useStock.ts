@@ -35,11 +35,10 @@ import type {
  * Deux ajouts seulement : `error`, qui porte l'échec réel jusqu'à l'interface,
  * et `isPending`, distinct de `isLoading`.
  *
- * ⚠️ `reconcilePurchasesWithStock()` n'est plus appelé ici. Cette fonction
- * appartient au module Achats, resté sur `localStorage` : elle écrivait dans un
- * stock local que cette page ne lit plus. Tant que les Achats ne sont pas
- * migrés à leur tour, la réception d'une commande n'alimente donc PAS le stock.
- * Une `queryFn` n'avait de toute façon pas à écrire.
+ * La réception d'une commande fournisseur alimente bien le stock : elle passe
+ * par la transaction `receive_purchase_order`, côté base. Le rattrapage
+ * `reconcilePurchasesWithStock()` qui s'exécutait autrefois dans la `queryFn` a
+ * disparu avec le `localStorage` — une requête n'a pas à écrire.
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * Le cloisonnement est appliqué par les policies, pas ici. `organizationId`

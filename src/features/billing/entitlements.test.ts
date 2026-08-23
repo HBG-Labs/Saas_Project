@@ -140,7 +140,7 @@ describe('synchronisation avec le seed SQL', () => {
   // `stock` est arrivé après cette remise à plat, dans sa propre migration :
   // il s'ajoute à la grille sans la redéfinir.
   const tuples = extractInsertTuplesAcross(
-    [MIGRATION_FILES.pricingModel, MIGRATION_FILES.stock],
+    [MIGRATION_FILES.pricingModel, MIGRATION_FILES.stock, MIGRATION_FILES.purchases],
     'plan_features',
   );
 

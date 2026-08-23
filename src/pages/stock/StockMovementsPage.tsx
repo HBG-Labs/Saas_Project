@@ -113,13 +113,15 @@ export default function StockMovementsPage() {
         onCustomMonthChange={setCustomMonth}
       />
 
-      {/* Modale de déclaration de mouvement */}
-      <RecordMovementModal
-        isOpen={isMovementModalOpen}
-        onClose={() => setIsMovementModalOpen(false)}
-        onSubmit={handleMovementSubmit}
-        consumables={consumables}
-      />
+      {/* Montée seulement lorsqu'elle est ouverte — voir StockConsumablesPage. */}
+      {isMovementModalOpen ? (
+        <RecordMovementModal
+          isOpen
+          onClose={() => setIsMovementModalOpen(false)}
+          onSubmit={handleMovementSubmit}
+          consumables={consumables}
+        />
+      ) : null}
     </div>
   );
 }

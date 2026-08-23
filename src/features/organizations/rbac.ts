@@ -23,6 +23,7 @@ import type { OrgRole } from '@/types/database';
  *           supabase/migrations/20260816100000_planning.sql
  *           supabase/migrations/20260817100000_retire_live_tracking.sql
  *           supabase/migrations/20260820110000_stock.sql
+ *           supabase/migrations/20260821100000_purchases.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -65,6 +66,9 @@ export const PERMISSIONS = {
 
   stockView: 'stock.view',
   stockManage: 'stock.manage',
+
+  purchaseView: 'purchase.view',
+  purchaseManage: 'purchase.manage',
 
   quoteView: 'quote.view',
   quoteManage: 'quote.manage',
@@ -147,6 +151,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'stock.view',
     'stock.manage',
+    'purchase.view',
+    'purchase.manage',
     'quote.view',
     'quote.manage',
     'leave.view',
@@ -187,6 +193,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'stock.view',
     'stock.manage',
+    'purchase.view',
+    'purchase.manage',
     'quote.view',
     'quote.manage',
     'leave.view',
@@ -221,6 +229,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'equipment.manage',
     'stock.view',
     'stock.manage',
+    'purchase.view',
+    'purchase.manage',
     'quote.view',
     'quote.manage',
     // Accorde les congés : c'est une décision d'employeur, et le responsable
@@ -253,6 +263,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // régularise l'inventaire de son véhicule.
     'stock.view',
     'stock.manage',
+    // Voit ce qui a été commandé et quand cela arrive — un chantier en dépend.
+    // Il n'engage pas la dépense pour autant.
+    'purchase.view',
     'quote.view',
     // Constate les absences pour organiser ses semaines, et voit qui est où
     // pour répartir une urgence. Il n'ACCORDE pas les congés.
@@ -288,6 +301,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // le stock serait tenu par quelqu'un qui n'y touche jamais.
     'stock.view',
     'stock.manage',
+    // Consulte les commandes en cours pour savoir ce qui arrive sur son
+    // chantier ; il ne passe pas commande.
+    'purchase.view',
     'leave.request',
     'planning.view',
   ],

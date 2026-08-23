@@ -1,6 +1,6 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 
-import { AuthContext } from '@/features/auth/context/auth-context';
+import { AuthContext } from '@/features/auth';
 import type { CalculationHistoryEntry } from '../types/tools.types';
 
 const MAX_HISTORY_ENTRIES = 50;
@@ -15,7 +15,7 @@ function readStoredHistory(key: string): CalculationHistoryEntry[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as CalculationHistoryEntry[]) : [];
   } catch {
     return [];
@@ -31,10 +31,21 @@ export function useToolHistory() {
     readStoredHistory(storageKey),
   );
 
-  // Synchronise automatiquement l'historique lors d'un changement de compte ou connexion/déconnexion
-  useEffect(() => {
+  /*
+    Changement de compte : l'historique doit repartir de celui du nouvel
+    utilisateur, jamais rester sur celui du précédent.
+
+    C'est le patron « ajuster un état quand une prop change » : la remise à
+    niveau se fait PENDANT le rendu, pas dans un effet. Dans un effet, React
+    peignait d'abord l'historique de l'ancien compte, puis le remplaçait au
+    rendu suivant — un rendu en cascade, et un instant où l'écran affichait les
+    données de quelqu'un d'autre.
+  */
+  const [cleLue, setCleLue] = useState(storageKey);
+  if (cleLue !== storageKey) {
+    setCleLue(storageKey);
     setHistory(readStoredHistory(storageKey));
-  }, [storageKey]);
+  }
 
   const persistHistory = useCallback(
     (items: CalculationHistoryEntry[]) => {

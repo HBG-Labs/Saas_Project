@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
@@ -31,8 +31,8 @@ function readStoredSet(key: string): Set<string> {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    return new Set(Array.isArray(parsed) ? parsed : []);
+    const parsed: unknown = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
   } catch {
     return new Set();
   }
@@ -63,10 +63,22 @@ export function useNotifications() {
   const [readIds, setReadIds] = useState<Set<string>>(() => readStoredSet(readKey));
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => readStoredSet(dismissedKey));
 
-  useEffect(() => {
+  /*
+    Changement de compte : les notifications lues et écartées doivent repartir de
+    celles du nouvel utilisateur, jamais rester sur celles du précédent.
+
+    C'est le patron « ajuster un état quand une prop change » : la remise à
+    niveau se fait PENDANT le rendu, pas dans un effet. Dans un effet, React
+    peignait d'abord les marqueurs de l'ancien compte, puis le remplaçait au
+    rendu suivant — un rendu en cascade, et un instant où l'écran affichait les
+    données de quelqu'un d'autre.
+  */
+  const [cleLue, setCleLue] = useState(readKey);
+  if (cleLue !== readKey) {
+    setCleLue(readKey);
     setReadIds(readStoredSet(readKey));
     setDismissedIds(readStoredSet(dismissedKey));
-  }, [readKey, dismissedKey]);
+  }
 
   // Queries
   const membersQuery = useMembers(organizationId);

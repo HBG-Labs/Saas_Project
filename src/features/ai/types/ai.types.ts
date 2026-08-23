@@ -14,7 +14,21 @@ export type AiActionType =
   | 'summarize_week_missions'
   | 'draft_intervention_report'
   | 'view_planning'
-  | 'navigate_route';
+  | 'navigate_route'
+  | 'view_missions'
+  | 'view_members'
+  | 'view_technicians'
+  | 'view_teams'
+  | 'view_stock'
+  | 'view_equipment'
+  | 'view_vehicles'
+  | 'view_suppliers'
+  | 'view_purchases'
+  | 'view_quotes'
+  | 'view_customers'
+  | 'view_analytics'
+  | 'view_billing'
+  | 'view_tools';
 
 export interface AiProposedAction {
   id: string;

@@ -174,6 +174,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.locations,
       MIGRATION_FILES.retireTracking,
       MIGRATION_FILES.stock,
+      MIGRATION_FILES.purchases,
     ],
     'role_permissions',
   );

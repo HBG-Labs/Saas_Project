@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -35,30 +35,22 @@ export function RecordMovementModal({
   const [reason, setReason] = useState<string>('');
   const [technicianName, setTechnicianName] = useState<string>('');
   const [interventionRef, setInterventionRef] = useState<string>('');
-  const [locationFrom, setLocationFrom] = useState<string>('');
+  const [locationFrom, setLocationFrom] = useState<string>(
+    initialConsumable?.location ?? consumables[0]?.location ?? '',
+  );
   const [locationTo, setLocationTo] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (initialConsumable) {
-      setSelectedConsumableId(initialConsumable.id);
-      setLocationFrom(initialConsumable.location);
-    } else if (consumables.length > 0 && !selectedConsumableId) {
-      const first = consumables[0];
-      if (first) {
-        setSelectedConsumableId(first.id);
-        setLocationFrom(first.location);
-      }
-    }
-    setType(initialType);
-    setQuantity(1);
-    setReason('');
-    setTechnicianName('');
-    setInterventionRef('');
-    setLocationTo('');
-    setError(null);
-  }, [initialConsumable, initialType, isOpen, consumables]);
+  /*
+    Aucun effet de resynchronisation ici.
+
+    La page ne monte cette modale QUE lorsqu'elle est ouverte : à chaque
+    ouverture, React la remonte et les `useState` repartent des props. La
+    version précédente la laissait montée en permanence et recopiait les props
+    dans l'état à chaque ouverture — un `setState` dans un effet, donc un rendu
+    en cascade à chaque frappe de dépendance.
+  */
 
   const selectedConsumable = consumables.find((c) => c.id === selectedConsumableId);
 

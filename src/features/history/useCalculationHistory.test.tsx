@@ -22,7 +22,11 @@ describe('useCalculationHistory — Isolation stricte par compte', () => {
     const mockAuth: AuthContextValue = {
       status: userId ? 'authenticated' : 'unauthenticated',
       session: null,
-      user: userId ? ({ id: userId, email: `${userId}@test.com` } as any) : null,
+      // Seuls `id` et `email` sont lus ici : le reste de `User` n'a pas à être
+      // inventé, d'où l'assertion — mais sur le type réel, pas sur `any`.
+      user: userId
+        ? ({ id: userId, email: `${userId}@test.com` } as AuthContextValue['user'])
+        : null,
       signIn: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),

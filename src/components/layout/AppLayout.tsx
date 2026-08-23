@@ -1,8 +1,9 @@
-import { Building2, LogOut, Menu, Search, Settings, User } from 'lucide-react';
+import { Building2, Download, LogOut, Menu, Search, Settings, User, WifiOff } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
+import { PwaInstallBanner, usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import {
@@ -44,6 +45,7 @@ export function AppLayout() {
   const navigate = useNavigate();
 
   const { avatarUrl } = useAvatarStore();
+  const { isInstallable, installPwa } = usePwaInstall();
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
 
@@ -256,6 +258,12 @@ export function AppLayout() {
                     Paramètres
                   </Link>
                 </DropdownItem>
+                {isInstallable && (
+                  <DropdownItem onSelect={installPwa} className="text-primary font-semibold">
+                    <Download />
+                    Installer l'application
+                  </DropdownItem>
+                )}
                 <DropdownSeparator />
                 <div className="sm:hidden">
                   <DropdownLabel>Apparence</DropdownLabel>
@@ -308,7 +316,16 @@ export function AppLayout() {
           sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-7xl space-y-4">
+          {!isOnline && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold animate-in fade-in">
+              <WifiOff className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Mode Hors-Ligne actif.</strong> Vous travaillez en autonomie locale. Vos interventions, calculs et saisies sont conservés sur votre appareil et seront synchronisés dès le retour du réseau.
+              </span>
+            </div>
+          )}
+
           {/*
             Au-dessus du contenu, pas dans une page : l'échéance d'essai suspend
             l'accès à TOUS les modules professionnels, pas seulement à celui
@@ -318,6 +335,8 @@ export function AppLayout() {
             mois de l'échéance, ou pour qui n'a pas `billing.view`.
           */}
           <TrialBanner organizationId={organizationId} />
+
+          <PwaInstallBanner />
 
           <Suspense fallback={<LoadingScreen />}>
             <Outlet />

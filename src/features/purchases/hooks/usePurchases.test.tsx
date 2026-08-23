@@ -1,171 +1,346 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { loadConsumablesFromStorage } from '@/features/stock/api/stock.storage';
+import type * as PurchasesApi from '../api/purchases.api';
+import type {
+  PurchaseOrder,
+  PurchaseOrderInput,
+  Supplier,
+  SupplierInput,
+} from '../types/purchases.types';
 
 import { usePurchases } from './usePurchases';
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
+/**
+ * Les achats, désormais lus et écrits en base.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE CES CAS VÉRIFIENT — ET CE QU'ILS NE VÉRIFIENT PLUS
+ *
+ * La version précédente affirmait `suppliers.length > 0` sur une organisation
+ * neuve : elle ne testait que la présence des cinq fournisseurs de démonstration
+ * semés dans `localStorage`. Une organisation réelle commence vide.
+ *
+ * Elle attendait aussi par `setTimeout(50)` plutôt que par `waitFor`, ce qui
+ * rendait le résultat dépendant de la charge de la machine.
+ *
+ * La couche `purchases.api` est simulée : ces cas portent sur le hook — cadrage
+ * par organisation, indicateurs, invalidation croisée avec le stock — pas sur
+ * PostgREST. L'enchaînement réception → stock est vérifié en base.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+const api = vi.hoisted(() => ({
+  suppliers: [] as Supplier[],
+  orders: [] as PurchaseOrder[],
+  listSuppliers: vi.fn(),
+  listPurchaseOrders: vi.fn(),
+  createSupplier: vi.fn(),
+  updateSupplier: vi.fn(),
+  deleteSupplier: vi.fn(),
+  createPurchaseOrder: vi.fn(),
+  updatePurchaseOrder: vi.fn(),
+  deletePurchaseOrder: vi.fn(),
+  receivePurchaseOrder: vi.fn(),
+}));
+
+vi.mock('../api/purchases.api', async (importOriginal) => {
+  // `calculatePurchaseMetrics` est une fonction pure : la simuler priverait ces
+  // cas de ce qu'ils veulent justement observer.
+  const reel = await importOriginal<typeof PurchasesApi>();
+
+  return {
+    calculatePurchaseMetrics: reel.calculatePurchaseMetrics,
+    listSuppliers: api.listSuppliers,
+    listPurchaseOrders: api.listPurchaseOrders,
+    createSupplier: api.createSupplier,
+    updateSupplier: api.updateSupplier,
+    deleteSupplier: api.deleteSupplier,
+    createPurchaseOrder: api.createPurchaseOrder,
+    updatePurchaseOrder: api.updatePurchaseOrder,
+    deletePurchaseOrder: api.deletePurchaseOrder,
+    receivePurchaseOrder: api.receivePurchaseOrder,
+  };
+});
+
+const ORG = 'org-test-achats';
+
+function fournisseur(over: Partial<Supplier> = {}): Supplier {
+  return {
+    id: 'sup-1',
+    organizationId: ORG,
+    name: 'Rexel France',
+    code: 'REX',
+    email: 'commandes@rexel.test',
+    createdAt: '2026-08-21T00:00:00.000Z',
+    updatedAt: '2026-08-21T00:00:00.000Z',
+    ...over,
   };
 }
 
+function commande(over: Partial<PurchaseOrder> = {}): PurchaseOrder {
+  return {
+    id: 'po-1',
+    organizationId: ORG,
+    reference: 'CMD-2026-001',
+    supplierId: 'sup-1',
+    supplierName: 'Rexel France',
+    status: 'draft',
+    orderDate: new Date().toISOString().slice(0, 10),
+    items: [
+      {
+        id: 'item-1',
+        reference: 'CAB-FO-001',
+        description: 'Câble fibre',
+        unit: 'm',
+        quantityOrdered: 100,
+        quantityReceived: 0,
+        unitPriceEur: 1,
+        totalEur: 100,
+      },
+    ],
+    subtotalEur: 100,
+    taxRate: 0.2,
+    taxEur: 20,
+    totalEur: 120,
+    createdAt: '2026-08-21T00:00:00.000Z',
+    updatedAt: '2026-08-21T00:00:00.000Z',
+    ...over,
+  };
+}
+
+const saisieFournisseur: SupplierInput = {
+  name: 'Sonepar',
+  code: 'SON',
+  email: 'contact@sonepar.test',
+};
+
+const saisieCommande: PurchaseOrderInput = {
+  supplierId: 'sup-1',
+  orderDate: '2026-08-21',
+  items: [
+    {
+      reference: 'CAB-FO-001',
+      description: 'Câble fibre',
+      unit: 'm',
+      quantityOrdered: 50,
+      unitPriceEur: 2,
+    },
+  ],
+};
+
 describe('usePurchases', () => {
-  const orgId = 'test-purchases-org';
+  let queryClient: QueryClient;
 
   beforeEach(() => {
-    localStorage.clear();
+    vi.clearAllMocks();
+    api.suppliers = [fournisseur()];
+    api.orders = [commande()];
+
+    api.listSuppliers.mockImplementation(() => Promise.resolve(api.suppliers));
+    api.listPurchaseOrders.mockImplementation(() => Promise.resolve(api.orders));
+
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
   });
 
-  it('initialise avec des fournisseurs et commandes par défaut', async () => {
-    const { result } = renderHook(() => usePurchases(orgId), {
-      wrapper: createWrapper(),
-    });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
+  function monter(organizationId: string | null = ORG) {
+    return renderHook(() => usePurchases(organizationId), { wrapper });
+  }
 
-    expect(result.current.suppliers.length).toBeGreaterThan(0);
-    expect(result.current.orders.length).toBeGreaterThan(0);
-    expect(result.current.metrics.totalOrders).toBe(result.current.orders.length);
+  it("ne requête rien tant qu'aucune organisation n'est sélectionnée", () => {
+    const { result } = monter(null);
+
+    expect(api.listSuppliers).not.toHaveBeenCalled();
+    expect(api.listPurchaseOrders).not.toHaveBeenCalled();
+    expect(result.current.suppliers).toEqual([]);
+    expect(result.current.orders).toEqual([]);
   });
 
-  it('permet de créer un nouveau fournisseur', async () => {
-    const { result } = renderHook(() => usePurchases(orgId), {
-      wrapper: createWrapper(),
-    });
+  it("refuse de muter sans organisation plutôt que d'écrire ailleurs", async () => {
+    // Le repli `?? 'demo'` faisait écrire les mutations dans une organisation
+    // fantôme, sans que rien ne le signale.
+    const { result } = monter(null);
 
-    await act(async () => {
-      await result.current.createSupplier({
-        name: 'Test Fournisseur Fibre',
-        email: 'contact@testfibre.fr',
-        phone: '01 99 88 77 66',
-        city: 'Nantes',
-        defaultPaymentTerms: '30 jours',
-      });
-    });
-
-    expect(result.current.suppliers.some((s) => s.name === 'Test Fournisseur Fibre')).toBe(true);
+    await expect(result.current.createSupplier(saisieFournisseur)).rejects.toThrow(
+      /organisation/i,
+    );
+    expect(api.createSupplier).not.toHaveBeenCalled();
   });
 
-  it('permet de créer un bon de commande et de modifier son statut', async () => {
-    const { result } = renderHook(() => usePurchases(orgId), {
-      wrapper: createWrapper(),
+  it("cadre la lecture sur l'organisation courante", async () => {
+    const { result } = monter();
+
+    await waitFor(() => {
+      expect(result.current.suppliers).toHaveLength(1);
     });
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
-
-    const supplier = result.current.suppliers[0];
-    if (!supplier) throw new Error('Supplier needed');
-
-    let orderId = '';
-    await act(async () => {
-      const order = await result.current.createOrder({
-        supplierId: supplier.id,
-        reference: 'CMD-TEST-999',
-        orderDate: '2026-08-20',
-        items: [
-          {
-            reference: 'FBR-CAB-4FO',
-            description: 'Câble Fibre 4 FO',
-            unit: 'm',
-            quantityOrdered: 200,
-            unitPriceEur: 0.5,
-          },
-        ],
-      });
-      orderId = order.id;
-    });
-
-    const created = result.current.orders.find((o) => o.id === orderId);
-    expect(created).toBeDefined();
-    expect(created?.subtotalEur).toBe(100);
-    expect(created?.totalEur).toBe(120); // 100 + 20% TVA
-    expect(created?.status).toBe('draft');
-
-    // Passer en statut envoyé
-    await act(async () => {
-      await result.current.updateOrder(orderId, { status: 'sent' });
-    });
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
-
-    const updated = result.current.orders.find((o) => o.id === orderId);
-    expect(updated?.status).toBe('sent');
+    expect(api.listSuppliers).toHaveBeenCalledWith(ORG);
+    expect(api.listPurchaseOrders).toHaveBeenCalledWith(ORG);
   });
 
-  it('synchronise automatiquement le stock lors de la réception d’une commande', async () => {
-    const { result } = renderHook(() => usePurchases(orgId), {
-      wrapper: createWrapper(),
+  it('calcule les indicateurs à partir des données du serveur', async () => {
+    api.orders = [
+      commande({ id: 'po-1', status: 'draft' }),
+      commande({ id: 'po-2', status: 'sent' }),
+      commande({ id: 'po-3', status: 'partially_received' }),
+      commande({ id: 'po-4', status: 'received' }),
+    ];
+
+    const { result } = monter();
+
+    await waitFor(() => {
+      expect(result.current.orders).toHaveLength(4);
     });
+
+    expect(result.current.metrics.totalOrders).toBe(4);
+    expect(result.current.metrics.ordersDraft).toBe(1);
+    expect(result.current.metrics.ordersPendingDelivery).toBe(2);
+    expect(result.current.metrics.ordersCompleted).toBe(1);
+    expect(result.current.metrics.activeSuppliersCount).toBe(1);
+  });
+
+  it("transmet l'organisation à la création d'un fournisseur puis relit le serveur", async () => {
+    api.createSupplier.mockImplementation((_org: string, input: SupplierInput) => {
+      const cree = fournisseur({ id: 'sup-2', name: input.name });
+      api.suppliers = [...api.suppliers, cree];
+      return Promise.resolve(cree);
+    });
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.suppliers).toHaveLength(1));
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await result.current.createSupplier(saisieFournisseur);
     });
 
-    // Charger le stock initial
-    const initialConsumables = loadConsumablesFromStorage(orgId);
-    const targetArticle = initialConsumables.find((c) => c.reference === 'FBR-CAB-4FO');
-    const initialStockQty = targetArticle?.quantityInStock ?? 0;
+    expect(api.createSupplier).toHaveBeenCalledWith(ORG, saisieFournisseur);
+    await waitFor(() => expect(result.current.suppliers).toHaveLength(2));
+  });
 
-    const supplier = result.current.suppliers[0];
-    if (!supplier) throw new Error('Supplier needed');
+  it('met à jour un fournisseur par son identifiant, arguments aplatis', async () => {
+    api.updateSupplier.mockResolvedValue(fournisseur({ name: 'Rexel — nouveau nom' }));
 
-    let orderId = '';
-    let itemId = '';
-    await act(async () => {
-      const order = await result.current.createOrder({
-        supplierId: supplier.id,
-        reference: 'CMD-SYNC-STOCK',
-        orderDate: '2026-08-20',
-        items: [
-          {
-            consumableId: targetArticle?.id,
-            reference: 'FBR-CAB-4FO',
-            description: 'Câble Fibre 4 FO',
-            unit: 'm',
-            quantityOrdered: 150,
-            unitPriceEur: 0.45,
-          },
-        ],
-      });
-      orderId = order.id;
-      itemId = order.items[0]?.id ?? '';
-    });
-
-    // Réceptionner 150 unités
-    await act(async () => {
-      await result.current.receiveOrder(orderId, { [itemId]: 150 }, 'BL-12345');
-    });
+    const { result } = monter();
+    await waitFor(() => expect(result.current.suppliers).toHaveLength(1));
 
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await result.current.updateSupplier('sup-1', { name: 'Rexel — nouveau nom' });
     });
 
-    // Vérifier que la commande est maintenant reçue
-    const updatedOrder = result.current.orders.find((o) => o.id === orderId);
-    expect(updatedOrder?.status).toBe('received');
-    expect(updatedOrder?.items[0]?.quantityReceived).toBe(150);
+    expect(api.updateSupplier).toHaveBeenCalledWith('sup-1', { name: 'Rexel — nouveau nom' });
+  });
 
-    // Vérifier que le stock a bien été augmenté de +150
-    const updatedConsumables = loadConsumablesFromStorage(orgId);
-    const updatedArticle = updatedConsumables.find((c) => c.reference === 'FBR-CAB-4FO');
-    expect(updatedArticle?.quantityInStock).toBe(initialStockQty + 150);
+  it('supprime un fournisseur et rafraîchit la liste', async () => {
+    api.deleteSupplier.mockImplementation(() => {
+      api.suppliers = [];
+      return Promise.resolve();
+    });
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.suppliers).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.deleteSupplier('sup-1');
+    });
+
+    await waitFor(() => expect(result.current.suppliers).toHaveLength(0));
+  });
+
+  it('crée une commande et relit le serveur', async () => {
+    api.createPurchaseOrder.mockImplementation(() => {
+      const creee = commande({ id: 'po-2', reference: 'CMD-2026-002' });
+      api.orders = [...api.orders, creee];
+      return Promise.resolve(creee);
+    });
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.orders).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.createOrder(saisieCommande);
+    });
+
+    expect(api.createPurchaseOrder).toHaveBeenCalledWith(ORG, saisieCommande);
+    await waitFor(() => expect(result.current.orders).toHaveLength(2));
+  });
+
+  it('accepte un changement de statut sans renvoyer les lignes', async () => {
+    // C'est le geste « Envoyer la commande » : un patch d'un seul champ.
+    api.updatePurchaseOrder.mockResolvedValue(commande({ status: 'sent' }));
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.orders).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.updateOrder('po-1', { status: 'sent' });
+    });
+
+    expect(api.updatePurchaseOrder).toHaveBeenCalledWith('po-1', { status: 'sent' });
+  });
+
+  it('transmet le pointage de réception ligne par ligne', async () => {
+    api.receivePurchaseOrder.mockImplementation(() => {
+      api.orders = [
+        commande({
+          status: 'partially_received',
+          items: [{ ...commande().items[0]!, quantityReceived: 40 }],
+        }),
+      ];
+      return Promise.resolve(api.orders[0]!);
+    });
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.orders).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.receiveOrder('po-1', { 'item-1': 40 }, 'BL n°4471');
+    });
+
+    expect(api.receivePurchaseOrder).toHaveBeenCalledWith('po-1', { 'item-1': 40 }, 'BL n°4471');
+    await waitFor(() => {
+      expect(result.current.orders[0]?.status).toBe('partially_received');
+      expect(result.current.orders[0]?.items[0]?.quantityReceived).toBe(40);
+    });
+  });
+
+  it('invalide aussi le stock après une réception', async () => {
+    // Réceptionner incrémente des quantités : ne rafraîchir que les achats
+    // laisserait la page Stock afficher l'état d'avant la livraison.
+    const invalider = vi.spyOn(queryClient, 'invalidateQueries');
+    api.receivePurchaseOrder.mockResolvedValue(commande({ status: 'received' }));
+
+    const { result } = monter();
+    await waitFor(() => expect(result.current.orders).toHaveLength(1));
+    invalider.mockClear();
+
+    await act(async () => {
+      await result.current.receiveOrder('po-1', { 'item-1': 100 });
+    });
+
+    const cles = invalider.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
+    expect(cles).toContain(JSON.stringify(['purchases']));
+    expect(cles).toContain(JSON.stringify(['stock']));
+  });
+
+  it("remonte l'erreur du serveur au lieu d'afficher une liste vide", async () => {
+    const panne = new Error('permission denied for table purchase_orders');
+    api.listPurchaseOrders.mockRejectedValue(panne);
+
+    const { result } = monter();
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    expect(result.current.error).toBe(panne);
+    expect(result.current.orders).toEqual([]);
   });
 });

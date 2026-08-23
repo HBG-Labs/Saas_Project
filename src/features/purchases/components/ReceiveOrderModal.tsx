@@ -1,5 +1,5 @@
 import { Check, PackageCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -24,24 +24,27 @@ export function ReceiveOrderModal({
   onSubmit,
   order,
 }: ReceiveOrderModalProps) {
-  const [receivedQuantities, setReceivedQuantities] = useState<Record<string, number>>({});
+  // Prérempli avec le RESTE à recevoir : c'est le geste courant, et le
+  // magasinier n'a qu'à corriger les écarts du bon de livraison.
+  const [receivedQuantities, setReceivedQuantities] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      (order?.items ?? []).map((item) => [
+        item.id,
+        Math.max(0, item.quantityOrdered - item.quantityReceived),
+      ]),
+    ),
+  );
   const [deliveryNotes, setDeliveryNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (order) {
-      // Par défaut, pré-remplir avec la quantité restante à recevoir
-      const initial: Record<string, number> = {};
-      order.items.forEach((item) => {
-        const remaining = Math.max(0, item.quantityOrdered - item.quantityReceived);
-        initial[item.id] = remaining;
-      });
-      setReceivedQuantities(initial);
-      setDeliveryNotes('');
-    }
-    setError(null);
-  }, [order, isOpen]);
+  /*
+    L'état part directement des props : la modale n'est montée que lorsqu'elle
+    est ouverte, donc React la remonte à chaque ouverture. La version précédente
+    la laissait montée en permanence et recopiait les props dans l'état par un
+    `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
+  */
+
 
   if (!order) return null;
 

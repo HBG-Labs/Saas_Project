@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { qk } from '@/lib/query-keys';
+import { supabase } from '@/services/supabase';
 import type { TablesUpdate } from '@/types/database';
 import type { Team } from '@/types/domain';
 
@@ -24,6 +26,35 @@ import {
  * avant d'atteindre cette requête.
  */
 export function useTeams(organizationId: string | null) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!organizationId) return;
+
+    const channelId = `realtime_teams_${organizationId}_${Math.random().toString(36).slice(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'teams',
+          filter: `organization_id=eq.${organizationId}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({
+            queryKey: qk.teams.list(organizationId),
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [organizationId, queryClient]);
+
   return useQuery({
     queryKey: qk.teams.list(organizationId ?? 'none'),
     queryFn: () => (organizationId === null ? [] : listTeams(organizationId)),

@@ -10,6 +10,7 @@ import {
 
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
+import { cn } from '@/lib/cn';
 import { useCurrentIndustry } from '@/features/industries';
 import { useMissions } from '@/features/missions';
 import { useCustomers, useOrganizationSites } from '@/features/customers';
@@ -43,14 +44,13 @@ export default function MapPage() {
   const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
 
-  // 1. Chargement des missions
+  // 2. Chargement de toutes les missions de l'organisation
   const missionsQuery = useMissions(organizationId, {
-    status: ['draft', 'assigned', 'accepted', 'in_progress', 'completed'],
-    limit: 200,
+    limit: 500,
   });
   const missions = useMemo(() => missionsQuery.data ?? [], [missionsQuery.data]);
 
-  // 2. Chargement des clients et de leurs sites
+  // 3. Chargement des clients et de leurs sites
   const customersQuery = useCustomers(organizationId);
   const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
 
@@ -129,15 +129,24 @@ export default function MapPage() {
             (!firstSiteCoordsByCustomerId.has(mission.customer_id) &&
               customerGeocodes[mission.customer_id] === undefined),
         )
-        .map((mission) => ({
-          id: mission.id,
-          query:
-            [mission.address_line1, mission.postal_code, mission.city]
-              .filter((part) => part != null && part !== '')
-              .join(' ') || (mission.location_label ?? ''),
-        }))
+        .map((mission) => {
+          const customer = mission.customer_id ? customersMap.get(mission.customer_id) : null;
+          const directQuery = [mission.address_line1, mission.postal_code, mission.city]
+            .filter((part) => part != null && part !== '')
+            .join(' ');
+          const customerQuery = customer
+            ? [customer.address_line1, customer.postal_code, customer.city]
+                .filter((part) => part != null && part !== '')
+                .join(' ')
+            : '';
+
+          return {
+            id: mission.id,
+            query: directQuery || (mission.location_label ?? '') || customerQuery,
+          };
+        })
         .filter((entry) => entry.query.trim().length > 3),
-    [missions, sitesMap, firstSiteCoordsByCustomerId, customerGeocodes],
+    [missions, sitesMap, firstSiteCoordsByCustomerId, customerGeocodes, customersMap],
   );
 
   const missionGeocoding = useGeocodedAddresses(missionsToGeocode);
@@ -299,83 +308,64 @@ export default function MapPage() {
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setRadiusKm(r)}
-                  className={`px-2 py-0.5 font-bold rounded-md transition-all ${
+                  onClick={() => setRadiusKm(radiusKm === r ? null : r)}
+                  className={cn(
+                    'px-2 py-0.5 font-semibold rounded-lg transition-all',
                     radiusKm === r
                       ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
                 >
                   {r}km
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => setRadiusKm(null)}
-                className={`px-2 py-0.5 font-bold rounded-md transition-all ${
-                  radiusKm === null
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Tous
-              </button>
             </div>
           )}
 
-          {/* Bouton « Ma position » (One-shot) */}
+          {/* Bouton d'action « Autour de moi » ponctuelle */}
           <Button
             type="button"
-            variant={userPosition ? 'primary' : 'outline'}
+            variant={userPosition ? 'outline' : 'primary'}
             size="sm"
             onClick={handleLocateAndNearby}
             disabled={isLocatingUser}
-            className="text-xs h-8 gap-1.5"
-            title="Récupérer ponctuellement ma position GPS pour voir les chantiers et clients à proximité"
+            className="text-xs h-8 gap-1.5 shadow-xs"
           >
-            <Crosshair
-              className={`size-3.5 ${isLocatingUser ? 'animate-spin' : ''}`}
-            />
-            <span>
-              {isLocatingUser
-                ? 'Localisation...'
-                : userPosition
-                  ? '📍 Ma position active'
-                  : '📍 Ma position'}
-            </span>
+            <Crosshair className={cn('size-3.5', isLocatingUser && 'animate-spin')} />
+            <span>{isLocatingUser ? 'Localisation...' : userPosition ? 'Actualiser GPS' : 'Autour de moi'}</span>
           </Button>
 
-          {/* Bascule Mobile (Carte / Liste) */}
-          <div className="flex lg:hidden items-center bg-surface-subtle p-0.5 rounded-xl border border-border">
+          {/* Bascule Mobile Carte / Liste */}
+          <div className="flex items-center lg:hidden bg-surface-subtle p-0.5 rounded-xl border border-border text-3xs">
             <button
               type="button"
               onClick={() => setMobileTab('map')}
-              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={cn(
+                'p-1.5 rounded-lg transition-all',
                 mobileTab === 'map'
                   ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  : 'text-muted-foreground',
+              )}
             >
-              <MapIcon className="size-3" />
-              Carte
+              <MapIcon className="size-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setMobileTab('list')}
-              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={cn(
+                'p-1.5 rounded-lg transition-all',
                 mobileTab === 'list'
                   ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  : 'text-muted-foreground',
+              )}
             >
-              <List className="size-3" />
-              Liste ({interventions.length})
+              <List className="size-3.5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Alerte si des missions sont sans coordonnées GPS */}
+      {/* Alerte discrète si des missions sont sans coordonnées */}
       {unlocatedCount > 0 && (
         <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-3xs text-amber-800 dark:text-amber-200">
           <div className="flex items-center gap-2">
@@ -401,10 +391,7 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Adresses que le géocodeur n'a pas su placer.
-          Un point absent de la carte s'expliquait auparavant par un `catch {}` :
-          l'utilisateur cherchait un chantier qui n'apparaissait pas, sans
-          jamais savoir que le service avait refusé la demande. */}
+      {/* Adresses que le géocodeur n'a pas su placer */}
       {unplacedCount > 0 && (
         <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 dark:text-amber-400">
           <AlertCircle className="size-4 shrink-0" />

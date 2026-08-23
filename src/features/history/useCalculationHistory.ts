@@ -1,6 +1,6 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 
-import { AuthContext } from '@/features/auth/context/auth-context';
+import { AuthContext } from '@/features/auth';
 import { FEATURES, useUserEntitlements } from '@/features/billing';
 
 import { type HistoryEntry } from './types';
@@ -33,10 +33,21 @@ export function useCalculationHistory(toolSlug?: string) {
 
   const [entries, setEntries] = useState<HistoryEntry[]>(() => readStoredEntries(storageKey));
 
-  // Dès qu'on change de compte connecté ou déconnecté, on recharge l'historique étanche de ce compte
-  useEffect(() => {
+  /*
+    Changement de compte : l'historique doit repartir de celui du nouvel
+    utilisateur, jamais rester sur celui du précédent.
+
+    C'est le patron « ajuster un état quand une prop change » : la remise à
+    niveau se fait PENDANT le rendu, pas dans un effet. Dans un effet, React
+    peignait d'abord l'historique de l'ancien compte, puis le remplaçait au
+    rendu suivant — un rendu en cascade, et un instant où l'écran affichait les
+    données de quelqu'un d'autre.
+  */
+  const [cleLue, setCleLue] = useState(storageKey);
+  if (cleLue !== storageKey) {
+    setCleLue(storageKey);
     setEntries(readStoredEntries(storageKey));
-  }, [storageKey]);
+  }
 
   // Le plan vient du serveur. Il n'est plus modifiable depuis l'interface
   const { planCode, limit: featureLimit } = useUserEntitlements();

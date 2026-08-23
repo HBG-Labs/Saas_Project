@@ -305,8 +305,8 @@
   }
 
   .safe-x {
-    padding-left: max(var(--safe-left), 0px);
-    padding-right: max(var(--safe-right), 0px);
+    padding-left: max(var(--safe-left), 1rem);
+    padding-right: max(var(--safe-right), 1rem);
   }
 
   /*

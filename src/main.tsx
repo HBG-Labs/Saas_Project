@@ -54,6 +54,18 @@ async function boot(): Promise<void> {
         <App />
       </StrictMode>,
     );
+
+    // Enregistrement du Service Worker PWA pour l'installation mobile & hors-ligne
+    if ('serviceWorker' in navigator && import.meta.env.PROD) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('[REZO360 PWA] Échec enregistrement Service Worker:', err);
+        });
+      });
+    } else if ('serviceWorker' in navigator) {
+      // En mode développement également pour les tests PWA
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   } catch (error) {
     renderBootFailure(container, error);
   }

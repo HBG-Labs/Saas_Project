@@ -100,7 +100,7 @@ export function NotificationBell() {
   const handleNotificationClick = (notification: AppNotification) => {
     markAsRead(notification.id);
     setIsOpen(false);
-    navigate(notification.link);
+    void navigate(notification.link);
   };
 
   return (
@@ -223,7 +223,15 @@ export function NotificationBell() {
                     'group relative p-3.5 flex items-start gap-3 transition-colors hover:bg-surface-hover cursor-pointer',
                     !n.read && 'bg-primary/5 dark:bg-primary/10',
                   )}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleNotificationClick(n)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleNotificationClick(n);
+                    }
+                  }}
                 >
                   {/* Icône de catégorie */}
                   <div
@@ -261,8 +269,10 @@ export function NotificationBell() {
 
                   {/* Pastille non lu ou bouton dismiss */}
                   <div
+                    role="presentation"
                     className="flex flex-col items-center justify-between self-stretch shrink-0"
                     onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                   >
                     {!n.read && (
                       <span className="size-2 rounded-full bg-primary shrink-0" />

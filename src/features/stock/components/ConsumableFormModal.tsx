@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -25,55 +25,45 @@ export function ConsumableFormModal({
 }: ConsumableFormModalProps) {
   const isEditing = Boolean(consumableToEdit);
 
-  const [formData, setFormData] = useState<ConsumableInput>({
-    reference: '',
-    name: '',
-    category: COMMON_CONSUMABLE_CATEGORIES[0] || 'Câblage & Fibre',
-    unit: 'pièce',
-    quantityInStock: 10,
-    minThreshold: 5,
-    unitPriceEur: undefined,
-    sellingPriceEur: undefined,
-    location: 'Dépôt Central',
-    supplier: '',
-    notes: '',
-  });
-
+  const [formData, setFormData] = useState<ConsumableInput>(() =>
+    consumableToEdit
+      ? {
+          reference: consumableToEdit.reference,
+          name: consumableToEdit.name,
+          category: consumableToEdit.category,
+          unit: consumableToEdit.unit,
+          quantityInStock: consumableToEdit.quantityInStock,
+          minThreshold: consumableToEdit.minThreshold,
+          unitPriceEur: consumableToEdit.unitPriceEur,
+          sellingPriceEur: consumableToEdit.sellingPriceEur,
+          location: consumableToEdit.location,
+          supplier: consumableToEdit.supplier ?? '',
+          notes: consumableToEdit.notes ?? '',
+        }
+      : {
+          reference: '',
+          name: '',
+          category: COMMON_CONSUMABLE_CATEGORIES[0] || 'Câblage & Fibre',
+          unit: 'pièce',
+          quantityInStock: 10,
+          minThreshold: 5,
+          unitPriceEur: undefined,
+          sellingPriceEur: undefined,
+          location: 'Dépôt Central',
+          supplier: '',
+          notes: '',
+        },
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (consumableToEdit) {
-      setFormData({
-        reference: consumableToEdit.reference,
-        name: consumableToEdit.name,
-        category: consumableToEdit.category,
-        unit: consumableToEdit.unit,
-        quantityInStock: consumableToEdit.quantityInStock,
-        minThreshold: consumableToEdit.minThreshold,
-        unitPriceEur: consumableToEdit.unitPriceEur,
-        sellingPriceEur: consumableToEdit.sellingPriceEur,
-        location: consumableToEdit.location,
-        supplier: consumableToEdit.supplier ?? '',
-        notes: consumableToEdit.notes ?? '',
-      });
-    } else {
-      setFormData({
-        reference: '',
-        name: '',
-        category: COMMON_CONSUMABLE_CATEGORIES[0] || 'Câblage & Fibre',
-        unit: 'pièce',
-        quantityInStock: 10,
-        minThreshold: 5,
-        unitPriceEur: undefined,
-        sellingPriceEur: undefined,
-        location: 'Dépôt Central',
-        supplier: '',
-        notes: '',
-      });
-    }
-    setError(null);
-  }, [consumableToEdit, isOpen]);
+  /*
+    L'état part directement des props : la modale n'est montée que lorsqu'elle
+    est ouverte, donc React la remonte à chaque ouverture. La version précédente
+    la laissait montée en permanence et recopiait les props dans l'état par un
+    `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
+  */
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

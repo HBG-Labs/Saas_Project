@@ -33,7 +33,7 @@ const mockOrder: PurchaseOrder = {
 };
 
 describe('ReceiveOrderModal', () => {
-  it('affiche les articles à réceptionner et permet de valider la réception', async () => {
+  it('affiche les articles à réceptionner et permet de valider la réception', () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 

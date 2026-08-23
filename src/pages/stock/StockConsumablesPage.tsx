@@ -181,23 +181,31 @@ export default function StockConsumablesPage() {
         onOrder={handleOrderConsumable}
       />
 
-      {/* Modale d'ajout / modification d'un consommable */}
-      <ConsumableFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSubmit={handleFormSubmit}
-        consumableToEdit={selectedConsumable}
-      />
+      {/* Montée seulement lorsqu'elle est ouverte — voir la modale de mouvement. */}
+      {isFormModalOpen ? (
+        <ConsumableFormModal
+          isOpen
+          onClose={() => setIsFormModalOpen(false)}
+          onSubmit={handleFormSubmit}
+          consumableToEdit={selectedConsumable}
+        />
+      ) : null}
 
-      {/* Modale de déclaration de mouvement */}
-      <RecordMovementModal
-        isOpen={isMovementModalOpen}
-        onClose={() => setIsMovementModalOpen(false)}
-        onSubmit={handleMovementSubmit}
-        consumables={consumables}
-        initialConsumable={selectedConsumable}
-        initialType={selectedMovementType}
-      />
+      {/*
+        Montée seulement lorsqu'elle est ouverte : la modale repart ainsi d'un
+        formulaire vierge à chaque ouverture, sans avoir à recopier les props
+        dans son état par un effet.
+      */}
+      {isMovementModalOpen ? (
+        <RecordMovementModal
+          isOpen
+          onClose={() => setIsMovementModalOpen(false)}
+          onSubmit={handleMovementSubmit}
+          consumables={consumables}
+          initialConsumable={selectedConsumable}
+          initialType={selectedMovementType}
+        />
+      ) : null}
     </div>
   );
 }

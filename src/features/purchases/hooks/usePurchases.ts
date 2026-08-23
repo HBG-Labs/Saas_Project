@@ -1,21 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { qk } from '@/lib/query-keys';
 
 import {
   calculatePurchaseMetrics,
-  createPurchaseOrderInStorage,
-  createSupplierInStorage,
-  deletePurchaseOrderInStorage,
-  deleteSupplierInStorage,
-  loadPurchaseOrdersFromStorage,
-  loadSuppliersFromStorage,
-  receivePurchaseOrderInStorage,
-  reconcilePurchasesWithStock,
-  updatePurchaseOrderInStorage,
-  updateSupplierInStorage,
-} from '../api/purchases.storage';
+  createPurchaseOrder,
+  createSupplier as createSupplierInDb,
+  deletePurchaseOrder,
+  deleteSupplier as deleteSupplierInDb,
+  listPurchaseOrders,
+  listSuppliers,
+  receivePurchaseOrder,
+  updatePurchaseOrder,
+  updateSupplier as updateSupplierInDb,
+} from '../api/purchases.api';
 import type {
   PurchaseMetrics,
   PurchaseOrder,
@@ -24,74 +23,105 @@ import type {
   SupplierInput,
 } from '../types/purchases.types';
 
+/**
+ * Fournisseurs et bons de commande de l'organisation courante.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LA SURFACE PUBLIQUE N'A PAS CHANGÉ
+ *
+ * Les douze clés retournées sont exactement celles d'avant, y compris la forme
+ * APLATIE des arguments (`updateSupplier(id, patch)`, et non `({ id, patch })`) :
+ * les deux pages et les huit composants du module n'ont pas eu à bouger. Seule
+ * la source a changé — `localStorage` est devenu PostgreSQL. C'est la stratégie
+ * déjà suivie pour le parc roulant puis pour le stock.
+ *
+ * Deux ajouts : `error`, qui porte l'échec réel jusqu'à l'interface, et
+ * `isPending`.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Le repli `organizationId ?? 'demo'` a disparu. Les requêtes étaient bien
+ * gardées par `enabled`, mais PAS les mutations : sans organisation
+ * sélectionnée, créer un fournisseur écrivait dans une organisation fantôme.
+ *
+ * `reconcilePurchasesWithStock()` n'est plus appelé dans les `queryFn` — une
+ * requête n'a pas à écrire. La cohérence Achats↔Stock est désormais garantie
+ * par la transaction de `receive_purchase_order`, et non plus rattrapée après
+ * coup en cherchant la référence de commande dans le texte d'un motif.
+ */
 export function usePurchases(organizationId: string | null) {
   const queryClient = useQueryClient();
-  const orgId = organizationId ?? 'demo';
+  const cacheKey = organizationId ?? 'none';
 
-  // 1. Requête des fournisseurs
   const suppliersQuery = useQuery({
-    queryKey: qk.purchases.suppliers(orgId),
-    queryFn: () => loadSuppliersFromStorage(orgId),
-    enabled: Boolean(organizationId),
+    queryKey: qk.purchases.suppliers(cacheKey),
+    queryFn: () => (organizationId === null ? [] : listSuppliers(organizationId)),
+    enabled: organizationId !== null,
   });
 
-  // 2. Requête des commandes
   const ordersQuery = useQuery({
-    queryKey: qk.purchases.orders(orgId),
-    queryFn: () => {
-      reconcilePurchasesWithStock(orgId);
-      return loadPurchaseOrdersFromStorage(orgId);
-    },
-    enabled: Boolean(organizationId),
+    queryKey: qk.purchases.orders(cacheKey),
+    queryFn: () => (organizationId === null ? [] : listPurchaseOrders(organizationId)),
+    enabled: organizationId !== null,
   });
 
   const refreshPurchases = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: qk.purchases.all });
   }, [queryClient]);
 
-  // Mutations Fournisseurs
+  /*
+    Une commande touche AUSSI le stock : réceptionner incrémente les quantités et
+    journalise un mouvement. Ne rafraîchir que les achats laisserait la page
+    Stock afficher l'état d'avant la livraison.
+  */
+  const refreshPurchasesAndStock = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.purchases.all }),
+      queryClient.invalidateQueries({ queryKey: qk.stock.all }),
+    ]);
+  }, [queryClient]);
+
+  /** Les mutations exigent une organisation : sans elle, la policy refuserait. */
+  const exigerOrganisation = useCallback((): string => {
+    if (organizationId === null) {
+      throw new Error('Aucune organisation sélectionnée.');
+    }
+    return organizationId;
+  }, [organizationId]);
+
   const createSupplierMutation = useMutation({
-    mutationFn: async (input: SupplierInput) => createSupplierInStorage(orgId, input),
+    mutationFn: (input: SupplierInput) => createSupplierInDb(exigerOrganisation(), input),
     onSuccess: refreshPurchases,
   });
 
   const updateSupplierMutation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<SupplierInput> }) =>
-      updateSupplierInStorage(orgId, id, patch),
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<SupplierInput> }) =>
+      updateSupplierInDb(id, patch),
     onSuccess: refreshPurchases,
   });
 
   const deleteSupplierMutation = useMutation({
-    mutationFn: async (id: string) => deleteSupplierInStorage(orgId, id),
+    mutationFn: (id: string) => deleteSupplierInDb(id),
     onSuccess: refreshPurchases,
   });
 
-  // Mutations Commandes
   const createOrderMutation = useMutation({
-    mutationFn: async (input: PurchaseOrderInput) => createPurchaseOrderInStorage(orgId, input),
-    onSuccess: async () => {
-      await refreshPurchases();
-      await queryClient.invalidateQueries({ queryKey: qk.stock.all });
-    },
+    mutationFn: (input: PurchaseOrderInput) => createPurchaseOrder(exigerOrganisation(), input),
+    onSuccess: refreshPurchasesAndStock,
   });
 
   const updateOrderMutation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<PurchaseOrderInput> }) =>
-      updatePurchaseOrderInStorage(orgId, id, patch),
-    onSuccess: async () => {
-      await refreshPurchases();
-      await queryClient.invalidateQueries({ queryKey: qk.stock.all });
-    },
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<PurchaseOrderInput> }) =>
+      updatePurchaseOrder(id, patch),
+    onSuccess: refreshPurchasesAndStock,
   });
 
   const deleteOrderMutation = useMutation({
-    mutationFn: async (id: string) => deletePurchaseOrderInStorage(orgId, id),
-    onSuccess: refreshPurchases,
+    mutationFn: (id: string) => deletePurchaseOrder(id),
+    onSuccess: refreshPurchasesAndStock,
   });
 
-  // Réception de commande -> invalide aussi le cache de stock
   const receiveOrderMutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       receivedQuantities,
       deliveryNotes,
@@ -99,67 +129,70 @@ export function usePurchases(organizationId: string | null) {
       id: string;
       receivedQuantities: Record<string, number>;
       deliveryNotes?: string | undefined;
-    }) => receivePurchaseOrderInStorage(orgId, id, receivedQuantities, deliveryNotes),
-    onSuccess: async () => {
-      await refreshPurchases();
-      // Synchronisation directe avec le cache de stock
-      await queryClient.invalidateQueries({ queryKey: qk.stock.all });
-    },
+    }) => receivePurchaseOrder(id, receivedQuantities, deliveryNotes),
+    onSuccess: refreshPurchasesAndStock,
   });
 
+  /*
+    `useMemo` sur `data ?? []` : un tableau neuf à chaque rendu ferait se recréer
+    les `useCallback` qui en dépendent, et re-rendre les modales.
+  */
   const suppliers: Supplier[] = useMemo(
     () => suppliersQuery.data ?? [],
     [suppliersQuery.data],
   );
 
-  const orders: PurchaseOrder[] = useMemo(
-    () => ordersQuery.data ?? [],
-    [ordersQuery.data],
-  );
+  const orders: PurchaseOrder[] = useMemo(() => ordersQuery.data ?? [], [ordersQuery.data]);
+
+  /*
+    L'instant de référence de la dépense « du mois », figé au montage.
+
+    `Date.now()` appelé pendant le rendu est impur : deux rendus successifs
+    donneraient deux fenêtres différentes, et l'indicateur changerait sans que
+    les données aient bougé.
+  */
+  const [maintenant] = useState(() => Date.now());
 
   const metrics: PurchaseMetrics = useMemo(
-    () => calculatePurchaseMetrics(orders, suppliers),
-    [orders, suppliers],
+    () => calculatePurchaseMetrics(orders, suppliers, maintenant),
+    [maintenant, orders, suppliers],
   );
 
   const createSupplier = useCallback(
-    async (input: SupplierInput) => createSupplierMutation.mutateAsync(input),
+    (input: SupplierInput) => createSupplierMutation.mutateAsync(input),
     [createSupplierMutation],
   );
 
   const updateSupplier = useCallback(
-    async (id: string, patch: Partial<SupplierInput>) =>
+    (id: string, patch: Partial<SupplierInput>) =>
       updateSupplierMutation.mutateAsync({ id, patch }),
     [updateSupplierMutation],
   );
 
   const deleteSupplier = useCallback(
-    async (id: string) => deleteSupplierMutation.mutateAsync(id),
+    (id: string) => deleteSupplierMutation.mutateAsync(id),
     [deleteSupplierMutation],
   );
 
   const createOrder = useCallback(
-    async (input: PurchaseOrderInput) => createOrderMutation.mutateAsync(input),
+    (input: PurchaseOrderInput) => createOrderMutation.mutateAsync(input),
     [createOrderMutation],
   );
 
   const updateOrder = useCallback(
-    async (id: string, patch: Partial<PurchaseOrderInput>) =>
+    (id: string, patch: Partial<PurchaseOrderInput>) =>
       updateOrderMutation.mutateAsync({ id, patch }),
     [updateOrderMutation],
   );
 
   const deleteOrder = useCallback(
-    async (id: string) => deleteOrderMutation.mutateAsync(id),
+    (id: string) => deleteOrderMutation.mutateAsync(id),
     [deleteOrderMutation],
   );
 
   const receiveOrder = useCallback(
-    async (
-      id: string,
-      receivedQuantities: Record<string, number>,
-      deliveryNotes?: string | undefined,
-    ) => receiveOrderMutation.mutateAsync({ id, receivedQuantities, deliveryNotes }),
+    (id: string, receivedQuantities: Record<string, number>, deliveryNotes?: string) =>
+      receiveOrderMutation.mutateAsync({ id, receivedQuantities, deliveryNotes }),
     [receiveOrderMutation],
   );
 
@@ -168,7 +201,19 @@ export function usePurchases(organizationId: string | null) {
     orders,
     metrics,
     isLoading: suppliersQuery.isLoading || ordersQuery.isLoading,
+    isPending: organizationId !== null && (suppliersQuery.isPending || ordersQuery.isPending),
     isError: suppliersQuery.isError || ordersQuery.isError,
+    /* L'erreur réelle, remontée jusqu'à l'interface plutôt qu'avalée. */
+    error:
+      suppliersQuery.error ??
+      ordersQuery.error ??
+      createSupplierMutation.error ??
+      updateSupplierMutation.error ??
+      deleteSupplierMutation.error ??
+      createOrderMutation.error ??
+      updateOrderMutation.error ??
+      deleteOrderMutation.error ??
+      receiveOrderMutation.error,
     createSupplier,
     updateSupplier,
     deleteSupplier,

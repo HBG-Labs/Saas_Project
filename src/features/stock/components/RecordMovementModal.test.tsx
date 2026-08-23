@@ -23,7 +23,7 @@ const mockConsumables: StockConsumable[] = [
 ];
 
 describe('RecordMovementModal', () => {
-  it('affiche le formulaire et permet de soumettre une entrée de stock', async () => {
+  it('affiche le formulaire et permet de soumettre une entrée de stock', () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 
@@ -54,7 +54,7 @@ describe('RecordMovementModal', () => {
     );
   });
 
-  it('permet de basculer en sortie et d’ajouter un technicien et référence', async () => {
+  it('permet de basculer en sortie et d’ajouter un technicien et référence', () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 

@@ -69,6 +69,13 @@ export type VehicleMaintenanceType =
 
 export type StockMovementType = 'in' | 'out' | 'transfer' | 'adjustment';
 
+export type PurchaseOrderStatus =
+  | 'draft'
+  | 'sent'
+  | 'partially_received'
+  | 'received'
+  | 'cancelled';
+
 export type EquipmentCategory = 'optique' | 'electricite' | 'radio' | 'securite' | 'autre';
 export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expired';
 export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
@@ -330,6 +337,8 @@ export interface Database {
           status: OrganizationStatus;
           /** Métier exercé. `null` = cœur sans spécialisation. */
           industry: string | null;
+          /** Taux de TVA par défaut (%) appliqué aux devis et chiffrages. */
+          default_vat_rate: number | null;
           /**
            * Territoire de référence pour les jours fériés.
            *
@@ -360,6 +369,7 @@ export interface Database {
           city?: string | null;
           country?: string | null;
           industry?: string | null;
+          default_vat_rate?: number | null;
           /** Imposé à `auth.uid()` par la policy `organizations_insert_self`. */
           created_by: string;
         };
@@ -378,6 +388,7 @@ export interface Database {
           city?: string | null;
           country?: string | null;
           industry?: string | null;
+          default_vat_rate?: number | null;
           status?: OrganizationStatus;
         };
         Relationships: [];
@@ -1681,6 +1692,216 @@ export interface Database {
         ];
       };
 
+      /** Fournisseurs de l'organisation. */
+      suppliers: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          code: string | null;
+          contact_name: string | null;
+          email: string | null;
+          phone: string | null;
+          address: string | null;
+          city: string | null;
+          postal_code: string | null;
+          siret: string | null;
+          vat_number: string | null;
+          website: string | null;
+          default_payment_terms: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          code?: string | null;
+          contact_name?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          city?: string | null;
+          postal_code?: string | null;
+          siret?: string | null;
+          vat_number?: string | null;
+          website?: string | null;
+          default_payment_terms?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          name?: string;
+          code?: string | null;
+          contact_name?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          city?: string | null;
+          postal_code?: string | null;
+          siret?: string | null;
+          vat_number?: string | null;
+          website?: string | null;
+          default_payment_terms?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'suppliers_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /**
+       * Bons de commande fournisseur.
+       *
+       * `supplier_name` / `_email` / `_phone` / `_address` et `mission_ref` sont
+       * des INSTANTANÉS figés à la création : une commande reste lisible telle
+       * qu'elle a été passée, même si la fiche fournisseur change ou disparaît.
+       *
+       * Les totaux ne figurent pas ici — ils découlent des lignes et sont
+       * dérivés dans `purchases.api.ts`, comme la vue `quote_totals` le fait
+       * pour les devis.
+       *
+       * `reference` est générée par trigger (`CMD-AAAA-NNN`) quand elle est
+       * absente : la laisser au client produisait des doublons.
+       */
+      purchase_orders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          reference: string;
+          supplier_id: string | null;
+          supplier_name: string;
+          supplier_email: string | null;
+          supplier_phone: string | null;
+          supplier_address: string | null;
+          status: PurchaseOrderStatus;
+          order_date: string;
+          expected_delivery_date: string | null;
+          received_date: string | null;
+          mission_id: string | null;
+          mission_ref: string | null;
+          /** Taux, pas pourcentage : 0.20 pour 20 %. */
+          tax_rate: number;
+          notes: string | null;
+          delivery_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          reference?: string;
+          supplier_id?: string | null;
+          supplier_name: string;
+          supplier_email?: string | null;
+          supplier_phone?: string | null;
+          supplier_address?: string | null;
+          status?: PurchaseOrderStatus;
+          order_date?: string;
+          expected_delivery_date?: string | null;
+          received_date?: string | null;
+          mission_id?: string | null;
+          mission_ref?: string | null;
+          tax_rate?: number;
+          notes?: string | null;
+          delivery_notes?: string | null;
+        };
+        Update: {
+          reference?: string;
+          supplier_id?: string | null;
+          supplier_name?: string;
+          supplier_email?: string | null;
+          supplier_phone?: string | null;
+          supplier_address?: string | null;
+          status?: PurchaseOrderStatus;
+          order_date?: string;
+          expected_delivery_date?: string | null;
+          received_date?: string | null;
+          mission_id?: string | null;
+          mission_ref?: string | null;
+          tax_rate?: number;
+          notes?: string | null;
+          delivery_notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_orders_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'purchase_orders_supplier_id_fkey';
+            columns: ['supplier_id'];
+            referencedRelation: 'suppliers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /**
+       * Lignes d'un bon de commande.
+       *
+       * `id` est structurellement critique : c'est la clé du dictionnaire
+       * `{ id_de_ligne: quantité reçue }` envoyé à `receive_purchase_order`.
+       */
+      purchase_order_items: {
+        Row: {
+          id: string;
+          purchase_order_id: string;
+          consumable_id: string | null;
+          reference: string;
+          description: string;
+          unit: string;
+          quantity_ordered: number;
+          quantity_received: number;
+          unit_price_eur: number;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          purchase_order_id: string;
+          consumable_id?: string | null;
+          reference?: string;
+          description?: string;
+          unit?: string;
+          quantity_ordered?: number;
+          quantity_received?: number;
+          unit_price_eur?: number;
+          position?: number;
+        };
+        Update: {
+          consumable_id?: string | null;
+          reference?: string;
+          description?: string;
+          unit?: string;
+          quantity_ordered?: number;
+          quantity_received?: number;
+          unit_price_eur?: number;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_order_items_purchase_order_id_fkey';
+            columns: ['purchase_order_id'];
+            referencedRelation: 'purchase_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'purchase_order_items_consumable_id_fkey';
+            columns: ['consumable_id'];
+            referencedRelation: 'stock_consumables';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       equipment: {
         Row: {
           id: string;
@@ -2228,6 +2449,54 @@ export interface Database {
         ];
       };
 
+      user_preferences: {
+        Row: {
+          user_id: string;
+          notify_new_mission: boolean;
+          notify_maintenance_due: boolean;
+          notify_stock_low: boolean;
+          notify_leave_requests: boolean;
+          sms_urgent_alerts: boolean;
+          traffic_layer: boolean;
+          vehicle_type: string;
+          gps_refresh_rate: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          notify_new_mission?: boolean;
+          notify_maintenance_due?: boolean;
+          notify_stock_low?: boolean;
+          notify_leave_requests?: boolean;
+          sms_urgent_alerts?: boolean;
+          traffic_layer?: boolean;
+          vehicle_type?: string;
+          gps_refresh_rate?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          notify_new_mission?: boolean;
+          notify_maintenance_due?: boolean;
+          notify_stock_low?: boolean;
+          notify_leave_requests?: boolean;
+          sms_urgent_alerts?: boolean;
+          traffic_layer?: boolean;
+          vehicle_type?: string;
+          gps_refresh_rate?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_preferences_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       technician_location_pings: {
         Row: {
           id: string;
@@ -2311,6 +2580,33 @@ export interface Database {
           p_location_to?: string | null;
         };
         Returns: Database['public']['Tables']['stock_movements']['Row'];
+      };
+
+      /**
+       * Pointe une livraison et fait entrer la marchandise en stock, dans la
+       * même transaction.
+       *
+       * `p_lines` est un objet `{ "<id de ligne>": <quantité reçue MAINTENANT> }` :
+       * un incrément, pas un cumul. La quantité est plafonnée à ce qui reste dû.
+       *
+       * L'écrire en deux appels — pointer, puis mouvementer le stock — laissait
+       * une fenêtre où le bon de commande et le stock divergeaient, que
+       * l'ancienne « réconciliation » rattrapait en cherchant la référence de
+       * commande dans le TEXTE du motif de mouvement.
+       */
+      receive_purchase_order: {
+        Args: {
+          p_order_id: string;
+          p_lines?: Record<string, number>;
+          p_delivery_notes?: string | null;
+        };
+        Returns: Database['public']['Tables']['purchase_orders']['Row'];
+      };
+
+      /** Solde toutes les lignes restantes d'une commande d'un seul coup. */
+      receive_purchase_order_fully: {
+        Args: { p_order_id: string };
+        Returns: Database['public']['Tables']['purchase_orders']['Row'];
       };
 
       /**

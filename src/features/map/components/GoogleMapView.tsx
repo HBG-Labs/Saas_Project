@@ -64,12 +64,23 @@ export function GoogleMapView({
     }
   };
 
-  // 1. Initialisation de la carte Leaflet
+  // 1. Initialisation sécurisée de la carte Leaflet (robuste face au StrictMode / Fast Refresh)
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    const container = mapContainerRef.current;
+    if (!container) return;
+
+    // Si Leaflet a déjà un ID sur le conteneur ou si une instance existe, nettoyer proprement
+    const containerWithLeaflet = container as unknown as { _leaflet_id?: number | null };
+    if (containerWithLeaflet._leaflet_id != null) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      containerWithLeaflet._leaflet_id = null;
+    }
 
     if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
+      const map = L.map(container, {
         center: territory.center,
         zoom: territory.zoom,
         zoomControl: false,
@@ -92,16 +103,11 @@ export function GoogleMapView({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      if (container) {
+        (container as unknown as { _leaflet_id?: number | null })._leaflet_id = null;
+      }
     };
-    // Volontairement vide : cet effet CRÉE la carte Leaflet, une seule fois.
-    //
-    // Ajouter `territory`, `layerMode` ou les coordonnées initiales en
-    // dépendances détruirait et reconstruirait la carte à chaque changement de
-    // filtre — perdant le zoom, le centrage et la position que l'utilisateur
-    // vient de choisir. Ces valeurs sont appliquées par des effets SÉPARÉS, qui
-    // agissent sur l'instance existante.
-    //
-    // Le tableau vide est donc une décision, pas un oubli.
+    // Volontairement vide : cet effet CRÉE la carte Leaflet une seule fois
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,7 +118,7 @@ export function GoogleMapView({
     }
   }, [layerMode]);
 
-  // 3. Mise à jour du marqueur « Ma position » ponctuelle
+  // 3. Position utilisateur ponctuelle
   useEffect(() => {
     const userGroup = userMarkerLayerRef.current;
     const map = mapInstanceRef.current;
@@ -124,29 +130,16 @@ export function GoogleMapView({
       const userLat = userPosition.latitude;
       const userLng = userPosition.longitude;
 
-      // Cercle d'incertitude de précision
-      if (userPosition.accuracy > 0) {
-        const accuracyCircle = L.circle([userLat, userLng], {
-          radius: userPosition.accuracy,
-          color: '#3b82f6',
-          fillColor: '#3b82f6',
-          fillOpacity: 0.15,
-          weight: 1.5,
-        });
-        userGroup.addLayer(accuracyCircle);
-      }
-
-      // Marqueur bleu « Ma position »
       const userIcon = L.divIcon({
-        className: 'user-current-pin',
+        className: 'custom-user-marker',
         html: `
           <div style="
             position: relative;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
           ">
             <div style="
               position: absolute;
@@ -177,7 +170,6 @@ export function GoogleMapView({
       });
       userGroup.addLayer(userMarker);
 
-      // Centrage fluide sur ma position
       map.flyTo([userLat, userLng], 15, {
         animate: true,
         duration: 1,
@@ -197,59 +189,70 @@ export function GoogleMapView({
       const isSelected = selectedSiteId === site.id;
       const isClient = site.kind === 'client';
 
+      let pinColor = '#2563eb'; // Bleu standard
+      if (isClient) {
+        pinColor = '#0891b2'; // Cyan client
+      } else if (site.priority === 'urgent') {
+        pinColor = '#ef4444'; // Rouge urgent
+      } else if (site.priority === 'high') {
+        pinColor = '#f59e0b'; // Ambre haute
+      }
+
       const customSiteIcon = L.divIcon({
         className: 'custom-site-pin',
         html: `
           <div style="
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 9px;
-            background: ${
-              isSelected
-                ? isClient
-                  ? '#0284c7'
-                  : '#2563eb'
-                : isClient
-                  ? 'rgba(12, 74, 110, 0.94)'
-                  : 'rgba(15, 23, 42, 0.94)'
-            };
-            color: #ffffff;
-            border-radius: 12px;
-            border: 2px solid ${
-              isSelected
-                ? '#93c5fd'
-                : isClient
-                  ? 'rgba(56, 189, 248, 0.6)'
-                  : 'rgba(255,255,255,0.25)'
-            };
-            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-            font-family: sans-serif;
-            font-size: 11px;
-            font-weight: 700;
             cursor: pointer;
-            transform: translate(-50%, -50%) ${isSelected ? 'scale(1.08)' : 'scale(1)'};
-            transition: all 0.2s ease;
-            white-space: nowrap;
+            transform: ${isSelected ? 'scale(1.12)' : 'scale(1)'};
+            transition: transform 0.15s ease;
           ">
-            <span style="
-              width: 8px;
-              height: 8px;
-              border-radius: 50%;
-              background: ${
-                isClient
-                  ? '#38bdf8'
-                  : site.priority === 'urgent'
-                    ? '#ef4444'
-                    : '#3b82f6'
-              };
-              display: inline-block;
-            "></span>
-            <span>${isClient ? '🏢 ' + site.title : site.reference}</span>
+            <!-- 1. Pin aiguille avec pointe au sol précise -->
+            <div style="
+              position: relative;
+              width: 26px;
+              height: 34px;
+              flex-shrink: 0;
+              filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35));
+            ">
+              <svg viewBox="0 0 26 34" width="26" height="34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 0C5.82 0 0 5.82 0 13c0 9.8 13 21 13 21s13-11.2 13-21c0-7.18-5.82-13-13-13z" fill="${pinColor}" stroke="#ffffff" stroke-width="2"/>
+                <circle cx="13" cy="13" r="5" fill="#ffffff"/>
+              </svg>
+              <span style="
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: ${pinColor};
+              "></span>
+            </div>
+
+            <!-- 2. Badge texte flottant à droite pour libérer la vue du terrain -->
+            <div style="
+              margin-left: 3px;
+              margin-bottom: 12px;
+              padding: 3px 7px;
+              background: ${isSelected ? '#0f172a' : 'rgba(15, 23, 42, 0.9)'};
+              color: #ffffff;
+              border-radius: 7px;
+              border: 1.5px solid ${isSelected ? '#93c5fd' : 'rgba(255,255,255,0.3)'};
+              font-family: system-ui, -apple-system, sans-serif;
+              font-size: 11px;
+              font-weight: 700;
+              white-space: nowrap;
+              backdrop-filter: blur(4px);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            ">
+              ${isClient ? '🏢 ' + site.title : site.reference}
+            </div>
           </div>
         `,
-        iconSize: [120, 30],
-        iconAnchor: [60, 15],
+        iconSize: [160, 34],
+        iconAnchor: [13, 34],
       });
 
       const marker = L.marker([site.lat, site.lng], { icon: customSiteIcon });
@@ -282,7 +285,7 @@ export function GoogleMapView({
     if (userPosition) {
       bounds.extend([userPosition.latitude, userPosition.longitude]);
     }
-    map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
   };
 
   const selectedSite = interventions.find((s) => s.id === selectedSiteId);
@@ -290,17 +293,16 @@ export function GoogleMapView({
   return (
     <div
       className={cn(
-        'relative w-full h-full min-h-[540px] overflow-hidden select-none rounded-2xl border border-border shadow-xs',
+        'relative w-full h-full rounded-2xl overflow-hidden border border-border shadow-xs bg-slate-900',
         isFullscreen && 'fixed inset-0 z-50 rounded-none border-none',
       )}
     >
-      {/* Conteneur de la carte */}
-      <div ref={mapContainerRef} className="w-full h-full min-h-[540px] z-0" />
+      {/* Conteneur DOM Leaflet */}
+      <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Barre d'outils flottante supérieure */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 flex-wrap">
-        {/* Sélecteur de fond de carte */}
-        <div className="flex items-center bg-surface/90 backdrop-blur-md p-1 rounded-xl border border-border shadow-md">
+      {/* Sélecteur de type de fond de carte (Haut Gauche) */}
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+        <div className="bg-surface/90 backdrop-blur-md p-1 rounded-xl border border-border shadow-md flex items-center gap-1">
           <button
             type="button"
             onClick={() => onLayerModeChange('roadmap')}

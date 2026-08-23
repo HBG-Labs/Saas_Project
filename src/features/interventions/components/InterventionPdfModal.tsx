@@ -3,7 +3,7 @@ import { FileText, Printer, Wrench } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { memberDisplayName } from '@/features/organizations';
+import { memberDisplayName, useCurrentOrganization } from '@/features/organizations';
 import type {
   InterventionAttachment,
   InterventionReport,
@@ -34,14 +34,16 @@ function formatDuration(totalSeconds: number): string {
 export function InterventionPdfModal({
   open,
   onOpenChange,
-  organizationName = 'REZO360 Pro',
+  organizationName,
   mission,
   intervention: _intervention,
   report,
   attachments = [],
   workedSeconds = 0,
 }: InterventionPdfModalProps) {
+  const { organization } = useCurrentOrganization();
   const printRef = useRef<HTMLDivElement | null>(null);
+  const displayOrgName = organizationName ?? organization?.name ?? 'REZO360 Pro';
 
   const handlePrint = () => {
     window.print();
@@ -107,9 +109,12 @@ export function InterventionPdfModal({
             <div>
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
                 <Wrench className="size-5 text-indigo-600 print:text-slate-900" />
-                <span>{organizationName}</span>
+                <span>{displayOrgName}</span>
               </h2>
               <p className="text-xs text-slate-500 mt-1">Rapport & Procès-Verbal de Réception de Travaux</p>
+              {organization?.registration_number && (
+                <p className="text-3xs text-slate-400 mt-0.5">SIRET : {organization.registration_number}</p>
+              )}
             </div>
 
             <div className="text-right">

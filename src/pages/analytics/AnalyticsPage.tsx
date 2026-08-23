@@ -5,11 +5,14 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  CircleDollarSign,
   Clock,
   Download,
   FileCheck,
+  Layers,
   Loader2,
   PieChart,
+  Receipt,
   TrendingUp,
   UsersRound,
 } from 'lucide-react';
@@ -1180,6 +1183,122 @@ export default function AnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 4. Rentabilité Financière, Devis & Métiers */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* KPI Devis & Taux de Transformation */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="border-b pb-4">
+            <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
+              <Receipt className="size-4.5 text-amber-500" />
+              Transformation des Devis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-4">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface-subtle border border-border">
+              <div className="space-y-0.5">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase">Taux de Conversion</p>
+                <p className="text-2xl font-bold font-mono text-emerald-500">84.6%</p>
+                <p className="text-3xs text-muted-foreground">Devis validés et lancés</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
+                <CircleDollarSign className="size-5" />
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Devis émis</span>
+                <span className="font-mono font-bold text-foreground">39 devis</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Devis signés / acceptés</span>
+                <span className="font-mono font-bold text-emerald-500">33 devis</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">En attente signature</span>
+                <span className="font-mono font-bold text-amber-500">6 devis</span>
+              </div>
+              <div className="flex justify-between py-1.5">
+                <span className="text-muted-foreground">Montant moyen / intervention</span>
+                <span className="font-mono font-bold text-foreground">420,00 € HT</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rentabilité par Métier */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
+            <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
+              <Layers className="size-4.5 text-blue-500" />
+              Rentabilité & Volume par Spécialité Technique
+            </CardTitle>
+            <Badge variant="primary" className="text-2xs font-mono">
+              4 secteurs
+            </Badge>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-blue-500" />
+                    Fibre Optique FTTH / D3
+                  </span>
+                  <Badge variant="success" className="text-3xs font-mono">+18% marge</Badge>
+                </div>
+                <p className="text-2xs text-muted-foreground">58 interventions • 99.2% conformité</p>
+                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '68%' }} />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-amber-500" />
+                    Électricité & Bornes IRVE
+                  </span>
+                  <Badge variant="success" className="text-3xs font-mono">+24% marge</Badge>
+                </div>
+                <p className="text-2xs text-muted-foreground">42 interventions • 97.8% conformité</p>
+                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-emerald-500" />
+                    Raccordement Télécom / Cuivre
+                  </span>
+                  <Badge variant="outline" className="text-3xs font-mono">+12% marge</Badge>
+                </div>
+                <p className="text-2xs text-muted-foreground">32 interventions • 98.5% conformité</p>
+                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '35%' }} />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-purple-500" />
+                    Audits & Maintenance Réseau
+                  </span>
+                  <Badge variant="success" className="text-3xs font-mono">+31% marge</Badge>
+                </div>
+                <p className="text-2xs text-muted-foreground">10 interventions • 100% conformité</p>
+                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-purple-500 h-full rounded-full" style={{ width: '22%' }} />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

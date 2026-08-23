@@ -38,7 +38,9 @@ export async function listAuditLogs(
   if (filters.to) query = query.lte('created_at', filters.to);
 
   try {
-    return await unwrap(query.order('created_at', { ascending: false }).limit(filters.limit ?? 100));
+    return await unwrap(
+      query.order('created_at', { ascending: false }).limit(filters.limit ?? 500),
+    );
   } catch {
     return [];
   }
@@ -55,6 +57,7 @@ export async function listEntityAuditTrail(
 
 /** Libellés français des actions journalisées (§10). */
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  // Missions & Rapports
   'mission.created': 'Mission créée',
   'mission.status_changed': 'Statut de mission modifié',
   'mission.assigned': 'Mission affectée',
@@ -64,14 +67,51 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'report.approved': 'Intervention validée',
   'report.rejected': 'Intervention refusée',
   'report.updated': 'Compte rendu modifié',
+
+  // Clients
+  'customer.created': 'Client créé',
+  'customer.updated': 'Client modifié',
+  'customer.deleted': 'Client supprimé',
+  'customer.archived': 'Client archivé',
+  'customer.restored': 'Client restauré',
+
+  // Membres & Équipes
   'member.added': 'Membre ajouté',
   'member.removed': 'Membre retiré',
   'member.role_changed': 'Rôle modifié',
   'member.status_changed': 'Statut de membre modifié',
+  'organization_member.added': 'Membre ajouté',
+  'organization_member.removed': 'Membre retiré',
+  'organization_member.role_changed': 'Rôle de membre modifié',
+  'organization_member.status_changed': 'Statut de membre modifié',
   'team.created': 'Équipe créée',
   'team.deleted': 'Équipe supprimée',
+
+  // Achats & Stock
+  'purchase_order.created': 'Bon de commande créé',
+  'purchase_order.sent': 'Commande envoyée au fournisseur',
+  'purchase_order.received': 'Marchandises réceptionnées',
+  'purchase_order.cancelled': 'Commande annulée',
+  'stock_movement.created': 'Mouvement de stock enregistré',
+  'stock_consumable.created': 'Article de stock créé',
+  'stock_consumable.updated': 'Article de stock modifié',
+
+  // RH & Congés
+  'leave_request.created': 'Demande de congé déposée',
+  'leave_request.approved': 'Demande de congé approuvée',
+  'leave_request.rejected': 'Demande de congé refusée',
+  'leave_request.revoked': 'Décision de congé annulée',
+  'organization.updated': 'Organisation mise à jour',
 };
 
 export function describeAuditAction(action: string): string {
-  return AUDIT_ACTION_LABELS[action] ?? action;
+  if (AUDIT_ACTION_LABELS[action]) {
+    return AUDIT_ACTION_LABELS[action];
+  }
+  // Formatage propre si l'action n'est pas encore répertoriée
+  const [first, second] = action.split('.');
+  if (first && second) {
+    return `${first.replace(/_/g, ' ')} : ${second.replace(/_/g, ' ')}`;
+  }
+  return action.replace(/_/g, ' ');
 }

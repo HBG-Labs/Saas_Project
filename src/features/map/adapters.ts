@@ -68,6 +68,7 @@ export function toInterventionSite(
     status: SITE_STATUS[mission.status] ?? 'planned',
     kind: 'mission',
     customerId: mission.customer_id ?? undefined,
+    assignedMemberId: mission.assigned_member?.id ?? undefined,
     ...(mission.assigned_member !== null
       ? { assignedTechnicianName: memberDisplayName(mission.assigned_member) }
       : {}),
