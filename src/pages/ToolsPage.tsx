@@ -159,22 +159,17 @@ export default function ToolsPage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. CEINTURE D'ACTION RAPIDE : LES 6 INSTRUMENTS DE TERRAIN   */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="mb-6 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-surface to-amber-500/5 p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5 pb-3 border-b border-amber-500/20">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-bold shadow-xs">
-              <Wrench className="size-5" />
+      <div className="mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-surface to-amber-500/5 p-2.5 sm:p-3 shadow-xs">
+        <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-amber-500/15">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-slate-950 font-bold shadow-2xs">
+              <Wrench className="size-3.5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-foreground">Ceinture d'Instruments de Terrain</h2>
-                <span className="rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-3xs px-2 py-0.5 border border-amber-500/30">
-                  Accès 1-tap
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Capteurs et outils physiques de votre smartphone pour interventions rapides.
-              </p>
+            <div className="flex items-center gap-1.5 min-w-0 truncate">
+              <h2 className="text-xs font-bold text-foreground truncate">Instruments de Terrain</h2>
+              <span className="shrink-0 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-3xs px-1.5 py-0.2 border border-amber-500/30">
+                1-tap
+              </span>
             </div>
           </div>
 
@@ -186,85 +181,79 @@ export default function ToolsPage() {
               setActiveFieldModalTool('flashlight');
               setShowFieldModal(true);
             }}
-            className="text-xs font-bold gap-1.5 self-start sm:self-auto bg-surface/80 hover:bg-surface border-amber-500/30 text-amber-700 dark:text-amber-300 shadow-xs cursor-pointer"
+            className="text-3xs font-bold h-7 px-2 gap-1 shrink-0 bg-surface/80 hover:bg-surface border-amber-500/30 text-amber-700 dark:text-amber-300 shadow-2xs cursor-pointer"
           >
-            <span>Ouvrir la boîte à outils</span>
-            <ChevronRight className="size-3.5" />
+            <span>Ouvrir boîte</span>
+            <ChevronRight className="size-3" />
           </Button>
         </div>
 
-        {/* Grille tactile des 6 instruments de terrain */}
-        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-6 gap-2.5">
+        {/* Grille compacte des 6 instruments de terrain */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => openFieldInstrument('flashlight')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-amber-500/50 hover:bg-amber-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-xs mb-2">
-              <Flashlight className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-2xs mb-1">
+              <Flashlight className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Lampe Torche</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">6500K & SOS</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Lampe</span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('magnifier')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-sky-500/50 hover:bg-sky-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-sky-500/50 hover:bg-sky-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-xs mb-2">
-              <ZoomIn className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+              <ZoomIn className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Loupe HD</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">Zoom 12x & Gel</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Loupe HD</span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('level')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-teal-500/50 hover:bg-teal-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-colors shadow-xs mb-2">
-              <CircleDot className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+              <CircleDot className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Niveau à Bulle</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">2D & Pente mm/m</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Niveau</span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('compass')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors shadow-xs mb-2">
-              <Compass className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+              <Compass className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Boussole & Cap</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">Azimut & GPS</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Boussole</span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('stopwatch')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shadow-xs mb-2">
-              <Timer className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+              <Timer className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Chronomètre</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">1/100s & Purge</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Chrono</span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('voice-recorder')}
-            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-rose-500/50 hover:bg-rose-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface border border-border/80 hover:border-rose-500/50 hover:bg-rose-500/10 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-11 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors shadow-xs mb-2">
-              <Mic className="size-5" />
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+              <Mic className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-xs font-bold text-foreground">Dictaphone</span>
-            <span className="text-3xs text-muted-foreground mt-0.5">Mémos Vocaux</span>
+            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Dictaphone</span>
           </button>
         </div>
       </div>
