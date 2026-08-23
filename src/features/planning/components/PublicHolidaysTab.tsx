@@ -21,30 +21,36 @@ export function PublicHolidaysTab({
   return (
     <div className="space-y-4">
       {/* 1. Header with Territory Selector */}
-      <div className="bg-surface p-4 rounded-2xl border border-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-extrabold text-foreground">
-              Calendrier des Jours Fériés Légaux
-            </h3>
-            <span className="text-base" title={currentTerritory?.label}>
-              {currentTerritory?.flag}
-            </span>
+      <div className="bg-surface p-4 rounded-2xl border border-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start justify-between sm:justify-start gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-extrabold text-foreground">
+                Calendrier des Jours Fériés Légaux
+              </h3>
+              <span className="text-base" title={currentTerritory?.label}>
+                {currentTerritory?.flag}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Calcul automatique des jours ouvrés, astreintes et majorations selon le territoire
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Calcul automatique des jours ouvrés, astreintes et majorations selon le territoire
-          </p>
+
+          <Badge variant="primary" className="text-3xs font-mono shrink-0 sm:hidden">
+            {holidays.length} Fériés ({new Date().getFullYear()})
+          </Badge>
         </div>
 
         {/* Territory Dropdown Selector */}
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          <div className="flex items-center gap-1.5 bg-surface-subtle px-2.5 py-1 rounded-xl border border-border">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-xl border border-border shrink-0 max-w-full">
             <Globe className="size-3.5 text-primary shrink-0" />
-            <span className="text-3xs text-muted-foreground font-semibold">Territoire :</span>
+            <span className="text-3xs text-muted-foreground font-semibold whitespace-nowrap">Territoire :</span>
             <select
               value={selectedTerritory}
               onChange={(e) => onSelectTerritory(e.target.value as HolidayTerritory)}
-              className="bg-transparent text-xs font-bold text-foreground focus:outline-hidden cursor-pointer"
+              className="bg-transparent text-xs font-bold text-foreground focus:outline-hidden cursor-pointer truncate max-w-[200px]"
             >
               {HOLIDAY_TERRITORIES.map((t) => (
                 <option key={t.id} value={t.id} className="bg-surface text-foreground">
@@ -54,14 +60,14 @@ export function PublicHolidaysTab({
             </select>
           </div>
 
-          <Badge variant="primary" className="text-3xs font-mono">
+          <Badge variant="primary" className="text-3xs font-mono hidden sm:inline-flex shrink-0">
             {holidays.length} Fériés ({new Date().getFullYear()})
           </Badge>
         </div>
       </div>
 
       {/* 2. Quick Territory Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
         {HOLIDAY_TERRITORIES.map((t) => {
           const isSelected = selectedTerritory === t.id;
           return (
@@ -70,7 +76,7 @@ export function PublicHolidaysTab({
               type="button"
               onClick={() => onSelectTerritory(t.id)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer',
+                'inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer active:scale-[0.98]',
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary shadow-xs'
                   : 'bg-surface text-muted-foreground border-border hover:text-foreground hover:bg-surface-hover',

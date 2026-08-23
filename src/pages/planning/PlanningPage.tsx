@@ -337,12 +337,12 @@ export default function PlanningPage() {
       )}
 
       {/* 2. Main Tab Navigation Bar */}
-      <div className="flex items-center gap-1.5 bg-surface-subtle p-1 rounded-2xl border border-border overflow-x-auto">
+      <div className="flex items-center gap-1.5 bg-surface-subtle p-1 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
         <button
           type="button"
           onClick={() => setActiveTab('calendar')}
           className={cn(
-            'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer',
+            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'calendar'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -356,7 +356,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('leaves')}
           className={cn(
-            'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer',
+            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'leaves'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -380,7 +380,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('recurring')}
           className={cn(
-            'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer',
+            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'recurring'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -394,7 +394,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('holidays')}
           className={cn(
-            'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer',
+            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'holidays'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
