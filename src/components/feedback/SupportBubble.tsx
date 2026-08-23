@@ -88,7 +88,13 @@ export function SupportBubble() {
       hasMoved: false,
     };
     setIsDragging(true);
-    buttonRef.current.setPointerCapture(e.pointerId);
+    if (typeof buttonRef.current.setPointerCapture === 'function') {
+      try {
+        buttonRef.current.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -119,10 +125,12 @@ export function SupportBubble() {
     if (!isDragging) return;
     setIsDragging(false);
 
-    try {
-      buttonRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
+    if (typeof buttonRef.current?.releasePointerCapture === 'function') {
+      try {
+        buttonRef.current.releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
     }
 
     if (dragInfoRef.current.hasMoved) {
