@@ -28,6 +28,7 @@ import {
   EMPTY_MISSION_FILTERS,
   exportMissionsToCsv,
   MissionFiltersBar,
+  MissionsNavTabs,
   MissionPriorityBadge,
   MissionStatusBadge,
   MISSION_STATUS_LABELS,
@@ -126,6 +127,8 @@ export default function MissionsListPage() {
           </div>
         }
       />
+
+      <MissionsNavTabs />
 
       {/* Bannière de guidage pour les comptes-rendus terrain */}
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">

@@ -43,7 +43,7 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
   },
   {
     to: ROUTES.planning,
-    label: 'Planning & Congés',
+    label: 'Planning',
     icon: 'calendar',
     feature: 'planning',
     permission: 'planning.view',
@@ -51,15 +51,15 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
   },
   {
     to: ROUTES.map,
-    label: 'Cartographie & Chantiers',
+    label: 'Carte & Chantiers',
     icon: 'map',
     feature: 'missions',
     primary: true,
   },
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
-  { to: ROUTES.analytics, label: 'Statistiques & Performance', icon: 'chart', feature: 'missions' },
-  { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
-  { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
+  { to: ROUTES.analytics, label: 'Statistiques', icon: 'chart', feature: 'missions' },
+  { to: ROUTES.review, label: 'Rapports & Contrôle', icon: 'clipboard-check', feature: 'interventions' },
+  { to: ROUTES.archives, label: 'Archives', icon: 'archive', feature: 'missions' },
 ];
 
 export const TOOLS_NAV: readonly NavItem[] = [
@@ -69,15 +69,15 @@ export const TOOLS_NAV: readonly NavItem[] = [
 ];
 
 export const STOCK_NAV: readonly NavItem[] = [
-  { to: ROUTES.stock, label: 'Fournitures & Consommables', icon: 'package', primary: true },
-  { to: ROUTES.stockMovements, label: 'Mouvements & Historique', icon: 'arrow-left-right' },
-  { to: ROUTES.equipment, label: 'Parc Matériel & Outillage', icon: 'wrench' },
+  { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', primary: true },
+  { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right' },
+  { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench' },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [
-  { to: ROUTES.purchaseOrders, label: 'Commandes Fournisseurs', icon: 'shopping-cart', primary: true },
-  { to: ROUTES.suppliers, label: 'Fournisseurs & Tarifs', icon: 'store' },
-  { to: ROUTES.quotes, label: 'Devis & Chiffrage Express', icon: 'calculator' },
+  { to: ROUTES.purchaseOrders, label: 'Commandes', icon: 'shopping-cart', primary: true },
+  { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store' },
+  { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator' },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [
@@ -97,7 +97,7 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
   },
   {
     to: ROUTES.organization,
-    label: 'Paramètres Entreprise',
+    label: 'Entreprise',
     icon: 'building',
     permission: 'organization.update',
   },
@@ -105,7 +105,7 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
     // `billing.view` et non `billing.manage` : un administrateur consulte la
     // formule et la consommation sans pouvoir changer le moyen de paiement.
     to: ROUTES.organizationBilling,
-    label: 'Abonnement & Facturation',
+    label: 'Facturation',
     icon: 'credit-card',
     permission: 'billing.view',
   },
@@ -120,7 +120,7 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'interventions', label: 'Interventions', icon: 'clipboard', items: INTERVENTIONS_NAV },
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
-  { id: 'achats', label: 'Achats', icon: 'calculator', items: ACHATS_NAV },
+  { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
 ];

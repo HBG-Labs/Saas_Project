@@ -16,6 +16,7 @@ import { ROUTES } from '@/config/routes';
 import { useIndustries } from '@/features/industries';
 import {
   OrganizationBillingCard,
+  OrganizationNavTabs,
   PERMISSIONS,
   useCurrentOrganization,
   useOrganization,
@@ -153,6 +154,8 @@ export default function OrganizationSettingsPage() {
           </Button>
         }
       />
+
+      <OrganizationNavTabs />
 
       {organization !== null && <OrganizationBillingCard organizationId={organization.id} />}
 

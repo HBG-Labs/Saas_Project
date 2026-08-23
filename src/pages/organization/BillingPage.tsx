@@ -23,6 +23,7 @@ import {
 } from '@/features/billing';
 import {
   MemberQuotaBar,
+  OrganizationNavTabs,
   PERMISSIONS,
   useCurrentOrganization,
   useMembers,
@@ -152,6 +153,8 @@ export default function BillingPage() {
         title="Facturation"
         description="Formule de l’entreprise et consommation associée."
       />
+
+      <OrganizationNavTabs />
 
       {paymentStatus === 'ok' ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">

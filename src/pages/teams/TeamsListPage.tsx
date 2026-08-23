@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { TeamFormDialog, useTeams } from '@/features/teams';
+import { TeamFormDialog, TeamsNavTabs, useTeams } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 export default function TeamsListPage() {
@@ -43,6 +43,8 @@ export default function TeamsListPage() {
           ) : null
         }
       />
+
+      <TeamsNavTabs />
 
       {teams.isPending ? (
         <ListSkeleton />

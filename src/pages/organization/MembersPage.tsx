@@ -28,7 +28,7 @@ import {
   useUpdateMemberDetails,
   useUpdateMemberRole,
 } from '@/features/organizations';
-import { useTeamMembershipsByMember } from '@/features/teams';
+import { useTeamMembershipsByMember, TeamsNavTabs } from '@/features/teams';
 import { useLabel } from '@/features/industries';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -119,6 +119,8 @@ export default function MembersPage() {
           ) : null
         }
       />
+
+      <TeamsNavTabs memberCount={activeMembers.length} />
 
       {includedSeats !== null ? (
         <Card>

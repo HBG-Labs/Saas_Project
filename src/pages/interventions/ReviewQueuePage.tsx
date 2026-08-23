@@ -18,6 +18,7 @@ import {
   useReportStatusCounts,
   useReviewReport,
 } from '@/features/interventions';
+import { MissionsNavTabs } from '@/features/missions';
 import {
   canReviewReport,
   memberDisplayName,
@@ -95,6 +96,8 @@ export default function ReviewQueuePage() {
         title="Contrôle & Rapports"
         description="Les comptes rendus soumis attendent votre validation. Vous pouvez valider ou refuser en motivant — le contenu appartient à son auteur."
       />
+
+      <MissionsNavTabs pendingReviewCount={rawList.length} />
 
       {isTechnicianOnly && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">

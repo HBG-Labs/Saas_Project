@@ -23,7 +23,7 @@ import {
   VehicleMaintenanceHistoryModal,
   useVehicles,
 } from '@/features/vehicles';
-import { StockNavTabs } from '@/features/stock';
+import { TeamsNavTabs } from '@/features/teams';
 import { cn } from '@/lib/cn';
 import { exportToCsv } from '@/lib/csv-export';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -169,8 +169,8 @@ export default function VehiclesPage() {
         }
       />
 
-      {/* Navigation commune Matériel, Stocks, Achats et Flotte */}
-      <StockNavTabs />
+      {/* Navigation commune Équipes, Membres et Flotte */}
+      <TeamsNavTabs />
 
       {/* 4 KPIs Flotte */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">

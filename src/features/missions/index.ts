@@ -51,6 +51,7 @@ export { MissionFormFields } from './components/MissionFormFields';
 export { MissionPriorityBadge, MissionStatusBadge } from './components/MissionBadges';
 export { MISSION_PRIORITY_LABELS } from './priority-labels';
 export { MissionTransitions } from './components/MissionTransitions';
+export { MissionsNavTabs } from './components/MissionsNavTabs';
 
 export {
   missionSchema,

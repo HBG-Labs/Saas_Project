@@ -78,5 +78,6 @@ export { MemberRow } from './components/MemberRow';
 export { OrganizationSwitcher } from './components/OrganizationSwitcher';
 export { OwnershipCard } from './components/OwnershipCard';
 export { OrganizationBillingCard } from './components/OrganizationBillingCard';
+export { OrganizationNavTabs } from './components/OrganizationNavTabs';
 export { RoleBadge } from './components/RoleBadge';
 export { RoleSelect } from './components/RoleSelect';

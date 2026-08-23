@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { exportMissionsToCsv, MissionStatusBadge, useMissions } from '@/features/missions';
+import { exportMissionsToCsv, MissionsNavTabs, MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -105,6 +105,8 @@ export default function ArchivedMissionsPage() {
           </div>
         }
       />
+
+      <MissionsNavTabs />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="bg-surface-sunken flex gap-1 rounded-lg p-1">

@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { AUDIT_ACTION_LABELS, describeAuditAction, useAuditLogs } from '@/features/audit';
-import { useCurrentOrganization } from '@/features/organizations';
+import { OrganizationNavTabs, useCurrentOrganization } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -168,11 +168,13 @@ export default function AuditLogPage() {
             <Filter className="size-3.5" />
             <span>Filtres</span>
             {hasActiveFilters && (
-              <span className="size-2 rounded-full bg-primary inline-block" />
+              <span className="size-1.5 rounded-full bg-primary" />
             )}
           </Button>
         }
       />
+
+      <OrganizationNavTabs />
 
       {/* Barre de Filtres & Recherche */}
       <Card className="border-border/80 shadow-xs">

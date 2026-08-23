@@ -36,6 +36,7 @@ export {
 
 export { TeamFormDialog } from './components/TeamFormDialog';
 export { TeamMembersPanel } from './components/TeamMembersPanel';
+export { TeamsNavTabs } from './components/TeamsNavTabs';
 export { TeamManagerBadge, TeamRoleBadge } from './components/TeamRoleBadge';
 
 export { slugifyTeamName, teamSchema, type TeamValues } from './schemas/team.schema';
