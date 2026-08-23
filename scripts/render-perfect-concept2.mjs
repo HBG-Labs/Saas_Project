@@ -1,3 +1,14 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { chromium } from '@playwright/test';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const artifactsDir = 'C:\\Users\\HBZ\\.gemini\\antigravity-ide\\brain\\1ae01ce1-97ea-4550-92f9-ef58e4247a8f';
+
+// Géométrie de précision chirurgicale (100% vectorielle) du Concept 2
+const perfectLogo = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Dégradé Fond Cobalt / Saphir Royal Électrique -->
@@ -105,3 +116,47 @@
 
   </g>
 </svg>
+`;
+
+async function renderPerfect() {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 800, height: 600 });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+          body { background: #060911; color: #ffffff; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+          h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+          p { color: #94a3b8; font-size: 14px; margin-bottom: 28px; }
+          .card { background: #0e1626; border: 1px solid #1e293b; border-radius: 28px; padding: 32px; display: flex; flex-direction: column; align-items: center; width: 420px; box-shadow: 0 25px 50px rgba(0,0,0,0.6); }
+          .preview { width: 280px; height: 280px; margin-bottom: 20px; }
+          .title { font-size: 18px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; text-align: center; }
+          .desc { font-size: 13px; color: #94a3b8; text-align: center; line-height: 1.5; }
+          .badge { margin-top: 14px; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 20px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+        </style>
+      </head>
+      <body>
+        <h1>Logo Officiel REZO360 - Concept 2 Ciselé Haute Fidélité</h1>
+        <p>Vecteur SVG pur, biseaux 3D à géométrie continue, 0 distorsion</p>
+        <div class="card">
+          <div class="preview">${perfectLogo}</div>
+          <div class="title">R Architectural Ciselé (Concept 2 Officiel)</div>
+          <div class="desc">Découpe 135° dynamique, biseaux zénithaux, facettes lumineuses et fond saphir profond.</div>
+          <div class="badge">Master Vectoriel Conforme</div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  await page.setContent(html);
+  const outPath = path.join(artifactsDir, 'perfect_concept2_preview.png');
+  await page.screenshot({ path: outPath, type: 'png' });
+  console.log('Saved perfect preview to:', outPath);
+  await browser.close();
+}
+
+renderPerfect().catch(console.error);
