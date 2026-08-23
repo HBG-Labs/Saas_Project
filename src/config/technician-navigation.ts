@@ -7,11 +7,11 @@ export const TECHNICIAN_PRINCIPAL_NAV: readonly NavItem[] = [
   { to: ROUTES.planning, label: 'Mon Planning & Congés', icon: 'calendar', primary: true },
   { to: ROUTES.map, label: 'Cartographie & Itinéraire', icon: 'map', primary: true },
   { to: ROUTES.reports, label: 'Rédiger un compte-rendu', icon: 'scroll', primary: true },
-  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
 ];
 
 export const TECHNICIAN_TOOLS_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Catalogue Universel', icon: 'wrench', primary: true },
+  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
 ];
 

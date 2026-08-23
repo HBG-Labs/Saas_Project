@@ -62,6 +62,7 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
 
 export const TOOLS_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Catalogue Universel', icon: 'wrench', primary: true },
+  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
 ];
 
@@ -80,7 +81,6 @@ export const ACHATS_NAV: readonly NavItem[] = [
 export const CLIENTS_NAV: readonly NavItem[] = [
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
   { to: ROUTES.analytics, label: 'Statistiques & Performance', icon: 'chart', feature: 'missions' },
-  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [

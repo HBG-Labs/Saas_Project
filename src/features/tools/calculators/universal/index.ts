@@ -197,8 +197,22 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
     order: 13,
     Component: lazy(() => import('./ratio/RatioCalculatorTool')),
   },
+  {
+    id: 'notepad',
+    slug: 'notepad',
+    name: 'Bloc-notes & Mémos',
+    title: 'Bloc-notes & Mémos',
+    category: 'universal',
+    description:
+      'Espace privé et sécurisé pour consigner vos notes, mémos techniques, observations de chantier et listes de tâches avec sauvegarde automatique.',
+    keywords: ['notes', 'bloc-notes', 'notepad', 'memo', 'pense-bete', 'texte', 'brouillon', 'chantier', 'redaction'],
+    icon: 'file-text',
+    order: 14,
+    Component: lazy(() => import('./notepad/NotepadTool')),
+  },
 ];
 
 export function getUniversalTool(slug: string): UniversalToolDefinition | undefined {
   return UNIVERSAL_TOOLS.find((t) => t.slug === slug);
 }
+
