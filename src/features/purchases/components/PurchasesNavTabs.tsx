@@ -13,21 +13,24 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
     {
       to: ROUTES.purchaseOrders,
       label: 'Commandes Fournisseurs',
+      shortLabel: 'Commandes',
       icon: ShoppingCart,
       badge:
         pendingDeliveryCount > 0
-          ? `${pendingDeliveryCount} en cours`
+          ? `${pendingDeliveryCount}`
           : null,
       badgeVariant: 'primary' as const,
     },
     {
       to: ROUTES.suppliers,
       label: 'Fournisseurs & Tarifs',
+      shortLabel: 'Fournisseurs',
       icon: Store,
     },
     {
       to: ROUTES.quotes,
       label: 'Devis & Chiffrage Client',
+      shortLabel: 'Devis & Chiffrage',
       icon: Calculator,
     },
   ];
@@ -43,7 +46,7 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
             end={tab.to === ROUTES.purchaseOrders || tab.to === ROUTES.suppliers}
             className={({ isActive }) =>
               cn(
-                'inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
+                'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -51,11 +54,12 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
             }
           >
             <Icon className="size-4 shrink-0" />
-            <span>{tab.label}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
             {tab.badge && (
               <span
                 className={cn(
-                  'ml-1 rounded-full px-1.5 py-0.5 text-3xs font-bold leading-none',
+                  'ml-0.5 sm:ml-1 rounded-full px-1.5 py-0.5 text-3xs font-bold leading-none',
                   'bg-primary/20 text-primary dark:bg-primary/30',
                 )}
               >
