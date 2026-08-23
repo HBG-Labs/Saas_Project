@@ -23,34 +23,7 @@ export function CustomizerDrawer() {
   } = useTheme();
 
   return (
-    <>
-      {/* ------------------- BOUTON FLOTTANT VERTICAL « PERSONNALISER » */}
-      <button
-        type="button"
-        onClick={() => setIsCustomizerOpen(true)}
-        aria-label="Ouvrir le panneau de personnalisation du cockpit"
-        className={cn(
-          'fixed right-0 top-1/2 -translate-y-1/2 z-40',
-          'group flex flex-col items-center justify-center gap-1.5',
-          'rounded-l-xl border-y border-l border-border/80',
-          'bg-surface/90 dark:bg-slate-900/90 backdrop-blur-md',
-          'py-2.5 px-1 shadow-sm transition-all duration-200',
-          'hover:bg-surface hover:border-primary/50 hover:pl-1.5 hover:shadow-md',
-          'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer',
-        )}
-      >
-        <div className="flex size-5 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-110">
-          <Paintbrush className="size-3" aria-hidden="true" />
-        </div>
-        <span
-          className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground transition-colors group-hover:text-primary [writing-mode:vertical-rl] rotate-180 select-none"
-        >
-          Personnaliser
-        </span>
-      </button>
-
-      {/* ------------------- TIROIR LATÉRAL (DRAWER RADIX UI) */}
-      <Dialog.Root open={isCustomizerOpen} onOpenChange={setIsCustomizerOpen}>
+    <Dialog.Root open={isCustomizerOpen} onOpenChange={setIsCustomizerOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
           <Dialog.Content
@@ -255,6 +228,5 @@ export function CustomizerDrawer() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    </>
   );
 }

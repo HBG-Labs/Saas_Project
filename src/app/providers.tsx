@@ -6,6 +6,7 @@ import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { SupportBubble } from '@/components/feedback/SupportBubble';
 import { AuthProvider } from '@/features/auth';
 import { OrganizationProvider } from '@/features/organizations';
+import { CustomizerDrawer } from '@/features/theme';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { createQueryClient } from '@/lib/query-client';
 
@@ -35,6 +36,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <OrganizationProvider>
               {children}
               <SupportBubble />
+              <CustomizerDrawer />
             </OrganizationProvider>
           </AuthProvider>
         </QueryClientProvider>
