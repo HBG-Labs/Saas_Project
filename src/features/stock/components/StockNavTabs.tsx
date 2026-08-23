@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Boxes, ShoppingCart, Truck, Wrench } from 'lucide-react';
+import { ArrowLeftRight, Boxes, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
@@ -13,7 +13,7 @@ export function StockNavTabs({ lowStockCount = 0 }: StockNavTabsProps) {
   const tabs = [
     {
       to: ROUTES.stock,
-      label: 'Fournitures & Consommables',
+      label: 'Articles & Fournitures',
       icon: Boxes,
       badge: lowStockCount > 0 ? `${lowStockCount} alerte${lowStockCount > 1 ? 's' : ''}` : null,
       badgeVariant: 'warning' as const,
@@ -24,19 +24,9 @@ export function StockNavTabs({ lowStockCount = 0 }: StockNavTabsProps) {
       icon: ArrowLeftRight,
     },
     {
-      to: ROUTES.purchaseOrders,
-      label: 'Achats & Commandes',
-      icon: ShoppingCart,
-    },
-    {
       to: ROUTES.equipment,
-      label: 'Parc Matériel & Outillage',
+      label: 'Matériel & Outillage',
       icon: Wrench,
-    },
-    {
-      to: ROUTES.vehicles,
-      label: 'Flotte & Véhicules',
-      icon: Truck,
     },
   ];
 
