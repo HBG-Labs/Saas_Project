@@ -47,6 +47,7 @@ vi.mock('@/features/organizations', () => ({
     },
   },
   OrganizationBillingCard: () => <div data-testid="billing-card">Billing Card</div>,
+  OrganizationNavTabs: () => null,
 }));
 
 vi.mock('@/features/industries', () => ({

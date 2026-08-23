@@ -54,6 +54,7 @@ vi.mock('@/features/organizations', () => ({
   usePermission: () => ({ can: () => droit.current }),
   PERMISSIONS: { billingManage: 'billing.manage' },
   MemberQuotaBar: () => null,
+  OrganizationNavTabs: () => null,
 }));
 
 function afficher() {

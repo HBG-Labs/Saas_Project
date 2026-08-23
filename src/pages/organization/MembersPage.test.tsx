@@ -96,6 +96,7 @@ vi.mock('@/features/organizations', () => ({
 
 vi.mock('@/features/teams', () => ({
   useTeamMembershipsByMember: () => ({ data: new Map() }),
+  TeamsNavTabs: () => null,
 }));
 
 vi.mock('@/features/industries', () => ({

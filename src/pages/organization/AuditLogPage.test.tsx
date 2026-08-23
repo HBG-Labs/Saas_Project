@@ -7,6 +7,7 @@ vi.mock('@/features/organizations', () => ({
   useCurrentOrganization: () => ({
     organization: { id: 'org-1', name: 'Tech Telecom SAS' },
   }),
+  OrganizationNavTabs: () => null,
 }));
 
 vi.mock('@/features/audit', () => ({
