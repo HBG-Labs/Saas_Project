@@ -320,39 +320,38 @@ export default function VoiceRecorderTool() {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={cn(
-                  'flex size-11 items-center justify-center rounded-xl transition-all duration-300',
+                  'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isRecording
-                    ? 'bg-red-600 text-white ring-4 ring-red-500/20 animate-pulse'
+                    ? 'bg-rose-500 text-white animate-pulse shadow-md ring-2 ring-rose-500/20'
                     : 'bg-primary/10 text-primary',
                 )}
               >
-                <Mic className="size-6" />
+                <Mic className="size-5" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Dictaphone & Mémos Vocaux de Chantier</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Enregistrez rapidement vos comptes-rendus oraux, constats et notes vocales sur le terrain.
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Dictaphone & Mémos Vocaux</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
+                  Enregistrement audio rapide pour rapports de visite, constats et notes de chantier.
                 </p>
               </div>
             </div>
 
-            {isRecording && (
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-600/10 text-red-600 dark:text-red-400 border border-red-600/20 animate-pulse">
-                <span className="size-2 rounded-full bg-red-600" />
-                {isPaused ? 'En pause' : 'Enregistrement'}
+            {recordings.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-3xs font-bold uppercase tracking-wider bg-surface-raised border border-border text-foreground self-start sm:self-auto shrink-0">
+                {recordings.length} mémo{recordings.length > 1 ? 's' : ''}
               </span>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {permissionError && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
               <p className="font-bold">Accès au microphone requis</p>

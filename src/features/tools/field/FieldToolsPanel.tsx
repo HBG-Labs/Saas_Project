@@ -95,23 +95,23 @@ export function FieldToolsPanel({
   return (
     <div
       className={cn(
-        'w-full flex flex-col',
-        isModal && 'max-h-[90vh] overflow-hidden rounded-2xl bg-surface border border-border shadow-overlay',
+        'w-full flex flex-col min-w-0',
+        isModal && 'max-h-[92vh] overflow-hidden rounded-2xl bg-surface border border-border shadow-overlay',
       )}
     >
       {/* Barre de Titre & Sélecteur d'Onglets du Volet */}
-      <div className="border-b border-border bg-surface-raised p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              <Wrench className="size-5" />
+      <div className="border-b border-border bg-surface-raised p-3 sm:p-4 space-y-2.5 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-surface border border-border text-foreground font-bold shadow-2xs">
+              <Wrench className="size-3.5 sm:size-4 text-primary" />
             </div>
-            <div>
-              <h2 className="text-sm font-extrabold text-foreground tracking-tight">
-                Volet Outils de Terrain
+            <div className="min-w-0">
+              <h2 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight truncate">
+                Instruments de Terrain
               </h2>
-              <p className="text-3xs text-muted-foreground">
-                Instruments utilitaires directs pour techniciens et interventions
+              <p className="text-3xs text-muted-foreground truncate">
+                Capteurs physiques et utilitaires d'intervention
               </p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export function FieldToolsPanel({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer shrink-0"
               title="Fermer le volet"
             >
               <X className="size-5" />
@@ -129,7 +129,7 @@ export function FieldToolsPanel({
         </div>
 
         {/* Barre de Défilement des 6 Outils */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5">
           {FIELD_TOOLS_TABS.map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTool === tab.id;
@@ -139,13 +139,13 @@ export function FieldToolsPanel({
                 type="button"
                 onClick={() => setActiveTool(tab.id)}
                 className={cn(
-                  'px-2 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1 text-center',
+                  'px-1.5 py-1.5 sm:px-2 sm:py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center min-w-0',
                   isSelected
-                    ? cn('border-primary bg-primary text-primary-foreground shadow-xs scale-102')
+                    ? 'border-primary bg-primary text-primary-foreground shadow-2xs'
                     : 'border-border bg-surface text-muted-foreground hover:text-foreground hover:border-primary/40',
                 )}
               >
-                <Icon className={cn('size-4', !isSelected && tab.tint.split(' ')[0])} />
+                <Icon className={cn('size-3.5 sm:size-4 shrink-0', !isSelected && tab.tint.split(' ')[0])} />
                 <span className="text-3xs truncate max-w-full font-semibold">{tab.shortLabel}</span>
               </button>
             );
@@ -154,7 +154,7 @@ export function FieldToolsPanel({
       </div>
 
       {/* Contenu Actif de l'Outil */}
-      <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-surface">
+      <div className="p-3 sm:p-5 overflow-y-auto overflow-x-hidden flex-1 bg-surface min-w-0">
         <Suspense fallback={<LoadingScreen />}>
           {activeTool === 'flashlight' && <FlashlightTool />}
           {activeTool === 'magnifier' && <MagnifierTool />}

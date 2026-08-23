@@ -260,8 +260,8 @@ export default function ToolsPage() {
 
       {/* Modal / Volet Dépliant Outils de Terrain */}
       {showFieldModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-50 duration-200">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface border border-border shadow-overlay">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-50 duration-200">
+          <div className="w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-xl sm:rounded-2xl bg-surface border border-border shadow-overlay flex flex-col min-w-0">
             <FieldToolsPanel
               initialTool={activeFieldModalTool}
               isModal

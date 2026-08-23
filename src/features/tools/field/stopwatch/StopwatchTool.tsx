@@ -223,31 +223,31 @@ export default function StopwatchTool() {
   const timerProgress = timerInitial > 0 ? (timerRemaining / timerInitial) * 100 : 0;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Timer className="size-6" />
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Timer className="size-5" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Chronomètre & Minuteur d'Intervention</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Mesure de temps de purge, test de débit, essais de pression et durées d’intervention.
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Chronomètre & Minuteur</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
+                  Mesure de temps de purge, test de débit, essais de pression et durées.
                 </p>
               </div>
             </div>
 
             {/* Bascule Mode Chrono / Minuteur */}
-            <div className="flex items-center gap-1 bg-surface-raised border border-border p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-surface-raised border border-border p-0.5 sm:p-1 rounded-xl self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveMode('stopwatch')}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
                   activeMode === 'stopwatch'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    ? 'bg-primary text-primary-foreground shadow-2xs'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -258,9 +258,9 @@ export default function StopwatchTool() {
                 type="button"
                 onClick={() => setActiveMode('timer')}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
                   activeMode === 'timer'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    ? 'bg-primary text-primary-foreground shadow-2xs'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -271,7 +271,7 @@ export default function StopwatchTool() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {activeMode === 'stopwatch' ? (
             /* --- VUE CHRONOMÈTRE --- */
             <div className="space-y-6">

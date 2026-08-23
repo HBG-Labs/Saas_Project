@@ -261,30 +261,30 @@ export default function FlashlightTool() {
       )}
 
       {/* Carte Principale de Contrôle */}
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={cn(
-                  'flex size-11 items-center justify-center rounded-xl transition-all duration-300',
+                  'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isOn
-                    ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 ring-4 ring-amber-500/20'
+                    ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-500/20'
                     : 'bg-surface-hover text-muted-foreground',
                 )}
               >
-                <Flashlight className={cn('size-6', isOn && 'animate-pulse')} />
+                <Flashlight className={cn('size-5', isOn && 'animate-pulse')} />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Lampe Torche & Balisage</CardTitle>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Lampe Torche & Balisage</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
                   Éclairage d’appoint haute puissance pour inspection et chantiers sombres.
                 </p>
               </div>
             </div>
 
             {hasTorchSupport === true && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 self-start sm:self-auto shrink-0">
                 <Zap className="size-3" />
                 Torche LED active
               </span>
@@ -292,7 +292,7 @@ export default function FlashlightTool() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {/* Grand Interrupteur Central */}
           <div className="flex flex-col items-center justify-center py-4">
             <button

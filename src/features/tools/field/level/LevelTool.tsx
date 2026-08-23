@@ -129,34 +129,34 @@ export default function LevelTool() {
   const bubbleY = Math.max(-100, Math.min(100, (netPitch / 45) * 100));
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={cn(
-                  'flex size-11 items-center justify-center rounded-xl transition-all duration-300',
+                  'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isPerfectLevel
-                    ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-500/20 shadow-lg'
+                    ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-500/20 shadow-md'
                     : 'bg-primary/10 text-primary',
                 )}
               >
-                <CircleDot className="size-6" />
+                <CircleDot className="size-5" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Niveau à Bulle & Inclinomètre</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Niveau 2D œil-de-bœuf et tubulaire pour réglage de socles, platines, goulottes et tuyauteries.
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Niveau à Bulle & Inclinomètre</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
+                  Niveau 2D et tubulaire pour socles, goulottes et tuyauteries.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setSoundEnabled((v) => !v)}
-                className="p-2 rounded-lg border border-border bg-surface-raised text-muted-foreground hover:text-foreground cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-lg border border-border bg-surface-raised text-muted-foreground hover:text-foreground cursor-pointer h-8 flex items-center justify-center"
                 title={soundEnabled ? 'Désactiver le bip sonore' : 'Activer le bip sonore'}
               >
                 {soundEnabled ? <Volume2 className="size-4 text-primary" /> : <VolumeX className="size-4" />}
@@ -167,7 +167,7 @@ export default function LevelTool() {
                 variant={isLocked ? 'primary' : 'outline'}
                 size="sm"
                 onClick={() => setIsLocked((v) => !v)}
-                className="gap-1.5 text-xs font-semibold"
+                className="gap-1.5 text-xs font-semibold h-8"
               >
                 {isLocked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
                 <span>{isLocked ? 'Angle figé' : 'Figer'}</span>
@@ -176,7 +176,7 @@ export default function LevelTool() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {/* Alerte demande de permission iOS */}
           {hasOrientationSensor === null && !permissionRequested && (
             <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

@@ -143,18 +143,18 @@ export default function CompassTool() {
   const headingDiff = lockedHeading !== null ? ((heading - lockedHeading + 540) % 360) - 180 : null;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Compass className="size-6" />
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Compass className="size-5" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Boussole Numérique & Azimut</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Orientation magnétique en temps réel, verrouillage de cap et positionnement GPS de chantier.
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Boussole Numérique & Azimut</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
+                  Orientation magnétique, verrouillage de cap et GPS de chantier.
                 </p>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function CompassTool() {
               variant={lockedHeading !== null ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setLockedHeading(lockedHeading !== null ? null : heading)}
-              className="gap-1.5 text-xs font-semibold"
+              className="gap-1.5 text-xs font-semibold self-start sm:self-auto shrink-0 h-8"
             >
               {lockedHeading !== null ? <Unlock className="size-3.5" /> : <Lock className="size-3.5" />}
               <span>{lockedHeading !== null ? 'Libérer cap' : 'Verrouiller cap'}</span>
@@ -172,7 +172,7 @@ export default function CompassTool() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {/* Alerte demande de permission iOS */}
           {hasOrientationSensor === null && !permissionRequested && (
             <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

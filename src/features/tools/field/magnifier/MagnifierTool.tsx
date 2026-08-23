@@ -178,34 +178,34 @@ export default function MagnifierTool() {
   const currentFilter = FILTER_STYLES[filterMode];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="border-border bg-surface shadow-raised overflow-hidden">
-        <CardHeader className="border-b border-border/70 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ZoomIn className="size-6" />
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
+      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
+        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ZoomIn className="size-5" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">Loupe d'Inspection Haute Définition</CardTitle>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold truncate">Loupe d'Inspection HD</CardTitle>
+                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
                   Agrandissement haute netteté, filtres de contraste et capture de micro-détails.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <Button
                 type="button"
                 variant={isTorchOn ? 'primary' : 'outline'}
                 size="sm"
                 onClick={toggleTorch}
                 disabled={!streamActive}
-                className="gap-1.5 text-xs font-semibold"
+                className="gap-1.5 text-xs font-semibold h-8"
                 title="Éclairer avec la torche"
               >
                 <Flashlight className="size-3.5" />
-                <span className="hidden sm:inline">Torche</span>
+                <span>Torche</span>
               </Button>
 
               <Button
@@ -214,20 +214,20 @@ export default function MagnifierTool() {
                 size="sm"
                 onClick={toggleFreeze}
                 disabled={!streamActive && !frozenImage}
-                className="gap-1.5 text-xs font-semibold"
+                className="gap-1.5 text-xs font-semibold h-8"
               >
                 <Camera className="size-3.5" />
-                <span>{frozenImage ? 'Reprendre' : 'Figer l’image'}</span>
+                <span>{frozenImage ? 'Reprendre' : 'Figer'}</span>
               </Button>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 space-y-5">
+        <CardContent className="p-3 sm:p-5 space-y-4 min-w-0 overflow-x-hidden">
           {/* Écran de Visualisation de la Caméra / Loupe */}
-          <div className="relative w-full aspect-4/3 sm:aspect-16/9 bg-slate-950 rounded-2xl overflow-hidden border border-border shadow-inner flex items-center justify-center">
+          <div className="relative w-full aspect-4/3 sm:aspect-16/9 bg-slate-950 rounded-xl overflow-hidden border border-border shadow-inner flex items-center justify-center">
             {streamError ? (
-              <div className="p-6 text-center text-white space-y-3">
+              <div className="p-4 sm:p-6 text-center text-white space-y-3">
                 <p className="text-sm font-bold text-amber-400">Accès caméra requis</p>
                 <p className="text-xs text-slate-300 max-w-md mx-auto">{streamError}</p>
                 <Button type="button" size="sm" onClick={startCamera} className="gap-1.5 text-xs">
@@ -239,14 +239,11 @@ export default function MagnifierTool() {
               <div className="relative w-full h-full flex items-center justify-center bg-black">
                 <img
                   src={frozenImage}
-                  alt="Image figée de la loupe"
+                  alt="Capture loupe"
                   className="w-full h-full object-contain"
-                  style={{
-                    transform: `scale(${zoomLevel > 2 ? 1 + (zoomLevel - 2) * 0.15 : 1})`,
-                    filter: currentFilter.filter,
-                  }}
+                  style={{ filter: currentFilter.filter }}
                 />
-                <div className="absolute top-3 left-3 bg-amber-500 text-slate-950 px-3 py-1 rounded-full text-2xs font-extrabold uppercase tracking-wider shadow-md">
+                <div className="absolute top-3 left-3 bg-amber-500 text-slate-950 font-bold text-2xs px-2.5 py-1 rounded-md shadow-md">
                   Image Figée
                 </div>
                 <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -318,26 +315,26 @@ export default function MagnifierTool() {
           </div>
 
           {/* Barre de Contrôle du Zoom */}
-          <div className="space-y-3 p-4 rounded-xl bg-surface-raised border border-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ZoomIn className="size-4 text-primary" />
-                <span className="text-xs font-bold text-foreground uppercase tracking-wider">
+          <div className="space-y-2.5 p-3 sm:p-4 rounded-xl bg-surface-raised border border-border min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <ZoomIn className="size-4 text-primary shrink-0" />
+                <span className="text-xs font-bold text-foreground uppercase tracking-wider truncate">
                   Facteur d’Agrandissement : {zoomLevel.toFixed(1)}x
                 </span>
               </div>
 
               {/* Paliers Rapides */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 shrink-0">
                 {[1, 2, 4, 8, 12].map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => handleZoomChange(preset)}
                     className={cn(
-                      'px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer',
+                      'px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer',
                       Math.abs(zoomLevel - preset) < 0.2
-                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'bg-surface border border-border text-muted-foreground hover:text-foreground',
                     )}
                   >
@@ -347,11 +344,11 @@ export default function MagnifierTool() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => handleZoomChange(zoomLevel - 0.5)}
-                className="p-2 rounded-lg bg-surface border border-border text-muted-foreground hover:text-foreground cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-lg bg-surface border border-border text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                 title="Dézoomer"
               >
                 <ZoomOut className="size-4" />
@@ -365,13 +362,13 @@ export default function MagnifierTool() {
                 value={zoomLevel}
                 onChange={(e) => handleZoomChange(Number(e.target.value))}
                 aria-label="Niveau de zoom"
-                className="w-full accent-primary h-2 bg-surface rounded-lg cursor-pointer"
+                className="w-full accent-primary h-2 bg-surface rounded-lg cursor-pointer min-w-0"
               />
 
               <button
                 type="button"
                 onClick={() => handleZoomChange(zoomLevel + 0.5)}
-                className="p-2 rounded-lg bg-surface border border-border text-muted-foreground hover:text-foreground cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-lg bg-surface border border-border text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                 title="Zoomer"
               >
                 <ZoomIn className="size-4" />
@@ -380,12 +377,12 @@ export default function MagnifierTool() {
           </div>
 
           {/* Filtres de Netteté et Rendu */}
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-              <Sliders className="size-3.5 text-primary" />
+              <Sliders className="size-3.5 text-primary shrink-0" />
               <span>Filtres de Lecture & Contraste</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
               {(Object.keys(FILTER_STYLES) as FilterMode[]).map((fKey) => {
                 const config = FILTER_STYLES[fKey];
                 const isSelected = filterMode === fKey;
@@ -395,13 +392,13 @@ export default function MagnifierTool() {
                     type="button"
                     onClick={() => setFilterMode(fKey)}
                     className={cn(
-                      'p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1',
+                      'p-2 sm:p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-0.5 sm:gap-1 min-w-0',
                       isSelected
-                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-xs'
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-2xs'
                         : 'border-border bg-surface-raised hover:border-primary/40',
                     )}
                   >
-                    <span className="text-xs font-bold text-foreground">{config.label}</span>
+                    <span className="text-xs font-bold text-foreground truncate">{config.label}</span>
                     <span className="text-3xs text-muted-foreground line-clamp-1">{config.desc}</span>
                   </button>
                 );
