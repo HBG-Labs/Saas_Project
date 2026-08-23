@@ -342,7 +342,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('calendar')}
           className={cn(
-            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'calendar'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -357,7 +357,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('leaves')}
           className={cn(
-            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'leaves'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -369,7 +369,7 @@ export default function PlanningPage() {
           {pendingLeavesCount > 0 && (
             <span
               className={cn(
-                'size-4.5 sm:size-5 rounded-full flex items-center justify-center text-3xs font-extrabold shrink-0',
+                'size-4 sm:size-5 rounded-full flex items-center justify-center text-[9px] sm:text-3xs font-extrabold shrink-0',
                 activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-amber-500 text-white',
               )}
             >
@@ -382,14 +382,14 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('recurring')}
           className={cn(
-            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'recurring'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
           <RotateCcw className="size-3.5 shrink-0" />
-          <span className="sm:hidden">Récurrent</span>
+          <span className="sm:hidden">Tâches</span>
           <span className="hidden sm:inline">Tâches Récurrentes ({tasks.length})</span>
         </button>
 
@@ -397,7 +397,7 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('holidays')}
           className={cn(
-            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'holidays'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
