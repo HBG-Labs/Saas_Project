@@ -29,7 +29,7 @@ export function TeamsNavTabs({ memberCount = 0 }: TeamsNavTabsProps) {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3 mb-6">
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap border-b border-border pb-2.5 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -39,7 +39,7 @@ export function TeamsNavTabs({ memberCount = 0 }: TeamsNavTabsProps) {
             end
             className={({ isActive }) =>
               cn(
-                'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150',
+                'inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
