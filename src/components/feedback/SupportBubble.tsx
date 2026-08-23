@@ -7,6 +7,8 @@ import { useAuth } from '@/features/auth';
 import { submitSupportRequest } from '@/features/support';
 import { cn } from '@/lib/cn';
 
+const STORAGE_KEY = 'rezo360_support_bubble_pos';
+
 export function SupportBubble() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +23,33 @@ export function SupportBubble() {
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Position personnalisée de la bulle
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { x: number; y: number };
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  const dragInfoRef = useRef<{
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+    hasMoved: boolean;
+  }>({ startX: 0, startY: 0, origX: 0, origY: 0, hasMoved: false });
 
   // Fermer avec la touche Échap
   useEffect(() => {
@@ -33,18 +62,84 @@ export function SupportBubble() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  // Recalibrer la position lors d'un redimensionnement d'écran
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => {
+        if (!prev) return null;
+        const btnSize = 44;
+        const clampedX = Math.max(12, Math.min(prev.x, window.innerWidth - btnSize - 12));
+        const clampedY = Math.max(12, Math.min(prev.y, window.innerHeight - btnSize - 12));
+        return { x: clampedX, y: clampedY };
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    dragInfoRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: rect.left,
+      origY: rect.top,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+    buttonRef.current.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragInfoRef.current.startX;
+    const dy = e.clientY - dragInfoRef.current.startY;
+
+    if (!dragInfoRef.current.hasMoved && Math.hypot(dx, dy) > 4) {
+      dragInfoRef.current.hasMoved = true;
+    }
+
+    if (dragInfoRef.current.hasMoved) {
+      const btnSize = 44;
+      const newX = Math.max(
+        12,
+        Math.min(dragInfoRef.current.origX + dx, window.innerWidth - btnSize - 12),
+      );
+      const newY = Math.max(
+        12,
+        Math.min(dragInfoRef.current.origY + dy, window.innerHeight - btnSize - 12),
+      );
+
+      setPosition({ x: newX, y: newY });
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    try {
+      buttonRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    if (dragInfoRef.current.hasMoved) {
+      if (position) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(position));
+        } catch {
+          // ignore
+        }
+      }
+    } else {
+      setIsOpen((prev) => !prev);
+    }
+  };
+
   /**
    * Envoi RÉEL.
-   *
-   * La version précédente attendait neuf cents millisecondes puis affichait un
-   * succès, sans rien transmettre : le message, le téléphone et les fichiers
-   * étaient abandonnés en mémoire. Quelqu'un ayant un vrai problème écrivait,
-   * lisait la confirmation, et attendait une réponse qui ne pouvait pas venir.
-   *
-   * Trois issues désormais, parce qu'il y en a trois : transmise, enregistrée
-   * sans notification, ou refusée. En cas de refus la SAISIE EST CONSERVÉE —
-   * faire retaper un message parce que le serveur a répondu 500 achèverait
-   * d'exaspérer quelqu'un qui écrivait déjà pour se plaindre.
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,28 +180,44 @@ export function SupportBubble() {
   return (
     <>
       {/* ------------------- BULLE FLOTTANTE BOUTON D'AIDE */}
-      <div className="fixed right-6 bottom-6 z-40 max-md:right-4 max-md:bottom-20">
+      <div
+        style={
+          position
+            ? { left: `${position.x}px`, top: `${position.y}px` }
+            : undefined
+        }
+        className={cn(
+          'fixed z-40 select-none touch-none',
+          !position && 'right-6 bottom-6 max-md:right-4 max-md:bottom-20',
+        )}
+      >
         <button
+          ref={buttonRef}
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           aria-expanded={isOpen}
           aria-label={isOpen ? "Fermer l'aide et le support" : "Ouvrir le support et l'aide"}
+          title="Besoin d'aide ? (Glisser-déposer pour déplacer)"
           className={cn(
-            'group relative flex size-12 items-center justify-center rounded-full sm:size-13',
-            'bg-primary text-primary-foreground shadow-lg transition-all duration-300',
-            'hover:bg-primary-hover hover:scale-105 hover:shadow-xl active:scale-95',
-            'focus-visible:ring-primary/40 cursor-pointer focus-visible:ring-4 focus-visible:outline-none',
+            'group relative flex size-9.5 sm:size-10 items-center justify-center rounded-full',
+            'bg-primary text-primary-foreground shadow-md transition-all duration-200',
+            'hover:bg-primary-hover hover:scale-105',
+            'focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none',
+            isDragging ? 'cursor-grabbing scale-110 shadow-xl ring-2 ring-primary/40' : 'cursor-grab active:scale-105',
           )}
         >
           {isOpen ? (
-            <X className="size-6 transition-transform duration-200 group-hover:rotate-90" />
+            <X className="size-4.5 sm:size-5 transition-transform duration-200 group-hover:rotate-90" />
           ) : (
             <>
-              <HelpCircle className="size-6 transition-transform duration-200 group-hover:scale-110" />
+              <HelpCircle className="size-4.5 sm:size-5 transition-transform duration-200 group-hover:scale-110" />
               {/* Badge d'état en ligne */}
-              <span className="absolute -top-0.5 -right-0.5 flex size-3.5">
+              <span className="absolute -top-0.5 -right-0.5 flex size-2.5 sm:size-3">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="border-surface relative inline-flex size-3.5 rounded-full border-2 bg-emerald-500" />
+                <span className="border-surface relative inline-flex size-full rounded-full border-1.5 bg-emerald-500" />
               </span>
             </>
           )}
@@ -120,9 +231,18 @@ export function SupportBubble() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="support-dialog-title"
+          style={
+            position && typeof window !== 'undefined'
+              ? {
+                  left: `${Math.max(12, Math.min(position.x - 280, window.innerWidth - 360))}px`,
+                  top: `${Math.max(12, Math.min(position.y - 440, window.innerHeight - 520))}px`,
+                }
+              : undefined
+          }
           className={cn(
-            'fixed right-6 bottom-20 z-50 max-md:right-4 max-md:bottom-34',
-            'flex max-h-[85vh] w-[min(23rem,92vw)] flex-col overflow-hidden',
+            'fixed z-50',
+            !position && 'right-6 bottom-20 max-md:right-4 max-md:bottom-32',
+            'flex max-h-[85vh] w-[min(22rem,92vw)] flex-col overflow-hidden',
             'border-border/80 bg-surface/98 shadow-modal rounded-2xl border backdrop-blur-xl',
             'animate-in fade-in-0 zoom-in-95 duration-200',
           )}
