@@ -1,6 +1,6 @@
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Paintbrush, Sun } from 'lucide-react';
 
-import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
+import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
 import { cn } from '@/lib/cn';
 
 import { useTheme } from './useTheme';
@@ -12,13 +12,10 @@ const OPTIONS: readonly { value: Theme; label: string; icon: typeof Sun }[] = [
 ];
 
 /**
- * Sélecteur de thème.
- *
- * Trois choix et non deux : « Système » est un état distinct de « Clair », qui
- * suit le réglage du système d'exploitation en continu. Un simple interrupteur
- * clair/sombre rendrait ce comportement impossible à retrouver une fois quitté.
+ * Sélecteur et bouton de thème REZO360.
+ * Visible et accessible sur mobile comme sur ordinateur.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme } = useTheme();
   const CurrentIcon = resolvedTheme === 'dark' ? Moon : Sun;
 
@@ -28,7 +25,10 @@ export function ThemeToggle() {
         <button
           type="button"
           aria-label="Changer de thème"
-          className="text-muted-foreground hover:bg-surface-hover hover:text-foreground hidden size-9 items-center justify-center rounded-md transition-colors sm:flex"
+          className={cn(
+            'text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-8 sm:size-9 items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0',
+            className,
+          )}
         >
           <CurrentIcon className="size-4" aria-hidden="true" />
         </button>
@@ -40,15 +40,10 @@ export function ThemeToggle() {
 }
 
 /**
- * Les mêmes choix, réutilisables dans un autre menu.
- *
- * Sur téléphone, la barre supérieure n'a pas la place d'aligner cinq commandes
- * de 44 px. Le thème se règle une fois puis s'oublie : il rejoint le menu du
- * compte, et les commandes qui restent en haut retrouvent une taille que le
- * pouce atteint. Le déclencheur ci-dessus ne réapparaît qu'à partir de `sm`.
+ * Choix de thèmes et personnalisation réutilisables.
  */
 export function ThemeMenuItems() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, setIsCustomizerOpen } = useTheme();
 
   return (
     <>
@@ -60,13 +55,23 @@ export function ThemeMenuItems() {
             onSelect={() => {
               setTheme(option.value);
             }}
-            className={cn(theme === option.value && 'text-primary font-medium')}
+            className={cn(theme === option.value && 'text-primary font-bold')}
           >
             <Icon />
-            {option.label}
+            <span>{option.label}</span>
           </DropdownItem>
         );
       })}
+
+      <DropdownSeparator />
+
+      <DropdownItem
+        onSelect={() => setIsCustomizerOpen(true)}
+        className="text-xs font-semibold text-primary"
+      >
+        <Paintbrush className="size-3.5" />
+        <span>Personnaliser l’ambiance</span>
+      </DropdownItem>
     </>
   );
 }
