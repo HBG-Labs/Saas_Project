@@ -1,4 +1,5 @@
 import {
+  Calculator,
   Clock,
   LayoutGrid,
   LayoutList,
@@ -6,6 +7,7 @@ import {
   Search,
   Sparkles,
   Star,
+  Wrench,
   X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -21,13 +23,16 @@ import {
   UNIVERSAL_TOOLS,
 } from '@/features/tools/calculators/universal';
 import { ToolCard } from '@/features/tools';
+import { FieldToolsPanel } from '@/features/tools/field/FieldToolsPanel';
 import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
 import { useToolHistory } from '@/features/tools/hooks/useToolHistory';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 type ViewMode = 'grid' | 'list';
-type FilterTab = 'all' | 'favorites';
+type FilterTab = 'all' | 'field' | 'calculators' | 'favorites';
+
+const FIELD_TOOL_SLUGS = ['flashlight', 'magnifier', 'compass', 'level', 'stopwatch', 'voice-recorder'];
 
 export default function ToolsPage() {
   useDocumentTitle('Boîte à Outils Universelle — REZO360 Tools');
@@ -35,12 +40,13 @@ export default function ToolsPage() {
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showHistory, setShowHistory] = useState(false);
+  const [showFieldPanel, setShowFieldPanel] = useState(false);
 
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
 
   const tabParam = (searchParams.get('tab') as FilterTab) || 'all';
-  const activeTab: FilterTab = ['all', 'favorites'].includes(tabParam)
+  const activeTab: FilterTab = ['all', 'field', 'calculators', 'favorites'].includes(tabParam)
     ? tabParam
     : 'all';
 
@@ -53,23 +59,6 @@ export default function ToolsPage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  /*
-    Le catalogue complet : outils métier du registry PUIS calculateurs
-    universels.
-
-    Les deux familles cohabitent au lieu de se remplacer. N'exposer que
-    `UNIVERSAL_TOOLS` retirait de la page les outils de `src/tools/` (subnet,
-    loi d'Ohm, codes couleur fibre et cuivre…) alors qu'ils restaient
-    référencés par le CommandBar et les pages de catégorie.
-
-    `listTools()` trie déjà par `order` puis par titre ; les universels sont
-    ajoutés ensuite, dans l'ordre explicite de leur déclaration.
-
-    Dédoublonnage par slug, le registry l'emportant : `scientific-calculator`
-    est déclaré des DEUX côtés. Sans ce filtre la carte apparaîtrait en double,
-    et les deux exemplaires mèneraient de toute façon à la même page — c'est le
-    registry que `ToolDetailPage` consulte en premier.
-  */
   const allTools = useMemo(() => {
     return UNIVERSAL_TOOLS;
   }, []);
@@ -80,6 +69,8 @@ export default function ToolsPage() {
     return allTools.filter((tool) => {
       // Filtrage par onglet
       if (activeTab === 'favorites' && !isFavorite(tool.slug)) return false;
+      if (activeTab === 'field' && !FIELD_TOOL_SLUGS.includes(tool.slug)) return false;
+      if (activeTab === 'calculators' && FIELD_TOOL_SLUGS.includes(tool.slug)) return false;
 
       // Filtrage par recherche
       if (normalized === '') return true;
@@ -96,6 +87,11 @@ export default function ToolsPage() {
   const favoriteToolsCount = useMemo(
     () => allTools.filter((t) => isFavorite(t.slug)).length,
     [allTools, isFavorite],
+  );
+
+  const fieldToolsCount = useMemo(
+    () => allTools.filter((t) => FIELD_TOOL_SLUGS.includes(t.slug)).length,
+    [allTools],
   );
 
   return (
@@ -132,7 +128,19 @@ export default function ToolsPage() {
               : {})}
           />
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {/* Bouton d'accès direct au Volet Outils de Terrain */}
+            <Button
+              type="button"
+              variant={showFieldPanel ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setShowFieldPanel((v) => !v)}
+              className="gap-1.5 text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20 cursor-pointer shadow-xs"
+            >
+              <Wrench className="size-4 text-amber-500" />
+              <span>Volet Outils Terrain</span>
+            </Button>
+
             {/* Bouton Historique des calculs */}
             <Button
               type="button"
@@ -183,6 +191,13 @@ export default function ToolsPage() {
             </div>
           </div>
         </div>
+
+        {/* Modal / Volet Dépliant Outils de Terrain */}
+        {showFieldPanel && (
+          <div className="mb-4 animate-in fade-in-50 zoom-in-95 duration-200">
+            <FieldToolsPanel isModal onClose={() => setShowFieldPanel(false)} />
+          </div>
+        )}
 
         {/* Volet Historique déroulant global */}
         {showHistory && (
@@ -274,6 +289,34 @@ export default function ToolsPage() {
           >
             <Sparkles className="size-3.5" />
             <span>Tous les outils ({allTools.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('field')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'field'
+                ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Wrench className="size-3.5 text-amber-500" />
+            <span>Outils de Terrain ({fieldToolsCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('calculators')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'calculators'
+                ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Calculator className="size-3.5 text-sky-500" />
+            <span>Calculateurs ({allTools.length - fieldToolsCount})</span>
           </button>
 
           <button

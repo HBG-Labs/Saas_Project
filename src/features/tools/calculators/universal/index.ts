@@ -210,9 +210,99 @@ export const UNIVERSAL_TOOLS: readonly UniversalToolDefinition[] = [
     order: 14,
     Component: lazy(() => import('./notepad/NotepadTool')),
   },
+  {
+    id: 'flashlight',
+    slug: 'flashlight',
+    name: 'Lampe Torche & Balisage',
+    title: 'Lampe Torche & Balisage',
+    category: 'universal',
+    description:
+      'Éclairage d’appoint haute puissance avec torche LED, écran projecteur multi-températures (6500K/3000K), vision nocturne rouge et signal S.O.S.',
+    keywords: ['lampe', 'torche', 'flashlight', 'lumiere', 'eclairage', 'sos', 'stroboscope', 'nuit', 'chantier'],
+    icon: 'flashlight',
+    order: 15,
+    Component: lazy(() => import('../../field/flashlight/FlashlightTool')),
+  },
+  {
+    id: 'magnifier',
+    slug: 'magnifier',
+    name: 'Loupe Haute Définition',
+    title: 'Loupe Haute Définition',
+    category: 'universal',
+    description:
+      'Loupe d’inspection avec zoom optique/numérique jusqu’à 12x, gel d’image instantané, éclairage d’appoint et filtres de contraste haute lisibilité.',
+    keywords: ['loupe', 'magnifier', 'zoom', 'inspection', 'camera', 'lecture', 'serie', 'code', 'micro', 'precision'],
+    icon: 'zoom-in',
+    order: 16,
+    Component: lazy(() => import('../../field/magnifier/MagnifierTool')),
+  },
+  {
+    id: 'compass',
+    slug: 'compass',
+    name: 'Boussole Numérique & Azimut',
+    title: 'Boussole Numérique & Azimut',
+    category: 'universal',
+    description:
+      'Boussole magnétique de précision avec verrouillage d’azimut pour alignement d’antennes et panneaux solaires, et coordonnées GPS du site.',
+    keywords: ['boussole', 'compass', 'azimut', 'nord', 'cap', 'gps', 'orientation', 'antenne', 'panneau', 'chantier'],
+    icon: 'compass',
+    order: 17,
+    Component: lazy(() => import('../../field/compass/CompassTool')),
+  },
+  {
+    id: 'level',
+    slug: 'level',
+    name: 'Niveau à Bulle & Inclinomètre',
+    title: 'Niveau à Bulle & Inclinomètre',
+    category: 'universal',
+    description:
+      'Niveau 2D œil-de-bœuf et tubulaire (axes X et Y) avec mesure en degrés et pente mm/m, fonction tare/zéro et alerte haptique/sonore.',
+    keywords: ['niveau', 'bulle', 'level', 'inclinometre', 'pente', 'horizontal', 'vertical', 'socle', 'tuyau', 'alignement'],
+    icon: 'circle-dot',
+    order: 18,
+    Component: lazy(() => import('../../field/level/LevelTool')),
+  },
+  {
+    id: 'stopwatch',
+    slug: 'stopwatch',
+    name: 'Chronomètre & Minuteur d’Essais',
+    title: 'Chronomètre & Minuteur d’Essais',
+    category: 'universal',
+    description:
+      'Chronomètre de précision au 1/100e de seconde avec tours (laps) et minuteur avec presets rapides pour tests de purge, débit et pression.',
+    keywords: ['chronometre', 'minuteur', 'timer', 'stopwatch', 'temps', 'purge', 'essai', 'debit', 'pression', 'duree'],
+    icon: 'timer',
+    order: 19,
+    Component: lazy(() => import('../../field/stopwatch/StopwatchTool')),
+  },
+  {
+    id: 'voice-recorder',
+    slug: 'voice-recorder',
+    name: 'Dictaphone & Mémos Vocaux',
+    title: 'Dictaphone & Mémos Vocaux',
+    category: 'universal',
+    description:
+      'Enregistreur vocal haute fidélité pour consigner vos constats oraux, mémos de chantier et comptes-rendus d’intervention avec visualiseur d’onde.',
+    keywords: ['dictaphone', 'audio', 'vocal', 'memo', 'micro', 'enregistrement', 'voix', 'compte-rendu', 'chantier'],
+    icon: 'mic',
+    order: 20,
+    Component: lazy(() => import('../../field/voice-recorder/VoiceRecorderTool')),
+  },
 ];
 
 export function getUniversalTool(slug: string): UniversalToolDefinition | undefined {
-  return UNIVERSAL_TOOLS.find((t) => t.slug === slug);
+  // Support des slugs français et anglais
+  const slugAliases: Record<string, string> = {
+    lampe: 'flashlight',
+    loupe: 'magnifier',
+    boussole: 'compass',
+    niveau: 'level',
+    chronometre: 'stopwatch',
+    dictaphone: 'voice-recorder',
+  };
+
+  const resolved = slugAliases[slug] ?? slug;
+  return UNIVERSAL_TOOLS.find((t) => t.slug === resolved);
 }
+
 
