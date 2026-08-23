@@ -13,17 +13,17 @@ export interface SelectOption {
 
 export interface SelectProps {
   options: readonly SelectOption[];
-  value?: string;
-  defaultValue?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-  label?: string;
-  hint?: string;
-  error?: string;
-  disabled?: boolean;
-  id?: string;
-  className?: string;
-  hideLabel?: boolean;
+  value?: string | undefined;
+  defaultValue?: string | undefined;
+  onValueChange?: ((value: string) => void) | undefined;
+  placeholder?: string | undefined;
+  label?: string | undefined;
+  hint?: string | undefined;
+  error?: string | undefined;
+  disabled?: boolean | undefined;
+  id?: string | undefined;
+  className?: string | undefined;
+  hideLabel?: boolean | undefined;
 }
 
 /**

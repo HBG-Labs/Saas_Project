@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
@@ -61,23 +61,25 @@ export default function OrganizationSettingsPage() {
     formState: { errors, isSubmitting, isDirty },
   } = useForm<OrganizationSettingsValues>({
     resolver: zodResolver(organizationSettingsSchema) as any,
-    values: data
+    ...(data
       ? {
-          name: data.name,
-          industry: toFormValue(data.industry),
-          legalName: toFormValue(data.legal_name),
-          registrationNumber: toFormValue(data.registration_number),
-          vatNumber: toFormValue(data.vat_number),
-          defaultVatRate: data.default_vat_rate ?? 20,
-          email: toFormValue(data.email),
-          phone: toFormValue(data.phone),
-          addressLine1: toFormValue(data.address_line1),
-          addressLine2: toFormValue(data.address_line2),
-          postalCode: toFormValue(data.postal_code),
-          city: toFormValue(data.city),
-          country: toFormValue(data.country),
+          values: {
+            name: data.name,
+            industry: toFormValue(data.industry),
+            legalName: toFormValue(data.legal_name),
+            registrationNumber: toFormValue(data.registration_number),
+            vatNumber: toFormValue(data.vat_number),
+            defaultVatRate: data.default_vat_rate ?? 20,
+            email: toFormValue(data.email),
+            phone: toFormValue(data.phone),
+            addressLine1: toFormValue(data.address_line1),
+            addressLine2: toFormValue(data.address_line2),
+            postalCode: toFormValue(data.postal_code),
+            city: toFormValue(data.city),
+            country: toFormValue(data.country),
+          },
         }
-      : undefined,
+      : {}),
   });
 
   const navigate = useNavigate();
