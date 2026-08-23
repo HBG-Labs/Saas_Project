@@ -31,7 +31,7 @@ export const HOLIDAY_TERRITORIES: {
   { id: 'guyane', label: 'Guyane (973)', code: '973', flag: '🇬🇫' },
   { id: 'reunion', label: 'La Réunion (974)', code: '974', flag: '🇷🇪' },
   { id: 'mayotte', label: 'Mayotte (976)', code: '976', flag: '🇾🇹' },
-  { id: 'alsace_moselle', label: 'Alsace-Moselle', code: 'ALS', flag: '🥨' },
+  { id: 'alsace_moselle', label: 'Alsace-Moselle', code: 'ALS', flag: '🇫🇷' },
 ];
 
 /**
