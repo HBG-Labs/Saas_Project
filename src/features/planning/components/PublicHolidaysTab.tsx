@@ -1,4 +1,4 @@
-import { Flag, Globe } from 'lucide-react';
+import { Flag } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 import { HOLIDAY_TERRITORIES } from '../public-holidays';
@@ -20,50 +20,25 @@ export function PublicHolidaysTab({
 
   return (
     <div className="space-y-4">
-      {/* 1. Header with Territory Selector */}
+      {/* 1. Header with Territory Badge */}
       <div className="bg-surface p-4 rounded-2xl border border-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-start justify-between sm:justify-start gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-extrabold text-foreground">
-                Calendrier des Jours Fériés Légaux
-              </h3>
-              <span className="text-base" title={currentTerritory?.label}>
-                {currentTerritory?.flag}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Calcul automatique des jours ouvrés, astreintes et majorations selon le territoire
-            </p>
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-extrabold text-foreground">
+              Calendrier des Jours Fériés Légaux
+            </h3>
+            <span className="text-base" title={currentTerritory?.label}>
+              {currentTerritory?.flag}
+            </span>
           </div>
-
-          <Badge variant="primary" className="text-3xs font-mono shrink-0 sm:hidden">
-            {holidays.length} Fériés ({new Date().getFullYear()})
-          </Badge>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Calcul automatique des jours ouvrés, astreintes et majorations selon le territoire
+          </p>
         </div>
 
-        {/* Territory Dropdown Selector */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-xl border border-border shrink-0 max-w-full">
-            <Globe className="size-3.5 text-primary shrink-0" />
-            <span className="text-3xs text-muted-foreground font-semibold whitespace-nowrap">Territoire :</span>
-            <select
-              value={selectedTerritory}
-              onChange={(e) => onSelectTerritory(e.target.value as HolidayTerritory)}
-              className="bg-transparent text-xs font-bold text-foreground focus:outline-hidden cursor-pointer truncate max-w-[200px]"
-            >
-              {HOLIDAY_TERRITORIES.map((t) => (
-                <option key={t.id} value={t.id} className="bg-surface text-foreground">
-                  {t.flag} {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Badge variant="primary" className="text-3xs font-mono hidden sm:inline-flex shrink-0">
-            {holidays.length} Fériés ({new Date().getFullYear()})
-          </Badge>
-        </div>
+        <Badge variant="primary" className="text-3xs font-mono self-start sm:self-auto shrink-0">
+          {holidays.length} Fériés ({new Date().getFullYear()})
+        </Badge>
       </div>
 
       {/* 2. Quick Territory Filter Chips */}

@@ -10,8 +10,8 @@ const artifactsDir = 'C:\\Users\\HBZ\\.gemini\\antigravity-ide\\brain\\1ae01ce1-
 async function generateHolidaysPreview() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  // Mobile iPhone 393 x 852
-  await page.setViewportSize({ width: 393, height: 650 });
+  // Desktop / Tablet & Mobile preview comparison
+  await page.setViewportSize({ width: 900, height: 420 });
 
   const html = `
     <!DOCTYPE html>
@@ -20,66 +20,47 @@ async function generateHolidaysPreview() {
         <meta charset="utf-8" />
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-          body { background: #070b14; color: #ffffff; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+          body { background: #070b14; color: #ffffff; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
           
           .card-main {
             background: #0d1322;
             border: 1px solid #1e293b;
             border-radius: 16px;
-            padding: 14px;
+            padding: 16px 20px;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
             width: 100%;
-            max-width: 360px;
+            max-width: 820px;
           }
           
-          .top-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 8px;
-          }
           .title-area { display: flex; flex-direction: column; gap: 2px; }
-          .title { font-size: 13.5px; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 6px; }
-          .subtitle { font-size: 11px; color: #94a3b8; }
+          .title { font-size: 15px; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+          .subtitle { font-size: 12px; color: #94a3b8; }
           .badge-count {
             background: rgba(59, 130, 246, 0.15);
             color: #60a5fa;
             border: 1px solid rgba(59, 130, 246, 0.3);
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
-            padding: 2px 7px;
+            padding: 3px 10px;
             border-radius: 8px;
             white-space: nowrap;
             flex-shrink: 0;
             font-family: monospace;
           }
           
-          .dropdown-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 10px;
-            padding: 7px 12px;
-            width: fit-content;
-          }
-          .dropdown-label { font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; }
-          .dropdown-val { font-size: 12px; color: #f8fafc; font-weight: 700; background: transparent; border: none; }
-          
           /* Chips row */
           .chips-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             overflow-x: auto;
             white-space: nowrap;
             padding-bottom: 4px;
-            margin: 0 -14px;
-            padding-left: 14px;
-            padding-right: 14px;
+            width: 100%;
+            max-width: 820px;
             scrollbar-width: none;
           }
           .chips-row::-webkit-scrollbar { display: none; }
@@ -87,73 +68,66 @@ async function generateHolidaysPreview() {
           .chip-pill {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 6px 11px;
-            border-radius: 10px;
-            font-size: 11.5px;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 600;
             color: #94a3b8;
-            background: #111827;
+            background: #0d1322;
             border: 1px solid #1e293b;
             flex-shrink: 0;
+            cursor: pointer;
           }
           .chip-pill.active {
             background: #2563eb;
             color: #ffffff;
             border-color: #3b82f6;
-            box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
           }
           
           .grid-holidays {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             width: 100%;
-            max-width: 360px;
-            margin-top: 10px;
+            max-width: 820px;
           }
           .holiday-card {
             background: #0d1322;
             border: 1px solid #1e293b;
-            border-radius: 10px;
-            padding: 8px 10px;
+            border-radius: 12px;
+            padding: 10px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 6px;
+            gap: 8px;
           }
-          .h-name { font-size: 11px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .h-date { font-size: 9.5px; color: #64748b; font-family: monospace; }
-          .h-tag { font-size: 8.5px; padding: 2px 5px; border-radius: 4px; background: rgba(244,63,94,0.1); color: #fb7185; border: 1px solid rgba(244,63,94,0.2); font-weight: 600; }
+          .h-name { font-size: 12px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .h-date { font-size: 10px; color: #64748b; font-family: monospace; }
+          .h-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(244,63,94,0.1); color: #fb7185; border: 1px solid rgba(244,63,94,0.2); font-weight: 600; }
         </style>
       </head>
       <body>
         <div class="card-main">
-          <div class="top-row">
-            <div class="title-area">
-              <div class="title">
-                <span>Calendrier des Jours Fériés Légaux</span>
-                <span>🇫🇷</span>
-              </div>
-              <div class="subtitle">Calcul automatique des jours ouvrés et majorations</div>
+          <div class="title-area">
+            <div class="title">
+              <span>Calendrier des Jours Fériés Légaux</span>
+              <span>🇫🇷</span>
             </div>
-            <div class="badge-count">11 Fériés (2026)</div>
+            <div class="subtitle">Calcul automatique des jours ouvrés, astreintes et majorations selon le territoire</div>
           </div>
-          
-          <div class="dropdown-box">
-            <span style="font-size: 13px;">🌐</span>
-            <span class="dropdown-label">Territoire :</span>
-            <span class="dropdown-val">🇫🇷 France Métropolitaine ▼</span>
-          </div>
-          
-          <div class="chips-row">
-            <div class="chip-pill active"><span>🇫🇷</span><span>France Métropolitaine</span></div>
-            <div class="chip-pill"><span>🇬🇵</span><span>Guadeloupe (971)</span></div>
-            <div class="chip-pill"><span>🇲🇶</span><span>Martinique (972)</span></div>
-            <div class="chip-pill"><span>🇬🇫</span><span>Guyane (973)</span></div>
-            <div class="chip-pill"><span>🇷🇪</span><span>La Réunion (974)</span></div>
-            <div class="chip-pill"><span>🇾🇹</span><span>Mayotte (976)</span></div>
-          </div>
+          <div class="badge-count">11 Fériés (2026)</div>
+        </div>
+        
+        <div class="chips-row">
+          <div class="chip-pill active"><span>🇫🇷</span><span>France Métropolitaine</span></div>
+          <div class="chip-pill"><span>🇬🇵</span><span>Guadeloupe (971)</span></div>
+          <div class="chip-pill"><span>🇲🇶</span><span>Martinique (972)</span></div>
+          <div class="chip-pill"><span>🇬🇫</span><span>Guyane (973)</span></div>
+          <div class="chip-pill"><span>🇷🇪</span><span>La Réunion (974)</span></div>
+          <div class="chip-pill"><span>🇾🇹</span><span>Mayotte (976)</span></div>
+          <div class="chip-pill"><span>🥨</span><span>Alsace-Moselle</span></div>
         </div>
         
         <div class="grid-holidays">
@@ -191,9 +165,9 @@ async function generateHolidaysPreview() {
   `;
 
   await page.setContent(html);
-  const outPath = path.join(artifactsDir, 'holidays_mobile_fix.png');
+  const outPath = path.join(artifactsDir, 'holidays_deduplicated_preview.png');
   await page.screenshot({ path: outPath, type: 'png' });
-  console.log('Saved holidays fix preview to:', outPath);
+  console.log('Saved deduplicated holidays preview to:', outPath);
   await browser.close();
 }
 
