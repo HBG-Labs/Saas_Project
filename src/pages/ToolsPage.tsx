@@ -1,14 +1,26 @@
 import {
+  ArrowLeftRight,
+  Briefcase,
   Calculator,
+  ChevronRight,
+  CircleDot,
   Clock,
+  Compass,
+  FileText,
+  Flashlight,
+  Layers,
   LayoutGrid,
   LayoutList,
+  Mic,
   RotateCcw,
   Search,
   Sparkles,
   Star,
+  Timer,
   Wrench,
   X,
+  Zap,
+  ZoomIn,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
@@ -19,34 +31,115 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ROUTES } from '@/config/routes';
+import { useCurrentOrganization } from '@/features/organizations';
 import {
   UNIVERSAL_TOOLS,
 } from '@/features/tools/calculators/universal';
 import { ToolCard } from '@/features/tools';
-import { FieldToolsPanel } from '@/features/tools/field/FieldToolsPanel';
+import { FieldToolsPanel, type FieldToolType } from '@/features/tools/field/FieldToolsPanel';
 import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
 import { useToolHistory } from '@/features/tools/hooks/useToolHistory';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 type ViewMode = 'grid' | 'list';
-type FilterTab = 'all' | 'field' | 'calculators' | 'favorites';
+type FilterTab = 'all' | 'industry' | 'field' | 'calculators' | 'conversions' | 'notes' | 'favorites';
 
 const FIELD_TOOL_SLUGS = ['flashlight', 'magnifier', 'compass', 'level', 'stopwatch', 'voice-recorder'];
+const CONVERSION_TOOL_SLUGS = ['unit-converter', 'distance-calculator', 'time-calculator'];
+const NOTES_TOOL_SLUGS = ['notepad', 'voice-recorder'];
+const CALC_TOOL_SLUGS = [
+  'scientific-calculator',
+  'surface-calculator',
+  'volume-calculator',
+  'slope-calculator',
+  'percentage-calculator',
+  'power-calculator',
+  'pressure-calculator',
+  'flow-calculator',
+  'ratio-calculator',
+  'weight-calculator',
+];
+
+interface IndustryPreset {
+  label: string;
+  icon: typeof Zap;
+  slugs: string[];
+}
+
+const DEFAULT_INDUSTRY_PRESET: IndustryPreset = {
+  label: 'Multi-Services & Travaux',
+  icon: Briefcase,
+  slugs: ['surface-calculator', 'volume-calculator', 'slope-calculator', 'unit-converter', 'level', 'flashlight'],
+};
+
+const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
+  electrical: {
+    label: 'Électricité & Électrotechnique',
+    icon: Zap,
+    slugs: ['power-calculator', 'scientific-calculator', 'flashlight', 'level', 'unit-converter'],
+  },
+  fiber_telecom: {
+    label: 'Télécom & Fibre Optique',
+    icon: Sparkles,
+    slugs: ['distance-calculator', 'compass', 'scientific-calculator', 'flashlight', 'notepad'],
+  },
+  hvac: {
+    label: 'Climatisation & CVC',
+    icon: Wrench,
+    slugs: ['pressure-calculator', 'flow-calculator', 'power-calculator', 'slope-calculator', 'level', 'flashlight'],
+  },
+  heating: {
+    label: 'Chauffage & Thermique',
+    icon: Zap,
+    slugs: ['power-calculator', 'pressure-calculator', 'flow-calculator', 'scientific-calculator', 'stopwatch', 'level'],
+  },
+  plumbing: {
+    label: 'Plomberie & Sanitaire',
+    icon: Wrench,
+    slugs: ['flow-calculator', 'pressure-calculator', 'slope-calculator', 'volume-calculator', 'level', 'flashlight'],
+  },
+  landscaping: {
+    label: 'Espaces Verts & Paysage',
+    icon: Layers,
+    slugs: ['surface-calculator', 'volume-calculator', 'slope-calculator', 'weight-calculator', 'compass', 'stopwatch'],
+  },
+  it_networks: {
+    label: 'Réseaux & IT',
+    icon: Sparkles,
+    slugs: ['scientific-calculator', 'unit-converter', 'distance-calculator', 'magnifier', 'notepad'],
+  },
+  general: DEFAULT_INDUSTRY_PRESET,
+};
 
 export default function ToolsPage() {
-  useDocumentTitle('Boîte à Outils Universelle — REZO360 Tools');
+  useDocumentTitle('Boîte à Outils & Instruments — REZO360 Tools');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showHistory, setShowHistory] = useState(false);
-  const [showFieldPanel, setShowFieldPanel] = useState(false);
+  const [showFieldModal, setShowFieldModal] = useState(false);
+  const [activeFieldModalTool, setActiveFieldModalTool] = useState<FieldToolType>('flashlight');
+
+  const { organization } = useCurrentOrganization();
+  const userIndustryKey = organization?.industry && INDUSTRY_PRESETS[organization.industry]
+    ? organization.industry
+    : 'general';
+  const industryPreset: IndustryPreset = INDUSTRY_PRESETS[userIndustryKey] ?? DEFAULT_INDUSTRY_PRESET;
 
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
 
   const tabParam = (searchParams.get('tab') as FilterTab) || 'all';
-  const activeTab: FilterTab = ['all', 'field', 'calculators', 'favorites'].includes(tabParam)
+  const activeTab: FilterTab = [
+    'all',
+    'industry',
+    'field',
+    'calculators',
+    'conversions',
+    'notes',
+    'favorites',
+  ].includes(tabParam)
     ? tabParam
     : 'all';
 
@@ -59,10 +152,9 @@ export default function ToolsPage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  const allTools = useMemo(() => {
-    return UNIVERSAL_TOOLS;
-  }, []);
+  const allTools = useMemo(() => UNIVERSAL_TOOLS, []);
 
+  // Outils filtrés par recherche ou onglet spécifique
   const filteredTools = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
@@ -70,7 +162,10 @@ export default function ToolsPage() {
       // Filtrage par onglet
       if (activeTab === 'favorites' && !isFavorite(tool.slug)) return false;
       if (activeTab === 'field' && !FIELD_TOOL_SLUGS.includes(tool.slug)) return false;
-      if (activeTab === 'calculators' && FIELD_TOOL_SLUGS.includes(tool.slug)) return false;
+      if (activeTab === 'calculators' && !CALC_TOOL_SLUGS.includes(tool.slug)) return false;
+      if (activeTab === 'conversions' && !CONVERSION_TOOL_SLUGS.includes(tool.slug)) return false;
+      if (activeTab === 'notes' && !NOTES_TOOL_SLUGS.includes(tool.slug)) return false;
+      if (activeTab === 'industry' && !industryPreset.slugs.includes(tool.slug)) return false;
 
       // Filtrage par recherche
       if (normalized === '') return true;
@@ -82,27 +177,183 @@ export default function ToolsPage() {
 
       return inTitle || inDesc || inKeywords;
     });
-  }, [allTools, activeTab, isFavorite, query]);
+  }, [allTools, activeTab, isFavorite, query, industryPreset]);
 
-  const favoriteToolsCount = useMemo(
-    () => allTools.filter((t) => isFavorite(t.slug)).length,
+  // Groupes pour l'affichage structuré quand tab === 'all' et query === ''
+  const favoriteTools = useMemo(
+    () => allTools.filter((t) => isFavorite(t.slug)),
     [allTools, isFavorite],
   );
 
-  const fieldToolsCount = useMemo(
-    () => allTools.filter((t) => FIELD_TOOL_SLUGS.includes(t.slug)).length,
+  const industryTools = useMemo(
+    () => allTools.filter((t) => industryPreset.slugs.includes(t.slug)),
+    [allTools, industryPreset],
+  );
+
+  const engineeringCalcTools = useMemo(
+    () => allTools.filter((t) => CALC_TOOL_SLUGS.includes(t.slug)),
     [allTools],
   );
+
+  const conversionTools = useMemo(
+    () => allTools.filter((t) => CONVERSION_TOOL_SLUGS.includes(t.slug)),
+    [allTools],
+  );
+
+  const notesTools = useMemo(
+    () => allTools.filter((t) => NOTES_TOOL_SLUGS.includes(t.slug)),
+    [allTools],
+  );
+
+  const fieldTools = useMemo(
+    () => allTools.filter((t) => FIELD_TOOL_SLUGS.includes(t.slug)),
+    [allTools],
+  );
+
+  const openFieldInstrument = (toolId: FieldToolType) => {
+    setActiveFieldModalTool(toolId);
+    setShowFieldModal(true);
+  };
+
+  const isBrowsingAll = activeTab === 'all' && query.trim() === '';
 
   return (
     <>
       <PageHeader
-        title="Catalogue des outils d’ingénierie & calcul — REZO360 Tools"
-        description="Boîte à outils de calculs et conversions pour techniciens et ingénieurs de terrain. Utile à tous les corps de métier."
+        title="Catalogue des outils & instruments de terrain — REZO360 Tools"
+        description="Ceinture d'outils numériques pour techniciens et ingénieurs : capteurs physiques de terrain, calculateurs et fiches de calculs rapides."
       />
 
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. CEINTURE D'ACTION RAPIDE : LES 6 INSTRUMENTS DE TERRAIN   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="mb-6 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-surface to-amber-500/5 p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5 pb-3 border-b border-amber-500/20">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-bold shadow-xs">
+              <Wrench className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-foreground">Ceinture d'Instruments de Terrain</h2>
+                <span className="rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-3xs px-2 py-0.5 border border-amber-500/30">
+                  Accès 1-tap
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Capteurs et outils physiques de votre smartphone pour interventions rapides.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setActiveFieldModalTool('flashlight');
+              setShowFieldModal(true);
+            }}
+            className="text-xs font-bold gap-1.5 self-start sm:self-auto bg-surface/80 hover:bg-surface border-amber-500/30 text-amber-700 dark:text-amber-300 shadow-xs cursor-pointer"
+          >
+            <span>Ouvrir la boîte à outils</span>
+            <ChevronRight className="size-3.5" />
+          </Button>
+        </div>
+
+        {/* Grille tactile des 6 instruments de terrain */}
+        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-6 gap-2.5">
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('flashlight')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-amber-500/50 hover:bg-amber-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-xs mb-2">
+              <Flashlight className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Lampe Torche</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">6500K & SOS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('magnifier')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-sky-500/50 hover:bg-sky-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-xs mb-2">
+              <ZoomIn className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Loupe HD</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">Zoom 12x & Gel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('level')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-teal-500/50 hover:bg-teal-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-colors shadow-xs mb-2">
+              <CircleDot className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Niveau à Bulle</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">2D & Pente mm/m</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('compass')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors shadow-xs mb-2">
+              <Compass className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Boussole & Cap</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">Azimut & GPS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('stopwatch')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shadow-xs mb-2">
+              <Timer className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Chronomètre</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">1/100s & Purge</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openFieldInstrument('voice-recorder')}
+            className="group flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-border hover:border-rose-500/50 hover:bg-rose-500/10 transition-all cursor-pointer shadow-xs active:scale-95 text-center"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors shadow-xs mb-2">
+              <Mic className="size-5" />
+            </div>
+            <span className="text-xs font-bold text-foreground">Dictaphone</span>
+            <span className="text-3xs text-muted-foreground mt-0.5">Mémos Vocaux</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Modal / Volet Dépliant Outils de Terrain */}
+      {showFieldModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-50 duration-200">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface border border-border shadow-overlay">
+            <FieldToolsPanel
+              initialTool={activeFieldModalTool}
+              isModal
+              onClose={() => setShowFieldModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. BARRE DE RECHERCHE, HISTORIQUE ET ONGLETS                  */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <div className="mb-6 space-y-4">
-        {/* Barre d'outils supérieure : Recherche + Historique + Vue */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Input
             label="Rechercher un outil"
@@ -119,7 +370,7 @@ export default function ToolsPage() {
                       type="button"
                       onClick={() => setQuery('')}
                       aria-label="Effacer la recherche"
-                      className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded"
+                      className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded cursor-pointer"
                     >
                       <X className="size-4" aria-hidden="true" />
                     </button>
@@ -129,18 +380,6 @@ export default function ToolsPage() {
           />
 
           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-            {/* Bouton d'accès direct au Volet Outils de Terrain */}
-            <Button
-              type="button"
-              variant={showFieldPanel ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setShowFieldPanel((v) => !v)}
-              className="gap-1.5 text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20 cursor-pointer shadow-xs"
-            >
-              <Wrench className="size-4 text-amber-500" />
-              <span>Volet Outils Terrain</span>
-            </Button>
-
             {/* Bouton Historique des calculs */}
             <Button
               type="button"
@@ -191,13 +430,6 @@ export default function ToolsPage() {
             </div>
           </div>
         </div>
-
-        {/* Modal / Volet Dépliant Outils de Terrain */}
-        {showFieldPanel && (
-          <div className="mb-4 animate-in fade-in-50 zoom-in-95 duration-200">
-            <FieldToolsPanel isModal onClose={() => setShowFieldPanel(false)} />
-          </div>
-        )}
 
         {/* Volet Historique déroulant global */}
         {showHistory && (
@@ -293,16 +525,30 @@ export default function ToolsPage() {
 
           <button
             type="button"
-            onClick={() => handleTabChange('field')}
+            onClick={() => handleTabChange('industry')}
             className={cn(
               'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
-              activeTab === 'field'
+              activeTab === 'industry'
                 ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Wrench className="size-3.5 text-amber-500" />
-            <span>Outils de Terrain ({fieldToolsCount})</span>
+            <Zap className="size-3.5 text-amber-500" />
+            <span>Recommandés Métier ({industryPreset.slugs.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('field')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'field'
+                ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Wrench className="size-3.5 text-teal-500" />
+            <span>Instruments Terrain ({FIELD_TOOL_SLUGS.length})</span>
           </button>
 
           <button
@@ -316,7 +562,35 @@ export default function ToolsPage() {
             )}
           >
             <Calculator className="size-3.5 text-sky-500" />
-            <span>Calculateurs ({allTools.length - fieldToolsCount})</span>
+            <span>Calculateurs ({CALC_TOOL_SLUGS.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('conversions')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'conversions'
+                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <ArrowLeftRight className="size-3.5 text-indigo-500" />
+            <span>Conversions ({CONVERSION_TOOL_SLUGS.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('notes')}
+            className={cn(
+              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'notes'
+                ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-xs'
+                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <FileText className="size-3.5 text-purple-500" />
+            <span>Notes & Mémos ({NOTES_TOOL_SLUGS.length})</span>
           </button>
 
           <button
@@ -329,53 +603,295 @@ export default function ToolsPage() {
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Star className={cn('size-3.5', favoriteToolsCount > 0 && 'fill-amber-500 text-amber-500')} />
-            <span>Mes Favoris ({favoriteToolsCount})</span>
+            <Star className={cn('size-3.5', favoriteTools.length > 0 && 'fill-amber-500 text-amber-500')} />
+            <span>Favoris ({favoriteTools.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Grille / Liste des outils */}
-      {filteredTools.length > 0 ? (
-        <div
-          className={cn(
-            viewMode === 'grid'
-              ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-              : 'space-y-3 max-w-4xl',
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. AFFICHAGE DES OUTILS                                       */}
+      {/* ───────────────────────────────────────────────────────────── */}
+
+      {/* Cas A : Navigation par défaut structurée par sections (tab === 'all' et query vide) */}
+      {isBrowsingAll ? (
+        <div className="space-y-10">
+          {/* Section Favoris si présents */}
+          {favoriteTools.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <div className="flex items-center gap-2">
+                  <Star className="size-4 text-amber-500 fill-amber-500" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                    Vos Outils Favoris
+                  </h2>
+                </div>
+                <span className="text-xs text-muted-foreground font-semibold">
+                  {favoriteTools.length} outil{favoriteTools.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div
+                className={cn(
+                  viewMode === 'grid'
+                    ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                    : 'space-y-3 max-w-4xl',
+                )}
+              >
+                {favoriteTools.map((tool) => (
+                  <ToolCard
+                    key={`fav-${tool.slug}`}
+                    tool={tool}
+                    variant={viewMode}
+                    isFavorite={true}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ))}
+              </div>
+            </section>
           )}
-        >
-          {filteredTools.map((tool) => (
-            <ToolCard
-              key={tool.slug}
-              tool={tool}
-              variant={viewMode}
-              isFavorite={isFavorite(tool.slug)}
-              onToggleFavorite={toggleFavorite}
-            />
-          ))}
+
+          {/* Section Recommandés pour votre métier */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="size-4 text-amber-500" />
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                    Recommandés pour votre métier
+                  </h2>
+                  <p className="text-2xs text-muted-foreground mt-0.5">
+                    Sélection adaptée à votre secteur : <span className="font-semibold text-foreground">{industryPreset.label}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleTabChange('industry')}
+                className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <span>Filtrer</span>
+                <ChevronRight className="size-3.5" />
+              </button>
+            </div>
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
+              {industryTools.map((tool) => (
+                <ToolCard
+                  key={`ind-${tool.slug}`}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section Calculateurs & Formules d'Ingénierie */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <Calculator className="size-4 text-sky-500" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                  Calculateurs d'Ingénierie & Formules Mathématiques
+                </h2>
+              </div>
+              <span className="text-xs text-muted-foreground font-semibold">
+                {engineeringCalcTools.length} calculateurs
+              </span>
+            </div>
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
+              {engineeringCalcTools.map((tool) => (
+                <ToolCard
+                  key={`calc-${tool.slug}`}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section Conversions & Mesures */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <ArrowLeftRight className="size-4 text-indigo-500" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                  Conversions & Mesures Universelles
+                </h2>
+              </div>
+              <span className="text-xs text-muted-foreground font-semibold">
+                {conversionTools.length} outils
+              </span>
+            </div>
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
+              {conversionTools.map((tool) => (
+                <ToolCard
+                  key={`conv-${tool.slug}`}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section Instruments de Terrain */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <Wrench className="size-4 text-teal-500" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                  Instruments Physiques de Terrain
+                </h2>
+              </div>
+              <span className="text-xs text-muted-foreground font-semibold">
+                {fieldTools.length} instruments
+              </span>
+            </div>
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
+              {fieldTools.map((tool) => (
+                <ToolCard
+                  key={`field-${tool.slug}`}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section Notes & Mémos */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-2">
+                <FileText className="size-4 text-purple-500" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                  Productivité & Prise de Notes de Chantier
+                </h2>
+              </div>
+              <span className="text-xs text-muted-foreground font-semibold">
+                {notesTools.length} outils
+              </span>
+            </div>
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
+            >
+              {notesTools.map((tool) => (
+                <ToolCard
+                  key={`notes-${tool.slug}`}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          </section>
         </div>
       ) : (
-        <EmptyState
-          icon={activeTab === 'favorites' ? Star : Search}
-          title={activeTab === 'favorites' ? 'Aucun favori enregistré' : 'Aucun outil trouvé'}
-          description={
-            activeTab === 'favorites'
-              ? 'Cliquez sur l’étoile ⭐ d’un outil pour l’ajouter à vos favoris et y accéder rapidement.'
-              : 'Aucun outil ne correspond à vos termes de recherche.'
-          }
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setQuery('');
-                handleTabChange('all');
-              }}
+        /* Cas B : Recherche active ou onglet de filtre spécifique sélectionné */
+        <div>
+          {/* En-tête des résultats filtrés */}
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">
+                {query ? `Résultats pour « ${query} »` : `Outils sélectionnés`}
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground font-semibold">
+                {filteredTools.length} outil{filteredTools.length > 1 ? 's' : ''} trouvé{filteredTools.length > 1 ? 's' : ''}
+              </span>
+              {(query || activeTab !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery('');
+                    handleTabChange('all');
+                  }}
+                  className="text-xs text-primary hover:underline cursor-pointer font-semibold"
+                >
+                  Réinitialiser
+                </button>
+              )}
+            </div>
+          </div>
+
+          {filteredTools.length > 0 ? (
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-3 max-w-4xl',
+              )}
             >
-              Voir tous les outils
-            </Button>
-          }
-        />
+              {filteredTools.map((tool) => (
+                <ToolCard
+                  key={tool.slug}
+                  tool={tool}
+                  variant={viewMode}
+                  isFavorite={isFavorite(tool.slug)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={activeTab === 'favorites' ? Star : Search}
+              title={activeTab === 'favorites' ? 'Aucun favori enregistré' : 'Aucun outil trouvé'}
+              description={
+                activeTab === 'favorites'
+                  ? 'Cliquez sur l’étoile ⭐ d’un outil pour l’ajouter à vos favoris et y accéder rapidement.'
+                  : 'Aucun outil ne correspond à vos critères de recherche.'
+              }
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setQuery('');
+                    handleTabChange('all');
+                  }}
+                >
+                  Voir tous les outils
+                </Button>
+              }
+            />
+          )}
+        </div>
       )}
     </>
   );
