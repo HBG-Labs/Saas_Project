@@ -40,25 +40,25 @@ export function ToolCard({
     return (
       <div
         className={cn(
-          'group bg-surface border-border/70 shadow-raised relative flex items-center justify-between rounded-xl border p-4 gap-4',
-          'hover:border-primary/50 hover:shadow-overlay transition-all duration-200',
+          'group bg-surface border-border shadow-2xs relative flex items-center justify-between rounded-xl border p-2.5 sm:p-3 gap-3',
+          'hover:border-primary/50 hover:shadow-xs transition-all duration-200',
           'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
           className,
         )}
       >
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <span
             className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105',
+              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
               category?.tint ?? 'bg-surface-hover text-muted-foreground',
             )}
           >
-            <Icon className="size-6" aria-hidden="true" />
+            <Icon className="size-4" aria-hidden="true" />
           </span>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="text-foreground font-bold text-base tracking-tight">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <h3 className="text-foreground font-bold text-sm tracking-tight">
                 <Link
                   to={ROUTES.tool(tool.slug)}
                   className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
@@ -66,7 +66,7 @@ export function ToolCard({
                   {tool.title}
                 </Link>
               </h3>
-              {category && <Badge variant="neutral" className="text-2xs shrink-0">{category.name}</Badge>}
+              {category && <Badge variant="neutral" className="text-3xs px-1.5 py-0 shrink-0">{category.name}</Badge>}
             </div>
             <p className="text-muted-foreground line-clamp-1 text-xs">
               {tool.description}
@@ -74,7 +74,7 @@ export function ToolCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 relative z-20">
+        <div className="flex items-center gap-2 shrink-0 relative z-20">
           {onToggleFavorite ? (
             <button
               type="button"
@@ -84,21 +84,21 @@ export function ToolCard({
                 isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
-                'flex size-8 items-center justify-center rounded-md transition-colors',
+                'flex size-7 items-center justify-center rounded-md transition-colors',
                 'hover:bg-surface-hover',
                 isFavorite ? 'text-warning' : 'text-subtle-foreground',
               )}
             >
-              <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden="true" />
+              <Star className={cn('size-3.5', isFavorite && 'fill-current')} aria-hidden="true" />
             </button>
           ) : null}
 
           <Link
             to={ROUTES.tool(tool.slug)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold shadow-xs hover:bg-primary-hover active:scale-95 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-xs font-semibold shadow-2xs hover:bg-primary-hover active:scale-95 transition-all cursor-pointer"
           >
             <span>Lancer</span>
-            <ChevronRight className="size-3.5" />
+            <ChevronRight className="size-3" />
           </Link>
         </div>
       </div>
@@ -108,21 +108,21 @@ export function ToolCard({
   return (
     <div
       className={cn(
-        'group bg-surface border-border/70 shadow-raised relative flex flex-col justify-between rounded-xl border p-4 sm:p-5',
-        'hover:border-primary/40 hover:shadow-overlay transition-all duration-200',
+        'group bg-surface border-border shadow-2xs relative flex flex-col justify-between rounded-xl border p-3 sm:p-3.5',
+        'hover:border-primary/40 hover:shadow-xs transition-all duration-200',
         'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
         className,
       )}
     >
       <div>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           <span
             className={cn(
-              'flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
               category?.tint ?? 'bg-surface-hover text-muted-foreground',
             )}
           >
-            <Icon className="size-5" aria-hidden="true" />
+            <Icon className="size-4" aria-hidden="true" />
           </span>
 
           {onToggleFavorite ? (
@@ -134,40 +134,46 @@ export function ToolCard({
                 isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
-                'relative z-20 flex size-8 items-center justify-center rounded-md transition-colors',
+                'relative z-20 flex size-7 items-center justify-center rounded-md transition-colors',
                 'hover:bg-surface-hover',
                 isFavorite ? 'text-warning' : 'text-subtle-foreground',
                 'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
                 isFavorite && 'md:opacity-100',
               )}
             >
-              <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden="true" />
+              <Star className={cn('size-3.5', isFavorite && 'fill-current')} aria-hidden="true" />
             </button>
           ) : null}
         </div>
 
-        <h3 className="text-foreground mt-3 font-semibold text-base">
+        <h3 className="text-foreground mt-2 font-bold text-sm leading-snug">
           <Link
             to={ROUTES.tool(tool.slug)}
-            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
+            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
           >
             {tool.title}
           </Link>
         </h3>
-        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
+        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-snug">
           {tool.description}
         </p>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2 text-xs">
-        {category ? <Badge variant="neutral" className="text-2xs">{category.name}</Badge> : <span aria-hidden="true" />}
+      <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between gap-2 text-xs">
+        {category ? (
+          <Badge variant="neutral" className="text-3xs px-1.5 py-0">
+            {category.name}
+          </Badge>
+        ) : (
+          <span aria-hidden="true" />
+        )}
 
         <Link
           to={ROUTES.tool(tool.slug)}
-          className="relative z-20 text-primary font-bold flex items-center gap-1 text-xs hover:underline cursor-pointer"
+          className="relative z-20 text-primary font-bold flex items-center gap-0.5 text-xs hover:underline cursor-pointer"
         >
           <span>Lancer</span>
-          <ChevronRight className="size-3.5" />
+          <ChevronRight className="size-3" />
         </Link>
       </div>
     </div>

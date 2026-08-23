@@ -522,26 +522,26 @@ export default function ToolsPage() {
 
       {/* Cas A : Navigation par défaut structurée par sections claires (tab === 'all' et query vide) */}
       {isBrowsingAll ? (
-        <div className="space-y-10">
+        <div className="space-y-6 sm:space-y-8">
           {/* Section Favoris si présents */}
           {favoriteTools.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between border-b border-border pb-2">
+            <section className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-border pb-1.5">
                 <div className="flex items-center gap-2">
-                  <Star className="size-4 text-amber-500 fill-amber-500" />
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                  <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                     Vos Outils Favoris
                   </h2>
                 </div>
-                <span className="text-xs text-muted-foreground font-semibold">
+                <span className="text-3xs text-muted-foreground font-semibold">
                   {favoriteTools.length} outil{favoriteTools.length > 1 ? 's' : ''}
                 </span>
               </div>
               <div
                 className={cn(
                   viewMode === 'grid'
-                    ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                    : 'space-y-3 max-w-4xl',
+                    ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                    : 'space-y-2 max-w-4xl',
                 )}
               >
                 {favoriteTools.map((tool) => (
@@ -558,23 +558,23 @@ export default function ToolsPage() {
           )}
 
           {/* Section Calculateurs & Formules d'Ingénierie */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <Calculator className="size-4 text-sky-500" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                <Calculator className="size-3.5 text-sky-500" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Calculateurs d'Ingénierie & Formules Mathématiques
                 </h2>
               </div>
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-3xs text-muted-foreground font-semibold">
                 {engineeringCalcTools.length} calculateurs
               </span>
             </div>
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
+                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {engineeringCalcTools.map((tool) => (
@@ -590,23 +590,23 @@ export default function ToolsPage() {
           </section>
 
           {/* Section Conversions & Mesures */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-indigo-500" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                <ArrowLeftRight className="size-3.5 text-indigo-500" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Conversions & Mesures Universelles
                 </h2>
               </div>
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-3xs text-muted-foreground font-semibold">
                 {conversionTools.length} outils
               </span>
             </div>
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
+                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {conversionTools.map((tool) => (
@@ -622,23 +622,23 @@ export default function ToolsPage() {
           </section>
 
           {/* Section Instruments de Terrain */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <Wrench className="size-4 text-teal-500" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                <Wrench className="size-3.5 text-teal-500" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Instruments Physiques de Terrain
                 </h2>
               </div>
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-3xs text-muted-foreground font-semibold">
                 {fieldTools.length} instruments
               </span>
             </div>
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
+                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {fieldTools.map((tool) => (
@@ -654,23 +654,23 @@ export default function ToolsPage() {
           </section>
 
           {/* Section Notes & Mémos */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <FileText className="size-4 text-purple-500" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                <FileText className="size-3.5 text-purple-500" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Productivité & Prise de Notes de Chantier
                 </h2>
               </div>
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-3xs text-muted-foreground font-semibold">
                 {notesTools.length} outils
               </span>
             </div>
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
+                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {notesTools.map((tool) => (
@@ -689,15 +689,15 @@ export default function ToolsPage() {
         /* Cas B : Recherche active ou onglet de filtre spécifique sélectionné */
         <div>
           {/* En-tête des résultats filtrés */}
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+          <div className="flex items-center justify-between mb-3 pb-1.5 border-b border-border">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              <h2 className="text-sm font-bold text-foreground">
+              <Sparkles className="size-3.5 text-primary" />
+              <h2 className="text-xs font-bold text-foreground">
                 {query ? `Résultats pour « ${query} »` : `Outils sélectionnés`}
               </h2>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-3xs text-muted-foreground font-semibold">
                 {filteredTools.length} outil{filteredTools.length > 1 ? 's' : ''} trouvé{filteredTools.length > 1 ? 's' : ''}
               </span>
               {(query || activeTab !== 'all') && (
@@ -707,7 +707,7 @@ export default function ToolsPage() {
                     setQuery('');
                     handleTabChange('all');
                   }}
-                  className="text-xs text-primary hover:underline cursor-pointer font-semibold"
+                  className="text-3xs text-primary hover:underline cursor-pointer font-semibold"
                 >
                   Réinitialiser
                 </button>
@@ -719,8 +719,8 @@ export default function ToolsPage() {
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
+                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {filteredTools.map((tool) => (
