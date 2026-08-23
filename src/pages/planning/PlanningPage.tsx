@@ -337,37 +337,39 @@ export default function PlanningPage() {
       )}
 
       {/* 2. Main Tab Navigation Bar */}
-      <div className="flex items-center gap-1.5 bg-surface-subtle p-1 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="flex items-center gap-1 sm:gap-1.5 bg-surface-subtle p-1 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
         <button
           type="button"
           onClick={() => setActiveTab('calendar')}
           className={cn(
-            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'calendar'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
-          <CalendarIcon className="size-3.5" />
-          <span>Calendrier & Agenda</span>
+          <CalendarIcon className="size-3.5 shrink-0" />
+          <span className="sm:hidden">Agenda</span>
+          <span className="hidden sm:inline">Calendrier & Agenda</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('leaves')}
           className={cn(
-            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'leaves'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
-          <Palmtree className="size-3.5" />
-          <span>Congés & Absences</span>
+          <Palmtree className="size-3.5 shrink-0" />
+          <span className="sm:hidden">Congés</span>
+          <span className="hidden sm:inline">Congés & Absences</span>
           {pendingLeavesCount > 0 && (
             <span
               className={cn(
-                'size-5 rounded-full flex items-center justify-center text-3xs font-extrabold',
+                'size-4.5 sm:size-5 rounded-full flex items-center justify-center text-3xs font-extrabold shrink-0',
                 activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-amber-500 text-white',
               )}
             >
@@ -380,28 +382,30 @@ export default function PlanningPage() {
           type="button"
           onClick={() => setActiveTab('recurring')}
           className={cn(
-            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'recurring'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
-          <RotateCcw className="size-3.5" />
-          <span>Tâches Récurrentes ({tasks.length})</span>
+          <RotateCcw className="size-3.5 shrink-0" />
+          <span className="sm:hidden">Récurrent</span>
+          <span className="hidden sm:inline">Tâches Récurrentes ({tasks.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('holidays')}
           className={cn(
-            'inline-flex shrink-0 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
             activeTab === 'holidays'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
-          <Flag className="size-3.5" />
-          <span>Jours Fériés ({holidays.length})</span>
+          <Flag className="size-3.5 shrink-0" />
+          <span className="sm:hidden">Fériés</span>
+          <span className="hidden sm:inline">Jours Fériés ({holidays.length})</span>
         </button>
       </div>
 
