@@ -1,6 +1,5 @@
 import {
   ArrowLeftRight,
-  Briefcase,
   Calculator,
   ChevronRight,
   CircleDot,
@@ -8,7 +7,6 @@ import {
   Compass,
   FileText,
   Flashlight,
-  Layers,
   LayoutGrid,
   LayoutList,
   Mic,
@@ -19,7 +17,6 @@ import {
   Timer,
   Wrench,
   X,
-  Zap,
   ZoomIn,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -31,7 +28,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ROUTES } from '@/config/routes';
-import { useCurrentOrganization } from '@/features/organizations';
 import {
   UNIVERSAL_TOOLS,
 } from '@/features/tools/calculators/universal';
@@ -43,7 +39,7 @@ import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 type ViewMode = 'grid' | 'list';
-type FilterTab = 'all' | 'industry' | 'field' | 'calculators' | 'conversions' | 'notes' | 'favorites';
+type FilterTab = 'all' | 'field' | 'calculators' | 'conversions' | 'notes' | 'favorites';
 
 const FIELD_TOOL_SLUGS = ['flashlight', 'magnifier', 'compass', 'level', 'stopwatch', 'voice-recorder'];
 const CONVERSION_TOOL_SLUGS = ['unit-converter', 'distance-calculator', 'time-calculator'];
@@ -61,57 +57,6 @@ const CALC_TOOL_SLUGS = [
   'weight-calculator',
 ];
 
-interface IndustryPreset {
-  label: string;
-  icon: typeof Zap;
-  slugs: string[];
-}
-
-const DEFAULT_INDUSTRY_PRESET: IndustryPreset = {
-  label: 'Multi-Services & Travaux',
-  icon: Briefcase,
-  slugs: ['surface-calculator', 'volume-calculator', 'slope-calculator', 'unit-converter', 'level', 'flashlight'],
-};
-
-const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
-  electrical: {
-    label: 'Électricité & Électrotechnique',
-    icon: Zap,
-    slugs: ['power-calculator', 'scientific-calculator', 'flashlight', 'level', 'unit-converter'],
-  },
-  fiber_telecom: {
-    label: 'Télécom & Fibre Optique',
-    icon: Sparkles,
-    slugs: ['distance-calculator', 'compass', 'scientific-calculator', 'flashlight', 'notepad'],
-  },
-  hvac: {
-    label: 'Climatisation & CVC',
-    icon: Wrench,
-    slugs: ['pressure-calculator', 'flow-calculator', 'power-calculator', 'slope-calculator', 'level', 'flashlight'],
-  },
-  heating: {
-    label: 'Chauffage & Thermique',
-    icon: Zap,
-    slugs: ['power-calculator', 'pressure-calculator', 'flow-calculator', 'scientific-calculator', 'stopwatch', 'level'],
-  },
-  plumbing: {
-    label: 'Plomberie & Sanitaire',
-    icon: Wrench,
-    slugs: ['flow-calculator', 'pressure-calculator', 'slope-calculator', 'volume-calculator', 'level', 'flashlight'],
-  },
-  landscaping: {
-    label: 'Espaces Verts & Paysage',
-    icon: Layers,
-    slugs: ['surface-calculator', 'volume-calculator', 'slope-calculator', 'weight-calculator', 'compass', 'stopwatch'],
-  },
-  it_networks: {
-    label: 'Réseaux & IT',
-    icon: Sparkles,
-    slugs: ['scientific-calculator', 'unit-converter', 'distance-calculator', 'magnifier', 'notepad'],
-  },
-  general: DEFAULT_INDUSTRY_PRESET,
-};
-
 export default function ToolsPage() {
   useDocumentTitle('Boîte à Outils & Instruments — REZO360 Tools');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -121,19 +66,12 @@ export default function ToolsPage() {
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [activeFieldModalTool, setActiveFieldModalTool] = useState<FieldToolType>('flashlight');
 
-  const { organization } = useCurrentOrganization();
-  const userIndustryKey = organization?.industry && INDUSTRY_PRESETS[organization.industry]
-    ? organization.industry
-    : 'general';
-  const industryPreset: IndustryPreset = INDUSTRY_PRESETS[userIndustryKey] ?? DEFAULT_INDUSTRY_PRESET;
-
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
 
   const tabParam = (searchParams.get('tab') as FilterTab) || 'all';
   const activeTab: FilterTab = [
     'all',
-    'industry',
     'field',
     'calculators',
     'conversions',
@@ -165,7 +103,6 @@ export default function ToolsPage() {
       if (activeTab === 'calculators' && !CALC_TOOL_SLUGS.includes(tool.slug)) return false;
       if (activeTab === 'conversions' && !CONVERSION_TOOL_SLUGS.includes(tool.slug)) return false;
       if (activeTab === 'notes' && !NOTES_TOOL_SLUGS.includes(tool.slug)) return false;
-      if (activeTab === 'industry' && !industryPreset.slugs.includes(tool.slug)) return false;
 
       // Filtrage par recherche
       if (normalized === '') return true;
@@ -177,17 +114,12 @@ export default function ToolsPage() {
 
       return inTitle || inDesc || inKeywords;
     });
-  }, [allTools, activeTab, isFavorite, query, industryPreset]);
+  }, [allTools, activeTab, isFavorite, query]);
 
   // Groupes pour l'affichage structuré quand tab === 'all' et query === ''
   const favoriteTools = useMemo(
     () => allTools.filter((t) => isFavorite(t.slug)),
     [allTools, isFavorite],
-  );
-
-  const industryTools = useMemo(
-    () => allTools.filter((t) => industryPreset.slugs.includes(t.slug)),
-    [allTools, industryPreset],
   );
 
   const engineeringCalcTools = useMemo(
@@ -525,20 +457,6 @@ export default function ToolsPage() {
 
           <button
             type="button"
-            onClick={() => handleTabChange('industry')}
-            className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
-              activeTab === 'industry'
-                ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs'
-                : 'border-border bg-surface text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <Zap className="size-3.5 text-amber-500" />
-            <span>Recommandés Métier ({industryPreset.slugs.length})</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => handleTabChange('field')}
             className={cn(
               'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
@@ -613,7 +531,7 @@ export default function ToolsPage() {
       {/* 3. AFFICHAGE DES OUTILS                                       */}
       {/* ───────────────────────────────────────────────────────────── */}
 
-      {/* Cas A : Navigation par défaut structurée par sections (tab === 'all' et query vide) */}
+      {/* Cas A : Navigation par défaut structurée par sections claires (tab === 'all' et query vide) */}
       {isBrowsingAll ? (
         <div className="space-y-10">
           {/* Section Favoris si présents */}
@@ -649,48 +567,6 @@ export default function ToolsPage() {
               </div>
             </section>
           )}
-
-          {/* Section Recommandés pour votre métier */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <div className="flex items-center gap-2">
-                <Zap className="size-4 text-amber-500" />
-                <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                    Recommandés pour votre métier
-                  </h2>
-                  <p className="text-2xs text-muted-foreground mt-0.5">
-                    Sélection adaptée à votre secteur : <span className="font-semibold text-foreground">{industryPreset.label}</span>
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleTabChange('industry')}
-                className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
-              >
-                <span>Filtrer</span>
-                <ChevronRight className="size-3.5" />
-              </button>
-            </div>
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-3 max-w-4xl',
-              )}
-            >
-              {industryTools.map((tool) => (
-                <ToolCard
-                  key={`ind-${tool.slug}`}
-                  tool={tool}
-                  variant={viewMode}
-                  isFavorite={isFavorite(tool.slug)}
-                  onToggleFavorite={toggleFavorite}
-                />
-              ))}
-            </div>
-          </section>
 
           {/* Section Calculateurs & Formules d'Ingénierie */}
           <section className="space-y-3">
