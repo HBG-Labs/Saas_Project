@@ -56,6 +56,8 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
     feature: 'missions',
     primary: true,
   },
+  { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
+  { to: ROUTES.analytics, label: 'Statistiques & Performance', icon: 'chart', feature: 'missions' },
   { to: ROUTES.review, label: 'Contrôle & Rapports', icon: 'clipboard-check', feature: 'interventions' },
   { to: ROUTES.archives, label: 'Dossiers clôturés', icon: 'archive', feature: 'missions' },
 ];
@@ -76,11 +78,6 @@ export const ACHATS_NAV: readonly NavItem[] = [
   { to: ROUTES.purchaseOrders, label: 'Commandes Fournisseurs', icon: 'shopping-cart', primary: true },
   { to: ROUTES.suppliers, label: 'Fournisseurs & Tarifs', icon: 'store' },
   { to: ROUTES.quotes, label: 'Devis & Chiffrage Express', icon: 'calculator' },
-];
-
-export const CLIENTS_NAV: readonly NavItem[] = [
-  { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
-  { to: ROUTES.analytics, label: 'Statistiques & Performance', icon: 'chart', feature: 'missions' },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [
@@ -125,14 +122,12 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
   { id: 'achats', label: 'Achats', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
-  { id: 'clients', label: 'Clients & Suivi', icon: 'contact', items: CLIENTS_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
 ];
 
 export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...INTERVENTIONS_NAV,
   ...ADMINISTRATION_NAV,
-  ...CLIENTS_NAV,
   ...TOOLS_NAV,
 ];
 
@@ -151,7 +146,6 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
   ...STOCK_NAV,
   ...ACHATS_NAV,
   ...ADMINISTRATION_NAV,
-  ...CLIENTS_NAV,
   ...TOOLS_NAV,
 ];
 export const ACCOUNT_NAV: readonly NavItem[] = [
