@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn';
  */
 export function Logo({
   className,
-  showIcon = true,
+  showIcon = false,
   to = ROUTES.home,
 }: {
   className?: string;
