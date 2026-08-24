@@ -28,13 +28,13 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-[#070b14] dark:text-white">
-      {/* Fond d'ambiance 1 : Immersif terrain & câblage haute technologie */}
+      {/* Fond d'ambiance 1 : Immersif terrain & câblage haute technologie (Décalé de -50px vers le haut) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
           src="/images/backgrounds/hero-field-ambient.jpg"
           alt="Fond d'ambiance terrain REZO360"
           aria-hidden="true"
-          className="size-full object-cover object-center opacity-35 dark:opacity-50 filter saturate-110 contrast-105"
+          className="absolute inset-x-0 -top-[50px] h-[calc(100%+100px)] w-full object-cover object-center opacity-35 dark:opacity-50 filter saturate-110 contrast-105"
         />
         {/* Masque dégradé pour préserver la lisibilité parfaite du texte */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-slate-50/40 to-slate-50 dark:from-[#070b14]/70 dark:via-[#070b14]/40 dark:to-[#070b14]" />

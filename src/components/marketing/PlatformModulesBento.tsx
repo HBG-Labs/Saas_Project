@@ -21,13 +21,13 @@ import { ROUTES } from '@/config/routes';
 export function PlatformModulesBento() {
   return (
     <section className="relative overflow-hidden border-t border-slate-200/80 bg-slate-50/50 py-20 dark:border-slate-800/80 dark:bg-[#060a12] sm:py-28">
-      {/* Fond d'ambiance 2 : Supervision & Centre de Contrôle Cockpit */}
+      {/* Fond d'ambiance 2 : Supervision & Centre de Contrôle Cockpit (Décalé de -50px vers le haut) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
           src="/images/backgrounds/cockpit-supervision-ambient.jpg"
           alt="Fond d'ambiance Cockpit Supervision REZO360"
           aria-hidden="true"
-          className="size-full object-cover object-center opacity-30 dark:opacity-40 filter saturate-110 contrast-105"
+          className="absolute inset-x-0 -top-[50px] h-[calc(100%+100px)] w-full object-cover object-center opacity-30 dark:opacity-40 filter saturate-110 contrast-105"
         />
         {/* Masque de transition doux haut et bas */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/40 to-slate-50/85 dark:from-[#060a12]/80 dark:via-[#060a12]/35 dark:to-[#060a12]/90" />
