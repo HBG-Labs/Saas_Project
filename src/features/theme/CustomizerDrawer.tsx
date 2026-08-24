@@ -1,4 +1,4 @@
-import { Check, Paintbrush, RotateCcw, Sparkles, X } from 'lucide-react';
+import { Check, RotateCcw, Sparkles, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 
 import { Button } from '@/components/ui/Button';
