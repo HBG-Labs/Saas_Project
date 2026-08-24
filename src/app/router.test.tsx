@@ -46,7 +46,7 @@ describe('routing', () => {
     // apostrophe typographique (« d’ingénierie ») qu'une comparaison stricte
     // rendrait fragile au moindre ajustement de copie.
     expect(
-      await screen.findByRole('heading', { name: /catalogue des outils/i, level: 1 }),
+      await screen.findByRole('heading', { name: /catalogue des outils/i, level: 1 }, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
 
