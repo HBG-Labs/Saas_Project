@@ -1,13 +1,13 @@
 import { Menu, Smartphone } from 'lucide-react';
 import { Dialog } from 'radix-ui';
-import { Suspense, useState } from 'react';
-import { Link, Outlet } from 'react-router';
+import { Suspense, useEffect, useState } from 'react';
+import { Link, Outlet, useLocation } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
-import { ThemeToggle } from '@/features/theme/ThemeToggle';
+import { ThemeToggle, useTheme } from '@/features/theme';
 import { cn } from '@/lib/cn';
 
 import { DownloadAppModal } from './DownloadAppModal';
@@ -25,9 +25,30 @@ export function PublicLayout() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status } = useAuth();
   const isAuthenticated = status === 'authenticated';
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+  const { resolvedTheme } = useTheme();
+
+  // La landing page est strictement verrouillée sur le thème sombre cyber-technique
+  useEffect(() => {
+    if (!isLandingPage) return;
+    const root = document.documentElement;
+    root.classList.add('dark');
+
+    return () => {
+      if (resolvedTheme === 'light') {
+        root.classList.remove('dark');
+      }
+    };
+  }, [isLandingPage, resolvedTheme]);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <div
+      className={cn(
+        'flex min-h-dvh flex-col bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100',
+        isLandingPage && 'dark bg-[#070b14] text-white',
+      )}
+    >
       <a
         href="#contenu-principal"
         className="sr-only rounded-md bg-blue-600 px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
@@ -36,7 +57,12 @@ export function PublicLayout() {
       </a>
 
       {/* ---------------------------------------------------- NAVBAR */}
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/90">
+      <header
+        className={cn(
+          'sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/90',
+          isLandingPage && 'border-slate-800/80 bg-[#070b14]/90 text-white',
+        )}
+      >
         {/*
           À 360 px la rangée contenait : logo, « Télécharger l'App »,
           bascule de thème, « Connexion », « Commencer gratuitement » et le
@@ -76,7 +102,8 @@ export function PublicLayout() {
               <span className="hidden sm:inline">Installer l’app</span>
             </button>
 
-            <ThemeToggle />
+            {/* Bascule de thème masquée UNIQUEMENT sur la landing page */}
+            {!isLandingPage && <ThemeToggle />}
 
             {isAuthenticated ? (
               <Button asChild size="sm" className="rounded-xl font-bold">
@@ -149,7 +176,7 @@ export function PublicLayout() {
         </Suspense>
       </main>
 
-      <PublicFooter />
+      <PublicFooter isLandingPage={isLandingPage} />
 
       {/* Installation sur l'appareil — REZO360 est une application web installable,
           il n'y a rien à télécharger. Voir le commentaire de `DownloadAppModal`. */}
@@ -188,9 +215,14 @@ const FOOTER_SECTIONS = [
   },
 ] as const;
 
-function PublicFooter() {
+function PublicFooter({ isLandingPage }: { isLandingPage?: boolean }) {
   return (
-    <footer className={cn('border-t border-slate-200/80 bg-white py-12 dark:border-slate-800/80 dark:bg-slate-950')}>
+    <footer
+      className={cn(
+        'border-t border-slate-200/80 bg-white py-12 dark:border-slate-800/80 dark:bg-slate-950',
+        isLandingPage && 'border-slate-800/80 bg-[#070b14] text-white',
+      )}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
