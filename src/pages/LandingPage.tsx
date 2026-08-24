@@ -8,6 +8,7 @@ import { Hero } from '@/components/marketing/Hero';
 import { InteractivePlayground } from '@/components/marketing/InteractivePlayground';
 import { PlatformModulesBento } from '@/components/marketing/PlatformModulesBento';
 import { Pricing } from '@/components/marketing/Pricing';
+import { TechnicianShowcase } from '@/components/marketing/TechnicianShowcase';
 import { Testimonials } from '@/components/marketing/Testimonials';
 import { ROUTES } from '@/config/routes';
 
@@ -20,7 +21,10 @@ export default function LandingPage() {
       {/* 2. PREUVE SOCIALE & DOMAINES D'EXPERTISES */}
       <BuiltForTech />
 
-      {/* 3. COCKPIT SAAS : GESTION DES ÉQUIPES, STOCKS, ACHATS & PARC */}
+      {/* 3. IMMERSION TERRAIN & SUPERVISION : PHOTOS RÉELLES & SITUATIONS MÉTIERS */}
+      <TechnicianShowcase />
+
+      {/* 4. COCKPIT SAAS : GESTION DES ÉQUIPES, STOCKS, ACHATS & PARC */}
       <PlatformModulesBento />
 
       {/* 4. BOÎTE À OUTILS D'INGÉNIERIE & CALCUL (13 outils universels) */}
