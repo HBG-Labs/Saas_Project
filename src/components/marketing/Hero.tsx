@@ -57,8 +57,8 @@ export function Hero() {
             <span>Cockpit SaaS v2.4 // Orchestration Terrain &amp; IA</span>
           </div>
 
-          {/* Titre Principal Impactant */}
-          <h1 className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-balance leading-[1.15] text-slate-900 dark:text-white">
+          {/* Titre Principal Impactant au premier plan */}
+          <h1 className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-balance leading-[1.15] text-slate-900 dark:text-white drop-shadow-md">
             <span className="block">Pilotez votre activité technique.</span>
             <span className="block bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 dark:from-cyan-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mt-1">
               Connectez tout votre réseau.
@@ -66,7 +66,7 @@ export function Hero() {
           </h1>
 
           {/* Proposition de valeur universelle pour toutes les entreprises techniques */}
-          <p className="mx-auto mt-5 max-w-2xl text-balance text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mx-auto mt-5 max-w-2xl text-balance text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-200 drop-shadow-sm font-normal">
             La solution tout-en-un pour les entreprises techniques et équipes de terrain : interventions,
             plannings, signatures clients, suivi de matériel et outils métiers sur une plateforme unique.
           </p>

@@ -72,36 +72,38 @@ export function InteractivePlayground() {
 
   return (
     <section className="relative overflow-hidden border-y border-slate-200/80 bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-50 py-20 dark:border-slate-800/80 dark:bg-slate-950 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 sm:py-28">
-      {/* Fond d'ambiance 3 : Ingénierie & Inspection Industrielle Terrain (Décalé de -50px vers le haut) */}
+      {/* Fond d'ambiance 3 : Ingénierie & Inspection Industrielle Terrain (Déplacement vers le haut sans zoom) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
           src="/images/backgrounds/industrial-inspection-ambient.jpg"
           alt="Fond d'ambiance ingénierie et inspection REZO360"
           aria-hidden="true"
-          className="absolute inset-x-0 -top-[50px] h-[calc(100%+100px)] w-full object-cover object-center opacity-25 dark:opacity-35 filter saturate-110 contrast-105"
+          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[260px] opacity-20 dark:opacity-30 filter saturate-110 contrast-105"
         />
         {/* Masque dégradé progressif */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/45 to-slate-50/85 dark:from-slate-950/85 dark:via-slate-950/40 dark:to-slate-950/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/90 via-slate-50/60 to-slate-50/90 dark:from-[#060a12]/90 dark:via-[#060a12]/60 dark:to-[#060a12]/95" />
+        {/* Voile radial pour garantir le texte au premier plan avec une clarté totale */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_15%,#060a12_25%,transparent_100%)] opacity-85" />
       </div>
 
       {/* Glows d'arrière-plan doux */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[500px] w-[min(750px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-300/15 to-cyan-300/20 blur-[140px] dark:from-blue-600/30 dark:via-indigo-500/25 dark:to-cyan-400/20" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-600 backdrop-blur-md dark:border-blue-500/30 dark:text-blue-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/15 px-4 py-1.5 text-xs font-semibold text-blue-700 backdrop-blur-md dark:border-cyan-400/40 dark:bg-cyan-950/70 dark:text-cyan-300 shadow-xs">
             <Sparkles className="size-4 animate-pulse text-blue-600 dark:text-cyan-400" />
             <span>Testez la puissance de REZO360 en direct</span>
           </div>
 
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white drop-shadow-md">
             Votre Studio d’Ingénierie Technique,{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-300 dark:to-cyan-400">
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent dark:from-cyan-300 dark:via-blue-300 dark:to-indigo-200">
               Partout Avec Vous
             </span>
           </h2>
 
-          <p className="text-base text-slate-600 sm:text-lg dark:text-slate-400">
+          <p className="text-base text-slate-700 sm:text-lg dark:text-slate-200 leading-relaxed font-normal drop-shadow-sm">
             Simulez instantanément vos calculs d’ingénierie et testez l’assistance technique intelligente.
           </p>
         </div>

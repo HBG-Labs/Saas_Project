@@ -27,28 +27,30 @@ export function PlatformModulesBento() {
           src="/images/backgrounds/cockpit-supervision-ambient.jpg"
           alt="Fond d'ambiance Cockpit Supervision REZO360"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[360px] opacity-35 dark:opacity-45 filter saturate-110 contrast-105"
+          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[360px] opacity-20 dark:opacity-30 filter saturate-110 contrast-105"
         />
         {/* Masque de transition doux haut et bas */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/40 to-slate-50/85 dark:from-[#060a12]/80 dark:via-[#060a12]/35 dark:to-[#060a12]/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/90 via-slate-50/60 to-slate-50/90 dark:from-[#060a12]/90 dark:via-[#060a12]/60 dark:to-[#060a12]/95" />
+        {/* Voile radial spécifique pour garantir le texte au premier plan avec un contraste parfait */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_15%,#060a12_25%,transparent_100%)] opacity-85" />
       </div>
 
       {/* Halo d'ambiance en arrière-plan */}
       <div className="pointer-events-none absolute top-1/3 left-1/2 -z-10 h-[500px] w-[min(800px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500/10 via-indigo-500/10 to-cyan-500/10 blur-[130px] dark:from-blue-600/15 dark:via-indigo-500/15 dark:to-cyan-400/10" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* En-tête de la section */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* En-tête de la section au premier plan */}
         <div className="mx-auto max-w-3xl text-center space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-600 dark:border-blue-500/30 dark:text-blue-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/15 px-4 py-1.5 text-xs font-bold text-blue-700 backdrop-blur-md dark:border-blue-400/40 dark:bg-blue-950/80 dark:text-blue-300 shadow-xs">
             <Boxes className="size-3.5" />
             <span>Cockpit Opérationnel Tout-en-Un</span>
           </div>
 
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl leading-tight dark:text-white">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl leading-tight dark:text-white drop-shadow-md">
             Un seul outil pour piloter vos équipes, vos stocks et vos chantiers
           </h2>
 
-          <p className="text-base text-slate-600 sm:text-lg dark:text-slate-400 leading-relaxed">
+          <p className="text-base text-slate-700 sm:text-lg dark:text-slate-200 leading-relaxed font-normal drop-shadow-sm">
             Fini la dispersion entre carnets papier, fichiers Excel et messageries. REZO360 réunit tout le cycle
             opérationnel de votre entreprise technique dans une interface moderne et rapide.
           </p>
@@ -279,12 +281,12 @@ export function PlatformModulesBento() {
           </div>
         </div>
 
-        {/* Bouton d'action central */}
-        <div className="mt-12 text-center">
+        {/* Bouton d'action central au premier plan */}
+        <div className="relative z-10 mt-14 text-center">
           <Button
             asChild
             size="lg"
-            className="h-12 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 px-8 font-bold text-white shadow-lg shadow-blue-600/25 ring-1 ring-white/20 hover:from-blue-500 hover:to-cyan-500 transition-all hover:-translate-y-0.5"
+            className="h-12 sm:h-13 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-8 font-bold text-white shadow-xl shadow-blue-600/30 ring-1 ring-white/25 hover:from-blue-500 hover:to-cyan-400 transition-all hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-cyan-500/20"
           >
             <Link to={ROUTES.register}>
               Découvrir le cockpit complet gratuitement
