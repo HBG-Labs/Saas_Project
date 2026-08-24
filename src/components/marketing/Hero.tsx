@@ -59,11 +59,12 @@ export function Hero() {
           </p>
 
           {/* Dual CTAs & Installation Mobile */}
-          <div className="mt-10 flex flex-col items-stretch justify-center gap-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5">
+            {/* CTA Principal : Gradient Tech Lumineux */}
             <Button
               asChild
               size="lg"
-              className="group rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 px-7 py-4 font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-cyan-500 border border-cyan-400/20 shadow-md shadow-blue-500/10"
+              className="group h-12 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6.5 font-bold text-white shadow-lg shadow-blue-600/25 ring-1 ring-white/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/35 hover:brightness-105 active:translate-y-0 cursor-pointer"
             >
               <Link to={ROUTES.register}>
                 Commencer gratuitement
@@ -71,26 +72,28 @@ export function Hero() {
               </Link>
             </Button>
 
+            {/* CTA Secondaire : Glassmorphism & Catalogue Outils */}
+            <Button
+              asChild
+              size="lg"
+              className="group h-12 rounded-xl border border-slate-300/80 bg-white/90 px-5.5 font-semibold text-slate-800 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-950 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/90 dark:hover:text-white active:translate-y-0 cursor-pointer"
+            >
+              <Link to={ROUTES.tools}>
+                Explorer les outils métiers
+                <ArrowRight className="ml-2 size-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
+              </Link>
+            </Button>
+
+            {/* CTA 3 : Accès & Installation Application Terrain */}
             <Button
               variant="outline"
               size="lg"
               onClick={() => setIsDownloadModalOpen(true)}
-              className="rounded-2xl border-slate-300/90 bg-white/95 px-6 py-4 font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white dark:hover:border-slate-600 transition-all backdrop-blur-md cursor-pointer gap-2 shadow-xs"
+              className="h-12 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-5 font-semibold text-cyan-700 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-950/40 dark:text-cyan-300 dark:hover:border-cyan-400/45 dark:hover:bg-cyan-900/50 dark:hover:text-cyan-200 active:translate-y-0 cursor-pointer gap-2"
             >
-              <Smartphone className="size-4 text-blue-600 dark:text-cyan-400" />
-              <span className="lg:hidden">Installer l&apos;app mobile</span>
+              <Smartphone className="size-4 text-cyan-600 dark:text-cyan-400" />
+              <span className="lg:hidden">Installer l&apos;app</span>
               <span className="hidden lg:inline">Installer l&apos;application terrain</span>
-            </Button>
-
-            <Button
-              asChild
-              size="lg"
-              className="group rounded-2xl bg-blue-50/90 border border-blue-500/30 px-6 py-4 font-bold text-blue-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-100 hover:text-blue-800 dark:bg-slate-900/90 dark:border-blue-500/30 dark:text-blue-300 dark:hover:bg-blue-950/60 dark:hover:text-blue-200 cursor-pointer shadow-xs"
-            >
-              <Link to={ROUTES.tools}>
-                Explorer les outils métiers
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
-              </Link>
             </Button>
           </div>
 

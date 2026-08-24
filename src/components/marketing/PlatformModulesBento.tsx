@@ -272,7 +272,7 @@ export function PlatformModulesBento() {
           <Button
             asChild
             size="lg"
-            className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 px-8 py-4 font-bold text-white shadow-xl shadow-blue-600/20 hover:from-blue-500 hover:to-cyan-500 transition-all hover:-translate-y-0.5"
+            className="h-12 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 px-8 font-bold text-white shadow-lg shadow-blue-600/25 ring-1 ring-white/20 hover:from-blue-500 hover:to-cyan-500 transition-all hover:-translate-y-0.5"
           >
             <Link to={ROUTES.register}>
               Découvrir le cockpit complet gratuitement
