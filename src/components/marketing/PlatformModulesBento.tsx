@@ -21,6 +21,17 @@ import { ROUTES } from '@/config/routes';
 export function PlatformModulesBento() {
   return (
     <section className="relative overflow-hidden border-t border-slate-200/80 bg-slate-50/50 py-20 dark:border-slate-800/80 dark:bg-[#060a12] sm:py-28">
+      {/* Fond d'ambiance Supervision Cockpit */}
+      <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
+        <img
+          src="/images/backgrounds/cockpit-supervision-ambient.jpg"
+          alt=""
+          aria-hidden="true"
+          className="size-full object-cover object-center opacity-5 dark:opacity-15 mix-blend-luminosity filter blur-[1px]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/90 to-slate-50 dark:from-[#060a12]/80 dark:via-[#060a12]/92 dark:to-[#060a12]" />
+      </div>
+
       {/* Halo d'ambiance en arrière-plan */}
       <div className="pointer-events-none absolute top-1/3 left-1/2 -z-10 h-[500px] w-[min(800px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500/10 via-indigo-500/10 to-cyan-500/10 blur-[130px] dark:from-blue-600/15 dark:via-indigo-500/15 dark:to-cyan-400/10" />
 

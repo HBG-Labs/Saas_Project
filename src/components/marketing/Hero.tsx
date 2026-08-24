@@ -28,6 +28,19 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-[#070b14] dark:text-white">
+      {/* Fond d'ambiance immersif terrain haute technologie */}
+      <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
+        <img
+          src="/images/backgrounds/hero-field-ambient.jpg"
+          alt=""
+          aria-hidden="true"
+          className="size-full object-cover object-center opacity-10 dark:opacity-20 mix-blend-luminosity filter blur-[1px] transition-opacity duration-700"
+        />
+        {/* Masque dégradé progressif radial et vertical */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-slate-50/85 to-slate-50 dark:from-[#070b14]/70 dark:via-[#070b14]/85 dark:to-[#070b14]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,transparent_20%,#f8fafc_100%)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,transparent_20%,#070b14_100%)]" />
+      </div>
+
       {/* 1. MOTEUR CARTOGRAPHIQUE & RÉSEAU VIVANT REZO CORE */}
       <RezoNetworkHeroCanvas />
 

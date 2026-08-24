@@ -8,23 +8,19 @@ import { Hero } from '@/components/marketing/Hero';
 import { InteractivePlayground } from '@/components/marketing/InteractivePlayground';
 import { PlatformModulesBento } from '@/components/marketing/PlatformModulesBento';
 import { Pricing } from '@/components/marketing/Pricing';
-import { TechnicianShowcase } from '@/components/marketing/TechnicianShowcase';
 import { Testimonials } from '@/components/marketing/Testimonials';
 import { ROUTES } from '@/config/routes';
 
 export default function LandingPage() {
   return (
     <>
-      {/* 1. HERO SECTION (Titre impactant, Dual CTA & Cockpit Live) */}
+      {/* 1. HERO SECTION (Titre impactant, Dual CTA, Réseau dynamique & Fond Ambiance Terrain) */}
       <Hero />
 
       {/* 2. PREUVE SOCIALE & DOMAINES D'EXPERTISES */}
       <BuiltForTech />
 
-      {/* 3. IMMERSION TERRAIN & SUPERVISION : PHOTOS RÉELLES & SITUATIONS MÉTIERS */}
-      <TechnicianShowcase />
-
-      {/* 4. COCKPIT SAAS : GESTION DES ÉQUIPES, STOCKS, ACHATS & PARC */}
+      {/* 3. COCKPIT SAAS : GESTION DES ÉQUIPES, STOCKS, ACHATS & PARC (Avec Fond Ambiance Supervision) */}
       <PlatformModulesBento />
 
       {/* 4. BOÎTE À OUTILS D'INGÉNIERIE & CALCUL (13 outils universels) */}
@@ -42,10 +38,21 @@ export default function LandingPage() {
       {/* 8. FOIRE AUX QUESTIONS */}
       <Faq />
 
-      {/* 9. BANNIÈRE CONVERSION FINALE AVEC ANIMATIONS DYNAMIQUES */}
+      {/* 9. BANNIÈRE CONVERSION FINALE AVEC ANIMATIONS DYNAMIQUES & FOND AMBIANCE INDUSTRIE */}
       <section className="py-16 sm:py-24 border-t border-border/60 bg-surface relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="group/cta relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-b from-white/95 to-slate-50/90 px-6 py-16 text-center shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:border-blue-500/40 dark:border-cyan-500/20 dark:from-slate-950/95 dark:to-[#090f1d]/90 dark:shadow-blue-950/20 sm:px-12 sm:py-20">
+            {/* Fond d'ambiance d'inspection et ingénierie industrielle */}
+            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+              <img
+                src="/images/backgrounds/industrial-inspection-ambient.jpg"
+                alt=""
+                aria-hidden="true"
+                className="size-full object-cover object-center opacity-10 dark:opacity-20 mix-blend-luminosity filter blur-[0.5px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/90 to-slate-50/95 dark:from-slate-950/85 dark:via-slate-950/92 dark:to-[#090f1d]/95" />
+            </div>
+
             {/* 1. Halos lumineux d'ambiance multicouches animés */}
             <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[380px] w-[min(550px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-600/20 via-indigo-500/15 to-cyan-400/20 blur-[110px] animate-glow-pulse" />
             <div className="pointer-events-none absolute -top-24 -left-24 -z-10 size-72 rounded-full bg-blue-500/15 blur-[90px] animate-float-slow" />
