@@ -42,15 +42,15 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 border-t border-border/60 bg-surface relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="group/cta relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-b from-white/95 to-slate-50/90 px-6 py-16 text-center shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:border-blue-500/40 dark:border-cyan-500/20 dark:from-slate-950/95 dark:to-[#090f1d]/90 dark:shadow-blue-950/20 sm:px-12 sm:py-20">
-            {/* Fond d'ambiance d'inspection et ingénierie industrielle */}
-            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            {/* Fond d'ambiance 3 : Inspection et ingénierie industrielle */}
+            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
               <img
                 src="/images/backgrounds/industrial-inspection-ambient.jpg"
-                alt=""
+                alt="Fond d'ambiance inspection industrielle"
                 aria-hidden="true"
-                className="size-full object-cover object-center opacity-10 dark:opacity-20 mix-blend-luminosity filter blur-[0.5px]"
+                className="size-full object-cover object-center opacity-25 dark:opacity-35 filter saturate-110 contrast-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/90 to-slate-50/95 dark:from-slate-950/85 dark:via-slate-950/92 dark:to-[#090f1d]/95" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/85 to-slate-50/95 dark:from-slate-950/80 dark:via-slate-950/85 dark:to-[#090f1d]/95" />
             </div>
 
             {/* 1. Halos lumineux d'ambiance multicouches animés */}

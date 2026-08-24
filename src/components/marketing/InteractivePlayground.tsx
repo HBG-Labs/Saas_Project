@@ -72,6 +72,18 @@ export function InteractivePlayground() {
 
   return (
     <section className="relative overflow-hidden border-y border-slate-200/80 bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-50 py-20 dark:border-slate-800/80 dark:bg-slate-950 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 sm:py-28">
+      {/* Fond d'ambiance 3 : Ingénierie & Inspection Industrielle Terrain */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <img
+          src="/images/backgrounds/industrial-inspection-ambient.jpg"
+          alt="Fond d'ambiance ingénierie et inspection REZO360"
+          aria-hidden="true"
+          className="size-full object-cover object-center opacity-25 dark:opacity-35 filter saturate-110 contrast-105"
+        />
+        {/* Masque dégradé progressif */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/45 to-slate-50/85 dark:from-slate-950/85 dark:via-slate-950/40 dark:to-slate-950/90" />
+      </div>
+
       {/* Glows d'arrière-plan doux */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[500px] w-[min(750px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-300/15 to-cyan-300/20 blur-[140px] dark:from-blue-600/30 dark:via-indigo-500/25 dark:to-cyan-400/20" />
 

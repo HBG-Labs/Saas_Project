@@ -689,14 +689,14 @@ export function RezoNetworkHeroCanvas() {
       {/* Canvas d'orchestration réseau */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 size-full transition-opacity duration-700"
+        className="absolute inset-0 size-full transition-opacity duration-700 opacity-80"
       />
 
-      {/* Masque dégradé radial pour garantir une lisibilité absolue des textes en mode clair et sombre (Capture 1) */}
-      <div className="pointer-events-none absolute inset-0 bg-radial-[ellipse_80%_60%_at_50%_35%] from-white/20 via-white/70 to-white/95 dark:from-slate-950/20 dark:via-slate-950/70 dark:to-slate-950" />
+      {/* Masque dégradé doux pour lisibilité sans masquer le fond */}
+      <div className="pointer-events-none absolute inset-0 bg-radial-[ellipse_75%_55%_at_50%_35%] from-white/10 via-transparent to-white/40 dark:from-slate-950/10 dark:via-transparent dark:to-[#070b14]/70" />
 
-      {/* Dégradé doux en pied de section pour fondre le réseau dans la section suivante */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-slate-950 dark:via-slate-950/60 dark:to-transparent" />
+      {/* Dégradé doux en pied de section */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-[#070b14] dark:via-[#070b14]/70 dark:to-transparent" />
     </div>
   );
 }
