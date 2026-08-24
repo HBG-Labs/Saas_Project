@@ -28,15 +28,15 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-[#070b14] dark:text-white">
-      {/* Fond d'ambiance 1 : Immersif terrain & câblage haute technologie (Cadrage centré sur les visages) */}
+      {/* Fond d'ambiance 1 : Immersif terrain & câblage haute technologie (Cadrage vers le haut sans aucun zoom) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
           src="/images/backgrounds/hero-field-ambient.jpg"
           alt="Fond d'ambiance terrain REZO360"
           aria-hidden="true"
-          className="absolute inset-x-0 -top-[280px] h-[calc(100%+380px)] w-full object-cover object-center opacity-40 dark:opacity-55 filter saturate-110 contrast-105"
+          className="absolute inset-0 h-full w-full object-cover object-bottom opacity-40 dark:opacity-55 filter saturate-110 contrast-105"
         />
-        {/* Masque dégradé pour préserver la lisibilité parfaite du texte tout en laissant les visages nets */}
+        {/* Masque dégradé pour préserver la lisibilité parfaite du texte tout en laissant les détails nets */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-slate-50/30 to-slate-50 dark:from-[#070b14]/70 dark:via-[#070b14]/30 dark:to-[#070b14]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#f8fafc_95%)] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#070b14_95%)] opacity-60" />
       </div>
