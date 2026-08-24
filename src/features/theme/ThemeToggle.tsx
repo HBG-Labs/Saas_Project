@@ -66,8 +66,15 @@ export function ThemeMenuItems() {
       <DropdownSeparator />
 
       <DropdownItem
-        onSelect={() => setIsCustomizerOpen(true)}
-        className="text-xs font-semibold text-primary"
+        onSelect={(e) => {
+          e.preventDefault();
+          setIsCustomizerOpen(true);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsCustomizerOpen(true);
+        }}
+        className="text-xs font-semibold text-primary cursor-pointer"
       >
         <Paintbrush className="size-3.5" />
         <span>Personnaliser l’ambiance</span>

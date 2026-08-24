@@ -24,17 +24,17 @@ export function CustomizerDrawer() {
 
   return (
     <Dialog.Root open={isCustomizerOpen} onOpenChange={setIsCustomizerOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <Dialog.Content
-            aria-describedby="customizer-description"
-            className={cn(
-              'fixed inset-y-0 right-0 z-50 flex h-full w-[min(20rem,88vw)] flex-col',
-              'border-l border-border bg-surface shadow-modal transition-transform duration-300 ease-out',
-              'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right',
-              'focus:outline-none',
-            )}
-          >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-xs transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Content
+          aria-describedby="customizer-description"
+          className={cn(
+            'fixed inset-y-0 right-0 z-[70] flex h-full w-[min(20rem,88vw)] flex-col',
+            'border-l border-border bg-surface shadow-modal transition-transform duration-300 ease-out',
+            'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right',
+            'focus:outline-none',
+          )}
+        >
             {/* Header du panneau */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
