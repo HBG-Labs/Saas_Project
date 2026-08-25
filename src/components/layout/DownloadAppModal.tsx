@@ -115,13 +115,13 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
         <div className="space-y-3.5 sm:space-y-4 p-3.5 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
           {/* Bouton d'installation permanent */}
           {!isInstalled && (
-            <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 shadow-2xs">
+            <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-xl bg-blue-950/70 border border-blue-500/40 shadow-lg">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-foreground">
+                <div className="space-y-1">
+                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
                     Installation rapide sur cet appareil
                   </h3>
-                  <p className="text-3xs sm:text-2xs text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-slate-200 leading-snug">
                     {isInstallable
                       ? "Votre navigateur est prêt pour l'installation instantanée en 1 clic."
                       : "Installez REZO360 en mode application plein écran pour vos interventions."}
@@ -132,7 +132,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
                   variant="primary"
                   size="md"
                   onClick={handleDirectInstall}
-                  className="w-full sm:w-auto font-bold gap-2 shadow-2xs cursor-pointer shrink-0 h-9 text-xs sm:text-sm"
+                  className="w-full sm:w-auto font-bold gap-2 shadow-md cursor-pointer shrink-0 h-10 text-xs sm:text-sm px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl"
                 >
                   <Download className="size-4" />
                   <span>Installer maintenant</span>
@@ -140,7 +140,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
               </div>
 
               {browserHelp && (
-                <div className="p-3 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-900 dark:text-blue-200 text-xs font-medium animate-in fade-in">
+                <div className="p-3 rounded-lg bg-blue-900/50 border border-blue-400/40 text-cyan-200 text-xs font-medium leading-relaxed animate-in fade-in">
                   {browserHelp}
                 </div>
               )}
