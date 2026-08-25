@@ -21,16 +21,18 @@ import { ROUTES } from '@/config/routes';
 export function PlatformModulesBento() {
   return (
     <section className="relative overflow-hidden border-t border-slate-200/80 bg-slate-50/50 py-20 dark:border-slate-800/80 dark:bg-[#060a12] sm:py-28">
-      {/* Fond d'ambiance 2 : Supervision & Centre de Contrôle Cockpit (Visible et nette avec texte au premier plan) */}
+      {/* Fond d'ambiance 2 : Supervision & Centre de Contrôle Cockpit (Déplacement haut sans zoom & Double fondu progressif identique au Hero) */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
           src="/images/backgrounds/cockpit-supervision-ambient.jpg"
           alt="Fond d'ambiance Cockpit Supervision REZO360"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[360px] opacity-40 dark:opacity-55 filter saturate-115 contrast-105"
+          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[360px] opacity-40 dark:opacity-55 filter saturate-110 contrast-105"
         />
-        {/* Masque de transition doux haut et bas pour laisser l'image bien visible */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/25 to-slate-50/85 dark:from-[#060a12]/80 dark:via-[#060a12]/20 dark:to-[#060a12]/85" />
+        {/* 1. Masque dégradé vertical identique au Hero pour fondre doucement le bas de la photo */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-slate-50/30 to-slate-50 dark:from-[#060a12]/70 dark:via-[#060a12]/30 dark:to-[#060a12]" />
+        {/* 2. Masque radial elliptique identique au Hero pour un fondu périphérique sans coupure franche */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#f8fafc_95%)] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#060a12_95%)] opacity-60" />
       </div>
 
       {/* Halo d'ambiance en arrière-plan */}
