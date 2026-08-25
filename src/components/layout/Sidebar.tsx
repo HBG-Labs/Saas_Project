@@ -43,6 +43,9 @@ function isGroupActive(group: NavGroup, pathname: string, search: string): boole
     if (item.to === ROUTES.tools) {
       return pathname === ROUTES.tools && (!search || search === '?cat=all');
     }
+    if (item.to === ROUTES.metiers) {
+      return pathname === ROUTES.metiers || pathname.startsWith('/metiers');
+    }
     if (item.to === ROUTES.dashboard) {
       return pathname === ROUTES.dashboard;
     }
@@ -73,6 +76,9 @@ function SidebarLink({
     }
     if (item.to === ROUTES.tools) {
       return location.pathname === ROUTES.tools && (!location.search || location.search === '?cat=all');
+    }
+    if (item.to === ROUTES.metiers) {
+      return location.pathname === ROUTES.metiers;
     }
     if (item.to === ROUTES.dashboard) {
       return location.pathname === ROUTES.dashboard;

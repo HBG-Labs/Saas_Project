@@ -1,62 +1,145 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useCatalogTools, useFavorites, useToggleFavorite } from '@/features/catalog';
+import { AuthContext } from '@/features/auth';
+import { useCatalogTools, useFavorites } from '@/features/catalog';
+import { addFavorite, removeFavorite } from '@/features/catalog/api/catalog.api';
+import { qk } from '@/lib/query-keys';
+
+const FAVORITES_EVENT = 'rezo360:favorites-updated';
+
+function getStorageKey(userId: string | null | undefined): string {
+  if (!userId) return 'rezo360_tools_favorites_anonymous';
+  return `rezo360_tools_favorites_${userId}`;
+}
+
+function readStoredFavorites(key: string): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistFavorites(key: string, items: string[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(items));
+    window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: { key, items } }));
+  } catch {
+    // Ignore quota errors
+  }
+}
 
 /**
- * Favoris d'outils, adressés par slug.
+ * Hook unifié pour la gestion des favoris d'outils (par slug).
  *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI CE HOOK N'EST PLUS DANS `localStorage`
- *
- * La version précédente tenait la liste dans `localStorage`. Elle avait deux
- * défauts, dont le second était visible à l'écran :
- *
- *   • le favori ne suivait pas l'utilisateur — changer de poste ou vider le
- *     cache du navigateur le perdait, alors que c'est une donnée de compte ;
- *   • la page de détail d'un outil, elle, lisait déjà les favoris SERVEUR
- *     (`useFavorites`). Les deux étoiles — celle de la carte et celle de la
- *     page — ne pouvaient donc jamais être d'accord.
- *
- * La table `favorites` existait depuis `20260807090200_user_data.sql` et ses
- * policies la restreignent déjà à son propriétaire. Il n'y avait rien à créer,
- * seulement à s'y brancher.
- * ─────────────────────────────────────────────────────────────────────────────
- *
- * La surface publique — `favorites`, `isFavorite`, `toggleFavorite` — est
- * inchangée : les pages qui l'utilisent n'ont pas eu à bouger.
- *
- * `toggleFavorite` prend un slug ; la table, elle, référence un `tool_id`. La
- * résolution passe par le catalogue en base, seul détenteur de cet
- * identifiant. Un outil absent du catalogue ne peut donc pas être mis en
- * favori — c'est voulu : la clé étrangère le refuserait de toute façon.
+ * Fonctionnalités clés :
+ * 1. Prise en charge instantanée en mode visiteur / invité (localStorage).
+ * 2. Mises à jour optimistes (0ms de latence au clic).
+ * 3. Synchronisation bidirectionnelle avec Supabase lorsque l'utilisateur est connecté.
+ * 4. Synchronisation inter-composants et multi-onglets via événements.
  */
 export function useToolFavorites() {
+  const auth = useContext(AuthContext);
+  const userId = auth?.user?.id ?? null;
+  const storageKey = getStorageKey(userId);
+  const queryClient = useQueryClient();
+
   const favoritesQuery = useFavorites();
   const catalogQuery = useCatalogTools();
-  const toggle = useToggleFavorite();
 
-  const favorites = useMemo(
-    () => (favoritesQuery.data ?? []).map((tool) => tool.slug),
-    [favoritesQuery.data],
+  const [localFavorites, setLocalFavorites] = useState<string[]>(() =>
+    readStoredFavorites(storageKey),
   );
+
+  // Changement de compte / session
+  const [cleLue, setCleLue] = useState(storageKey);
+  if (cleLue !== storageKey) {
+    setCleLue(storageKey);
+    setLocalFavorites(readStoredFavorites(storageKey));
+  }
+
+  // Écoute des mises à jour inter-composants et multi-onglets
+  useEffect(() => {
+    const handleUpdate = () => {
+      setLocalFavorites(readStoredFavorites(storageKey));
+    };
+    window.addEventListener(FAVORITES_EVENT, handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener(FAVORITES_EVENT, handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [storageKey]);
+
+  // Synchronisation avec les données serveur si connecté
+  useEffect(() => {
+    if (userId !== null && favoritesQuery.data) {
+      const serverSlugs = favoritesQuery.data.map((tool) => tool.slug);
+      const combined = Array.from(new Set([...serverSlugs, ...readStoredFavorites(storageKey)]));
+      if (combined.length !== localFavorites.length || !combined.every((s) => localFavorites.includes(s))) {
+        setLocalFavorites(combined);
+        persistFavorites(storageKey, combined);
+      }
+    }
+  }, [userId, favoritesQuery.data, storageKey, localFavorites]);
+
+  const favorites = useMemo(() => {
+    const serverSlugs = (favoritesQuery.data ?? []).map((tool) => tool.slug);
+    return Array.from(new Set([...serverSlugs, ...localFavorites]));
+  }, [favoritesQuery.data, localFavorites]);
 
   const isFavorite = useCallback((slug: string) => favorites.includes(slug), [favorites]);
 
   const toggleFavorite = useCallback(
     (slug: string) => {
-      const tool = (catalogQuery.data ?? []).find((entry) => entry.slug === slug);
-      if (tool === undefined) return;
+      if (!slug) return;
+      const currentlyFavorite = favorites.includes(slug);
+      const nextFavorites = currentlyFavorite
+        ? favorites.filter((s) => s !== slug)
+        : [...favorites, slug];
 
-      toggle.mutate({ toolId: tool.id, isFavorite: favorites.includes(slug) });
+      // 1. Sauvegarde locale immédiate (optimistic UI)
+      setLocalFavorites(nextFavorites);
+      persistFavorites(storageKey, nextFavorites);
+
+      // 2. Synchronisation serveur si connecté et si l'outil existe en base
+      if (userId !== null) {
+        const tool = (catalogQuery.data ?? []).find((entry) => entry.slug === slug);
+        if (tool?.id) {
+          void (async () => {
+            try {
+              if (currentlyFavorite) {
+                await removeFavorite(userId, tool.id);
+              } else {
+                await addFavorite(userId, tool.id);
+              }
+              await queryClient.invalidateQueries({
+                queryKey: [...qk.catalog.all, 'favorites', userId],
+              });
+            } catch (err) {
+              console.error('[useToolFavorites] Erreur de synchronisation Supabase :', err);
+            }
+          })();
+        }
+      }
     },
-    [catalogQuery.data, favorites, toggle],
+    [favorites, storageKey, userId, catalogQuery.data, queryClient],
   );
 
   return {
     favorites,
     isFavorite,
     toggleFavorite,
-    isLoading: favoritesQuery.isPending || catalogQuery.isPending,
-    error: favoritesQuery.error ?? catalogQuery.error ?? toggle.error,
+    isLoading: userId !== null && favoritesQuery.isPending,
+    error: favoritesQuery.error ?? catalogQuery.error,
   };
 }
+

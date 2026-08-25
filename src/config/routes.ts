@@ -86,12 +86,21 @@ export const ROUTES = {
    */
   tool: (slug: string) => `/tools/${slug}`,
   category: (slug: string) => `/categories/${slug}`,
+
+  /**
+   * Nouveau volet indépendant « Outils Métiers » (6 métiers, 36 outils)
+   */
+  metiers: '/metiers',
+  metierTrade: (tradeSlug: string) => `/metiers/${tradeSlug}`,
+  metierTool: (tradeSlug: string, toolSlug: string) => `/metiers/${tradeSlug}/${toolSlug}`,
 } as const;
 
 /** Patrons utilisés par la déclaration des routes (paramètres non résolus). */
 export const ROUTE_PATTERNS = {
   tool: '/tools/:toolSlug',
   category: '/categories/:categorySlug',
+  metierTrade: '/metiers/:tradeSlug',
+  metierTool: '/metiers/:tradeSlug/:toolSlug',
   invitation: '/invitations/:token',
   customer: '/clients/:customerId',
   team: '/equipes/:teamId',

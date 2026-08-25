@@ -9,20 +9,15 @@ import { registerTool, type ToolDefinition } from '@/features/tools/registry';
  *
  * Les dossiers préfixés par `_` (gabarits) ainsi que les outils masqués sont exclus.
  */
-const modules = import.meta.glob<{ default: ToolDefinition }>(
-  [
-    './scientific-calculator/index.ts',
-  ],
+const modules = import.meta.glob<{ default: ToolDefinition | undefined }>(
+  ['./*/index.ts', '!./_template/**'],
   {
     eager: true,
   },
 );
 
-for (const [path, module] of Object.entries(modules)) {
+for (const module of Object.values(modules)) {
   if (!module.default) {
-    console.error(
-      `[outils] ${path} n'a pas d'export par défaut. Attendu : « export default defineTool({...}) ».`,
-    );
     continue;
   }
 
