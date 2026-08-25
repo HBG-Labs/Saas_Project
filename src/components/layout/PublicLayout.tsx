@@ -71,7 +71,7 @@ export function PublicLayout() {
           mise en page ne cède, et les écarts se resserrent.
         */}
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
-          <Logo className="shrink-0 text-base sm:text-lg" />
+          <Logo className={cn('shrink-0 text-base sm:text-lg', isLandingPage ? 'text-white' : 'text-slate-900 dark:text-white')} />
 
           {/* Navigation centrale */}
           <nav aria-label="Navigation du site" className="hidden lg:block">
@@ -147,7 +147,7 @@ export function PublicLayout() {
                 >
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
                   <div className={cn('flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800/80', isLandingPage && 'border-slate-800/80')}>
-                    <Logo className="text-base" />
+                    <Logo className={cn('text-base', isLandingPage ? 'text-white' : 'text-slate-900 dark:text-white')} />
                     <Dialog.Close className={cn('rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white', isLandingPage && 'text-slate-300 hover:bg-slate-800 hover:text-white')}>
                       <X className="size-5" />
                     </Dialog.Close>
@@ -246,7 +246,7 @@ function PublicFooter({ isLandingPage }: { isLandingPage?: boolean }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <Logo />
+            <Logo className={isLandingPage ? 'text-white' : 'text-slate-900 dark:text-white'} />
             <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               REZO360 est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
             </p>

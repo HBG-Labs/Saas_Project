@@ -23,7 +23,7 @@ export function Logo({
     <Link
       to={to}
       className={cn(
-        'text-foreground inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
+        'text-current inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
         'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
         className,
       )}
@@ -38,7 +38,7 @@ export function Logo({
         />
       )}
       <span className="shrink-0">
-        REZO<span className="text-primary">360</span>
+        REZO<span className="text-blue-500 dark:text-cyan-400">360</span>
       </span>
     </Link>
   );
