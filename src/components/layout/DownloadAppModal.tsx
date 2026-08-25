@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Apple, CheckCircle2, Download, Globe, MonitorSmartphone, Smartphone, X } from 'lucide-react';
 
 import { usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
@@ -46,7 +47,17 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
   const { isInstallable, isInstalled, installPwa } = usePwaInstall();
   const [browserHelp, setBrowserHelp] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  // Fermer la modale avec la touche Échap
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleDirectInstall = async () => {
     setBrowserHelp(null);
@@ -60,27 +71,32 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
     }
   };
 
-  return (
-    <div className="bg-surface-sunken/80 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 backdrop-blur-md duration-200 overflow-y-auto">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="bg-black/70 animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-md duration-200 overflow-y-auto"
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="install-title"
-        className="border-border bg-surface text-foreground animate-in zoom-in-95 relative w-full max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200 my-auto"
+        className="border-slate-800 bg-slate-900/98 text-slate-100 dark:border-slate-800 dark:bg-slate-950 text-foreground animate-in zoom-in-95 relative w-full max-w-2xl max-h-[88dvh] flex flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200 my-auto"
       >
         <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-blue-500/10 blur-3xl" />
 
         {/* En-tête fixe / persistant */}
-        <div className="border-border bg-surface/95 backdrop-blur-sm sticky top-0 z-20 flex items-center justify-between border-b p-3.5 sm:p-5 shrink-0">
+        <div className="border-slate-800 bg-slate-900/98 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between border-b p-3.5 sm:p-5 shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="text-primary flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10">
+            <div className="text-cyan-400 flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/25 bg-cyan-950/60 shadow-xs">
               <Smartphone className="size-4 sm:size-5" />
             </div>
             <div className="min-w-0">
-              <h2 id="install-title" className="text-foreground text-sm sm:text-lg font-bold truncate">
+              <h2 id="install-title" className="text-white text-sm sm:text-base font-bold truncate">
                 Installer REZO360 sur votre appareil
               </h2>
-              <p className="text-muted-foreground text-3xs sm:text-xs truncate">
+              <p className="text-slate-400 text-3xs sm:text-xs truncate">
                 Vos interventions et vos outils de calcul, en plein écran, comme une application native.
               </p>
             </div>
@@ -89,7 +105,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="text-muted-foreground hover:bg-surface-raised hover:text-foreground cursor-pointer rounded-lg p-1.5 transition-colors shrink-0"
+            className="text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer rounded-lg p-1.5 transition-colors shrink-0"
           >
             <X className="size-5" />
           </button>
@@ -138,9 +154,9 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
             </div>
           )}
 
-          <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border p-3 sm:px-3.5 sm:py-2.5 text-xs leading-relaxed">
+          <p className="border border-slate-800 bg-slate-950/60 text-slate-400 rounded-xl p-3 sm:px-3.5 sm:py-2.5 text-xs leading-relaxed">
             REZO360 ne passe pas par les magasins d’applications. Il s’installe{' '}
-            <strong className="text-foreground">directement depuis votre navigateur</strong> — rien
+            <strong className="text-white">directement depuis votre navigateur</strong> — rien
             à télécharger, aucune mise à jour à suivre : vous avez toujours la dernière version.
           </p>
 
@@ -151,16 +167,16 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
               return (
                 <div
                   key={parcours.id}
-                  className="border-border bg-surface-sunken flex flex-col gap-2 rounded-xl border p-3 sm:p-3.5"
+                  className="border border-slate-800 bg-slate-950/60 flex flex-col gap-2 rounded-xl p-3 sm:p-3.5"
                 >
-                  <div className="text-foreground flex items-center gap-2 text-xs font-bold">
-                    <Icone className="text-primary size-4 shrink-0" aria-hidden="true" />
+                  <div className="text-slate-200 flex items-center gap-2 text-xs font-bold">
+                    <Icone className="text-cyan-400 size-4 shrink-0" aria-hidden="true" />
                     {parcours.titre}
                   </div>
-                  <ol className="text-muted-foreground space-y-1.5 text-3xs sm:text-2xs leading-relaxed">
+                  <ol className="text-slate-400 space-y-1.5 text-3xs sm:text-2xs leading-relaxed">
                     {parcours.etapes.map((etape, index) => (
                       <li key={etape} className="flex gap-1.5">
-                        <span className="text-subtle-foreground font-mono">{index + 1}.</span>
+                        <span className="text-slate-500 font-mono">{index + 1}.</span>
                         <span>{etape}</span>
                       </li>
                     ))}
@@ -172,15 +188,16 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
         </div>
 
         {/* Pied de page fixe / persistant */}
-        <div className="border-border bg-surface-sunken text-subtle-foreground sticky bottom-0 z-20 flex items-center justify-between border-t px-4 py-2.5 sm:px-6 sm:py-3.5 text-3xs sm:text-2xs shrink-0">
+        <div className="border-slate-800 bg-slate-900/98 text-slate-400 sticky bottom-0 z-20 flex items-center justify-between border-t px-4 py-2.5 sm:px-6 sm:py-3.5 text-3xs sm:text-2xs shrink-0">
           <span className="pr-2 line-clamp-1">
-            Application web progressive (PWA) optimisée tout mobile.
+            Application web progressive (PWA) ultra-rapide et sécurisée.
           </span>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-xs shrink-0">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-xs text-slate-300 hover:text-white hover:bg-slate-800 shrink-0">
             Fermer
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
