@@ -38,7 +38,7 @@ export function Logo({
         />
       )}
       <span className="shrink-0">
-        REZO<span className="text-blue-500 dark:text-cyan-400">360</span>
+        REZO<span className="text-primary">360</span>
       </span>
     </Link>
   );
