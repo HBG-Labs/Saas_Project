@@ -72,67 +72,122 @@ export function InteractivePlayground() {
 
   return (
     <section className="relative overflow-hidden border-y border-slate-200/80 bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-50 py-20 dark:border-slate-800/80 dark:bg-slate-950 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 sm:py-28">
-      {/* Fond d'ambiance 3 : Ingénierie & Inspection Industrielle Terrain (Déplacement haut sans zoom & Double fondu progressif identique au Hero) */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <img
-          src="/images/backgrounds/industrial-inspection-ambient.jpg"
-          alt="Fond d'ambiance ingénierie et inspection REZO360"
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center -translate-y-24 sm:-translate-y-48 lg:-translate-y-[260px] opacity-35 dark:opacity-50 filter saturate-110 contrast-105"
-        />
-        {/* 1. Masque dégradé vertical identique au Hero pour fondre doucement le bas de la photo */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-slate-50/30 to-slate-50 dark:from-[#060a12]/70 dark:via-[#060a12]/30 dark:to-[#060a12]" />
-        {/* 2. Masque radial elliptique identique au Hero pour un fondu périphérique sans coupure franche */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#f8fafc_95%)] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_25%,transparent_15%,#060a12_95%)] opacity-60" />
-      </div>
-
       {/* Glows d'arrière-plan doux */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[500px] w-[min(750px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-400/20 via-indigo-300/15 to-cyan-300/20 blur-[140px] dark:from-blue-600/30 dark:via-indigo-500/25 dark:to-cyan-400/20" />
+      <div className="pointer-events-none absolute top-1/4 right-10 -z-10 size-80 rounded-full bg-cyan-500/10 dark:bg-cyan-500/15 blur-[120px]" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/15 px-4 py-1.5 text-xs font-semibold text-blue-700 backdrop-blur-md dark:border-cyan-400/40 dark:bg-cyan-950/70 dark:text-cyan-300 shadow-xs">
-            <Sparkles className="size-4 animate-pulse text-blue-600 dark:text-cyan-400" />
-            <span>Testez la puissance de REZO360 en direct</span>
+        {/* GRILLE 2 COLONNES : TEXTE À GAUCHE, PHOTO DÉZOOMÉE & FONDUE À DROITE */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 xl:gap-12 items-center">
+          {/* COLONNE GAUCHE : TITRE, TEXTE ET ATOUTS CLÉS (CENTRÉ SUR MOBILE, ALIGNÉ À GAUCHE SUR DESKTOP) */}
+          <div className="lg:col-span-6 xl:col-span-6 text-center lg:text-left flex flex-col items-center lg:items-start space-y-4">
+            {/* Badge Titre */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/15 px-4 py-1.5 text-xs font-semibold text-blue-700 backdrop-blur-md dark:border-cyan-400/40 dark:bg-cyan-950/70 dark:text-cyan-300 shadow-xs">
+              <Sparkles className="size-4 animate-pulse text-blue-600 dark:text-cyan-400" />
+              <span>Testez la puissance de REZO360 en direct</span>
+            </div>
+
+            {/* Titre H2 Principal */}
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl lg:text-5xl leading-tight dark:text-white text-center lg:text-left">
+              Votre Studio d’Ingénierie Technique,{' '}
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent dark:from-cyan-300 dark:via-blue-300 dark:to-indigo-200">
+                Partout Avec Vous
+              </span>
+            </h2>
+
+            {/* Paragraphe Explicatif */}
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal text-center lg:text-left mx-auto lg:mx-0">
+              Simulez instantanément vos calculs d’ingénierie et testez l’assistance technique intelligente.
+            </p>
+
+            {/* Atouts Clés en Grille */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 w-full text-xs text-slate-700 dark:text-slate-300 font-medium">
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
+                <Zap className="size-4 text-amber-500 shrink-0" />
+                <span>13 Outils universels intégrés</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
+                <Bot className="size-4 text-cyan-500 shrink-0" />
+                <span>Diagnostic IA temps réel</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
+                <Calculator className="size-4 text-blue-500 shrink-0" />
+                <span>Formules certifiées NF / ISO</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
+                <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                <span>Fonctionne 100% hors-ligne</span>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight dark:text-white drop-shadow-md">
-            Votre Studio d’Ingénierie Technique,{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent dark:from-cyan-300 dark:via-blue-300 dark:to-indigo-200">
-              Partout Avec Vous
-            </span>
-          </h2>
+          {/* COLONNE DROITE : PHOTO DÉZOOMÉE MISE EN VALEUR, SANS FILTRE NOIR AVEC FONDU STYLÉ */}
+          <div className="lg:col-span-6 xl:col-span-6 relative">
+            {/* Halo lumineux d'accentuation en arrière-plan */}
+            <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-tr from-cyan-500/25 via-blue-600/25 to-indigo-500/25 blur-2xl opacity-70 dark:opacity-80" />
 
-          <p className="text-base text-slate-700 sm:text-lg dark:text-slate-200 leading-relaxed font-normal drop-shadow-sm">
-            Simulez instantanément vos calculs d’ingénierie et testez l’assistance technique intelligente.
-          </p>
+            {/* Cadre Visuel Haut de Gamme */}
+            <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-cyan-500/30 bg-slate-900/5 dark:bg-slate-950/60 shadow-2xl shadow-blue-950/20 backdrop-blur-xs">
+              {/* Photo Dézoomée, Nette et Lumineuse sans filtre assombrissant */}
+              <img
+                src="/images/backgrounds/industrial-inspection-ambient.jpg"
+                alt="Ingénieurs en diagnostic technique industriel REZO360"
+                className="w-full h-auto max-h-[440px] object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.02] filter contrast-105 saturate-110"
+                loading="lazy"
+              />
+
+              {/* Fondus dégradés subtils & stylés pour une intégration fluide sans coupure */}
+              {/* Fondu latéral gauche (vers le texte à gauche) */}
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-slate-50/90 via-slate-50/30 to-transparent dark:from-slate-950/90 dark:via-slate-950/30 dark:to-transparent" />
+              {/* Fondu bas */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50/80 via-slate-50/20 to-transparent dark:from-slate-950/85 dark:via-slate-950/20 dark:to-transparent" />
+              {/* Fondu latéral droit léger */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-50/50 via-transparent to-transparent dark:from-slate-950/60 dark:via-transparent dark:to-transparent" />
+
+              {/* Badges Flottants Discrets & Ultra-Fins */}
+              {/* 1. Statut Studio d’Ingénierie en haut à droite */}
+              <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 rounded-full border border-cyan-500/35 bg-slate-950/75 px-2.5 py-0.5 text-[10px] sm:text-2xs font-bold text-cyan-300 backdrop-blur-md shadow-md">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-cyan-400" />
+                </span>
+                <span>Studio d’Ingénierie Live</span>
+              </div>
+
+              {/* 2. Badge Assistant IA en bas à gauche */}
+              <div className="absolute bottom-2.5 left-2.5 z-20 hidden sm:flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] sm:text-2xs font-medium text-slate-200 backdrop-blur-md shadow-md">
+                <Bot className="size-3 text-cyan-400" />
+                <span>Assistant IA Prêt</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Console Interactive claire & moderne */}
         <div className="mt-12 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/80">
           {/* Navigation des Onglets Démo */}
-          <div className="flex border-b border-slate-200 bg-slate-100/70 p-2 dark:border-slate-800 dark:bg-slate-950/60">
+          <div className="flex flex-col sm:flex-row border-b border-slate-200 bg-slate-100/70 p-2 dark:border-slate-800 dark:bg-slate-950/60 gap-1.5 sm:gap-2">
             <button
               onClick={() => setActiveTab('calc')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-bold transition-all cursor-pointer ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'calc'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
                   : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white'
               }`}
             >
-              <Calculator className="size-4" />
+              <Calculator className="size-4 shrink-0" />
               <span>Simulateur Puissance &amp; Énergie Live</span>
             </button>
 
             <button
               onClick={() => setActiveTab('ai')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm font-bold transition-all cursor-pointer ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'ai'
                   ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/25'
                   : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white'
               }`}
             >
-              <Bot className="size-4" />
+              <Bot className="size-4 shrink-0" />
               <span>Assistant IA &amp; Diagnostic Technique</span>
             </button>
           </div>

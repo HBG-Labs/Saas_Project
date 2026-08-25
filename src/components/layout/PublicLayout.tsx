@@ -224,18 +224,12 @@ function PublicFooter({ isLandingPage }: { isLandingPage?: boolean }) {
       )}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               REZO360 est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
             </p>
-            {/*
-              « Tous les services sont 100% opérationnels » a été retiré :
-              aucune supervision ne le mesure. Un voyant vert qui ne regarde
-              rien reste vert pendant la panne — c'est précisément le moment où
-              on le consulte.
-            */}
           </div>
 
           {FOOTER_SECTIONS.map((section) => (

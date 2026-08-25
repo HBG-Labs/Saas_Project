@@ -39,7 +39,7 @@ export default function RegisterPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await signUp(values.email, values.password);
+      await signUp(values.email, values.password, values.displayName);
       setEmailSent(true);
     } catch (error) {
       setSubmitError(error);

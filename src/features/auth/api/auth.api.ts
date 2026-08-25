@@ -43,11 +43,18 @@ export async function signInWithPassword(email: string, password: string): Promi
   if (error) throw mapAuthError(error);
 }
 
-export async function signUpWithPassword(email: string, password: string): Promise<void> {
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+  options?: { displayName?: string },
+): Promise<void> {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      ...(options?.displayName ? { data: { display_name: options.displayName } } : {}),
+    },
   });
   if (error) throw mapAuthError(error);
 }
