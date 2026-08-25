@@ -8,23 +8,18 @@ import {
   FileCheck2,
   MapPin,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   Users,
   Wrench,
   Zap,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Link } from 'react-router';
 
-import { DownloadAppModal } from '@/components/layout/DownloadAppModal';
 import { ROUTES } from '@/config/routes';
 
 import { RezoNetworkHeroCanvas } from './RezoNetworkHeroCanvas';
 
 export function Hero() {
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-
   return (
     <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28 bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-[#070b14] dark:text-white">
       {/* 1. MOTEUR CARTOGRAPHIQUE & RÉSEAU VIVANT REZO CORE EN ARRIÈRE-PLAN */}
@@ -85,7 +80,7 @@ export function Hero() {
               {/* 2. CTA Secondaire : Verre Obsidienne Fumé & Bordure Laser Cyan */}
               <Link
                 to={ROUTES.tools}
-                className="group relative inline-flex shrink-0 h-9 sm:h-10 items-center justify-center gap-1 sm:gap-1.5 overflow-hidden rounded-xl border border-slate-300/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/90 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 backdrop-blur-xl shadow-md transition-all duration-300 hover:border-cyan-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/90 hover:text-slate-950 dark:hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.25)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                className="group relative inline-flex shrink-0 h-9 sm:h-10 items-center justify-center gap-1 sm:gap-1.5 overflow-hidden rounded-xl border border-slate-300/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/90 px-3 sm:px-4 text-[11px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 backdrop-blur-xl shadow-md transition-all duration-300 hover:border-cyan-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/90 hover:text-slate-950 dark:hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.25)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 {/* Liseré supérieur métallique */}
                 <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
@@ -93,22 +88,6 @@ export function Hero() {
                 <span>Explorer<span className="hidden sm:inline">&nbsp;les outils</span></span>
                 <ChevronRight className="size-3 text-slate-400 dark:text-slate-500 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-cyan-400 shrink-0" />
               </Link>
-
-              {/* 3. CTA Tertiaire : App Terrain (Même style verre obsidienne qu'Explorer les outils) */}
-              <button
-                type="button"
-                onClick={() => setIsDownloadModalOpen(true)}
-                className="group relative inline-flex shrink-0 h-9 sm:h-10 items-center justify-center gap-1 sm:gap-1.5 overflow-hidden rounded-xl border border-slate-300/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/90 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 backdrop-blur-xl shadow-md transition-all duration-300 hover:border-cyan-500/60 hover:bg-slate-50 dark:hover:bg-slate-800/90 hover:text-slate-950 dark:hover:text-white hover:shadow-[0_0_18px_rgba(6,182,212,0.25)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                {/* Liseré supérieur métallique */}
-                <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-                <span className="relative flex size-1.5 shrink-0">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan-400 opacity-80" />
-                  <span className="relative inline-flex size-1.5 rounded-full bg-cyan-400" />
-                </span>
-                <Smartphone className="size-3 text-slate-400 transition-colors duration-300 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 shrink-0" />
-                <span>App<span className="hidden sm:inline">&nbsp;Terrain</span></span>
-              </button>
             </div>
 
             {/* Bandeau de réassurance / Ticker d'orchestration technique (CENTRÉ SUR MOBILE, ALIGNÉ À GAUCHE SUR DESKTOP) */}
@@ -171,12 +150,6 @@ export function Hero() {
             </div>
           </div>
         </div>
-
-        {/* Modal d'installation PWA */}
-        <DownloadAppModal
-          isOpen={isDownloadModalOpen}
-          onClose={() => setIsDownloadModalOpen(false)}
-        />
 
         {/* ---------------------------------------------------- MOCKUP DASHBOARD SHOWCASE */}
         <div className="mt-16 sm:mt-24">

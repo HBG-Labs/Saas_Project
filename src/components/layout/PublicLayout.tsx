@@ -1,4 +1,4 @@
-import { Menu, Smartphone, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
@@ -10,7 +10,6 @@ import { useAuth } from '@/features/auth';
 import { ThemeToggle, useTheme } from '@/features/theme';
 import { cn } from '@/lib/cn';
 
-import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 
 const MARKETING_LINKS = [
@@ -22,7 +21,6 @@ const MARKETING_LINKS = [
 
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { status } = useAuth();
   const isAuthenticated = status === 'authenticated';
   const location = useLocation();
@@ -86,22 +84,6 @@ export function PublicLayout() {
 
           {/* Actions à droite */}
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-            {/* BOUTON TÉLÉCHARGER L'APP */}
-            <button
-              type="button"
-              onClick={() => setIsDownloadModalOpen(true)}
-              className={cn(
-                'hidden items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer sm:flex',
-                isLandingPage
-                  ? 'border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:border-cyan-400/50'
-                  : 'border-blue-500/30 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400'
-              )}
-              aria-label="Installer l'application sur votre appareil"
-            >
-              <Smartphone className="size-4 shrink-0" />
-              <span className="hidden sm:inline">Installer l’app</span>
-            </button>
-
             {/* Bascule de thème masquée UNIQUEMENT sur la landing page */}
             {!isLandingPage && <ThemeToggle />}
 
@@ -185,13 +167,6 @@ export function PublicLayout() {
       </main>
 
       <PublicFooter isLandingPage={isLandingPage} />
-
-      {/* Installation sur l'appareil — REZO360 est une application web installable,
-          il n'y a rien à télécharger. Voir le commentaire de `DownloadAppModal`. */}
-      <DownloadAppModal
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-      />
     </div>
   );
 }
