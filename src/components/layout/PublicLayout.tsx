@@ -1,4 +1,4 @@
-import { Menu, Smartphone } from 'lucide-react';
+import { Menu, Smartphone, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
@@ -129,33 +129,53 @@ export function PublicLayout() {
             {/* Burger mobile */}
             <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
               <Dialog.Trigger
-                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mr-1 flex size-touch items-center justify-center rounded-lg sm:size-9 lg:hidden"
+                className={cn(
+                  'text-muted-foreground hover:bg-surface-hover hover:text-foreground -mr-1 flex size-touch items-center justify-center rounded-lg sm:size-9 lg:hidden',
+                  isLandingPage && 'text-slate-200 hover:bg-slate-800 hover:text-white',
+                )}
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
               </Dialog.Trigger>
               <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" />
-                <Dialog.Content className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white p-4 shadow-xl lg:hidden dark:border-slate-800 dark:bg-slate-950">
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs lg:hidden" />
+                <Dialog.Content
+                  className={cn(
+                    'fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white p-4 shadow-xl lg:hidden dark:border-slate-800 dark:bg-slate-950',
+                    isLandingPage && 'border-slate-800/90 bg-[#070b14]/98 text-white backdrop-blur-2xl shadow-2xl shadow-black/60',
+                  )}
+                >
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
+                  <div className={cn('flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800/80', isLandingPage && 'border-slate-800/80')}>
+                    <Logo className="text-base" />
+                    <Dialog.Close className={cn('rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white', isLandingPage && 'text-slate-300 hover:bg-slate-800 hover:text-white')}>
+                      <X className="size-5" />
+                    </Dialog.Close>
+                  </div>
                   <ul className="space-y-1">
                     {MARKETING_LINKS.map((link) => (
                       <li key={link.to}>
                         <Link
                           to={link.to}
                           onClick={() => setMenuOpen(false)}
-                          className="flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+                          className={cn(
+                            'flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900',
+                            isLandingPage && 'text-slate-200 hover:bg-blue-600/15 hover:text-cyan-300',
+                          )}
                         >
                           {link.label}
                         </Link>
                       </li>
                     ))}
                     {!isAuthenticated ? (
-                      <li className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <li className={cn('pt-3 border-t border-slate-100 dark:border-slate-800/80 mt-2', isLandingPage && 'border-slate-800/80')}>
                         <Link
                           to={ROUTES.login}
                           onClick={() => setMenuOpen(false)}
-                          className="flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+                          className={cn(
+                            'flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900',
+                            isLandingPage && 'text-slate-200 hover:bg-blue-600/15 hover:text-cyan-300',
+                          )}
                         >
                           Connexion
                         </Link>
