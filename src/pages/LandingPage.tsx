@@ -10,7 +10,6 @@ import { PlatformModulesBento } from '@/components/marketing/PlatformModulesBent
 import { Pricing } from '@/components/marketing/Pricing';
 import { Testimonials } from '@/components/marketing/Testimonials';
 import { ROUTES } from '@/config/routes';
-import ctaDepotImg from '@/assets/images/backgrounds/cta-depot-technician.jpg';
 
 export default function LandingPage() {
   return (
@@ -116,7 +115,7 @@ export default function LandingPage() {
               <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-cyan-500/30 bg-slate-900/5 dark:bg-slate-950/60 shadow-2xl shadow-blue-950/25 backdrop-blur-xs">
                 {/* Photo Grand Format Dézoomée & Nette */}
                 <img
-                  src={ctaDepotImg}
+                  src="/images/backgrounds/cta-depot-technician.jpg"
                   alt="Responsable technique et gestion logistique REZO360"
                   className="w-full h-auto max-h-[520px] object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.02] filter contrast-105 saturate-110"
                   loading="lazy"

@@ -17,7 +17,6 @@ import {
 import { Link } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
-import cockpitSupervisionImg from '@/assets/images/backgrounds/cockpit-supervision-ambient.jpg';
 
 export function PlatformModulesBento() {
   return (
@@ -38,7 +37,7 @@ export function PlatformModulesBento() {
             <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-blue-500/30 bg-slate-900/5 dark:bg-slate-950/60 shadow-2xl shadow-blue-950/20 backdrop-blur-xs">
               {/* Photo Dézoomée, Nette et Lumineuse sans filtre assombrissant */}
               <img
-                src={cockpitSupervisionImg}
+                src="/images/backgrounds/cockpit-supervision-ambient.jpg"
                 alt="Supervision et pilotage des opérations REZO360"
                 className="w-full h-auto max-h-[440px] object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.02] filter contrast-105 saturate-110"
                 loading="lazy"

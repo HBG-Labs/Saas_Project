@@ -23,7 +23,7 @@ export function Logo({
     <Link
       to={to}
       className={cn(
-        'text-current inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
+        'text-foreground inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
         'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
         className,
       )}
