@@ -17,6 +17,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import heroFieldImg from '@/assets/images/backgrounds/hero-field-ambient.jpg';
 import { DownloadAppModal } from '@/components/layout/DownloadAppModal';
 import { ROUTES } from '@/config/routes';
 
@@ -139,7 +140,7 @@ export function Hero() {
             <div className="relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-cyan-500/30 bg-slate-900/5 dark:bg-slate-950/60 shadow-2xl shadow-blue-950/20 backdrop-blur-xs">
               {/* Photo Nette et Lumineuse sans filtre assombrissant */}
               <img
-                src="/images/backgrounds/hero-field-ambient.jpg"
+                src={heroFieldImg}
                 alt="Techniciens terrain connectés sur REZO360"
                 className="w-full h-auto max-h-[500px] lg:max-h-[520px] object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.02] filter contrast-105 saturate-110"
                 loading="eager"
