@@ -62,11 +62,6 @@ export const routes: RouteObject[] = [
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
 
-          // Nouveau volet indépendant « Outils Métiers » (6 métiers, 36 calculateurs spécialisés)
-          { path: ROUTES.metiers, lazy: lazyPage(() => import('@/pages/metiers/MetiersHomePage')) },
-          { path: ROUTE_PATTERNS.metierTrade, lazy: lazyPage(() => import('@/pages/metiers/MetierTradePage')) },
-          { path: ROUTE_PATTERNS.metierTool, lazy: lazyPage(() => import('@/pages/metiers/MetierToolPage')) },
-
           // Publiques et sans session : un prospect doit pouvoir lire les
           // conditions AVANT de créer un compte, et un tiers doit pouvoir
           // consulter les mentions légales sans en avoir un.

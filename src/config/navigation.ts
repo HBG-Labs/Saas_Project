@@ -68,16 +68,6 @@ export const TOOLS_NAV: readonly NavItem[] = [
   { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
 ];
 
-export const METIERS_TOOLS_NAV: readonly NavItem[] = [
-  { to: ROUTES.metiers, label: 'Accueil Métiers', icon: 'briefcase', primary: true },
-  { to: `${ROUTES.metiers}/btp`, label: 'BTP & Maçonnerie', icon: 'hammer' },
-  { to: `${ROUTES.metiers}/plomberie`, label: 'Plomberie & Fluides', icon: 'droplet' },
-  { to: `${ROUTES.metiers}/electricite`, label: 'Électricité & Câblage', icon: 'zap' },
-  { to: `${ROUTES.metiers}/espaces-verts`, label: 'Espaces Verts', icon: 'flower' },
-  { to: `${ROUTES.metiers}/fibre-optique`, label: 'Fibre Optique', icon: 'cable' },
-  { to: `${ROUTES.metiers}/reseaux`, label: 'Réseaux & Télécoms', icon: 'network' },
-];
-
 export const STOCK_NAV: readonly NavItem[] = [
   { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', primary: true },
   { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right' },
@@ -133,14 +123,12 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
-  { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
 ];
 
 export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...INTERVENTIONS_NAV,
   ...ADMINISTRATION_NAV,
   ...TOOLS_NAV,
-  ...METIERS_TOOLS_NAV,
 ];
 
 export const GESTION_NAV: readonly NavItem[] = [
@@ -150,7 +138,6 @@ export const GESTION_NAV: readonly NavItem[] = [
 
 export const TOOLS_CATEGORIES_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Boîte à outils universelle', icon: 'wrench', primary: true },
-  { to: ROUTES.metiers, label: 'Outils Métiers spécialisés', icon: 'briefcase', primary: true },
 ];
 
 export const APP_NAV: readonly NavItem[] = [...ROOT_NAV, ...TOOLS_CATEGORIES_NAV];
@@ -160,7 +147,6 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
   ...ACHATS_NAV,
   ...ADMINISTRATION_NAV,
   ...TOOLS_NAV,
-  ...METIERS_TOOLS_NAV,
 ];
 export const ACCOUNT_NAV: readonly NavItem[] = [
   { to: ROUTES.profile, label: 'Profil', icon: 'user' },

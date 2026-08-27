@@ -61,22 +61,10 @@ export default function ToolsPage() {
   useDocumentTitle('Boîte à Outils & Instruments — REZO360 Tools');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') return 'list';
-    return (localStorage.getItem('rezo360:tools_view_mode') as ViewMode) || 'list';
-  });
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showHistory, setShowHistory] = useState(false);
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [activeFieldModalTool, setActiveFieldModalTool] = useState<FieldToolType>('flashlight');
-
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem('rezo360:tools_view_mode', mode);
-    } catch {
-      // Ignore
-    }
-  };
 
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
@@ -330,25 +318,11 @@ export default function ToolsPage() {
               )}
             </Button>
 
-            {/* Sélecteur de vue (Liste / Grille) */}
+            {/* Sélecteur de vue (Grille / Liste) */}
             <div className="flex items-center gap-1 bg-surface border border-border rounded-lg p-1 shadow-xs">
               <button
                 type="button"
-                onClick={() => handleViewModeChange('list')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                  viewMode === 'list'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-                title="Affichage en liste"
-              >
-                <LayoutList className="size-4" />
-                <span className="hidden sm:inline">Liste</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('grid')}
+                onClick={() => setViewMode('grid')}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
                   viewMode === 'grid'
@@ -359,6 +333,20 @@ export default function ToolsPage() {
               >
                 <LayoutGrid className="size-4" />
                 <span className="hidden sm:inline">Grille</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  viewMode === 'list'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                title="Affichage en liste"
+              >
+                <LayoutList className="size-4" />
+                <span className="hidden sm:inline">Liste</span>
               </button>
             </div>
           </div>
@@ -553,7 +541,7 @@ export default function ToolsPage() {
                 className={cn(
                   viewMode === 'grid'
                     ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                    : 'space-y-2 w-full',
+                    : 'space-y-2 max-w-4xl',
                 )}
               >
                 {favoriteTools.map((tool) => (
@@ -586,7 +574,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {engineeringCalcTools.map((tool) => (
@@ -618,7 +606,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {conversionTools.map((tool) => (
@@ -650,7 +638,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {fieldTools.map((tool) => (
@@ -682,7 +670,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {notesTools.map((tool) => (
@@ -732,7 +720,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'space-y-2 max-w-4xl',
               )}
             >
               {filteredTools.map((tool) => (

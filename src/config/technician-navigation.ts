@@ -1,5 +1,5 @@
 import { ROUTES } from './routes';
-import { METIERS_TOOLS_NAV, type NavGroup, type NavItem } from './navigation';
+import type { NavGroup, NavItem } from './navigation';
 
 export const TECHNICIAN_PRINCIPAL_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
@@ -18,5 +18,4 @@ export const TECHNICIAN_TOOLS_NAV: readonly NavItem[] = [
 export const TECHNICIAN_SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'principal', label: 'Espace Technicien', items: TECHNICIAN_PRINCIPAL_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TECHNICIAN_TOOLS_NAV },
-  { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
 ];
