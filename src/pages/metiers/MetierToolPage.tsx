@@ -1,10 +1,11 @@
-import { ArrowLeft, Star, Wrench, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Sparkles, Star, Wrench, type LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useUserEntitlements } from '@/features/billing';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import { MetierToolRunner } from '@/features/metiers-tools/components/MetierToolRunner';
@@ -17,6 +18,8 @@ export default function MetierToolPage() {
 
   const tool = tradeSlug && toolSlug ? getMetierTool(tradeSlug, toolSlug) : undefined;
   const trade = tradeSlug ? getTrade(tradeSlug) : undefined;
+  const { has } = useUserEntitlements();
+  const isProUnlocked = has('pro_tools');
 
   useDocumentTitle(
     tool ? `${tool.title} — ${trade?.shortName ?? 'Métiers'} REZO360` : 'Outil introuvable — REZO360',
@@ -83,6 +86,12 @@ export default function MetierToolPage() {
               <Badge variant="neutral" className="text-3xs px-2 py-0.2 font-semibold">
                 {trade.name}
               </Badge>
+              {!isProUnlocked && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-700 dark:text-amber-300 shadow-[0_1px_4px_rgba(245,158,11,0.15)] backdrop-blur-xs">
+                  <Sparkles className="size-2.5 text-amber-500" />
+                  <span>Module Pro</span>
+                </span>
+              )}
               {tool.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}

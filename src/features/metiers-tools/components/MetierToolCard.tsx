@@ -1,4 +1,4 @@
-import { ChevronRight, Lock, Star, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Sparkles, Star, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
@@ -60,8 +60,8 @@ export function MetierToolCard({
                 </Link>
               </h3>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-4xs font-black text-amber-700 dark:text-amber-400">
-                  <Lock className="size-2.5" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-700 dark:text-amber-300 shadow-[0_1px_4px_rgba(245,158,11,0.15)] backdrop-blur-xs">
+                  <Sparkles className="size-2.5 text-amber-500" />
                   <span>PRO</span>
                 </span>
               )}
@@ -199,8 +199,8 @@ export function MetierToolCard({
             </Link>
           </h3>
           {!isProUnlocked && (
-            <span className="inline-flex items-center gap-0.5 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-4xs font-black text-amber-700 dark:text-amber-400">
-              <Lock className="size-2.5" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-700 dark:text-amber-300 shadow-[0_1px_4px_rgba(245,158,11,0.15)] backdrop-blur-xs">
+              <Sparkles className="size-2.5 text-amber-500" />
               <span>PRO</span>
             </span>
           )}

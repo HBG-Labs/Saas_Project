@@ -1,5 +1,4 @@
 import {
-  CheckCircle2,
   FileSpreadsheet,
   Lock,
   ShieldCheck,
@@ -123,16 +122,16 @@ export function ProToolUpgradeModal({
             Continuer en mode gratuit
           </Button>
 
-          <Button
-            asChild
-            variant="primary"
-            className="w-full sm:flex-1 text-xs font-bold shadow-xs gap-1.5"
+          <Link
+            to={ROUTES.pricing}
+            onClick={() => onOpenChange(false)}
+            className="group relative flex-1 w-full overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 p-[1px] shadow-sm shadow-amber-500/25 hover:shadow-md hover:shadow-amber-500/35 active:scale-[0.99] transition-all cursor-pointer text-center"
           >
-            <Link to={ROUTES.pricing} onClick={() => onOpenChange(false)}>
-              <span>Découvrir les offres Pro</span>
-              <CheckCircle2 className="size-3.5" />
-            </Link>
-          </Button>
+            <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 px-4 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
+              <span>Découvrir les offres & Débloquer</span>
+              <Sparkles className="size-3.5 text-amber-100 group-hover:rotate-12 transition-transform" />
+            </div>
+          </Link>
         </div>
       </div>
     </Modal>

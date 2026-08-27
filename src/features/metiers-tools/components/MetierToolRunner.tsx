@@ -382,52 +382,72 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
               <span className="text-2xs font-extrabold uppercase tracking-wider text-primary">
                 {output.primaryLabel ?? 'Résultat principal'}
               </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopySummary}
-                className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer bg-surface/80 hover:bg-surface"
-                title={isProUnlocked ? 'Copier le résumé complet' : 'Débloquer avec le pack Pro'}
-              >
-                {!isProUnlocked ? (
-                  <>
-                    <Lock className="size-3 text-amber-600 dark:text-amber-400" />
-                    <span>Copier (Pro)</span>
-                  </>
-                ) : copied ? (
-                  <>
-                    <Check className="size-3 text-success" />
-                    <span className="text-success font-bold">Copié !</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3" />
-                    <span>Copier</span>
-                  </>
-                )}
-              </Button>
+              {!isProUnlocked ? (
+                <button
+                  type="button"
+                  onClick={() => setUpgradeModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 px-2.5 py-1 text-3xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/50 shadow-2xs transition-all cursor-pointer"
+                  title="Débloquer l'export et la copie avec les forfaits Pro"
+                >
+                  <Sparkles className="size-3 text-amber-500" />
+                  <span>Débloquer (Pro)</span>
+                </button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopySummary}
+                  className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer bg-surface/80 hover:bg-surface"
+                  title="Copier le résumé complet"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="size-3 text-success" />
+                      <span className="text-success font-bold">Copié !</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3" />
+                      <span>Copier</span>
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {!isProUnlocked ? (
-              <div className="my-2.5 p-3.5 rounded-xl border border-amber-500/30 bg-surface/90 text-center space-y-2">
-                <div className="flex items-center justify-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold text-xs">
-                  <Lock className="size-4" />
-                  <span>Résultat Certifié Réservé aux Forfaits Pro</span>
+              <div className="my-3 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
+                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-300 shadow-2xs">
+                  <Sparkles className="size-4.5 text-amber-500 animate-pulse" />
                 </div>
-                <p className="text-3xs text-muted-foreground leading-relaxed">
-                  Débloquez les 36 moteurs de calcul normés, les fiches techniques PDF et l'historique illimité.
-                </p>
-                <Button
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-amber-800 dark:text-amber-300">
+                    <Lock className="size-2.5" />
+                    <span>Calculateur Certifié Pro</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-foreground">
+                    Résultat normé et fiches de calcul verrouillés
+                  </h4>
+                  <p className="text-3xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    Débloquez l’accès illimité aux 36 moteurs de calcul, aux exports PDF officiels et à l'historique d'équipe.
+                  </p>
+                </div>
+
+                <button
                   type="button"
-                  variant="primary"
-                  size="sm"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="w-full text-xs font-bold gap-1.5 shadow-xs"
+                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 p-[1px] shadow-sm shadow-amber-500/25 hover:shadow-md hover:shadow-amber-500/35 active:scale-[0.99] transition-all cursor-pointer"
                 >
-                  <Sparkles className="size-3.5" />
-                  <span>Débloquer ce calculateur métier</span>
-                </Button>
+                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
+                    <Sparkles className="size-3.5 text-amber-100 group-hover:rotate-12 transition-transform" />
+                    <span>Débloquer l’accès Pro</span>
+                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-100 border border-white/10">
+                      Dès 19 €/m
+                    </span>
+                  </div>
+                </button>
               </div>
             ) : (
               <div className="my-2">
@@ -505,17 +525,15 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
               </div>
 
               {!isProUnlocked && (
-                <div className="absolute inset-x-0 bottom-0 top-10 flex flex-col items-center justify-center p-4 bg-surface/60 backdrop-blur-[1.5px]">
-                  <Button
+                <div className="absolute inset-x-0 bottom-0 top-10 flex flex-col items-center justify-center p-4 bg-surface/70 backdrop-blur-[2px]">
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
                     onClick={() => setUpgradeModalOpen(true)}
-                    className="text-xs font-bold gap-1.5 shadow-xs border-amber-500/40 bg-surface hover:bg-surface-raised"
+                    className="inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 px-3.5 py-2 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-sm hover:border-amber-500/60 hover:bg-amber-500/25 transition-all cursor-pointer backdrop-blur-xs"
                   >
-                    <Lock className="size-3 text-amber-600 dark:text-amber-400" />
-                    <span>Débloquer les grandeurs détaillées</span>
-                  </Button>
+                    <Sparkles className="size-3.5 text-amber-500" />
+                    <span>Débloquer les grandeurs détaillées (Pro)</span>
+                  </button>
                 </div>
               )}
             </Card>
