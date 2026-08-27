@@ -8,7 +8,7 @@ export function ProblemSection() {
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
-            Ne perdez plus votre temps entre 10 outils différents
+            Ne perdez plus votre temps entre de multiples outils dispersés
           </h2>
           <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-base sm:text-lg">
             Sur le terrain ou en bureau d&apos;études, l&apos;imprécision et la dispersion des outils de calcul réduisent l&apos;efficacité. REZO360 rassemble tout au même endroit.

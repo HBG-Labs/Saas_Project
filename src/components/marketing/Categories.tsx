@@ -17,7 +17,7 @@ export function Categories() {
     },
     {
       name: 'Conversions Universelles',
-      count: '10 grandeurs physiques',
+      count: 'Grandeurs & Unités',
       description: 'Longueurs, surfaces, volumes, masses, températures, pressions, vitesses, débits, énergie et puissances.',
       icon: ArrowLeftRight,
       color: 'text-cyan-600 dark:text-cyan-400',
@@ -27,7 +27,7 @@ export function Categories() {
     },
     {
       name: 'Géométrie, Espaces & Volumes',
-      count: '3 calculateurs dédiés',
+      count: 'Surfaces & Cubages',
       description: 'Distances euclidiennes 2D, surfaces géométriques (m², hectares) et cubages (m³, litres, cuves et cylindres).',
       icon: Box,
       color: 'text-emerald-600 dark:text-emerald-400',
@@ -75,7 +75,7 @@ export function Categories() {
             Boîte à outils d’ingénierie &amp; calcul
           </h2>
           <p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            13 calculateurs certifiés, toujours à portée de main
+            Calculateurs certifiés &amp; outils de terrain, toujours à portée de main
           </p>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-400">
             Une suite d’ingénierie universelle et rigoureuse pour tous les techniciens et ingénieurs de terrain,
@@ -124,7 +124,7 @@ export function Categories() {
             to={ROUTES.tools}
             className="inline-flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 transition-all shadow-xs"
           >
-            <span>Voir tous les 13 outils du catalogue</span>
+            <span>Explorer la boîte à outils &amp; calculateurs</span>
             <ArrowRight className="size-3.5" />
           </Link>
         </div>

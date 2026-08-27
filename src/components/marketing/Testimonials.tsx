@@ -30,7 +30,7 @@ export function Testimonials() {
             Ce sur quoi vous pouvez compter
           </span>
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-            Treize calculateurs d’ingénierie, et la manière dont ils sont tenus
+            Calculateurs certifiés d’ingénierie, et la manière dont ils sont tenus
           </h2>
           <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
             REZO360 est un produit conçu pour les exigences réelles du terrain. Plutôt que des promesses marketing, voici ce qui se vérifie.

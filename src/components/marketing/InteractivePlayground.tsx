@@ -104,7 +104,7 @@ export function InteractivePlayground() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 w-full text-xs text-slate-700 dark:text-slate-300 font-medium">
               <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
                 <Zap className="size-4 text-amber-500 shrink-0" />
-                <span>13 Outils universels intégrés</span>
+                <span>Outils universels &amp; calculateurs</span>
               </div>
               <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
                 <Bot className="size-4 text-cyan-500 shrink-0" />
