@@ -209,10 +209,12 @@ export async function getBillingSummary(organizationId: string): Promise<Billing
  */
 export async function syncSubscriptionSeats(organizationId: string): Promise<boolean> {
   try {
-    // `invoke` déclare son retour en `any` : sans annotation explicite, la
-    // déstructuration propagerait ce `any` dans tout l'appelant.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
     const response: { data: { synced?: boolean } | null; error: unknown } =
       await supabase.functions.invoke<{ synced?: boolean }>('sync-subscription-seats', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: { organizationId },
       });
 
@@ -253,6 +255,9 @@ export async function createCheckoutSession(params: {
 
   const response: { data: { url?: string; error?: string } | null; error: unknown } =
     await supabase.functions.invoke<{ url?: string; error?: string }>('create-checkout-session', {
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
       body: {
         organizationId: params.organizationId,
         planCode: params.planCode,
@@ -294,6 +299,9 @@ export async function createBillingPortalSession(organizationId: string): Promis
     await supabase.functions.invoke<{ url?: string; error?: string }>(
       'create-billing-portal-session',
       {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
         body: { organizationId, returnUrl: `${window.location.origin}${ROUTES.organizationBilling}` },
       },
     );
