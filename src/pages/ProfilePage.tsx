@@ -68,47 +68,6 @@ export interface UserProfileData {
   equipments: EquipmentItem[];
 }
 
-const DEFAULT_PROFILE: UserProfileData = {
-  displayName: 'Stéphane Leduc',
-  jobTitle: 'Technicien Réseaux, Fibre & Infrastructures Senior',
-  phone: '0696 45 89 12',
-  zone: 'Martinique (Fort-de-France & Technopole)',
-  certifications: [
-    {
-      id: 'cert-1',
-      name: 'Habilitation Électrique H0V / B2V / BR',
-      validity: "Valide jusqu'en Novembre 2027",
-      detail: 'Travaux & consignations HT/BT',
-    },
-    {
-      id: 'cert-2',
-      name: 'CACES R486 (PEMP 1B & 3B)',
-      validity: "Valide jusqu'en Mars 2028",
-      detail: 'Intervention Nacelles & Pylônes',
-    },
-  ],
-  equipments: [
-    {
-      id: 'eq-1',
-      name: 'Réflectomètre OTDR VIAVI SmartOTDR',
-      serial: 'OTDR-972-88',
-      color: 'blue',
-    },
-    {
-      id: 'eq-2',
-      name: 'Soudeuse Fibre Fujikura 70S+',
-      serial: 'FJ-70S-410',
-      color: 'emerald',
-    },
-    {
-      id: 'eq-3',
-      name: 'Pince Ampèremétrique Fluke 376 FC',
-      serial: 'FLK-376-90',
-      color: 'amber',
-    },
-  ],
-};
-
 /**
  * Ligne `profiles` → formulaire.
  *
@@ -132,15 +91,12 @@ function toFormProfile(
     ? (details.equipments as { id?: string; name?: string; serial?: string }[])
     : [];
 
-  const certifications: CertificationItem[] =
-    rawCertifications.length > 0
-      ? rawCertifications.map((item, index) => ({
-          id: item.id ?? `cert-${index}`,
-          name: item.name ?? item.label ?? '',
-          validity: item.validity ?? item.detail ?? item.expires_at ?? '',
-          detail: item.info ?? item.details ?? (item.label ? '' : item.detail ?? ''),
-        }))
-      : DEFAULT_PROFILE.certifications;
+  const certifications: CertificationItem[] = rawCertifications.map((item, index) => ({
+    id: item.id ?? `cert-${index}`,
+    name: item.name ?? item.label ?? '',
+    validity: item.validity ?? item.detail ?? item.expires_at ?? '',
+    detail: item.info ?? item.details ?? (item.label ? '' : item.detail ?? ''),
+  }));
 
   return {
     displayName: identity?.display_name ?? fallbackName,
@@ -148,15 +104,12 @@ function toFormProfile(
     phone: details?.phone ?? '',
     zone: details?.zone ?? '',
     certifications,
-    equipments:
-      equipments.length > 0
-        ? equipments.map((item, index) => ({
-            id: item.id ?? `eq-${index}`,
-            name: item.name ?? '',
-            serial: item.serial ?? '',
-            color: 'blue' as const,
-          }))
-        : DEFAULT_PROFILE.equipments,
+    equipments: equipments.map((item, index) => ({
+      id: item.id ?? `eq-${index}`,
+      name: item.name ?? '',
+      serial: item.serial ?? '',
+      color: 'blue' as const,
+    })),
   };
 }
 
@@ -169,7 +122,7 @@ export default function ProfilePage() {
   const fallbackName =
     (user?.user_metadata?.['display_name'] as string | undefined) ??
     user?.email?.split('@')[0] ??
-    'Utilisateur';
+    '';
 
   const storedJobTitle =
     typeof window !== 'undefined' ? localStorage.getItem('user_job_title') : null;
@@ -179,7 +132,7 @@ export default function ProfilePage() {
     (user?.user_metadata?.['jobTitle'] as string | undefined) ??
     membership?.job_title ??
     storedJobTitle ??
-    DEFAULT_PROFILE.jobTitle;
+    '';
 
   const remoteProfile = toFormProfile(
     profileQuery.data ?? undefined,
@@ -780,32 +733,38 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-              {draftProfile.equipments.map((eq) => (
-                <div key={eq.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface p-2.5">
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Nom de l'équipement (ex: Soudeuse Fujikura)"
-                      value={eq.name}
-                      onChange={(e) => handleUpdateEquipment(eq.id, 'name', e.target.value)}
-                    />
-                    <Input
-                      placeholder="Matricule / S/N (ex: FJ-70S-410)"
-                      value={eq.serial}
-                      onChange={(e) => handleUpdateEquipment(eq.id, 'serial', e.target.value)}
-                    />
+              {draftProfile.equipments.length === 0 ? (
+                <p className="text-xs italic text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                  Aucun équipement renseigné. Cliquez sur « Ajouter un matériel » ci-dessus.
+                </p>
+              ) : (
+                draftProfile.equipments.map((eq) => (
+                  <div key={eq.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface p-2.5">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Nom de l'équipement (ex: Réflectomètre, Soudeuse...)"
+                        value={eq.name}
+                        onChange={(e) => handleUpdateEquipment(eq.id, 'name', e.target.value)}
+                      />
+                      <Input
+                        placeholder="Matricule / S/N"
+                        value={eq.serial}
+                        onChange={(e) => handleUpdateEquipment(eq.id, 'serial', e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleRemoveEquipment(eq.id)}
+                      className="cursor-pointer text-muted-foreground hover:text-error shrink-0"
+                      title="Supprimer cet équipement"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleRemoveEquipment(eq.id)}
-                    className="cursor-pointer text-muted-foreground hover:text-error shrink-0"
-                    title="Supprimer cet équipement"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
