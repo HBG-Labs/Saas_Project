@@ -52,15 +52,19 @@ export interface EquipmentItem {
   color: 'blue' | 'emerald' | 'amber' | 'purple';
 }
 
+export interface CertificationItem {
+  id: string;
+  name: string;
+  validity: string;
+  detail: string;
+}
+
 export interface UserProfileData {
   displayName: string;
   jobTitle: string;
   phone: string;
   zone: string;
-  habElec: string;
-  habElecExpiry: string;
-  habCaces: string;
-  habCacesInfo: string;
+  certifications: CertificationItem[];
   equipments: EquipmentItem[];
 }
 
@@ -69,10 +73,20 @@ const DEFAULT_PROFILE: UserProfileData = {
   jobTitle: 'Technicien Réseaux, Fibre & Infrastructures Senior',
   phone: '0696 45 89 12',
   zone: 'Martinique (Fort-de-France & Technopole)',
-  habElec: 'Habilitation Électrique H0V / B2V',
-  habElecExpiry: "Valide jusqu'en Novembre 2027",
-  habCaces: 'CACES R486 & Travaux en Hauteur',
-  habCacesInfo: 'Intervention Pylônes & Nacelles',
+  certifications: [
+    {
+      id: 'cert-1',
+      name: 'Habilitation Électrique H0V / B2V / BR',
+      validity: "Valide jusqu'en Novembre 2027",
+      detail: 'Travaux & consignations HT/BT',
+    },
+    {
+      id: 'cert-2',
+      name: 'CACES R486 (PEMP 1B & 3B)',
+      validity: "Valide jusqu'en Mars 2028",
+      detail: 'Intervention Nacelles & Pylônes',
+    },
+  ],
   equipments: [
     {
       id: 'eq-1',
@@ -111,30 +125,38 @@ function toFormProfile(
   const identity = full?.identity ?? null;
   const details = full?.details ?? null;
 
-  const certifications = Array.isArray(details?.certifications)
-    ? (details.certifications as { label?: string; detail?: string; expires_at?: string }[])
+  const rawCertifications = Array.isArray(details?.certifications)
+    ? (details.certifications as any[])
     : [];
   const equipments = Array.isArray(details?.equipments)
     ? (details.equipments as { id?: string; name?: string; serial?: string }[])
     : [];
 
-  const [elec, caces] = certifications;
+  const certifications: CertificationItem[] =
+    rawCertifications.length > 0
+      ? rawCertifications.map((item, index) => ({
+          id: item.id ?? `cert-${index}`,
+          name: item.name ?? item.label ?? '',
+          validity: item.validity ?? item.detail ?? item.expires_at ?? '',
+          detail: item.info ?? item.details ?? (item.label ? '' : item.detail ?? ''),
+        }))
+      : DEFAULT_PROFILE.certifications;
 
   return {
     displayName: identity?.display_name ?? fallbackName,
     jobTitle: fallbackJobTitle,
     phone: details?.phone ?? '',
     zone: details?.zone ?? '',
-    habElec: elec?.label ?? '',
-    habElecExpiry: elec?.detail ?? '',
-    habCaces: caces?.label ?? '',
-    habCacesInfo: caces?.detail ?? '',
-    equipments: equipments.map((item, index) => ({
-      id: item.id ?? `eq-${index}`,
-      name: item.name ?? '',
-      serial: item.serial ?? '',
-      color: 'blue' as const,
-    })),
+    certifications,
+    equipments:
+      equipments.length > 0
+        ? equipments.map((item, index) => ({
+            id: item.id ?? `eq-${index}`,
+            name: item.name ?? '',
+            serial: item.serial ?? '',
+            color: 'blue' as const,
+          }))
+        : DEFAULT_PROFILE.equipments,
   };
 }
 
@@ -275,15 +297,23 @@ export default function ProfilePage() {
         details: {
           phone: dataToSave.phone.trim() === '' ? null : dataToSave.phone.trim(),
           zone: dataToSave.zone.trim() === '' ? null : dataToSave.zone.trim(),
-          certifications: [
-            { label: dataToSave.habElec, detail: dataToSave.habElecExpiry },
-            { label: dataToSave.habCaces, detail: dataToSave.habCacesInfo },
-          ],
-          equipments: dataToSave.equipments.map((eq) => ({
-            id: eq.id,
-            name: eq.name,
-            serial: eq.serial,
-          })),
+          certifications: dataToSave.certifications
+            .filter((c) => c.name.trim() !== '')
+            .map((c) => ({
+              id: c.id,
+              name: c.name.trim(),
+              label: c.name.trim(),
+              validity: c.validity.trim(),
+              detail: c.validity.trim(),
+              info: c.detail.trim(),
+            })),
+          equipments: dataToSave.equipments
+            .filter((eq) => eq.name.trim() !== '')
+            .map((eq) => ({
+              id: eq.id,
+              name: eq.name.trim(),
+              serial: eq.serial.trim(),
+            })),
         },
       },
       {
@@ -298,15 +328,11 @@ export default function ProfilePage() {
 
   const handleModalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // `void` assumé : l'échec est déjà traité par `onError` de la mutation, qui
-    // alimente `submitError`. Attendre ici ne changerait que le moment de la
-    // fermeture — et laisserait la modale ouverte sans indication pendant
-    // l'aller-retour réseau.
     void handleSaveProfile(draftProfile);
     setIsModalOpen(false);
   };
 
-  // Helper équipement dans la modale
+  // Helper équipements dans la modale
   const handleAddEquipment = () => {
     const newEq: EquipmentItem = {
       id: `eq-${Date.now()}`,
@@ -332,6 +358,40 @@ export default function ProfilePage() {
       ...draftProfile,
       equipments: draftProfile.equipments.map((eq) =>
         eq.id === id ? { ...eq, [key]: value } : eq,
+      ),
+    });
+  };
+
+  // Helper habilitations & certifications dans la modale
+  const handleAddCertification = () => {
+    const newCert: CertificationItem = {
+      id: `cert-${Date.now()}`,
+      name: '',
+      validity: '',
+      detail: '',
+    };
+    setDraftProfile({
+      ...draftProfile,
+      certifications: [...draftProfile.certifications, newCert],
+    });
+  };
+
+  const handleRemoveCertification = (id: string) => {
+    setDraftProfile({
+      ...draftProfile,
+      certifications: draftProfile.certifications.filter((c) => c.id !== id),
+    });
+  };
+
+  const handleUpdateCertification = (
+    id: string,
+    key: 'name' | 'validity' | 'detail',
+    value: string,
+  ) => {
+    setDraftProfile({
+      ...draftProfile,
+      certifications: draftProfile.certifications.map((c) =>
+        c.id === id ? { ...c, [key]: value } : c,
       ),
     });
   };
@@ -546,34 +606,57 @@ export default function ProfilePage() {
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                 <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                Habilitations & Certifications Sécurité
+                Habilitations & Certifications Sécurité ({profile.certifications.filter((c) => c.name.trim() !== '').length})
               </h4>
               <div className="grid gap-3 sm:grid-cols-2">
-                {profile.habElec.trim() !== '' ? (
-                  <div className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3">
-                    <Zap className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">{profile.habElec}</p>
-                      <p className="mt-0.5 text-2xs text-muted-foreground">{profile.habElecExpiry || "Valide"}</p>
-                    </div>
-                  </div>
-                ) : null}
+                {profile.certifications
+                  .filter((c) => c.name.trim() !== '')
+                  .map((cert) => {
+                    const isElec =
+                      cert.name.toLowerCase().includes('elec') ||
+                      cert.name.toLowerCase().includes('h0') ||
+                      cert.name.toLowerCase().includes('b2') ||
+                      cert.name.toLowerCase().includes('br') ||
+                      cert.name.toLowerCase().includes('bc');
+                    const isCaces =
+                      cert.name.toLowerCase().includes('caces') ||
+                      cert.name.toLowerCase().includes('nacelle') ||
+                      cert.name.toLowerCase().includes('pemp');
 
-                {profile.habCaces.trim() !== '' ? (
-                  <div className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3">
-                    <Award className="mt-0.5 size-5 shrink-0 text-primary" />
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">{profile.habCaces}</p>
-                      <p className="mt-0.5 text-2xs text-muted-foreground">{profile.habCacesInfo || "Intervention Nacelle"}</p>
-                    </div>
-                  </div>
-                ) : null}
+                    return (
+                      <div
+                        key={cert.id}
+                        className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-primary/40"
+                      >
+                        {isElec ? (
+                          <Zap className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                        ) : isCaces ? (
+                          <Award className="mt-0.5 size-5 shrink-0 text-blue-500" />
+                        ) : (
+                          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-foreground truncate">
+                            {cert.name}
+                          </p>
+                          <p className="mt-0.5 text-2xs font-medium text-muted-foreground">
+                            {cert.validity || 'Validité permanente'}
+                          </p>
+                          {cert.detail.trim() !== '' && (
+                            <p className="mt-1 text-3xs text-subtle-foreground line-clamp-1">
+                              {cert.detail}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
 
-                {profile.habElec.trim() === '' && profile.habCaces.trim() === '' ? (
+                {profile.certifications.filter((c) => c.name.trim() !== '').length === 0 && (
                   <p className="col-span-2 text-xs italic text-subtle-foreground">
-                    Aucune habilitation enregistrée. Cliquez sur "Modifier" pour en ajouter une.
+                    Aucune habilitation enregistrée. Cliquez sur "Modifier" pour en ajouter (H0V/B2V, CACES, SST, AIPR...).
                   </p>
-                ) : null}
+                )}
               </div>
             </div>
 
@@ -726,39 +809,80 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Section Habilitations */}
+          {/* Section Habilitations & Certifications */}
           <div className="space-y-3 border-t border-border pt-4">
-            <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              Habilitations Électriques & Sécurité
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="Habilitation Électrique (Nom / Niveau)"
-                placeholder="ex: Habilitation Électrique H0V / B2V"
-                value={draftProfile.habElec}
-                onChange={(e) => setDraftProfile({ ...draftProfile, habElec: e.target.value })}
-              />
-              <Input
-                label="Date / Validité"
-                placeholder="ex: Valide jusqu'en Novembre 2027"
-                value={draftProfile.habElecExpiry}
-                onChange={(e) => setDraftProfile({ ...draftProfile, habElecExpiry: e.target.value })}
-              />
+            <div className="flex items-center justify-between">
+              <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                Habilitations Électriques & Sécurité
+              </h4>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAddCertification}
+                className="cursor-pointer gap-1 text-xs text-primary hover:text-primary-hover"
+              >
+                <Plus className="size-3.5" /> Ajouter une habilitation
+              </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <Input
-                label="Certification Sécurité / CACES"
-                placeholder="ex: CACES R486 & Travaux en Hauteur"
-                value={draftProfile.habCaces}
-                onChange={(e) => setDraftProfile({ ...draftProfile, habCaces: e.target.value })}
-              />
-              <Input
-                label="Détail d'intervention"
-                placeholder="ex: Intervention Pylônes & Nacelles"
-                value={draftProfile.habCacesInfo}
-                onChange={(e) => setDraftProfile({ ...draftProfile, habCacesInfo: e.target.value })}
-              />
+
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+              {draftProfile.certifications.length === 0 ? (
+                <p className="text-xs italic text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                  Aucune habilitation enregistrée. Cliquez sur « Ajouter une habilitation » ci-dessus.
+                </p>
+              ) : (
+                draftProfile.certifications.map((cert, index) => (
+                  <div
+                    key={cert.id}
+                    className="rounded-lg border border-border bg-surface p-3 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b border-border/50">
+                      <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Habilitation #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleRemoveCertification(cert.id)}
+                        className="cursor-pointer text-muted-foreground hover:text-error shrink-0 size-6"
+                        title="Supprimer cette habilitation"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <Input
+                        label="Habilitation (Nom / Niveau)"
+                        placeholder="ex: H0V / B2V, CACES R486, SST, AIPR..."
+                        value={cert.name}
+                        onChange={(e) =>
+                          handleUpdateCertification(cert.id, 'name', e.target.value)
+                        }
+                      />
+                      <Input
+                        label="Date / Validité"
+                        placeholder="ex: Valide jusqu'en Novembre 2027"
+                        value={cert.validity}
+                        onChange={(e) =>
+                          handleUpdateCertification(cert.id, 'validity', e.target.value)
+                        }
+                      />
+                    </div>
+                    <Input
+                      label="Détail ou organisme"
+                      placeholder="ex: Intervention Pylônes & Nacelles, Bureau Veritas, SST..."
+                      value={cert.detail}
+                      onChange={(e) =>
+                        handleUpdateCertification(cert.id, 'detail', e.target.value)
+                      }
+                    />
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
