@@ -64,7 +64,11 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     export_pdf: null,
     export_csv: null,
     organizations: null,
+    customers: null,
     members: 2,
+    missions: null,
+    interventions: null,
+    quotes: null,
   },
 
   pro: {

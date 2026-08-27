@@ -224,7 +224,7 @@ insert into public.plan_features (plan_code, feature_key, limit_value) values
   ('free', 'calculation_history',   10),
   ('free', 'favorites',              3),
 
-  -- starter : l'entreprise et ses membres, pas encore les missions
+  -- starter : l'artisan solo / duo — missions, interventions, devis, carnet clients
   ('starter', 'catalog_access',      null),
   ('starter', 'calculation_history', null),
   ('starter', 'favorites',           null),
@@ -232,7 +232,11 @@ insert into public.plan_features (plan_code, feature_key, limit_value) values
   ('starter', 'export_pdf',          null),
   ('starter', 'export_csv',          null),
   ('starter', 'organizations',       null),
+  ('starter', 'customers',           null),
   ('starter', 'members',                2),
+  ('starter', 'missions',            null),
+  ('starter', 'interventions',       null),
+  ('starter', 'quotes',              null),
 
   -- pro : le terrain — missions, interventions, matériel, devis
   ('pro', 'catalog_access',      null),

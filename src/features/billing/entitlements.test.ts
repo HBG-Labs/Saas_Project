@@ -27,15 +27,31 @@ describe('matrice des entitlements', () => {
     expect(planHasFeature(null, FEATURES.missions)).toBe(false);
   });
 
-  it('réserve le module professionnel et missions aux plans Pro, Business et Enterprise', () => {
-    const proFeatures: FeatureKey[] = [
+  it('ouvre les missions, interventions et devis dès le plan Starter', () => {
+    const starterFeatures: FeatureKey[] = [
       FEATURES.missions,
       FEATURES.interventions,
-      FEATURES.equipment,
       FEATURES.quotes,
+      FEATURES.customers,
     ];
 
-    for (const feature of proFeatures) {
+    for (const feature of starterFeatures) {
+      expect(planHasFeature('free', feature), `free ne doit pas avoir ${feature}`).toBe(false);
+      expect(planHasFeature('starter', feature), `starter doit avoir ${feature}`).toBe(true);
+      expect(planHasFeature('pro', feature), `pro doit avoir ${feature}`).toBe(true);
+      expect(planHasFeature('business', feature), `business doit avoir ${feature}`).toBe(true);
+      expect(planHasFeature('enterprise', feature), `enterprise doit avoir ${feature}`).toBe(true);
+    }
+  });
+
+  it('réserve la gestion de matériel, stocks et achats aux forfaits Pro et supérieurs', () => {
+    const proExclusiveFeatures: FeatureKey[] = [
+      FEATURES.equipment,
+      FEATURES.stock,
+      FEATURES.purchases,
+    ];
+
+    for (const feature of proExclusiveFeatures) {
       expect(planHasFeature('free', feature), `free ne doit pas avoir ${feature}`).toBe(false);
       expect(planHasFeature('starter', feature), `starter ne doit pas avoir ${feature}`).toBe(false);
       expect(planHasFeature('pro', feature), `pro doit avoir ${feature}`).toBe(true);
