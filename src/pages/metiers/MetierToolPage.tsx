@@ -87,8 +87,8 @@ export default function MetierToolPage() {
                 {trade.name}
               </Badge>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-700 dark:text-amber-300 shadow-[0_1px_4px_rgba(245,158,11,0.15)] backdrop-blur-xs">
-                  <Sparkles className="size-2.5 text-amber-500" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-cyan-500/15 px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300 shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
+                  <Sparkles className="size-2.5 text-cyan-500 dark:text-cyan-400" />
                   <span>Module Pro</span>
                 </span>
               )}

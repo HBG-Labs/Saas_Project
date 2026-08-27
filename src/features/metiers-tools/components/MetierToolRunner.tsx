@@ -370,7 +370,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             className={cn(
               'p-5 rounded-2xl border shadow-xs relative overflow-hidden transition-all duration-200',
               !isProUnlocked
-                ? 'border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-surface to-surface-raised'
+                ? 'border-cyan-500/40 bg-gradient-to-br from-blue-500/10 via-surface to-surface-raised'
                 : output.status === 'danger'
                   ? 'border-error/50 bg-error/5'
                   : output.status === 'warning'
@@ -386,10 +386,10 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/35 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 px-2.5 py-1 text-3xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/50 shadow-2xs transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-cyan-500/10 px-2.5 py-1 text-3xs font-bold text-blue-700 dark:text-cyan-300 hover:bg-blue-500/20 hover:border-cyan-500/50 shadow-2xs transition-all cursor-pointer"
                   title="Débloquer l'export et la copie avec les forfaits Pro"
                 >
-                  <Sparkles className="size-3 text-amber-500" />
+                  <Sparkles className="size-3 text-cyan-500 dark:text-cyan-400" />
                   <span>Débloquer (Pro)</span>
                 </button>
               ) : (
@@ -417,13 +417,13 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             </div>
 
             {!isProUnlocked ? (
-              <div className="my-3 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
-                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-300 shadow-2xs">
-                  <Sparkles className="size-4.5 text-amber-500 animate-pulse" />
+              <div className="my-3 rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-blue-500/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
+                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 text-cyan-500 dark:text-cyan-400 shadow-2xs">
+                  <Sparkles className="size-4.5 text-cyan-500 dark:text-cyan-400 animate-pulse" />
                 </div>
 
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-amber-800 dark:text-amber-300">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300">
                     <Lock className="size-2.5" />
                     <span>Calculateur Certifié Pro</span>
                   </div>
@@ -438,12 +438,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 p-[1px] shadow-sm shadow-amber-500/25 hover:shadow-md hover:shadow-amber-500/35 active:scale-[0.99] transition-all cursor-pointer"
+                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 p-[1px] shadow-sm shadow-blue-500/25 hover:shadow-md hover:shadow-cyan-500/35 active:scale-[0.99] transition-all cursor-pointer"
                 >
-                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
-                    <Sparkles className="size-3.5 text-amber-100 group-hover:rotate-12 transition-transform" />
+                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
+                    <Sparkles className="size-3.5 text-cyan-100 group-hover:rotate-12 transition-transform" />
                     <span>Débloquer l’accès Pro</span>
-                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-amber-100 border border-white/10">
+                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-cyan-100 border border-white/10">
                       Dès 19 €/m
                     </span>
                   </div>
@@ -485,7 +485,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   Détails & Grandeurs calculées
                 </h3>
                 {!isProUnlocked && (
-                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
+                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-blue-700 dark:text-cyan-300 bg-blue-500/10 px-1.5 py-0.5 rounded border border-cyan-500/25">
                     <Lock className="size-2.5" />
                     <span>Inclus en Pro</span>
                   </span>
@@ -529,9 +529,9 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   <button
                     type="button"
                     onClick={() => setUpgradeModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 px-3.5 py-2 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-sm hover:border-amber-500/60 hover:bg-amber-500/25 transition-all cursor-pointer backdrop-blur-xs"
+                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-blue-500/15 via-indigo-500/15 to-cyan-500/15 px-3.5 py-2 text-xs font-bold text-blue-700 dark:text-cyan-300 shadow-sm hover:border-cyan-500/60 hover:bg-blue-500/25 transition-all cursor-pointer backdrop-blur-xs"
                   >
-                    <Sparkles className="size-3.5 text-amber-500" />
+                    <Sparkles className="size-3.5 text-cyan-500 dark:text-cyan-400" />
                     <span>Débloquer les grandeurs détaillées (Pro)</span>
                   </button>
                 </div>
