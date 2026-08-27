@@ -21,14 +21,14 @@ const FAQS: FaqItem[] = [
     category: 'platform',
     question: "Qu'est-ce que REZO360 exactement ?",
     answer:
-      "REZO360 est la plateforme SaaS tout-en-un centralisant des calculateurs normés, des assistants numériques alimentés par l'IA et un hub de gestion technique pour les techniciens, ingénieurs et entreprises.",
+      "REZO360 est la plateforme SaaS tout-en-un centralisant des calculateurs normés, des outils d’ingénierie certifiés et un hub de gestion technique pour les techniciens, ingénieurs et entreprises.",
   },
   {
     id: '2',
     category: 'platform',
     question: 'Les calculateurs sont-ils conformes et vérifiables ?',
     answer:
-      'Oui. Tous nos algorithmes s’appuient sur les formules mathématiques et physiques standardisées (Système International d’Unités, trigonométrie, bilans de puissance et de pression). Les formules exactes et les conversions sont affichées en direct dans chaque outil.',
+      'Oui. Tous nos algorithmes s’appuient sur les formules mathématiques et physiques standardisées (Système International d’Unités, normes NF C 15-100, ITU-T, Eurocodes, DTU). Les formules exactes et les conversions sont affichées en direct dans chaque outil.',
   },
   {
     id: '3',
@@ -47,9 +47,9 @@ const FAQS: FaqItem[] = [
   {
     id: '5',
     category: 'security',
-    question: "Comment l'Assistant IA est-il entraîné ? Vos données sont-elles sécurisées ?",
+    question: 'Comment mes données d’entreprise sont-elles protégées ?',
     answer:
-      'Notre IA utilise des modèles souverains et isolés. Vos données d’entreprise ne sont jamais utilisées pour entraîner des modèles publics. Les flux sont chiffrés en AES-256 bits.',
+      'Toutes vos données d’entreprise sont stockées dans une base chiffrée avec isolation stricte (Row Level Security PostgreSQL). Les flux sont chiffrés en transit et au repos (AES-256 bits).',
   },
   {
     id: '6',
