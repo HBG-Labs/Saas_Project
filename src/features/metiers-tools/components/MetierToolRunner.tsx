@@ -7,8 +7,10 @@ import {
   HelpCircle,
   Info,
   Lightbulb,
+  Lock,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { ProToolUpgradeModal, useUserEntitlements } from '@/features/billing';
 import { cn } from '@/lib/cn';
 import { useMetierHistory } from '../hooks/useMetierHistory';
 import type { MetierToolDefinition, ReliabilityLevel } from '../types';
@@ -60,6 +63,10 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
     return obj;
   }, [tool]);
 
+  const { has } = useUserEntitlements();
+  const isProUnlocked = has('pro_tools');
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
   const [inputs, setInputs] = useState<Record<string, any>>(initialInputs);
   const [copied, setCopied] = useState(false);
   const { addHistoryEntry } = useMetierHistory();
@@ -69,7 +76,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
     setInputs(initialInputs);
   }, [initialInputs]);
 
-  // 2. Calcul dynamique en direct
+  // 2. Calcul dynamique en direct (uniquement si débloqué ou pour preview)
   const output = useMemo(() => {
     try {
       return tool.compute(inputs);
@@ -84,9 +91,9 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
     }
   }, [tool, inputs]);
 
-  // 3. Sauvegarde automatique dans l'historique quand le calcul est stabilisé
+  // 3. Sauvegarde automatique dans l'historique quand le calcul est stabilisé (utilisateurs Pro)
   useEffect(() => {
-    if (output.primaryResult && output.primaryResult !== '0' && output.status !== 'danger') {
+    if (isProUnlocked && output.primaryResult && output.primaryResult !== '0' && output.status !== 'danger') {
       const timer = setTimeout(() => {
         addHistoryEntry({
           tradeSlug: tool.tradeSlug,
@@ -101,7 +108,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
       };
     }
     return undefined;
-  }, [tool, output, addHistoryEntry]);
+  }, [tool, output, addHistoryEntry, isProUnlocked]);
 
   const handleInputChange = (fieldId: string, value: any) => {
     setInputs((prev) => ({ ...prev, [fieldId]: value }));
@@ -112,6 +119,11 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
   };
 
   const handleCopySummary = () => {
+    if (!isProUnlocked) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     const lines = [
       `=== ${tool.title.toUpperCase()} ===`,
       `Résultat : ${output.primaryResult} ${output.primaryUnit ? `(${output.primaryUnit})` : ''}`,
@@ -357,11 +369,13 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
           <Card
             className={cn(
               'p-5 rounded-2xl border shadow-xs relative overflow-hidden transition-all duration-200',
-              output.status === 'danger'
-                ? 'border-error/50 bg-error/5'
-                : output.status === 'warning'
-                  ? 'border-warning/50 bg-warning/5'
-                  : 'border-primary/40 bg-gradient-to-br from-primary/10 via-surface to-surface-raised',
+              !isProUnlocked
+                ? 'border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-surface to-surface-raised'
+                : output.status === 'danger'
+                  ? 'border-error/50 bg-error/5'
+                  : output.status === 'warning'
+                    ? 'border-warning/50 bg-warning/5'
+                    : 'border-primary/40 bg-gradient-to-br from-primary/10 via-surface to-surface-raised',
             )}
           >
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -374,9 +388,14 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 size="sm"
                 onClick={handleCopySummary}
                 className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer bg-surface/80 hover:bg-surface"
-                title="Copier le résumé complet"
+                title={isProUnlocked ? 'Copier le résumé complet' : 'Débloquer avec le pack Pro'}
               >
-                {copied ? (
+                {!isProUnlocked ? (
+                  <>
+                    <Lock className="size-3 text-amber-600 dark:text-amber-400" />
+                    <span>Copier (Pro)</span>
+                  </>
+                ) : copied ? (
                   <>
                     <Check className="size-3 text-success" />
                     <span className="text-success font-bold">Copié !</span>
@@ -390,18 +409,40 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
               </Button>
             </div>
 
-            <div className="my-2">
-              <div className="text-2xl sm:text-3xl font-mono font-black text-foreground tracking-tight">
-                {output.primaryResult}
-              </div>
-              {output.primaryUnit && (
-                <p className="text-xs font-semibold text-muted-foreground mt-1">
-                  {output.primaryUnit}
+            {!isProUnlocked ? (
+              <div className="my-2.5 p-3.5 rounded-xl border border-amber-500/30 bg-surface/90 text-center space-y-2">
+                <div className="flex items-center justify-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold text-xs">
+                  <Lock className="size-4" />
+                  <span>Résultat Certifié Réservé aux Forfaits Pro</span>
+                </div>
+                <p className="text-3xs text-muted-foreground leading-relaxed">
+                  Débloquez les 36 moteurs de calcul normés, les fiches techniques PDF et l'historique illimité.
                 </p>
-              )}
-            </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setUpgradeModalOpen(true)}
+                  className="w-full text-xs font-bold gap-1.5 shadow-xs"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>Débloquer ce calculateur métier</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="my-2">
+                <div className="text-2xl sm:text-3xl font-mono font-black text-foreground tracking-tight">
+                  {output.primaryResult}
+                </div>
+                {output.primaryUnit && (
+                  <p className="text-xs font-semibold text-muted-foreground mt-1">
+                    {output.primaryUnit}
+                  </p>
+                )}
+              </div>
+            )}
 
-            {output.statusMessage && (
+            {isProUnlocked && output.statusMessage && (
               <div
                 className={cn(
                   'mt-3 p-2.5 rounded-xl text-xs font-medium flex items-start gap-2',
@@ -418,11 +459,20 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
           {/* Détails du calcul */}
           {output.details && output.details.length > 0 && (
-            <Card className="p-4 sm:p-5 rounded-2xl border-border bg-surface shadow-xs space-y-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">
-                Détails & Grandeurs calculées
-              </h3>
-              <div className="divide-y divide-border/60">
+            <Card className="p-4 sm:p-5 rounded-2xl border-border bg-surface shadow-xs space-y-2.5 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Détails & Grandeurs calculées
+                </h3>
+                {!isProUnlocked && (
+                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
+                    <Lock className="size-2.5" />
+                    <span>Inclus en Pro</span>
+                  </span>
+                )}
+              </div>
+
+              <div className={cn("divide-y divide-border/60", !isProUnlocked && "blur-[2.5px] select-none pointer-events-none opacity-50")}>
                 {output.details.map((row, idx) => (
                   <div
                     key={idx}
@@ -453,6 +503,21 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   </div>
                 ))}
               </div>
+
+              {!isProUnlocked && (
+                <div className="absolute inset-x-0 bottom-0 top-10 flex flex-col items-center justify-center p-4 bg-surface/60 backdrop-blur-[1.5px]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUpgradeModalOpen(true)}
+                    className="text-xs font-bold gap-1.5 shadow-xs border-amber-500/40 bg-surface hover:bg-surface-raised"
+                  >
+                    <Lock className="size-3 text-amber-600 dark:text-amber-400" />
+                    <span>Débloquer les grandeurs détaillées</span>
+                  </Button>
+                </div>
+              )}
             </Card>
           )}
 
@@ -498,6 +563,14 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
           </div>
         </div>
       </div>
+
+      {/* Modale de montée en gamme pour débloquer les calculateurs métiers */}
+      <ProToolUpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        toolName={tool.title}
+        tradeName={tool.tradeSlug}
+      />
     </div>
   );
 }

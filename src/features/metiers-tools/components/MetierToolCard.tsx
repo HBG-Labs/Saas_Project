@@ -1,7 +1,8 @@
-import { ChevronRight, Star, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Lock, Star, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
+import { useUserEntitlements } from '@/features/billing';
 import { cn } from '@/lib/cn';
 import { getTrade } from '../registry';
 import type { MetierToolDefinition } from '../types';
@@ -22,6 +23,8 @@ export function MetierToolCard({
   onToggleFavorite,
   className,
 }: MetierToolCardProps) {
+  const { has } = useUserEntitlements();
+  const isProUnlocked = has('pro_tools');
   const trade = getTrade(tool.tradeSlug);
   const Icon: LucideIcon = NAV_ICONS[tool.icon] ?? (trade ? NAV_ICONS[trade.icon] : undefined) ?? FALLBACK_NAV_ICON;
   const targetUrl = `/metiers/${tool.tradeSlug}/${tool.slug}`;
@@ -56,6 +59,12 @@ export function MetierToolCard({
                   {tool.title}
                 </Link>
               </h3>
+              {!isProUnlocked && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-4xs font-black text-amber-700 dark:text-amber-400">
+                  <Lock className="size-2.5" />
+                  <span>PRO</span>
+                </span>
+              )}
               {trade && (
                 <Badge variant="neutral" className="text-3xs px-2 py-0.2 shrink-0 font-semibold">
                   {trade.shortName}
@@ -180,14 +189,22 @@ export function MetierToolCard({
           </div>
         </div>
 
-        <h3 className="text-foreground mt-2.5 font-bold text-sm leading-snug">
-          <Link
-            to={targetUrl}
-            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
-          >
-            {tool.title}
-          </Link>
-        </h3>
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <h3 className="text-foreground font-bold text-sm leading-snug">
+            <Link
+              to={targetUrl}
+              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
+            >
+              {tool.title}
+            </Link>
+          </h3>
+          {!isProUnlocked && (
+            <span className="inline-flex items-center gap-0.5 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-4xs font-black text-amber-700 dark:text-amber-400">
+              <Lock className="size-2.5" />
+              <span>PRO</span>
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-snug">
           {tool.shortDescription ?? tool.description}
         </p>

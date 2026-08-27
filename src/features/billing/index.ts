@@ -45,3 +45,4 @@ export {
 } from './hooks/useEntitlements';
 
 export { TrialBanner } from './components/TrialBanner';
+export { ProToolUpgradeModal, type ProToolUpgradeModalProps } from './components/ProToolUpgradeModal';
