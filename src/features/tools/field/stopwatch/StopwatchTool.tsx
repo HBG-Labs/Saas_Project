@@ -140,15 +140,21 @@ export default function StopwatchTool() {
     setLaps([]);
   };
 
+  const getExactElapsed = () => {
+    if (!swRunning) return swAccumulatedRef.current;
+    return performance.now() - swStartTimeRef.current + swAccumulatedRef.current;
+  };
+
   const recordLap = () => {
-    if (swTime === 0) return;
+    const exactNow = getExactElapsed();
+    if (exactNow === 0) return;
     const lastLapTotal = laps.length > 0 ? (laps[0]?.totalTime ?? 0) : 0;
-    const currentLapTime = swTime - lastLapTotal;
+    const currentLapTime = Math.max(0, exactNow - lastLapTotal);
 
     const newLap: LapItem = {
       lapIndex: laps.length + 1,
       lapTime: currentLapTime,
-      totalTime: swTime,
+      totalTime: exactNow,
     };
     setLaps([newLap, ...laps]);
   };
@@ -157,7 +163,10 @@ export default function StopwatchTool() {
   const copyLaps = () => {
     if (laps.length === 0) return;
     const text = laps
-      .map((l) => `Tour ${l.lapIndex}: ${formatTime(l.lapTime).main}.${formatTime(l.lapTime).hundredths} (Cumul: ${formatTime(l.totalTime).main})`)
+      .map(
+        (l) =>
+          `Tour #${l.lapIndex} : ${formatTime(l.lapTime).main}.${formatTime(l.lapTime).hundredths} (Cumul : ${formatTime(l.totalTime).main}.${formatTime(l.totalTime).hundredths})`,
+      )
       .join('\n');
     navigator.clipboard.writeText(text);
     setCopiedLaps(true);
@@ -221,6 +230,11 @@ export default function StopwatchTool() {
   const swFormatted = formatTime(swTime);
   const timerFormatted = formatTime(timerRemaining);
   const timerProgress = timerInitial > 0 ? (timerRemaining / timerInitial) * 100 : 0;
+
+  // Calcul du tour en cours
+  const lastLapTotal = laps.length > 0 ? (laps[0]?.totalTime ?? 0) : 0;
+  const currentRunningLapTime = Math.max(0, swTime - lastLapTotal);
+  const currentRunningLapFmt = formatTime(currentRunningLapTime);
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
@@ -309,7 +323,7 @@ export default function StopwatchTool() {
                   size="lg"
                   variant="outline"
                   onClick={recordLap}
-                  disabled={!swRunning}
+                  disabled={swTime === 0}
                   className="w-32 h-12 text-sm font-bold gap-2 cursor-pointer"
                 >
                   <Flag className="size-4 text-primary" />
@@ -330,25 +344,53 @@ export default function StopwatchTool() {
               </div>
 
               {/* Tableau des Tours (Laps) */}
-              {laps.length > 0 && (
+              {(laps.length > 0 || swTime > 0) && (
                 <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Temps au tour ({laps.length})
+                      Tableau des temps &amp; paliers ({laps.length + (swTime > 0 ? 1 : 0)})
                     </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={copyLaps}
-                      className="h-7 px-2 text-3xs font-semibold gap-1"
-                    >
-                      {copiedLaps ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
-                      {copiedLaps ? 'Copié' : 'Copier les tours'}
-                    </Button>
+                    {laps.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={copyLaps}
+                        className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer"
+                      >
+                        {copiedLaps ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                        {copiedLaps ? 'Copié' : 'Copier les tours'}
+                      </Button>
+                    )}
                   </div>
 
-                  <div className="max-h-60 overflow-y-auto divide-y divide-border/60">
+                  {/* En-têtes de colonnes clairs */}
+                  <div className="grid grid-cols-12 px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+                    <div className="col-span-3">N° Tour</div>
+                    <div className="col-span-5 text-right">Durée du tour</div>
+                    <div className="col-span-4 text-right">Temps cumulé</div>
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border/60">
+                    {/* Tour actif en cours */}
+                    {swTime > 0 && (
+                      <div className="grid grid-cols-12 items-center py-2 px-3 text-xs rounded-lg bg-primary/10 text-primary font-bold transition-colors">
+                        <div className="col-span-3 flex items-center gap-1.5">
+                          <span className="font-mono">#{laps.length + 1}</span>
+                          <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-primary/20 text-primary">
+                            {swRunning ? 'En cours' : 'Arrêté'}
+                          </span>
+                        </div>
+                        <div className="col-span-5 text-right font-mono text-foreground font-black text-xs sm:text-sm">
+                          {currentRunningLapFmt.main}.{currentRunningLapFmt.hundredths}
+                        </div>
+                        <div className="col-span-4 text-right font-mono text-muted-foreground text-xs">
+                          {swFormatted.main}.{swFormatted.hundredths}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Liste des tours enregistrés */}
                     {laps.map((lap) => {
                       const isBest = bestLap !== null && lap.lapTime === bestLap;
                       const isWorst = worstLap !== null && lap.lapTime === worstLap;
@@ -359,32 +401,31 @@ export default function StopwatchTool() {
                         <div
                           key={lap.lapIndex}
                           className={cn(
-                            'flex items-center justify-between py-2 px-3 text-xs rounded-lg transition-colors',
+                            'grid grid-cols-12 items-center py-2 px-3 text-xs rounded-lg transition-colors',
                             isBest && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold',
                             isWorst && 'bg-red-500/10 text-red-700 dark:text-red-300 font-semibold',
                           )}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="col-span-3 flex items-center gap-1.5">
                             <span className="font-mono text-muted-foreground">#{lap.lapIndex}</span>
                             {isBest && (
-                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                                Meilleur
+                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                                Plus rapide
                               </span>
                             )}
                             {isWorst && (
-                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400">
-                                Plus lent
+                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-red-500/20 text-red-600 dark:text-red-400">
+                                Plus long
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-6 font-mono">
-                            <span className="text-foreground">
-                              +{lapFmt.main}.{lapFmt.hundredths}
-                            </span>
-                            <span className="text-muted-foreground text-3xs w-20 text-right">
-                              {totalFmt.main}.{totalFmt.hundredths}
-                            </span>
+                          <div className="col-span-5 text-right font-mono text-foreground font-semibold">
+                            {lapFmt.main}.{lapFmt.hundredths}
+                          </div>
+
+                          <div className="col-span-4 text-right font-mono text-muted-foreground text-xs">
+                            {totalFmt.main}.{totalFmt.hundredths}
                           </div>
                         </div>
                       );
