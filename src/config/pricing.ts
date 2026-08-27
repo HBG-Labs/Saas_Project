@@ -73,8 +73,8 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     features: [
       'Toutes les fonctionnalités du plan Free',
       '2 utilisateurs inclus (+5 € / util. supp.)',
-      '36 Calculateurs Métiers & Outils certifiés',
       'Gestion des missions & interventions terrain',
+      'Fiches d’intervention & signature client',
       'Carnet Clients & Devis/Facturation',
       'Exportation des rapports en PDF certifié & CSV',
       'Historique de calculs & sauvegardes illimité',
@@ -95,8 +95,9 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaLink: `${ROUTES.register}?plan=pro`,
     ctaVariant: 'primary',
     features: [
-      'Toutes les fonctionnalités du plan Starter',
+      'Calculateurs Métiers certifiés (Fibre, Élec, BTP...)',
       '5 utilisateurs inclus (+5 € / util. supp.)',
+      'Toutes les fonctionnalités du plan Starter',
       'Parc Matériel, Outillage & Étalonnages',
       'Gestion de la Flotte de Véhicules',
       'Gestion des Stocks & Consommables',

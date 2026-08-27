@@ -24,6 +24,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatWorkedTime, useActivityStats } from '@/features/analytics';
 import { useCurrentOrganization } from '@/features/organizations';
+import { useQuotes } from '@/features/quotes';
+import { useTeams } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 type ViewMode = 'month' | 'quarter' | 'year';
@@ -52,136 +54,14 @@ export default function AnalyticsPage() {
     Q4: 'T4 (Oct - Déc)',
   };
 
-  // Fonction calculant les métriques selon la sélection Trimestre / Année
-  const getSelectedAnalytics = () => {
+  const getPeriodLabel = () => {
     if (viewMode === 'month') {
-      return {
-        periodLabel: `30 Derniers Jours (Août ${selectedYear})`,
-        conformity: '98.4%',
-        conformityDiff: '+2.3% vs M-1',
-        volume: '142',
-        volumeDiff: '+18.4%',
-        avgDuration: '2h 15m',
-        durationDiff: '-15 min',
-        sla: '99.2%',
-        slaLabel: 'Optimal',
-        totalMissions: 142,
-        chartData: [
-          { label: 'Jan', count: 98 },
-          { label: 'Fév', count: 112 },
-          { label: 'Mar', count: 125 },
-          { label: 'Avr', count: 130 },
-          { label: 'Mai', count: 118 },
-          { label: 'Juin', count: 140 },
-          { label: 'Juil', count: 135 },
-          { label: 'Août', count: 142 },
-        ],
-        clientBreakdown: [
-          { name: 'Aethel Telecom Solutions', percentage: 42, count: 60, color: '#ea580c' },
-          { name: 'Nexis Networks & Infra', percentage: 28, count: 40, color: '#dc2626' },
-          { name: 'Solaria Communications', percentage: 18, count: 25, color: '#0891b2' },
-          { name: 'Kyros Fiber Engineering', percentage: 12, count: 17, color: '#ca8a04' },
-        ],
-      };
+      return `30 Derniers Jours`;
     }
-
     if (viewMode === 'quarter') {
-      const quarters = {
-        Q1: {
-          label: `1er Trimestre ${selectedYear} (Janv - Mars)`,
-          volume: 335,
-          conformity: '97.8%',
-          chart: [
-            { label: 'Janvier', count: 98 },
-            { label: 'Février', count: 112 },
-            { label: 'Mars', count: 125 },
-          ],
-        },
-        Q2: {
-          label: `2ème Trimestre ${selectedYear} (Avr - Juin)`,
-          volume: 388,
-          conformity: '98.2%',
-          chart: [
-            { label: 'Avril', count: 130 },
-            { label: 'Mai', count: 118 },
-            { label: 'Juin', count: 140 },
-          ],
-        },
-        Q3: {
-          label: `3ème Trimestre ${selectedYear} (Juil - Sept)`,
-          volume: 277,
-          conformity: '98.6%',
-          chart: [
-            { label: 'Juillet', count: 135 },
-            { label: 'Août', count: 142 },
-            { label: 'Septembre (Est.)', count: 145 },
-          ],
-        },
-        Q4: {
-          label: `4ème Trimestre ${selectedYear} (Oct - Déc)`,
-          volume: 310,
-          conformity: '98.0%',
-          chart: [
-            { label: 'Octobre', count: 102 },
-            { label: 'Novembre', count: 104 },
-            { label: 'Décembre', count: 104 },
-          ],
-        },
-      };
-
-      const q = quarters[selectedQuarter];
-
-      return {
-        periodLabel: q.label,
-        conformity: q.conformity,
-        conformityDiff: '+1.9% vs T-1',
-        volume: String(q.volume),
-        volumeDiff: '+12.5%',
-        avgDuration: '2h 10m',
-        durationDiff: '-18 min',
-        sla: '99.4%',
-        slaLabel: 'Excellent',
-        totalMissions: q.volume,
-        chartData: q.chart,
-        clientBreakdown: [
-          { name: 'Aethel Telecom Solutions', percentage: 44, count: Math.round(q.volume * 0.44), color: '#ea580c' },
-          { name: 'Nexis Networks & Infra', percentage: 26, count: Math.round(q.volume * 0.26), color: '#dc2626' },
-          { name: 'Solaria Communications', percentage: 19, count: Math.round(q.volume * 0.19), color: '#0891b2' },
-          { name: 'Kyros Fiber Engineering', percentage: 11, count: Math.round(q.volume * 0.11), color: '#ca8a04' },
-        ],
-      };
+      return `${quarterLabels[selectedQuarter]} ${selectedYear}`;
     }
-
-    // Vue Annuelle
-    const yearVolume = selectedYear === 2026 ? 995 : selectedYear === 2025 ? 840 : 710;
-    return {
-      periodLabel: `Année Complète ${selectedYear}`,
-      conformity: selectedYear === 2026 ? '98.1%' : '96.5%',
-      conformityDiff: '+3.4% vs N-1',
-      volume: String(yearVolume),
-      volumeDiff: '+24.1%',
-      avgDuration: '2h 18m',
-      durationDiff: '-20 min',
-      sla: '98.9%',
-      slaLabel: 'Conforme',
-      totalMissions: yearVolume,
-      chartData: [
-        { label: 'Jan', count: Math.round(yearVolume * 0.1) },
-        { label: 'Fév', count: Math.round(yearVolume * 0.11) },
-        { label: 'Mar', count: Math.round(yearVolume * 0.12) },
-        { label: 'Avr', count: Math.round(yearVolume * 0.13) },
-        { label: 'Mai', count: Math.round(yearVolume * 0.11) },
-        { label: 'Juin', count: Math.round(yearVolume * 0.14) },
-        { label: 'Juil', count: Math.round(yearVolume * 0.14) },
-        { label: 'Août', count: Math.round(yearVolume * 0.15) },
-      ],
-      clientBreakdown: [
-        { name: 'Aethel Telecom Solutions', percentage: 41, count: Math.round(yearVolume * 0.41), color: '#ea580c' },
-        { name: 'Nexis Networks & Infra', percentage: 29, count: Math.round(yearVolume * 0.29), color: '#dc2626' },
-        { name: 'Solaria Communications', percentage: 18, count: Math.round(yearVolume * 0.18), color: '#0891b2' },
-        { name: 'Kyros Fiber Engineering', percentage: 12, count: Math.round(yearVolume * 0.12), color: '#ca8a04' },
-      ],
-    };
+    return `Année Complète ${selectedYear}`;
   };
 
   /**
@@ -214,25 +94,17 @@ export default function AnalyticsPage() {
   const statsQuery = useActivityStats(organization?.id ?? null, range);
   const stats = statsQuery.data ?? null;
 
-  const fallback = getSelectedAnalytics();
+  const teamsQuery = useTeams(organization?.id ?? null);
+  const teams = teamsQuery.data ?? [];
 
-  /**
-   * Les indicateurs proviennent de la base dès qu'elle a répondu.
-   *
-   * ─────────────────────────────────────────────────────────────────────────
-   * CE QUI A CHANGÉ
-   *
-   * Ces chiffres étaient écrits en dur : ils affichaient « 98,4 % de conformité »
-   * quelle que soit l'activité, y compris sur une entreprise sans une seule
-   * mission. `organization_activity_stats` les calcule désormais côté serveur,
-   * sur la période sélectionnée.
-   *
-   * Le taux de conformité est le rapport des comptes rendus VALIDÉS sur les
-   * comptes rendus contrôlés — validés plus refusés. Les comptes rendus encore
-   * en attente n'entrent pas au dénominateur : ils ne sont pas non conformes,
-   * ils ne sont pas encore jugés.
-   * ─────────────────────────────────────────────────────────────────────────
-   */
+  const quotesQuery = useQuotes(organization?.id ?? null);
+  const quotes = quotesQuery.data ?? [];
+
+  const totalQuotesCount = quotes.length;
+  const acceptedQuotes = quotes.filter((q) => q.status === 'accepted');
+  const pendingQuotes = quotes.filter((q) => q.status === 'sent' || q.status === 'draft');
+  const conversionRate = totalQuotesCount > 0 ? (acceptedQuotes.length / totalQuotesCount) * 100 : 0;
+
   const STATUS_LABELS_SHORT: Record<string, string> = {
     draft: 'Brouillon',
     assigned: 'Affectée',
@@ -247,7 +119,24 @@ export default function AnalyticsPage() {
   };
 
   const currentData = (() => {
-    if (stats === null) return fallback;
+    const periodLabel = getPeriodLabel();
+
+    if (stats === null) {
+      return {
+        periodLabel,
+        conformity: '—',
+        conformityDiff: 'Aucune donnée sur la période',
+        volume: '0',
+        volumeDiff: '0 intervenant',
+        avgDuration: '—',
+        durationDiff: '0 h au total',
+        sla: '0',
+        slaLabel: '0 en attente de contrôle',
+        totalMissions: 0,
+        chartData: [{ label: 'Aucune mission', count: 0 }],
+        clientBreakdown: [],
+      };
+    }
 
     const reviewed = stats.reports_approved + stats.reports_rejected;
     const conformity = reviewed === 0 ? null : (stats.reports_approved / reviewed) * 100;
@@ -268,7 +157,7 @@ export default function AnalyticsPage() {
     const palette = ['#ea580c', '#dc2626', '#0891b2', '#ca8a04', '#7c3aed', '#059669'];
 
     return {
-      periodLabel: fallback.periodLabel,
+      periodLabel,
       conformity: conformity === null ? '—' : `${conformity.toFixed(1)}%`,
       conformityDiff:
         reviewed === 0
@@ -295,37 +184,6 @@ export default function AnalyticsPage() {
   })();
 
   const maxChartCount = Math.max(1, ...currentData.chartData.map((d) => d.count));
-
-  // Performance des équipes
-  const teamPerformance = [
-    {
-      name: 'Équipe Fibre Optique Nord',
-      lead: 'Mathieu Laurent',
-      members: 4,
-      missions: 58,
-      avgTime: '1h 45m',
-      qualityScore: '99.2%',
-      color: '#2563eb',
-    },
-    {
-      name: 'Équipe Raccordement Ligne',
-      lead: 'Stéphane Leduc',
-      members: 3,
-      missions: 42,
-      avgTime: '2h 10m',
-      qualityScore: '98.5%',
-      color: '#16a34a',
-    },
-    {
-      name: 'Équipe Électricité Haute Tension',
-      lead: 'Thomas Bernard',
-      members: 3,
-      missions: 42,
-      avgTime: '3h 05m',
-      qualityScore: '97.8%',
-      color: '#d97706',
-    },
-  ];
 
   // Génération d'un Document PDF Haute Définition Exécutif
   const handleExportPDF = () => {
@@ -659,33 +517,31 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div class="section-title">Performance & Qualité par Équipe Terrain</div>
+        <div class="section-title">Performance & Activité par Équipe Terrain</div>
         <table class="table-custom">
           <thead>
             <tr>
               <th>Équipe Terrain</th>
-              <th>Chef d'Équipe</th>
-              <th style="text-align:center;">Effectif</th>
-              <th style="text-align:center;">Missions Réalisées</th>
-              <th style="text-align:center;">Temps Moyen</th>
-              <th style="text-align:right;">Conformité Qualité</th>
+              <th>Description / Spécialité</th>
+              <th style="text-align:right;">Statut</th>
             </tr>
           </thead>
           <tbody>
-            ${teamPerformance
-              .map(
-                (t) => `
+            ${
+              teams.length === 0
+                ? `<tr><td colspan="3" style="text-align:center; padding:14px; color:#64748b;">Aucune équipe enregistrée</td></tr>`
+                : teams
+                    .map(
+                      (t) => `
               <tr>
                 <td><strong>${t.name}</strong></td>
-                <td>${t.lead}</td>
-                <td style="text-align:center;">${t.members} techniciens</td>
-                <td style="text-align:center; font-weight:700;">${t.missions}</td>
-                <td style="text-align:center;">${t.avgTime}</td>
-                <td style="text-align:right;"><span class="badge-score">${t.qualityScore}</span></td>
+                <td>${t.description ?? '—'}</td>
+                <td style="text-align:right;"><span class="badge-score">${t.status === 'active' ? 'Active' : 'Archivée'}</span></td>
               </tr>
             `
-              )
-              .join('')}
+                    )
+                    .join('')
+            }
           </tbody>
         </table>
 
@@ -1115,12 +971,18 @@ export default function AnalyticsPage() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface-subtle/50 p-3.5 text-xs space-y-1">
-              <p className="font-semibold text-foreground">Top Donneur d'Ordre : Aethel Telecom</p>
-              <p className="text-muted-foreground text-2xs">
-                Représente la majorité du chiffre d'affaires et du volume d'interventions sur cette période.
-              </p>
-            </div>
+            {currentData.clientBreakdown.length > 0 && currentData.clientBreakdown[0] ? (
+              <div className="rounded-xl border border-border bg-surface-subtle/50 p-3.5 text-xs space-y-1">
+                <p className="font-semibold text-foreground">Top Donneur d'Ordre : {currentData.clientBreakdown[0].name}</p>
+                <p className="text-muted-foreground text-2xs">
+                  Représente {currentData.clientBreakdown[0].percentage}% de votre volume d'interventions sur cette période ({currentData.clientBreakdown[0].count} missions).
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-surface-subtle/50 p-3.5 text-xs text-center text-muted-foreground">
+                Aucun client actif sur cette période.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1130,10 +992,10 @@ export default function AnalyticsPage() {
         <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
           <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
             <UsersRound className="size-4.5 text-emerald-400" />
-            Performance & Conformité Qualité par Équipe
+            Performance & Activité par Équipe
           </CardTitle>
           <Badge variant="outline" className="font-mono text-xs">
-            3 équipes actives
+            {teams.length} équipe{teams.length > 1 ? 's' : ''}
           </Badge>
         </CardHeader>
         <CardContent className="pt-4">
@@ -1142,49 +1004,37 @@ export default function AnalyticsPage() {
               <thead>
                 <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">
                   <th className="pb-3 pl-2">Équipe Terrain</th>
-                  <th className="pb-3">Chef d'Équipe</th>
-                  <th className="pb-3 text-center">Effectif</th>
-                  <th className="pb-3 text-center">Missions Réalisées</th>
-                  <th className="pb-3 text-center">Temps Moyen</th>
-                  <th className="pb-3 text-right pr-2">Conformité Qualité</th>
+                  <th className="pb-3">Description / Spécialité</th>
+                  <th className="pb-3 text-right pr-2">Statut</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {teamPerformance.map((team) => (
-                  <tr key={team.name} className="hover:bg-surface-hover/50 transition-colors">
-                    <td className="py-3.5 pl-2">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="size-3 rounded-full shrink-0"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        <span className="font-semibold text-foreground">{team.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 text-muted-foreground font-medium">{team.lead}</td>
-                    <td className="py-3.5 text-center font-mono text-foreground">
-                      {team.members} techniciens
-                    </td>
-                    <td className="py-3.5 text-center font-mono font-bold text-foreground">
-                      {team.missions}
-                    </td>
-                    <td className="py-3.5 text-center font-mono text-muted-foreground">
-                      {team.avgTime}
-                    </td>
-                    <td className="py-3.5 text-right pr-2">
-                      <Badge variant="success" className="font-mono text-2xs">
-                        {team.qualityScore}
-                      </Badge>
+                {teams.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-muted-foreground text-xs">
+                      Aucune équipe enregistrée pour le moment.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  teams.map((team) => (
+                    <tr key={team.id} className="hover:bg-surface-hover/50 transition-colors">
+                      <td className="py-3.5 pl-2 font-semibold text-foreground">{team.name}</td>
+                      <td className="py-3.5 text-muted-foreground font-medium">{team.description ?? '—'}</td>
+                      <td className="py-3.5 text-right pr-2">
+                        <Badge variant={team.status === 'active' ? 'outline' : 'neutral'} className="font-mono text-2xs">
+                          {team.status === 'active' ? 'Active' : 'Archivée'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* 4. Rentabilité Financière, Devis & Métiers */}
+      {/* 4. Suivi des Devis & Volume par Secteur */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* KPI Devis & Taux de Transformation */}
         <Card className="lg:col-span-1">
@@ -1198,7 +1048,9 @@ export default function AnalyticsPage() {
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface-subtle border border-border">
               <div className="space-y-0.5">
                 <p className="text-3xs font-semibold text-muted-foreground uppercase">Taux de Conversion</p>
-                <p className="text-2xl font-bold font-mono text-emerald-500">84.6%</p>
+                <p className="text-2xl font-bold font-mono text-emerald-500">
+                  {totalQuotesCount > 0 ? `${conversionRate.toFixed(1)}%` : '—'}
+                </p>
                 <p className="text-3xs text-muted-foreground">Devis validés et lancés</p>
               </div>
               <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
@@ -1209,92 +1061,58 @@ export default function AnalyticsPage() {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1.5 border-b border-border/50">
                 <span className="text-muted-foreground">Devis émis</span>
-                <span className="font-mono font-bold text-foreground">39 devis</span>
+                <span className="font-mono font-bold text-foreground">{totalQuotesCount} devis</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-border/50">
                 <span className="text-muted-foreground">Devis signés / acceptés</span>
-                <span className="font-mono font-bold text-emerald-500">33 devis</span>
+                <span className="font-mono font-bold text-emerald-500">{acceptedQuotes.length} devis</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-border/50">
                 <span className="text-muted-foreground">En attente signature</span>
-                <span className="font-mono font-bold text-amber-500">6 devis</span>
+                <span className="font-mono font-bold text-amber-500">{pendingQuotes.length} devis</span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-muted-foreground">Montant moyen / intervention</span>
-                <span className="font-mono font-bold text-foreground">420,00 € HT</span>
+                <span className="text-muted-foreground">Taux en cours</span>
+                <span className="font-mono font-bold text-foreground">
+                  {totalQuotesCount > 0 ? `${((pendingQuotes.length / totalQuotesCount) * 100).toFixed(1)}%` : '—'}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Rentabilité par Métier */}
+        {/* Répartition de l'Activité Métier */}
         <Card className="lg:col-span-2">
           <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
               <Layers className="size-4.5 text-blue-500" />
-              Rentabilité & Volume par Spécialité Technique
+              Activité & Volume par Statut d'Intervention
             </CardTitle>
             <Badge variant="primary" className="text-2xs font-mono">
-              4 secteurs
+              {currentData.chartData.length} statuts
             </Badge>
           </CardHeader>
           <CardContent className="pt-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-blue-500" />
-                    Fibre Optique FTTH / D3
-                  </span>
-                  <Badge variant="success" className="text-3xs font-mono">+18% marge</Badge>
+              {currentData.chartData.map((item) => (
+                <div key={item.label} className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-blue-500" />
+                      {item.label}
+                    </span>
+                    <span className="font-mono font-bold text-xs text-foreground">{item.count} missions</span>
+                  </div>
+                  <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-primary h-full rounded-full"
+                      style={{
+                        width: `${maxChartCount > 0 ? (item.count / maxChartCount) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <p className="text-2xs text-muted-foreground">58 interventions • 99.2% conformité</p>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '68%' }} />
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-amber-500" />
-                    Électricité & Bornes IRVE
-                  </span>
-                  <Badge variant="success" className="text-3xs font-mono">+24% marge</Badge>
-                </div>
-                <p className="text-2xs text-muted-foreground">42 interventions • 97.8% conformité</p>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-emerald-500" />
-                    Raccordement Télécom / Cuivre
-                  </span>
-                  <Badge variant="outline" className="text-3xs font-mono">+12% marge</Badge>
-                </div>
-                <p className="text-2xs text-muted-foreground">32 interventions • 98.5% conformité</p>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '35%' }} />
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-purple-500" />
-                    Audits & Maintenance Réseau
-                  </span>
-                  <Badge variant="success" className="text-3xs font-mono">+31% marge</Badge>
-                </div>
-                <p className="text-2xs text-muted-foreground">10 interventions • 100% conformité</p>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-purple-500 h-full rounded-full" style={{ width: '22%' }} />
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

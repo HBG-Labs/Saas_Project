@@ -44,8 +44,9 @@ describe('matrice des entitlements', () => {
     }
   });
 
-  it('réserve la gestion de matériel, stocks et achats aux forfaits Pro et supérieurs', () => {
+  it('réserve les calculateurs métiers, la gestion de matériel, stocks et achats aux forfaits Pro et supérieurs', () => {
     const proExclusiveFeatures: FeatureKey[] = [
+      FEATURES.proTools,
       FEATURES.equipment,
       FEATURES.stock,
       FEATURES.purchases,

@@ -228,7 +228,6 @@ insert into public.plan_features (plan_code, feature_key, limit_value) values
   ('starter', 'catalog_access',      null),
   ('starter', 'calculation_history', null),
   ('starter', 'favorites',           null),
-  ('starter', 'pro_tools',           null),
   ('starter', 'export_pdf',          null),
   ('starter', 'export_csv',          null),
   ('starter', 'organizations',       null),

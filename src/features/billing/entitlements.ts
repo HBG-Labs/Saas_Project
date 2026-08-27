@@ -60,7 +60,6 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     catalog_access: null,
     calculation_history: null,
     favorites: null,
-    pro_tools: null,
     export_pdf: null,
     export_csv: null,
     organizations: null,

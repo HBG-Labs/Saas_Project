@@ -31,9 +31,17 @@ const COMPARISON_FEATURES = [
     enterprise: '+5 €/user/mois (Illimité)',
   },
   {
-    name: 'Accès aux calculatrices & outils certifiés',
+    name: 'Outils & convertisseurs universels',
     free: true,
     starter: true,
+    pro: true,
+    business: true,
+    enterprise: true,
+  },
+  {
+    name: 'Calculateurs Métiers certifiés (Fibre, Élec, BTP...)',
+    free: false,
+    starter: false,
     pro: true,
     business: true,
     enterprise: true,
