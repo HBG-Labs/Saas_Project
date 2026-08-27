@@ -70,53 +70,53 @@ export function RezoNetworkHeroCanvas() {
     // État du scroll pour la transition vers le bas
     let scrollProgress = 0;
 
-    // Palette REZO360 : Dark Mode & Light Mode
+    // Palette REZO360 : Dark Mode & Light Mode (Ajustée pour un fond subtil et raffiné)
     const DARK_THEME = {
       core: '#38bdf8', // Cyan vif
-      coreGlow: 'rgba(56, 189, 248, 0.45)',
+      coreGlow: 'rgba(56, 189, 248, 0.22)',
       fibre: '#06b6d4', // Cyan fibre
-      fibreGlow: 'rgba(6, 182, 212, 0.35)',
+      fibreGlow: 'rgba(6, 182, 212, 0.16)',
       telecom: '#3b82f6', // Bleu électrique
-      telecomGlow: 'rgba(59, 130, 246, 0.35)',
+      telecomGlow: 'rgba(59, 130, 246, 0.16)',
       elec: '#f59e0b', // Ambre / énergie
-      elecGlow: 'rgba(245, 158, 11, 0.35)',
+      elecGlow: 'rgba(245, 158, 11, 0.16)',
       maintenance: '#10b981', // Émeraude / chantier actif
-      maintenanceGlow: 'rgba(16, 185, 129, 0.35)',
+      maintenanceGlow: 'rgba(16, 185, 129, 0.16)',
       hub: '#6366f1', // Indigo / répartiteur
-      hubGlow: 'rgba(99, 102, 241, 0.35)',
-      grid: 'rgba(59, 130, 246, 0.04)',
+      hubGlow: 'rgba(99, 102, 241, 0.16)',
+      grid: 'rgba(59, 130, 246, 0.02)',
       lineBase: '56, 189, 248',
-      halo0: 'rgba(56, 189, 248, 0.14)',
-      halo1: 'rgba(37, 99, 235, 0.06)',
+      halo0: 'rgba(56, 189, 248, 0.06)',
+      halo1: 'rgba(37, 99, 235, 0.02)',
       halo2: 'rgba(15, 23, 42, 0)',
-      coreOuterRing: 'rgba(56, 189, 248, 0.4)',
-      coreInnerRing: 'rgba(6, 182, 212, 0.35)',
-      coreHaloStop: 'rgba(56, 189, 248, 0.2)',
-      labelColor: 'rgba(148, 163, 184, 0.75)',
+      coreOuterRing: 'rgba(56, 189, 248, 0.20)',
+      coreInnerRing: 'rgba(6, 182, 212, 0.18)',
+      coreHaloStop: 'rgba(56, 189, 248, 0.08)',
+      labelColor: 'rgba(148, 163, 184, 0.40)',
     };
 
     const LIGHT_THEME = {
       core: '#0284c7', // Sky 600
-      coreGlow: 'rgba(2, 132, 199, 0.25)',
+      coreGlow: 'rgba(2, 132, 199, 0.14)',
       fibre: '#0891b2', // Cyan 600
-      fibreGlow: 'rgba(8, 145, 178, 0.20)',
+      fibreGlow: 'rgba(8, 145, 178, 0.12)',
       telecom: '#2563eb', // Bleu royal 600
-      telecomGlow: 'rgba(37, 99, 235, 0.20)',
+      telecomGlow: 'rgba(37, 99, 235, 0.12)',
       elec: '#d97706', // Ambre 600
-      elecGlow: 'rgba(217, 119, 6, 0.20)',
+      elecGlow: 'rgba(217, 119, 6, 0.12)',
       maintenance: '#059669', // Émeraude 600
-      maintenanceGlow: 'rgba(5, 150, 105, 0.20)',
+      maintenanceGlow: 'rgba(5, 150, 105, 0.12)',
       hub: '#4f46e5', // Indigo 600
-      hubGlow: 'rgba(79, 70, 229, 0.20)',
-      grid: 'rgba(148, 163, 184, 0.12)', // Grille cartographique fine
+      hubGlow: 'rgba(79, 70, 229, 0.12)',
+      grid: 'rgba(148, 163, 184, 0.06)',
       lineBase: '37, 99, 235',
-      halo0: 'rgba(37, 99, 235, 0.08)',
-      halo1: 'rgba(14, 165, 233, 0.04)',
+      halo0: 'rgba(37, 99, 235, 0.04)',
+      halo1: 'rgba(14, 165, 233, 0.02)',
       halo2: 'rgba(248, 250, 252, 0)',
-      coreOuterRing: 'rgba(2, 132, 199, 0.4)',
-      coreInnerRing: 'rgba(8, 145, 178, 0.35)',
-      coreHaloStop: 'rgba(2, 132, 199, 0.2)',
-      labelColor: 'rgba(71, 85, 105, 0.85)',
+      coreOuterRing: 'rgba(2, 132, 199, 0.22)',
+      coreInnerRing: 'rgba(8, 145, 178, 0.18)',
+      coreHaloStop: 'rgba(2, 132, 199, 0.10)',
+      labelColor: 'rgba(71, 85, 105, 0.50)',
     };
 
     const getTheme = () =>
@@ -156,9 +156,9 @@ export function RezoNetworkHeroCanvas() {
         type: 'core',
         label: 'REZO CORE',
         code: 'HUB-ORCHESTRATION',
-        radius: isMobile ? 6 : 9,
-        basePulse: 1.0,
-        pulseSpeed: 0.03,
+        radius: isMobile ? 5 : 7.5,
+        basePulse: 0.9,
+        pulseSpeed: 0.01,
         pulsePhase: 0,
         activeRipple: 0,
         color: currentTheme.core,
@@ -238,9 +238,9 @@ export function RezoNetworkHeroCanvas() {
           type: p.type,
           label: p.label,
           code: p.code,
-          radius: (isMobile ? 3 : 4.5) * Math.max(0.6, p.depth),
+          radius: (isMobile ? 2.5 : 3.8) * Math.max(0.6, p.depth),
           basePulse: 0.8,
-          pulseSpeed: 0.02 + Math.random() * 0.02,
+          pulseSpeed: 0.007 + Math.random() * 0.007,
           pulsePhase: Math.random() * Math.PI * 2,
           activeRipple: 0,
           color: themeColor,
@@ -249,7 +249,7 @@ export function RezoNetworkHeroCanvas() {
       });
 
       // 3. Construction des connexions logiques (Topologie adaptée en pixels réels)
-      const connect = (from: number, to: number, strength = 0.25, curvature = 0) => {
+      const connect = (from: number, to: number, strength = 0.16, curvature = 0) => {
         if (from >= nodes.length || to >= nodes.length) return;
         edges.push({
           fromIndex: from,
@@ -271,7 +271,7 @@ export function RezoNetworkHeroCanvas() {
           if (!target) continue;
           const distPx = Math.hypot((core.x - target.x) * width, (core.y - target.y) * height);
           if (distPx < maxConnectPx * 1.2) {
-            connect(0, i, 0.32, (Math.random() - 0.5) * 0.08);
+            connect(0, i, 0.18, (Math.random() - 0.5) * 0.06);
           }
         }
       }
@@ -285,13 +285,13 @@ export function RezoNetworkHeroCanvas() {
           if (!nodeB) continue;
           const distPx = Math.hypot((nodeA.x - nodeB.x) * width, (nodeA.y - nodeB.y) * height);
           if (distPx < maxConnectPx) {
-            connect(i, j, 0.18, (Math.random() - 0.5) * 0.10);
+            connect(i, j, 0.09, (Math.random() - 0.5) * 0.08);
           }
         }
       }
 
-      // 4. Initialisation des paquets de données en circulation
-      const packetCount = isMobile ? 6 : 14;
+      // 4. Initialisation des paquets de données en circulation (Flux calmes et apaisés)
+      const packetCount = isMobile ? 3 : 7;
       for (let k = 0; k < packetCount; k++) {
         if (edges.length === 0) break;
         const edgeIdx = Math.floor(Math.random() * edges.length);
@@ -301,8 +301,8 @@ export function RezoNetworkHeroCanvas() {
         packets.push({
           edgeIndex: edgeIdx,
           progress: Math.random(),
-          speed: 0.003 + Math.random() * 0.004,
-          size: isMobile ? 2.0 : 2.5,
+          speed: 0.0010 + Math.random() * 0.0014,
+          size: isMobile ? 1.6 : 2.0,
           color: sourceNode ? sourceNode.color : currentTheme.core,
           reverse: Math.random() > 0.5,
         });
@@ -369,9 +369,9 @@ export function RezoNetworkHeroCanvas() {
 
       const currentTheme = getTheme();
 
-      // Amortissement lerp pour la souris
-      currentMouseX += (targetMouseX - currentMouseX) * 0.05;
-      currentMouseY += (targetMouseY - currentMouseY) * 0.05;
+      // Amortissement lerp pour la souris (très doux)
+      currentMouseX += (targetMouseX - currentMouseX) * 0.025;
+      currentMouseY += (targetMouseY - currentMouseY) * 0.025;
 
       // Effacement du canvas
       ctx.clearRect(0, 0, width, height);
@@ -387,16 +387,16 @@ export function RezoNetworkHeroCanvas() {
       // Opacité globale liée au scroll
       ctx.globalAlpha = 1 - scrollProgress * 0.85;
 
-      // Calcul des coordonnées réelles avec parallaxe de profondeur
+      // Calcul des coordonnées réelles avec parallaxe de profondeur apaisé
       const computedNodes = nodes.map((node) => {
-        const parallaxFactor = node.depth * 20;
+        const parallaxFactor = node.depth * 9;
         const px = node.x * width + currentMouseX * parallaxFactor;
-        const py = node.y * height + currentMouseY * parallaxFactor + scrollProgress * 40;
+        const py = node.y * height + currentMouseY * parallaxFactor + scrollProgress * 30;
         return { ...node, px, py };
       });
 
       // 1. Grille cartographique technique discrète
-      const gridSize = width < 768 ? 50 : 70;
+      const gridSize = width < 768 ? 55 : 75;
       ctx.strokeStyle = currentTheme.grid;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -413,7 +413,7 @@ export function RezoNetworkHeroCanvas() {
       // 2. Halo atmosphérique sous le REZO CORE
       const coreNode = computedNodes[0];
       if (coreNode) {
-        const haloRadius = width < 768 ? width * 0.45 : width * 0.35;
+        const haloRadius = width < 768 ? width * 0.40 : width * 0.30;
         const haloGrad = ctx.createRadialGradient(
           coreNode.px,
           coreNode.py,
@@ -432,18 +432,18 @@ export function RezoNetworkHeroCanvas() {
         ctx.fill();
       }
 
-      // 3. Dessin des lignes de réseau (Edges)
+      // 3. Dessin des lignes de réseau (Edges - Pulsations très douces et lentes)
       edges.forEach((edge) => {
         const from = computedNodes[edge.fromIndex];
         const to = computedNodes[edge.toIndex];
         if (!from || !to) return;
 
-        edge.pulsePhase += delta * 1.5;
-        const dynamicAlpha = edge.strength * (0.7 + 0.3 * Math.sin(edge.pulsePhase));
+        edge.pulsePhase += delta * 0.4;
+        const dynamicAlpha = edge.strength * (0.8 + 0.2 * Math.sin(edge.pulsePhase));
 
         ctx.beginPath();
         ctx.strokeStyle = `rgba(${currentTheme.lineBase}, ${dynamicAlpha.toFixed(3)})`;
-        ctx.lineWidth = Math.max(0.7, ((from.depth + to.depth) / 2) * 1.1);
+        ctx.lineWidth = Math.max(0.6, ((from.depth + to.depth) / 2) * 0.9);
 
         // Ligne avec courbure quadratique élégante
         if (Math.abs(edge.curvature) > 0.01) {
@@ -479,7 +479,7 @@ export function RezoNetworkHeroCanvas() {
           if (packet.progress >= 1 || packet.progress <= 0) {
             const targetNode = packet.progress >= 1 ? nodes[edge.toIndex] : nodes[edge.fromIndex];
             if (targetNode) {
-              targetNode.activeRipple = 1.0;
+              targetNode.activeRipple = 0.8;
             }
 
             const nextNodeIdx = packet.progress >= 1 ? edge.toIndex : edge.fromIndex;
@@ -528,21 +528,21 @@ export function RezoNetworkHeroCanvas() {
 
           const packetColor = currentTheme[from.type];
 
-          // Dessin du paquet lumineux
+          // Dessin du paquet lumineux discret
           ctx.beginPath();
-          const pGlow = ctx.createRadialGradient(posX, posY, 0, posX, posY, packet.size * 3.5);
+          const pGlow = ctx.createRadialGradient(posX, posY, 0, posX, posY, packet.size * 2.5);
           pGlow.addColorStop(0, packetColor);
-          pGlow.addColorStop(0.4, packetColor);
+          pGlow.addColorStop(0.35, packetColor);
           pGlow.addColorStop(1, `rgba(${currentTheme.lineBase}, 0)`);
 
           ctx.fillStyle = pGlow;
-          ctx.arc(posX, posY, packet.size * 3.5, 0, Math.PI * 2);
+          ctx.arc(posX, posY, packet.size * 2.5, 0, Math.PI * 2);
           ctx.fill();
 
           // Cœur étincelant blanc
           ctx.beginPath();
           ctx.fillStyle = '#ffffff';
-          ctx.arc(posX, posY, packet.size * 0.8, 0, Math.PI * 2);
+          ctx.arc(posX, posY, packet.size * 0.7, 0, Math.PI * 2);
           ctx.fill();
         });
       }
@@ -553,7 +553,7 @@ export function RezoNetworkHeroCanvas() {
           node.pulsePhase += node.pulseSpeed;
         }
 
-        const pulseScale = 1 + Math.sin(node.pulsePhase) * 0.15;
+        const pulseScale = 1 + Math.sin(node.pulsePhase) * 0.10;
         const currentRadius = node.radius * pulseScale;
 
         const nodeColor = currentTheme[node.type];
@@ -561,44 +561,44 @@ export function RezoNetworkHeroCanvas() {
 
         // Ondes de choc actives (Ripples)
         if (node.activeRipple > 0) {
-          const maxRippleRadius = node.radius * (idx === 0 ? 5.5 : 4.0);
+          const maxRippleRadius = node.radius * (idx === 0 ? 4.5 : 3.2);
           const rippleRadius = node.radius + (1 - node.activeRipple) * (maxRippleRadius - node.radius);
 
           ctx.beginPath();
           ctx.strokeStyle = nodeColor;
-          ctx.globalAlpha = node.activeRipple * 0.5 * (1 - scrollProgress);
-          ctx.lineWidth = 1.2;
+          ctx.globalAlpha = node.activeRipple * 0.3 * (1 - scrollProgress);
+          ctx.lineWidth = 1.0;
           ctx.arc(node.px, node.py, rippleRadius, 0, Math.PI * 2);
           ctx.stroke();
           ctx.globalAlpha = 1 - scrollProgress * 0.85;
 
-          node.activeRipple -= delta * 1.8;
+          node.activeRipple -= delta * 1.2;
           if (node.activeRipple < 0) node.activeRipple = 0;
         }
 
         // Cas Particulier : Le REZO CORE
         if (node.type === 'core') {
-          // Anneau orbital externe en pointillés
+          // Anneau orbital externe en pointillés (rotation lente)
           ctx.save();
           ctx.translate(node.px, node.py);
-          ctx.rotate(time * 0.0003);
+          ctx.rotate(time * 0.00008);
           ctx.beginPath();
-          ctx.setLineDash([4, 6]);
+          ctx.setLineDash([3, 5]);
           ctx.strokeStyle = currentTheme.coreOuterRing;
-          ctx.lineWidth = 1.2;
-          ctx.arc(0, 0, node.radius * 3.0, 0, Math.PI * 2);
+          ctx.lineWidth = 1.0;
+          ctx.arc(0, 0, node.radius * 2.8, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
           // Anneau orbital intermédiaire inversé
           ctx.save();
           ctx.translate(node.px, node.py);
-          ctx.rotate(-time * 0.0004);
+          ctx.rotate(-time * 0.00010);
           ctx.beginPath();
-          ctx.setLineDash([6, 10]);
+          ctx.setLineDash([5, 8]);
           ctx.strokeStyle = currentTheme.coreInnerRing;
-          ctx.lineWidth = 1.0;
-          ctx.arc(0, 0, node.radius * 2.0, 0, Math.PI * 2);
+          ctx.lineWidth = 0.9;
+          ctx.arc(0, 0, node.radius * 1.9, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
@@ -609,7 +609,7 @@ export function RezoNetworkHeroCanvas() {
             0,
             node.px,
             node.py,
-            node.radius * 2.5
+            node.radius * 2.2
           );
           coreGrad.addColorStop(0, '#ffffff');
           coreGrad.addColorStop(0.3, nodeColor);
@@ -618,12 +618,12 @@ export function RezoNetworkHeroCanvas() {
 
           ctx.beginPath();
           ctx.fillStyle = coreGrad;
-          ctx.arc(node.px, node.py, node.radius * 2.5, 0, Math.PI * 2);
+          ctx.arc(node.px, node.py, node.radius * 2.2, 0, Math.PI * 2);
           ctx.fill();
         }
 
         // Halo régulier du nœud
-        const glowRadius = currentRadius * (idx === 0 ? 3 : 2.5);
+        const glowRadius = currentRadius * (idx === 0 ? 2.6 : 2.0);
         const nodeGlow = ctx.createRadialGradient(
           node.px,
           node.py,
@@ -650,14 +650,14 @@ export function RezoNetworkHeroCanvas() {
         // Point focal intérieur
         ctx.beginPath();
         ctx.fillStyle = '#ffffff';
-        ctx.arc(node.px, node.py, currentRadius * 0.45, 0, Math.PI * 2);
+        ctx.arc(node.px, node.py, currentRadius * 0.4, 0, Math.PI * 2);
         ctx.fill();
 
         // Micro-étiquettes techniques (sur grand écran uniquement)
         if (width >= 1024 && node.depth >= 0.7) {
-          ctx.font = '600 9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+          ctx.font = '500 8.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
           ctx.fillStyle = currentTheme.labelColor;
-          ctx.fillText(node.code, node.px + currentRadius + 8, node.py + 3);
+          ctx.fillText(node.code, node.px + currentRadius + 7, node.py + 3);
         }
       });
 
@@ -686,10 +686,10 @@ export function RezoNetworkHeroCanvas() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden select-none"
     >
-      {/* Canvas d'orchestration réseau */}
+      {/* Canvas d'orchestration réseau avec opacité subtile */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 size-full transition-opacity duration-700 opacity-80"
+        className="absolute inset-0 size-full transition-opacity duration-700 opacity-45 dark:opacity-50"
       />
 
       {/* Masque dégradé doux pour lisibilité sans masquer le fond */}
