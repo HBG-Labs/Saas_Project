@@ -63,14 +63,16 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? supabaseAnonKey;
 
     // 1. Vérification de la session utilisateur
+    const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false },
     });
 
     const {
       data: { user },
       error: userError,
-    } = await userClient.auth.getUser();
+    } = await userClient.auth.getUser(jwt);
 
     if (userError || !user) {
       return json({ error: 'Session utilisateur invalide ou expirée' }, 401);

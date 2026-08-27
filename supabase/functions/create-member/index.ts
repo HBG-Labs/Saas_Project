@@ -117,14 +117,16 @@ Deno.serve(async (request) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
   // Client « appelant » : tout ce qu'il fait passe par la RLS.
+  const jwt = authorization.replace(/^Bearer\s+/i, '').trim();
   const asCaller = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authorization } },
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
+    auth: { persistSession: false },
   });
 
   const {
     data: { user: caller },
     error: callerError,
-  } = await asCaller.auth.getUser();
+  } = await asCaller.auth.getUser(jwt);
 
   if (callerError || !caller) {
     return json({ error: 'Session invalide.' }, 401);

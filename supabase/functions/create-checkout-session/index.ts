@@ -116,7 +116,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const caller = callerClient(authorization);
 
   // Droit de facturer + situation réelle de l'organisation.
-  const access = await requireBillingAccess(caller, organizationId);
+  const access = await requireBillingAccess(caller, organizationId, authorization);
   if ('error' in access) return access.error;
 
   // Le plan VISÉ, qui n'est pas forcément le plan courant.

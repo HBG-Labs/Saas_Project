@@ -68,7 +68,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const caller = callerClient(authorization);
 
-  const access = await requireBillingAccess(caller, organizationId);
+  const access = await requireBillingAccess(caller, organizationId, authorization);
   if ('error' in access) return access.error;
 
   const { context } = access;

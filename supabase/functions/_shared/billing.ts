@@ -39,10 +39,16 @@ export function env(name: string): string {
   return value;
 }
 
+export function extractJwt(authorization: string): string {
+  return authorization.replace(/^Bearer\s+/i, '').trim();
+}
+
 /** Client agissant AVEC le jeton de l'appelant : la RLS s'applique. */
 export function callerClient(authorization: string): SupabaseClient {
+  const jwt = extractJwt(authorization);
   return createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), {
-    global: { headers: { Authorization: authorization } },
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
+    auth: { persistSession: false },
   });
 }
 
@@ -74,12 +80,18 @@ export interface BillingContext {
 export async function requireBillingAccess(
   caller: SupabaseClient,
   organizationId: string,
+  authorization?: string,
 ): Promise<{ context: BillingContext } | { error: Response }> {
+  const jwt = authorization ? extractJwt(authorization) : undefined;
   const {
     data: { user },
-  } = await caller.auth.getUser();
+    error: authError,
+  } = await (jwt ? caller.auth.getUser(jwt) : caller.auth.getUser());
 
-  if (!user) return { error: json({ error: 'Session invalide.' }, 401) };
+  if (authError || !user) {
+    console.warn('requireBillingAccess: Session invalide', authError);
+    return { error: json({ error: 'Session invalide.' }, 401) };
+  }
 
   const { data: membership } = await caller
     .from('organization_members')
