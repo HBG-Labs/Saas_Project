@@ -245,6 +245,12 @@ export async function createCheckoutSession(params: {
 }): Promise<string> {
   const base = window.location.origin;
 
+  // Garantir que le jeton de session est valide et actif
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    throw new AppError('unauthorized', 'Session expirée. Veuillez vous reconnecter.');
+  }
+
   const response: { data: { url?: string; error?: string } | null; error: unknown } =
     await supabase.functions.invoke<{ url?: string; error?: string }>('create-checkout-session', {
       body: {
@@ -279,6 +285,11 @@ export async function createCheckoutSession(params: {
  * périmètre PCI-DSS pour n'apporter aucun service de plus.
  */
 export async function createBillingPortalSession(organizationId: string): Promise<string> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    throw new AppError('unauthorized', 'Session expirée. Veuillez vous reconnecter.');
+  }
+
   const response: { data: { url?: string; error?: string } | null; error: unknown } =
     await supabase.functions.invoke<{ url?: string; error?: string }>(
       'create-billing-portal-session',
