@@ -33,9 +33,9 @@ const FAQS: FaqItem[] = [
   {
     id: '3',
     category: 'platform',
-    question: 'Comment fonctionne le mode hors-ligne (Offline) ?',
+    question: 'Puis-je exporter mes résultats et fiches de dimensionnement ?',
     answer:
-      "REZO360 s'appuie sur la technologie PWA. Vos données et outils clés sont stockés localement sur votre appareil. Vous travaillez sans réseau et l'application se synchronise automatiquement au retour de la connexion.",
+      "Oui. Vous pouvez exporter vos synthèses, bilans techniques et fiches de calcul en PDF prêts à transmettre à vos clients ou bureaux d'études, ou copier directement le compte-rendu textuel en 1 clic.",
   },
   {
     id: '4',

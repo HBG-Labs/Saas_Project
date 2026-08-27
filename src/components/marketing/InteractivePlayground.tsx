@@ -109,7 +109,7 @@ export function InteractivePlayground() {
               </div>
               <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-900/60 p-2.5 backdrop-blur-xs">
                 <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
-                <span>Fonctionne 100% hors-ligne</span>
+                <span>Calculs instantanés &amp; exports</span>
               </div>
             </div>
           </div>

@@ -79,7 +79,7 @@ export function Categories() {
           </p>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-400">
             Une suite d’ingénierie universelle et rigoureuse pour tous les techniciens et ingénieurs de terrain,
-            accessible en ligne comme hors-connexion.
+            accessible directement sur mobile, tablette et ordinateur.
           </p>
         </div>
 

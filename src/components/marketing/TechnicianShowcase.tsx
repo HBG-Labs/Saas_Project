@@ -33,7 +33,7 @@ export function TechnicianShowcase() {
           </h2>
 
           <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-300">
-            Du raccordement d’infrastructures au pilotage opérationnel en régie : vos équipes disposent d’une synchronisation continue, même hors-ligne.
+            Du raccordement d’infrastructures au pilotage opérationnel en régie : vos équipes disposent d’une synchronisation continue sur tous vos chantiers.
           </p>
         </div>
 
@@ -64,10 +64,10 @@ export function TechnicianShowcase() {
                   <span>{tech.badge}</span>
                 </div>
 
-                {/* Puce statut PWA Hors-ligne / En direct */}
+                {/* Puce statut Cloud En direct */}
                 <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/85 px-2.5 py-1 text-3xs font-bold text-emerald-300 shadow-md backdrop-blur-md">
                   <span className="size-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>SYNCHRO PWA</span>
+                  <span>SYNCHRO CLOUD</span>
                 </div>
 
                 {/* Localisation et Identité en bas de l'image */}
