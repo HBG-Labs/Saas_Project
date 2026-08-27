@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { useContext } from 'react';
 
 import { useAuth } from '@/features/auth';
+import { OrganizationContext } from '@/features/organizations/context/organization-context';
 import { qk } from '@/lib/query-keys';
 
 import {
@@ -17,6 +19,14 @@ import {
   type PlanCode,
 } from '../entitlements';
 
+const PLAN_HIERARCHY: Record<PlanCode, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  business: 3,
+  enterprise: 4,
+};
+
 /**
  * Droits effectifs de l'utilisateur — ou de l'organisation courante.
  *
@@ -29,9 +39,7 @@ import {
  * policy du module professionnel passe par `app.can_use_pro_module`.
  *
  * Conséquence directe : le plan n'est JAMAIS un état local. Il découle de la
- * table `subscriptions`, fermée en écriture au client. La version précédente le
- * stockait dans un `useState` qu'un bouton de l'interface pouvait faire passer à
- * « pro » — l'utilisateur s'accordait lui-même les droits qu'il voulait.
+ * table `subscriptions`, fermée en écriture au client.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -45,35 +53,50 @@ export interface Entitlements {
 }
 
 /**
- * Droits attachés au COMPTE (catalogue, historique, favoris, outils pro).
+ * Droits attachés au COMPTE et à l'ORGANISATION ACTIVE.
  *
- * Un visiteur anonyme retombe sur `free` sans requête : il n'a pas d'abonnement,
- * et interroger le serveur pour l'apprendre coûterait un aller-retour à chaque
- * chargement de la page d'accueil.
+ * Si l'utilisateur appartient à une organisation abonnée (ex: Pro, Business, Enterprise),
+ * il bénéficie automatiquement du plan de son entreprise pour les outils métiers,
+ * l'historique et les exports.
  */
 export function useUserEntitlements(): Entitlements {
   const { user, status } = useAuth();
   const userId = user?.id ?? null;
 
-  const { data, isPending } = useQuery({
+  const orgContext = useContext(OrganizationContext);
+  const organizationId = orgContext?.organization?.id ?? null;
+
+  const userSubQuery = useQuery({
     queryKey: qk.billing.mySubscription(userId),
     queryFn: () => (userId === null ? Promise.resolve(null) : getMySubscription(userId)),
     enabled: userId !== null,
-    // L'abonnement ne change qu'au retour d'un paiement : inutile de le
-    // réinterroger à chaque montage d'un composant d'outil.
     staleTime: 5 * 60_000,
   });
 
-  const planCode = userId === null ? DEFAULT_PLAN : resolvePlanCode(data ?? null);
+  const orgPlanQuery = useQuery({
+    queryKey: [...qk.billing.all, 'plan-code', organizationId ?? 'none'],
+    queryFn: () =>
+      organizationId === null
+        ? Promise.resolve(DEFAULT_PLAN)
+        : getOrganizationPlanCode(organizationId),
+    enabled: organizationId !== null,
+    staleTime: 5 * 60_000,
+  });
+
+  const userPlan = userId === null ? DEFAULT_PLAN : resolvePlanCode(userSubQuery.data ?? null);
+  const orgPlan = organizationId === null ? DEFAULT_PLAN : (orgPlanQuery.data ?? DEFAULT_PLAN);
+
+  // Le plan effectif retient le meilleur niveau entre l'abonnement personnel et l'organisation active
+  const planCode = PLAN_HIERARCHY[orgPlan] >= PLAN_HIERARCHY[userPlan] ? orgPlan : userPlan;
 
   return {
     planCode,
     has: (feature) => planHasFeature(planCode, feature),
     limit: (feature) => planFeatureLimit(planCode, feature),
-    // `status === 'loading'` compte comme un chargement : afficher les droits du
-    // plan gratuit pendant la restauration de session ferait clignoter les
-    // bannières de montée en gamme sous les yeux d'un abonné.
-    isLoading: status === 'loading' || (userId !== null && isPending),
+    isLoading:
+      status === 'loading' ||
+      (userId !== null && userSubQuery.isPending) ||
+      (organizationId !== null && orgPlanQuery.isPending),
   };
 }
 

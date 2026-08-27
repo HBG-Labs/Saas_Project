@@ -444,7 +444,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                     <Sparkles className="size-3.5 text-cyan-100 group-hover:rotate-12 transition-transform" />
                     <span>Débloquer l’accès Pro</span>
                     <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-cyan-100 border border-white/10">
-                      Dès 19 €/m
+                      Dès 39 €/m
                     </span>
                   </div>
                 </button>
