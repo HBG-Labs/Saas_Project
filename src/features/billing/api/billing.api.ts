@@ -248,7 +248,7 @@ export async function createCheckoutSession(params: {
   // Garantir que le jeton de session est valide et actif
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData?.session) {
-    throw new AppError('unauthorized', 'Session expirée. Veuillez vous reconnecter.');
+    throw new AppError('unauthenticated', 'Session expirée. Veuillez vous reconnecter.');
   }
 
   const response: { data: { url?: string; error?: string } | null; error: unknown } =
@@ -287,7 +287,7 @@ export async function createCheckoutSession(params: {
 export async function createBillingPortalSession(organizationId: string): Promise<string> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData?.session) {
-    throw new AppError('unauthorized', 'Session expirée. Veuillez vous reconnecter.');
+    throw new AppError('unauthenticated', 'Session expirée. Veuillez vous reconnecter.');
   }
 
   const response: { data: { url?: string; error?: string } | null; error: unknown } =

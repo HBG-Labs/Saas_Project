@@ -11,6 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
+import { useAuth } from '@/features/auth';
+import { useOrganizationEntitlements } from '@/features/billing';
+import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const COMPARISON_FEATURES = [
@@ -172,6 +175,11 @@ export default function PricingPage() {
   useDocumentTitle('Tarifs');
   const [proModalOpen, setProModalOpen] = useState(false);
 
+  const { user } = useAuth();
+  const { organization } = useCurrentOrganization();
+  const organizationId = organization?.id ?? null;
+  const { planCode: currentPlanCode } = useOrganizationEntitlements(organizationId);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-10">
       <div className="space-y-6">
@@ -191,6 +199,23 @@ export default function PricingPage() {
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {PRICING_PLANS.map((tier) => {
             const displayPrice = tier.priceMonthly;
+            const isCurrentPlan = user != null && tier.id === currentPlanCode;
+
+            let targetLink = tier.ctaLink ?? ROUTES.register;
+            let targetText = tier.ctaText;
+
+            if (user != null) {
+              if (isCurrentPlan) {
+                targetText = 'Formule actuelle';
+                targetLink = ROUTES.organizationBilling;
+              } else if (tier.id === 'free') {
+                targetText = 'Accéder à l’application';
+                targetLink = ROUTES.missions;
+              } else {
+                targetText = `Passer à ${tier.name}`;
+                targetLink = ROUTES.organizationBilling;
+              }
+            }
 
             return (
               <Card
@@ -269,22 +294,29 @@ export default function PricingPage() {
 
                 <div className="p-5 pt-0">
                   <Button
-                    asChild
+                    asChild={!isCurrentPlan}
+                    disabled={isCurrentPlan}
                     variant={tier.popular ? 'primary' : tier.ctaVariant}
-                    className={`w-full font-bold text-xs h-9 cursor-pointer ${
-                      tier.popular
-                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md'
-                        : tier.id === 'enterprise'
-                          ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20'
-                          : tier.id === 'business'
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20'
-                            : ''
+                    className={`w-full font-bold text-xs h-9 ${
+                      isCurrentPlan
+                        ? 'opacity-60 cursor-default bg-surface-sunken border border-border'
+                        : tier.popular
+                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer'
+                          : tier.id === 'enterprise'
+                            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20 cursor-pointer'
+                            : tier.id === 'business'
+                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 cursor-pointer'
+                              : 'cursor-pointer'
                     }`}
                   >
-                    <Link to={tier.ctaLink ?? ROUTES.register}>
-                      {tier.ctaText}
-                      <ArrowRight className="size-3.5 ml-1" />
-                    </Link>
+                    {isCurrentPlan ? (
+                      <span>{targetText}</span>
+                    ) : (
+                      <Link to={targetLink}>
+                        {targetText}
+                        <ArrowRight className="size-3.5 ml-1 inline" />
+                      </Link>
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -410,8 +442,11 @@ export default function PricingPage() {
               Fermer
             </Button>
             <Button asChild size="sm">
-              <Link to={`${ROUTES.register}?plan=pro`} onClick={() => setProModalOpen(false)}>
-                Choisir le plan Pro
+              <Link
+                to={user != null ? ROUTES.organizationBilling : `${ROUTES.register}?plan=pro`}
+                onClick={() => setProModalOpen(false)}
+              >
+                {user != null ? 'Gérer mon abonnement' : 'Choisir le plan Pro'}
               </Link>
             </Button>
           </div>

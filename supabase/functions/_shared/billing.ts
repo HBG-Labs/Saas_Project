@@ -83,17 +83,30 @@ export async function requireBillingAccess(
   authorization?: string,
 ): Promise<{ context: BillingContext } | { error: Response }> {
   const jwt = authorization ? extractJwt(authorization) : undefined;
-  const {
-    data: { user },
-    error: authError,
-  } = await (jwt ? caller.auth.getUser(jwt) : caller.auth.getUser());
+  const admin = adminClient();
 
-  if (authError || !user) {
-    console.warn('requireBillingAccess: Session invalide', authError);
+  let user: { id: string } | null = null;
+  if (jwt) {
+    const { data: adminAuth, error: adminAuthError } = await admin.auth.getUser(jwt);
+    if (adminAuthError) {
+      console.warn('requireBillingAccess admin getUser error:', adminAuthError);
+    }
+    user = adminAuth?.user ?? null;
+  }
+
+  if (!user) {
+    const { data: callerAuth, error: callerAuthError } = await caller.auth.getUser();
+    if (callerAuthError) {
+      console.warn('requireBillingAccess caller getUser error:', callerAuthError);
+    }
+    user = callerAuth?.user ?? null;
+  }
+
+  if (!user) {
     return { error: json({ error: 'Session invalide.' }, 401) };
   }
 
-  const { data: membership } = await caller
+  const { data: membership } = await admin
     .from('organization_members')
     .select('role, status')
     .eq('organization_id', organizationId)
@@ -104,7 +117,7 @@ export async function requireBillingAccess(
     return { error: json({ error: "Vous n'appartenez pas à cette organisation." }, 403) };
   }
 
-  const { data: permission } = await caller
+  const { data: permission } = await admin
     .from('role_permissions')
     .select('permission')
     .eq('role', membership.role)
@@ -118,7 +131,7 @@ export async function requireBillingAccess(
   }
 
   // La synthèse vient du SERVEUR, jamais du corps de la requête.
-  const { data: summary, error } = await caller
+  const { data: summary, error } = await admin
     .rpc('organization_billing_summary', { p_organization_id: organizationId })
     .maybeSingle();
 
@@ -205,16 +218,17 @@ export interface StripePrices {
  * un changement effectué depuis le tableau de bord Stripe.
  */
 export async function resolveStripePrices(
-  client: SupabaseClient,
+  _client: SupabaseClient,
   planCode: string,
 ): Promise<StripePrices | { error: string }> {
-  const { data: plan } = await client
+  const admin = adminClient();
+  const { data: plan } = await admin
     .from('plans')
     .select('stripe_price_id_monthly')
     .eq('code', planCode)
     .maybeSingle();
 
-  const { data: settings } = await client
+  const { data: settings } = await admin
     .from('billing_settings')
     .select('extra_seat_price_id_monthly')
     .maybeSingle();
