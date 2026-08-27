@@ -1,4 +1,5 @@
-import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import { mapPostgrestError } from '@/lib/errors';
+import { supabase, unwrapMaybe } from '@/services/supabase';
 import type { TablesUpdate } from '@/types/database';
 import type { Profile, ProfileDetails } from '@/types/domain';
 
@@ -29,8 +30,6 @@ export interface FullProfile {
 }
 
 export async function getMyProfile(userId: string): Promise<FullProfile> {
-  // Deux lectures en parallèle : elles portent sur des tables différentes, et
-  // les enchaîner doublerait l'attente sans rien apporter.
   const [identity, details] = await Promise.all([
     unwrapMaybe(supabase.from('profiles').select('*').eq('id', userId).single()),
     unwrapMaybe(
@@ -49,45 +48,56 @@ export async function updateMyProfile(
     jobTitle?: string;
   },
 ): Promise<FullProfile> {
+  // 1. Mise à jour de l'identité dans profiles
   if (patch.identity && Object.keys(patch.identity).length > 0) {
-    await unwrap(
-      supabase.from('profiles').update(patch.identity).eq('id', userId).select('id').single(),
-    );
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update(patch.identity)
+      .eq('id', userId);
 
-    // Les métadonnées de session suivent le profil, jamais l'inverse :
-    // `profiles` fait foi. Sans cette recopie, l'en-tête continuerait d'afficher
-    // l'ancien nom jusqu'à la prochaine reconnexion.
+    if (profileError) {
+      console.error('Erreur mise à jour profiles:', profileError);
+      throw mapPostgrestError(profileError);
+    }
+  }
+
+  // 2. Mise à jour de la fiche personnelle dans profile_details
+  if (patch.details && Object.keys(patch.details).length > 0) {
+    const { error: detailsError } = await supabase
+      .from('profile_details')
+      .upsert(
+        {
+          user_id: userId,
+          phone: patch.details.phone ?? null,
+          zone: patch.details.zone ?? null,
+          certifications: (patch.details.certifications ?? []) as any,
+          equipments: (patch.details.equipments ?? []) as any,
+        },
+        { onConflict: 'user_id' },
+      );
+
+    if (detailsError) {
+      console.error('Erreur sauvegarde profile_details:', detailsError);
+      throw mapPostgrestError(detailsError);
+    }
+  }
+
+  // 3. Recopie non-bloquante de confort dans la session GoTrue
+  try {
     const authData: Record<string, unknown> = {};
-    if (patch.identity.display_name !== undefined) {
+    if (patch.identity?.display_name !== undefined) {
       authData['display_name'] = patch.identity.display_name;
     }
     if (patch.jobTitle !== undefined) {
       authData['job_title'] = patch.jobTitle;
     }
     if (Object.keys(authData).length > 0) {
-      const { error } = await supabase.auth.updateUser({
+      await supabase.auth.updateUser({
         data: authData,
       });
-      if (error) throw error;
     }
-  } else if (patch.jobTitle !== undefined) {
-    const { error } = await supabase.auth.updateUser({
-      data: { job_title: patch.jobTitle },
-    });
-    if (error) throw error;
-  }
-
-  if (patch.details && Object.keys(patch.details).length > 0) {
-    // `upsert` plutôt qu'`update` : la fiche personnelle n'est créée qu'au
-    // premier enregistrement. Un `update` sur une ligne absente ne toucherait
-    // rien et rapporterait un succès trompeur.
-    await unwrap(
-      supabase
-        .from('profile_details')
-        .upsert({ user_id: userId, ...patch.details }, { onConflict: 'user_id' })
-        .select('user_id')
-        .single(),
-    );
+  } catch (authErr) {
+    console.warn('Recopie auth.updateUser non bloquante ignorée:', authErr);
   }
 
   return getMyProfile(userId);
