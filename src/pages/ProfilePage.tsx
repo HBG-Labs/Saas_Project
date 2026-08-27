@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   User,
   Mail,
@@ -141,23 +141,16 @@ export default function ProfilePage() {
   );
 
   /**
-   * Tampon d'édition.
-   *
-   * Les champs de cette page se modifient sur place et ne sont enregistrés qu'au
-   * clic sur « Sauvegarder ». Éditer directement l'objet dérivé du cache le
-   * ferait réapparaître tel quel au premier rafraîchissement en arrière-plan,
-   * effaçant la saisie en cours.
+   * Tampon d'édition réactif.
    */
   const [profile, setProfile] = useState<UserProfileData>(remoteProfile);
-  const loadedFor = useRef<string | null>(null);
 
+  // Synchronisation dès la réception ou l'invalidation des données distantes
   useEffect(() => {
-    const loadedId = profileQuery.data?.identity?.id ?? null;
-    if (loadedId === null || loadedFor.current === loadedId) return;
-
-    loadedFor.current = loadedId;
-    setProfile(remoteProfile);
-  }, [profileQuery.data, remoteProfile]);
+    if (profileQuery.data) {
+      setProfile(toFormProfile(profileQuery.data, fallbackName, fallbackJobTitle));
+    }
+  }, [profileQuery.data, fallbackName, fallbackJobTitle]);
 
   const { avatarUrl } = useAvatarStore();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -207,14 +200,15 @@ export default function ProfilePage() {
   };
 
   const handleOpenModal = () => {
-    // Copie profonde : l'édition ne doit pas modifier l'objet dérivé du cache,
-    // qu'un abandon devrait laisser intact.
     setDraftProfile(structuredClone(profile));
     setIsModalOpen(true);
   };
 
   const handleSaveProfile = async (dataToSave: UserProfileData) => {
     setSubmitError(null);
+    // Mise à jour instantanée du rendu local
+    setProfile(dataToSave);
+    setDraftProfile(structuredClone(dataToSave));
 
     const trimmedJobTitle = dataToSave.jobTitle.trim();
     const trimmedDisplayName = dataToSave.displayName.trim();
@@ -281,6 +275,7 @@ export default function ProfilePage() {
 
   const handleModalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setProfile(draftProfile);
     void handleSaveProfile(draftProfile);
     setIsModalOpen(false);
   };
