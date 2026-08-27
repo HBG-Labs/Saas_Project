@@ -172,3 +172,38 @@ export function planUnlocksProModule(plan: PlanCode | null): boolean {
 export const ORGANIZATION_PLANS: readonly PlanCode[] = PLAN_CODES.filter((code) =>
   planUnlocksProModule(code),
 );
+
+export interface RequiredPlanInfo {
+  code: PlanCode;
+  name: string;
+  priceMonthly: number;
+}
+
+const PLAN_INFO: Record<PlanCode, { name: string; priceMonthly: number }> = {
+  free: { name: 'Free', priceMonthly: 0 },
+  starter: { name: 'Starter', priceMonthly: 19 },
+  pro: { name: 'Pro', priceMonthly: 39 },
+  business: { name: 'Business', priceMonthly: 69 },
+  enterprise: { name: 'Enterprise', priceMonthly: 99 },
+};
+
+/**
+ * Renvoie le premier forfait (le plus économique) qui inclut la fonctionnalité donnée.
+ */
+export function getMinimumRequiredPlan(feature: FeatureKey): RequiredPlanInfo {
+  for (const code of PLAN_CODES) {
+    if (planHasFeature(code, feature)) {
+      return {
+        code,
+        name: PLAN_INFO[code].name,
+        priceMonthly: PLAN_INFO[code].priceMonthly,
+      };
+    }
+  }
+
+  return {
+    code: 'pro',
+    name: 'Pro',
+    priceMonthly: 39,
+  };
+}

@@ -4,7 +4,11 @@ import { Link, Outlet } from 'react-router';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { Button } from '@/components/ui/Button';
-import { useOrganizationEntitlements, type FeatureKey } from '@/features/billing';
+import {
+  getMinimumRequiredPlan,
+  useOrganizationEntitlements,
+  type FeatureKey,
+} from '@/features/billing';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import { ROUTES } from '@/config/routes';
 
@@ -41,6 +45,7 @@ export function RequirePlan({ feature, label }: RequirePlanProps) {
   // comprendre. L'inverse le ferait buter sur un second mur — celui de la
   // permission — juste après le premier.
   const peutVoirFacturation = can(PERMISSIONS.billingView);
+  const requiredPlan = getMinimumRequiredPlan(feature);
 
   if (isLoading) {
     return <LoadingScreen label="Vérification de votre formule…" />;
@@ -50,14 +55,14 @@ export function RequirePlan({ feature, label }: RequirePlanProps) {
     return (
       <EmptyState
         icon={Sparkles}
-        title={`${label} nécessite la formule Entreprise`}
-        description="Cette section fait partie du module professionnel. Si votre entreprise y était abonnée, vérifiez l’état de la facturation : un abonnement expiré rend ces données inaccessibles sans les supprimer."
+        title={`${label} nécessite la formule ${requiredPlan.name}`}
+        description={`Cette fonctionnalité est disponible à partir du forfait ${requiredPlan.name} (${requiredPlan.priceMonthly} €/mois). Passez à la formule supérieure pour débloquer cet espace professionnel.`}
         action={
           <Button asChild variant="primary" size="sm">
             {peutVoirFacturation ? (
-              <Link to={ROUTES.organizationBilling}>Voir mon abonnement</Link>
+              <Link to={ROUTES.organizationBilling}>Mettre à niveau l’abonnement</Link>
             ) : (
-              <Link to={ROUTES.pricing}>Voir les formules</Link>
+              <Link to={ROUTES.pricing}>Découvrir les offres</Link>
             )}
           </Button>
         }

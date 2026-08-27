@@ -5,12 +5,14 @@ export {
   ORGANIZATION_PLANS,
   PLAN_CODES,
   PLAN_FEATURES,
+  getMinimumRequiredPlan,
   planFeatureLimit,
   planHasFeature,
   planUnlocksProModule,
   type FeatureKey,
   type FeatureMatrix,
   type PlanCode,
+  type RequiredPlanInfo,
 } from './entitlements';
 
 export {
