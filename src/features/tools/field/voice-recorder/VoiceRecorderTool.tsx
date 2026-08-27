@@ -1,8 +1,11 @@
 import {
+  AlertCircle,
   Download,
+  Info,
   Mic,
   Pause,
   Play,
+  RotateCcw,
   Square,
   Trash2,
 } from 'lucide-react';
@@ -133,34 +136,76 @@ export default function VoiceRecorderTool() {
   // Démarrer l'enregistrement
   const startRecording = async () => {
     setPermissionError(null);
+
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setPermissionError(
+        'L’API audio/microphone n’est pas disponible dans ce navigateur ou requiert une connexion sécurisée (HTTPS).'
+      );
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       streamRef.current = stream;
 
-      // Web Audio Analyser pour l'onde
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      audioContextRef.current = audioCtx;
+      // Web Audio Analyser pour l'onde (facultatif si non supporté)
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const audioCtx = new AudioCtx();
+          audioContextRef.current = audioCtx;
+          const source = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+          analyserRef.current = analyser;
+        }
+      } catch (audioCtxErr) {
+        console.warn('Analyser Web Audio non disponible:', audioCtxErr);
+      }
 
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
+      // Détection MIME Type compatible multi-plateformes (Android Chrome, iOS Safari, etc.)
+      let recorderOptions: MediaRecorderOptions | undefined = undefined;
+      let selectedMime = 'audio/webm';
+
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          selectedMime = 'audio/webm;codecs=opus';
+          recorderOptions = { mimeType: selectedMime };
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          selectedMime = 'audio/webm';
+          recorderOptions = { mimeType: selectedMime };
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          selectedMime = 'audio/mp4';
+          recorderOptions = { mimeType: selectedMime };
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          selectedMime = 'audio/aac';
+          recorderOptions = { mimeType: selectedMime };
+        }
+      }
 
       // Configuration MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = recorderOptions
+        ? new MediaRecorder(stream, recorderOptions)
+        : new MediaRecorder(stream);
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: selectedMime });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
@@ -189,11 +234,17 @@ export default function VoiceRecorderTool() {
       drawWaveform();
     } catch (err: any) {
       console.warn('Erreur accès micro dictaphone:', err);
-      setPermissionError(
-        err.name === 'NotAllowedError'
-          ? 'Autorisation micro refusée. Veuillez autoriser le microphone dans votre navigateur.'
-          : 'Impossible d’accéder au microphone de l’appareil.',
-      );
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setPermissionError(
+          'Autorisation refusée par votre navigateur. Vous devez autoriser le microphone dans les paramètres de votre navigateur pour enregistrer des mémos vocaux.'
+        );
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setPermissionError('Aucun microphone physique détecté sur cet appareil.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setPermissionError('Le microphone est déjà utilisé par une autre application.');
+      } else {
+        setPermissionError('Impossible d’accéder au microphone de l’appareil.');
+      }
     }
   };
 
@@ -353,9 +404,56 @@ export default function VoiceRecorderTool() {
 
         <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {permissionError && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
-              <p className="font-bold">Accès au microphone requis</p>
-              <p className="mt-0.5">{permissionError}</p>
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-foreground space-y-3">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="size-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-red-600 dark:text-red-400 text-sm">
+                    Accès au microphone requis
+                  </p>
+                  <p className="text-xs text-muted-foreground">{permissionError}</p>
+                </div>
+              </div>
+
+              <div className="bg-surface-raised/90 rounded-lg p-3 border border-border space-y-2 text-2xs">
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Info className="size-3.5 text-primary" />
+                  Comment réactiver le micro sur votre téléphone :
+                </p>
+                <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">Sur Android (Chrome / Navigateur) :</strong> Touchez l'icône du cadenas <span className="font-mono bg-surface-subtle px-1 rounded">🔒</span> ou réglages tout en haut à gauche dans la barre d'adresse &gt; <strong className="text-foreground">Autorisations</strong> &gt; Activez <strong className="text-foreground">Microphone</strong> &gt; Rafraîchissez la page.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Sur iPhone (Safari / Chrome) :</strong> Touchez <strong className="text-foreground">aA</strong> dans la barre d'adresse &gt; <strong className="text-foreground">Réglages du site</strong> &gt; <strong className="text-foreground">Microphone</strong> &gt; <strong className="text-foreground">Autoriser</strong>.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Paramètres système Android :</strong> Ouvrez <em>Paramètres &gt; Applications &gt; Chrome &gt; Autorisations</em> et autorisez le <strong>Microphone</strong>.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={startRecording}
+                  className="text-xs gap-1.5 cursor-pointer bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Réessayer l'autorisation</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPermissionError(null)}
+                  className="text-xs cursor-pointer"
+                >
+                  Fermer
+                </Button>
+              </div>
             </div>
           )}
 
