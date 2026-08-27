@@ -102,7 +102,6 @@ export const routes: RouteObject[] = [
               { path: ROUTES.dashboard, Component: DashboardPage },
               { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
               { path: '/statistiques', lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
-              { path: ROUTES.planning, lazy: lazyPage(() => import('@/pages/planning/PlanningPage')) },
               { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
               { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
@@ -282,6 +281,28 @@ export const routes: RouteObject[] = [
                           {
                             path: ROUTE_PATTERNS.team,
                             lazy: lazyPage(() => import('@/pages/teams/TeamDetailPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    element: (
+                      <RequirePlan
+                        feature={FEATURES.planning}
+                        label="Le module Planning & Congés"
+                      />
+                    ),
+                    children: [
+                      {
+                        element: (
+                          <RequirePermission permission={PERMISSIONS.planningView} />
+                        ),
+                        children: [
+                          {
+                            path: ROUTES.planning,
+                            lazy: lazyPage(() => import('@/pages/planning/PlanningPage')),
                           },
                         ],
                       },

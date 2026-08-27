@@ -36,6 +36,7 @@ import {
   useMissionStatusCounts,
   useMissions,
 } from '@/features/missions';
+import { useOrganizationEntitlements } from '@/features/billing';
 import {
   PERMISSIONS,
   useCurrentOrganization,
@@ -49,6 +50,7 @@ export default function MissionsListPage() {
   const { organization } = useCurrentOrganization();
   const { can } = usePermission();
   const organizationId = organization?.id ?? null;
+  const { has: hasFeature } = useOrganizationEntitlements(organizationId);
 
   const [filters, setFilters] = useState(EMPTY_MISSION_FILTERS);
 
@@ -62,6 +64,7 @@ export default function MissionsListPage() {
 
   const canCreate = can(PERMISSIONS.missionCreate);
   const canViewAll = can(PERMISSIONS.missionViewAll);
+  const canViewPlanning = hasFeature('planning') && can(PERMISSIONS.planningView);
   const activeFilters = countActiveFilters(filters);
   const list = missions.data ?? [];
 
@@ -102,12 +105,14 @@ export default function MissionsListPage() {
               CSV
             </Button>
 
-            <Button asChild variant="outline" size="sm" className="text-xs">
-              <Link to={ROUTES.planning}>
-                <Calendar className="size-3.5 mr-1 text-primary" />
-                Planning
-              </Link>
-            </Button>
+            {canViewPlanning && (
+              <Button asChild variant="outline" size="sm" className="text-xs">
+                <Link to={ROUTES.planning}>
+                  <Calendar className="size-3.5 mr-1 text-primary" />
+                  Planning
+                </Link>
+              </Button>
+            )}
 
             <Button asChild variant="outline" size="sm" className="text-xs">
               <Link to={ROUTES.map}>

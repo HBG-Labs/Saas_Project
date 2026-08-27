@@ -4,7 +4,14 @@ import { METIERS_TOOLS_NAV, type NavGroup, type NavItem } from './navigation';
 export const TECHNICIAN_PRINCIPAL_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
   { to: ROUTES.missions, label: 'Mes Interventions & Missions', icon: 'clipboard-check', primary: true },
-  { to: ROUTES.planning, label: 'Mon Planning & Congés', icon: 'calendar', primary: true },
+  {
+    to: ROUTES.planning,
+    label: 'Mon Planning & Congés',
+    icon: 'calendar',
+    feature: 'planning',
+    permission: 'planning.view',
+    primary: true,
+  },
   { to: ROUTES.map, label: 'Cartographie & Itinéraire', icon: 'map', primary: true },
   { to: ROUTES.reports, label: 'Rédiger un compte-rendu', icon: 'scroll', primary: true },
 ];
