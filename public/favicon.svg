@@ -1,33 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
+    <linearGradient id="rezoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
       <stop offset="100%" stop-color="#1d4ed8" />
     </linearGradient>
   </defs>
 
-  <!-- Fond Squircle PWA / App Icon Standard -->
-  <rect width="512" height="512" rx="118" fill="url(#bgGrad)" />
+  <!-- Fond Squircle PWA iOS / Android -->
+  <rect width="512" height="512" rx="120" fill="url(#rezoGrad)" />
 
-  <!-- Monogramme 'R' Bold Simple & Épuré (Vecteur pur haute précision) -->
+  <!-- R BOLD Typographique Pur & Impactant Centré -->
   <path
     fill="#ffffff"
-    d="M 136 100
-       L 300 100
-       C 376 100 420 140 420 216
-       C 420 272 382 312 324 324
-       L 426 412
-       L 326 412
-       L 238 326
-       L 228 326
-       L 228 412
-       L 136 412
+    d="M 116 96
+       L 280 96
+       C 358 96 404 138 404 212
+       C 404 266 364 306 308 318
+       L 406 416
+       L 306 416
+       L 218 328
+       L 204 328
+       L 204 416
+       L 116 416
        Z
-       M 228 174
-       L 228 252
-       L 290 252
-       C 328 252 348 236 348 213
-       C 348 190 328 174 290 174
+       M 204 168
+       L 204 256
+       L 268 256
+       C 304 256 324 240 324 212
+       C 324 184 304 168 268 168
        Z"
   />
 </svg>
