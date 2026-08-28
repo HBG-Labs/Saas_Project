@@ -43,6 +43,7 @@ vi.mock('@/features/billing', () => ({
   }),
   useOrganizationEntitlements: () => ({ planCode: 'business' }),
   useCheckout: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useUpdateSubscriptionPlan: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useBillingPortal: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useCancelSubscription: () => ({ ...resilier, isPending: false, error: null }),
   useResumeSubscription: () => ({ ...reprendre, isPending: false, error: null }),
@@ -258,5 +259,19 @@ describe('BillingPage — la sortie', () => {
     afficher();
 
     expect(screen.queryByRole('button', { name: 'Résilier' })).not.toBeInTheDocument();
+  });
+
+  it('ouvre la modale de confirmation de rétrogradation avec mention du prorata quand on clique sur une formule inférieure', async () => {
+    const user = userEvent.setup();
+    abonnement.current.provider = 'stripe';
+    abonnement.current.provider_subscription_id = 'sub_123';
+    afficher();
+
+    await user.click(screen.getByRole('button', { name: /Starter/ }));
+
+    const modal = within(screen.getByRole('dialog'));
+    expect(modal.getByText(/Rétrograder vers la formule Starter/)).toBeInTheDocument();
+    expect(modal.getByText(/Aucun paiement immédiat requis/)).toBeInTheDocument();
+    expect(modal.getByText(/crédit et déduit de vos prochaines factures/)).toBeInTheDocument();
   });
 });

@@ -241,6 +241,65 @@ export async function syncSubscriptionSeats(organizationId: string): Promise<boo
  * la session avec un message qui ne désigne rien.
  * ─────────────────────────────────────────────────────────────────────────────
  */
+export async function updateSubscriptionPlan(params: {
+  organizationId: string;
+  planCode: PlanCode;
+}): Promise<{ updatedInPlace: boolean; url?: string; planCode: string }> {
+  const base = window.location.origin;
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    throw new AppError('unauthenticated', 'Session expirée. Veuillez vous reconnecter.');
+  }
+
+  const response: {
+    data: { updatedInPlace?: boolean; url?: string; error?: string; planCode?: string } | null;
+    error: unknown;
+  } = await supabase.functions.invoke('update-subscription-plan', {
+    headers: {
+      Authorization: `Bearer ${sessionData.session.access_token}`,
+    },
+    body: {
+      organizationId: params.organizationId,
+      planCode: params.planCode,
+      successUrl: `${base}${ROUTES.organizationBilling}?paiement=ok`,
+      cancelUrl: `${base}${ROUTES.organizationBilling}?paiement=annule`,
+    },
+  });
+
+  if (response.error !== null || !response.data) {
+    throw new AppError(
+      'unknown',
+      await messageDeLaFonction(
+        response.error,
+        response.data?.error ?? "La modification d'abonnement a échoué.",
+      ),
+    );
+  }
+
+  return {
+    updatedInPlace: response.data.updatedInPlace ?? false,
+    url: response.data.url,
+    planCode: response.data.planCode ?? params.planCode,
+  };
+}
+
+/**
+ * Ouvre une session de paiement Stripe et renvoie l'adresse de redirection.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE L'APPELANT NE TRANSMET PAS
+ *
+ * Ni prix, ni nombre de sièges, ni montant. La fonction Edge les recalcule
+ * depuis la base et ignore tout ce qui ressemblerait à une valeur imposée. Le
+ * client annonce une intention — « je veux Pro » — et le serveur en tire les
+ * conséquences.
+ *
+ * Les adresses de retour sont fournies explicitement plutôt que déduites de
+ * l'en-tête `Origin` : celui-ci manque hors navigateur, et Stripe refuse alors
+ * la session avec un message qui ne désigne rien.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export async function createCheckoutSession(params: {
   organizationId: string;
   planCode: PlanCode;
@@ -322,20 +381,36 @@ export async function createBillingPortalSession(organizationId: string): Promis
 }
 
 /**
- * Résiliation : lève le drapeau, ne coupe rien.
+ * Résiliation programmée (rétrogradation vers Free) : lève le drapeau, ne coupe rien.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * L'accès court jusqu'à la fin de la période déjà payée — ou, en essai, jusqu'à
- * la date annoncée. C'est le serveur qui décide de tout : le droit de résilier,
- * la date rendue, et le refus lorsque Stripe est l'autorité.
- *
- * Le montant, la date et la permission ne transitent jamais depuis ici. La RPC
- * ne prend qu'un identifiant d'organisation.
+ * la date annoncée. C'est le serveur qui gère Stripe et la base pour poser
+ * `cancel_at_period_end = true` sans double facturation.
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * @returns la date de fin d'accès, ou `null` si la période est ouverte.
  */
 export async function cancelSubscription(organizationId: string): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session) {
+    const response = await supabase.functions.invoke<{
+      success?: boolean;
+      currentPeriodEnd?: string;
+      error?: string;
+    }>('cancel-subscription', {
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: { organizationId, action: 'cancel' },
+    });
+
+    if (response.error === null && response.data?.success) {
+      return response.data.currentPeriodEnd ?? null;
+    }
+  }
+
+  // Secours RPC pour les essais sans session serveur Edge
   const { data, error } = await supabase.rpc('cancel_organization_subscription', {
     p_organization_id: organizationId,
   });
@@ -349,6 +424,23 @@ export async function cancelSubscription(organizationId: string): Promise<string
 
 /** Annule une résiliation qui n'a pas encore pris effet. */
 export async function resumeSubscription(organizationId: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session) {
+    const response = await supabase.functions.invoke<{
+      success?: boolean;
+      error?: string;
+    }>('cancel-subscription', {
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: { organizationId, action: 'resume' },
+    });
+
+    if (response.error === null && response.data?.success) {
+      return;
+    }
+  }
+
   const { error } = await supabase.rpc('resume_organization_subscription', {
     p_organization_id: organizationId,
   });
@@ -357,3 +449,4 @@ export async function resumeSubscription(organizationId: string): Promise<void> 
     throw new AppError('unknown', error.message);
   }
 }
+

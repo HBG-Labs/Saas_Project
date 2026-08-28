@@ -27,6 +27,7 @@ export {
   listPlans,
   resolvePlanCode,
   syncSubscriptionSeats,
+  updateSubscriptionPlan,
   type BillingSummary,
 } from './api/billing.api';
 
@@ -36,6 +37,7 @@ export {
   useBillingSummary,
   useCheckout,
   useResumeSubscription,
+  useUpdateSubscriptionPlan,
 } from './hooks/useCheckout';
 export { useSeatBilling, type SeatBilling } from './hooks/useSeatBilling';
 

@@ -17,6 +17,16 @@
     <script>
       (function () {
         try {
+          if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+          }
+          window.scrollTo(0, 0);
+          window.addEventListener('beforeunload', function () {
+            window.scrollTo(0, 0);
+          });
+        } catch (e) {}
+
+        try {
           /* Clé dupliquée depuis THEME_STORAGE_KEY (src/features/theme/theme-context.ts).
              Un test la vérifie : voir src/features/theme/theme-script.test.ts. */
           /* Le repli sur l'ancien nom de marque est INDISPENSABLE ICI : ce

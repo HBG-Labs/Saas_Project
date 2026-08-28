@@ -53,7 +53,15 @@ export async function signUpWithPassword(
     password,
     options: {
       emailRedirectTo: `${window.location.origin}/auth/callback`,
-      ...(options?.displayName ? { data: { display_name: options.displayName } } : {}),
+      ...(options?.displayName
+        ? {
+            data: {
+              display_name: options.displayName,
+              name: options.displayName,
+              full_name: options.displayName,
+            },
+          }
+        : {}),
     },
   });
   if (error) throw mapAuthError(error);

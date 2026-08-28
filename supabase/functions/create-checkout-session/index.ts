@@ -3,89 +3,17 @@ import {
   callerClient,
   json,
   requireBillingAccess,
-  resolveStripePrices,
   resolveReturnUrl,
+  resolveStripePrices,
+  resolveTrialEnd,
   stripeRequest,
 } from '../_shared/billing.ts';
-
-/**
- * Ouverture d'une session de paiement Stripe.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * CE QUE LE CLIENT PEUT DEMANDER, ET CE QU'IL NE PEUT PAS IMPOSER
- *
- * Il transmet trois choses : l'organisation, le plan visé, la périodicité.
- * Tout le reste — le prix, le nombre de sièges, le supplément — est recalculé
- * ici depuis la base. Un corps `{ plan: 'enterprise', price: 19, seats: 0 }`
- * n'échoue pas à la validation : `price` et `seats` ne sont jamais lus.
- *
- * DEUX LIGNES D'ABONNEMENT, PAS UNE PAR EFFECTIF
- *
- *   ligne 1 : le plan            quantity = 1
- *   ligne 2 : le siège en plus   quantity = sièges au-delà des inclus
- *
- * Un tarif unique à 5 € dont seule la quantité varie. Créer un tarif par
- * effectif possible — la faute classique — produirait des centaines
- * d'identifiants pour exprimer une multiplication.
- *
- * Free n'a AUCUN abonnement Stripe : une souscription à 0 € coûterait un objet
- * à synchroniser, à renouveler et à annuler, pour zéro euro encaissé.
- * ─────────────────────────────────────────────────────────────────────────────
- */
 
 interface Body {
   organizationId?: string;
   planCode?: string;
   successUrl?: string;
   cancelUrl?: string;
-}
-
-/** Minimum imposé par Stripe entre maintenant et un `trial_end` accepté. */
-const MINIMUM_ESSAI_MS = 48 * 60 * 60 * 1000;
-
-/**
- * L'échéance d'essai à reprendre dans l'abonnement Stripe, en secondes.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI LE RELIQUAT SUIT LE CLIENT
- *
- * Sans ce paramètre, souscrire pendant l'essai le referme et débite aussitôt.
- * Mesuré : une organisation créée à 21:41, avec un essai courant jusqu'au 1er
- * septembre, a été prélevée à 21:43 — quatorze jours d'essai perdus pour avoir
- * décidé trop tôt.
- *
- * Le produit punissait donc celui qui s'abonne vite, et le client rationnel
- * attendait le dernier jour — jour où il n'est pas connecté. En reprenant
- * l'échéance déjà annoncée, s'abonner ne coûte plus rien avant la date promise,
- * puis le renouvellement se fait tout seul. On garde l'inscription sans carte,
- * et on gagne la conversion automatique.
- *
- * UN HORODATAGE ABSOLU, PAS UN NOMBRE DE JOURS
- *
- * `trial_period_days` ne prend qu'un entier : il arrondirait, et déplacerait la
- * date affichée à l'écran. On promet une date, on transmet cette date.
- *
- * LE SEUIL DE 48 HEURES
- *
- * Stripe refuse un `trial_end` trop proche. En deçà, on n'envoie rien et le
- * prélèvement est immédiat — comportement d'aujourd'hui. Le dire ici évite un
- * refus opaque au moment du paiement, sur un message qui ne désigne rien.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-export function resolveTrialEnd(
-  essai: { status?: string | null; trial_ends_at?: string | null; current_period_end?: string | null } | null,
-): number | null {
-  if (!essai || essai.status !== 'trialing') return null;
-
-  const brut = essai.trial_ends_at ?? essai.current_period_end;
-  if (brut == null) return null;
-
-  const echeance = new Date(brut).getTime();
-  if (Number.isNaN(echeance)) return null;
-
-  if (echeance - Date.now() < MINIMUM_ESSAI_MS) return null;
-
-  return Math.floor(echeance / 1000);
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {

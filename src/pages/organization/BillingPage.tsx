@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
+import { AlertCircle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
@@ -16,10 +16,11 @@ import {
   useBillingPortal,
   useBillingSummary,
   useCancelSubscription,
-  useCheckout,
   useResumeSubscription,
+  useUpdateSubscriptionPlan,
   useOrganizationEntitlements,
   useOrganizationSubscription,
+  type PlanCode,
 } from '@/features/billing';
 import {
   MemberQuotaBar,
@@ -34,6 +35,15 @@ import {
 const PAYABLE_PLANS = PRICING_PLANS.filter((tier) => tier.id !== 'free');
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { SubscriptionStatus } from '@/types/database';
+
+const PLAN_RANKS: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  business: 3,
+  enterprise: 4,
+  ultimate: 4,
+};
 
 const STATUS_LABELS: Record<SubscriptionStatus, string> = {
   trialing: 'Période d’essai',
@@ -98,7 +108,7 @@ export default function BillingPage() {
   const subscription = useOrganizationSubscription(organizationId);
   const { planCode } = useOrganizationEntitlements(organizationId);
   const summary = useBillingSummary(organizationId);
-  const checkout = useCheckout(organizationId);
+  const updatePlan = useUpdateSubscriptionPlan(organizationId);
 
   /*
     L'effectif sert de REPLI au décompte de sièges du serveur : tant que la
@@ -112,6 +122,8 @@ export default function BillingPage() {
   const resume = useResumeSubscription(organizationId);
 
   const [confirmerResiliation, setConfirmerResiliation] = useState(false);
+  const [planToDowngrade, setPlanToDowngrade] = useState<PlanCode | null>(null);
+  const [planSuccessMessage, setPlanSuccessMessage] = useState<string | null>(null);
 
   const { can } = usePermission();
   // Masque les actions à qui ne les obtiendra pas. Cela ne SÉCURISE rien :
@@ -134,6 +146,10 @@ export default function BillingPage() {
   const gereParStripe = subscription.data?.provider_subscription_id != null;
   const resiliationProgrammee = subscription.data?.cancel_at_period_end === true;
 
+  const targetDowngradeTier = planToDowngrade
+    ? PAYABLE_PLANS.find((t) => t.id === planToDowngrade) ?? null
+    : null;
+
   if (subscription.isError) {
     return (
       <ErrorState
@@ -155,6 +171,22 @@ export default function BillingPage() {
       />
 
       <OrganizationNavTabs />
+
+      {planSuccessMessage ? (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
+          <CheckCircle2 className="size-5 shrink-0 text-emerald-500 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold">{planSuccessMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPlanSuccessMessage(null)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Fermer
+          </button>
+        </div>
+      ) : null}
 
       {paymentStatus === 'ok' ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
@@ -233,26 +265,16 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/*
-        Le paiement est possible, et il l'est SANS que le client puisse décider
-        de son montant : `subscriptions` reste fermée en écriture, et
-        `create-checkout-session` recalcule plan, sièges et prix depuis la base.
-        Ce que le navigateur envoie ici, c'est une intention — pas un tarif.
-      */}
       <Card>
         <CardHeader>
           <CardTitle>Changer de formule</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Lerreur de résiliation saffiche dans sa fenêtre ; celle de reprise
-              na pas de fenêtre, donc elle remonte ici. */}
-          <FormError error={checkout.error ?? portal.error ?? resume.error} />
+          {/* L'erreur s'affiche de manière claire */}
+          <FormError error={updatePlan.error ?? portal.error ?? resume.error} />
 
           {summary.data !== null && summary.data !== undefined ? (
             <div className="space-y-3">
-              {/* La jauge vit ICI, au moment de choisir — et non dans une carte
-                  « Consommation » séparée qui répétait la même donnée deux
-                  centimètres plus haut. */}
               {summary.isPending ? (
                 <Skeleton className="h-12 w-full" />
               ) : (
@@ -278,11 +300,6 @@ export default function BillingPage() {
                     <strong className="text-foreground">
                       {formatDate(data?.trial_ends_at ?? data?.current_period_end ?? null)}
                     </strong>
-                    {/* « puis X € par mois » n'est vrai QUE si une carte est
-                        enregistrée. Sans elle, l'échéance ne déclenche aucun
-                        prélèvement : elle ferme les modules. Annoncer un prix
-                        qui ne sera pas réclamé, c'est le travers déjà corrigé
-                        sur la fenêtre d'invitation et la barre de quota. */}
                     {gereParStripe ? (
                       <>
                         , puis {(summary.data.totalCents / 100).toFixed(2)} € par mois, prélevés
@@ -308,11 +325,6 @@ export default function BillingPage() {
             </div>
           ) : null}
 
-          {/* LE MESSAGE QUI LÈVE LE FREIN. Souscrire pendant l'essai reprend
-              désormais les jours restants : la carte est enregistrée, mais rien
-              n'est prélevé avant la date déjà promise. Sans cette phrase, le
-              dirigeant suppose l'inverse — c'était d'ailleurs vrai jusqu'ici,
-              et attendre le dernier jour lui coûtait moins cher. */}
           {enEssai && !gereParStripe && joursDEssaiRestants > 2 ? (
             <p className="border-primary/30 bg-primary/[0.06] text-muted-foreground rounded-xl border px-3 py-2 text-xs">
               Vous gardez vos <strong className="text-foreground">{joursDEssaiRestants} jours
@@ -327,13 +339,10 @@ export default function BillingPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {PAYABLE_PLANS.map((tier) => {
               const isCurrent = tier.id === planCode;
+              const currentRank = PLAN_RANKS[planCode] ?? 0;
+              const targetRank = PLAN_RANKS[tier.id] ?? 0;
+              const isDowngrade = targetRank < currentRank;
               const seats = summary.data?.activeSeats ?? activeMembers.length;
-              // Ce que coûterait CETTE formule à l'effectif actuel. Un montant
-              // annoncé avant de cliquer vaut mieux qu'une surprise sur la page
-              // de paiement — et il vient de la même formule que le serveur.
-              // N'apparaît que s'il dépasse le forfait : le répéter à
-              // l'identique sur les formules assez larges ferait du bruit là où
-              // il doit servir d'avertissement.
               const projete = computeSubscriptionPrice(tier.id, seats);
               const auDela = Math.max(0, seats - tier.includedUsers);
 
@@ -342,18 +351,37 @@ export default function BillingPage() {
                   key={tier.id}
                   type="button"
                   variant="outline"
-                  disabled={isCurrent || checkout.isPending || !canManageBilling}
-                  onClick={() => checkout.mutate(tier.id)}
-                  className={`h-auto sm:h-auto min-h-[82px] whitespace-normal flex-col items-start justify-center gap-1.5 p-4 text-left w-full transition-all ${
+                  disabled={isCurrent || updatePlan.isPending || !canManageBilling}
+                  onClick={() => {
+                    if (isDowngrade && gereParStripe) {
+                      setPlanToDowngrade(tier.id as PlanCode);
+                    } else {
+                      updatePlan.mutate(tier.id as PlanCode, {
+                        onSuccess: (res) => {
+                          if (res.updatedInPlace) {
+                            setPlanSuccessMessage(
+                              `Votre formule a été mise à jour vers ${tier.name} avec succès.`,
+                            );
+                          }
+                        },
+                      });
+                    }
+                  }}
+                  className={`h-auto sm:h-auto min-h-[88px] whitespace-normal flex-col items-start justify-center gap-1.5 p-4 text-left w-full transition-all ${
                     isCurrent
                       ? 'border-primary/60 bg-primary/5 cursor-default'
                       : 'hover:border-primary/40 hover:bg-surface-hover'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full gap-2">
-                    <span className="font-semibold text-sm">
+                    <span className="font-semibold text-sm flex items-center gap-1.5">
                       {tier.name}
-                      {isCurrent ? ' — formule actuelle' : ''}
+                      {isCurrent ? ' — actuelle' : ''}
+                      {!isCurrent && isDowngrade && gereParStripe ? (
+                        <ArrowDownRight className="size-3.5 text-warning shrink-0" />
+                      ) : !isCurrent ? (
+                        <ArrowUpRight className="size-3.5 text-primary shrink-0" />
+                      ) : null}
                     </span>
                     {tier.popular && !isCurrent ? (
                       <span className="text-[10px] font-bold text-primary border border-primary/30 bg-primary/10 rounded-md px-1.5 py-0.5">
@@ -453,9 +481,88 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* La résiliation ne coupe rien sur-le-champ, mais elle engage : mieux
-          vaut la dire en toutes lettres, avec la date, que de la faire tenir
-          dans un bouton. */}
+      {/* Modale de Confirmation de Rétrogradation (Downgrade) */}
+      <Modal
+        open={planToDowngrade !== null}
+        onOpenChange={(open) => {
+          if (!open) setPlanToDowngrade(null);
+        }}
+        title={`Rétrograder vers la formule ${targetDowngradeTier?.name ?? ''}`}
+        description="Votre changement prendra effet immédiatement sans prélèvement supplémentaire."
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={updatePlan.isPending}
+              onClick={() => {
+                setPlanToDowngrade(null);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={updatePlan.isPending}
+              onClick={() => {
+                if (planToDowngrade) {
+                  updatePlan.mutate(planToDowngrade, {
+                    onSuccess: (res) => {
+                      setPlanToDowngrade(null);
+                      if (res.updatedInPlace) {
+                        setPlanSuccessMessage(
+                          `Votre formule a été rétrogradée vers ${targetDowngradeTier?.name} avec succès.`,
+                        );
+                      }
+                    },
+                  });
+                }
+              }}
+            >
+              {updatePlan.isPending ? 'Modification…' : 'Confirmer la rétrogradation'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1.5">
+            <p className="font-semibold text-foreground flex items-center gap-1.5">
+              💰 Aucun paiement immédiat requis
+            </p>
+            <p className="text-muted-foreground">
+              Le montant non consommé de votre formule actuelle (au prorata des jours restants) sera
+              automatiquement transformé en crédit et déduit de vos prochaines factures.
+            </p>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <p className="font-medium text-foreground">Ajustement de vos quotas :</p>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+              <li>
+                Sièges inclus : passe à{' '}
+                <strong className="text-foreground">
+                  {targetDowngradeTier?.includedUsers ?? 0} utilisateur(s) inclus
+                </strong>
+                .
+              </li>
+              {(summary.data?.activeSeats ?? 0) > (targetDowngradeTier?.includedUsers ?? 0) ? (
+                <li className="text-warning">
+                  Vos {summary.data?.activeSeats} membres actifs restent conservés. Les{' '}
+                  {(summary.data?.activeSeats ?? 0) - (targetDowngradeTier?.includedUsers ?? 0)}{' '}
+                  siège(s) en supplément seront facturés à +5 €/mois chacun.
+                </li>
+              ) : (
+                <li>Aucun dépassement de siège à ce jour.</li>
+              )}
+            </ul>
+          </div>
+
+          <FormError error={updatePlan.error} />
+        </div>
+      </Modal>
+
+      {/* Modale de Résiliation */}
       <Modal
         open={confirmerResiliation}
         onOpenChange={setConfirmerResiliation}
@@ -515,3 +622,4 @@ export default function BillingPage() {
     </div>
   );
 }
+

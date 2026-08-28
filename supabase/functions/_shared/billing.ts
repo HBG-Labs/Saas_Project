@@ -247,6 +247,28 @@ export async function resolveStripePrices(
   return { planPriceId, extraSeatPriceId };
 }
 
+/** Minimum imposé par Stripe entre maintenant et un `trial_end` accepté (48h). */
+export const MINIMUM_ESSAI_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * L'échéance d'essai à reprendre dans l'abonnement Stripe, en secondes (Unix timestamp).
+ */
+export function resolveTrialEnd(
+  essai: { status?: string | null; trial_ends_at?: string | null; current_period_end?: string | null } | null,
+): number | null {
+  if (!essai || essai.status !== 'trialing') return null;
+
+  const brut = essai.trial_ends_at ?? essai.current_period_end;
+  if (brut == null) return null;
+
+  const echeance = new Date(brut).getTime();
+  if (Number.isNaN(echeance)) return null;
+
+  if (echeance - Date.now() < MINIMUM_ESSAI_MS) return null;
+
+  return Math.floor(echeance / 1000);
+}
+
 /**
  * Appel de l'API Stripe en `application/x-www-form-urlencoded`.
  *

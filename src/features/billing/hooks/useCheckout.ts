@@ -8,6 +8,7 @@ import {
   createCheckoutSession,
   getBillingSummary,
   resumeSubscription,
+  updateSubscriptionPlan,
 } from '../api/billing.api';
 import type { PlanCode } from '../entitlements';
 
@@ -44,6 +45,25 @@ export function useCheckout(organizationId: string | null) {
     },
     onSuccess: (url) => {
       window.location.assign(url);
+    },
+  });
+}
+
+/** Modifie ou rétrograde l'abonnement en place sans repayer (ou redirige vers Checkout). */
+export function useUpdateSubscriptionPlan(organizationId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (planCode: PlanCode) => {
+      if (organizationId === null) throw new Error('Aucune organisation sélectionnée.');
+      return updateSubscriptionPlan({ organizationId, planCode });
+    },
+    onSuccess: (result) => {
+      if (result.updatedInPlace) {
+        void queryClient.invalidateQueries({ queryKey: qk.billing.all });
+      } else if (result.url) {
+        window.location.assign(result.url);
+      }
     },
   });
 }

@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 
 import { CommandBarProvider } from '@/features/search/CommandBarProvider';
 import { useCatalogReconciliation } from '@/features/tools';
@@ -6,20 +7,33 @@ import { useCatalogReconciliation } from '@/features/tools';
 /**
  * Racine commune aux deux ossatures.
  *
- * Existe pour héberger ce qui doit être disponible partout — aujourd'hui la
- * palette de commandes — tout en restant À L'INTÉRIEUR du routeur, dont
- * `CommandBar` dépend via `useNavigate`.
- *
- * Ne rend aucune interface propre : la présentation reste entièrement dans
- * `PublicLayout` et `AppLayout`.
+ * Gère la palette de commandes globale, la réconciliation du catalogue
+ * et la remontée systématique du défilement en haut de page (Scroll to Top)
+ * à chaque changement de route ou actualisation.
  */
 export function RootLayout() {
   // Confronte le registry au catalogue en base. Silencieux en production, et
   // silencieux tant que les deux concordent.
   useCatalogReconciliation();
+  const location = useLocation();
+
+  // Remonte systématiquement en haut lors de chaque navigation ou actualisation
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch {
+        window.scrollTo(0, 0);
+      }
+    }
+  }, [location.pathname]);
 
   return (
     <CommandBarProvider>
+      <ScrollRestoration getKey={() => 'top'} />
       <Outlet />
     </CommandBarProvider>
   );

@@ -33,6 +33,7 @@ export const routes: RouteObject[] = [
           { index: true, Component: LandingPage },
           { path: ROUTES.features, lazy: lazyPage(() => import('@/pages/FeaturesPage')) },
           { path: ROUTES.pricing, lazy: lazyPage(() => import('@/pages/PricingPage')) },
+          { path: '/tarifs', lazy: lazyPage(() => import('@/pages/PricingPage')) },
           { path: ROUTES.faq, lazy: lazyPage(() => import('@/pages/FaqPage')) },
 
           {
