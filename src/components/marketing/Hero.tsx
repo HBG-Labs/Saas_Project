@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Clock,
   FileCheck2,
+  LayoutDashboard,
   MapPin,
   ShieldCheck,
   Smartphone,
@@ -22,8 +23,11 @@ import { ROUTES } from '@/config/routes';
 
 import { RezoNetworkHeroCanvas } from './RezoNetworkHeroCanvas';
 
+type CockpitTab = 'supervision' | 'calculators' | 'reports';
+
 export function Hero() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<CockpitTab>('supervision');
 
   return (
     <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28 bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-[#070b14] dark:text-white">
@@ -64,7 +68,7 @@ export function Hero() {
             </p>
 
             {/* 3 CTAs HAUT DE GAMME : CENTRÉS SUR MOBILE, ALIGNÉS À GAUCHE SUR DESKTOP */}
-            <div className="mt-7 flex items-center justify-center lg:justify-start flex-nowrap gap-1.5 sm:gap-2.5 w-full whitespace-nowrap overflow-x-auto no-scrollbar pb-1">
+            <div className="mt-7 flex items-center justify-center lg:justify-start flex-wrap gap-2 sm:gap-2.5 w-full">
               {/* 1. CTA Principal : Cœur Électrique Lumineux & Lame Shimmer Spéculaire */}
               <Link
                 to={ROUTES.register}
@@ -145,13 +149,8 @@ export function Hero() {
                 loading="eager"
               />
 
-              {/* Fondus dégradés subtils & stylés pour une intégration fluide sans coupure */}
-              {/* Fondu latéral gauche (vers le texte) */}
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-slate-50/90 via-slate-50/30 to-transparent dark:from-[#070b14]/90 dark:via-[#070b14]/30 dark:to-transparent" />
-              {/* Fondu bas */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50/80 via-slate-50/20 to-transparent dark:from-[#070b14]/85 dark:via-[#070b14]/20 dark:to-transparent" />
-              {/* Fondu latéral droit léger */}
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-50/50 via-transparent to-transparent dark:from-[#070b14]/60 dark:via-transparent dark:to-transparent" />
+              {/* Liseré subtil en bas uniquement pour ancrer l'image */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#070b14]/70 to-transparent" />
 
               {/* Badges Flottants Discrets & Ultra-Fins */}
               {/* 1. Statut Actif en haut à droite */}
@@ -178,157 +177,197 @@ export function Hero() {
           onClose={() => setIsDownloadModalOpen(false)}
         />
 
-        {/* ---------------------------------------------------- MOCKUP DASHBOARD SHOWCASE */}
+        {/* ---------------------------------------------------- COCKPIT INTERACTIF */}
         <div className="mt-16 sm:mt-24">
-          <div className="relative mx-auto max-w-6xl rounded-3xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl backdrop-blur-2xl transition-all duration-300 hover:border-blue-300 dark:border-blue-500/20 dark:bg-slate-950/85 dark:hover:border-cyan-500/40 sm:p-6 lg:p-8">
-            {/* Effet néon au sommet du cadre */}
+          <div className="relative mx-auto max-w-6xl rounded-3xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl backdrop-blur-2xl transition-all duration-300 hover:border-blue-300 dark:border-blue-500/20 dark:bg-slate-950/90 dark:hover:border-cyan-500/40 sm:p-6 lg:p-8">
+            {/* Ligne néon sommet */}
             <div className="pointer-events-none absolute -top-px left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-blue-500/50 dark:via-cyan-400/80 to-transparent" />
 
-            {/* Header du Mockup */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/90 pb-4">
+            {/* Header barre de titre macOS */}
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/90 pb-4">
               <div className="flex items-center gap-2">
                 <span className="size-3 rounded-full bg-rose-500/80" />
                 <span className="size-3 rounded-full bg-amber-500/80" />
                 <span className="size-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  rezo360-cockpit.saas // v2.4
-                </span>
+                <span className="ml-2 font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">rezo360-cockpit.saas // v2.4</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 px-3 py-1 text-xs font-bold">
                 <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                <span>Flux d’orchestration actif</span>
+                <span>Flux d&apos;orchestration actif</span>
               </div>
             </div>
 
-            {/* Contenu du Dashboard Mockup */}
-            <div className="space-y-6">
-              {/* Bienvenue */}
-              <div className="flex flex-col justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-4 sm:flex-row sm:items-center">
-                <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-xl font-extrabold text-slate-900 dark:text-white sm:text-2xl">
-                      Bonjour, Alexandre
-                    </h2>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-2xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400">
-                      <span className="size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                      Session Sécurisée
-                    </span>
-                    <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-2xs font-bold text-slate-700 dark:bg-slate-800/90 dark:border-slate-700 dark:text-slate-300">
-                      Responsable Opérations Multi-Métiers
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Aperçu temps réel de votre activité entreprise — Pilotage multi-chantiers
-                  </p>
-                </div>
-                <span className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-1 font-mono text-xs font-bold text-blue-700 dark:bg-blue-950/70 dark:border-blue-800/50 dark:text-blue-300">
-                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </span>
-              </div>
-
-              {/* 4 Cartes KPIs */}
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <div className="rounded-2xl border border-blue-200/80 bg-blue-50/40 p-4 transition-all hover:scale-102 hover:border-blue-300 dark:border-blue-900/50 dark:bg-blue-950/40 dark:hover:border-blue-700/60">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    <span>Missions</span>
-                    <div className="rounded-lg bg-blue-500/15 p-2 text-blue-600 dark:bg-blue-500/20 dark:text-cyan-400">
-                      <Briefcase className="size-4" />
-                    </div>
-                  </div>
-                  <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">24</span>
-                  <span className="mt-1 block text-[11px] font-bold text-emerald-600 dark:text-emerald-400">+12% cette semaine</span>
-                </div>
-
-                <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 transition-all hover:scale-102 hover:border-emerald-300 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:hover:border-emerald-700/60">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    <span>Interventions</span>
-                    <div className="rounded-lg bg-emerald-500/15 p-2 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                      <Wrench className="size-4" />
-                    </div>
-                  </div>
-                  <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">18</span>
-                  <span className="mt-1 block text-[11px] font-bold text-emerald-600 dark:text-emerald-400">56% terminées</span>
-                </div>
-
-                <div className="rounded-2xl border border-violet-200/80 bg-violet-50/40 p-4 transition-all hover:scale-102 hover:border-violet-300 dark:border-violet-900/50 dark:bg-violet-950/40 dark:hover:border-violet-700/60">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    <span>Techniciens</span>
-                    <div className="rounded-lg bg-violet-500/15 p-2 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
-                      <Users className="size-4" />
-                    </div>
-                  </div>
-                  <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">14/16</span>
-                  <span className="mt-1 block text-[11px] font-bold text-violet-600 dark:text-violet-400">87.5% actifs</span>
-                </div>
-
-                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 transition-all hover:scale-102 hover:border-amber-300 dark:border-amber-900/50 dark:bg-amber-950/40 dark:hover:border-amber-700/60">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    <span>Rapports</span>
-                    <div className="rounded-lg bg-amber-500/15 p-2 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                      <FileCheck2 className="size-4" />
-                    </div>
-                  </div>
-                  <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">5</span>
-                  <span className="mt-1 block text-[11px] font-bold text-amber-600 dark:text-amber-400">3 urgents à valider</span>
-                </div>
-              </div>
-
-              {/* Tableau d'Interventions du jour */}
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800/80 dark:bg-slate-900/70">
-                <div className="mb-3 flex items-center justify-between text-xs font-bold">
-                  <span className="flex items-center gap-2 text-slate-900 dark:text-white">
-                    <Calendar className="size-4 text-blue-600 dark:text-cyan-400" />
-                    Planning des interventions du jour
-                  </span>
-                  <span className="flex items-center gap-1 text-blue-600 dark:text-cyan-400 select-none">
-                    Voir tout <ChevronRight className="size-3.5" />
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between rounded-xl bg-white border border-slate-200/80 p-3.5 text-xs shadow-2xs dark:bg-slate-950/80 dark:border-slate-800/70">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-500 dark:text-slate-400">INT-8902</span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/70 dark:border-emerald-500/30 dark:text-emerald-400">
-                          <span className="size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                          En cours
-                        </span>
-                      </div>
-                      <div className="font-bold text-slate-900 dark:text-white">Installation &amp; Mise en service CVC</div>
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">Complexe Tertiaire Horizon</span>
-                        <span className="flex items-center gap-1"><Clock className="size-3" /> 08:30 - 10:30</span>
-                        <span className="flex items-center gap-1"><MapPin className="size-3" /> Paris Nord</span>
-                      </div>
-                    </div>
-                    <div className="text-right font-semibold text-slate-700 dark:text-slate-200">
-                      Jean Dupont
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-xl bg-white border border-slate-200/80 p-3.5 text-xs shadow-2xs dark:bg-slate-950/80 dark:border-slate-800/70">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-500 dark:text-slate-400">INT-8903</span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-[10px] font-bold text-rose-700 dark:bg-rose-950/70 dark:border-rose-500/30 dark:text-rose-400">
-                          <span className="size-1.5 rounded-full bg-rose-500 dark:bg-rose-400 animate-ping" />
-                          Urgente
-                        </span>
-                      </div>
-                      <div className="font-bold text-slate-900 dark:text-white">Audit Technique &amp; Conformité Fibre</div>
-                      <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">Clinique Val d&apos;Or</span>
-                        <span className="flex items-center gap-1"><Clock className="size-3" /> 10:00 - 12:00</span>
-                      </div>
-                    </div>
-                    <div className="text-right font-semibold text-slate-700 dark:text-slate-200">
-                      Marc Antoine
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {/* Onglets interactifs */}
+            <div className="mb-6 flex gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/80">
+              {([
+                { key: 'supervision', label: 'Supervision', icon: LayoutDashboard },
+                { key: 'calculators', label: 'Calculateurs', icon: Wrench },
+                { key: 'reports', label: 'Rapports', icon: FileCheck2 },
+              ] as const).map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveTab(key)}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 ${
+                    activeTab === key
+                      ? 'bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-cyan-300'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300'
+                  }`}
+                >
+                  <Icon className="size-3.5 shrink-0" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
             </div>
+
+            {/* ——— VUE 1 : SUPERVISION ——— */}
+            {activeTab === 'supervision' && (
+              <div className="space-y-5">
+                {/* Bandeau Bienvenue */}
+                <div className="flex flex-col justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-4 sm:flex-row sm:items-center">
+                  <div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-xl font-extrabold text-slate-900 dark:text-white sm:text-2xl">Bonjour, Alexandre</h2>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-2xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400">
+                        <span className="size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+                        Session Sécurisée
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Aperçu temps réel · Pilotage multi-chantiers</p>
+                  </div>
+                  <span className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-1 font-mono text-xs font-bold text-blue-700 dark:bg-blue-950/70 dark:border-blue-800/50 dark:text-blue-300">
+                    {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </span>
+                </div>
+
+                {/* 4 KPIs */}
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {[
+                    { label: 'Missions', value: '24', sub: '+12% semaine', color: 'blue', Icon: Briefcase },
+                    { label: 'Interventions', value: '18', sub: '56% terminées', color: 'emerald', Icon: Wrench },
+                    { label: 'Techniciens', value: '14/16', sub: '87.5% actifs', color: 'violet', Icon: Users },
+                    { label: 'Rapports', value: '5', sub: '3 urgents', color: 'amber', Icon: FileCheck2 },
+                  ].map(({ label, value, sub, color, Icon }) => (
+                    <div key={label} className={`rounded-2xl border border-${color}-200/80 bg-${color}-50/40 p-4 transition-all hover:scale-[1.02] dark:border-${color}-900/50 dark:bg-${color}-950/40`}>
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        <span>{label}</span>
+                        <div className={`rounded-lg bg-${color}-500/15 p-2 text-${color}-600 dark:bg-${color}-500/20 dark:text-${color}-400`}>
+                          <Icon className="size-4" />
+                        </div>
+                      </div>
+                      <span className="font-mono text-3xl font-black text-slate-900 dark:text-white">{value}</span>
+                      <span className={`mt-1 block text-[11px] font-bold text-${color}-600 dark:text-${color}-400`}>{sub}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tableau planning */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800/80 dark:bg-slate-900/70">
+                  <div className="mb-3 flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2 text-slate-900 dark:text-white">
+                      <Calendar className="size-4 text-blue-600 dark:text-cyan-400" />
+                      Planning du jour
+                    </span>
+                    <span className="flex items-center gap-1 text-blue-600 dark:text-cyan-400">Voir tout <ChevronRight className="size-3.5" /></span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'INT-8902', status: 'En cours', statusColor: 'emerald', title: 'Installation & Mise en service CVC', client: 'Complexe Tertiaire Horizon', time: '08:30 - 10:30', loc: 'Paris Nord', tech: 'Jean Dupont', ping: false },
+                      { id: 'INT-8903', status: 'Urgente', statusColor: 'rose', title: 'Audit Technique & Conformité Fibre', client: 'Clinique Val d\'Or', time: '10:00 - 12:00', loc: 'Lyon Centre', tech: 'Marc Antoine', ping: true },
+                    ].map((row) => (
+                      <div key={row.id} className="flex flex-col gap-2 rounded-xl bg-white border border-slate-200/80 p-3.5 text-xs shadow-2xs sm:flex-row sm:items-center sm:justify-between dark:bg-slate-950/80 dark:border-slate-800/70">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-500 dark:text-slate-400">{row.id}</span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-${row.statusColor}-50 border border-${row.statusColor}-200 text-${row.statusColor}-700 dark:bg-${row.statusColor}-950/70 dark:border-${row.statusColor}-500/30 dark:text-${row.statusColor}-400`}>
+                              <span className={`size-1.5 rounded-full bg-${row.statusColor}-500 dark:bg-${row.statusColor}-400 ${row.ping ? 'animate-ping' : 'animate-pulse'}`} />
+                              {row.status}
+                            </span>
+                          </div>
+                          <div className="font-bold text-slate-900 dark:text-white">{row.title}</div>
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">{row.client}</span>
+                            <span className="flex items-center gap-1"><Clock className="size-3" /> {row.time}</span>
+                            <span className="flex items-center gap-1"><MapPin className="size-3" /> {row.loc}</span>
+                          </div>
+                        </div>
+                        <div className="font-semibold text-slate-700 dark:text-slate-200 sm:text-right shrink-0">{row.tech}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ——— VUE 2 : CALCULATEURS ——— */}
+            {activeTab === 'calculators' && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Calculateurs d&apos;ingénierie certifiés</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">36 outils · Normes NF C 15-100, ITU-T G.652, Eurocodes</p>
+                  </div>
+                  <span className="rounded-md bg-cyan-950/80 border border-cyan-800/50 px-3 py-1 font-mono text-xs font-bold text-cyan-300">UTE &amp; ISO/IEC</span>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[
+                    { title: 'Bilan Optique FTTH', color: 'cyan', value: '14.85 dB', desc: 'Liaison 12 km @ 1310 nm · 4 épissures · coupleur 1:8', result: 'Marge : +15.15 dB (Classe B+)' },
+                    { title: 'Puissance Triphasée', color: 'amber', value: '25.5 A / ph', desc: '15 kW sous 400 V · cos φ = 0.85', result: 'Disjoncteur : 32 A Courbe C' },
+                    { title: 'Sous-réseau IP', color: 'indigo', value: '/27 · 30 hôtes', desc: 'Plage : 192.168.10.1 → 192.168.10.30', result: 'Masque : 255.255.255.224' },
+                  ].map(({ title, color, value, desc, result }) => (
+                    <div key={title} className={`rounded-2xl border border-${color}-500/30 bg-slate-900/80 p-5 space-y-3`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`font-bold text-${color}-300 text-sm`}>{title}</span>
+                        <span className={`font-mono text-xs text-${color}-400 font-bold`}>{value}</span>
+                      </div>
+                      <p className="text-xs text-slate-400">{desc}</p>
+                      <div className="rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-300 border border-slate-800">{result}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ——— VUE 3 : RAPPORTS ——— */}
+            {activeTab === 'reports' && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Rapports &amp; Signatures numériques</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">PDF certifié + signature client sur smartphone dès la fin des travaux</p>
+                  </div>
+                  <span className="rounded-md bg-emerald-950/80 border border-emerald-800/50 px-3 py-1 font-mono text-xs font-bold text-emerald-300">Horodatage</span>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck2 className="size-5 text-emerald-400" />
+                      <div>
+                        <div className="font-bold text-white text-sm">Rapport #RAP-2026-089</div>
+                        <div className="text-xs text-slate-400">Client : Groupe Hospitalier Paris Est</div>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400">✓ Signé</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
+                    {[
+                      { label: 'Durée intervention', value: '2h 15m (conforme devis)' },
+                      { label: 'Matériel utilisé', value: '2x Disjoncteurs · 45m Câble' },
+                      { label: 'Export', value: 'PDF certifié + photos' },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="rounded-xl bg-slate-950 p-3 border border-slate-800">
+                        <span className="block text-[10px] uppercase text-slate-500 mb-0.5">{label}</span>
+                        <span className="font-bold text-white">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Activity className="size-3.5 text-cyan-400" />
+                    <span className="text-xs text-slate-400">2 rapports en attente de signature client · <span className="text-cyan-400 font-semibold">Relance auto dans 2h</span></span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -212,11 +212,15 @@ export async function syncSubscriptionSeats(organizationId: string): Promise<boo
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
+    const options: { headers?: Record<string, string>; body: { organizationId: string } } = {
+      body: { organizationId },
+    };
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+    }
+
     const response: { data: { synced?: boolean } | null; error: unknown } =
-      await supabase.functions.invoke<{ synced?: boolean }>('sync-subscription-seats', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: { organizationId },
-      });
+      await supabase.functions.invoke<{ synced?: boolean }>('sync-subscription-seats', options);
 
     if (response.error !== null) return false;
     return response.data?.synced === true;
@@ -279,7 +283,7 @@ export async function updateSubscriptionPlan(params: {
 
   return {
     updatedInPlace: response.data.updatedInPlace ?? false,
-    url: response.data.url,
+    ...(response.data.url !== undefined ? { url: response.data.url } : {}),
     planCode: response.data.planCode ?? params.planCode,
   };
 }

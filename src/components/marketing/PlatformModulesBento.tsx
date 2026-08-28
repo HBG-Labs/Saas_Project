@@ -43,13 +43,8 @@ export function PlatformModulesBento() {
                 loading="lazy"
               />
 
-              {/* Fondus dégradés subtils & stylés pour une intégration fluide sans coupure */}
-              {/* Fondu latéral droit (vers le texte à droite) */}
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-slate-50/90 via-slate-50/30 to-transparent dark:from-[#060a12]/90 dark:via-[#060a12]/30 dark:to-transparent" />
-              {/* Fondu bas */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50/80 via-slate-50/20 to-transparent dark:from-[#060a12]/85 dark:via-[#060a12]/20 dark:to-transparent" />
-              {/* Fondu latéral gauche léger */}
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-slate-50/50 via-transparent to-transparent dark:from-[#060a12]/60 dark:via-transparent dark:to-transparent" />
+              {/* Liseré bas subtil */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#060a12]/70 to-transparent" />
 
               {/* Badges Flottants Discrets & Ultra-Fins */}
               {/* 1. Statut Centre de Contrôle en haut à gauche */}
