@@ -110,7 +110,7 @@ export function PublicLayout() {
               className={cn(
                 'hidden items-center gap-1.5 text-xs font-bold transition-all cursor-pointer sm:flex',
                 isLandingPage
-                  ? 'border-0 bg-transparent text-blue-400 hover:text-blue-300 shadow-none p-0 rounded-none'
+                  ? 'border-0 bg-transparent text-blue-400 hover:text-cyan-300 shadow-none p-0 rounded-none'
                   : 'rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-blue-600 shadow-xs hover:bg-blue-500/20 dark:text-blue-400'
               )}
               aria-label="Installer l'application sur votre appareil"
@@ -139,7 +139,7 @@ export function PublicLayout() {
             ) : (
               <>
                 {isLandingPage ? (
-                  <Link to={ROUTES.login} className="hidden text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors lg:inline-flex">
+                  <Link to={ROUTES.login} className="hidden text-xs font-semibold text-blue-400 hover:text-cyan-300 transition-colors lg:inline-flex">
                     Connexion
                   </Link>
                 ) : (
