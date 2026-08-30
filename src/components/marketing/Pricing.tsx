@@ -2,7 +2,6 @@ import { ArrowRight, Check, Sparkles, User, Users } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
@@ -106,24 +105,23 @@ export function Pricing() {
                 </div>
 
                 <div className="p-5 pt-0">
-                  <Button
-                    asChild
-                    variant={tier.popular ? 'primary' : tier.ctaVariant}
-                    className={`w-full rounded-none font-bold text-xs h-9 cursor-pointer ${
+                  <Link
+                    to={tier.ctaLink ?? ROUTES.register}
+                    className={`inline-flex items-center justify-center gap-1.5 w-full rounded-none font-bold text-xs h-9 cursor-pointer transition-all duration-200 ${
                       tier.popular
-                        ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md'
-                        : tier.id === 'enterprise'
-                          ? 'border border-purple-400/40 text-purple-300 hover:bg-purple-950/60 backdrop-blur-xs'
-                          : tier.id === 'business'
-                            ? 'border border-emerald-400/40 text-emerald-300 hover:bg-emerald-950/60 backdrop-blur-xs'
-                            : 'border border-white/15 text-white hover:bg-white/10 backdrop-blur-xs'
+                        ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black shadow-md ring-1 ring-cyan-400/50'
+                        : tier.id === 'free'
+                          ? 'border border-white/20 bg-white/5 text-white hover:bg-white/15 hover:border-white/40 shadow-xs backdrop-blur-xs'
+                          : tier.id === 'starter'
+                            ? 'border border-sky-400/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 hover:border-sky-400/70 shadow-xs backdrop-blur-xs'
+                            : tier.id === 'business'
+                              ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/80 shadow-xs backdrop-blur-xs'
+                              : 'border border-purple-400/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400/80 shadow-xs backdrop-blur-xs'
                     }`}
                   >
-                    <Link to={tier.ctaLink ?? ROUTES.register}>
-                      {tier.ctaText}
-                      <ArrowRight className="size-3.5 ml-1" />
-                    </Link>
-                  </Button>
+                    <span>{tier.ctaText}</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
                 </div>
               </Card>
             );

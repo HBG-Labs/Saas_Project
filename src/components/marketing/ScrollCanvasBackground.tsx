@@ -29,9 +29,10 @@ export function ScrollCanvasBackground() {
 
     // Rendu d'une image sur le canvas avec taille réduite & dégradé doux sur le bord gauche
     const renderFrame = (img: HTMLImageElement) => {
-      if (!ctx || !canvas) return;
+      try {
+        if (!ctx || !canvas || !img || !img.complete || (img.naturalWidth || 0) === 0) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const displayWidth = window.innerWidth;
       const displayHeight = window.innerHeight;
 
@@ -125,7 +126,10 @@ export function ScrollCanvasBackground() {
       bottomGrad.addColorStop(1, '#020808');
       ctx.fillStyle = bottomGrad;
       ctx.fillRect(nx, ny + nh - fadeVHeight, nw, fadeVHeight);
-    };
+    } catch {
+      // Ignore les erreurs de décodage transitoires du canvas
+    }
+  };
 
     // Charger immédiatement la 1ère frame
     const firstImg = new Image();
