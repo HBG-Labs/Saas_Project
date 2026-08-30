@@ -103,9 +103,9 @@ export function Hero() {
           onClose={() => setIsDownloadModalOpen(false)}
         />
 
-        {/* ---------------------------------------------------- SUPERVISION ÉPURÉE SANS FOND POSITIONNÉE À GAUCHE */}
+        {/* ---------------------------------------------------- SUPERVISION ÉPURÉE AVEC CADRE CARRÉ GLASSMORPHIQUE */}
         <div className="mt-12 sm:mt-16 w-full max-w-2xl lg:max-w-3xl text-left">
-          <div className="space-y-6">
+          <div className="border border-white/20 bg-white/[0.04] backdrop-blur-xl shadow-[0_8px_40px_0_rgba(6,182,212,0.10),0_2px_16px_0_rgba(0,0,0,0.4)] p-5 sm:p-7 space-y-6">
             {/* Ligne d'état supérieure */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-4">
               <div className="flex items-center gap-2">
