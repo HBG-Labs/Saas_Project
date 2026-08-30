@@ -16,7 +16,10 @@ export default defineConfig({
     port: 5173,
     // Nécessaire sous OneDrive : la surveillance native rate parfois des
     // événements sur un dossier synchronisé.
-    watch: { usePolling: false },
+    watch: {
+      usePolling: false,
+      ignored: ['**/ezgif-*/**', '**/COdeFinal/**', '**/Test/**', '**/Saas_Project/**', '**/coverage/**'],
+    },
   },
   build: {
     // Le découpage vient du lazy loading par route (src/app/router.tsx).

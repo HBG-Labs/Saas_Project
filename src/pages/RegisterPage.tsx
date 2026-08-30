@@ -102,11 +102,16 @@ export default function RegisterPage() {
               rien ne l'annonce. Un avantage que le visiteur ignore ne le
               décide pas — et il découvrait une échéance dont on ne lui avait
               jamais parlé. */}
-          <p className="text-2xs text-muted-foreground">
-            Quatorze jours d’essai gratuit sur les formules payantes, sans carte bancaire. À
-            l’échéance, l’entreprise revient en formule Gratuite : vos données sont conservées,
-            seuls les modules métier se referment.
-          </p>
+          {/* Message explicatif dynamique selon la formule sélectionnée */}
+          {activePlanInfo.priceMonthly === 0 ? (
+            <p className="text-2xs text-muted-foreground">
+              La formule <strong className="text-foreground">Free</strong> est 100% gratuite à vie, sans carte bancaire. Vous accédez immédiatement aux calculateurs et outils techniques.
+            </p>
+          ) : (
+            <p className="text-2xs text-muted-foreground">
+              <strong className="text-foreground">14 jours d’essai offerts</strong> sur la formule {activePlanInfo.name} (0 € débité aujourd’hui, carte bancaire requise pour valider l’accès). Annulable à tout moment.
+            </p>
+          )}
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 rounded-xl bg-surface-sunken border border-border/80">
             {PRICING_PLANS.map((plan) => {
@@ -208,13 +213,13 @@ export default function RegisterPage() {
           <Button type="submit" size="lg" className="w-full font-bold" isLoading={isSubmitting}>
             {activePlanInfo.priceMonthly === 0
               ? 'Créer mon compte gratuit'
-              : `Démarrer avec ${activePlanInfo.name}`}
+              : `Démarrer mon essai ${activePlanInfo.name} (0 €)`}
           </Button>
 
           <p className="text-center text-3xs text-muted-foreground">
             {activePlanInfo.priceMonthly === 0
               ? 'Compte gratuit sans carte bancaire. Vos outils et calculs sont accessibles immédiatement.'
-              : 'Aucun paiement requis immédiatement. Vous configurerez votre abonnement après validation de votre e-mail.'}
+              : `14 jours d’essai offerts sur la formule ${activePlanInfo.name}. Vous validerez votre empreinte bancaire sans débit après confirmation de votre e-mail.`}
           </p>
         </form>
       </div>

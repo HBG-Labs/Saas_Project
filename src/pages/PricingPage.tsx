@@ -191,7 +191,7 @@ export default function PricingPage() {
         <p className="text-muted-foreground mt-4 text-center text-xs">
           Facturation mensuelle, sans engagement.{' '}
           <strong className="text-foreground">Quatorze jours d’essai gratuit</strong> sur toutes
-          les formules payantes, sans carte bancaire. Au-delà des utilisateurs compris dans la
+          les formules payantes (0 € débité aujourd’hui). Au-delà des utilisateurs compris dans la
           formule, chaque siège supplémentaire coûte 5 € par mois.
         </p>
 

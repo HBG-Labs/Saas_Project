@@ -1,173 +1,102 @@
 import { useState } from 'react';
-import { ChevronDown, Sparkles, ShieldCheck, Cpu, Layers } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 
 interface FaqItem {
   id: string;
-  category: 'platform' | 'security' | 'billing';
   question: string;
   answer: string;
 }
 
-const CATEGORIES = [
-  { id: 'all', label: 'Toutes les questions', icon: Layers },
-  { id: 'platform', label: 'Plateforme & Outils', icon: Cpu },
-  { id: 'security', label: 'Sécurité & IA', icon: ShieldCheck },
-  { id: 'billing', label: 'Abonnements & Équipes', icon: Sparkles },
-] as const;
-
 const FAQS: FaqItem[] = [
   {
     id: '1',
-    category: 'platform',
     question: "Qu'est-ce que REZO360 exactement ?",
     answer:
-      "REZO360 est la plateforme SaaS tout-en-un centralisant des calculateurs normés, des outils d’ingénierie certifiés et un hub de gestion technique pour les techniciens, ingénieurs et entreprises.",
+      "REZO360 est la plateforme SaaS tout-en-un centralisant calculateurs normés, outils d’ingénierie certifiés et gestion technique de terrain pour les techniciens, ingénieurs et entreprises.",
   },
   {
     id: '2',
-    category: 'platform',
     question: 'Les calculateurs sont-ils conformes et vérifiables ?',
     answer:
-      'Oui. Tous nos algorithmes s’appuient sur les formules mathématiques et physiques standardisées (Système International d’Unités, normes NF C 15-100, ITU-T, Eurocodes, DTU). Les formules exactes et les conversions sont affichées en direct dans chaque outil.',
+      'Oui. Tous nos calculs s’appuient sur les formules mathématiques et normes officielles (NF C 15-100, ITU-T, ISO). Les formules exactes sont affichées en direct dans chaque outil.',
   },
   {
     id: '3',
-    category: 'platform',
-    question: 'Puis-je exporter mes résultats et fiches de dimensionnement ?',
+    question: 'Est-ce compatible avec mon smartphone iOS ou Android ?',
     answer:
-      "Oui. Vous pouvez exporter vos synthèses, bilans techniques et fiches de calcul en PDF prêts à transmettre à vos clients ou bureaux d'études, ou copier directement le compte-rendu textuel en 1 clic.",
+      'Oui, REZO360 est 100% responsive et optimisé pour mobile sous forme de PWA installable en 1 clic sur votre écran d’accueil pour vos interventions sur le terrain.',
   },
   {
     id: '4',
-    category: 'platform',
-    question: 'Est-ce compatible avec mon smartphone iOS ou Android ?',
+    question: 'Puis-je tester REZO360 gratuitement ?',
     answer:
-      'Oui, REZO360 est 100% responsive et optimisé pour tous les navigateurs mobiles ainsi que sous forme d’application PWA installable en 1 clic sur votre écran d’accueil.',
+      'Absolument. Vous bénéficiez de 14 jours d’essai gratuit sans carte bancaire sur les formules payantes, ainsi que d’un plan Gratuit permanent sans limite de temps.',
   },
   {
     id: '5',
-    category: 'security',
     question: 'Comment mes données d’entreprise sont-elles protégées ?',
     answer:
-      'Toutes vos données d’entreprise sont stockées dans une base chiffrée avec isolation stricte (Row Level Security PostgreSQL). Les flux sont chiffrés en transit et au repos (AES-256 bits).',
-  },
-  {
-    id: '6',
-    category: 'security',
-    question: 'Puis-je créer mes propres calculateurs personnalisés ?',
-    answer:
-      'Oui, avec l’offre Entreprise, notre studio de création vous permet de modéliser vos propres formules métier et de les diffuser instantanément à vos équipes terrain.',
-  },
-  {
-    id: '7',
-    category: 'billing',
-    question: 'Puis-je utiliser REZO360 gratuitement ?',
-    answer:
-      'Absolument. Le plan Gratuit est accessible sans limite de temps et sans carte bancaire pour découvrir les outils et effectuer vos premiers calculs.',
-  },
-  {
-    id: '8',
-    category: 'billing',
-    question: 'Quelle est la différence entre le plan Pro et le plan Entreprise ?',
-    answer:
-      'Le plan Pro s’adresse aux techniciens et ingénieurs individuels (historique illimité, exports PDF/CSV certifiés). Le plan Entreprise ajoute la gestion d’équipe, le SSO, l’espace partagé et un SLA garanti.',
-  },
-  {
-    id: '9',
-    category: 'billing',
-    question: 'Est-il possible d’exporter les rapports d’intervention en PDF ?',
-    answer:
-      'Oui, les plans Pro et Entreprise permettent de générer des rapports PDF certifiés et personnalisés avec le logo de votre entreprise et vos signatures numériques.',
-  },
-  {
-    id: '10',
-    category: 'billing',
-    question: 'Comment s’effectue le déploiement pour une équipe ?',
-    answer:
-      'Le déploiement prend moins de 5 minutes : vous invitez vos collaborateurs par e-mail ou via l’annuaire d’entreprise SSO (Google, Microsoft, Okta). Aucune installation lourde requise.',
+      'Toutes vos données sont hébergées en Europe et chiffrées de bout en bout (AES-256). L’accès est strictement cloisonné par organisation (PostgreSQL Row Level Security).',
   },
 ];
 
 export function Faq() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [openId, setOpenId] = useState<string | null>('1');
 
-  const filteredFaqs =
-    selectedCategory === 'all' ? FAQS : FAQS.filter((faq) => faq.category === selectedCategory);
-
   return (
-    <section className="py-16 sm:py-24 border-t border-border/60">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* En-tête de section */}
-        <div className="text-center space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Foire Aux Questions
-          </span>
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            Tout ce que vous devez savoir sur REZO360
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Trouvez rapidement des réponses claires sur nos outils, la sécurité de vos données et nos offres.
-          </p>
-        </div>
+    <section className="py-16 sm:py-24 bg-transparent text-white">
+      <div className="mx-auto max-w-[1600px] px-3 sm:px-5 lg:px-6 flex justify-start lg:justify-end">
+        {/* Contenu entièrement positionné à droite sur desktop, pleine largeur fluide sur mobile/tablette */}
+        <div className="w-full max-w-2xl lg:max-w-3xl text-left flex flex-col items-start space-y-6">
+          {/* En-tête de section */}
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-none border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-bold text-cyan-300 shadow-xs">
+              <Sparkles className="size-3.5 text-cyan-400" />
+              <span>Questions Fréquentes</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+              Tout ce que vous devez savoir sur REZO360
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed font-normal">
+              Des réponses claires et immédiates sur nos outils, la conformité de nos calculateurs et la sécurité de vos données.
+            </p>
+          </div>
 
-        {/* Filtres par catégories (Pills) */}
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {CATEGORIES.map((cat) => {
-            const Icon = cat.icon;
-            const isActive = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Icon className="size-3.5" />
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Grille 2 Colonnes d'Accordéons compacts */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-          {filteredFaqs.map((faq) => {
-            const isOpen = openId === faq.id;
-            return (
-              <div
-                key={faq.id}
-                className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
-                  isOpen
-                    ? 'border-blue-500/50 bg-white shadow-md dark:border-blue-500/40 dark:bg-slate-900'
-                    : 'border-slate-200/80 bg-white/80 hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenId(isOpen ? null : faq.id)}
-                  className="flex w-full items-center justify-between p-4 sm:p-5 text-left text-xs sm:text-sm font-bold text-slate-900 transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400 cursor-pointer gap-3"
+          {/* 5 Questions Clés avec Aisance Horizontale et Bords Carrés */}
+          <div className="space-y-3 w-full pt-1">
+            {FAQS.map((faq) => {
+              const isOpen = openId === faq.id;
+              return (
+                <div
+                  key={faq.id}
+                  className={`overflow-hidden rounded-none border transition-all duration-200 bg-transparent ${
+                    isOpen
+                      ? 'border-cyan-500/50'
+                      : 'border-white/10 hover:border-white/20'
+                  }`}
                 >
-                  <span className="leading-snug">{faq.question}</span>
-                  <ChevronDown
-                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
-                    }`}
-                  />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(isOpen ? null : faq.id)}
+                    className="flex w-full items-center justify-between p-4 sm:p-5 text-left text-xs sm:text-sm font-bold text-white transition-colors hover:text-cyan-300 cursor-pointer gap-3"
+                  >
+                    <span className="leading-snug">{faq.question}</span>
+                    <ChevronDown
+                      className={`size-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-cyan-400' : ''
+                      }`}
+                    />
+                  </button>
 
-                {isOpen && (
-                  <div className="border-t border-slate-100 dark:border-slate-800 p-4 sm:p-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-950/40">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {isOpen && (
+                    <div className="border-t border-white/10 p-4 sm:p-5 text-xs sm:text-sm leading-relaxed text-slate-300 bg-transparent">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

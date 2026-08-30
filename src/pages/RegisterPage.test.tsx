@@ -37,7 +37,7 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     renderWithProviders(<RegisterPage />, { route: '/register?plan=pro' });
 
     expect(screen.getAllByText(/Formule Pro/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer avec Pro/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Démarrer mon essai Pro/i })).toBeInTheDocument();
     expect(screen.getByText(/39 € \/ mois/i)).toBeInTheDocument();
   });
 
@@ -50,14 +50,14 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     await user.click(starterBtn);
 
     expect(screen.getAllByText(/Formule Starter/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer avec Starter/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Démarrer mon essai Starter/i })).toBeInTheDocument();
 
-    // Clic sur Business (79€/m)
+    // Clic sur Business (69€/m)
     const businessBtn = screen.getByRole('button', { name: /Business/i });
     await user.click(businessBtn);
 
     expect(screen.getAllByText(/Formule Business/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer avec Business/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Démarrer mon essai Business/i })).toBeInTheDocument();
   });
 
   it('bloque la soumission et affiche les erreurs de validation si les champs sont vides', async () => {

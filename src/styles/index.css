@@ -196,11 +196,15 @@
      Tailwind (1 s) évoque une attente bloquante, pas un fond de tâche. */
   --animate-spin-slow: spin 3s linear infinite;
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-full: 0px;
+  --radius: 0px;
 
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
@@ -209,11 +213,14 @@
 }
 
 /* =============================================================================
-   BASE & COMPOSANTS RICHES
+   BASE & COMPOSANTS RICHES — BORDS CARRÉS GLOBAUX (DESIGN TECHNIQUE CYBER)
    ============================================================================= */
 @layer base {
-  * {
+  *,
+  ::before,
+  ::after {
     border-color: var(--border);
+    border-radius: 0px !important;
   }
 
   html {
@@ -270,7 +277,7 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
+    border-radius: 0px !important;
   }
 
   h1, h2, h3, h4 {

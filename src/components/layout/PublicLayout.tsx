@@ -23,11 +23,23 @@ const MARKETING_LINKS = [
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { status } = useAuth();
   const isAuthenticated = status === 'authenticated';
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
   const { resolvedTheme } = useTheme();
+
+  // Détection du défilement pour protéger la topbar lors du scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // La landing page est strictement verrouillée sur le thème sombre cyber-technique
   useEffect(() => {
@@ -41,10 +53,11 @@ export function PublicLayout() {
 
   return (
     <div
-      className={cn(
-        'flex min-h-dvh flex-col bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100',
-        isLandingPage && 'dark bg-[#070b14] text-white',
-      )}
+      className={
+        isLandingPage
+          ? 'flex min-h-dvh flex-col bg-transparent text-white'
+          : 'flex min-h-dvh flex-col bg-slate-50/50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100'
+      }
     >
       <a
         href="#contenu-principal"
@@ -56,11 +69,15 @@ export function PublicLayout() {
       {/* ---------------------------------------------------- NAVBAR */}
       <header
         className={cn(
-          'sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/90',
-          isLandingPage && 'border-slate-800/80 bg-[#070b14]/90 text-white',
+          'sticky top-0 z-50 transition-all duration-200',
+          isLandingPage
+            ? isScrolled
+              ? 'border-b border-white/10 bg-slate-950/80 backdrop-blur-md text-white shadow-lg shadow-black/30'
+              : 'border-b border-transparent bg-transparent text-white shadow-none'
+            : 'border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/90'
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
+        <div className={cn('mx-auto flex h-16 items-center justify-between gap-2', isLandingPage ? 'max-w-[1600px] px-3 sm:gap-4 sm:px-5 lg:px-6' : 'max-w-7xl px-3 sm:gap-4 sm:px-6 lg:px-8')}>
           <Logo className={cn('shrink-0 text-base sm:text-lg', isLandingPage ? 'text-white' : 'text-slate-900 dark:text-white')} />
 
           {/* Navigation centrale */}
@@ -71,10 +88,10 @@ export function PublicLayout() {
                   <Link
                     to={link.to}
                     className={cn(
-                      'flex h-9 items-center rounded-xl px-3.5 text-xs font-semibold transition-colors',
+                      'flex h-9 items-center px-3.5 text-xs font-semibold transition-colors',
                       isLandingPage
-                        ? 'text-slate-300 hover:bg-blue-600/15 hover:text-cyan-300'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white'
+                        ? 'rounded-none text-slate-300 hover:bg-blue-600/15 hover:text-cyan-300'
+                        : 'rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white'
                     )}
                   >
                     {link.label}
@@ -85,16 +102,16 @@ export function PublicLayout() {
           </nav>
 
           {/* Actions à droite */}
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             {/* BOUTON TÉLÉCHARGER L'APP */}
             <button
               type="button"
               onClick={() => setIsDownloadModalOpen(true)}
               className={cn(
-                'hidden items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer sm:flex',
+                'hidden items-center gap-1.5 text-xs font-bold transition-all cursor-pointer sm:flex',
                 isLandingPage
-                  ? 'border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:border-cyan-400/50'
-                  : 'border-blue-500/30 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400'
+                  ? 'border-0 bg-transparent text-cyan-300 hover:text-cyan-200 shadow-none p-0 rounded-none'
+                  : 'rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-blue-600 shadow-xs hover:bg-blue-500/20 dark:text-blue-400'
               )}
               aria-label="Installer l'application sur votre appareil"
             >
@@ -106,23 +123,44 @@ export function PublicLayout() {
             {!isLandingPage && <ThemeToggle />}
 
             {isAuthenticated ? (
-              <Button asChild size="sm" className="rounded-xl font-bold">
-                <Link to={ROUTES.dashboard}>
+              isLandingPage ? (
+                <Link to={ROUTES.dashboard} className="text-xs font-bold text-cyan-300 hover:text-cyan-200 transition-colors">
                   <span className="lg:hidden">Ouvrir</span>
                   <span className="hidden lg:inline">Ouvrir l&apos;application</span>
                 </Link>
-              </Button>
+              ) : (
+                <Button asChild size="sm" className="rounded-xl font-bold">
+                  <Link to={ROUTES.dashboard}>
+                    <span className="lg:hidden">Ouvrir</span>
+                    <span className="hidden lg:inline">Ouvrir l&apos;application</span>
+                  </Link>
+                </Button>
+              )
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className={cn("hidden text-xs font-semibold lg:inline-flex", isLandingPage && "text-slate-200 hover:text-white hover:bg-slate-800/80")}>
-                  <Link to={ROUTES.login}>Connexion</Link>
-                </Button>
-                <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
-                  <Link to={ROUTES.register}>
+                {isLandingPage ? (
+                  <Link to={ROUTES.login} className="hidden text-xs font-semibold text-slate-300 hover:text-white transition-colors lg:inline-flex">
+                    Connexion
+                  </Link>
+                ) : (
+                  <Button asChild variant="ghost" size="sm" className="hidden text-xs font-semibold lg:inline-flex">
+                    <Link to={ROUTES.login}>Connexion</Link>
+                  </Button>
+                )}
+
+                {isLandingPage ? (
+                  <Link to={ROUTES.register} className="text-xs font-bold text-blue-400 hover:text-cyan-300 transition-colors">
                     <span className="lg:hidden">Commencer</span>
                     <span className="hidden lg:inline">Commencer gratuitement</span>
                   </Link>
-                </Button>
+                ) : (
+                  <Button asChild size="sm" className="rounded-xl font-bold shadow-xs">
+                    <Link to={ROUTES.register}>
+                      <span className="lg:hidden">Commencer</span>
+                      <span className="hidden lg:inline">Commencer gratuitement</span>
+                    </Link>
+                  </Button>
+                )}
               </>
             )}
 
@@ -198,27 +236,27 @@ export function PublicLayout() {
 
 const FOOTER_SECTIONS = [
   {
-    title: 'Plateforme REZO360',
+    title: 'Plateforme',
     links: [
-      { to: ROUTES.features, label: 'Fonctionnalités' },
-      { to: ROUTES.tools, label: 'Catalogue d’outils' },
+      { to: ROUTES.features, label: 'Fonctions' },
+      { to: ROUTES.tools, label: 'Outils' },
       { to: ROUTES.pricing, label: 'Tarifs' },
       { to: ROUTES.faq, label: 'FAQ' },
     ],
   },
   {
-    title: 'Compte & Session',
+    title: 'Compte',
     links: [
       { to: ROUTES.login, label: 'Connexion' },
-      { to: ROUTES.register, label: 'Créer un compte' },
+      { to: ROUTES.register, label: 'Inscription' },
     ],
   },
   {
     title: 'Légal',
     links: [
-      { to: ROUTES.legalNotice, label: 'Mentions légales' },
+      { to: ROUTES.legalNotice, label: 'Mentions' },
       { to: ROUTES.privacy, label: 'Confidentialité' },
-      { to: ROUTES.terms, label: 'Conditions générales' },
+      { to: ROUTES.terms, label: 'CGU' },
     ],
   },
 ] as const;
@@ -226,44 +264,55 @@ const FOOTER_SECTIONS = [
 function PublicFooter({ isLandingPage }: { isLandingPage?: boolean }) {
   return (
     <footer
-      className={cn(
-        'border-t border-slate-200/80 bg-white py-12 dark:border-slate-800/80 dark:bg-slate-950',
-        isLandingPage && 'border-slate-800/80 bg-[#070b14] text-white',
-      )}
+      className={
+        isLandingPage
+          ? 'relative z-10 border-t border-white/10 bg-[#020808]/90 py-3 sm:py-6 text-white backdrop-blur-md'
+          : 'relative z-10 border-t border-slate-200/80 bg-white py-3 sm:py-6 dark:border-slate-800/80 dark:bg-slate-950 text-slate-900 dark:text-white'
+      }
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <Logo />
-            <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              REZO360 est la plateforme SaaS dédiée aux techniciens et entreprises techniques. Centralisez vos missions, interventions, équipes et outils professionnels.
+      <div className={isLandingPage ? 'mx-auto max-w-[1600px] px-3 sm:px-5 lg:px-6' : 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'}>
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-5 lg:gap-6">
+          {/* Logo & Descriptif ultra compact */}
+          <div className="lg:col-span-2 space-y-1">
+            <Logo className={cn('text-sm sm:text-base', isLandingPage && 'text-white')} />
+            <p className={cn('max-w-sm text-[11px] sm:text-xs leading-tight sm:leading-relaxed', isLandingPage ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400')}>
+              Plateforme SaaS dédiée aux techniciens et entreprises techniques.
             </p>
           </div>
 
-          {FOOTER_SECTIONS.map((section) => (
-            <div key={section.title}>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                {section.title}
-              </h2>
-              <ul className="mt-3 space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className="text-xs text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Les 3 menus STRICTEMENT sur la même ligne (3 colonnes) sur mobile comme sur desktop */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:col-span-3 lg:gap-6">
+            {FOOTER_SECTIONS.map((section) => (
+              <div key={section.title} className="space-y-1">
+                <h2 className={cn('text-[10px] sm:text-xs font-bold uppercase tracking-wider', isLandingPage ? 'text-white' : 'text-slate-900 dark:text-white')}>
+                  {section.title}
+                </h2>
+                <ul className="space-y-0.5 sm:space-y-1">
+                  {section.links.map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className={cn(
+                          'text-[10px] sm:text-xs transition-colors block py-0.5 truncate',
+                          isLandingPage
+                            ? 'text-slate-300 hover:text-cyan-300'
+                            : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-6 text-xs text-slate-400 sm:flex-row dark:border-slate-800/60">
+        {/* Copyright & Mentions ultra compact */}
+        <div className={cn('mt-3 sm:mt-5 flex flex-col items-center justify-between gap-1 border-t pt-2 sm:pt-3 text-[10px] sm:text-xs sm:flex-row', isLandingPage ? 'border-white/10 text-slate-400' : 'border-slate-100 text-slate-400 dark:border-slate-800/60')}>
           <span>© {new Date().getFullYear()} REZO360 SaaS. Tous droits réservés.</span>
-          {/* « Engine v2.4 » retiré : cette version n'a jamais existé. */}
+          <span className="text-[10px] text-slate-500 hidden xs:inline">Conçu pour les professionnels du terrain</span>
         </div>
       </div>
     </footer>

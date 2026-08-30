@@ -69,7 +69,7 @@ export function Categories() {
 
   return (
     <section className="py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-3 sm:px-5 lg:px-6">
         <div className="text-center">
           <h2 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
             Boîte à outils d’ingénierie &amp; calcul
@@ -83,34 +83,34 @@ export function Categories() {
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {toolClusters.map((cluster) => {
             const IconComponent = cluster.icon;
             return (
               <Link
                 key={cluster.name}
                 to={cluster.to}
-                className={`group relative flex flex-col justify-between rounded-2xl border ${cluster.border} bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md dark:bg-slate-900/90`}
+                className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-transparent p-5 sm:p-6 transition-all duration-300 hover:border-cyan-500/40 hover:-translate-y-1"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className={`rounded-xl p-3 ${cluster.bg}`}>
-                      <IconComponent className={`size-6 ${cluster.color}`} />
+                    <div className="rounded-xl p-2.5 bg-white/5 border border-white/10">
+                      <IconComponent className={`size-5 ${cluster.color}`} />
                     </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] font-bold text-slate-300">
                       {cluster.count}
                     </span>
                   </div>
 
-                  <h3 className="mt-4 text-base font-bold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                  <h3 className="mt-4 text-sm font-bold text-white transition-colors group-hover:text-cyan-300">
                     {cluster.name}
                   </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
                     {cluster.description}
                   </p>
                 </div>
 
-                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+                <div className="mt-5 flex items-center gap-1.5 text-xs font-bold text-cyan-400">
                   <span>Accéder à l’outil</span>
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
@@ -122,7 +122,7 @@ export function Categories() {
         <div className="mt-10 text-center">
           <Link
             to={ROUTES.tools}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 transition-all shadow-xs"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
           >
             <span>Explorer la boîte à outils &amp; calculateurs</span>
             <ArrowRight className="size-3.5" />

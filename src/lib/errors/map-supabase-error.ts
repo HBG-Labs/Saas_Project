@@ -138,6 +138,30 @@ export function mapAuthError(error: SupabaseLikeError): AppError {
     );
   }
 
+  if (
+    msg.includes('error sending confirmation email') ||
+    msg.includes('error sending email') ||
+    msg.includes('smtp') ||
+    code === 'email_provider_disabled' ||
+    code === 'email_address_invalid'
+  ) {
+    return new AppError(
+      'validation',
+      "Impossible d'envoyer l'e-mail de confirmation. Veuillez renseigner une adresse e-mail valide (ex. @gmail.com, @entreprise.fr) ou réessayer dans quelques minutes.",
+      { cause: error },
+    );
+  }
+
+  if (
+    msg.includes('already registered') ||
+    msg.includes('user already exists') ||
+    code === 'user_already_exists'
+  ) {
+    return new AppError('conflict', 'Cette adresse e-mail est déjà utilisée. Connectez-vous.', {
+      cause: error,
+    });
+  }
+
   if (error.status === 400 || code === 'invalid_credentials') {
     return new AppError('validation', 'Identifiants incorrects.', { cause: error });
   }

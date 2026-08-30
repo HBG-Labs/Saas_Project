@@ -12,154 +12,165 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-const ROW_1_SECTORS = [
+const LEFT_SECTORS = [
   {
     name: 'Fibre Optique & Télécoms',
     sub: 'Réseaux FTTH & Infrastructures télécom',
     icon: Cable,
-    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20 dark:text-cyan-400 dark:bg-cyan-950/50 dark:border-cyan-500/30',
+    color: 'text-cyan-400',
   },
   {
     name: 'Électricité & Courants Faibles',
     sub: 'Basse tension, Tertiaire & Domotique',
     icon: Zap,
-    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-500/30',
+    color: 'text-amber-400',
   },
   {
     name: 'Froid & Climatisation (CVC)',
     sub: 'Génie frigorifique & Traitement d’air',
     icon: Snowflake,
-    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20 dark:text-rose-400 dark:bg-rose-950/50 dark:border-rose-500/30',
+    color: 'text-rose-400',
   },
   {
     name: 'Plomberie & Sanitaire',
     sub: 'Réseaux d’eau, Canalisations & Sanitaire',
     icon: Droplet,
-    color: 'text-sky-500 bg-sky-500/10 border-sky-500/20 dark:text-sky-400 dark:bg-sky-950/50 dark:border-sky-500/30',
+    color: 'text-sky-400',
   },
   {
     name: 'Chauffage & Génie Thermique',
     sub: 'Chaudières, Pompes à chaleur & Énergie',
     icon: Flame,
-    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20 dark:text-orange-400 dark:bg-orange-950/50 dark:border-orange-500/30',
+    color: 'text-orange-400',
   },
   {
     name: 'Réseaux Informatiques & IT',
     sub: 'Infrastructures VDI, Baies & Systèmes IP',
     icon: Cpu,
-    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20 dark:text-indigo-400 dark:bg-indigo-950/50 dark:border-indigo-500/30',
+    color: 'text-indigo-400',
   },
 ];
 
-const ROW_2_SECTORS = [
+const RIGHT_SECTORS = [
   {
     name: 'Énergies Renouvelables & IRVE',
     sub: 'Solaire photovoltaïque & Bornes de recharge',
     icon: SunMedium,
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-500/30',
+    color: 'text-emerald-400',
   },
   {
     name: 'Sécurité Électronique & Alarme',
     sub: 'Vidéosurveillance, Alarmes & Contrôle d’accès',
     icon: ShieldCheck,
-    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-500/30',
+    color: 'text-blue-400',
   },
   {
     name: 'Paysage & Espaces Verts',
     sub: 'Création paysagère & Aménagement extérieur',
     icon: Trees,
-    color: 'text-green-500 bg-green-500/10 border-green-500/20 dark:text-green-400 dark:bg-green-950/50 dark:border-green-500/30',
+    color: 'text-green-400',
   },
   {
     name: 'Propreté & Nettoyage Industriel',
     sub: 'Entretien de locaux, Tertiaire & Hygiène',
     icon: Sparkles,
-    color: 'text-purple-500 bg-purple-500/10 border-purple-500/20 dark:text-purple-400 dark:bg-purple-950/50 dark:border-purple-500/30',
+    color: 'text-purple-400',
   },
   {
     name: 'Hygiène 3D & Anti-Nuisibles',
     sub: 'Dératisation, Désinsectisation & Prévention',
     icon: Bug,
-    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20 dark:text-rose-400 dark:bg-rose-950/50 dark:border-rose-500/30',
+    color: 'text-rose-400',
   },
   {
     name: 'Maintenance Multi-Technique',
     sub: 'Maintenance de bâtiments & Installations',
     icon: Wrench,
-    color: 'text-violet-500 bg-violet-500/10 border-violet-500/20 dark:text-violet-400 dark:bg-violet-950/50 dark:border-violet-500/30',
+    color: 'text-violet-400',
   },
 ];
 
 export function BuiltForTech() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight || 800;
+
+      // Début de l'animation quand le haut de la section entre dans l'écran
+      const start = windowHeight * 0.90;
+      const end = windowHeight * 0.20;
+      const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end)));
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const ALL_SECTORS = [...LEFT_SECTORS, ...RIGHT_SECTORS];
+
   return (
-    <section className="relative overflow-hidden border-y border-slate-200/80 bg-slate-50/70 py-12 sm:py-16 transition-colors duration-200 dark:border-slate-800/80 dark:bg-[#070b14]/70">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center mb-8 sm:mb-10">
-        <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-50/80 px-3.5 py-1 text-xs font-bold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300 mb-3">
-          <Sparkles className="size-3.5 text-blue-600 dark:text-blue-400" />
-          <span>Secteurs d’Activité & Filières de Terrain</span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Pensé pour chaque secteur d’activité technique
-        </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-          Une plateforme unifiée qui s’adapte aux exigences métier et réglementaires de chaque filière opérationnelle.
-        </p>
-      </div>
+    <section ref={sectionRef} className="py-14 sm:py-20">
+      <div className="mx-auto max-w-[1600px] px-3 sm:px-5 lg:px-6">
+        {/* Contenu entièrement positionné à gauche : libère 100% de la moitié droite pour le technicien */}
+        <div className="max-w-2xl text-left flex flex-col items-start space-y-6">
+          {/* En-tête de section */}
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-none border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-bold text-cyan-300 shadow-xs">
+              <Sparkles className="size-3.5 text-cyan-400" />
+              <span>Secteurs d’Activité &amp; Filières de Terrain</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+              Pensé pour chaque secteur d’activité technique
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 max-w-xl leading-relaxed font-normal">
+              Une plateforme unifiée qui s’adapte aux exigences métier et réglementaires de chaque filière opérationnelle.
+            </p>
+          </div>
 
-      {/* Conteneur du Marquee avec masque de fondu progressif sur les bords gauche/droit */}
-      <div
-        className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
-        aria-label="Liste défilante des secteurs d’activité pris en charge"
-      >
-        {/* Ruban 1 : Défilement fluide vers la gauche */}
-        <div className="animate-marquee py-2 flex gap-4">
-          {[...ROW_1_SECTORS, ...ROW_1_SECTORS].map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={`row1-${item.name}-${index}`}
-                className="group flex items-center gap-3.5 rounded-2xl border border-slate-200/90 bg-white/90 px-4 py-3 shadow-2xs backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md dark:border-slate-800/90 dark:bg-slate-900/85 shrink-0"
-              >
-                <div className={`flex size-10 items-center justify-center rounded-xl border p-2 shrink-0 transition-transform group-hover:scale-110 ${item.color}`}>
-                  <Icon className="size-5" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {item.name}
-                  </div>
-                  <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                    {item.sub}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {/* Grille des 12 secteurs en 2 colonnes ultra-compactes sur mobile et desktop */}
+          <div className="grid grid-cols-2 gap-x-2.5 sm:gap-x-6 gap-y-1.5 sm:gap-y-2.5 w-full pt-1">
+            {ALL_SECTORS.map((item, index) => {
+              const Icon = item.icon;
+              // Calcul de déclenchement progressif au fur et à mesure du scroll
+              const threshold = (index / ALL_SECTORS.length) * 0.75;
+              const isVisible = scrollProgress >= threshold;
+              const itemProgress = Math.min(1, Math.max(0, (scrollProgress - threshold) / 0.25));
 
-        {/* Ruban 2 : Défilement fluide vers la droite (décalé pour une grande richesse visuelle) */}
-        <div className="animate-marquee-reverse py-2 flex gap-4 mt-2 sm:mt-3">
-          {[...ROW_2_SECTORS, ...ROW_2_SECTORS].map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={`row2-${item.name}-${index}`}
-                className="group flex items-center gap-3.5 rounded-2xl border border-slate-200/90 bg-white/90 px-4 py-3 shadow-2xs backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md dark:border-slate-800/90 dark:bg-slate-900/85 shrink-0"
-              >
-                <div className={`flex size-10 items-center justify-center rounded-xl border p-2 shrink-0 transition-transform group-hover:scale-110 ${item.color}`}>
-                  <Icon className="size-5" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {item.name}
+              return (
+                <div
+                  key={item.name}
+                  style={{
+                    opacity: isVisible ? itemProgress : 0,
+                    transform: isVisible
+                      ? `translateX(${(1 - itemProgress) * -15}px)`
+                      : 'translateX(-15px)',
+                    transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                  className="group flex items-center gap-1.5 sm:gap-2.5 py-1 sm:py-1.5 px-0.5 border-b border-white/5 transition-all duration-300 hover:translate-x-1 cursor-default min-w-0"
+                >
+                  <div className={`flex size-5 sm:size-7 items-center justify-center rounded-none shrink-0 transition-transform duration-300 group-hover:scale-110 ${item.color}`}>
+                    <Icon className="size-3.5 sm:size-4" />
                   </div>
-                  <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                    {item.sub}
+                  <div className="text-left min-w-0 flex-1">
+                    <div className="text-[11px] sm:text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                      {item.name}
+                    </div>
+                    <div className="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate hidden sm:block">
+                      {item.sub}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

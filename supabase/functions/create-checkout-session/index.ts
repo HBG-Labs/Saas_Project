@@ -138,6 +138,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
     payment_method_collection: 'always',
   };
 
+  let effectiveTrialEnd = finEssai;
+
   if (finEssai !== null) {
     params['subscription_data[trial_end]'] = String(finEssai);
     // À l'échéance, sans moyen de paiement valide, on s'ARRÊTE plutôt que
@@ -145,6 +147,22 @@ Deno.serve(async (request: Request): Promise<Response> => {
     // n'a jamais payé n'apporte rien ; l'organisation retombe sur Gratuit par
     // le chemin déjà éprouvé, ses données intactes.
     params['subscription_data[trial_settings][end_behavior][missing_payment_method]'] = 'cancel';
+  } else if (!existing?.provider_customer_id) {
+    // Si l'organisation n'a jamais souscrit ni eu de client Stripe, elle bénéficie
+    // d'un essai de 14 jours avec carte bancaire (0 € débité aujourd'hui).
+    const { data: hadPastSubscription } = await caller
+      .from('subscriptions')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .not('provider_subscription_id', 'is', null)
+      .limit(1)
+      .maybeSingle();
+
+    if (!hadPastSubscription) {
+      params['subscription_data[trial_period_days]'] = '14';
+      params['subscription_data[trial_settings][end_behavior][missing_payment_method]'] = 'cancel';
+      effectiveTrialEnd = Math.floor(Date.now() / 1000) + 14 * 86400;
+    }
   }
 
   // La seconde ligne n'existe que s'il y a un dépassement : une quantité nulle
@@ -175,7 +193,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
        * redirection : « vous ne serez pas débité avant le 1er septembre » n'a
        * de valeur qu'annoncé au moment du choix.
        */
-      trialEnd: finEssai === null ? null : new Date(finEssai * 1000).toISOString(),
+      trialEnd: effectiveTrialEnd === null ? null : new Date(effectiveTrialEnd * 1000).toISOString(),
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Échec Stripe.' }, 502);
