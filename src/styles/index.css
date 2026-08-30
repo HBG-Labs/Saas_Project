@@ -223,6 +223,12 @@
     border-radius: 0px !important;
   }
 
+  /* Exception : bulle d'aide flottante — doit rester ronde */
+  .support-bubble-btn,
+  .support-bubble-btn span {
+    border-radius: 9999px !important;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;

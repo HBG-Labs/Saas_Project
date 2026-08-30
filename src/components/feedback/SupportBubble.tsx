@@ -210,7 +210,7 @@ export function SupportBubble() {
           aria-label={isOpen ? "Fermer l'aide et le support" : "Ouvrir le support et l'aide"}
           title="Besoin d'aide ? (Glisser-déposer pour déplacer)"
           className={cn(
-            'group relative flex size-9.5 sm:size-10 items-center justify-center rounded-full',
+            'support-bubble-btn group relative flex size-9.5 sm:size-10 items-center justify-center rounded-full',
             'bg-primary text-primary-foreground shadow-md transition-all duration-200',
             'hover:bg-primary-hover hover:scale-105',
             'focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none',
