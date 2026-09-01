@@ -8,27 +8,28 @@ const badgeVariants = cva(
   {
     variants: {
       /*
-        Deux teintes par variante, et non une.
+        Chaque variante sémantique tire ses trois valeurs du même trio de
+        jetons : `--x`, `--x-subtle` (fond) et `--x-border` (contour).
 
-        Les couleurs vives à 300/400 sont lisibles sur fond sombre ; sur le
-        blanc du thème clair, adossées à un fond teinté à 15 %, elles tombent
-        sous 2,5:1 — un texte qu'on devine plutôt qu'on ne lit. La nuance à 700
-        rétablit le contraste en clair, la nuance d'origine reste en sombre.
+        La version précédente composait ces teintes à la main dans les palettes
+        brutes de Tailwind (`bg-emerald-500/15 text-emerald-700
+        dark:text-emerald-400`), avec une nuance différente par thème pour
+        rattraper le contraste — un commentaire de dix lignes expliquait
+        pourquoi. Ce rattrapage n'a plus lieu d'être : les jetons sont définis
+        séparément dans `:root` et `.dark`, donc le contraste est déjà résolu
+        par le thème, une fois, au lieu d'être recalculé dans chaque variante.
 
-        `neutral` portait `bg-secondary`, un jeton qui n'existe nulle part dans
-        le thème : la variante par défaut n'avait donc aucun fond.
+        Conséquence pratique : un changement d'identité se fait dans
+        `index.css` et traverse tous les badges du produit.
       */
       variant: {
-        neutral: 'border-border/50 bg-surface-sunken text-foreground/80',
-        primary: 'border-blue-500/30 bg-blue-500/15 text-blue-700 dark:text-blue-400 font-semibold',
-        accent:
-          'border-purple-500/35 bg-purple-500/15 text-purple-700 dark:text-purple-300 font-semibold',
-        success:
-          'border-emerald-500/35 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold',
-        warning:
-          'border-amber-500/35 bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold',
-        error: 'border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-400 font-semibold',
-        info: 'border-sky-500/35 bg-sky-500/15 text-sky-700 dark:text-sky-300 font-semibold',
+        neutral: 'border-border/60 bg-surface-sunken text-foreground/80',
+        primary: 'border-primary/30 bg-primary-subtle text-primary',
+        accent: 'border-accent/30 bg-accent-subtle text-accent',
+        success: 'border-success-border bg-success-subtle text-success',
+        warning: 'border-warning-border bg-warning-subtle text-warning',
+        error: 'border-error-border bg-error-subtle text-error',
+        info: 'border-info-border bg-info-subtle text-info',
         outline: 'border-border text-muted-foreground bg-transparent',
       },
       size: {
@@ -44,6 +45,9 @@ const badgeVariants = cva(
 export interface BadgeProps
   extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}
 
-export function Badge({ className, variant, ...props }: BadgeProps) {
-  return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
+// `size` était déclaré dans les variantes mais jamais transmis : tout badge
+// tombait sur `default`, y compris `RoleBadge` qui passe la prop
+// consciencieusement depuis toujours. La prop existait sans rien faire.
+export function Badge({ className, variant, size, ...props }: BadgeProps) {
+  return <span className={cn(badgeVariants({ variant, size }), className)} {...props} />;
 }

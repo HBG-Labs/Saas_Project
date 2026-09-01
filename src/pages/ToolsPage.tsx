@@ -7,8 +7,6 @@ import {
   Compass,
   FileText,
   Flashlight,
-  LayoutGrid,
-  LayoutList,
   Mic,
   RotateCcw,
   Search,
@@ -27,6 +25,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ROUTES } from '@/config/routes';
 import {
   UNIVERSAL_TOOLS,
@@ -37,8 +36,8 @@ import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
 import { useToolHistory } from '@/features/tools/hooks/useToolHistory';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import { useViewMode, VIEW_MODE_OPTIONS } from '@/lib/use-view-mode';
 
-type ViewMode = 'grid' | 'list';
 type FilterTab = 'all' | 'field' | 'calculators' | 'conversions' | 'notes' | 'favorites';
 
 const FIELD_TOOL_SLUGS = ['flashlight', 'magnifier', 'compass', 'level', 'stopwatch', 'voice-recorder'];
@@ -61,22 +60,10 @@ export default function ToolsPage() {
   useDocumentTitle('Boîte à Outils & Instruments — REZO360 Tools');
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') return 'list';
-    return (localStorage.getItem('rezo360:tools_view_mode') as ViewMode) || 'list';
-  });
+  const { viewMode, setViewMode } = useViewMode('rezo360:tools_view_mode');
   const [showHistory, setShowHistory] = useState(false);
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [activeFieldModalTool, setActiveFieldModalTool] = useState<FieldToolType>('flashlight');
-
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem('rezo360:tools_view_mode', mode);
-    } catch {
-      // Ignore
-    }
-  };
 
   const { isFavorite, toggleFavorite } = useToolFavorites();
   const { history, clearHistory, removeHistoryEntry } = useToolHistory();
@@ -330,37 +317,12 @@ export default function ToolsPage() {
               )}
             </Button>
 
-            {/* Sélecteur de vue (Liste / Grille) */}
-            <div className="flex items-center gap-1 bg-surface border border-border rounded-lg p-1 shadow-xs">
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('list')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                  viewMode === 'list'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-                title="Affichage en liste"
-              >
-                <LayoutList className="size-4" />
-                <span className="hidden sm:inline">Liste</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('grid')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                  viewMode === 'grid'
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-                title="Affichage en grille"
-              >
-                <LayoutGrid className="size-4" />
-                <span className="hidden sm:inline">Grille</span>
-              </button>
-            </div>
+            <SegmentedControl
+              label="Mode d’affichage"
+              value={viewMode}
+              onValueChange={setViewMode}
+              options={VIEW_MODE_OPTIONS}
+            />
           </div>
         </div>
 

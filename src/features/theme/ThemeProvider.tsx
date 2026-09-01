@@ -11,6 +11,7 @@ import {
   type ThemeContextValue,
 } from './theme-context';
 import { ACCENT_COLORS, type AccentColorId } from './accent-colors';
+import { applyBrowserBarColor } from './theme-script';
 import { DEFAULT_THEME_PRESET, THEME_PRESETS, type ThemePresetId } from './theme-presets';
 
 function readStoredPreset(): ThemePresetId {
@@ -65,6 +66,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     // 1. Classe dark/light et mode compact haute densité
     root.classList.toggle('dark', resolvedTheme === 'dark');
+    applyBrowserBarColor(resolvedTheme === 'dark');
     root.classList.toggle('compact-mode', compactMode);
     root.setAttribute('data-theme', preset);
     root.setAttribute('data-density', compactMode ? 'compact' : 'comfortable');

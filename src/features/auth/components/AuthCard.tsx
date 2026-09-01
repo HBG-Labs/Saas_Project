@@ -27,7 +27,7 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
           <p className="text-muted-foreground mt-2 text-sm">{description}</p>
         </div>
 
-        <div className="bg-surface/90 border-border/80 border-glow shadow-modal rounded-2xl border p-6 sm:p-8 backdrop-blur-xl">
+        <div className="bg-surface/90 border-border/80 shadow-modal rounded-2xl border p-6 sm:p-8">
           {children}
         </div>
 

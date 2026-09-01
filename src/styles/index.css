@@ -12,52 +12,61 @@
    ============================================================================= */
 @layer base {
   :root {
-    /* --- Mode Clair Crisp ------------------------------------------------ */
-    --background: #f8fafc;
+    /* --- ATELIER JOUR ----------------------------------------------------
+       Fond papier légèrement bleuté, encre ardoise, bleu de tracé technique.
+       Le fond clair n'est pas une préférence esthétique : l'application se lit
+       dehors, en plein jour, à bout de bras.
+
+       Le orange « haute visibilité » (--warning) est le seul signal chaud de
+       la palette. Il est réservé à ce qui demande une action — s'il apparaît
+       en décoration, il ne veut plus rien dire.
+       -------------------------------------------------------------------- */
+    --background: #eef2f5;
     --surface: #ffffff;
     --surface-raised: #ffffff;
-    --surface-sunken: #f1f5f9;
-    --surface-subtle: #f8fafc;
-    --surface-hover: #f1f5f9;
+    --surface-sunken: #e6ecf1;
+    --surface-subtle: #f6f8fa;
+    --surface-hover: #e9eff4;
 
-    --border: #e2e8f0;
-    --border-strong: #cbd5e1;
+    --border: #d8e0e7;
+    --border-strong: #b8c5cf;
 
-    --foreground: #0f172a;
-    --muted-foreground: #475569;
-    --subtle-foreground: #94a3b8;
+    --foreground: #0e1720;
+    --muted-foreground: #46545f;
+    --subtle-foreground: #77868f;
 
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-active: #1e40af;
+    --primary: #1b44c8;
+    --primary-hover: #163aac;
+    --primary-active: #12308f;
     --primary-foreground: #ffffff;
-    --primary-subtle: #eff6ff;
+    --primary-subtle: #e4e9fb;
 
-    --accent: #0284c7;
+    --accent: #0f62c4;
     --accent-foreground: #ffffff;
-    --accent-subtle: #f0f9ff;
+    --accent-subtle: #e1ecfa;
 
-    --success: #10b981;
-    --success-subtle: #ecfdf5;
-    --success-border: #a7f3d0;
+    --success: #0f7a54;
+    --success-subtle: #e0f2ea;
+    --success-border: #a8d8c4;
 
-    --warning: #f59e0b;
-    --warning-subtle: #fffbeb;
-    --warning-border: #fde68a;
+    --warning: #c46a00;
+    --warning-subtle: #fbeedc;
+    --warning-border: #efc188;
 
-    --error: #ef4444;
-    --error-subtle: #fef2f2;
-    --error-border: #fca5a5;
+    --error: #b32d19;
+    --error-subtle: #fae6e2;
+    --error-border: #edb0a5;
 
-    --info: #3b82f6;
-    --info-subtle: #eff6ff;
-    --info-border: #bfdbfe;
+    --info: #1b44c8;
+    --info-subtle: #e4e9fb;
+    --info-border: #b9c6f2;
 
-    --ring: #2563eb;
+    --ring: #1b44c8;
 
-    --shadow-raised: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-overlay: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-    --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+    /* Trois niveaux d'élévation, teintés à l'encre plutôt qu'au noir pur. */
+    --shadow-raised: 0 1px 2px rgb(14 23 32 / 0.06), 0 2px 6px -2px rgb(14 23 32 / 0.08);
+    --shadow-overlay: 0 4px 12px -2px rgb(14 23 32 / 0.1), 0 12px 28px -8px rgb(14 23 32 / 0.12);
+    --shadow-modal: 0 8px 24px -4px rgb(14 23 32 / 0.14), 0 24px 48px -12px rgb(14 23 32 / 0.18);
 
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -68,52 +77,57 @@
   }
 
   .dark {
-    /* --- Mode Sombre Cockpit Nuit ---------------------------------------- */
-    --background: #090d16;
-    --surface: #0f172a;
-    --surface-raised: #1e293b;
-    --surface-sunken: #020617;
-    --surface-subtle: #0b1220;
-    --surface-hover: #1e293b;
+    /* --- ATELIER NUIT ----------------------------------------------------
+       Pour le local technique et la camionnette de nuit — pas l'apparence par
+       défaut. Ce n'est pas une inversion automatique du mode clair : en fond
+       sombre l'élévation passe par la clarté de surface, et le bleu de tracé
+       est éclairci pour rester lisible en texte comme en aplat.
+       -------------------------------------------------------------------- */
+    --background: #0b1117;
+    --surface: #121b23;
+    --surface-raised: #18242e;
+    --surface-sunken: #070c11;
+    --surface-subtle: #0f171f;
+    --surface-hover: #1c2a35;
 
-    --border: #1e293b;
-    --border-strong: #334155;
+    --border: #22303a;
+    --border-strong: #33444f;
 
-    --foreground: #f8fafc;
-    --muted-foreground: #94a3b8;
-    --subtle-foreground: #64748b;
+    --foreground: #e8eff4;
+    --muted-foreground: #9baab6;
+    --subtle-foreground: #6b7c87;
 
-    --primary: #3b82f6;
-    --primary-hover: #60a5fa;
-    --primary-active: #2563eb;
-    --primary-foreground: #ffffff;
-    --primary-subtle: #1e293b;
+    --primary: #7fa0ff;
+    --primary-hover: #9db6ff;
+    --primary-active: #6288f5;
+    --primary-foreground: #0b1117;
+    --primary-subtle: #1a2540;
 
-    --accent: #38bdf8;
-    --accent-foreground: #0f172a;
-    --accent-subtle: #0c4a6e;
+    --accent: #6fb0f0;
+    --accent-foreground: #0b1117;
+    --accent-subtle: #14293d;
 
-    --success: #10b981;
-    --success-subtle: #064e3b;
-    --success-border: #047857;
+    --success: #3fc792;
+    --success-subtle: #0f2a21;
+    --success-border: #1f5c46;
 
-    --warning: #f59e0b;
-    --warning-subtle: #78350f;
-    --warning-border: #b45309;
+    --warning: #f0a340;
+    --warning-subtle: #2c2113;
+    --warning-border: #6b4a1c;
 
-    --error: #ef4444;
-    --error-subtle: #7f1d1d;
-    --error-border: #b91c1c;
+    --error: #ff7358;
+    --error-subtle: #2e1713;
+    --error-border: #7a2e20;
 
-    --info: #3b82f6;
-    --info-subtle: #1e3a8a;
-    --info-border: #1d4ed8;
+    --info: #7fa0ff;
+    --info-subtle: #1a2540;
+    --info-border: #33477a;
 
-    --ring: #3b82f6;
+    --ring: #7fa0ff;
 
-    --shadow-raised: 0 4px 12px 0 rgb(0 0 0 / 0.4);
-    --shadow-overlay: 0 12px 24px -4px rgb(0 0 0 / 0.5);
-    --shadow-modal: 0 24px 36px -6px rgb(0 0 0 / 0.6);
+    --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 8px -2px rgb(0 0 0 / 0.35);
+    --shadow-overlay: 0 8px 20px -4px rgb(0 0 0 / 0.5);
+    --shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.6);
 
     color-scheme: dark;
   }
@@ -177,9 +191,21 @@
   */
   --breakpoint-xs: 26rem;
 
-  --text-3xs: 0.625rem;
-  --text-2xs: 0.6875rem;
-  --text-xs: 0.75rem;
+  /*
+    Plancher de lisibilité.
+
+    `text-3xs` valait 10 px et `text-2xs` 11 px, pour 788 usages dans
+    l'application — libellés de KPI, sous-titres de listes, badges, navigation
+    basse. C'est illisible pour quelqu'un debout sur un chantier, en plein
+    jour, à bout de bras.
+
+    Relever les jetons plutôt que réécrire 788 appels : les deux paliers
+    remontent d'un cran et tout le produit gagne en lisibilité d'un coup. Ils
+    seront remplacés par des classes sémantiques au fil des phases suivantes.
+  */
+  --text-3xs: 0.75rem;
+  --text-2xs: 0.8125rem;
+  --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
 
@@ -196,15 +222,24 @@
      Tailwind (1 s) évoque une attente bloquante, pas un fond de tâche. */
   --animate-spin-slow: spin 3s linear infinite;
 
-  --radius-xs: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
-  --radius-full: 0px;
-  --radius: 0px;
+  /*
+    Échelle de rayons.
+
+    Ces jetons valaient tous `0px`, doublés d'un `border-radius: 0 !important`
+    sur `*` : les 1 300 classes `rounded-*` écrites dans les composants
+    n'avaient aucun effet. L'échelle suit l'usage réel du code — `rounded-md`
+    sur les boutons, `rounded-lg` sur les tuiles d'icône, `rounded-xl` sur les
+    cartes, `rounded-2xl` sur les modales et les feuilles mobiles.
+  */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+  --radius-full: 9999px;
+  --radius: 10px;
 
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
@@ -213,20 +248,22 @@
 }
 
 /* =============================================================================
-   BASE & COMPOSANTS RICHES — BORDS CARRÉS GLOBAUX (DESIGN TECHNIQUE CYBER)
+   BASE
    ============================================================================= */
 @layer base {
+  /*
+    Couleur de bordure par défaut, et rien d'autre.
+
+    Cette règle portait aussi `border-radius: 0px !important`, qui annulait
+    toutes les classes `rounded-*` de l'application — d'où l'exception ajoutée
+    à la main pour la bulle d'aide, seul élément rond au milieu d'angles
+    droits. L'exception n'est plus nécessaire : la bulle porte déjà
+    `rounded-full` dans son propre balisage.
+  */
   *,
   ::before,
   ::after {
     border-color: var(--border);
-    border-radius: 0px !important;
-  }
-
-  /* Exception : bulle d'aide flottante — doit rester ronde */
-  .support-bubble-btn,
-  .support-bubble-btn span {
-    border-radius: 9999px !important;
   }
 
   html {
@@ -283,7 +320,6 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: 0px !important;
   }
 
   h1, h2, h3, h4 {
@@ -317,9 +353,23 @@
     padding-top: max(var(--safe-top), 0px);
   }
 
+  /*
+    Encoches latérales — en MARGE, jamais en rembourrage.
+
+    Cette classe écrivait `padding-left/right`. Posée sur le `<main>` de
+    `AppLayout`, elle écrasait donc TOUTES les utilitaires de rembourrage
+    horizontal de l'élément : `px-4 sm:px-6 lg:px-8` aplatis à 16 px constants,
+    et surtout `lg:pl-64` annulé — le contenu principal passait sous la barre
+    latérale fixe de 240 px sur tout écran ≥ 1024 px (mesuré : 135 à 160 px de
+    titre masqués sur /dashboard, /missions et /clients).
+
+    En marge, l'inset d'encoche s'ajoute au rembourrage au lieu de s'y
+    substituer. Sur un appareil sans encoche les variables valent 0 : la règle
+    ne change alors strictement rien.
+  */
   .safe-x {
-    padding-left: max(var(--safe-left), 1rem);
-    padding-right: max(var(--safe-right), 1rem);
+    margin-left: var(--safe-left);
+    margin-right: var(--safe-right);
   }
 
   /*
@@ -407,246 +457,56 @@
     }
   }
 
-  .glass-panel {
-    background-color: color-mix(in oklab, var(--surface) 85%, transparent);
-    backdrop-filter: blur(12px);
-  }
-
-  .border-glow {
-    border: 1px solid rgb(59 130 246 / 0.25);
-    box-shadow: 0 0 15px -3px rgb(59 130 246 / 0.15);
-  }
-
-  .glow-primary {
-    box-shadow: 0 4px 14px 0 rgb(37 99 235 / 0.35);
-  }
-
-  .hero-gradient-text {
-    background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 50%, #818cf8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  /*
+    `border-glow`, `glow-primary`, `hero-gradient-text` et `glass-panel` ont été
+    retirés avec la direction artistique « cockpit cyber » : ils codaient en dur
+    l'ancien bleu (#3b82f6 / #2563eb), donc juraient avec la palette du produit
+    dès qu'elle a changé, et une lueur néon ne dit rien d'un outil de terrain.
+  */
 }
 
 /* =============================================================================
-   MODE COMPACT HAUTE DENSITÉ (OPTIMISATION ÉCRANS DE TERRAIN & TABLEAUX DE BORD)
+   MODE COMPACT HAUTE DENSITÉ
+
+   Cette section faisait une centaine de lignes de `!important` ciblant des
+   noms de classes littéraux : `.compact-mode .p-4.sm\:p-5`,
+   `.compact-mode .min-h-\[152px\]`, `.compact-mode .px-2\.5.py-0\.5`… Chaque
+   règle était un pari sur le balisage d'un composant précis. Changer un
+   padding dans une carte cassait silencieusement la densité, sans que rien
+   ne le signale — le lien entre la feuille de style et le JSX n'était ni
+   visible ni vérifiable.
+
+   Tailwind v4 génère toutes ses utilitaires d'espacement à partir d'une seule
+   variable : `p-4` vaut `calc(var(--spacing) * 4)`. Redéfinir cette variable
+   suffit donc à resserrer TOUTE l'application — rembourrages, écarts de
+   grille, espacements verticaux, y compris dans les composants écrits après
+   coup, sans les nommer un par un.
+
+   `html.compact-mode` plutôt que `.compact-mode` : la spécificité (0,1,1) doit
+   l'emporter sur celle de `:root` (0,1,0), où Tailwind pose sa valeur.
+
+   Deux choses ne bougent PAS, volontairement :
+   — `--spacing-touch` (44 px) est un jeton distinct : les cibles tactiles
+     restent conformes WCAG 2.5.5 même en haute densité ;
+   — la taille du texte. L'ancienne version descendait les tableaux à 12 px.
+     Densifier ne doit pas revenir à rendre l'écran illisible : le mode
+     compact resserre l'espace, jamais la lecture.
    ============================================================================= */
-.compact-mode {
-  --spacing-compact-card: 0.75rem;
-  --spacing-compact-gap: 0.5rem;
-}
-
-/* 1. Rayons et arrondis affinés */
-.compact-mode .rounded-2xl {
-  border-radius: var(--radius-lg, 0.75rem);
-}
-
-.compact-mode .rounded-xl {
-  border-radius: var(--radius-md, 0.5rem);
-}
-
-/* 2. Cartes UI standard (CardHeader, CardContent, CardFooter) */
-.compact-mode .p-4.sm\:p-5,
-.compact-mode .p-5.sm\:p-6,
-.compact-mode .p-6 {
-  padding: 0.75rem 1rem !important;
-}
-
-.compact-mode .p-4.pt-0.sm\:p-5.sm\:pt-0,
-.compact-mode .p-5.pt-0.sm\:p-6.sm\:pt-0 {
-  padding: 0 1rem 0.625rem !important;
-}
-
-.compact-mode .gap-1.p-4.sm\:p-5 {
-  padding: 0.5rem 1rem 0.25rem !important;
-}
-
-/* 3. StatCards & indicateurs chiffrés haute densité */
-.compact-mode .min-h-\[152px\] {
-  min-height: 110px !important;
-  padding: 0.75rem 1rem !important;
-}
-
-.compact-mode .min-h-\[152px\] .size-10 {
-  width: 2rem !important;
-  height: 2rem !important;
-  border-radius: 0.5rem !important;
-}
-
-.compact-mode .min-h-\[152px\] .size-10 > svg,
-.compact-mode .min-h-\[152px\] .size-10 svg {
-  width: 1rem !important;
-  height: 1rem !important;
-}
-
-.compact-mode .min-h-\[152px\] .text-2xl.sm\:text-3xl,
-.compact-mode .min-h-\[152px\] .text-3xl {
-  font-size: 1.375rem !important;
-  line-height: 1.75rem !important;
-}
-
-.compact-mode .min-h-\[152px\] .mt-3,
-.compact-mode .min-h-\[152px\] .pt-3 {
-  margin-top: 0.25rem !important;
-  padding-top: 0.25rem !important;
-}
-
-/* 4. Badges resserrés */
-.compact-mode .px-2\.5.py-0\.5 {
-  padding: 0.0625rem 0.375rem !important;
-  font-size: 0.625rem !important;
-}
-
-/* 5. Espacements verticaux & grilles */
-.compact-mode .space-y-6 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.875rem !important;
-}
-
-.compact-mode .space-y-4 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.625rem !important;
-}
-
-.compact-mode .gap-4 {
-  gap: 0.625rem !important;
-}
-
-.compact-mode .gap-5,
-.compact-mode .gap-6 {
-  gap: 0.875rem !important;
-}
-
-.compact-mode .gap-3 {
-  gap: 0.5rem !important;
-}
-
-/* 6. Lignes de tableaux haute densité */
-.compact-mode table th,
-.compact-mode table td {
-  padding-top: 0.375rem !important;
-  padding-bottom: 0.375rem !important;
-  padding-left: 0.625rem !important;
-  padding-right: 0.625rem !important;
-  font-size: 0.75rem !important;
-}
-
-/* 7. En-têtes de section et cartes de paramètres */
-.compact-mode .py-3.px-4 {
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.375rem !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
+html.compact-mode {
+  --spacing: 0.215rem;
 }
 
 /* =============================================================================
-   ANIMATIONS MARQUEE (Rubans défilants continus 60 FPS)
+   ANIMATIONS D'AMBIANCE — SUPPRIMÉES
+
+   Six animations permanentes vivaient ici : `marquee-scroll` (×2),
+   `float-slow` (×2), `glow-pulse` et `cta-shimmer`. Aucune n'était utilisée —
+   vérifié par recherche sur l'ensemble de `src/` et `index.html` : zéro
+   occurrence hors de ce fichier. C'était du code mort, hérité d'une direction
+   artistique abandonnée, qui déclarait `will-change: transform` sur des
+   éléments jamais rendus.
+
+   `animate-spin-slow` (déclaré dans `@theme`) reste en place : lui est
+   réellement utilisé, pour l'indicateur de synchronisation.
    ============================================================================= */
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes marquee-scroll-reverse {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee-scroll 38s linear infinite;
-  will-change: transform;
-}
-
-.animate-marquee-reverse {
-  display: flex;
-  width: max-content;
-  animation: marquee-scroll-reverse 42s linear infinite;
-  will-change: transform;
-}
-
-@media (hover: hover) {
-  .animate-marquee:hover,
-  .animate-marquee-reverse:hover {
-    animation-play-state: paused;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee,
-  .animate-marquee-reverse,
-  .animate-float-slow,
-  .animate-glow-pulse {
-    animation: none;
-  }
-}
-
-/* =============================================================================
-   ANIMATIONS CTA & EFFETS VISUELS HIGH-TECH
-   ============================================================================= */
-@keyframes float-slow {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(15px, -15px) scale(1.08);
-  }
-}
-
-@keyframes float-slow-reverse {
-  0%, 100% {
-    transform: translate(0, 0) scale(1.05);
-  }
-  50% {
-    transform: translate(-18px, 12px) scale(0.95);
-  }
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.45;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: translate(-50%, -50%) scale(1.15);
-  }
-}
-
-@keyframes cta-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-.animate-float-slow {
-  animation: float-slow 10s ease-in-out infinite;
-  will-change: transform;
-}
-
-.animate-float-slow-reverse {
-  animation: float-slow-reverse 12s ease-in-out infinite;
-  will-change: transform;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 6s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-.animate-cta-shimmer {
-  animation: cta-shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform;
-}
-
 

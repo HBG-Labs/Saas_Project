@@ -222,16 +222,16 @@ export default function PricingPage() {
                 key={tier.id}
                 className={`relative flex flex-col justify-between transition-all duration-200 ${
                   tier.popular
-                    ? 'border-primary/60 shadow-modal glow-primary bg-surface ring-2 ring-primary/20'
+                    ? 'border-primary/60 shadow-modal bg-surface ring-2 ring-primary/20'
                     : 'hover:border-border-strong bg-surface'
                 }`}
               >
                 {tier.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
                     <Badge
-                      className="gap-1 bg-surface border-2 border-primary text-primary dark:text-blue-400 py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide shadow-xs"
+                      className="gap-1 bg-surface border-2 border-primary text-primary py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide shadow-xs"
                     >
-                      <Sparkles className="size-3 text-primary dark:text-blue-400" />
+                      <Sparkles className="size-3 text-primary" />
                       Recommandé
                     </Badge>
                   </div>
@@ -284,7 +284,7 @@ export default function PricingPage() {
                     <ul className="space-y-2 text-2xs">
                       {tier.features.map((feat) => (
                         <li key={feat} className="flex items-start gap-1.5 text-foreground leading-tight">
-                          <Check className={`size-3.5 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-rose-500' : 'text-primary'}`} />
+                          <Check className={`size-3.5 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-error' : 'text-success'}`} />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -303,9 +303,9 @@ export default function PricingPage() {
                         : tier.popular
                           ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer'
                           : tier.id === 'enterprise'
-                            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/20 cursor-pointer'
+                            ? 'bg-surface border border-border-strong text-foreground hover:bg-surface-hover cursor-pointer'
                             : tier.id === 'business'
-                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 cursor-pointer'
+                              ? 'bg-surface border border-border-strong text-foreground hover:bg-surface-hover cursor-pointer'
                               : 'cursor-pointer'
                     }`}
                   >
@@ -349,10 +349,10 @@ export default function PricingPage() {
                 <tr>
                   <th scope="col" className="p-3.5 font-semibold text-foreground">Fonctionnalité</th>
                   <th scope="col" className="p-3.5 font-semibold text-center text-foreground w-[15%]">Free</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-blue-500 w-[15%]">Starter</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Starter</th>
                   <th scope="col" className="p-3.5 font-semibold text-center text-primary font-bold w-[15%]">Pro ⭐</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-emerald-500 w-[15%]">Business</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-purple-500 w-[15%]">Enterprise</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Business</th>
+                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Enterprise</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
@@ -370,9 +370,9 @@ export default function PricingPage() {
 
                     <td className="p-3.5 text-center text-foreground">
                       {typeof row.starter === 'boolean' ? (
-                        row.starter ? <Check className="size-4 text-blue-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                        row.starter ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs text-blue-500 font-semibold">{row.starter}</span>
+                        <span className="font-mono text-2xs text-primary font-semibold">{row.starter}</span>
                       )}
                     </td>
 
@@ -386,17 +386,17 @@ export default function PricingPage() {
 
                     <td className="p-3.5 text-center text-foreground font-semibold">
                       {typeof row.business === 'boolean' ? (
-                        row.business ? <Check className="size-4 text-emerald-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                        row.business ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs text-emerald-500">{row.business}</span>
+                        <span className="font-mono text-2xs text-primary">{row.business}</span>
                       )}
                     </td>
 
                     <td className="p-3.5 text-center text-foreground font-semibold">
                       {typeof row.enterprise === 'boolean' ? (
-                        row.enterprise ? <Check className="size-4 text-purple-500 inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
+                        row.enterprise ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
                       ) : (
-                        <span className="font-mono text-2xs text-purple-500">{row.enterprise}</span>
+                        <span className="font-mono text-2xs text-primary">{row.enterprise}</span>
                       )}
                     </td>
                   </tr>

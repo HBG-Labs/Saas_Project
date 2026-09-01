@@ -119,16 +119,16 @@ function Section({ titre, children }: { titre: string; children: React.ReactNode
   );
 }
 
-/** Une valeur absente s'affiche comme absente, jamais comme une ligne vide. */
+/** N'affiche la ligne que si la valeur est renseignée. */
 function Ligne({ label, valeur }: { label: string; valeur: string }) {
+  if (!estRenseigne(valeur)) {
+    return null;
+  }
+
   return (
     <div className="border-border flex flex-wrap justify-between gap-2 border-b py-2 last:border-0">
       <span className="text-muted-foreground text-sm">{label}</span>
-      {estRenseigne(valeur) ? (
-        <span className="text-foreground text-sm font-medium">{valeur}</span>
-      ) : (
-        <span className="text-warning text-xs font-medium">à renseigner</span>
-      )}
+      <span className="text-foreground text-sm font-medium">{valeur}</span>
     </div>
   );
 }

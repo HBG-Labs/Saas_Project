@@ -130,7 +130,7 @@ export default function RegisterPage() {
                   <div className="flex items-center gap-1">
                     <span className="text-2xs font-semibold">{plan.name}</span>
                     {plan.popular ? (
-                      <span className="text-3xs text-amber-300 font-black">★</span>
+                      <span className="text-3xs text-warning font-black">★</span>
                     ) : null}
                   </div>
                   <span className={`text-xs font-mono font-extrabold tabular-nums tracking-tight ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}>

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
 
-import { MOBILE_NAV } from '@/config/navigation';
+import { MOBILE_NAV_CANDIDATES, MOBILE_NAV_SIZE } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useVisibleNavItems } from '@/features/organizations';
 import { cn } from '@/lib/cn';
@@ -18,7 +18,10 @@ import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
  * l'indicateur d'accueil iOS ni sous la barre gestuelle Android.
  */
 export function MobileNav() {
-  const visibleNav = useVisibleNavItems(MOBILE_NAV);
+  // Filtrer D'ABORD, couper ENSUITE : l'inverse laissait une entrée gâcher sa
+  // place puis disparaître, et la barre tombait à trois destinations sur un
+  // compte dont la formule n'ouvre pas le planning.
+  const visibleNav = useVisibleNavItems(MOBILE_NAV_CANDIDATES).slice(0, MOBILE_NAV_SIZE);
 
   return (
     <nav

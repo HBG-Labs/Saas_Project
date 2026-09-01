@@ -122,7 +122,11 @@ afterEach(() => {
 });
 
 describe('ThemeProvider', () => {
-  it('applique le thème sombre par défaut ou stocké', () => {
+  // Le thème par défaut est celui du preset signature « Atelier Jour », qui est
+  // clair : l'application se lit d'abord en plein jour. Le système en sombre ne
+  // le renverse pas — sans quoi le premier rendu et le preset se
+  // contrediraient, et l'écran flasherait au démarrage.
+  it('applique le thème clair par défaut, même sur un système en sombre', () => {
     mockSystemDark(true);
     render(
       <ThemeProvider>
@@ -130,10 +134,10 @@ describe('ThemeProvider', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
-    expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
+    expect(screen.getByTestId('theme')).toHaveTextContent('light');
+    expect(screen.getByTestId('resolved')).toHaveTextContent('light');
     expect(screen.getByTestId('compact')).toHaveTextContent('false');
-    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement).not.toHaveClass('dark');
     expect(document.documentElement).not.toHaveClass('compact-mode');
   });
 
@@ -214,7 +218,8 @@ describe('ThemeProvider', () => {
       ),
     ).not.toThrow();
 
-    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
+    // Stockage inaccessible : on retombe sur le preset par défaut, donc clair.
+    expect(screen.getByTestId('theme')).toHaveTextContent('light');
   });
 });
 

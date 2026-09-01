@@ -35,10 +35,15 @@
              première visite après le renommage repeint l'écran dans le mauvais
              thème — exactement le clignotement que ce script existe pour
              éviter. À retirer en même temps que la reprise, pas avant. */
+          /* Le défaut du produit est CLAIR (preset signature « Atelier Jour »).
+             Ce script lisait `prefers-color-scheme` en l'absence de choix : sur
+             un système en sombre il peignait donc en sombre, avant que
+             ThemeProvider ne rebascule en clair d'après le preset par défaut —
+             le clignotement même que ce script existe pour éviter. Seul un
+             choix explicite et mémorisé bascule désormais le premier rendu. */
           var stored =
             localStorage.getItem('rezo360-theme') || localStorage.getItem('nexoratech-theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (stored === 'dark' || (stored !== 'light' && prefersDark)) {
+          if (stored === 'dark') {
             document.documentElement.classList.add('dark');
           }
           var storedCompact = localStorage.getItem('pref_compact_mode');
@@ -54,12 +59,15 @@
     <!-- viewport-fit=cover : nécessaire pour exploiter env(safe-area-inset-*) sur iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!--
-      La barre du navigateur mobile suit le thème.
-      Une seule valeur sombre teintait la barre d'adresse en bleu nuit même en
-      thème clair, ce qui coupait l'écran en deux sur Android.
+      La barre du navigateur mobile suit le thème RÉEL de l'application.
+
+      Ces deux balises suivaient `prefers-color-scheme`, c'est-à-dire le système
+      et non le produit. Depuis que le défaut est clair quel que soit le
+      système, un utilisateur en système sombre obtenait une application claire
+      surmontée d'une barre d'adresse sombre. La valeur est désormais posée par
+      le script ci-dessus, d'après le thème effectivement appliqué.
     -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
+    <meta id="theme-color-meta" name="theme-color" content="#eef2f5" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="REZO360" />

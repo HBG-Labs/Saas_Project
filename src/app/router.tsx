@@ -77,6 +77,11 @@ export const routes: RouteObject[] = [
           },
           { path: ROUTES.privacy, lazy: lazyPage(() => import('@/pages/legal/PrivacyPage')) },
           { path: ROUTES.terms, lazy: lazyPage(() => import('@/pages/legal/TermsPage')) },
+          {
+            path: ROUTES.servicesTerms,
+            lazy: lazyPage(() => import('@/pages/legal/ServicesTermsPage')),
+          },
+          { path: ROUTES.cookies, lazy: lazyPage(() => import('@/pages/legal/CookiePolicyPage')) },
 
           // HORS de `ProtectedRoute`, et c'est tout l'enjeu : la personne
           // invitée n'a par définition PAS ENCORE DE COMPTE. Sous protection,

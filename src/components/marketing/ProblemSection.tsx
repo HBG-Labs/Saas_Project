@@ -49,7 +49,7 @@ export function ProblemSection() {
           </div>
 
           {/* L'espace REZO360 */}
-          <div className="bg-surface border-glow glow-cyan shadow-modal relative rounded-2xl border border-primary/30 p-6 sm:p-8">
+          <div className="bg-surface glow-cyan shadow-modal relative rounded-2xl border border-primary/30 p-6 sm:p-8">
             <div className="flex items-center gap-3">
               <span className="bg-success/10 text-success flex size-9 items-center justify-center rounded-lg">
                 <CheckCircle className="size-5" />

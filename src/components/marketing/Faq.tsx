@@ -1,5 +1,8 @@
-import { useState } from 'react';
 import { ChevronDown, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/cn';
 
 interface FaqItem {
   id: string;
@@ -44,59 +47,69 @@ export function Faq() {
   const [openId, setOpenId] = useState<string | null>('1');
 
   return (
-    <section className="py-16 sm:py-24 bg-transparent text-white">
-      <div className="mx-auto max-w-[1600px] px-3 sm:px-5 lg:px-6 flex justify-start lg:justify-end">
-        {/* Contenu entièrement positionné à droite sur desktop, pleine largeur fluide sur mobile/tablette */}
-        <div className="w-full max-w-2xl lg:max-w-3xl text-left flex flex-col items-start space-y-6">
-          {/* En-tête de section */}
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-none border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-bold text-cyan-300 shadow-xs">
-              <Sparkles className="size-3.5 text-cyan-400" />
-              <span>Questions Fréquentes</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Tout ce que vous devez savoir sur REZO360
-            </h2>
-            <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed font-normal">
-              Des réponses claires et immédiates sur nos outils, la conformité de nos calculateurs et la sécurité de vos données.
-            </p>
-          </div>
+    <section className="py-16 sm:py-24">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <Badge variant="primary" className="mb-4">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Questions fréquentes
+          </Badge>
+          <h2 className="text-foreground text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+            Tout ce que vous devez savoir sur REZO360
+          </h2>
+          <p className="text-muted-foreground mt-4 text-base leading-relaxed">
+            Des réponses claires sur nos outils, la conformité des calculateurs et la sécurité de
+            vos données.
+          </p>
+        </div>
 
-          {/* 5 Questions Clés avec Aisance Horizontale et Bords Carrés */}
-          <div className="space-y-3 w-full pt-1">
-            {FAQS.map((faq) => {
-              const isOpen = openId === faq.id;
-              return (
-                <div
-                  key={faq.id}
-                  className={`overflow-hidden rounded-none border transition-all duration-200 bg-transparent ${
-                    isOpen
-                      ? 'border-cyan-500/50'
-                      : 'border-white/10 hover:border-white/20'
-                  }`}
+        {/*
+          Une question ouverte est un `<button aria-expanded>` associé à son
+          panneau : la version précédente n'annonçait ni l'état ni le lien entre
+          les deux, et le contenu replié était retiré du DOM sans que rien ne le
+          signale à un lecteur d'écran.
+        */}
+        <div className="space-y-3">
+          {FAQS.map((faq) => {
+            const isOpen = openId === faq.id;
+            const panelId = `faq-panel-${faq.id}`;
+
+            return (
+              <div
+                key={faq.id}
+                className={cn(
+                  'bg-surface overflow-hidden rounded-xl border transition-colors',
+                  isOpen ? 'border-primary/40' : 'border-border hover:border-border-strong',
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : faq.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  className="text-foreground hover:text-primary flex w-full cursor-pointer items-center justify-between gap-3 p-4 text-left text-base font-semibold transition-colors sm:p-5"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(isOpen ? null : faq.id)}
-                    className="flex w-full items-center justify-between p-4 sm:p-5 text-left text-xs sm:text-sm font-bold text-white transition-colors hover:text-cyan-300 cursor-pointer gap-3"
-                  >
-                    <span className="leading-snug">{faq.question}</span>
-                    <ChevronDown
-                      className={`size-4 shrink-0 text-slate-400 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180 text-cyan-400' : ''
-                      }`}
-                    />
-                  </button>
+                  <span className="leading-snug">{faq.question}</span>
+                  <ChevronDown
+                    className={cn(
+                      'text-muted-foreground size-4 shrink-0 transition-transform duration-200',
+                      isOpen && 'text-primary rotate-180',
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
 
-                  {isOpen && (
-                    <div className="border-t border-white/10 p-4 sm:p-5 text-xs sm:text-sm leading-relaxed text-slate-300 bg-transparent">
-                      {faq.answer}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                {isOpen ? (
+                  <div
+                    id={panelId}
+                    className="border-border text-muted-foreground border-t p-4 text-sm leading-relaxed sm:p-5"
+                  >
+                    {faq.answer}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

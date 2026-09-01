@@ -95,7 +95,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
 
             {/* Boutons d'Action */}
             <div className="flex flex-wrap items-center gap-3 pt-3">
-              <Button asChild size="md" variant="primary" className="glow-primary rounded-xl font-semibold">
+              <Button asChild size="md" variant="primary" className="rounded-xl font-semibold">
                 <Link to={ROUTES.reports}>
                   <FileText className="size-4 mr-2" />
                   Rédiger un compte-rendu
@@ -153,7 +153,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
                 />
 
                 {/* Badge Flottant "Casque de Sécurité Conforme" sur l'image */}
-                <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1 text-2xs font-medium text-white shadow-lg">
+                <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-1 text-2xs font-medium text-white shadow-lg">
                   <HardHat className="size-3.5 text-warning" />
                   <span className="font-semibold text-amber-300">EPI Obligatoire</span>
                 </div>
@@ -162,7 +162,7 @@ export function TechnicianHeroBanner({ displayName, toolsCount }: TechnicianHero
                 <button
                   type="button"
                   onClick={() => setIsZoomOpen(true)}
-                  className="absolute top-3 right-3 z-20 rounded-full bg-black/60 backdrop-blur-md border border-white/20 p-2 text-foreground hover:bg-primary hover:border-primary transition-all cursor-pointer shadow-lg"
+                  className="absolute top-3 right-3 z-20 rounded-full bg-black/60 border border-white/20 p-2 text-foreground hover:bg-primary hover:border-primary transition-all cursor-pointer shadow-lg"
                   title="Agrandir la photo du technicien"
                 >
                   <Maximize2 className="size-4" />

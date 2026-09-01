@@ -224,8 +224,8 @@ export function SupportBubble() {
               <HelpCircle className="size-4.5 sm:size-5 transition-transform duration-200 group-hover:scale-110" />
               {/* Badge d'état en ligne */}
               <span className="absolute -top-0.5 -right-0.5 flex size-2.5 sm:size-3">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="border-surface relative inline-flex size-full rounded-full border-1.5 bg-emerald-500" />
+                <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-75" />
+                <span className="border-surface bg-success relative inline-flex size-full rounded-full border-1.5" />
               </span>
             </>
           )}
@@ -266,7 +266,7 @@ export function SupportBubble() {
                   Centre d&apos;Assistance
                 </h3>
                 <div className="text-3xs text-muted-foreground flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  <span className="bg-success size-1.5 rounded-full" />
                   <span>Équipe technique disponible</span>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export function SupportBubble() {
                     'mx-auto flex size-12 items-center justify-center rounded-full',
                     notifieEnEchec
                       ? 'bg-warning/10 text-warning'
-                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                      : 'bg-success-subtle text-success',
                   )}
                 >
                   <CheckCircle2 className="size-6" />

@@ -1,5 +1,6 @@
 export type ThemePresetId =
   | 'default'
+  | 'atelier-nuit'
   | 'basic'
   | 'light'
   | 'dark'
@@ -24,39 +25,86 @@ export interface ThemePreset {
   variables: Record<string, string>;
 }
 
+/**
+ * Thème signature — Atelier Jour.
+ *
+ * Clair par défaut : REZO360 se lit dehors, en plein jour, souvent à bout de
+ * bras. Le mode sombre reste un vrai mode (« Atelier Nuit », ci-dessous), pour
+ * le local technique et le travail de nuit — mais ce n'est pas l'apparence de
+ * départ.
+ *
+ * Les variables d'un preset sont posées EN STYLE INLINE sur `<html>` par
+ * `ThemeProvider` : elles écrasent `styles/index.css`. Un preset désaccordé
+ * avec la feuille de style annule donc silencieusement la palette du produit —
+ * raison pour laquelle ces valeurs doivent rester identiques à celles du bloc
+ * `:root` de `index.css`.
+ */
 export const DEFAULT_THEME_PRESET: ThemePreset = {
   id: 'default',
-  label: 'Cockpit Cobalt (Défaut)',
-  description: 'Ambiance signature REZO360, sombre & haute précision',
-  baseMode: 'dark',
+  label: 'Atelier Jour (Défaut)',
+  description: 'Thème signature REZO360 — papier et encre, lisible en plein jour',
+  baseMode: 'light',
   preview: {
-    primary: '#3b82f6',
-    surface: '#0f172a',
-    background: '#090d16',
+    primary: '#1b44c8',
+    surface: '#ffffff',
+    background: '#eef2f5',
   },
   variables: {
-    '--background': '#090d16',
-    '--surface': '#0f172a',
-    '--surface-raised': '#1e293b',
-    '--surface-sunken': '#020617',
-    '--surface-subtle': '#0b1220',
-    '--surface-hover': '#1e293b',
-    '--border': '#1e293b',
-    '--border-strong': '#334155',
-    '--foreground': '#f8fafc',
-    '--muted-foreground': '#94a3b8',
-    '--subtle-foreground': '#64748b',
-    '--primary': '#3b82f6',
-    '--primary-hover': '#60a5fa',
-    '--primary-active': '#2563eb',
+    '--background': '#eef2f5',
+    '--surface': '#ffffff',
+    '--surface-raised': '#ffffff',
+    '--surface-sunken': '#e6ecf1',
+    '--surface-subtle': '#f6f8fa',
+    '--surface-hover': '#e9eff4',
+    '--border': '#d8e0e7',
+    '--border-strong': '#b8c5cf',
+    '--foreground': '#0e1720',
+    '--muted-foreground': '#46545f',
+    '--subtle-foreground': '#77868f',
+    '--primary': '#1b44c8',
+    '--primary-hover': '#163aac',
+    '--primary-active': '#12308f',
     '--primary-foreground': '#ffffff',
-    '--primary-subtle': '#1e293b',
-    '--ring': '#3b82f6',
+    '--primary-subtle': '#e4e9fb',
+    '--ring': '#1b44c8',
+  },
+};
+
+/** Contrepartie sombre du thème signature — valeurs identiques au bloc `.dark`. */
+export const ATELIER_NUIT_PRESET: ThemePreset = {
+  id: 'atelier-nuit',
+  label: 'Atelier Nuit',
+  description: 'Le thème signature en sombre — local technique et travail de nuit',
+  baseMode: 'dark',
+  preview: {
+    primary: '#7fa0ff',
+    surface: '#121b23',
+    background: '#0b1117',
+  },
+  variables: {
+    '--background': '#0b1117',
+    '--surface': '#121b23',
+    '--surface-raised': '#18242e',
+    '--surface-sunken': '#070c11',
+    '--surface-subtle': '#0f171f',
+    '--surface-hover': '#1c2a35',
+    '--border': '#22303a',
+    '--border-strong': '#33444f',
+    '--foreground': '#e8eff4',
+    '--muted-foreground': '#9baab6',
+    '--subtle-foreground': '#6b7c87',
+    '--primary': '#7fa0ff',
+    '--primary-hover': '#9db6ff',
+    '--primary-active': '#6288f5',
+    '--primary-foreground': '#0b1117',
+    '--primary-subtle': '#1a2540',
+    '--ring': '#7fa0ff',
   },
 };
 
 export const THEME_PRESETS: readonly ThemePreset[] = [
   DEFAULT_THEME_PRESET,
+  ATELIER_NUIT_PRESET,
   {
     id: 'basic',
     label: 'Titane Minimaliste',

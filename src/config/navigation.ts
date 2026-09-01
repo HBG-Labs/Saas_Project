@@ -166,4 +166,58 @@ export const ACCOUNT_NAV: readonly NavItem[] = [
   { to: ROUTES.profile, label: 'Profil', icon: 'user' },
   { to: ROUTES.settings, label: 'Paramètres', icon: 'settings' },
 ];
-export const MOBILE_NAV = PRINCIPAL_NAV.filter((item) => item.primary).slice(0, 4);
+/**
+ * Candidats de la navigation basse, du plus quotidien au plus occasionnel.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UNE LISTE EXPLICITE PLUTÔT QU'UN FILTRE
+ *
+ * Cette constante valait `PRINCIPAL_NAV.filter(primary).slice(0, 4)`. La coupe
+ * à quatre intervenait AVANT le filtrage par abonnement et permissions : une
+ * entrée réservée à une formule supérieure consommait sa place puis
+ * disparaissait à l'affichage. Mesuré sur un compte Pro, la barre ne portait
+ * plus que TROIS destinations — « Planning » occupait le quatrième rang et
+ * était retiré ensuite, sans être remplacé.
+ *
+ * `MobileNav` filtre donc d'abord, puis prend les cinq premières survivantes.
+ * La liste compte plus de cinq entrées : c'est délibéré, ce sont les
+ * remplaçantes.
+ *
+ * L'ORDRE EST UN CHOIX MÉTIER
+ *
+ * Il suit ce qu'une personne sur le terrain ouvre dans sa journée, pas
+ * l'architecture du produit : ce qu'elle doit faire aujourd'hui, puis pour qui,
+ * puis avec quoi. « Carte & Chantiers » recule — on la consulte en se
+ * déplaçant, pas à chaque prise en main.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const MOBILE_NAV_CANDIDATES: readonly NavItem[] = [
+  { to: ROUTES.dashboard, label: 'Accueil', icon: 'dashboard', primary: true },
+  {
+    to: ROUTES.missions,
+    label: 'Missions',
+    icon: 'clipboard',
+    feature: 'missions',
+    vocabulary: { term: 'job', plural: true },
+  },
+  {
+    to: ROUTES.planning,
+    label: 'Planning',
+    icon: 'calendar',
+    feature: 'planning',
+    permission: 'planning.view',
+  },
+  { to: ROUTES.tools, label: 'Outils', icon: 'wrench' },
+  { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
+  {
+    to: ROUTES.review,
+    label: 'Rapports',
+    icon: 'clipboard-check',
+    feature: 'interventions',
+  },
+  { to: ROUTES.map, label: 'Carte', icon: 'map', feature: 'missions' },
+  { to: ROUTES.metiers, label: 'Métiers', icon: 'briefcase' },
+];
+
+/** Nombre de destinations affichées en barre basse. */
+export const MOBILE_NAV_SIZE = 5;

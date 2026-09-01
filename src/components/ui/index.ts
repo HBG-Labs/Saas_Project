@@ -21,6 +21,11 @@ export { Input, type InputProps } from './Input';
 export { Kbd } from './Kbd';
 export { Modal, type ModalProps } from './Modal';
 export { Select, type SelectOption, type SelectProps } from './Select';
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './SegmentedControl';
 export { ListSkeleton, Skeleton, ToolCardSkeleton } from './Skeleton';
 export { StatCard, type StatCardProps } from './StatCard';
 export { Switch, type SwitchProps } from './Switch';

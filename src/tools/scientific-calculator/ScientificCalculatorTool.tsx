@@ -177,7 +177,7 @@ export default function ScientificCalculatorTool() {
   const keyActionBackspace =
     'h-12 sm:h-13 bg-surface-hover text-muted-foreground hover:text-foreground border border-border/70 hover:bg-border/60 shadow-xs';
   const keyEquals =
-    'h-12 sm:h-13 bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active font-black text-lg sm:text-xl shadow-raised glow-primary';
+    'h-12 sm:h-13 bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active font-black text-lg sm:text-xl shadow-raised';
 
   return (
     <div className="grid gap-6 lg:grid-cols-3 max-w-full">

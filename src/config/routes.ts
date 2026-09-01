@@ -40,6 +40,9 @@ export const ROUTES = {
   legalNotice: '/mentions-legales',
   privacy: '/confidentialite',
   terms: '/conditions-generales',
+  /** CGV des prestations HBG Labs sur devis — distinctes de l'abonnement REZO360 ci-dessus. */
+  servicesTerms: '/cgv-prestations',
+  cookies: '/cookies',
 
   customers: '/clients',
   customer: (customerId: string) => `/clients/${customerId}`,

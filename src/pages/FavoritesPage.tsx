@@ -1,11 +1,12 @@
-import { LayoutGrid, LayoutList, Star } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Star } from 'lucide-react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ToolCardSkeleton } from '@/components/ui/Skeleton';
 import { isCategorySlug } from '@/config/categories';
 import { ROUTES } from '@/config/routes';
@@ -16,6 +17,7 @@ import { ToolCard } from '@/features/tools/components/ToolCard';
 import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import { useViewMode, VIEW_MODE_OPTIONS } from '@/lib/use-view-mode';
 import type { ToolWithCategory } from '@/types/domain';
 
 function resolveFavoriteTool(slug: string, dbTools: ToolWithCategory[] = []) {
@@ -62,17 +64,7 @@ function resolveFavoriteTool(slug: string, dbTools: ToolWithCategory[] = []) {
 export default function FavoritesPage() {
   useDocumentTitle('Favoris — REZO360');
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
-    if (typeof window === 'undefined') return 'list';
-    return (localStorage.getItem('rezo360:tools_view_mode') as 'grid' | 'list') || 'list';
-  });
-
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem('rezo360:tools_view_mode', mode);
-    } catch {}
-  };
+  const { viewMode, setViewMode } = useViewMode('rezo360:tools_view_mode');
 
   const { favorites, toggleFavorite, isLoading, error } = useToolFavorites();
   const catalogQuery = useCatalogTools();
@@ -93,36 +85,13 @@ export default function FavoritesPage() {
         />
 
         {favoriteCards.length > 0 && (
-          <div className="flex items-center gap-1 bg-surface border border-border rounded-lg p-1 shadow-xs self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('list')}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                viewMode === 'list'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              title="Affichage en liste"
-            >
-              <LayoutList className="size-4" />
-              <span className="hidden sm:inline">Liste</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('grid')}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                viewMode === 'grid'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              title="Affichage en grille"
-            >
-              <LayoutGrid className="size-4" />
-              <span className="hidden sm:inline">Grille</span>
-            </button>
-          </div>
+          <SegmentedControl
+            label="Mode d’affichage"
+            value={viewMode}
+            onValueChange={setViewMode}
+            options={VIEW_MODE_OPTIONS}
+            className="self-start sm:self-auto"
+          />
         )}
       </div>
 

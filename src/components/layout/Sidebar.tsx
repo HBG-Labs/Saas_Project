@@ -142,7 +142,16 @@ function CollapsibleSidebarSection({
         <button
           type="button"
           onClick={onToggle}
-          className="flex w-full items-center justify-between px-2.5 py-1.5 text-2xs font-bold tracking-wider text-muted-foreground uppercase hover:text-foreground hover:bg-surface-hover/60 rounded-lg transition-colors group cursor-pointer select-none"
+          /*
+            Ni majuscules forcées ni interlettrage élargi.
+
+            « COMPTE & PARAMÈTRES » en capitales espacées ne tenait plus dans
+            les 240 px de la barre une fois la typographie remontée à son
+            plancher de lisibilité : le libellé était coupé. Les capitales
+            n'apportaient rien qu'une graisse et une couleur atténuée ne disent
+            déjà — et elles se lisent moins vite.
+          */
+          className="text-muted-foreground hover:text-foreground hover:bg-surface-hover/60 group flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-2xs font-semibold transition-colors select-none"
           aria-expanded={isOpen}
         >
           <div className="flex items-center gap-2 truncate">

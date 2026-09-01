@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
+import { CookieConsentBanner } from '@/components/feedback/CookieConsentBanner';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { SupportBubble } from '@/components/feedback/SupportBubble';
@@ -37,6 +38,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
               {children}
               <SupportBubble />
               <CustomizerDrawer />
+              <CookieConsentBanner />
             </OrganizationProvider>
           </AuthProvider>
         </QueryClientProvider>

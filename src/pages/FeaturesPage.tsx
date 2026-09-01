@@ -104,7 +104,7 @@ export default function FeaturesPage() {
         title="Toutes les fonctionnalités de votre cockpit"
         description="Découvrez comment REZO360 simplifie et sécurise le travail quotidien des techniciens et ingénieurs."
         actions={
-          <Button asChild size="lg" className="glow-primary">
+          <Button asChild size="lg">
             <Link to={ROUTES.tools}>
               Explorer les outils
               <ArrowRight className="size-4 ml-1.5" />
@@ -114,7 +114,7 @@ export default function FeaturesPage() {
       />
 
       {/* Raccourci recherche ⌘K */}
-      <div className="bg-surface/80 border-border/80 border-glow shadow-raised mb-12 flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 backdrop-blur-md sm:flex-row">
+      <div className="bg-surface/80 border-border/80 shadow-raised mb-12 flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 sm:flex-row">
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-xl">
             <Search className="size-5" />
@@ -170,7 +170,7 @@ export default function FeaturesPage() {
           Accédez gratuitement à tous les outils du catalogue sans carte bancaire.
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="glow-primary w-full sm:w-auto">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link to={ROUTES.register}>Créer un compte gratuit</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">

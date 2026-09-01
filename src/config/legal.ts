@@ -45,13 +45,13 @@ export interface MentionEditeur {
 }
 
 export const EDITEUR: MentionEditeur = {
-  raisonSociale: '',
-  formeJuridique: '',
+  raisonSociale: 'HBG Labs',
+  formeJuridique: 'Entrepreneur individuel (EI)',
   capitalSocial: '',
-  siege: '',
-  siret: '',
+  siege: 'Durand, 97212 Saint-Joseph',
+  siret: '10919844000017',
   tvaIntracom: '',
-  directeurPublication: '',
+  directeurPublication: 'Harry Bergoz, Fondateur de HBG Labs',
   email: 'contact@rezo360.fr',
   telephone: '',
 };
@@ -99,6 +99,47 @@ export const CONSERVATION = [
   { donnee: 'Factures et pièces comptables', duree: '10 ans — obligation du code de commerce' },
   { donnee: 'Journal d’activité', duree: '12 mois' },
   { donnee: 'Demandes d’assistance', duree: '24 mois' },
+] as const;
+
+/**
+ * Ce que le navigateur conserve localement, en dehors de tout cookie.
+ *
+ * Vérifié directement dans le code (grep sur `localStorage.setItem`) plutôt
+ * que supposé : aucune de ces entrées ne sert à la mesure d'audience ni à la
+ * publicité, donc aucune ne requiert de consentement au sens de la
+ * recommandation « Cookies et autres traceurs » de la CNIL.
+ */
+export const DEPOTS_LOCAUX = [
+  {
+    nom: 'Session de connexion',
+    finalite: 'Vous garder connecté entre deux visites (géré par Supabase Auth)',
+    duree: 'Jusqu’à déconnexion',
+  },
+  {
+    nom: 'Préférences d’affichage',
+    finalite: 'Thème, couleur d’accent, mode compact, menu latéral replié, affichage en grille ou en liste',
+    duree: 'Jusqu’à modification',
+  },
+  {
+    nom: 'Territoire et organisation actifs',
+    finalite: 'Retrouver votre contexte de travail au rechargement de la page',
+    duree: 'Jusqu’à changement',
+  },
+  {
+    nom: 'Historique, favoris et brouillons des outils',
+    finalite: 'Retrouver vos derniers calculs, favoris et notes techniques en cours',
+    duree: 'Nombre d’entrées limité, ou jusqu’à suppression manuelle',
+  },
+  {
+    nom: 'Position du widget d’assistance, bannière d’installation',
+    finalite: 'Mémoriser où vous avez déplacé la bulle d’aide, ou que vous avez fermé la proposition d’installation',
+    duree: 'Jusqu’à réinitialisation du navigateur',
+  },
+  {
+    nom: 'Avatar et intitulé de poste du profil',
+    finalite: 'Personnaliser l’affichage de votre profil',
+    duree: 'Jusqu’à modification',
+  },
 ] as const;
 
 /** Un champ non renseigné se voit, plutôt que de passer pour une omission. */

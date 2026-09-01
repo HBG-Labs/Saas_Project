@@ -65,8 +65,8 @@ export function StatCard({
             className={cn(
               'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-2xs font-bold tabular-nums',
               isPositive
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+                ? 'bg-success-subtle text-success'
+                : 'bg-error-subtle text-error',
             )}
           >
             <TrendIcon className="size-3" aria-hidden="true" />

@@ -35,7 +35,7 @@ export function ErrorFallback({
       role="alert"
       className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center"
     >
-      <div className="size-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-black text-xl mb-2">
+      <div className="bg-error-subtle text-error mb-2 flex size-12 items-center justify-center rounded-2xl text-xl font-black">
         !
       </div>
       <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
@@ -53,7 +53,7 @@ export function ErrorFallback({
             {showDetails ? 'Masquer les détails techniques' : 'Afficher les détails techniques'}
           </button>
           {showDetails && (
-            <pre className="p-3 bg-slate-900 text-slate-200 text-3xs font-mono rounded-lg overflow-x-auto max-h-48 whitespace-pre-wrap">
+            <pre className="bg-surface-sunken text-muted-foreground text-3xs max-h-48 overflow-x-auto rounded-lg p-3 font-mono whitespace-pre-wrap">
               {rawError.stack}
             </pre>
           )}

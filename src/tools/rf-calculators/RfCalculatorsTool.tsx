@@ -162,7 +162,7 @@ export default function RfCalculatorsTool() {
               onClick={() => setActiveModule(m.id)}
               className={`flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all cursor-pointer border ${
                 isActive
-                  ? 'border-primary bg-primary/10 shadow-md glow-primary text-foreground'
+                  ? 'border-primary bg-primary/10 shadow-md text-foreground'
                   : 'border-border/70 bg-surface hover:border-border-strong text-muted-foreground hover:text-foreground'
               }`}
             >

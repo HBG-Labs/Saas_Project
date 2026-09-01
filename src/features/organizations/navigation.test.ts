@@ -5,7 +5,8 @@ import { FEATURES, type FeatureKey } from '@/features/billing';
 import {
   ACCOUNT_NAV,
   APP_NAV,
-  MOBILE_NAV,
+  MOBILE_NAV_CANDIDATES,
+  MOBILE_NAV_SIZE,
   ORGANIZATION_NAV,
   SIDEBAR_GROUPS,
   type NavItem,
@@ -31,7 +32,7 @@ const ALL_NAV: readonly NavItem[] = [
   ...APP_NAV,
   ...ORGANIZATION_NAV,
   ...ACCOUNT_NAV,
-  ...MOBILE_NAV,
+  ...MOBILE_NAV_CANDIDATES,
   ...SIDEBAR_GROUPS.flatMap((group) => group.items),
 ];
 
@@ -86,10 +87,23 @@ describe('configuration de navigation', () => {
     expect(new Set(appTargets).size).toBe(appTargets.length);
   });
 
-  it('limite la navigation basse à quatre entrées', () => {
-    // Au-delà, les cibles tactiles passent sous les 44 px recommandés par
-    // WCAG 2.5.5 sur les téléphones étroits.
-    expect(MOBILE_NAV.length).toBeLessThanOrEqual(4);
+  it('garde des cibles tactiles conformes sur le plus étroit des téléphones', () => {
+    // L'ancienne version plafonnait la barre à quatre entrées « au-delà, les
+    // cibles passent sous les 44 px de WCAG 2.5.5 ». La règle porte sur une
+    // surface de 44x44 px, or c'est la LARGEUR que le nombre d'entrées divise,
+    // pas la hauteur — fixée par `min-h-touch`. Le vrai garde-fou est donc
+    // celui-ci, et il autorise cinq destinations : 5 x 44 = 220 px, largement
+    // sous les 320 px de l'écran le plus étroit que le produit vise.
+    const ECRAN_LE_PLUS_ETROIT = 320;
+    const CIBLE_MINIMALE = 44;
+
+    expect(MOBILE_NAV_SIZE * CIBLE_MINIMALE).toBeLessThanOrEqual(ECRAN_LE_PLUS_ETROIT);
+  });
+
+  it('propose plus de candidats que de places, pour combler les entrées filtrées', () => {
+    // Une entrée peut disparaître selon l'abonnement ou les permissions. Sans
+    // remplaçante, la barre se vide — c'est exactement le défaut corrigé ici.
+    expect(MOBILE_NAV_CANDIDATES.length).toBeGreaterThan(MOBILE_NAV_SIZE);
   });
 });
 
