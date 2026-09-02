@@ -293,20 +293,22 @@ export default function PricingPage() {
                 </div>
 
                 <div className="p-5 pt-0">
+                  {/*
+                    La formule en cours passe par la VARIANTE `outline`, et non
+                    par un fond réécrit à la main.
+
+                    La version précédente gardait `variant="primary"` — donc le
+                    texte blanc de cette variante — tout en repeignant le fond
+                    en `bg-surface-sunken`, un gris clair. Résultat mesuré :
+                    blanc sur #E6ECF1, soit 1,19:1. Le libellé « Formule
+                    actuelle » était illisible pour tout client connecté.
+                  */}
                   <Button
                     asChild={!isCurrentPlan}
                     disabled={isCurrentPlan}
-                    variant={tier.popular ? 'primary' : tier.ctaVariant}
-                    className={`w-full font-bold text-xs h-9 ${
-                      isCurrentPlan
-                        ? 'opacity-60 cursor-default bg-surface-sunken border border-border'
-                        : tier.popular
-                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer'
-                          : tier.id === 'enterprise'
-                            ? 'bg-surface border border-border-strong text-foreground hover:bg-surface-hover cursor-pointer'
-                            : tier.id === 'business'
-                              ? 'bg-surface border border-border-strong text-foreground hover:bg-surface-hover cursor-pointer'
-                              : 'cursor-pointer'
+                    variant={isCurrentPlan ? 'outline' : tier.popular ? 'primary' : tier.ctaVariant}
+                    className={`h-9 w-full text-xs font-bold ${
+                      isCurrentPlan ? 'cursor-default' : 'cursor-pointer'
                     }`}
                   >
                     {isCurrentPlan ? (
