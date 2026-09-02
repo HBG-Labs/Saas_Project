@@ -114,7 +114,7 @@ export function NewLeaveModal({
         <Dialog.Content className="fixed top-[50%] left-[50%] z-50 max-h-[90vh] w-[95vw] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-2xl bg-surface p-6 shadow-2xl border border-border overflow-y-auto animate-in zoom-in-95">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="size-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+              <div className="size-8 rounded-xl bg-warning/10 text-warning flex items-center justify-center border border-warning/20">
                 <Calendar className="size-4" />
               </div>
               <Dialog.Title className="text-base font-bold text-foreground">
@@ -250,7 +250,7 @@ export function NewLeaveModal({
               )}
 
               {preview.isError && (
-                <p className="text-3xs font-semibold text-rose-600 dark:text-rose-400">
+                <p className="text-3xs font-semibold text-error">
                   Le décompte n’a pas pu être calculé. Vérifiez les dates avant d’enregistrer.
                 </p>
               )}

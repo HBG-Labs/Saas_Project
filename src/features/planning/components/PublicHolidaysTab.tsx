@@ -83,7 +83,7 @@ export function PublicHolidaysTab({
               className={cn(
                 'p-2.5 rounded-xl bg-surface border shadow-2xs flex items-center justify-between gap-1.5 transition-all hover:border-border-strong',
                 isSpecific
-                  ? 'border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10'
+                  ? 'border-warning/40 bg-warning/5 dark:bg-warning/10'
                   : 'border-border',
               )}
             >
@@ -92,8 +92,8 @@ export function PublicHolidaysTab({
                   className={cn(
                     'size-6.5 rounded-lg flex items-center justify-center font-bold border shrink-0',
                     isSpecific
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+                      ? 'bg-warning/15 text-warning border-warning/30'
+                      : 'bg-error/10 text-error border-error/20',
                   )}
                 >
                   <Flag className="size-3" />
@@ -110,8 +110,8 @@ export function PublicHolidaysTab({
                 className={cn(
                   'text-[9px] font-medium px-1.5 py-0.5 rounded-md shrink-0 leading-none tracking-tight',
                   isSpecific
-                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                    : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+                    ? 'bg-warning/10 text-warning border border-warning/20'
+                    : 'bg-error/10 text-error border border-error/20',
                 )}
               >
                 Férié

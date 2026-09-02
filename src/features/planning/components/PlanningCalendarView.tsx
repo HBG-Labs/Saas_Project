@@ -369,7 +369,7 @@ export function PlanningCalendarView({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
+                className="size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
                 title="Période précédente"
                 aria-label="Période précédente"
               >
@@ -378,7 +378,7 @@ export function PlanningCalendarView({
               <button
                 type="button"
                 onClick={handleNext}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
+                className="size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
                 title="Période suivante"
                 aria-label="Période suivante"
               >
@@ -406,7 +406,7 @@ export function PlanningCalendarView({
               type="button"
               onClick={() => setViewMode('month')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'month'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -420,7 +420,7 @@ export function PlanningCalendarView({
               type="button"
               onClick={() => setViewMode('week')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'week'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -434,7 +434,7 @@ export function PlanningCalendarView({
               type="button"
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'list'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -507,7 +507,7 @@ export function PlanningCalendarView({
                 className={cn(
                   'px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'intervention'
-                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-extrabold'
+                    ? 'bg-success/20 text-success font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -519,7 +519,7 @@ export function PlanningCalendarView({
                 className={cn(
                   'px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'leave'
-                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold'
+                    ? 'bg-warning/20 text-warning font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -537,19 +537,19 @@ export function PlanningCalendarView({
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <span className="text-muted-foreground">Légende :</span>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-emerald-500" />
+            <span className="size-2.5 rounded-full bg-success" />
             <span className="text-foreground">Intervention ({totalMissionsCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-amber-500" />
+            <span className="size-2.5 rounded-full bg-warning" />
             <span className="text-foreground">Congé validé ({totalLeavesCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-rose-500" />
+            <span className="size-2.5 rounded-full bg-error" />
             <span className="text-foreground">Jour férié ({totalHolidaysCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-blue-500" />
+            <span className="size-2.5 rounded-full bg-primary" />
             <span className="text-foreground">Tâche récurrente</span>
           </div>
         </div>
@@ -629,10 +629,22 @@ export function PlanningCalendarView({
                           e.stopPropagation();
                           onNewMissionAtDate(dateStr);
                         }}
-                        className="opacity-0 group-hover:opacity-100 size-5 rounded-md hover:bg-primary/10 text-primary flex items-center justify-center transition-opacity cursor-pointer"
+                        /*
+                          Visible en permanence au doigt, révélé au survol au
+                          pointeur.
+
+                          Ce bouton était en `opacity-0 group-hover:opacity-100`
+                          et mesurait 20 px : sur un téléphone, où il n'existe
+                          pas de survol, il restait invisible ET sous la cible
+                          tactile minimale. Ajouter une mission depuis le
+                          calendrier était donc impossible au doigt — trente
+                          fois par mois affiché.
+                        */
+                        className="size-touch text-primary hover:bg-primary/10 flex items-center justify-center rounded-md transition-opacity cursor-pointer sm:size-5 sm:opacity-0 sm:group-hover:opacity-100"
+                        aria-label={`Planifier une mission le ${dateStr}`}
                         title={`Planifier une mission le ${dateStr}`}
                       >
-                        <Plus className="size-3.5" />
+                        <Plus className="size-3.5" aria-hidden="true" />
                       </button>
                     )}
                   </div>
@@ -643,10 +655,10 @@ export function PlanningCalendarView({
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="px-1.5 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-4xs sm:text-3xs font-semibold truncate flex items-center gap-1"
+                        className="px-1.5 py-0.5 rounded-md bg-error/15 border border-error/30 text-error sm:text-3xs font-semibold truncate flex items-center gap-1"
                         title={`Jour férié : ${holiday.name}`}
                       >
-                        <span className="size-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="size-1.5 rounded-full bg-error shrink-0" />
                         <span className="truncate">{holiday.name}</span>
                       </div>
                     ))}
@@ -655,10 +667,10 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-4xs sm:text-3xs font-semibold truncate flex items-center gap-1"
+                        className="px-1.5 py-0.5 rounded-md bg-warning/15 border border-warning/30 text-warning sm:text-3xs font-semibold truncate flex items-center gap-1"
                         title={`Congé : ${leave.technicianName} (${leave.type === 'rtt' ? 'RTT' : 'Congé payé'})`}
                       >
-                        <Palmtree className="size-2.5 shrink-0 text-amber-500" />
+                        <Palmtree className="size-2.5 shrink-0 text-warning" />
                         <span className="truncate">
                           [{leave.technicianInitials}] {leave.technicianName}
                         </span>
@@ -670,10 +682,10 @@ export function PlanningCalendarView({
                       <div
                         key={evt.id}
                         className={cn(
-                          'px-1.5 py-0.5 rounded-md text-4xs sm:text-3xs font-semibold truncate flex items-center gap-1 border',
+                          'px-1.5 py-0.5 rounded-md sm:text-3xs font-semibold truncate flex items-center gap-1 border',
                           evt.type === 'recurring_task'
-                            ? 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300'
-                            : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+                            ? 'bg-primary/15 border-primary/30 text-primary'
+                            : 'bg-success/15 border-success/30 text-success',
                         )}
                         title={`${evt.startTime ? `${evt.startTime} • ` : ''}${evt.title} (${evt.clientName ?? 'Client'})`}
                       >
@@ -690,14 +702,14 @@ export function PlanningCalendarView({
 
                     {/* Plus d'activités */}
                     {remainingCount > 0 && (
-                      <div className="text-4xs text-muted-foreground font-bold px-1">
+                      <div className="text-muted-foreground font-bold px-1">
                         +{remainingCount} autre{remainingCount > 1 ? 's' : ''}…
                       </div>
                     )}
                   </div>
 
                   {/* Cell Footer summary count */}
-                  <div className="text-4xs sm:text-3xs text-muted-foreground/70 text-right font-medium">
+                  <div className="sm:text-3xs text-muted-foreground/70 text-right font-medium">
                     {totalCount > 0 && <span>{totalCount} act.</span>}
                   </div>
                 </div>
@@ -746,7 +758,7 @@ export function PlanningCalendarView({
 
                     <div className="flex items-center gap-1.5">
                       {totalCount > 0 && (
-                        <Badge variant="outline" className="text-4xs px-1.5 py-0 font-bold">
+                        <Badge variant="outline" className="px-1.5 py-0 font-bold">
                           {totalCount} act.
                         </Badge>
                       )}
@@ -769,10 +781,10 @@ export function PlanningCalendarView({
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="p-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-3xs font-semibold"
+                        className="p-2 rounded-xl bg-error/15 border border-error/30 text-error text-3xs font-semibold"
                       >
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Flag className="size-3 text-rose-500" />
+                          <Flag className="size-3 text-error" />
                           <span>{holiday.name}</span>
                         </div>
                       </div>
@@ -782,13 +794,13 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-3xs space-y-1"
+                        className="p-2 rounded-xl bg-warning/15 border border-warning/30 text-warning text-3xs space-y-1"
                       >
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Palmtree className="size-3 text-amber-500" />
+                          <Palmtree className="size-3 text-warning" />
                           <span>{leave.technicianName}</span>
                         </div>
-                        <p className="text-4xs text-muted-foreground">
+                        <p className="text-muted-foreground">
                           {leave.type === 'rtt' ? 'RTT' : 'Congé payé'} ({leave.daysCount}j)
                         </p>
                       </div>
@@ -805,11 +817,11 @@ export function PlanningCalendarView({
                         className="p-2.5 rounded-xl bg-surface border border-border/80 hover:border-primary/50 shadow-2xs hover:shadow-xs transition-all cursor-pointer space-y-1.5 group"
                       >
                         <div className="flex items-center justify-between gap-1">
-                          <span className="font-mono text-4xs font-extrabold text-primary">
+                          <span className="font-mono font-extrabold text-primary">
                             {evt.startTime ?? 'Journée'}
                           </span>
                           {evt.technicianInitials && (
-                            <Badge variant="outline" className="text-4xs px-1 py-0 font-bold">
+                            <Badge variant="outline" className="px-1 py-0 font-bold">
                               {evt.technicianInitials}
                             </Badge>
                           )}
@@ -826,7 +838,7 @@ export function PlanningCalendarView({
                         )}
 
                         {evt.address && (
-                          <p className="text-4xs text-muted-foreground truncate flex items-center gap-1">
+                          <p className="text-muted-foreground truncate flex items-center gap-1">
                             <MapPin className="size-2.5 shrink-0 opacity-70" />
                             <span>{evt.address}</span>
                           </p>
@@ -845,7 +857,7 @@ export function PlanningCalendarView({
                                   ...(evt.address ? { address: evt.address } : {}),
                                 });
                               }}
-                              className="text-4xs p-1 rounded hover:bg-surface-subtle text-primary flex items-center gap-1 cursor-pointer"
+                              className="p-1 rounded hover:bg-surface-subtle text-primary flex items-center gap-1 cursor-pointer"
                               title="Lancer l'itinéraire GPS"
                             >
                               <Navigation className="size-2.5" />
@@ -856,7 +868,7 @@ export function PlanningCalendarView({
                             <Link
                               to={ROUTES.mission(evt.missionId)}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-4xs p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground flex items-center gap-1 ml-auto"
+                              className="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground flex items-center gap-1 ml-auto"
                               title="Voir la mission"
                             >
                               <Eye className="size-2.5" />
@@ -960,9 +972,9 @@ export function PlanningCalendarView({
                       {dayHolidays.map((holiday) => (
                         <div
                           key={holiday.name}
-                          className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 flex items-center gap-2"
+                          className="p-3 rounded-xl bg-error/10 border border-error/30 text-error flex items-center gap-2"
                         >
-                          <Flag className="size-4 text-rose-500 shrink-0" />
+                          <Flag className="size-4 text-error shrink-0" />
                           <div>
                             <p className="text-xs font-bold">{holiday.name}</p>
                             <p className="text-3xs text-muted-foreground">Jour férié officiel</p>
@@ -974,10 +986,10 @@ export function PlanningCalendarView({
                       {dayLeaves.map((leave) => (
                         <div
                           key={leave.id}
-                          className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex items-center justify-between gap-3"
+                          className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning flex items-center justify-between gap-3"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="size-7 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-600">
+                            <div className="size-7 rounded-lg bg-warning/20 flex items-center justify-center text-warning">
                               <Palmtree className="size-4" />
                             </div>
                             <div>
@@ -988,7 +1000,7 @@ export function PlanningCalendarView({
                               </p>
                             </div>
                           </div>
-                          <Badge variant="warning" className="text-4xs font-bold">
+                          <Badge variant="warning" className="font-bold">
                             Validé
                           </Badge>
                         </div>
@@ -1023,7 +1035,7 @@ export function PlanningCalendarView({
                                         ? 'warning'
                                         : 'info'
                                   }
-                                  className="text-4xs px-1.5 py-0 font-bold"
+                                  className="px-1.5 py-0 font-bold"
                                 >
                                   {evt.priority}
                                 </Badge>
@@ -1104,7 +1116,7 @@ export function PlanningCalendarView({
                                 className="text-3xs h-7 px-2 text-muted-foreground hover:text-foreground ml-auto"
                               >
                                 <a href={`tel:${evt.phone}`}>
-                                  <Phone className="size-3 text-emerald-500" />
+                                  <Phone className="size-3 text-success" />
                                   <span className="hidden sm:inline">Appeler</span>
                                 </a>
                               </Button>
@@ -1177,9 +1189,9 @@ export function PlanningCalendarView({
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 flex items-center gap-2"
+                        className="p-3 rounded-xl bg-error/10 border border-error/30 text-error flex items-center gap-2"
                       >
-                        <Flag className="size-4 text-rose-500 shrink-0" />
+                        <Flag className="size-4 text-error shrink-0" />
                         <div>
                           <p className="text-xs font-bold">{holiday.name}</p>
                           <p className="text-3xs text-muted-foreground">Jour férié</p>
@@ -1191,10 +1203,10 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2"
+                        className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning flex items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-2">
-                          <Palmtree className="size-4 text-amber-500" />
+                          <Palmtree className="size-4 text-warning" />
                           <div>
                             <p className="text-xs font-bold">{leave.technicianName}</p>
                             <p className="text-3xs text-muted-foreground">
@@ -1202,7 +1214,7 @@ export function PlanningCalendarView({
                             </p>
                           </div>
                         </div>
-                        <Badge variant="warning" className="text-4xs font-bold">
+                        <Badge variant="warning" className="font-bold">
                           Validé
                         </Badge>
                       </div>

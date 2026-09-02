@@ -293,7 +293,7 @@ export function GoogleMapView({
   return (
     <div
       className={cn(
-        'relative w-full h-full rounded-2xl overflow-hidden border border-border shadow-xs bg-slate-900',
+        'relative w-full h-full rounded-2xl overflow-hidden border border-border shadow-xs bg-surface-sunken',
         isFullscreen && 'fixed inset-0 z-50 rounded-none border-none',
       )}
     >
@@ -307,7 +307,7 @@ export function GoogleMapView({
             type="button"
             onClick={() => onLayerModeChange('roadmap')}
             className={cn(
-              'px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
+              'min-h-touch sm:min-h-0 flex items-center justify-center px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
               layerMode === 'roadmap'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -319,7 +319,7 @@ export function GoogleMapView({
             type="button"
             onClick={() => onLayerModeChange('satellite')}
             className={cn(
-              'px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
+              'min-h-touch sm:min-h-0 flex items-center justify-center px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
               layerMode === 'satellite'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -331,7 +331,7 @@ export function GoogleMapView({
             type="button"
             onClick={() => onLayerModeChange('dark_cockpit')}
             className={cn(
-              'px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
+              'min-h-touch sm:min-h-0 flex items-center justify-center px-2.5 py-1 text-3xs font-bold rounded-lg transition-all',
               layerMode === 'dark_cockpit'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -351,9 +351,9 @@ export function GoogleMapView({
             onClick={onLocateUser}
             disabled={isLocatingUser}
             className={cn(
-              'size-9 rounded-xl flex items-center justify-center border shadow-md transition-all',
+              'size-touch sm:size-9 rounded-xl flex items-center justify-center border shadow-md transition-all',
               userPosition
-                ? 'bg-blue-600 text-white border-blue-500 shadow-blue-500/20'
+                ? 'bg-primary text-white border-primary shadow-primary/20'
                 : 'bg-surface/90 backdrop-blur-md text-foreground border-border hover:bg-surface',
             )}
             title="📍 Ma position (Localisation ponctuelle)"
@@ -368,7 +368,7 @@ export function GoogleMapView({
         <button
           type="button"
           onClick={handleFitBounds}
-          className="size-9 rounded-xl bg-surface/90 backdrop-blur-md text-foreground border border-border shadow-md flex items-center justify-center hover:bg-surface transition-all"
+          className="size-touch sm:size-9 rounded-xl bg-surface/90 backdrop-blur-md text-foreground border border-border shadow-md flex items-center justify-center hover:bg-surface transition-all"
           title="Vue globale de tous les chantiers"
         >
           <Compass className="size-4" />
@@ -378,7 +378,7 @@ export function GoogleMapView({
         <button
           type="button"
           onClick={() => setIsFullscreen(!isFullscreen)}
-          className="size-9 rounded-xl bg-surface/90 backdrop-blur-md text-foreground border border-border shadow-md flex items-center justify-center hover:bg-surface transition-all"
+          className="size-touch sm:size-9 rounded-xl bg-surface/90 backdrop-blur-md text-foreground border border-border shadow-md flex items-center justify-center hover:bg-surface transition-all"
           title={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
         >
           {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
@@ -396,7 +396,7 @@ export function GoogleMapView({
                 </span>
                 <Badge
                   variant={selectedSite.kind === 'client' ? 'info' : 'primary'}
-                  className="text-4xs px-1.5 py-0 font-bold"
+                  className="px-1.5 py-0 font-bold"
                 >
                   {selectedSite.kind === 'client' ? '🏢 Client' : selectedSite.tradeLabel}
                 </Badge>

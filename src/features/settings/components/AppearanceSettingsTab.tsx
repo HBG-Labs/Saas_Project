@@ -200,7 +200,7 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                     onSaved?.();
                   }}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer',
+                    'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer',
                     isSelected
                       ? 'border-foreground/40 bg-foreground/10 text-foreground font-bold shadow-2xs ring-2 ring-primary/40'
                       : 'border-border bg-surface hover:bg-surface-hover text-muted-foreground',

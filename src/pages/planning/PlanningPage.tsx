@@ -307,7 +307,7 @@ export default function PlanningPage() {
               size="sm"
               variant="outline"
               onClick={() => setIsNewLeaveOpen(true)}
-              className="text-xs h-8 gap-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+              className="text-xs h-8 gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
             >
               <Palmtree className="size-3.5" />
               <span>Poser un congé</span>
@@ -370,7 +370,7 @@ export default function PlanningPage() {
             <span
               className={cn(
                 'size-4 sm:size-5 rounded-full flex items-center justify-center text-[9px] sm:text-3xs font-extrabold shrink-0',
-                activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-amber-500 text-white',
+                activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-warning text-white',
               )}
             >
               {pendingLeavesCount}

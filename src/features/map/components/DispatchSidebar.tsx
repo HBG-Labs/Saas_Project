@@ -92,7 +92,7 @@ export function DispatchSidebar({
             <h3 className="font-extrabold text-xs text-foreground tracking-tight truncate">
               Chantiers & Clients
             </h3>
-            <Badge variant="outline" className="text-4xs font-mono font-bold px-1.5 py-0">
+            <Badge variant="outline" className="font-mono font-bold px-1.5 py-0">
               {filtered.length}
             </Badge>
           </div>
@@ -195,7 +195,7 @@ export function DispatchSidebar({
                   'w-full text-left p-3 rounded-xl border transition-all cursor-pointer space-y-2',
                   isSelected
                     ? isClient
-                      ? 'bg-sky-500/10 border-sky-500 shadow-xs ring-1 ring-sky-500/40'
+                      ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/40'
                       : 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/40'
                     : 'bg-surface hover:border-border-strong hover:bg-surface-hover/50 border-border/70',
                 )}
@@ -208,14 +208,14 @@ export function DispatchSidebar({
                       </span>
                       <Badge
                         variant={isClient ? 'info' : getPriorityVariant(site.priority)}
-                        className="text-4xs px-1.5 py-0 font-bold"
+                        className="px-1.5 py-0 font-bold"
                       >
                         {isClient ? '🏢 Client' : getPriorityLabel(site.priority)}
                       </Badge>
                       {distance && (
                         <Badge
                           variant="success"
-                          className="text-4xs px-1.5 py-0 font-bold"
+                          className="px-1.5 py-0 font-bold"
                         >
                           📍 {distance}
                         </Badge>

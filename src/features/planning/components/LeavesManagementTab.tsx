@@ -80,11 +80,11 @@ export function LeavesManagementTab({
             <p className="text-3xs text-muted-foreground uppercase font-bold tracking-wider">
               En attente d'approbation
             </p>
-            <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">
+            <p className="text-2xl font-extrabold text-warning mt-0.5">
               {pendingLeaves.length}
             </p>
           </div>
-          <div className="size-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+          <div className="size-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center border border-warning/20">
             <Hourglass className="size-5" />
           </div>
         </div>
@@ -94,11 +94,11 @@ export function LeavesManagementTab({
             <p className="text-3xs text-muted-foreground uppercase font-bold tracking-wider">
               Congés validés ce mois
             </p>
-            <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <p className="text-2xl font-extrabold text-success mt-0.5">
               {approvedLeaves.length}
             </p>
           </div>
-          <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+          <div className="size-10 rounded-xl bg-success/10 text-success flex items-center justify-center border border-success/20">
             <CheckCircle2 className="size-5" />
           </div>
         </div>
@@ -169,7 +169,7 @@ export function LeavesManagementTab({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground text-3xs">Heures Récupération :</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="font-mono text-success font-semibold">
                     {staff.recoveryHours}h
                   </span>
                 </div>
@@ -334,7 +334,7 @@ export function LeavesManagementTab({
                             size="sm"
                             variant="outline"
                             onClick={() => onUpdateStatus(leave.id, 'rejected')}
-                            className="text-xs h-8 px-2.5 gap-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                            className="text-xs h-8 px-2.5 gap-1 border-error/30 text-error hover:bg-error/10 cursor-pointer"
                           >
                             <X className="size-3.5" />
                             Refuser
@@ -343,7 +343,7 @@ export function LeavesManagementTab({
                             size="sm"
                             variant="primary"
                             onClick={() => onUpdateStatus(leave.id, 'approved')}
-                            className="text-xs h-8 px-3 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                            className="text-xs h-8 px-3 gap-1 bg-success hover:bg-success text-success-foreground cursor-pointer"
                           >
                             <Check className="size-3.5" />
                             Valider le congé
@@ -358,7 +358,7 @@ export function LeavesManagementTab({
                             size="sm"
                             variant="outline"
                             onClick={() => onUpdateStatus(leave.id, 'rejected')}
-                            className="text-xs h-7 px-2 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                            className="text-xs h-7 px-2 border-error/30 text-error hover:bg-error/10 cursor-pointer"
                             title="Annuler ma demande de congé"
                           >
                             <X className="size-3 mr-1" />
@@ -376,7 +376,7 @@ export function LeavesManagementTab({
                           size="sm"
                           variant="outline"
                           onClick={() => onUpdateStatus(leave.id, 'cancelled')}
-                          className="text-xs h-7 px-2.5 gap-1 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                          className="text-xs h-7 px-2.5 gap-1 border-error/30 text-error hover:bg-error/10 cursor-pointer"
                           title="Révoquer ce congé et libérer le planning"
                         >
                           <X className="size-3" />
@@ -387,7 +387,7 @@ export function LeavesManagementTab({
                           size="sm"
                           variant="outline"
                           onClick={() => onUpdateStatus(leave.id, 'approved')}
-                          className="text-xs h-7 px-2.5 gap-1 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 cursor-pointer"
+                          className="text-xs h-7 px-2.5 gap-1 border-success/30 text-success hover:bg-success/10 cursor-pointer"
                           title="Réexaminer et valider ce congé"
                         >
                           <Check className="size-3" />

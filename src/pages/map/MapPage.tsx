@@ -341,7 +341,7 @@ export default function MapPage() {
               type="button"
               onClick={() => setMobileTab('map')}
               className={cn(
-                'p-1.5 rounded-lg transition-all',
+                'size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg transition-all',
                 mobileTab === 'map'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground',
@@ -353,7 +353,7 @@ export default function MapPage() {
               type="button"
               onClick={() => setMobileTab('list')}
               className={cn(
-                'p-1.5 rounded-lg transition-all',
+                'size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg transition-all',
                 mobileTab === 'list'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground',
@@ -367,16 +367,16 @@ export default function MapPage() {
 
       {/* Alerte discrète si des missions sont sans coordonnées */}
       {unlocatedCount > 0 && (
-        <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-3xs text-amber-800 dark:text-amber-200">
+        <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-warning/10 border border-warning/25 rounded-xl text-3xs text-warning">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-3.5 shrink-0 text-amber-500" />
+            <AlertCircle className="size-3.5 shrink-0 text-warning" />
             <span>
               <strong>{unlocatedCount} mission{unlocatedCount > 1 ? 's' : ''}</strong> sans adresse ou coordonnées GPS ne peu{unlocatedCount > 1 ? 'vent' : 't'} pas être affichée{unlocatedCount > 1 ? 's' : ''} sur la carte.
             </span>
           </div>
           <Link
             to={ROUTES.missions}
-            className="underline font-bold text-amber-900 dark:text-amber-100 shrink-0 hover:opacity-80"
+            className="underline font-bold text-warning shrink-0 hover:opacity-80"
           >
             Voir les missions
           </Link>
@@ -385,7 +385,7 @@ export default function MapPage() {
 
       {/* Message d'erreur GPS éventuel */}
       {geoError && (
-        <div className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-600 dark:text-rose-400">
+        <div className="flex items-center gap-2 p-3 bg-error/10 border border-error/30 rounded-xl text-xs text-error">
           <AlertCircle className="size-4 shrink-0" />
           <span>{geoError.message}</span>
         </div>
@@ -393,7 +393,7 @@ export default function MapPage() {
 
       {/* Adresses que le géocodeur n'a pas su placer */}
       {unplacedCount > 0 && (
-        <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 dark:text-amber-400">
+        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/30 rounded-xl text-xs text-warning">
           <AlertCircle className="size-4 shrink-0" />
           <span>
             {unplacedCount} adresse{unplacedCount > 1 ? 's' : ''} n’a pas pu être placée sur la

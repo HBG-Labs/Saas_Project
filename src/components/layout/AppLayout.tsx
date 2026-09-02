@@ -217,8 +217,8 @@ export function AppLayout() {
           {/* Actions utilisateur et thème */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {!isOnline && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-3xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 text-3xs font-bold text-warning border border-warning/30">
+                <span className="size-1.5 rounded-full bg-warning animate-ping" />
                 Mode Hors-ligne (PWA)
               </span>
             )}
@@ -270,7 +270,7 @@ export function AppLayout() {
                   <ThemeMenuItems />
                   <DropdownSeparator />
                 </div>
-                <DropdownItem onSelect={handleSignOut} className="text-rose-600 dark:text-rose-400">
+                <DropdownItem onSelect={handleSignOut} className="text-error">
                   <LogOut />
                   Se déconnecter
                 </DropdownItem>
@@ -318,8 +318,8 @@ export function AppLayout() {
       >
         <div className="mx-auto max-w-7xl space-y-4">
           {!isOnline && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold animate-in fade-in">
-              <WifiOff className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 text-warning border border-warning/30 text-xs font-semibold animate-in fade-in">
+              <WifiOff className="size-4 shrink-0 text-warning" />
               <span>
                 <strong>Mode Hors-Ligne actif.</strong> Vous travaillez en autonomie locale. Vos interventions, calculs et saisies sont conservés sur votre appareil et seront synchronisés dès le retour du réseau.
               </span>

@@ -67,7 +67,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer',
+                'min-h-touch sm:min-h-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',
@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
       {/* Feedback de sauvegarde automatique */}
       {savedFeedback && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold animate-in fade-in slide-in-from-top-1">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-bold animate-in fade-in slide-in-from-top-1">
           <Check className="size-3.5" />
           <span>Préférences mises à jour et synchronisées.</span>
         </div>
