@@ -247,12 +247,21 @@ export function PlatformModulesBento() {
             </div>
           </div>
 
-          {/* Un vrai bouton : c'était un lien texte, sans surface cliquable. */}
+          {/*
+            Un vrai bouton : c'était un lien texte, sans surface cliquable.
+
+            Le libellé disait « Découvrir la plateforme gratuitement ». Mesuré :
+            334 px pour 288 disponibles sur un écran de 320 — le bouton, et sa
+            flèche avec lui, sortaient du cadre. `Button` porte `whitespace-nowrap`
+            ET `shrink-0` : il ne peut ni se replier ni rétrécir, sa largeur est
+            donc entièrement dictée par le texte. Sur ce composant, raccourcir
+            le libellé est la seule correction possible.
+          */}
           <div className="pt-4">
             <Button asChild size="lg">
               <Link to={ROUTES.register}>
                 <Zap className="size-4" aria-hidden="true" />
-                Découvrir la plateforme gratuitement
+                Découvrir gratuitement
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>

@@ -9,6 +9,52 @@ import { cn } from '@/lib/cn';
 
 const STORAGE_KEY = 'rezo360_support_bubble_pos';
 
+/** Côté de la pastille, et marge minimale avec les bords. */
+const TAILLE_BULLE = 44;
+const MARGE = 12;
+
+/**
+ * Hauteur réservée à l'en-tête, dans laquelle la bulle ne descend jamais.
+ *
+ * L'en-tête est collant : sans cette réserve, une bulle ramenée vers le haut
+ * vient se poser sur le logo et la navigation — c'est le symptôme qui a fait
+ * remonter le défaut.
+ */
+const ZONE_EN_TETE = 72;
+
+/**
+ * Ramène la bulle dans l'écran.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UNE SEULE FONCTION
+ *
+ * Ce calcul existait en TROIS exemplaires — pendant le glisser, au
+ * redimensionnement, et… nulle part au montage. C'est précisément l'exemplaire
+ * manquant qui a produit le défaut : la position relue depuis `localStorage`
+ * était appliquée telle quelle.
+ *
+ * Mesuré : une position enregistrée sur un écran de bureau ({x:1240, y:700})
+ * plaçait la bulle à `left:1240 / top:700` dans une fenêtre de 375x667 — soit
+ * entièrement hors champ. Le bouton d'aide devenait INJOIGNABLE, sans aucun
+ * moyen de le récupérer, puisque le seul recadrage écoutait un événement
+ * `resize` qui ne se produisait pas.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function contraindreDansEcran(pos: { x: number; y: number }): { x: number; y: number } {
+  if (typeof window === 'undefined') return pos;
+
+  // `Math.max` en dernier : sur une fenêtre plus étroite que la bulle, la borne
+  // haute passerait sous la borne basse et `Math.min` seul renverrait un
+  // négatif.
+  const xMax = Math.max(MARGE, window.innerWidth - TAILLE_BULLE - MARGE);
+  const yMax = Math.max(ZONE_EN_TETE, window.innerHeight - TAILLE_BULLE - MARGE);
+
+  return {
+    x: Math.min(Math.max(MARGE, pos.x), xMax),
+    y: Math.min(Math.max(ZONE_EN_TETE, pos.y), yMax),
+  };
+}
+
 export function SupportBubble() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -32,8 +78,10 @@ export function SupportBubble() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as { x: number; y: number };
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          return parsed;
+        if (Number.isFinite(parsed.x) && Number.isFinite(parsed.y)) {
+          // Le recadrage AU MONTAGE, celui qui manquait. Une position venue
+          // d'un plus grand écran n'a aucune raison d'être encore valable ici.
+          return contraindreDansEcran(parsed);
         }
       }
     } catch {
@@ -65,13 +113,7 @@ export function SupportBubble() {
   // Recalibrer la position lors d'un redimensionnement d'écran
   useEffect(() => {
     const handleResize = () => {
-      setPosition((prev) => {
-        if (!prev) return null;
-        const btnSize = 44;
-        const clampedX = Math.max(12, Math.min(prev.x, window.innerWidth - btnSize - 12));
-        const clampedY = Math.max(12, Math.min(prev.y, window.innerHeight - btnSize - 12));
-        return { x: clampedX, y: clampedY };
-      });
+      setPosition((prev) => (prev ? contraindreDansEcran(prev) : null));
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -107,17 +149,12 @@ export function SupportBubble() {
     }
 
     if (dragInfoRef.current.hasMoved) {
-      const btnSize = 44;
-      const newX = Math.max(
-        12,
-        Math.min(dragInfoRef.current.origX + dx, window.innerWidth - btnSize - 12),
+      setPosition(
+        contraindreDansEcran({
+          x: dragInfoRef.current.origX + dx,
+          y: dragInfoRef.current.origY + dy,
+        }),
       );
-      const newY = Math.max(
-        12,
-        Math.min(dragInfoRef.current.origY + dy, window.innerHeight - btnSize - 12),
-      );
-
-      setPosition({ x: newX, y: newY });
     }
   };
 
@@ -210,7 +247,11 @@ export function SupportBubble() {
           aria-label={isOpen ? "Fermer l'aide et le support" : "Ouvrir le support et l'aide"}
           title="Besoin d'aide ? (Glisser-déposer pour déplacer)"
           className={cn(
-            'support-bubble-btn group relative flex size-9.5 sm:size-10 items-center justify-center rounded-full',
+            // `size-touch` (44 px) et non `size-9.5` : mesuré à 38x38, ce
+            // bouton flottant passait sous le minimum de WCAG 2.5.5. C'est le
+            // seul accès à l'aide, et il se vise au pouce, souvent en
+            // déplacement — le jeton `--spacing-touch` existe pour ce cas.
+            'support-bubble-btn group relative flex size-touch items-center justify-center rounded-full',
             'bg-primary text-primary-foreground shadow-md transition-all duration-200',
             'hover:bg-primary-hover hover:scale-105',
             'focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none',

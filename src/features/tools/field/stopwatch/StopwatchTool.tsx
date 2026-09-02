@@ -302,20 +302,45 @@ export default function StopwatchTool() {
                 </span>
               </div>
 
-              {/* Boutons d'Action Principaux */}
-              <div className="flex items-center justify-center gap-3">
+              {/*
+                LARGEURS FIXES + `justify-center` = DÉBORDEMENT DES DEUX CÔTÉS.
+
+                Mesuré sur iPhone SE (375 px) : `w-36` (144) + `w-32` (128) +
+                le bouton Reset (66) + deux `gap-3` (24) réclamaient 362 px dans
+                une rangée qui n'en offrait que 305. Comme le contenu était
+                CENTRÉ, le surplus se répartissait de part et d'autre — « Démarrer »
+                commençait 16 px à gauche du cadre, « Reset » finissait 17 px à
+                droite, tous deux rognés. Un `overflow-x` n'aurait rien montré de
+                plus : la modale coupe.
+
+                Les deux boutons de texte se partagent donc la place
+                disponible (`flex-1` + `min-w-0`, sans quoi le contenu impose sa
+                largeur intrinsèque et rien ne rétrécit), et reprennent leur
+                largeur fixe à partir de `sm`. Le bouton d'icône, lui, garde sa
+                taille : c'est le seul dont la largeur ne dépend pas du texte.
+
+                `h-12` est conservé partout — 48 px, au-dessus des 44 px de
+                WCAG 2.5.5, et c'est un outil qu'on manipule avec des gants.
+              */}
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <Button
                   type="button"
                   size="lg"
                   variant={swRunning ? 'outline' : 'primary'}
                   onClick={toggleStopwatch}
                   className={cn(
-                    'w-36 h-12 text-sm font-bold gap-2 shadow-md cursor-pointer',
+                    'h-12 w-full gap-2 px-3 text-sm font-bold shadow-md cursor-pointer sm:w-36 sm:px-6',
                     swRunning && 'border-warning text-warning hover:bg-warning/10',
                   )}
                 >
-                  {swRunning ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
-                  <span>{swRunning ? 'Pause' : swTime === 0 ? 'Démarrer' : 'Reprendre'}</span>
+                  {swRunning ? (
+                    <Pause className="size-5 shrink-0" />
+                  ) : (
+                    <Play className="size-5 shrink-0 fill-current" />
+                  )}
+                  <span className="truncate">
+                    {swRunning ? 'Pause' : swTime === 0 ? 'Démarrer' : 'Reprendre'}
+                  </span>
                 </Button>
 
                 <Button
@@ -324,10 +349,10 @@ export default function StopwatchTool() {
                   variant="outline"
                   onClick={recordLap}
                   disabled={swTime === 0}
-                  className="w-32 h-12 text-sm font-bold gap-2 cursor-pointer"
+                  className="h-12 min-w-0 flex-1 gap-2 px-3 text-sm font-bold cursor-pointer sm:w-auto sm:min-w-32 sm:flex-none sm:px-6"
                 >
-                  <Flag className="size-4 text-primary" />
-                  <span>Tour / Lap</span>
+                  <Flag className="size-4 shrink-0 text-primary" />
+                  <span className="truncate">Tour / Lap</span>
                 </Button>
 
                 <Button
@@ -336,9 +361,10 @@ export default function StopwatchTool() {
                   variant="outline"
                   onClick={resetStopwatch}
                   disabled={swTime === 0}
-                  className="h-12 text-xs font-semibold gap-1 text-muted-foreground hover:text-error cursor-pointer"
+                  aria-label="Remettre le chronomètre à zéro"
+                  className="h-12 min-w-12 shrink-0 gap-1 px-3 text-xs font-semibold text-muted-foreground hover:text-error cursor-pointer sm:min-w-0 sm:px-4"
                 >
-                  <RotateCcw className="size-4" />
+                  <RotateCcw className="size-4 shrink-0" />
                   <span className="hidden sm:inline">Reset</span>
                 </Button>
               </div>
@@ -496,20 +522,33 @@ export default function StopwatchTool() {
                 </div>
               </div>
 
-              {/* Boutons d'Action Minuteur */}
-              <div className="flex items-center justify-center gap-3">
+              {/*
+                Même correction que la rangée du chronomètre, et le cas était
+                pire : `w-40` (160) plus « Réinitialiser » écrit en toutes
+                lettres plus la bascule sonore dépassaient 370 px.
+
+                Le libellé du bouton de remise à zéro disparaît sous `sm` — son
+                icône et son `aria-label` suffisent à l'identifier, et c'est le
+                seul des trois dont le texte soit assez long pour condamner la
+                rangée entière.
+              */}
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <Button
                   type="button"
                   size="lg"
                   variant={timerRunning ? 'outline' : 'primary'}
                   onClick={toggleTimer}
                   className={cn(
-                    'w-40 h-12 text-sm font-bold gap-2 shadow-md cursor-pointer',
+                    'h-12 w-full gap-2 px-3 text-sm font-bold shadow-md cursor-pointer sm:w-40 sm:px-6',
                     timerRunning && 'border-warning text-warning hover:bg-warning/10',
                   )}
                 >
-                  {timerRunning ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
-                  <span>{timerRunning ? 'Pause' : 'Démarrer'}</span>
+                  {timerRunning ? (
+                    <Pause className="size-5 shrink-0" />
+                  ) : (
+                    <Play className="size-5 shrink-0 fill-current" />
+                  )}
+                  <span className="truncate">{timerRunning ? 'Pause' : 'Démarrer'}</span>
                 </Button>
 
                 <Button
@@ -517,17 +556,19 @@ export default function StopwatchTool() {
                   size="lg"
                   variant="outline"
                   onClick={resetTimer}
-                  className="h-12 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                  aria-label="Remettre le minuteur à zéro"
+                  className="h-12 min-w-12 flex-1 gap-1 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer sm:min-w-0 sm:flex-none sm:px-4"
                 >
-                  <RotateCcw className="size-4" />
-                  <span>Réinitialiser</span>
+                  <RotateCcw className="size-4 shrink-0" />
+                  <span className="hidden sm:inline">Réinitialiser</span>
                 </Button>
 
                 <button
                   type="button"
                   onClick={() => setTimerSound((v) => !v)}
-                  className="p-3 rounded-xl border border-border bg-surface-raised text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-raised text-muted-foreground hover:text-foreground cursor-pointer"
                   title={timerSound ? 'Alerte sonore activée' : 'Alerte sonore muette'}
+                  aria-label={timerSound ? 'Couper l’alerte sonore' : 'Activer l’alerte sonore'}
                 >
                   {timerSound ? <Volume2 className="size-5 text-primary" /> : <VolumeX className="size-5" />}
                 </button>

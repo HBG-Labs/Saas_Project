@@ -78,9 +78,27 @@ export function Hero() {
     <section className="trame-technique py-12 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl lg:max-w-3xl">
-          <Badge variant="primary" className="mb-5">
-            <Zap className="size-3.5" aria-hidden="true" />
-            Formule Gratuite sans carte · 14 jours d’essai sur les formules payantes
+          {/*
+            TEXTE COURT, ET FILET DE SÉCURITÉ.
+
+            `Badge` porte `whitespace-nowrap` dans sa base : il ne passe JAMAIS
+            à la ligne et prend sa largeur intrinsèque, quoi qu'il arrive.
+            Mesuré : « Formule Gratuite sans carte · 14 jours d'essai sur les
+            formules payantes » réclamait 468 px et débordait de 180 px sur un
+            écran de 320. Rien ne le signalait — un ancêtre masquait le surplus,
+            la page ne défilait même pas latéralement, le texte était
+            simplement coupé.
+
+            Le libellé est donc ramené à ce qui tient, et `whitespace-normal`
+            l'autorise à se replier si quelqu'un le rallonge un jour : un pavé
+            arrondi est moins grave qu'une phrase tronquée.
+
+            La durée d'essai n'est pas perdue pour autant — elle est portée par
+            la liste de réassurance, quelques lignes plus bas.
+          */}
+          <Badge variant="primary" className="mb-5 max-w-full whitespace-normal">
+            <Zap className="size-3.5 shrink-0" aria-hidden="true" />
+            Formule Gratuite, sans carte bancaire
           </Badge>
 
           <h1 className="text-foreground text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
@@ -108,10 +126,28 @@ export function Hero() {
               </Link>
             </Button>
 
+            {/*
+              LA HIÉRARCHIE À TROIS NIVEAUX NE SURVIT PAS À L'EMPILEMENT.
+
+              Cette action est la tertiaire des trois, d'où `ghost` : en ligne
+              sur grand écran, l'absence de surface la place clairement au
+              second plan derrière l'action pleine et l'action en contour.
+
+              Sous `sm`, la rangée passe en `flex-col` : trois blocs de même
+              largeur, dont le dernier sans bordure ni fond. Il cesse alors de
+              se lire comme un contrôle et passe pour une légende sous les deux
+              boutons.
+
+              La bordure n'apparaît donc QUE là où ils s'empilent. Elle reste
+              présente en transparent au-delà, plutôt que retirée : la boîte
+              garde exactement la même hauteur que le bouton en contour voisin,
+              sans décalage d'un pixel au franchissement du seuil.
+            */}
             <Button
               type="button"
               variant="ghost"
               size="lg"
+              className="border border-border sm:border-transparent"
               onClick={() => setIsDownloadModalOpen(true)}
             >
               <Smartphone className="size-4" aria-hidden="true" />
