@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
-/* Polices auto-hébergées */
-@import '@fontsource-variable/plus-jakarta-sans';
-@import '@fontsource-variable/inter';
+/* Polices auto-hébergées — aucune requête vers un CDN tiers. */
+@import '@fontsource-variable/archivo';
+@import '@fontsource-variable/ibm-plex-sans';
 @import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -188,12 +188,34 @@
 
   --color-ring: var(--ring);
 
-  /* Le paquet fontsource declare la famille sous le nom 'Plus Jakarta Sans
-     Variable'. L'ancien nom reste en second : il couvre une police
-     eventuellement installee sur le poste. */
+  /*
+    Trois familles, trois rôles distincts.
+
+    `--font-display` : Archivo, une grotesque industrielle proche de la
+    signalétique de chantier. Elle donne du caractère aux titres sans jouer au
+    terminal — c'est exactement ce que faisait l'ancienne direction avec du
+    monospace partout.
+
+    `--font-sans` : IBM Plex Sans, d'origine ingénierie, nette à petite taille.
+    C'est la contrainte réelle ici : du texte lu dehors, à bout de bras. Plus
+    Jakarta Sans portait une rondeur « startup » qui ne disait rien du métier,
+    et Inter n'était chargée que comme repli — une famille téléchargée pour
+    rien.
+
+    `--font-mono` : JetBrains Mono, conservée. IBM Plex Mono n'existe pas en
+    variable ; sa version statique multi-graisses pèserait plus lourd pour un
+    gain de cohérence marginal sur des références et des mesures.
+
+    Les paquets fontsource déclarent les familles sous un nom suffixé
+    « Variable ». Le nom sans suffixe reste en second : il couvre une police
+    éventuellement installée sur le poste.
+  */
+  --font-display:
+    'Archivo Variable', 'Archivo', 'IBM Plex Sans Variable', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-sans:
-    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Inter Variable', 'Inter',
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    'IBM Plex Sans Variable', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /*
@@ -337,9 +359,16 @@
     outline-offset: 2px;
   }
 
+  /*
+    Les titres passent sur la police d'affichage, le reste sur celle de texte.
+
+    Archivo est plus serrée qu'IBM Plex Sans : l'interlettrage négatif est
+    réduit de -0.02em à -0.015em, sinon les gros titres se referment.
+  */
   h1, h2, h3, h4 {
+    font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
   }
 
   .tabular, table {
