@@ -169,7 +169,7 @@ export function CustomizerDrawer() {
                               'flex size-full items-center justify-center rounded-full border-2 bg-surface-sunken font-bold text-2xs transition-colors',
                               isSelected
                                 ? 'border-foreground text-foreground'
-                                : 'border-slate-700 dark:border-slate-300 text-foreground',
+                                : 'border-border text-foreground',
                             )}
                           >
                             A
