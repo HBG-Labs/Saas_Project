@@ -426,6 +426,69 @@
     `overscroll-contain` empêche le geste de se propager à la page une fois la
     butée atteinte ; `-webkit-overflow-scrolling` conserve l'inertie iOS.
   */
+  /*
+    Trame de plan technique.
+
+    ───────────────────────────────────────────────────────────────────────────
+    CE QU'ELLE REMPLACE
+
+    L'accueil portait un fond animé : 240 images JPEG (9 Mo) peintes sur un
+    canvas et défilées au scroll. Elle imposait un noir absolu derrière toute
+    la page, empêchait le thème clair, et faisait télécharger neuf mégaoctets
+    à quelqu'un qui consulte le site en 4G depuis un chantier.
+
+    POURQUOI CELLE-CI PLUTÔT QU'UN DÉGRADÉ ANIMÉ
+
+    Deux dégradés répétés : zéro octet transféré, zéro animation, donc rien qui
+    tourne en continu sur un téléphone de terrain. Et surtout, elle vient de
+    l'univers du métier — papier millimétré, calque d'architecte — au lieu du
+    dégradé mesh que porte aujourd'hui une landing SaaS sur deux.
+
+    Le fondu par masque évite qu'elle ne tapisse la page : elle tient l'entête
+    et s'efface avant le contenu, là où elle deviendrait du bruit.
+    ───────────────────────────────────────────────────────────────────────────
+  */
+  .trame-technique {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .trame-technique::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /*
+      Deux niveaux, comme sur du papier millimétré : un trait fin tous les
+      16 px, un trait fort tous les 96 px. C'est cette hiérarchie qui fait lire
+      « plan » — un quadrillage uniforme, lui, lit « tableur ».
+    */
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        color-mix(in oklab, var(--border-strong) 45%, transparent) 0 1px,
+        transparent 1px 96px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--border-strong) 45%, transparent) 0 1px,
+        transparent 1px 96px
+      ),
+      repeating-linear-gradient(
+        to right,
+        color-mix(in oklab, var(--border-strong) 16%, transparent) 0 1px,
+        transparent 1px 16px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--border-strong) 16%, transparent) 0 1px,
+        transparent 1px 16px
+      );
+    /* Le trait se dilue vers le bas : la trame porte le titre, pas la page. */
+    mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.5), transparent 72%);
+  }
+
   .scroll-x {
     overflow-x: auto;
     overscroll-behavior-x: contain;

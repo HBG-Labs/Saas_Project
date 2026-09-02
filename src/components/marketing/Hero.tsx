@@ -75,7 +75,7 @@ export function Hero() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20">
+    <section className="trame-technique py-12 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl lg:max-w-3xl">
           <Badge variant="primary" className="mb-5">
