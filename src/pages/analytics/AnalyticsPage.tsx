@@ -652,7 +652,7 @@ export default function AnalyticsPage() {
                       setIsQuarterMenuOpen((prev) => !prev);
                       setIsYearMenuOpen(false);
                     }}
-                    className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
+                    className="min-h-touch sm:min-h-0 flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
                   >
                     <span>Trimestre : {selectedQuarter}</span>
                     <ChevronDown className="size-3.5 text-primary" />
@@ -693,7 +693,7 @@ export default function AnalyticsPage() {
                     setIsYearMenuOpen((prev) => !prev);
                     setIsQuarterMenuOpen(false);
                   }}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
+                  className="min-h-touch sm:min-h-0 flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
                 >
                   <span>Année : {selectedYear}</span>
                   <ChevronDown className="size-3.5 text-muted-foreground" />

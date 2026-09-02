@@ -58,7 +58,7 @@ export function PricingSimulator() {
                 key={preset.count}
                 type="button"
                 onClick={() => setUsersCount(preset.count)}
-                className={`text-3xs px-2 py-1 rounded-md border font-medium transition-all cursor-pointer ${
+                className={`min-h-touch sm:min-h-0 inline-flex items-center justify-center text-3xs px-2 py-1 rounded-md border font-medium transition-all cursor-pointer ${
                   usersCount === preset.count
                     ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
                     : 'bg-surface border-border/60 text-muted-foreground hover:text-foreground hover:bg-surface-hover'
@@ -86,7 +86,7 @@ export function PricingSimulator() {
                   type="button"
                   onClick={() => setUsersCount((c) => Math.max(1, c - 1))}
                   disabled={usersCount <= 1}
-                  className="size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+                  className="size-touch sm:size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
                   aria-label="Diminuer"
                 >
                   <Minus className="size-3" />
@@ -100,7 +100,7 @@ export function PricingSimulator() {
                   type="button"
                   onClick={() => setUsersCount((c) => Math.min(100, c + 1))}
                   disabled={usersCount >= 100}
-                  className="size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+                  className="size-touch sm:size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
                   aria-label="Augmenter"
                 >
                   <Plus className="size-3" />

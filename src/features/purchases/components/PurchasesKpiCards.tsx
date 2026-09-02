@@ -202,7 +202,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
                 trigger={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-success/50 hover:bg-success/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-success/50 hover:bg-success/10 transition-colors cursor-pointer max-w-full truncate"
                     title="Cliquer pour changer le mois ou la période"
                   >
                     <Calendar className="size-3 text-success shrink-0" />

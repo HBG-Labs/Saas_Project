@@ -70,7 +70,11 @@ export function Select({
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
           className={cn(
-            'bg-surface text-foreground flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm',
+            // 44 px au doigt, 36 px au pointeur — comme `Button`, qui suit
+            // déjà cette règle. Le déclencheur était figé à `h-9` : 36 px, soit
+            // sous la cible tactile de WCAG 2.5.5 sur un champ que l'on ouvre
+            // en permanence dans les filtres de liste.
+            'bg-surface text-foreground h-touch sm:h-9 flex w-full items-center justify-between gap-2 rounded-md border px-3 text-sm',
             'transition-colors duration-[120ms]',
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',

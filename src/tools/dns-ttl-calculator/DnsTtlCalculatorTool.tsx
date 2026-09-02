@@ -127,7 +127,7 @@ export default function DnsTtlCalculatorTool() {
                       setCurrentTtlValue(item.val);
                       setCurrentTtlUnit('seconds');
                     }}
-                    className="rounded-lg border border-border bg-surface-sunken/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary dark:border-border dark:bg-surface-sunken dark:text-muted-foreground dark:hover:text-white cursor-pointer"
+                    className="min-h-touch sm:min-h-0 inline-flex items-center rounded-lg border border-border bg-surface-sunken/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary dark:border-border dark:bg-surface-sunken dark:text-muted-foreground dark:hover:text-white cursor-pointer"
                   >
                     {item.label}
                   </button>

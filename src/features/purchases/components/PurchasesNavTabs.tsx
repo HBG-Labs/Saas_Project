@@ -46,7 +46,7 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
             end={tab.to === ROUTES.purchaseOrders || tab.to === ROUTES.suppliers}
             className={({ isActive }) =>
               cn(
-                'inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
+                'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',

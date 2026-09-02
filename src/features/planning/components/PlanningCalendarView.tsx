@@ -493,7 +493,7 @@ export function PlanningCalendarView({
                 type="button"
                 onClick={() => setActivityTypeFilter('all')}
                 className={cn(
-                  'px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'all'
                     ? 'bg-surface text-foreground shadow-2xs font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
@@ -505,7 +505,7 @@ export function PlanningCalendarView({
                 type="button"
                 onClick={() => setActivityTypeFilter('intervention')}
                 className={cn(
-                  'px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'intervention'
                     ? 'bg-success/20 text-success font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
@@ -517,7 +517,7 @@ export function PlanningCalendarView({
                 type="button"
                 onClick={() => setActivityTypeFilter('leave')}
                 className={cn(
-                  'px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'leave'
                     ? 'bg-warning/20 text-warning font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',

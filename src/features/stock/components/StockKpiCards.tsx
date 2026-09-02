@@ -226,7 +226,7 @@ export function StockKpiCards({
                 trigger={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer max-w-full truncate"
                     title="Cliquer pour changer le mois ou la période"
                   >
                     <Calendar className="size-3 text-accent shrink-0" />
