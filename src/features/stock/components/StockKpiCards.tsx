@@ -129,7 +129,7 @@ export function StockKpiCards({
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {/* 1. Total Articles */}
-      <Card className="border-blue-500/20 p-3 sm:p-4">
+      <Card className="border-primary/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -142,7 +142,7 @@ export function StockKpiCards({
               {metrics.totalQuantity} unités en stock
             </p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-blue-500/10 text-primary border border-blue-500/20">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-primary/10 text-primary border border-primary/20">
             <Boxes className="size-5" />
           </div>
         </div>
@@ -187,10 +187,10 @@ export function StockKpiCards({
       </Card>
 
       {/* 3. Valeur Totale du Stock */}
-      <Card className="border-emerald-500/20 p-3 sm:p-4">
+      <Card className="border-success/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-success">
               Valeur Totale du Stock
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
@@ -202,17 +202,17 @@ export function StockKpiCards({
             </p>
             <p className="text-2xs text-muted-foreground mt-0.5">Prix d’achat total HT</p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-success/10 text-success border border-success/20">
             <Euro className="size-5" />
           </div>
         </div>
       </Card>
 
       {/* 4. Mouvements avec menu calendrier sans chevauchement */}
-      <Card className="border-purple-500/20 p-3 sm:p-4">
+      <Card className="border-accent/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-2xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 truncate">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-accent truncate">
               Mouvements Stock
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl font-mono">
@@ -226,10 +226,10 @@ export function StockKpiCards({
                 trigger={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-purple-500/50 hover:bg-purple-500/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer max-w-full truncate"
                     title="Cliquer pour changer le mois ou la période"
                   >
-                    <Calendar className="size-3 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <Calendar className="size-3 text-accent shrink-0" />
                     <span className="truncate">{periodData.badgeText}</span>
                     <ChevronDown className="size-2.5 opacity-60 shrink-0" />
                   </button>
@@ -264,13 +264,13 @@ export function StockKpiCards({
                         setSelectedPeriod('custom_month');
                       }
                     }}
-                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   />
                 </div>
               </Dropdown>
             </div>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-accent/10 text-accent border border-accent/20">
             <ArrowLeftRight className="size-5" />
           </div>
         </div>

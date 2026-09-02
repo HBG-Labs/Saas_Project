@@ -173,8 +173,8 @@ export default function BillingPage() {
       <OrganizationNavTabs />
 
       {planSuccessMessage ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
-          <CheckCircle2 className="size-5 shrink-0 text-emerald-500 mt-0.5" />
+        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-sm text-success flex items-start gap-3">
+          <CheckCircle2 className="size-5 shrink-0 text-success mt-0.5" />
           <div className="flex-1">
             <p className="font-semibold">{planSuccessMessage}</p>
           </div>
@@ -189,8 +189,8 @@ export default function BillingPage() {
       ) : null}
 
       {paymentStatus === 'ok' ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
-          <CheckCircle2 className="size-5 shrink-0 text-emerald-500 mt-0.5" />
+        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-sm text-success flex items-start gap-3">
+          <CheckCircle2 className="size-5 shrink-0 text-success mt-0.5" />
           <div>
             <p className="font-semibold">Paiement validé avec succès !</p>
             <p className="text-xs text-muted-foreground mt-0.5">

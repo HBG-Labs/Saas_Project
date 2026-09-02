@@ -78,7 +78,7 @@ export function LocateMissionButton({
           </>
         ) : successAccuracy !== null ? (
           <>
-            <Check className="size-3.5 text-emerald-500" aria-hidden="true" />
+            <Check className="size-3.5 text-success" aria-hidden="true" />
             <span>Position GPS enregistrée (±{successAccuracy}m)</span>
           </>
         ) : (
@@ -90,7 +90,7 @@ export function LocateMissionButton({
       </Button>
 
       {error && (
-        <div className="flex items-center gap-1.5 text-3xs text-rose-500 font-medium">
+        <div className="flex items-center gap-1.5 text-3xs text-error font-medium">
           <AlertCircle className="size-3 shrink-0" />
           <span>{error}</span>
         </div>

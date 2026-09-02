@@ -751,7 +751,7 @@ export default function AnalyticsPage() {
 
       {/* Message de Succès d'Exportation PDF */}
       {exportSuccessMessage ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400 text-xs font-semibold flex items-center justify-between shadow-xs animate-in fade-in duration-300">
+        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-success text-xs font-semibold flex items-center justify-between shadow-xs animate-in fade-in duration-300">
           <span className="flex items-center gap-2">
             <FileCheck className="size-4 shrink-0" />
             {exportSuccessMessage}
@@ -759,7 +759,7 @@ export default function AnalyticsPage() {
           <button
             type="button"
             onClick={() => setExportSuccessMessage(null)}
-            className="text-emerald-400/80 hover:text-emerald-400"
+            className="text-success/80 hover:text-success"
           >
             ✕
           </button>
@@ -788,7 +788,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-success/10 text-success border border-success/20">
               <CheckCircle2 className="size-5" />
             </div>
             <Badge variant="success" className="text-2xs font-semibold">
@@ -808,7 +808,7 @@ export default function AnalyticsPage() {
 
         <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
               <TrendingUp className="size-5" />
             </div>
             <Badge variant="primary" className="text-2xs font-semibold">
@@ -828,7 +828,7 @@ export default function AnalyticsPage() {
 
         <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-warning/10 text-warning border border-warning/20">
               <Clock className="size-5" />
             </div>
             <Badge variant="warning" className="text-2xs font-semibold">
@@ -848,10 +848,10 @@ export default function AnalyticsPage() {
 
         <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent border border-accent/20">
               <Award className="size-5" />
             </div>
-            <Badge variant="outline" className="text-2xs font-semibold border-purple-500/30 text-purple-400">
+            <Badge variant="outline" className="text-2xs font-semibold border-accent/30 text-accent">
               {currentData.slaLabel}
             </Badge>
           </div>
@@ -909,7 +909,7 @@ export default function AnalyticsPage() {
                       </span>
                       <div className="w-full bg-surface-subtle rounded-t-md overflow-hidden flex items-end h-full">
                         <div
-                          className="w-full bg-gradient-to-t from-primary/80 to-blue-400 group-hover:from-primary group-hover:to-blue-300 transition-all rounded-t-md"
+                          className="w-full bg-gradient-to-t from-primary/80 to-primary group-hover:from-primary group-hover:to-primary transition-all rounded-t-md"
                           style={{ height: `${heightPercent}%` }}
                         />
                       </div>
@@ -937,7 +937,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <PieChart className="size-4.5 text-cyan-400" />
+              <PieChart className="size-4.5 text-primary" />
               Répartition par Client
             </CardTitle>
           </CardHeader>
@@ -991,7 +991,7 @@ export default function AnalyticsPage() {
       <Card>
         <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
           <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-            <UsersRound className="size-4.5 text-emerald-400" />
+            <UsersRound className="size-4.5 text-success" />
             Performance & Activité par Équipe
           </CardTitle>
           <Badge variant="outline" className="font-mono text-xs">
@@ -1040,7 +1040,7 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-1">
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Receipt className="size-4.5 text-amber-500" />
+              <Receipt className="size-4.5 text-warning" />
               Transformation des Devis
             </CardTitle>
           </CardHeader>
@@ -1048,12 +1048,12 @@ export default function AnalyticsPage() {
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface-subtle border border-border">
               <div className="space-y-0.5">
                 <p className="text-3xs font-semibold text-muted-foreground uppercase">Taux de Conversion</p>
-                <p className="text-2xl font-bold font-mono text-emerald-500">
+                <p className="text-2xl font-bold font-mono text-success">
                   {totalQuotesCount > 0 ? `${conversionRate.toFixed(1)}%` : '—'}
                 </p>
                 <p className="text-3xs text-muted-foreground">Devis validés et lancés</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <div className="p-2.5 rounded-xl bg-success/10 text-success">
                 <CircleDollarSign className="size-5" />
               </div>
             </div>
@@ -1065,11 +1065,11 @@ export default function AnalyticsPage() {
               </div>
               <div className="flex justify-between py-1.5 border-b border-border/50">
                 <span className="text-muted-foreground">Devis signés / acceptés</span>
-                <span className="font-mono font-bold text-emerald-500">{acceptedQuotes.length} devis</span>
+                <span className="font-mono font-bold text-success">{acceptedQuotes.length} devis</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-border/50">
                 <span className="text-muted-foreground">En attente signature</span>
-                <span className="font-mono font-bold text-amber-500">{pendingQuotes.length} devis</span>
+                <span className="font-mono font-bold text-warning">{pendingQuotes.length} devis</span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-muted-foreground">Taux en cours</span>
@@ -1085,7 +1085,7 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Layers className="size-4.5 text-blue-500" />
+              <Layers className="size-4.5 text-primary" />
               Activité & Volume par Statut d'Intervention
             </CardTitle>
             <Badge variant="primary" className="text-2xs font-mono">
@@ -1098,7 +1098,7 @@ export default function AnalyticsPage() {
                 <div key={item.label} className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                      <span className="size-2.5 rounded-full bg-blue-500" />
+                      <span className="size-2.5 rounded-full bg-primary" />
                       {item.label}
                     </span>
                     <span className="font-mono font-bold text-xs text-foreground">{item.count} missions</span>

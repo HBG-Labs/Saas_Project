@@ -34,21 +34,21 @@ function getReliabilityBadge(level: ReliabilityLevel) {
         label: '🟢 Calcul direct',
         description: 'Calcul mathématique et physique direct',
         badgeVariant: 'success' as const,
-        bgClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+        bgClass: 'bg-success/10 text-success border-success/20',
       };
     case 'indicative':
       return {
         label: '🟠 Calcul technique indicatif',
         description: 'Résultat dépendant d’hypothèses de chantier',
         badgeVariant: 'warning' as const,
-        bgClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+        bgClass: 'bg-warning/10 text-warning border-warning/20',
       };
     case 'pro_validation':
       return {
         label: '🔴 Dimensionnement (Validation BE requise)',
         description: 'Étude d’avant-projet nécessitant validation bureau d’études / BE certifié',
         badgeVariant: 'error' as const,
-        bgClass: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
+        bgClass: 'bg-error/10 text-error border-error/20',
       };
   }
 }
@@ -344,7 +344,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
               {tool.limits && tool.limits.length > 0 && (
                 <div className="space-y-1.5 pt-2 border-t border-border/50">
-                  <span className="text-3xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                  <span className="text-3xs font-bold uppercase tracking-wider text-warning flex items-center gap-1">
                     <AlertTriangle className="size-3" />
                     <span>Limites d’utilisation :</span>
                   </span>
@@ -370,7 +370,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             className={cn(
               'p-5 rounded-2xl border shadow-xs relative overflow-hidden transition-all duration-200',
               !isProUnlocked
-                ? 'border-cyan-500/40 bg-gradient-to-br from-blue-500/10 via-surface to-surface-raised'
+                ? 'border-primary/40 bg-gradient-to-br from-primary/10 via-surface to-surface-raised'
                 : output.status === 'danger'
                   ? 'border-error/50 bg-error/5'
                   : output.status === 'warning'
@@ -386,10 +386,10 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-cyan-500/10 px-2.5 py-1 text-3xs font-bold text-blue-700 dark:text-cyan-300 hover:bg-blue-500/20 hover:border-cyan-500/50 shadow-2xs transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-gradient-to-r from-primary/10 via-primary/10 to-primary/10 px-2.5 py-1 text-3xs font-bold text-primary dark:text-primary hover:bg-primary/20 hover:border-primary/50 shadow-2xs transition-all cursor-pointer"
                   title="Débloquer l'export et la copie avec les forfaits Pro"
                 >
-                  <Sparkles className="size-3 text-cyan-500 dark:text-cyan-400" />
+                  <Sparkles className="size-3 text-primary" />
                   <span>Débloquer (Pro)</span>
                 </button>
               ) : (
@@ -417,13 +417,13 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             </div>
 
             {!isProUnlocked ? (
-              <div className="my-3 rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-blue-500/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
-                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 text-cyan-500 dark:text-cyan-400 shadow-2xs">
-                  <Sparkles className="size-4.5 text-cyan-500 dark:text-cyan-400 animate-pulse" />
+              <div className="my-3 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
+                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/30 text-primary shadow-2xs">
+                  <Sparkles className="size-4.5 text-primary animate-pulse" />
                 </div>
 
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-primary dark:text-primary">
                     <Lock className="size-2.5" />
                     <span>Calculateur Certifié Pro</span>
                   </div>
@@ -438,12 +438,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 p-[1px] shadow-sm shadow-blue-500/25 hover:shadow-md hover:shadow-cyan-500/35 active:scale-[0.99] transition-all cursor-pointer"
+                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary to-primary p-[1px] shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/35 active:scale-[0.99] transition-all cursor-pointer"
                 >
-                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
-                    <Sparkles className="size-3.5 text-cyan-100 group-hover:rotate-12 transition-transform" />
+                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-primary via-primary to-primary px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
+                    <Sparkles className="size-3.5 text-primary group-hover:rotate-12 transition-transform" />
                     <span>Débloquer l’accès Pro</span>
-                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-cyan-100 border border-white/10">
+                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary border border-white/10">
                       Dès 39 €/m
                     </span>
                   </div>
@@ -485,7 +485,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   Détails & Grandeurs calculées
                 </h3>
                 {!isProUnlocked && (
-                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-blue-700 dark:text-cyan-300 bg-blue-500/10 px-1.5 py-0.5 rounded border border-cyan-500/25">
+                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-primary dark:text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/25">
                     <Lock className="size-2.5" />
                     <span>Inclus en Pro</span>
                   </span>
@@ -529,9 +529,9 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   <button
                     type="button"
                     onClick={() => setUpgradeModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-blue-500/15 via-indigo-500/15 to-cyan-500/15 px-3.5 py-2 text-xs font-bold text-blue-700 dark:text-cyan-300 shadow-sm hover:border-cyan-500/60 hover:bg-blue-500/25 transition-all cursor-pointer backdrop-blur-xs"
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/15 via-primary/15 to-primary/15 px-3.5 py-2 text-xs font-bold text-primary dark:text-primary shadow-sm hover:border-primary/60 hover:bg-primary/25 transition-all cursor-pointer backdrop-blur-xs"
                   >
-                    <Sparkles className="size-3.5 text-cyan-500 dark:text-cyan-400" />
+                    <Sparkles className="size-3.5 text-primary" />
                     <span>Débloquer les grandeurs détaillées (Pro)</span>
                   </button>
                 </div>
@@ -554,8 +554,8 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
           {/* Conseils de terrain */}
           {output.advice && output.advice.length > 0 && (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
+            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 font-bold text-warning">
                 <Lightbulb className="size-4 shrink-0" />
                 <span>Conseils de mise en œuvre</span>
               </div>
@@ -572,7 +572,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
           {/* Avertissement réglementaire & non-surpromesse */}
           <div className="p-3.5 rounded-2xl bg-surface-raised border border-border text-3xs text-muted-foreground space-y-1 leading-relaxed">
             <div className="flex items-center gap-1 font-bold text-foreground/90">
-              <AlertTriangle className="size-3 text-amber-500" />
+              <AlertTriangle className="size-3 text-warning" />
               <span>Avertissement & Règle de l’art</span>
             </div>
             <p>

@@ -148,7 +148,7 @@ export function AvatarPickerModal({
                 {/* Textes descriptifs */}
                 <div className="mt-2 w-full min-w-0">
                   <h4 className="text-2xs font-bold text-foreground truncate">{avatar.name}</h4>
-                  <Badge variant="outline" className="text-4xs px-1 py-0 h-4 mt-1">
+                  <Badge variant="outline" className="px-1 py-0 h-4 mt-1">
                     {avatar.categoryLabel}
                   </Badge>
                 </div>
@@ -168,7 +168,7 @@ export function AvatarPickerModal({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h5 className="text-xs font-bold text-foreground truncate">{selectedAvatarData.name}</h5>
-                <Badge variant="primary" className="text-4xs font-mono">{selectedAvatarData.genderLabel}</Badge>
+                <Badge variant="primary" className="font-mono">{selectedAvatarData.genderLabel}</Badge>
               </div>
               <p className="text-3xs text-muted-foreground mt-0.5">{selectedAvatarData.clothingStyle}</p>
             </div>

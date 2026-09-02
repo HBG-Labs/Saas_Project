@@ -58,7 +58,7 @@ const CATEGORIES: Record<Exclude<PhotoCategory, 'all'>, CategoryConfig> = {
     icon: Camera,
     kind: 'before',
     badgeVariant: 'neutral',
-    colorClass: 'text-slate-600 dark:text-slate-400',
+    colorClass: 'text-muted-foreground',
     description: 'État initial du chantier à l’arrivée',
   },
   during: {
@@ -67,7 +67,7 @@ const CATEGORIES: Record<Exclude<PhotoCategory, 'all'>, CategoryConfig> = {
     icon: Hammer,
     kind: 'proof',
     badgeVariant: 'primary',
-    colorClass: 'text-blue-600 dark:text-blue-400',
+    colorClass: 'text-primary',
     description: 'Étapes intermédiaires, pose, passages, raccordements',
   },
   after: {
@@ -76,7 +76,7 @@ const CATEGORIES: Record<Exclude<PhotoCategory, 'all'>, CategoryConfig> = {
     icon: Sparkles,
     kind: 'after',
     badgeVariant: 'success',
-    colorClass: 'text-emerald-600 dark:text-emerald-400',
+    colorClass: 'text-success',
     description: 'Résultat finalisé et chantier nettoyé',
   },
   proof: {
@@ -85,7 +85,7 @@ const CATEGORIES: Record<Exclude<PhotoCategory, 'all'>, CategoryConfig> = {
     icon: Wrench,
     kind: 'proof',
     badgeVariant: 'warning',
-    colorClass: 'text-amber-600 dark:text-amber-400',
+    colorClass: 'text-warning',
     description: 'Réflectométrie, tests, étiquettes, compteurs, n° de série',
   },
   document: {
@@ -94,7 +94,7 @@ const CATEGORIES: Record<Exclude<PhotoCategory, 'all'>, CategoryConfig> = {
     icon: FileText,
     kind: 'document',
     badgeVariant: 'outline',
-    colorClass: 'text-indigo-600 dark:text-indigo-400',
+    colorClass: 'text-primary',
     description: 'Plans de câblage, schémas, fiches techniques, bons de livraison',
   },
 };
@@ -264,10 +264,10 @@ export function AttachmentGallery({
               size="sm"
               onClick={() => beforeInputRef.current?.click()}
               disabled={upload.isPending}
-              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-slate-400"
+              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-border-strong"
               title="Photographier l'état initial"
             >
-              <Camera className="size-3.5 text-slate-500 shrink-0" />
+              <Camera className="size-3.5 text-muted-foreground shrink-0" />
               <span className="truncate">1. « Avant »</span>
             </Button>
 
@@ -278,10 +278,10 @@ export function AttachmentGallery({
               size="sm"
               onClick={() => duringInputRef.current?.click()}
               disabled={upload.isPending}
-              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-blue-400"
+              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-primary/50"
               title="Photographier les étapes de pose ou travaux en cours"
             >
-              <Hammer className="size-3.5 text-blue-500 shrink-0" />
+              <Hammer className="size-3.5 text-primary shrink-0" />
               <span className="truncate">2. Travaux</span>
             </Button>
 
@@ -292,10 +292,10 @@ export function AttachmentGallery({
               size="sm"
               onClick={() => afterInputRef.current?.click()}
               disabled={upload.isPending}
-              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-emerald-400"
+              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-primary/50"
               title="Photographier le résultat finalisé"
             >
-              <Sparkles className="size-3.5 text-emerald-500 shrink-0" />
+              <Sparkles className="size-3.5 text-success shrink-0" />
               <span className="truncate">3. « Après »</span>
             </Button>
 
@@ -306,10 +306,10 @@ export function AttachmentGallery({
               size="sm"
               onClick={() => proofInputRef.current?.click()}
               disabled={upload.isPending}
-              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-amber-400"
+              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-primary/50"
               title="Photographier un test, compteur ou numéro de série"
             >
-              <Wrench className="size-3.5 text-amber-500 shrink-0" />
+              <Wrench className="size-3.5 text-warning shrink-0" />
               <span className="truncate">4. Mesure / Test</span>
             </Button>
 
@@ -320,10 +320,10 @@ export function AttachmentGallery({
               size="sm"
               onClick={() => documentInputRef.current?.click()}
               disabled={upload.isPending}
-              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-indigo-400 col-span-2 sm:col-span-1"
+              className="w-full justify-start text-xs h-9 gap-1.5 cursor-pointer hover:border-primary col-span-2 sm:col-span-1"
               title="Joindre un plan ou document PDF"
             >
-              <FileText className="size-3.5 text-indigo-500 shrink-0" />
+              <FileText className="size-3.5 text-primary shrink-0" />
               <span className="truncate">5. Doc / Plan</span>
             </Button>
           </div>
@@ -529,7 +529,7 @@ function AttachmentTile({
 
         {/* Badge catégorie en coin supérieur */}
         <div className="absolute top-1.5 left-1.5">
-          <Badge variant={config.badgeVariant} className="text-4xs px-1.5 py-0.5 shadow-sm font-bold uppercase">
+          <Badge variant={config.badgeVariant} className="px-1.5 py-0.5 shadow-sm font-bold uppercase">
             {config.shortLabel}
           </Badge>
         </div>
@@ -537,7 +537,7 @@ function AttachmentTile({
 
       {/* Barre d'action inférieure */}
       <div className="flex items-center justify-between gap-1 p-1.5 bg-surface-subtle/50">
-        <span className="text-4xs text-muted-foreground truncate max-w-[100px]" title={attachment.file_name}>
+        <span className="text-muted-foreground truncate max-w-[100px]" title={attachment.file_name}>
           {attachment.caption || attachment.file_name}
         </span>
 
@@ -607,7 +607,9 @@ function AttachmentPreviewModal({
       description={`Catégorie : ${config.label}`}
     >
       <div className="space-y-4">
-        <div className="bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center max-h-[60vh] min-h-[250px] p-2">
+        {/* Fond sombre délibéré, et non un oubli de jeton : une photo de chantier
+            se juge sur un fond neutre foncé, quel que soit le thème de l'application. */}
+        <div className="bg-surface-sunken rounded-xl overflow-hidden flex items-center justify-center max-h-[60vh] min-h-[250px] p-2">
           {url.isPending ? (
             <Skeleton className="h-64 w-full" />
           ) : isImage && url.data ? (
@@ -617,8 +619,8 @@ function AttachmentPreviewModal({
               className="max-h-[58vh] max-w-full object-contain rounded-lg shadow-lg"
             />
           ) : (
-            <div className="text-center text-slate-300 space-y-3 p-6">
-              <FileText className="size-16 mx-auto text-indigo-400" />
+            <div className="text-center text-muted-foreground space-y-3 p-6">
+              <FileText className="size-16 mx-auto text-primary" />
               <p className="text-sm font-medium">{attachment.file_name}</p>
               {url.data && (
                 <Button asChild variant="primary" size="sm">

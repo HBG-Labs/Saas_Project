@@ -99,7 +99,19 @@ export function InterventionPdfModal({
           </Button>
         </div>
 
-        {/* 📄 ZONE OFFICIELLE DU RAPPORT (Format A4 / PV de Réception) */}
+        {/*
+          ZONE OFFICIELLE DU RAPPORT (format A4 / PV de réception).
+
+          ⚠️ Les couleurs de ce bloc sont volontairement écrites en dur
+          (`bg-white`, `text-slate-900`, `border-slate-200`) et NON en jetons de
+          thème. Ce document part à l'impression et dans le PDF remis au client :
+          il doit rester noir sur blanc quel que soit le thème de l'application.
+          Le passer sur les jetons produirait une page noire à l'impression pour
+          quiconque travaille en thème sombre.
+
+          Ce n'est donc pas une dette de design system, et un passage
+          d'harmonisation ne doit pas « corriger » cette zone.
+        */}
         <div
           ref={printRef}
           className="p-6 sm:p-8 bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-sm space-y-6 print:border-none print:shadow-none print:p-0 print:m-0"
@@ -222,7 +234,7 @@ export function InterventionPdfModal({
                 ) : (
                   <div className="py-2 text-3xs text-slate-400 italic">Signature apposée électroniquement</div>
                 )}
-                <p className="text-4xs text-slate-400">Fait le {dateStr}</p>
+                <p className="text-slate-400">Fait le {dateStr}</p>
               </div>
 
               {/* Signature Client */}
@@ -242,13 +254,13 @@ export function InterventionPdfModal({
                 ) : (
                   <div className="py-2 text-3xs text-amber-700 italic">Bon pour accord et réception des travaux</div>
                 )}
-                <p className="text-4xs text-slate-400">Fait le {dateStr}</p>
+                <p className="text-slate-400">Fait le {dateStr}</p>
               </div>
             </div>
           </div>
 
           {/* Sceau de conformité & traçabilité */}
-          <div className="pt-3 flex items-center justify-between text-4xs text-slate-400 border-t border-slate-100">
+          <div className="pt-3 flex items-center justify-between text-slate-400 border-t border-slate-100">
             <span>Certifié conforme — Plateforme d’exploitation technique REZO360 — Document officiel</span>
             <span>Réf : {reference}</span>
           </div>
@@ -306,11 +318,11 @@ function PdfAttachmentThumbnail({ attachment }: { attachment: InterventionAttach
         ) : (
           <FileText className="size-6 text-slate-400" />
         )}
-        <span className="absolute top-1 left-1 px-1 py-0.5 rounded bg-slate-900/80 text-white text-4xs font-bold uppercase">
+        <span className="absolute top-1 left-1 px-1 py-0.5 rounded bg-slate-900/80 text-white font-bold uppercase">
           {kindLabel}
         </span>
       </div>
-      <p className="p-1 text-4xs text-slate-600 truncate font-mono" title={attachment.file_name}>
+      <p className="p-1 text-slate-600 truncate font-mono" title={attachment.file_name}>
         {attachment.caption || attachment.file_name}
       </p>
     </div>

@@ -119,8 +119,8 @@ export function AddMemberDialog({
     >
       {account !== null ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
-            <div className="flex items-center gap-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="rounded-xl border border-success/40 bg-success/10 p-4">
+            <div className="flex items-center gap-2 text-base font-semibold text-success">
               <UserCheck className="size-5" />
               <span>{displayName.trim() === '' ? account.email : displayName}</span>
             </div>
@@ -136,7 +136,7 @@ export function AddMemberDialog({
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Mot de passe</dt>
-                <dd className="font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
+                <dd className="font-bold tracking-wider text-success">
                   {account.password}
                 </dd>
               </div>

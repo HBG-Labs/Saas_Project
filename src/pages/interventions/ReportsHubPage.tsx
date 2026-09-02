@@ -221,7 +221,7 @@ export default function ReportsHubPage() {
         <FormError error={error} />
 
         {report !== null && report.status === 'rejected' && report.rejection_reason !== null ? (
-          <div className="border-rose-500/30 bg-rose-500/10 rounded-xl border p-4 text-rose-600 dark:text-rose-400">
+          <div className="border-error/30 bg-error/10 rounded-xl border p-4 text-error">
             <p className="text-sm font-bold flex items-center gap-1.5">
               <AlertCircle className="size-4" />
               Compte rendu refusé par le responsable
@@ -306,11 +306,11 @@ export default function ReportsHubPage() {
                     </Button>
 
                     {hasUnsavedChanges ? (
-                      <span className="text-amber-500 text-xs font-medium">
+                      <span className="text-warning text-xs font-medium">
                         Modifications non enregistrées
                       </span>
                     ) : savedAt !== null ? (
-                      <span className="text-emerald-500 text-xs font-medium flex items-center gap-1">
+                      <span className="text-success text-xs font-medium flex items-center gap-1">
                         <CheckCircle2 className="size-3.5" />
                         Enregistré à {savedAt.toLocaleTimeString('fr-FR')}
                       </span>

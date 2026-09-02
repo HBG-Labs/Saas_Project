@@ -28,19 +28,19 @@ const COLOR_CONFIGS: Record<
   },
   warm: {
     label: 'Blanc Chaud (3000K)',
-    bgClass: 'bg-amber-100 text-amber-950',
+    bgClass: 'bg-warning text-warning',
     hex: '#fef3c7',
     desc: 'Éclairage doux et reposant pour lecture de plans et schémas.',
   },
   red: {
     label: 'Rouge Vision Nocturne',
-    bgClass: 'bg-red-600 text-white',
+    bgClass: 'bg-error text-white',
     hex: '#dc2626',
     desc: 'Préserve l’adaptation de l’œil à l’obscurité en intervention de nuit.',
   },
   amber: {
     label: 'Ambre Sécurité',
-    bgClass: 'bg-amber-500 text-slate-950',
+    bgClass: 'bg-warning text-foreground',
     hex: '#f59e0b',
     desc: 'Signalisation de sécurité haute visibilité pour balisage de zone.',
   },
@@ -269,7 +269,7 @@ export default function FlashlightTool() {
                 className={cn(
                   'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isOn
-                    ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-500/20'
+                    ? 'bg-warning text-foreground shadow-md ring-2 ring-warning/20'
                     : 'bg-surface-hover text-muted-foreground',
                 )}
               >
@@ -284,7 +284,7 @@ export default function FlashlightTool() {
             </div>
 
             {hasTorchSupport === true && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 self-start sm:self-auto shrink-0">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20 self-start sm:self-auto shrink-0">
                 <Zap className="size-3" />
                 Torche LED active
               </span>
@@ -303,7 +303,7 @@ export default function FlashlightTool() {
                 'relative flex size-36 sm:size-44 items-center justify-center rounded-full transition-all duration-300 cursor-pointer',
                 'border-4 shadow-xl active:scale-95 select-none',
                 isOn
-                  ? 'border-amber-400 bg-linear-to-b from-amber-400 to-amber-500 text-slate-950 shadow-amber-500/40 ring-8 ring-amber-400/20'
+                  ? 'border-warning bg-linear-to-b from-warning to-warning text-foreground shadow-warning/40 ring-8 ring-warning/20'
                   : 'border-border bg-surface-raised text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-inner',
               )}
             >
@@ -326,7 +326,7 @@ export default function FlashlightTool() {
                 }}
                 className="gap-2 text-xs"
               >
-                <Sun className="size-4 text-amber-500" />
+                <Sun className="size-4 text-warning" />
                 <span>Plein écran projecteur</span>
               </Button>
 
@@ -338,7 +338,7 @@ export default function FlashlightTool() {
                   onClick={() => togglePhysicalTorch(false)}
                   className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <Zap className="size-3.5 text-amber-500" />
+                  <Zap className="size-3.5 text-warning" />
                   <span>Désactiver LED</span>
                 </Button>
               )}
@@ -409,7 +409,7 @@ export default function FlashlightTool() {
                 className={cn(
                   'p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer',
                   flashMode === 'strobe'
-                    ? 'border-amber-500 bg-amber-500 text-slate-950 shadow-xs'
+                    ? 'border-warning bg-warning text-foreground shadow-xs'
                     : 'border-border bg-surface-raised text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -421,7 +421,7 @@ export default function FlashlightTool() {
                 className={cn(
                   'p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5',
                   flashMode === 'sos'
-                    ? 'border-red-500 bg-red-600 text-white shadow-xs'
+                    ? 'border-error bg-error text-white shadow-xs'
                     : 'border-border bg-surface-raised text-muted-foreground hover:text-foreground',
                 )}
               >

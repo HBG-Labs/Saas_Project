@@ -82,11 +82,11 @@ export function ToolLayout({
             size="sm"
             onClick={() => toggleFavorite(toolSlug)}
             className={`h-8 gap-1.5 text-xs font-medium cursor-pointer ${
-              favorite ? 'text-amber-500 border-amber-500/40 bg-amber-500/10' : ''
+              favorite ? 'text-warning border-warning/40 bg-warning/10' : ''
             }`}
             title={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
-            <Star className={`size-3.5 ${favorite ? 'fill-amber-500 text-amber-500' : ''}`} />
+            <Star className={`size-3.5 ${favorite ? 'fill-amber-500 text-warning' : ''}`} />
             <span className="hidden sm:inline">{favorite ? 'Favori' : 'Épingler'}</span>
           </Button>
 
@@ -244,10 +244,10 @@ export function CopyResultButton({
       size="sm"
       onClick={handleCopy}
       className={`gap-1.5 text-xs font-semibold cursor-pointer ${
-        copied ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : ''
+        copied ? 'border-success/40 text-success bg-success/10' : ''
       } ${className}`}
     >
-      {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+      {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
       <span>{copied ? 'Copié !' : label}</span>
     </Button>
   );

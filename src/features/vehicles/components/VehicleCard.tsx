@@ -76,7 +76,7 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
           <div className="space-y-0.5 min-w-0">
             {/* French-style plate badge */}
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-surface-hover border border-border font-mono font-bold text-xs tracking-wider text-foreground shadow-2xs">
-              <span className="text-3xs font-extrabold text-blue-500">F</span>
+              <span className="text-3xs font-extrabold text-primary">F</span>
               <span>{vehicle.plate}</span>
             </div>
             <h3 className="text-xs font-bold text-foreground truncate mt-0.5">
@@ -97,9 +97,9 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
           </span>
           <span className="flex items-center gap-1 bg-surface-hover px-1.5 py-0.5 rounded-md">
             {fuelCfg.isElectric ? (
-              <Zap className="size-2.5 text-emerald-500" />
+              <Zap className="size-2.5 text-success" />
             ) : (
-              <Fuel className="size-2.5 text-amber-500" />
+              <Fuel className="size-2.5 text-warning" />
             )}
             <span>{fuelCfg.label}</span>
           </span>

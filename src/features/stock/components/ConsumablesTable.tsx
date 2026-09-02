@@ -246,7 +246,7 @@ export function ConsumablesTable({
                         variant="ghost"
                         onClick={() => onRecordMovement(item, 'in')}
                         title="Déclarer une entrée (BL)"
-                        className="size-6.5 p-0 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                        className="size-6.5 p-0 text-success hover:bg-success/10 cursor-pointer"
                       >
                         <ArrowDownLeft className="size-3.5" />
                       </Button>
@@ -256,7 +256,7 @@ export function ConsumablesTable({
                         variant="ghost"
                         onClick={() => onRecordMovement(item, 'out')}
                         title="Déclarer une sortie chantier"
-                        className="size-6.5 p-0 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                        className="size-6.5 p-0 text-error hover:bg-error/10 cursor-pointer"
                       >
                         <ArrowUpRight className="size-3.5" />
                       </Button>

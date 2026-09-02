@@ -245,7 +245,7 @@ export default function MetiersHomePage() {
             <section className="space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-1.5">
                 <div className="flex items-center gap-2">
-                  <Star className="size-4 text-amber-500 fill-amber-500" />
+                  <Star className="size-4 text-warning fill-amber-500" />
                   <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                     Vos Outils Métiers Favoris
                   </h2>

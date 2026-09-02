@@ -381,7 +381,7 @@ export default function ProfilePage() {
                 </div>
               </button>
               <span
-                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-emerald-500 text-3xs text-white ring-2 pointer-events-none shadow-xs"
+                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-success text-3xs text-white ring-2 pointer-events-none shadow-xs"
                 title="Disponible pour intervention"
               >
                 ✓
@@ -396,18 +396,18 @@ export default function ProfilePage() {
                   className="flex items-center gap-1 text-3xs font-bold text-primary hover:underline cursor-pointer bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md transition-colors"
                   title="Choisir un avatar 3D (patron, technicien, etc.)"
                 >
-                  <Sparkles className="size-3 text-amber-500" />
+                  <Sparkles className="size-3 text-warning" />
                   <span>Changer d'avatar 3D</span>
                 </button>
                 <Badge
                   variant="outline"
-                  className="border-blue-400/40 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300"
+                  className="border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
                 >
                   {role ? ROLE_LABELS[role] : 'Compte Professionnel'}
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+                  className="border-success/40 bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success"
                 >
                   🟢 En service
                 </Badge>
@@ -434,7 +434,7 @@ export default function ProfilePage() {
               variant="primary"
               onClick={() => handleSaveProfile(profile)}
               disabled={updateProfile.isPending}
-              className="cursor-pointer gap-2 bg-blue-600 font-medium text-white shadow-md hover:bg-blue-500"
+              className="cursor-pointer gap-2 bg-primary font-medium text-white shadow-md hover:bg-primary"
             >
               <Save className="size-4" />
               {updateProfile.isPending
@@ -496,7 +496,7 @@ export default function ProfilePage() {
                     disabled
                     className="w-full rounded-md border border-border-strong bg-surface py-2 pr-24 pl-9 text-sm text-muted-foreground opacity-80 cursor-not-allowed"
                   />
-                  <span className="absolute right-2 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="absolute right-2 rounded border border-success/20 bg-success/10 px-2 py-0.5 text-2xs font-semibold text-success">
                     ✓ Vérifiée
                   </span>
                 </div>
@@ -530,7 +530,7 @@ export default function ProfilePage() {
           <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
             <div>
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <HardHat className="size-4 text-amber-600 dark:text-amber-400" />
+                <HardHat className="size-4 text-warning" />
                 Habilitations & Matériel Attribué
               </CardTitle>
               <CardDescription className="mt-1">
@@ -553,7 +553,7 @@ export default function ProfilePage() {
             {/* Habilitations */}
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <ShieldCheck className="size-3.5 text-success" />
                 Habilitations & Certifications Sécurité ({profile.certifications.filter((c) => c.name.trim() !== '').length})
               </h4>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -577,11 +577,11 @@ export default function ProfilePage() {
                         className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-primary/40"
                       >
                         {isElec ? (
-                          <Zap className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <Zap className="mt-0.5 size-5 shrink-0 text-warning" />
                         ) : isCaces ? (
-                          <Award className="mt-0.5 size-5 shrink-0 text-blue-500" />
+                          <Award className="mt-0.5 size-5 shrink-0 text-primary" />
                         ) : (
-                          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-success" />
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-foreground truncate">
@@ -622,10 +622,10 @@ export default function ProfilePage() {
                     .map((eq, index) => {
                       const dotColor =
                         index % 3 === 0
-                          ? 'bg-blue-500'
+                          ? 'bg-primary'
                           : index % 3 === 1
-                            ? 'bg-emerald-500'
-                            : 'bg-amber-500';
+                            ? 'bg-success'
+                            : 'bg-warning';
 
                       return (
                         <div
@@ -683,14 +683,14 @@ export default function ProfilePage() {
 
           <CardContent className="pt-5">
             {passwordSuccess ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-400 animate-in fade-in">
+              <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-xs text-success animate-in fade-in">
                 <CheckCircle2 className="size-4 shrink-0" />
                 <span>Votre mot de passe a été mis à jour avec succès.</span>
               </div>
             ) : (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-emerald-500" />
+                  <div className="size-2 rounded-full bg-success" />
                   <span>Authentification sécurisée active (Supabase Auth)</span>
                 </div>
                 <span className="font-mono text-2xs text-subtle-foreground">••••••••••••</span>
@@ -767,7 +767,7 @@ export default function ProfilePage() {
           <div className="space-y-3 border-t border-border pt-4">
             <div className="flex items-center justify-between">
               <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <ShieldCheck className="size-3.5 text-success" />
                 Habilitations Électriques & Sécurité
               </h4>
               <Button
@@ -850,7 +850,7 @@ export default function ProfilePage() {
             >
               Annuler
             </Button>
-            <Button type="submit" variant="primary" className="cursor-pointer gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold">
+            <Button type="submit" variant="primary" className="cursor-pointer gap-2 bg-primary hover:bg-primary text-white font-semibold">
               <Check className="size-4" />
               Enregistrer
             </Button>
@@ -942,7 +942,7 @@ export default function ProfilePage() {
               type="submit"
               variant="primary"
               disabled={isChangingPassword || newPassword.trim() === ''}
-              className="cursor-pointer gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+              className="cursor-pointer gap-2 bg-primary hover:bg-primary text-white font-semibold"
             >
               <KeyRound className="size-3.5" />
               {isChangingPassword ? 'Enregistrement…' : 'Enregistrer le mot de passe'}

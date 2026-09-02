@@ -265,7 +265,7 @@ export default function QuotesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
               <CardTitle className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400" />
+                <Sparkles className="size-3.5 text-warning" />
                 Catalogue des Prestations Standards & Perso
               </CardTitle>
 
@@ -273,7 +273,7 @@ export default function QuotesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddCustomModalOpen(true)}
-                className="cursor-pointer gap-1.5 text-2xs text-primary border-blue-500/30 hover:bg-blue-500/10"
+                className="cursor-pointer gap-1.5 text-2xs text-primary border-primary/30 hover:bg-primary/10"
               >
                 <Plus className="size-3" />
                 Créer une prestation perso
@@ -303,14 +303,14 @@ export default function QuotesPage() {
                       >
                         <Plus className="size-3 text-primary shrink-0" />
                         <span className="truncate max-w-[200px] text-foreground">{preset.label}</span>
-                        <span className="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                        <span className="font-semibold text-success shrink-0">
                           ({priceEuros.toFixed(2)} €)
                         </span>
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
-                        className="ml-1.5 flex size-4.5 items-center justify-center rounded-full text-subtle-foreground hover:bg-rose-500/20 hover:text-error transition-colors cursor-pointer"
+                        className="ml-1.5 flex size-4.5 items-center justify-center rounded-full text-subtle-foreground hover:bg-error/20 hover:text-error transition-colors cursor-pointer"
                         title="Supprimer cette prestation du catalogue"
                         aria-label={`Supprimer ${preset.label} du catalogue`}
                       >
@@ -333,7 +333,7 @@ export default function QuotesPage() {
                       disabled={seedTemplates.isPending}
                       className="cursor-pointer gap-1.5 text-2xs"
                     >
-                      <Sparkles className="size-3 text-amber-600 dark:text-amber-400" />
+                      <Sparkles className="size-3 text-warning" />
                       {seedTemplates.isPending
                         ? 'Import en cours…'
                         : 'Importer les prestations standards'}
@@ -349,7 +349,7 @@ export default function QuotesPage() {
             <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Calculator className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  <Calculator className="size-4 text-success" />
                   Détail des Prestations & Fournitures
                 </CardTitle>
               </div>
@@ -433,7 +433,7 @@ export default function QuotesPage() {
                         onChange={(e) =>
                           handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
                         }
-                        className="border-border-strong bg-surface-sunken focus:border-primary w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold text-emerald-600 focus:outline-none dark:text-emerald-400"
+                        className="border-border-strong bg-surface-sunken focus:border-primary w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold text-success focus:outline-none"
                       />
                       <span className="text-muted-foreground absolute right-2 text-2xs">€</span>
                     </div>
@@ -472,10 +472,10 @@ export default function QuotesPage() {
 
         {/* Aperçu & Synthèse Financière (1/3) */}
         <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-          <Card className="border-emerald-500/30 bg-gradient-to-b from-surface to-surface-sunken shadow-xl">
+          <Card className="border-success/30 bg-gradient-to-b from-surface to-surface-sunken shadow-xl">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <FileText className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <FileText className="size-4 text-success" />
                 Synthèse du Devis
               </CardTitle>
               <CardDescription>Calcul automatique des totaux HT & TTC.</CardDescription>
@@ -500,7 +500,7 @@ export default function QuotesPage() {
                         inputMode="decimal"
                         value={vatInput}
                         onChange={(e) => setVatInput(e.target.value)}
-                        className="w-full rounded border border-border-strong bg-surface py-1 pl-2 pr-6 text-xs text-right text-emerald-600 dark:text-emerald-400 font-bold focus:border-primary focus:outline-none"
+                        className="w-full rounded border border-border-strong bg-surface py-1 pl-2 pr-6 text-xs text-right text-success font-bold focus:border-primary focus:outline-none"
                       />
                       <span className="absolute right-2 text-2xs text-muted-foreground font-semibold">%</span>
                     </div>
@@ -513,7 +513,7 @@ export default function QuotesPage() {
                       className={cn(
                         'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 8.5
-                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                          ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
                       )}
                     >
@@ -525,7 +525,7 @@ export default function QuotesPage() {
                       className={cn(
                         'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 20
-                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                          ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
                       )}
                     >
@@ -537,7 +537,7 @@ export default function QuotesPage() {
                       className={cn(
                         'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 0
-                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                          ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
                       )}
                     >
@@ -558,7 +558,7 @@ export default function QuotesPage() {
                 </div>
                 <div className="flex justify-between items-center border-t border-border pt-3 text-sm">
                   <span className="font-bold text-foreground">Total TTC :</span>
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{totalTTC.toFixed(2)} €</span>
+                  <span className="text-xl font-bold text-success">{totalTTC.toFixed(2)} €</span>
                 </div>
               </div>
 
@@ -569,7 +569,7 @@ export default function QuotesPage() {
                   variant="primary"
                   onClick={handleSendQuote}
                   disabled={createQuote.isPending}
-                  className="w-full justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer font-semibold shadow-md"
+                  className="w-full justify-center gap-2 cursor-pointer font-semibold"
                 >
                   <Send className="size-4" />
                   {createQuote.isPending
@@ -646,7 +646,7 @@ export default function QuotesPage() {
             <Button variant="outline" type="button" onClick={() => setIsAddCustomModalOpen(false)} className="cursor-pointer">
               Annuler
             </Button>
-            <Button type="submit" variant="primary" className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white font-semibold">
+            <Button type="submit" variant="primary" className="cursor-pointer font-semibold">
               Enregistrer & Ajouter au Devis
             </Button>
           </div>
@@ -662,6 +662,14 @@ export default function QuotesPage() {
       >
         <div className="space-y-6 pt-2">
           {/* Document Paper Preview Container (Fond Blanc Style Papier Imprimable) */}
+          {/*
+            ⚠️ Zone imprimable : couleurs en dur VOLONTAIRES.
+
+            Ce devis part chez le client, à l'impression ou en PDF. Il doit
+            rester noir sur blanc quel que soit le thème de l'application —
+            le passer sur les jetons produirait une page noire pour quiconque
+            travaille en thème sombre. Ce n'est pas une dette de design system.
+          */}
           <div id="quote-printable-area" className="rounded-xl border border-slate-300 bg-white p-6 sm:p-8 text-slate-900 shadow-2xl space-y-6 font-sans">
             {/* Header Document */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">

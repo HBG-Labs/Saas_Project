@@ -193,10 +193,10 @@ export function MemberRow({
               disabled
               className={cn(
                 'font-semibold opacity-100 disabled:opacity-100 cursor-default',
-                member.role === 'owner' && 'border-purple-500/40 bg-purple-500/20 text-purple-700 dark:text-purple-300',
-                member.role === 'admin' && 'border-blue-500/40 bg-blue-500/20 text-blue-700 dark:text-blue-300',
-                member.role === 'manager' && 'border-sky-500/40 bg-sky-500/20 text-sky-700 dark:text-sky-300',
-                member.role === 'technician' && 'border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+                member.role === 'owner' && 'border-accent/40 bg-accent/20 text-accent',
+                member.role === 'admin' && 'border-primary/40 bg-primary/20 text-primary',
+                member.role === 'manager' && 'border-primary/40 bg-primary/20 text-primary',
+                member.role === 'technician' && 'border-success/40 bg-success/20 text-success',
               )}
             >
               {ROLE_LABELS[member.role]}

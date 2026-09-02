@@ -157,7 +157,7 @@ export function RecordMovementModal({
               onClick={() => setType('in')}
               className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                 type === 'in'
-                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500'
+                  ? 'border-success bg-success/10 text-success ring-1 ring-success'
                   : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground'
               }`}
             >
@@ -170,7 +170,7 @@ export function RecordMovementModal({
               onClick={() => setType('out')}
               className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                 type === 'out'
-                  ? 'border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-rose-500'
+                  ? 'border-error bg-error/10 text-error ring-1 ring-error'
                   : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground'
               }`}
             >
@@ -183,7 +183,7 @@ export function RecordMovementModal({
               onClick={() => setType('transfer')}
               className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                 type === 'transfer'
-                  ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500'
+                  ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
                   : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground'
               }`}
             >
@@ -196,7 +196,7 @@ export function RecordMovementModal({
               onClick={() => setType('adjustment')}
               className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                 type === 'adjustment'
-                  ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500'
+                  ? 'border-warning bg-warning/10 text-warning ring-1 ring-warning'
                   : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground'
               }`}
             >

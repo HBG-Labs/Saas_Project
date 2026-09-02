@@ -209,14 +209,14 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
 
   return (
     <div className="space-y-6 pt-2">
-      <div className="rounded-2xl border border-blue-200/70 bg-blue-50/50 p-4 sm:p-5 dark:border-blue-900/40 dark:bg-blue-950/20">
+      <div className="rounded-2xl border border-primary/70 bg-primary/10/50 p-4 sm:p-5 dark:border-primary/40 dark:bg-primary/20">
         <div className="flex items-start gap-3">
-          <ShieldCheck className="size-5 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <ShieldCheck className="size-5 shrink-0 text-primary mt-0.5" />
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-blue-950 dark:text-blue-200">
+            <h3 className="text-sm font-bold text-primary">
               Conformité & Certifications Techniques
             </h3>
-            <p className="text-xs text-blue-900/80 dark:text-blue-300/80 leading-relaxed">
+            <p className="text-xs text-primary/80 dark:text-primary/80 leading-relaxed">
               Les calculs effectués par l&apos;outil <strong>{tool.title}</strong> reposent rigoureusement sur les standards d&apos;ingénierie et normes officielles recensés ci-dessous.
             </p>
           </div>
@@ -226,25 +226,25 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
       {references.map((ref, idx) => (
         <div
           key={`${ref.standardName}-${idx}`}
-          className="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900"
+          className="space-y-5 rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken"
         >
           {/* Header de la norme */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 dark:border-border">
             <div className="flex items-center gap-2">
-              <BookOpen className="size-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              <BookOpen className="size-4 text-primary" />
+              <span className="font-mono text-xs font-bold text-primary">
                 {ref.standardName}
               </span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <Award className="size-3 text-amber-500" />
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface-sunken px-2 py-0.5 text-[11px] font-semibold text-muted-foreground dark:bg-surface-sunken dark:text-muted-foreground">
+              <Award className="size-3 text-warning" />
               {ref.organization}
             </span>
           </div>
 
           <div>
-            <h4 className="text-base font-bold text-slate-900 dark:text-white">{ref.title}</h4>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            <h4 className="text-base font-bold text-foreground dark:text-white">{ref.title}</h4>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               {ref.summary}
             </p>
           </div>
@@ -259,15 +259,15 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
                 {ref.formulas.map((item, fIdx) => (
                   <div
                     key={fIdx}
-                    className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-slate-800/60 dark:bg-slate-950/60"
+                    className="rounded-xl border border-border bg-surface-sunken/80 p-3 dark:border-border/60 dark:bg-surface-sunken/60"
                   >
-                    <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    <span className="block text-[11px] font-bold text-muted-foreground">
                       {item.label}
                     </span>
-                    <code className="mt-1 block font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
+                    <code className="mt-1 block font-mono text-xs font-bold text-primary">
                       {item.formula}
                     </code>
-                    <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-[10px] text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
@@ -279,12 +279,12 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
           {/* Tableau d'abaque */}
           {ref.table && (
             <div className="space-y-2">
-              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              <h5 className="text-xs font-bold text-muted-foreground">
                 {ref.table.title}
               </h5>
-              <div className="scroll-x rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <div className="scroll-x rounded-xl border border-border/80 dark:border-border">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                  <thead className="bg-surface-sunken text-muted-foreground dark:bg-surface-sunken/50 dark:text-muted-foreground">
                     <tr>
                       {ref.table.headers.map((h, hIdx) => (
                         <th key={hIdx} className="px-3.5 py-2 font-semibold">
@@ -295,12 +295,12 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {ref.table.rows.map((row, rIdx) => (
-                      <tr key={rIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                      <tr key={rIdx} className="hover:bg-surface-sunken/50 dark:hover:bg-surface-sunken/30">
                         {row.map((cell, cIdx) => (
                           <td
                             key={cIdx}
-                            className={`px-3.5 py-2 text-slate-600 dark:text-slate-300 ${
-                              cIdx === 0 ? 'font-medium text-slate-900 dark:text-white' : 'font-mono'
+                            className={`px-3.5 py-2 text-muted-foreground ${
+                              cIdx === 0 ? 'font-medium text-foreground dark:text-white' : 'font-mono'
                             }`}
                           >
                             {cell}
@@ -316,12 +316,12 @@ export function ToolReferences({ tool }: { tool: Pick<ToolDefinition, 'slug' | '
 
           {/* Points clés terrain */}
           {ref.keyTakeaways && ref.keyTakeaways.length > 0 && (
-            <div className="rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/40 space-y-2">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
-                <Info className="size-3.5 text-amber-500" />
+            <div className="rounded-xl bg-surface-sunken p-3.5 dark:bg-surface-sunken/40 space-y-2">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                <Info className="size-3.5 text-warning" />
                 Exigences réglementaires & recommandations terrain
               </span>
-              <ul className="space-y-1.5 pl-4 text-xs text-slate-600 dark:text-slate-400 list-disc">
+              <ul className="space-y-1.5 pl-4 text-xs text-muted-foreground list-disc">
                 {ref.keyTakeaways.map((takeaway, tIdx) => (
                   <li key={tIdx}>
                     <span>{takeaway}</span>

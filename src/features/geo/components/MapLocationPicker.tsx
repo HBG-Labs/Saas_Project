@@ -340,8 +340,8 @@ export function MapLocationPicker({
         <div ref={mapContainerRef} className="w-full h-full z-0" />
 
         {/* Guide d'instruction flottant */}
-        <div className="absolute top-2.5 left-2.5 z-10 bg-slate-900/85 backdrop-blur-md text-white text-3xs px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg flex items-center gap-1.5 pointer-events-none">
-          <Sparkles className="size-3 text-amber-400 shrink-0" />
+        <div className="absolute top-2.5 left-2.5 z-10 bg-surface-sunken/85 backdrop-blur-md text-white text-3xs px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg flex items-center gap-1.5 pointer-events-none">
+          <Sparkles className="size-3 text-warning shrink-0" />
           <span>Cliquez ou glissez le repère 📍 pour ajuster la position exacte</span>
         </div>
       </div>
@@ -368,7 +368,7 @@ export function MapLocationPicker({
                 que de laisser le champ vide sans explication. Les coordonnées
                 restent valides : le point est posé, seule son adresse manque. */}
             {geocodeError !== null && (
-              <p className="text-3xs text-amber-600 dark:text-amber-400">{geocodeError}</p>
+              <p className="text-3xs text-warning">{geocodeError}</p>
             )}
           </div>
 

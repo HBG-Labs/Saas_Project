@@ -220,7 +220,7 @@ export function PurchaseOrderViewModal({
                   <p className="font-bold text-foreground text-3xs uppercase">
                     Pointage de livraison :
                   </p>
-                  <p className="text-3xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2 rounded-lg border border-emerald-500/20 mt-0.5">
+                  <p className="text-3xs bg-success/10 text-success p-2 rounded-lg border border-success/20 mt-0.5">
                     {order.deliveryNotes}
                   </p>
                 </div>

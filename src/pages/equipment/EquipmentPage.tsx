@@ -263,25 +263,25 @@ export default function EquipmentPage() {
 
       {/* KPI Cards Header */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="border-blue-500/20 p-3 sm:p-4">
+        <Card className="border-primary/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Total Équipements</p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{totalCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-blue-500/10 text-primary border border-blue-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-primary/10 text-primary border border-primary/20">
               <Cpu className="size-5" />
             </div>
           </div>
         </Card>
 
-        <Card className="border-emerald-500/20 p-3 sm:p-4">
+        <Card className="border-success/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Attribués / Sur le terrain</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-success">Attribués / Sur le terrain</p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{assignedCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-success/10 text-success border border-success/20">
               <User className="size-5" />
             </div>
           </div>
@@ -299,13 +299,13 @@ export default function EquipmentPage() {
           </div>
         </Card>
 
-        <Card className="border-amber-500/20 p-3 sm:p-4">
+        <Card className="border-warning/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Étalonnage / Révision</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-warning">Étalonnage / Révision</p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{maintenanceCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-warning/10 text-warning border border-warning/20">
               <AlertTriangle className="size-5" />
             </div>
           </div>
@@ -400,8 +400,8 @@ export default function EquipmentPage() {
         </div>
 
         {calibrationAlertsCount > 0 && (
-          <div className="mt-3 flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs font-semibold">
-            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="mt-3 flex items-center gap-2.5 p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold">
+            <AlertTriangle className="size-4 shrink-0 text-warning" />
             <span>
               <strong>Alerte Réglementaire :</strong> {calibrationAlertsCount} appareil(s) de mesure nécessite(nt) un étalonnage ou un contrôle périodique urgent pour rester conformes aux exigences des donneurs d'ordre.
             </span>
@@ -424,15 +424,15 @@ export default function EquipmentPage() {
 
             const statusBadge =
               eq.status === 'assigned' ? (
-                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-2xs">
+                <Badge variant="outline" className="border-success/30 bg-success/10 text-success text-2xs">
                   Attribué{assigneeName !== null ? ` · ${assigneeName}` : ''}
                 </Badge>
               ) : eq.status === 'available' ? (
-                <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-primary text-2xs">
+                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary text-2xs">
                   Stock Disponible
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-2xs">
+                <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning text-2xs">
                   En Révision / Étalonnage
                 </Badge>
               );
@@ -478,19 +478,19 @@ export default function EquipmentPage() {
                           <strong
                             className={
                               calibration === 'expired'
-                                ? 'text-rose-600 dark:text-rose-400'
+                                ? 'text-error'
                                 : calibration === 'due_soon'
-                                  ? 'text-amber-600 dark:text-amber-400'
+                                  ? 'text-warning'
                                   : 'text-muted-foreground'
                             }
                           >
                             {eq.next_calibration ?? 'Non spécifié'}
                           </strong>
                           {calibration === 'expired' && (
-                            <span className="text-rose-600 dark:text-rose-400 font-semibold">— dépassé</span>
+                            <span className="text-error font-semibold">— dépassé</span>
                           )}
                           {calibration === 'due_soon' && (
-                            <span className="text-amber-600 dark:text-amber-400 font-semibold">— sous 30 jours</span>
+                            <span className="text-warning font-semibold">— sous 30 jours</span>
                           )}
                         </span>
                       </div>
@@ -631,7 +631,7 @@ export default function EquipmentPage() {
               type="submit"
               variant="primary"
               disabled={createEquipment.isPending}
-              className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white"
+              className="cursor-pointer bg-primary hover:bg-primary text-white"
             >
               {createEquipment.isPending ? 'Enregistrement…' : "Enregistrer l'équipement"}
             </Button>
@@ -765,7 +765,7 @@ export default function EquipmentPage() {
                 type="submit"
                 variant="primary"
                 disabled={updateEquipment.isPending}
-                className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+                className="cursor-pointer bg-primary hover:bg-primary text-white font-semibold"
               >
                 {updateEquipment.isPending ? 'Enregistrement…' : 'Enregistrer les modifications'}
               </Button>

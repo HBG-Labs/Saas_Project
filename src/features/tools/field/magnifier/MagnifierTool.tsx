@@ -225,11 +225,11 @@ export default function MagnifierTool() {
 
         <CardContent className="p-3 sm:p-5 space-y-4 min-w-0 overflow-x-hidden">
           {/* Écran de Visualisation de la Caméra / Loupe */}
-          <div className="relative w-full aspect-4/3 sm:aspect-16/9 bg-slate-950 rounded-xl overflow-hidden border border-border shadow-inner flex items-center justify-center">
+          <div className="relative w-full aspect-4/3 sm:aspect-16/9 bg-surface-sunken rounded-xl overflow-hidden border border-border shadow-inner flex items-center justify-center">
             {streamError ? (
               <div className="p-4 sm:p-6 text-center text-white space-y-3">
-                <p className="text-sm font-bold text-amber-400">Accès caméra requis</p>
-                <p className="text-xs text-slate-300 max-w-md mx-auto">{streamError}</p>
+                <p className="text-sm font-bold text-warning">Accès caméra requis</p>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">{streamError}</p>
                 <Button type="button" size="sm" onClick={startCamera} className="gap-1.5 text-xs">
                   <RefreshCw className="size-3.5" />
                   Réessayer
@@ -243,7 +243,7 @@ export default function MagnifierTool() {
                   className="w-full h-full object-contain"
                   style={{ filter: currentFilter.filter }}
                 />
-                <div className="absolute top-3 left-3 bg-amber-500 text-slate-950 font-bold text-2xs px-2.5 py-1 rounded-md shadow-md">
+                <div className="absolute top-3 left-3 bg-warning text-foreground font-bold text-2xs px-2.5 py-1 rounded-md shadow-md">
                   Image Figée
                 </div>
                 <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -281,7 +281,7 @@ export default function MagnifierTool() {
                     <div className="border-b border-white/20" />
                     <div className="border-r border-b border-white/20" />
                     <div className="border-r border-b border-white/20 flex items-center justify-center">
-                      <div className="size-8 rounded-full border border-amber-400/80 border-dashed animate-pulse" />
+                      <div className="size-8 rounded-full border border-warning/80 border-dashed animate-pulse" />
                     </div>
                     <div className="border-b border-white/20" />
                     <div className="border-r border-white/20" />

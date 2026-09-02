@@ -138,7 +138,7 @@ export default function LevelTool() {
                 className={cn(
                   'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isPerfectLevel
-                    ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-500/20 shadow-md'
+                    ? 'bg-success text-foreground ring-2 ring-success/20 shadow-md'
                     : 'bg-primary/10 text-primary',
                 )}
               >
@@ -198,33 +198,33 @@ export default function LevelTool() {
               className={cn(
                 'relative size-64 sm:size-76 rounded-full border-4 shadow-2xl flex items-center justify-center transition-all duration-300',
                 isPerfectLevel
-                  ? 'border-emerald-500 bg-emerald-950/20 ring-8 ring-emerald-500/20 shadow-emerald-500/30'
-                  : 'border-border bg-slate-950',
+                  ? 'border-success bg-success/20 ring-8 ring-success/20 shadow-success/30'
+                  : 'border-border bg-surface-sunken',
               )}
             >
               {/* Cercles de tolérance (0.5°, 5°, 15°, 30°) */}
-              <div className="absolute size-52 rounded-full border border-slate-800" />
-              <div className="absolute size-36 rounded-full border border-slate-800/80 border-dashed" />
+              <div className="absolute size-52 rounded-full border border-border" />
+              <div className="absolute size-36 rounded-full border border-border/80 border-dashed" />
               <div
                 className={cn(
                   'absolute size-18 rounded-full border-2 transition-all duration-200',
                   isPerfectLevel
-                    ? 'border-emerald-400 bg-emerald-500/20 shadow-lg shadow-emerald-500/40 animate-pulse'
-                    : 'border-slate-700',
+                    ? 'border-success bg-success/20 shadow-lg shadow-success/40 animate-pulse'
+                    : 'border-border',
                 )}
               />
 
               {/* Réticule de visée */}
-              <div className="absolute h-full w-px bg-slate-800/80" />
-              <div className="absolute w-full h-px bg-slate-800/80" />
+              <div className="absolute h-full w-px bg-surface-sunken/80" />
+              <div className="absolute w-full h-px bg-surface-sunken/80" />
 
               {/* Bulle mobile */}
               <div
                 className={cn(
                   'absolute size-12 rounded-full transition-transform duration-75 ease-out flex items-center justify-center shadow-lg',
                   isPerfectLevel
-                    ? 'bg-radial from-emerald-300 to-emerald-500 ring-4 ring-emerald-400/40 shadow-emerald-500/60'
-                    : 'bg-radial from-amber-200 to-amber-500 ring-2 ring-amber-400/30 shadow-amber-500/40',
+                    ? 'bg-radial from-success to-success ring-4 ring-success/40 shadow-success/60'
+                    : 'bg-radial from-warning to-warning ring-2 ring-warning/30 shadow-warning/40',
                 )}
                 style={{
                   transform: `translate(${bubbleX}px, ${bubbleY}px)`,
@@ -240,7 +240,7 @@ export default function LevelTool() {
                 className={cn(
                   'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-extrabold shadow-sm transition-all',
                   isPerfectLevel
-                    ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-500/20 animate-bounce'
+                    ? 'bg-success text-foreground ring-4 ring-success/20 animate-bounce'
                     : 'bg-surface-raised border border-border text-foreground',
                 )}
               >
@@ -273,14 +273,14 @@ export default function LevelTool() {
               </div>
 
               {/* Tube de niveau horizontal */}
-              <div className="relative w-full h-8 bg-slate-950 rounded-full border border-slate-700 overflow-hidden flex items-center justify-center">
-                <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full border-x-2 border-slate-600 pointer-events-none" />
+              <div className="relative w-full h-8 bg-surface-sunken rounded-full border border-border overflow-hidden flex items-center justify-center">
+                <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full border-x-2 border-border pointer-events-none" />
                 <div
                   className={cn(
                     'absolute size-6 rounded-full transition-transform duration-75 ease-out shadow-md',
                     Math.abs(netRoll) <= 0.5
-                      ? 'bg-radial from-emerald-300 to-emerald-500 shadow-emerald-500/50'
-                      : 'bg-radial from-amber-200 to-amber-500 shadow-amber-500/40',
+                      ? 'bg-radial from-success to-success shadow-success/50'
+                      : 'bg-radial from-warning to-warning shadow-warning/40',
                   )}
                   style={{
                     transform: `translateX(${Math.max(-120, Math.min(120, (netRoll / 45) * 120))}px)`,
@@ -301,14 +301,14 @@ export default function LevelTool() {
               </div>
 
               {/* Tube de niveau vertical horizontalisé */}
-              <div className="relative w-full h-8 bg-slate-950 rounded-full border border-slate-700 overflow-hidden flex items-center justify-center">
-                <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full border-x-2 border-slate-600 pointer-events-none" />
+              <div className="relative w-full h-8 bg-surface-sunken rounded-full border border-border overflow-hidden flex items-center justify-center">
+                <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full border-x-2 border-border pointer-events-none" />
                 <div
                   className={cn(
                     'absolute size-6 rounded-full transition-transform duration-75 ease-out shadow-md',
                     Math.abs(netPitch) <= 0.5
-                      ? 'bg-radial from-emerald-300 to-emerald-500 shadow-emerald-500/50'
-                      : 'bg-radial from-amber-200 to-amber-500 shadow-amber-500/40',
+                      ? 'bg-radial from-success to-success shadow-success/50'
+                      : 'bg-radial from-warning to-warning shadow-warning/40',
                   )}
                   style={{
                     transform: `translateX(${Math.max(-120, Math.min(120, (netPitch / 45) * 120))}px)`,
@@ -365,7 +365,7 @@ export default function LevelTool() {
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/70">
             <div className="text-xs text-muted-foreground">
               {calibratedPitch !== 0 || calibratedRoll !== 0 ? (
-                <span className="text-amber-500 font-semibold">
+                <span className="text-warning font-semibold">
                   ⚠️ Calibration relative active (Offset X: {calibratedRoll}°, Y: {calibratedPitch}°)
                 </span>
               ) : (

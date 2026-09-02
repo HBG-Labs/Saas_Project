@@ -244,7 +244,7 @@ export function PurchaseOrdersTable({
                         <div className="h-1.5 w-24 rounded-full bg-surface-raised overflow-hidden border border-border">
                           <div
                             className={`h-full transition-all ${
-                              progressPct === 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                              progressPct === 100 ? 'bg-success' : 'bg-warning'
                             }`}
                             style={{ width: `${progressPct}%` }}
                           />
@@ -317,7 +317,7 @@ export function PurchaseOrdersTable({
                           variant="ghost"
                           onClick={() => onReceive(order)}
                           title="Pointage du Bon de Livraison (BL) / Réceptionner"
-                          className="size-6.5 p-0 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                          className="size-6.5 p-0 text-success hover:bg-success/10 cursor-pointer"
                         >
                           <PackageCheck className="size-3.5" />
                         </Button>

@@ -197,12 +197,12 @@ export default function VehiclesPage() {
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Sur le terrain
               </p>
-              <p className="text-2xl font-bold font-mono text-emerald-500">{inServiceCount}</p>
+              <p className="text-2xl font-bold font-mono text-success">{inServiceCount}</p>
               <p className="text-3xs text-muted-foreground">
                 {totalCount > 0 ? `${Math.round((inServiceCount / totalCount) * 100)}% de la flotte` : '0%'}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
+            <div className="p-2.5 rounded-xl bg-success/10 text-success">
               <CheckCircle2 className="size-5" />
             </div>
           </CardContent>
@@ -215,28 +215,28 @@ export default function VehiclesPage() {
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Disponibles
               </p>
-              <p className="text-2xl font-bold font-mono text-blue-500">{availableCount}</p>
+              <p className="text-2xl font-bold font-mono text-primary">{availableCount}</p>
               <p className="text-3xs text-muted-foreground">Au dépôt / Libres</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <Car className="size-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Alertes Entretien / CT */}
-        <Card className={cn('border-border', urgentAlertsCount > 0 && 'border-amber-500/40 bg-amber-500/5')}>
+        <Card className={cn('border-border', urgentAlertsCount > 0 && 'border-warning/40 bg-warning/5')}>
           <CardContent className="p-4 pt-4 sm:pt-4 flex items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Échéances Proches
               </p>
-              <p className={cn('text-2xl font-bold font-mono', urgentAlertsCount > 0 ? 'text-amber-500' : 'text-foreground')}>
+              <p className={cn('text-2xl font-bold font-mono', urgentAlertsCount > 0 ? 'text-warning' : 'text-foreground')}>
                 {urgentAlertsCount}
               </p>
               <p className="text-3xs text-muted-foreground">CT ou révision &lt; 45j</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500">
+            <div className="p-2.5 rounded-xl bg-warning/10 text-warning">
               <AlertTriangle className="size-5" />
             </div>
           </CardContent>

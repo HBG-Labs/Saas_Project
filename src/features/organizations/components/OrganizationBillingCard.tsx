@@ -67,7 +67,7 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
-              <Crown className="size-3.5 text-amber-500" aria-hidden="true" />
+              <Crown className="size-3.5 text-warning" aria-hidden="true" />
               {owners.length > 1 ? 'Propriétaires de l’entreprise' : 'Propriétaire de l’entreprise'}
             </p>
             {members.isPending ? (

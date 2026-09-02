@@ -193,29 +193,29 @@ export default function CompassTool() {
             <div className="relative size-64 sm:size-76 flex items-center justify-center">
               {/* Repère supérieur fixe (flèche de visée) */}
               <div className="absolute -top-3 z-20 flex flex-col items-center">
-                <div className="size-0 border-x-8 border-x-transparent border-t-12 border-t-amber-500" />
+                <div className="size-0 border-x-8 border-x-transparent border-t-12 border-t-warning" />
               </div>
 
               {/* Cadran tournant gradué */}
               <div
-                className="relative size-full rounded-full border-4 border-border bg-slate-950 shadow-2xl flex items-center justify-center transition-transform duration-100 ease-out"
+                className="relative size-full rounded-full border-4 border-border bg-surface-sunken shadow-2xl flex items-center justify-center transition-transform duration-100 ease-out"
                 style={{ transform: `rotate(${-heading}deg)` }}
               >
                 {/* Graduations circulaires */}
-                <div className="absolute inset-2 rounded-full border border-slate-800" />
-                <div className="absolute inset-6 rounded-full border border-dashed border-slate-800/80" />
+                <div className="absolute inset-2 rounded-full border border-border" />
+                <div className="absolute inset-6 rounded-full border border-dashed border-border/80" />
 
                 {/* Points Cardinaux */}
                 <span className="absolute top-2.5 text-sm font-black text-red-500 tracking-wider">N</span>
-                <span className="absolute right-3.5 text-sm font-black text-slate-300 tracking-wider">E</span>
-                <span className="absolute bottom-2.5 text-sm font-black text-slate-300 tracking-wider">S</span>
-                <span className="absolute left-3.5 text-sm font-black text-slate-300 tracking-wider">O</span>
+                <span className="absolute right-3.5 text-sm font-black text-muted-foreground tracking-wider">E</span>
+                <span className="absolute bottom-2.5 text-sm font-black text-muted-foreground tracking-wider">S</span>
+                <span className="absolute left-3.5 text-sm font-black text-muted-foreground tracking-wider">O</span>
 
                 {/* Points Intercardinaux */}
-                <span className="absolute top-8 right-8 text-2xs font-bold text-slate-500">NE</span>
-                <span className="absolute bottom-8 right-8 text-2xs font-bold text-slate-500">SE</span>
-                <span className="absolute bottom-8 left-8 text-2xs font-bold text-slate-500">SO</span>
-                <span className="absolute top-8 left-8 text-2xs font-bold text-slate-500">NO</span>
+                <span className="absolute top-8 right-8 text-2xs font-bold text-muted-foreground">NE</span>
+                <span className="absolute bottom-8 right-8 text-2xs font-bold text-muted-foreground">SE</span>
+                <span className="absolute bottom-8 left-8 text-2xs font-bold text-muted-foreground">SO</span>
+                <span className="absolute top-8 left-8 text-2xs font-bold text-muted-foreground">NO</span>
 
                 {/* Rayons principaux */}
                 <div className="absolute h-full w-0.5 bg-slate-800/60" />
@@ -229,9 +229,9 @@ export default function CompassTool() {
               </div>
 
               {/* Centre du cadran avec Cap en Degrés */}
-              <div className="absolute z-10 flex flex-col items-center justify-center size-24 rounded-full bg-slate-900/90 backdrop-blur-md border border-slate-700 shadow-xl text-white">
+              <div className="absolute z-10 flex flex-col items-center justify-center size-24 rounded-full bg-surface-sunken/90 backdrop-blur-md border border-border shadow-xl text-white">
                 <span className="font-mono text-2xl font-black tracking-tight">{heading}°</span>
-                <span className="text-3xs uppercase font-bold text-slate-400">
+                <span className="text-3xs uppercase font-bold text-muted-foreground">
                   {getCardinalDirection(heading).split(' • ')[0]}
                 </span>
               </div>
@@ -241,7 +241,7 @@ export default function CompassTool() {
             <div className="mt-5 text-center space-y-1">
               <p className="text-base font-extrabold text-foreground">{getCardinalDirection(heading)}</p>
               {lockedHeading !== null && headingDiff !== null && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
                   <span>Cap cible : {lockedHeading}°</span>
                   <span>•</span>
                   <span>
@@ -303,7 +303,7 @@ export default function CompassTool() {
                     onClick={copyCoordinates}
                     className="h-7 px-2 text-3xs font-semibold gap-1"
                   >
-                    {copiedGps ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                    {copiedGps ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
                     {copiedGps ? 'Copié' : 'Copier'}
                   </Button>
                 )}
@@ -328,7 +328,7 @@ export default function CompassTool() {
                 </div>
                 <div className="p-2.5 rounded-lg bg-surface border border-border/80 text-xs">
                   <span className="text-3xs text-muted-foreground font-semibold block">Précision GPS</span>
-                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="font-mono font-bold text-success">
                     ± {coords.accuracy} m
                   </span>
                 </div>

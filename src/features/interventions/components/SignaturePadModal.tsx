@@ -246,6 +246,9 @@ export function SignaturePadModal({
           {/* Surface de signature type bloc-papier blanc haute visibilité */}
           <div
             ref={containerRef}
+            /* Zone de signature en noir sur blanc, quel que soit le thème : le tracé
+             part tel quel dans le PDF du compte rendu, où il doit rester lisible
+             sur papier. Ce ne sont donc pas des jetons oubliés. */
             className="relative h-48 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white text-slate-900 touch-none overflow-hidden shadow-inner select-none"
             style={{ touchAction: 'none' }}
           >
@@ -260,7 +263,7 @@ export function SignaturePadModal({
             />
 
             {/* Ligne repère de signature discrète */}
-            <div className="absolute bottom-6 inset-x-6 border-b border-slate-200 pointer-events-none flex items-center justify-between text-4xs text-slate-300 font-mono">
+            <div className="absolute bottom-6 inset-x-6 border-b border-slate-200 pointer-events-none flex items-center justify-between text-slate-300 font-mono">
               <span>✕ Signer sur la ligne</span>
               <span>Document sécurisé</span>
             </div>
@@ -273,7 +276,7 @@ export function SignaturePadModal({
           </div>
         </div>
 
-        {error && <p className="text-xs text-rose-600 dark:text-rose-400 font-semibold">{error}</p>}
+        {error && <p className="text-error text-xs font-semibold">{error}</p>}
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">

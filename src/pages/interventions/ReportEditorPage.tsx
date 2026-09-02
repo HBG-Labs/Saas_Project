@@ -372,14 +372,14 @@ export default function ReportEditorPage() {
 
                   {report.technician_signature_path ? (
                     <div className="space-y-1">
-                      <div className="p-1 rounded bg-white dark:bg-slate-900 border border-border inline-block">
+                      <div className="p-1 rounded bg-white dark:bg-surface-sunken border border-border inline-block">
                         <img
                           src={report.technician_signature_path}
                           alt="Signature technicien"
                           className="max-h-14 object-contain"
                         />
                       </div>
-                      <p className="text-4xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <p className="text-success font-semibold flex items-center gap-1">
                         <CheckCircle2 className="size-3" />
                         Signature enregistrée
                       </p>
@@ -415,14 +415,14 @@ export default function ReportEditorPage() {
 
                   {report.customer_signature_path ? (
                     <div className="space-y-1">
-                      <div className="p-1 rounded bg-white dark:bg-slate-900 border border-border inline-block">
+                      <div className="p-1 rounded bg-white dark:bg-surface-sunken border border-border inline-block">
                         <img
                           src={report.customer_signature_path}
                           alt="Signature client"
                           className="max-h-14 object-contain"
                         />
                       </div>
-                      <p className="text-4xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <p className="text-success font-semibold flex items-center gap-1">
                         <CheckCircle2 className="size-3" />
                         Signé par {report.customer_signature_name || 'le client'}
                       </p>

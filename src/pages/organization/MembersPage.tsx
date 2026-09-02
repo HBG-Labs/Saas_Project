@@ -255,7 +255,7 @@ export default function MembersPage() {
 
                     {resendInvitation.isSuccess &&
                       resendInvitation.variables === invitation.id && (
-                        <p className="text-2xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <p className="text-2xs font-medium text-success">
                           Courriel renvoyé à {invitation.email}.
                         </p>
                       )}

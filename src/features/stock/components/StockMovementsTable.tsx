@@ -215,10 +215,10 @@ export function StockMovementsTable({
               trigger={
                 <button
                   type="button"
-                  className="h-9 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-foreground hover:border-purple-500/50 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                  className="h-9 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-foreground hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer"
                   title="Filtrer par mois ou période"
                 >
-                  <Calendar className="size-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                  <Calendar className="size-3.5 text-accent shrink-0" />
                   <span className="truncate">{periodBadgeText}</span>
                   <ChevronDown className="size-3 opacity-60 shrink-0" />
                 </button>
@@ -253,7 +253,7 @@ export function StockMovementsTable({
                       setSelectedPeriod('custom_month');
                     }
                   }}
-                  className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
             </Dropdown>

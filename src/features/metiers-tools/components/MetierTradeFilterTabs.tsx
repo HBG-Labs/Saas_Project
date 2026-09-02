@@ -24,7 +24,7 @@ export function MetierTradeFilterTabs({
         type="button"
         onClick={() => onTabChange('all')}
         className={cn(
-          'h-9 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
+          'min-h-touch sm:h-9 sm:min-h-0 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
           activeTab === 'all'
             ? 'border-primary bg-primary/10 text-primary shadow-xs'
             : 'border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover',
@@ -45,7 +45,7 @@ export function MetierTradeFilterTabs({
             type="button"
             onClick={() => onTabChange(trade.slug)}
             className={cn(
-              'h-9 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
               isSelected
                 ? 'border-primary bg-primary text-primary-foreground shadow-xs font-bold'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover',
@@ -62,13 +62,13 @@ export function MetierTradeFilterTabs({
         type="button"
         onClick={() => onTabChange('favorites')}
         className={cn(
-          'h-9 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
+          'min-h-touch sm:h-9 sm:min-h-0 rounded-xl border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 select-none',
           activeTab === 'favorites'
-            ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 shadow-xs font-bold'
+            ? 'border-warning bg-warning/15 text-warning shadow-xs font-bold'
             : 'border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover',
         )}
       >
-        <Star className={cn('size-3.5', favoritesCount > 0 && 'fill-amber-500 text-amber-500')} />
+        <Star className={cn('size-3.5', favoritesCount > 0 && 'fill-amber-500 text-warning')} />
         <span>Favoris ({favoritesCount})</span>
       </button>
     </div>

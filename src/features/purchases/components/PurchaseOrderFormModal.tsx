@@ -360,7 +360,7 @@ export function PurchaseOrderFormModal({
                       {consumables.length > 0 && (
                         <div className="flex items-center gap-1.5">
                           <span className="text-3xs text-muted-foreground font-semibold flex items-center gap-1">
-                            <Sparkles className="size-3 text-amber-500" />
+                            <Sparkles className="size-3 text-warning" />
                             Catalogue Stock :
                           </span>
                           <select
@@ -473,7 +473,7 @@ export function PurchaseOrderFormModal({
 
                     {/* Prix Unitaire HT */}
                     <div className="sm:col-span-3">
-                      <label htmlFor="purchaseorderformmodal-prix-unit-ht" className="block text-3xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                      <label htmlFor="purchaseorderformmodal-prix-unit-ht" className="block text-3xs font-bold text-success uppercase tracking-wider mb-1">
                         Prix Unit. HT (€) *
                       </label>
                       <div className="relative">

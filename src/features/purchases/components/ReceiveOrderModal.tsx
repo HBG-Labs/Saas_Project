@@ -232,7 +232,7 @@ export function ReceiveOrderModal({
             type="submit"
             variant="primary"
             disabled={isSubmitting || totalToReceiveNow <= 0}
-            className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer"
+            className="gap-1.5 bg-success hover:bg-success text-white font-semibold cursor-pointer"
           >
             <PackageCheck className="size-4" />
             <span>

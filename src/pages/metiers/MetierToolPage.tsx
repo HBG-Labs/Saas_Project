@@ -87,8 +87,8 @@ export default function MetierToolPage() {
                 {trade.name}
               </Badge>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-cyan-500/15 px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300 shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-                  <Sparkles className="size-2.5 text-cyan-500 dark:text-cyan-400" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
+                  <Sparkles className="size-2.5 text-primary" />
                   <span>Module Pro</span>
                 </span>
               )}
@@ -118,7 +118,7 @@ export default function MetierToolPage() {
           onClick={() => toggleFavorite(tool.slug)}
           className={cn(
             'gap-1.5 text-xs font-semibold cursor-pointer shrink-0 self-start sm:self-auto shadow-xs',
-            fav && 'bg-amber-500 hover:bg-amber-600 border-amber-500 text-slate-950',
+            fav && 'bg-warning hover:bg-warning border-warning text-foreground',
           )}
         >
           <Star className={cn('size-4', fav && 'fill-current')} />

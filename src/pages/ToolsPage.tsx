@@ -194,7 +194,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('flashlight')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-warning/10 text-warning group-hover:bg-warning group-hover:text-foreground transition-colors shadow-2xs mb-1">
               <Flashlight className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Lampe</span>
@@ -205,7 +205,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('magnifier')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-2xs mb-1">
               <ZoomIn className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Loupe HD</span>
@@ -216,7 +216,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('level')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-success/10 text-success group-hover:bg-success group-hover:text-white transition-colors shadow-2xs mb-1">
               <CircleDot className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Niveau</span>
@@ -227,7 +227,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('compass')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-success/10 text-success group-hover:bg-success group-hover:text-white transition-colors shadow-2xs mb-1">
               <Compass className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Boussole</span>
@@ -238,7 +238,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('stopwatch')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-2xs mb-1">
               <Timer className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Chrono</span>
@@ -249,7 +249,7 @@ export default function ToolsPage() {
             onClick={() => openFieldInstrument('voice-recorder')}
             className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-error/10 text-error group-hover:bg-error group-hover:text-white transition-colors shadow-2xs mb-1">
               <Mic className="size-3.5 sm:size-4" />
             </div>
             <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Dictaphone</span>
@@ -408,7 +408,7 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('all')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'all'
                 ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
@@ -422,13 +422,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('field')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'field'
-                ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 shadow-xs'
+                ? 'border-success bg-success/10 text-success shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Wrench className="size-3.5 text-teal-500" />
+            <Wrench className="size-3.5 text-success" />
             <span>Instruments Terrain ({FIELD_TOOL_SLUGS.length})</span>
           </button>
 
@@ -436,13 +436,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('calculators')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'calculators'
-                ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400 shadow-xs'
+                ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Calculator className="size-3.5 text-sky-500" />
+            <Calculator className="size-3.5 text-primary" />
             <span>Calculateurs ({CALC_TOOL_SLUGS.length})</span>
           </button>
 
@@ -450,13 +450,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('conversions')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'conversions'
-                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <ArrowLeftRight className="size-3.5 text-indigo-500" />
+            <ArrowLeftRight className="size-3.5 text-primary" />
             <span>Conversions ({CONVERSION_TOOL_SLUGS.length})</span>
           </button>
 
@@ -464,13 +464,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('notes')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'notes'
-                ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-xs'
+                ? 'border-accent bg-accent/10 text-accent shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <FileText className="size-3.5 text-purple-500" />
+            <FileText className="size-3.5 text-accent" />
             <span>Notes & Mémos ({NOTES_TOOL_SLUGS.length})</span>
           </button>
 
@@ -478,13 +478,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('favorites')}
             className={cn(
-              'h-9 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
               activeTab === 'favorites'
-                ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs'
+                ? 'border-warning bg-warning/10 text-warning shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Star className={cn('size-3.5', favoriteTools.length > 0 && 'fill-amber-500 text-amber-500')} />
+            <Star className={cn('size-3.5', favoriteTools.length > 0 && 'fill-amber-500 text-warning')} />
             <span>Favoris ({favoriteTools.length})</span>
           </button>
         </div>
@@ -502,7 +502,7 @@ export default function ToolsPage() {
             <section className="space-y-2.5">
               <div className="flex items-center justify-between border-b border-border pb-1.5">
                 <div className="flex items-center gap-2">
-                  <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                  <Star className="size-3.5 text-warning fill-amber-500" />
                   <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                     Vos Outils Favoris
                   </h2>
@@ -535,7 +535,7 @@ export default function ToolsPage() {
           <section className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <Calculator className="size-3.5 text-sky-500" />
+                <Calculator className="size-3.5 text-primary" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Calculateurs d'Ingénierie & Formules Mathématiques
                 </h2>
@@ -567,7 +567,7 @@ export default function ToolsPage() {
           <section className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <ArrowLeftRight className="size-3.5 text-indigo-500" />
+                <ArrowLeftRight className="size-3.5 text-primary" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Conversions & Mesures Universelles
                 </h2>
@@ -599,7 +599,7 @@ export default function ToolsPage() {
           <section className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <Wrench className="size-3.5 text-teal-500" />
+                <Wrench className="size-3.5 text-success" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Instruments Physiques de Terrain
                 </h2>
@@ -631,7 +631,7 @@ export default function ToolsPage() {
           <section className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border pb-1.5">
               <div className="flex items-center gap-2">
-                <FileText className="size-3.5 text-purple-500" />
+                <FileText className="size-3.5 text-accent" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Productivité & Prise de Notes de Chantier
                 </h2>

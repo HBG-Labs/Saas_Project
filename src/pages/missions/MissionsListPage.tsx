@@ -338,7 +338,7 @@ export default function MissionsListPage() {
                       className="text-3xs h-7 px-2.5 text-muted-foreground hover:text-foreground ml-auto"
                     >
                       <a href={`tel:${mission.customer_phone}`}>
-                        <Phone className="size-3 text-emerald-500 mr-1" />
+                        <Phone className="size-3 text-success mr-1" />
                         Appeler
                       </a>
                     </Button>

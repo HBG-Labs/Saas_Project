@@ -84,7 +84,9 @@ export function ToolCard({
                 isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
-                'flex size-7 items-center justify-center rounded-md transition-colors',
+                // Voir `MetierToolCard` : cible tactile pleine au doigt,
+                // compacte dès qu'un pointeur est disponible.
+                'size-touch sm:size-7 flex items-center justify-center rounded-md transition-colors',
                 'hover:bg-surface-hover',
                 isFavorite ? 'text-warning' : 'text-subtle-foreground',
               )}
@@ -95,7 +97,7 @@ export function ToolCard({
 
           <Link
             to={ROUTES.tool(tool.slug)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-xs font-semibold shadow-2xs hover:bg-primary-hover active:scale-95 transition-all cursor-pointer"
+            className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-2xs transition-all hover:bg-primary-hover active:scale-95 cursor-pointer"
           >
             <span>Lancer</span>
             <ChevronRight className="size-3" />

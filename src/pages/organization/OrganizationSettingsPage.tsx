@@ -281,7 +281,7 @@ export default function OrganizationSettingsPage() {
               </Button>
               {saved && !isDirty ? (
                 <span className="text-success text-sm font-semibold flex items-center gap-1.5 animate-in fade-in">
-                  <Check className="size-4 text-emerald-500" />
+                  <Check className="size-4 text-success" />
                   <span>Modifications enregistrées. Fermeture…</span>
                 </span>
               ) : null}

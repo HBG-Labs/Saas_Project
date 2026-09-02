@@ -43,7 +43,7 @@ export function ProToolUpgradeModal({
             <Sparkles className="size-6 text-primary animate-pulse" />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-3xs font-bold text-blue-700 dark:text-cyan-300">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-3xs font-bold text-primary dark:text-primary">
             <Lock className="size-3" />
             <span>Fonctionnalité Réservée aux Forfaits Pro</span>
           </div>
@@ -101,11 +101,11 @@ export function ProToolUpgradeModal({
             <p className="text-sm font-black text-foreground">19 € <span className="text-3xs font-normal text-muted-foreground">/mois</span></p>
             <p className="text-3xs text-muted-foreground">2 techniciens inclus</p>
           </div>
-          <div className="p-2.5 rounded-xl border border-cyan-500/40 bg-cyan-500/5 text-xs space-y-0.5 relative">
-            <span className="absolute -top-2 right-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-1.5 py-0.2 text-4xs font-black text-white shadow-xs">
+          <div className="p-2.5 rounded-xl border border-primary/40 bg-primary/5 text-xs space-y-0.5 relative">
+            <span className="absolute -top-2 right-2 rounded-full bg-gradient-to-r from-primary to-primary px-1.5 py-0.2 font-black text-white shadow-xs">
               POPULAIRE
             </span>
-            <span className="text-3xs font-bold text-cyan-600 dark:text-cyan-400 uppercase">Pro ⭐</span>
+            <span className="text-3xs font-bold text-primary uppercase">Pro ⭐</span>
             <p className="text-sm font-black text-foreground">39 € <span className="text-3xs font-normal text-muted-foreground">/mois</span></p>
             <p className="text-3xs text-muted-foreground">5 techniciens + modules complets</p>
           </div>
@@ -125,11 +125,11 @@ export function ProToolUpgradeModal({
           <Link
             to={ROUTES.pricing}
             onClick={() => onOpenChange(false)}
-            className="group relative flex-1 w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 p-[1px] shadow-sm shadow-blue-500/25 hover:shadow-md hover:shadow-cyan-500/35 active:scale-[0.99] transition-all cursor-pointer text-center"
+            className="group relative flex-1 w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary to-primary p-[1px] shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/35 active:scale-[0.99] transition-all cursor-pointer text-center"
           >
-            <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-4 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
+            <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-primary via-primary to-primary px-4 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
               <span>Découvrir les offres & Débloquer</span>
-              <Sparkles className="size-3.5 text-cyan-100 group-hover:rotate-12 transition-transform" />
+              <Sparkles className="size-3.5 text-primary group-hover:rotate-12 transition-transform" />
             </div>
           </Link>
         </div>

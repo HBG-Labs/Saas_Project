@@ -259,10 +259,10 @@ export default function VolumeCalculatorTool() {
               </div>
               <span className="text-muted-foreground font-bold text-sm">soit</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-success">
                   {result.formattedLiters}
                 </span>
-                <span className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">Litres</span>
+                <span className="text-base sm:text-lg font-bold text-success">Litres</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">

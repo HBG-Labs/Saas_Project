@@ -67,7 +67,7 @@ export function StockAlertsBanner({
                 className="h-7 text-2xs px-2 font-medium text-muted-foreground hover:text-foreground cursor-pointer gap-1"
                 title="Déclarer une entrée / mouvement direct"
               >
-                <ArrowDownLeft className="size-3 text-emerald-500" />
+                <ArrowDownLeft className="size-3 text-success" />
                 <span>Mouvement</span>
               </Button>
 

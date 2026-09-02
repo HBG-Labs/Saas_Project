@@ -290,14 +290,14 @@ export default function StopwatchTool() {
             /* --- VUE CHRONOMÈTRE --- */
             <div className="space-y-6">
               {/* Grand Afficheur Numérique */}
-              <div className="flex flex-col items-center justify-center py-6 bg-slate-950 rounded-2xl border border-slate-800 text-white shadow-inner">
+              <div className="flex flex-col items-center justify-center py-6 bg-surface-sunken rounded-2xl border border-border text-white shadow-inner">
                 <div className="font-mono text-5xl sm:text-7xl font-black tracking-tight flex items-baseline">
                   <span>{swFormatted.main}</span>
-                  <span className="text-2xl sm:text-4xl text-amber-400 font-bold ml-1">
+                  <span className="text-2xl sm:text-4xl text-warning font-bold ml-1">
                     .{swFormatted.hundredths}
                   </span>
                 </div>
-                <span className="text-3xs uppercase font-bold text-slate-400 mt-2 tracking-widest">
+                <span className="text-3xs uppercase font-bold text-muted-foreground mt-2 tracking-widest">
                   Précision au 1/100e de seconde
                 </span>
               </div>
@@ -311,7 +311,7 @@ export default function StopwatchTool() {
                   onClick={toggleStopwatch}
                   className={cn(
                     'w-36 h-12 text-sm font-bold gap-2 shadow-md cursor-pointer',
-                    swRunning && 'border-amber-500 text-amber-500 hover:bg-amber-500/10',
+                    swRunning && 'border-warning text-warning hover:bg-warning/10',
                   )}
                 >
                   {swRunning ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}
@@ -358,7 +358,7 @@ export default function StopwatchTool() {
                         onClick={copyLaps}
                         className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer"
                       >
-                        {copiedLaps ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                        {copiedLaps ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
                         {copiedLaps ? 'Copié' : 'Copier les tours'}
                       </Button>
                     )}
@@ -402,19 +402,19 @@ export default function StopwatchTool() {
                           key={lap.lapIndex}
                           className={cn(
                             'grid grid-cols-12 items-center py-2 px-3 text-xs rounded-lg transition-colors',
-                            isBest && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold',
-                            isWorst && 'bg-red-500/10 text-red-700 dark:text-red-300 font-semibold',
+                            isBest && 'bg-success/10 text-success font-bold',
+                            isWorst && 'bg-error/10 text-error font-semibold',
                           )}
                         >
                           <div className="col-span-3 flex items-center gap-1.5">
                             <span className="font-mono text-muted-foreground">#{lap.lapIndex}</span>
                             {isBest && (
-                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-success/20 text-success">
                                 Plus rapide
                               </span>
                             )}
                             {isWorst && (
-                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-red-500/20 text-red-600 dark:text-red-400">
+                              <span className="text-3xs uppercase font-extrabold px-1.5 py-0.2 rounded bg-error/20 text-error">
                                 Plus long
                               </span>
                             )}
@@ -442,23 +442,23 @@ export default function StopwatchTool() {
                 className={cn(
                   'flex flex-col items-center justify-center py-6 rounded-2xl border text-white shadow-inner transition-colors duration-300',
                   timerFinished
-                    ? 'bg-red-950 border-red-600 animate-pulse'
-                    : 'bg-slate-950 border-slate-800',
+                    ? 'bg-error border-error animate-pulse'
+                    : 'bg-surface-sunken border-border',
                 )}
               >
                 <div className="font-mono text-5xl sm:text-7xl font-black tracking-tight">
                   {timerFormatted.main}
                 </div>
-                <div className="w-48 bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
+                <div className="w-48 bg-surface-sunken h-2 rounded-full mt-4 overflow-hidden">
                   <div
                     className={cn(
                       'h-full transition-all duration-100',
-                      timerFinished ? 'bg-red-500' : 'bg-primary',
+                      timerFinished ? 'bg-error' : 'bg-primary',
                     )}
                     style={{ width: `${timerProgress}%` }}
                   />
                 </div>
-                <span className="text-3xs uppercase font-bold text-slate-400 mt-2 tracking-widest">
+                <span className="text-3xs uppercase font-bold text-muted-foreground mt-2 tracking-widest">
                   {timerFinished ? '⚠️ TEMPS ÉCOULÉ !' : 'Compte à rebours restant'}
                 </span>
               </div>
@@ -505,7 +505,7 @@ export default function StopwatchTool() {
                   onClick={toggleTimer}
                   className={cn(
                     'w-40 h-12 text-sm font-bold gap-2 shadow-md cursor-pointer',
-                    timerRunning && 'border-amber-500 text-amber-500 hover:bg-amber-500/10',
+                    timerRunning && 'border-warning text-warning hover:bg-warning/10',
                   )}
                 >
                   {timerRunning ? <Pause className="size-5" /> : <Play className="size-5 fill-current" />}

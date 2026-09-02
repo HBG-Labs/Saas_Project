@@ -380,7 +380,7 @@ export default function VoiceRecorderTool() {
                 className={cn(
                   'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isRecording
-                    ? 'bg-rose-500 text-white animate-pulse shadow-md ring-2 ring-rose-500/20'
+                    ? 'bg-error text-white animate-pulse shadow-md ring-2 ring-error/20'
                     : 'bg-primary/10 text-primary',
                 )}
               >
@@ -404,11 +404,11 @@ export default function VoiceRecorderTool() {
 
         <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
           {permissionError && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-foreground space-y-3">
+            <div className="p-4 rounded-xl bg-error/10 border border-error/30 text-xs text-foreground space-y-3">
               <div className="flex items-start gap-2.5">
-                <AlertCircle className="size-5 text-red-500 shrink-0 mt-0.5" />
+                <AlertCircle className="size-5 text-error shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold text-red-600 dark:text-red-400 text-sm">
+                  <p className="font-bold text-error text-sm">
                     Accès au microphone requis
                   </p>
                   <p className="text-xs text-muted-foreground">{permissionError}</p>
@@ -439,7 +439,7 @@ export default function VoiceRecorderTool() {
                   size="sm"
                   variant="primary"
                   onClick={startRecording}
-                  className="text-xs gap-1.5 cursor-pointer bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                  className="text-xs gap-1.5 cursor-pointer bg-error hover:bg-error text-white shadow-sm"
                 >
                   <RotateCcw className="size-3.5" />
                   <span>Réessayer l'autorisation</span>
@@ -458,13 +458,13 @@ export default function VoiceRecorderTool() {
           )}
 
           {/* Zone d'Enregistrement & Visualiseur d'Onde */}
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-950 rounded-2xl border border-slate-800 space-y-4 shadow-inner">
+          <div className="flex flex-col items-center justify-center p-6 bg-surface-sunken rounded-2xl border border-border space-y-4 shadow-inner">
             {/* Visualiseur Canvas */}
             <canvas
               ref={canvasRef}
               width={600}
               height={100}
-              className="w-full h-24 rounded-xl border border-slate-800 bg-slate-900/60"
+              className="w-full h-24 rounded-xl border border-border bg-surface-sunken/60"
             />
 
             {/* Durée de l'enregistrement */}
@@ -480,7 +480,7 @@ export default function VoiceRecorderTool() {
                   size="lg"
                   variant="primary"
                   onClick={startRecording}
-                  className="h-12 px-6 text-sm font-bold gap-2 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30 cursor-pointer"
+                  className="h-12 px-6 text-sm font-bold gap-2 bg-error hover:bg-error text-white shadow-lg shadow-error/30 cursor-pointer"
                 >
                   <Mic className="size-5" />
                   <span>Démarrer l’enregistrement</span>
@@ -492,7 +492,7 @@ export default function VoiceRecorderTool() {
                     size="lg"
                     variant="outline"
                     onClick={togglePause}
-                    className="h-12 px-5 text-xs font-semibold gap-1.5 bg-slate-900 text-white border-slate-700 hover:bg-slate-800 cursor-pointer"
+                    className="h-12 px-5 text-xs font-semibold gap-1.5 bg-surface-sunken text-white border-border hover:bg-surface-sunken cursor-pointer"
                   >
                     {isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4" />}
                     <span>{isPaused ? 'Reprendre' : 'Pause'}</span>
@@ -503,7 +503,7 @@ export default function VoiceRecorderTool() {
                     size="lg"
                     variant="primary"
                     onClick={stopRecording}
-                    className="h-12 px-6 text-sm font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md cursor-pointer"
+                    className="h-12 px-6 text-sm font-bold gap-2 bg-success hover:bg-success text-white shadow-md cursor-pointer"
                   >
                     <Square className="size-4 fill-current" />
                     <span>Sauvegarder le mémo</span>

@@ -51,11 +51,11 @@ function formatRelativeTime(dateStr: string): string {
 function getNotificationIcon(notification: AppNotification) {
   switch (notification.category) {
     case 'hr':
-      return <Palmtree className="size-4 text-amber-500" />;
+      return <Palmtree className="size-4 text-warning" />;
     case 'stock':
-      return <Package className="size-4 text-rose-500" />;
+      return <Package className="size-4 text-error" />;
     case 'equipment':
-      return <Wrench className="size-4 text-purple-500" />;
+      return <Wrench className="size-4 text-accent" />;
     case 'mission':
     default:
       return <ClipboardList className="size-4 text-primary" />;
@@ -205,7 +205,7 @@ export function NotificationBell() {
           <div className="max-h-[380px] overflow-y-auto divide-y divide-border/50 scrollbar-thin">
             {displayedNotifications.length === 0 ? (
               <div className="p-8 text-center space-y-2">
-                <CheckCircle2 className="size-8 text-emerald-500/60 mx-auto" />
+                <CheckCircle2 className="size-8 text-success/60 mx-auto" />
                 <p className="text-xs font-bold text-foreground">
                   {filter === 'unread'
                     ? 'Aucune notification non lue'
@@ -237,9 +237,9 @@ export function NotificationBell() {
                   <div
                     className={cn(
                       'size-8 rounded-xl flex items-center justify-center shrink-0 border mt-0.5',
-                      n.category === 'hr' && 'bg-amber-500/10 border-amber-500/20',
-                      n.category === 'stock' && 'bg-rose-500/10 border-rose-500/20',
-                      n.category === 'equipment' && 'bg-purple-500/10 border-purple-500/20',
+                      n.category === 'hr' && 'bg-warning/10 border-warning/20',
+                      n.category === 'stock' && 'bg-error/10 border-error/20',
+                      n.category === 'equipment' && 'bg-accent/10 border-accent/20',
                       n.category === 'mission' && 'bg-primary/10 border-primary/20',
                     )}
                   >
@@ -282,7 +282,7 @@ export function NotificationBell() {
                       type="button"
                       onClick={() => dismissNotification(n.id)}
                       aria-label="Supprimer"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-all rounded"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-error transition-all rounded"
                       title="Masquer"
                     >
                       <Trash2 className="size-3" />

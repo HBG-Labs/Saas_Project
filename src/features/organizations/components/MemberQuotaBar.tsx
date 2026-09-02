@@ -58,7 +58,7 @@ export function MemberQuotaBar({
             <span>
               {current} utilisateurs — <span className="text-muted-foreground font-normal">{baseIncluded} inclus</span>{' '}
               <span className="text-primary font-semibold">+{extraCount} supplémentaires</span>{' '}
-              <span className="text-emerald-500 font-bold">
+              <span className="text-success font-bold">
                 (+{extraCostEur} €/mois{isBilled ? '' : ' à la souscription'})
               </span>
             </span>
@@ -82,9 +82,9 @@ export function MemberQuotaBar({
           className={cn(
             'h-full rounded-full transition-[width] duration-300',
             hasExtraUsers
-              ? 'bg-gradient-to-r from-primary to-emerald-500'
+              ? 'bg-gradient-to-r from-primary to-success'
               : isQuotaReached
-                ? 'bg-amber-500'
+                ? 'bg-warning'
                 : ratio >= 0.8
                   ? 'bg-warning'
                   : 'bg-primary',

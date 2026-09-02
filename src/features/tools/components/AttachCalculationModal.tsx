@@ -146,7 +146,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
         <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-3">
           <div className="text-xs">
             <div className="font-bold text-foreground flex items-center gap-1.5">
-              <FileText className="size-3.5 text-blue-600 dark:text-cyan-400" />
+              <FileText className="size-3.5 text-primary dark:text-primary" />
               <span>Insérer dans un Devis Client</span>
             </div>
             <p className="text-3xs text-muted-foreground">Préremplit la description technique du devis.</p>
@@ -167,7 +167,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
         <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-3">
           <div className="text-xs">
             <div className="font-bold text-foreground flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-amber-500" />
+              <Sparkles className="size-3.5 text-warning" />
               <span>Copier la Note Technique Certifiée</span>
             </div>
             <p className="text-3xs text-muted-foreground">Texte complet prêt à coller dans un mail ou rapport.</p>
@@ -182,8 +182,8 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
           >
             {copied ? (
               <>
-                <Check className="size-3.5 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400">Copié !</span>
+                <Check className="size-3.5 text-success" />
+                <span className="text-success">Copié !</span>
               </>
             ) : (
               <>

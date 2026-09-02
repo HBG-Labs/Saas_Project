@@ -140,7 +140,7 @@ export default function StockConsumablesPage() {
             variant="outline"
             size="sm"
             onClick={() => handleOpenMovementModal(null, 'in')}
-            className="gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 cursor-pointer"
+            className="gap-1.5 text-xs font-semibold text-success border-success/30 hover:bg-success/10 cursor-pointer"
           >
             <ArrowDownLeft className="size-3.5" />
             <span>Mouvement</span>

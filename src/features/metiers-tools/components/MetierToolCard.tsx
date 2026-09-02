@@ -60,8 +60,8 @@ export function MetierToolCard({
                 </Link>
               </h3>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-cyan-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300 shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-                  <Sparkles className="size-2.5 text-cyan-500 dark:text-cyan-400" />
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
+                  <Sparkles className="size-2.5 text-primary" />
                   <span>PRO</span>
                 </span>
               )}
@@ -73,9 +73,9 @@ export function MetierToolCard({
               <span
                 className={cn(
                   'inline-flex items-center gap-1 text-3xs font-medium px-1.5 py-0.2 rounded',
-                  tool.reliabilityLevel === 'simple' && 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10',
-                  tool.reliabilityLevel === 'indicative' && 'text-amber-700 dark:text-amber-400 bg-amber-500/10',
-                  tool.reliabilityLevel === 'pro_validation' && 'text-rose-700 dark:text-rose-400 bg-rose-500/10',
+                  tool.reliabilityLevel === 'simple' && 'text-success bg-success/10',
+                  tool.reliabilityLevel === 'indicative' && 'text-warning bg-warning/10',
+                  tool.reliabilityLevel === 'pro_validation' && 'text-error bg-error/10',
                 )}
                 title={
                   tool.reliabilityLevel === 'simple'
@@ -88,9 +88,9 @@ export function MetierToolCard({
                 <span
                   className={cn(
                     'size-1.5 rounded-full',
-                    tool.reliabilityLevel === 'simple' && 'bg-emerald-500',
-                    tool.reliabilityLevel === 'indicative' && 'bg-amber-500',
-                    tool.reliabilityLevel === 'pro_validation' && 'bg-rose-500',
+                    tool.reliabilityLevel === 'simple' && 'bg-success',
+                    tool.reliabilityLevel === 'indicative' && 'bg-warning',
+                    tool.reliabilityLevel === 'pro_validation' && 'bg-error',
                   )}
                 />
                 <span>{tool.reliabilityLevel === 'simple' ? 'Direct' : tool.reliabilityLevel === 'indicative' ? 'Indicatif' : 'Validation BE'}</span>
@@ -112,18 +112,21 @@ export function MetierToolCard({
                 isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
-                'flex size-8 items-center justify-center rounded-lg transition-colors cursor-pointer',
+                // 44 px au doigt (WCAG 2.5.5), 32 px au pointeur : l'étoile
+                // faisait 32 px partout, soit une cible ratée une fois sur
+                // trois avec un gant.
+                'size-touch sm:size-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer',
                 'hover:bg-surface-hover',
-                isFavorite ? 'text-amber-500 fill-amber-500' : 'text-subtle-foreground',
+                isFavorite ? 'text-warning' : 'text-subtle-foreground',
               )}
             >
-              <Star className={cn('size-4', isFavorite && 'fill-amber-500 text-amber-500')} aria-hidden="true" />
+              <Star className={cn('size-4', isFavorite && 'fill-current text-warning')} aria-hidden="true" />
             </button>
           )}
 
           <Link
             to={targetUrl}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-2xs hover:bg-primary-hover active:scale-95 transition-all cursor-pointer"
+            className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs transition-all hover:bg-primary-hover active:scale-95 cursor-pointer"
           >
             <span>Lancer</span>
             <ChevronRight className="size-3.5" />
@@ -157,9 +160,9 @@ export function MetierToolCard({
             <span
               className={cn(
                 'size-2 rounded-full',
-                tool.reliabilityLevel === 'simple' && 'bg-emerald-500',
-                tool.reliabilityLevel === 'indicative' && 'bg-amber-500',
-                tool.reliabilityLevel === 'pro_validation' && 'bg-rose-500',
+                tool.reliabilityLevel === 'simple' && 'bg-success',
+                tool.reliabilityLevel === 'indicative' && 'bg-warning',
+                tool.reliabilityLevel === 'pro_validation' && 'bg-error',
               )}
               title={
                 tool.reliabilityLevel === 'simple'
@@ -180,10 +183,10 @@ export function MetierToolCard({
                 className={cn(
                   'flex size-7 items-center justify-center rounded-md transition-colors cursor-pointer',
                   'hover:bg-surface-hover',
-                  isFavorite ? 'text-amber-500 fill-amber-500' : 'text-subtle-foreground',
+                  isFavorite ? 'text-warning fill-amber-500' : 'text-subtle-foreground',
                 )}
               >
-                <Star className={cn('size-3.5', isFavorite && 'fill-amber-500 text-amber-500')} aria-hidden="true" />
+                <Star className={cn('size-3.5', isFavorite && 'fill-amber-500 text-warning')} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -199,8 +202,8 @@ export function MetierToolCard({
             </Link>
           </h3>
           {!isProUnlocked && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-cyan-500/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-blue-700 dark:text-cyan-300 shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-              <Sparkles className="size-2.5 text-cyan-500 dark:text-cyan-400" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
+              <Sparkles className="size-2.5 text-primary" />
               <span>PRO</span>
             </span>
           )}

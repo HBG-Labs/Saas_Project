@@ -185,7 +185,7 @@ export default function DistanceCalculatorTool() {
             {/* Point B */}
             <div className="space-y-2 p-3 rounded-xl bg-surface-raised border border-border">
               <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-500" />
+                <span className="size-2 rounded-full bg-success" />
                 Point B (Arrivée)
               </p>
               <div className="grid grid-cols-2 gap-2">

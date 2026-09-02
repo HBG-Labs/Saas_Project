@@ -120,7 +120,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {/* 1. Total Commandes */}
-      <Card className="border-blue-500/20 p-3 sm:p-4">
+      <Card className="border-primary/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -133,7 +133,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
               {metrics.ordersDraft} brouillon{metrics.ordersDraft > 1 ? 's' : ''}
             </p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-blue-500/10 text-primary border border-blue-500/20">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-primary/10 text-primary border border-primary/20">
             <ShoppingCart className="size-5" />
           </div>
         </div>
@@ -143,7 +143,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
       <Card
         className={`p-3 sm:p-4 transition-colors ${
           metrics.ordersPendingDelivery > 0
-            ? 'border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10'
+            ? 'border-warning/30 bg-warning/5 dark:bg-warning/10'
             : 'border-border'
         }`}
       >
@@ -152,7 +152,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
             <p
               className={`text-2xs font-semibold uppercase tracking-wider ${
                 metrics.ordersPendingDelivery > 0
-                  ? 'text-amber-600 dark:text-amber-400'
+                  ? 'text-warning'
                   : 'text-muted-foreground'
               }`}
             >
@@ -170,7 +170,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
           <div
             className={`hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex ${
               metrics.ordersPendingDelivery > 0
-                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                ? 'bg-warning/15 text-warning border border-warning/30'
                 : 'bg-surface-raised text-muted-foreground border border-border'
             }`}
           >
@@ -180,10 +180,10 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
       </Card>
 
       {/* 3. Dépenses engagées avec menu calendrier qui s'ouvre proprement sans chevauchement */}
-      <Card className="border-emerald-500/20 p-3 sm:p-4">
+      <Card className="border-success/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-success truncate">
               Achats HT
             </p>
 
@@ -202,10 +202,10 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
                 trigger={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-success/50 hover:bg-success/10 transition-colors cursor-pointer max-w-full truncate"
                     title="Cliquer pour changer le mois ou la période"
                   >
-                    <Calendar className="size-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <Calendar className="size-3 text-success shrink-0" />
                     <span className="truncate">{periodSpend.badgeText}</span>
                     <ChevronDown className="size-2.5 opacity-60 shrink-0" />
                   </button>
@@ -240,7 +240,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
                         setSelectedPeriod('custom_month');
                       }
                     }}
-                    className="w-full h-7 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-emerald-500 focus:outline-none cursor-pointer"
+                    className="w-full h-7 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-success focus:outline-none cursor-pointer"
                   />
                 </div>
               </Dropdown>
@@ -251,17 +251,17 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
             </div>
           </div>
 
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 ml-2">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-success/10 text-success border border-success/20 ml-2">
             <Euro className="size-5" />
           </div>
         </div>
       </Card>
 
       {/* 4. Fournisseurs Référencés */}
-      <Card className="border-purple-500/20 p-3 sm:p-4">
+      <Card className="border-accent/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-accent">
               Fournisseurs Actifs
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
@@ -271,7 +271,7 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
               Partenaires &amp; Grossistes
             </p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-accent/10 text-accent border border-accent/20">
             <Store className="size-5" />
           </div>
         </div>
