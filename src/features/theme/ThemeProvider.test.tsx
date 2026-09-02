@@ -158,6 +158,58 @@ describe('ThemeProvider', () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
   });
 
+  it('bascule RÉELLEMENT en sombre, et pas seulement en intention', async () => {
+    // LE TEST QUI MANQUAIT.
+    //
+    // « Sombre » appelait `setPreset('default')`. C'était juste tant que
+    // `default` valait `baseMode: 'dark'` ; en devenant « Atelier Jour », il est
+    // passé en clair, et le bouton a cessé de rien changer — sans erreur, sans
+    // avertissement, les deux modes rendant exactement la même chose.
+    //
+    // Vérifier `theme` ne suffisait pas : c'est la CLASSE `dark` posée sur
+    // <html> qui décide de ce que l'œil voit. On l'assert donc explicitement.
+    mockSystemDark(false);
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Sombre' }));
+
+    expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
+    expect(document.documentElement, 'la classe « dark » commande le rendu').toHaveClass('dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+
+    // Et le retour au clair doit la retirer.
+    await user.click(screen.getByRole('button', { name: 'Clair' }));
+
+    expect(screen.getByTestId('resolved')).toHaveTextContent('light');
+    expect(document.documentElement).not.toHaveClass('dark');
+  });
+
+  it('mène le basculeur vers les deux ambiances signature', async () => {
+    // Le basculeur envoyait « Clair » sur le preset « light » (Épure Studio),
+    // une ambiance du personnalisateur que personne n'avait choisie. Les deux
+    // positions doivent atteindre Atelier Jour et Atelier Nuit.
+    mockSystemDark(false);
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Sombre' }));
+    expect(screen.getByTestId('preset')).toHaveTextContent('atelier-nuit');
+
+    await user.click(screen.getByRole('button', { name: 'Clair' }));
+    expect(screen.getByTestId('preset')).toHaveTextContent('default');
+  });
+
   it('permet de changer de preset d’ambiance et d’accent de couleur', async () => {
     mockSystemDark(true);
     const user = userEvent.setup();

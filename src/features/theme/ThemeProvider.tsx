@@ -14,17 +14,42 @@ import { ACCENT_COLORS, type AccentColorId } from './accent-colors';
 import { applyBrowserBarColor } from './theme-script';
 import { DEFAULT_THEME_PRESET, THEME_PRESETS, type ThemePresetId } from './theme-presets';
 
+/**
+ * Les deux ambiances signature, celles que le basculeur Clair / Sombre atteint.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI DES CONSTANTES ET NON DES CHAÎNES ÉPARPILLÉES
+ *
+ * Le basculeur écrivait `setPreset('default')` pour « Sombre ». C'était juste
+ * tant que `default` s'appelait « Cockpit Cobalt » et valait `baseMode: 'dark'`.
+ * En devenant « Atelier Jour », ce preset est passé en CLAIR — et le bouton
+ * « Sombre » a continué de pointer dessus. Il ne changeait donc plus rien :
+ * deux modes rigoureusement identiques, sans la moindre erreur pour le
+ * signaler.
+ *
+ * Nommer les deux cibles empêche la prochaine repeinte de les désaccorder en
+ * silence : renommer un preset ne suffit plus, il faut passer ici.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const PRESET_CLAIR: ThemePresetId = 'default';
+const PRESET_SOMBRE: ThemePresetId = 'atelier-nuit';
+
 function readStoredPreset(): ThemePresetId {
   try {
     const stored = localStorage.getItem(PRESET_STORAGE_KEY) as ThemePresetId | null;
     if (stored && THEME_PRESETS.some((p) => p.id === stored)) return stored;
 
+    // Repli pour les installations antérieures à `PRESET_STORAGE_KEY`, qui
+    // n'ont conservé qu'un mode. On les ramène sur les ambiances signature —
+    // renvoyer le preset « light » (Épure Studio) enverrait ces personnes sur
+    // une ambiance qu'elles n'ont jamais choisie.
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === 'light') return 'light';
+    if (storedTheme === 'dark') return PRESET_SOMBRE;
+    if (storedTheme === 'light') return PRESET_CLAIR;
   } catch {
     // Stockage inaccessible
   }
-  return 'default';
+  return PRESET_CLAIR;
 }
 
 function readStoredAccent(): AccentColorId {
@@ -115,16 +140,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback(
     (next: Theme) => {
-      if (next === 'light') {
-        setPreset('light');
-      } else {
-        setPreset('default');
-      }
-      try {
-        localStorage.setItem(THEME_STORAGE_KEY, next);
-      } catch {
-        // Stockage inaccessible
-      }
+      // `setPreset` persiste déjà le mode de base du preset choisi : réécrire
+      // `next` par-dessus laisserait passer une incohérence si les deux
+      // venaient à diverger, au lieu de la faire remonter.
+      setPreset(next === 'dark' ? PRESET_SOMBRE : PRESET_CLAIR);
     },
     [setPreset],
   );
@@ -148,14 +167,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetCustomization = useCallback(() => {
-    setPresetState('default');
+    setPresetState(PRESET_CLAIR);
     setAccentColorState('auto');
     setCompactModeState(false);
     try {
       localStorage.removeItem(PRESET_STORAGE_KEY);
       localStorage.removeItem(ACCENT_STORAGE_KEY);
       localStorage.removeItem(COMPACT_STORAGE_KEY);
-      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+      // 'light', et non 'dark' : la remise à zéro rétablit « Atelier Jour »,
+      // qui est clair. Écrire 'dark' ici laissait en mémoire un mode que
+      // l'écran ne montrait pas.
+      localStorage.setItem(THEME_STORAGE_KEY, 'light');
     } catch {
       // Stockage inaccessible
     }
