@@ -449,7 +449,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                                 {note.title}
                               </span>
                               {note.isPinned && (
-                                <Pin className="size-3 shrink-0 text-amber-500 fill-amber-500/20" />
+                                <Pin className="size-3 shrink-0 text-warning fill-amber-500/20" />
                               )}
                               {note.category && (
                                 <Badge
@@ -475,7 +475,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                           type="button"
                           onClick={(e) => handleTogglePin(note.id, e)}
                           title={note.isPinned ? 'Détacher' : 'Épingler'}
-                          className="rounded p-1 text-muted-foreground hover:text-amber-500 hover:bg-surface"
+                          className="rounded p-1 text-muted-foreground hover:text-warning hover:bg-surface"
                         >
                           <Pin className="size-3.5" />
                         </button>
@@ -491,7 +491,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                           type="button"
                           onClick={(e) => handleDeleteNote(note.id, e)}
                           title="Supprimer"
-                          className="rounded p-1 text-muted-foreground hover:text-rose-500 hover:bg-surface"
+                          className="rounded p-1 text-muted-foreground hover:text-error hover:bg-surface"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -556,7 +556,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                       title="Copier le contenu"
                     >
                       {copied ? (
-                        <Check className="size-3.5 text-emerald-500" />
+                        <Check className="size-3.5 text-success" />
                       ) : (
                         <Copy className="size-3.5" />
                       )}
@@ -577,7 +577,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleDeleteNote(activeNote.id)}
-                      className="text-muted-foreground hover:text-rose-500"
+                      className="text-muted-foreground hover:text-error"
                       title="Supprimer ce fichier"
                     >
                       <Trash2 className="size-3.5" />
@@ -606,7 +606,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                     <span>•</span>
                     <span>{charCount} caractère{charCount > 1 ? 's' : ''}</span>
                   </div>
-                  <span className="flex items-center gap-1 text-emerald-500 font-medium">
+                  <span className="flex items-center gap-1 text-success font-medium">
                     <Sparkles className="size-3" />
                     Sauvegarde automatique activée
                   </span>

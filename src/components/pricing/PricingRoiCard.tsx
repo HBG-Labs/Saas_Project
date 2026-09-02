@@ -38,7 +38,7 @@ export function PricingRoiCard() {
               Un investissement 100% amorti dès le premier mois
             </h3>
           </div>
-          <span className="text-3xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="text-3xs font-semibold text-success">
             Zéro double saisie • Rapports certifiés
           </span>
         </div>

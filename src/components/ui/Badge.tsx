@@ -12,8 +12,8 @@ const badgeVariants = cva(
         jetons : `--x`, `--x-subtle` (fond) et `--x-border` (contour).
 
         La version précédente composait ces teintes à la main dans les palettes
-        brutes de Tailwind (`bg-emerald-500/15 text-emerald-700
-        dark:text-emerald-400`), avec une nuance différente par thème pour
+        brutes de Tailwind (`bg-success/15 text-success
+        dark:text-success`), avec une nuance différente par thème pour
         rattraper le contraste — un commentaire de dix lignes expliquait
         pourquoi. Ce rattrapage n'a plus lieu d'être : les jetons sont définis
         séparément dans `:root` et `.dark`, donc le contraste est déjà résolu

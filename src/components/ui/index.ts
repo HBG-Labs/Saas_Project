@@ -27,7 +27,7 @@ export {
   type SegmentedOption,
 } from './SegmentedControl';
 export { ListSkeleton, Skeleton, ToolCardSkeleton } from './Skeleton';
-export { StatCard, type StatCardProps } from './StatCard';
+export { MetricCard, type MetricCardProps } from './MetricCard';
 export { Switch, type SwitchProps } from './Switch';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';
