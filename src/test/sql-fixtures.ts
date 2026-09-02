@@ -14,6 +14,7 @@ import retireTrackingSql from '../../supabase/migrations/20260817100000_retire_l
 import pricingModelSql from '../../supabase/migrations/20260817101000_pricing_model.sql?raw';
 import stockSql from '../../supabase/migrations/20260820110000_stock.sql?raw';
 import purchasesSql from '../../supabase/migrations/20260821100000_purchases.sql?raw';
+import planMatrixSql from '../../supabase/migrations/20260902100000_realigne_la_matrice_des_formules.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -57,6 +58,7 @@ const MIGRATIONS: Record<string, string> = {
   pricingModel: pricingModelSql,
   stock: stockSql,
   purchases: purchasesSql,
+  planMatrix: planMatrixSql,
 };
 
 export const MIGRATION_FILES = {
@@ -76,6 +78,7 @@ export const MIGRATION_FILES = {
   pricingModel: 'pricingModel',
   stock: 'stock',
   purchases: 'purchases',
+  planMatrix: 'planMatrix',
 } as const;
 
 /**

@@ -24,7 +24,16 @@ describe('matrice des entitlements', () => {
   it('retombe sur le plan gratuit par défaut', () => {
     expect(DEFAULT_PLAN).toBe('free');
     expect(planHasFeature(null, FEATURES.catalogAccess)).toBe(true);
-    expect(planHasFeature(null, FEATURES.missions)).toBe(false);
+
+    // Un abonnement illisible ne doit rien débloquer de plus que la formule
+    // gratuite. On le vérifie sur `quotes`, qu'elle n'inclut pas — et non sur
+    // `missions`, qu'elle inclut désormais sous plafond.
+    expect(planHasFeature(null, FEATURES.quotes)).toBe(false);
+    for (const feature of Object.values(FEATURES)) {
+      expect(planHasFeature(null, feature), `plan illisible : ${feature}`).toBe(
+        planHasFeature('free', feature),
+      );
+    }
   });
 
   it('ouvre les missions, interventions et devis dès le plan Starter', () => {
@@ -36,11 +45,42 @@ describe('matrice des entitlements', () => {
     ];
 
     for (const feature of starterFeatures) {
-      expect(planHasFeature('free', feature), `free ne doit pas avoir ${feature}`).toBe(false);
       expect(planHasFeature('starter', feature), `starter doit avoir ${feature}`).toBe(true);
       expect(planHasFeature('pro', feature), `pro doit avoir ${feature}`).toBe(true);
       expect(planHasFeature('business', feature), `business doit avoir ${feature}`).toBe(true);
       expect(planHasFeature('enterprise', feature), `enterprise doit avoir ${feature}`).toBe(true);
+    }
+  });
+
+  it('laisse la formule gratuite parcourir la chaîne complète, sous plafond', () => {
+    // Une formule gratuite qui ne montre rien ne convertit personne : un artisan
+    // qui n'a jamais vu une intervention se créer n'a aucune raison de sortir sa
+    // carte. Le plafond, lui, est appliqué par le serveur
+    // (`app.enforce_plan_row_quota`) et non par l'interface.
+    expect(planFeatureLimit('free', FEATURES.customers)).toBe(3);
+    expect(planFeatureLimit('free', FEATURES.missions)).toBe(5);
+    expect(planFeatureLimit('free', FEATURES.interventions)).toBe(10);
+
+    for (const feature of [FEATURES.customers, FEATURES.missions, FEATURES.interventions]) {
+      expect(planHasFeature('free', feature), `free doit pouvoir essayer ${feature}`).toBe(true);
+    }
+  });
+
+  it('garde la facturation et le pilotage hors de la formule gratuite', () => {
+    // Ce sont ces modules qu'on achète : les ouvrir viderait les formules
+    // payantes de leur raison d'être.
+    const payantes: FeatureKey[] = [
+      FEATURES.quotes,
+      FEATURES.teams,
+      FEATURES.statistics,
+      FEATURES.planning,
+      FEATURES.auditLog,
+      FEATURES.exportPdf,
+      FEATURES.exportCsv,
+    ];
+
+    for (const feature of payantes) {
+      expect(planHasFeature('free', feature), `free ne doit pas avoir ${feature}`).toBe(false);
     }
   });
 
@@ -151,15 +191,29 @@ describe('cohérence avec la grille tarifaire publique', () => {
 });
 
 describe('synchronisation avec le seed SQL', () => {
-  // La matrice est REMISE À PLAT par `20260817101000_pricing_model.sql` : ce
-  // fichier supprime les cinq plans puis les réinsère d'un bloc. Lire les
-  // migrations antérieures reconstituerait un état que la base n'a plus.
-  // `stock` est arrivé après cette remise à plat, dans sa propre migration :
-  // il s'ajoute à la grille sans la redéfinir.
-  const tuples = extractInsertTuplesAcross(
-    [MIGRATION_FILES.pricingModel, MIGRATION_FILES.stock, MIGRATION_FILES.purchases],
-    'plan_features',
-  );
+  // La matrice est REMISE À PLAT par
+  // `20260902100000_realigne_la_matrice_des_formules.sql` : ce fichier supprime
+  // les cinq plans puis les réinsère d'un bloc, `stock` et `purchases` compris.
+  // Lire les migrations antérieures — dont `pricing_model`, qui procédait de la
+  // même façon — reconstituerait un état que la base n'a plus.
+  //
+  // ───────────────────────────────────────────────────────────────────────────
+  // CE QUE CE TEST NE PEUT PAS VOIR
+  //
+  // Il lit les FICHIERS de migration, jamais le serveur. Il valide donc une
+  // intention, pas un état déployé — et cette nuance a coûté cher :
+  // `20260817101000_pricing_model.sql` a été modifié deux fois APRÈS son
+  // application (ajout des missions, interventions, devis et clients à Starter,
+  // puis retrait de `pro_tools`). Sa version étant déjà inscrite dans
+  // `supabase_migrations`, `db push` la saute : les corrections ne sont jamais
+  // parties en base. Fichier et TypeScript ayant été corrigés ensemble, ce test
+  // est resté vert pendant qu'un client Starter à 19 €/mois se voyait refuser
+  // par la RLS la création de la moindre mission.
+  //
+  // D'où la règle : une migration appliquée ne se corrige pas en l'éditant. On
+  // en écrit une nouvelle, et ce bloc pointe vers la plus récente.
+  // ───────────────────────────────────────────────────────────────────────────
+  const tuples = extractInsertTuplesAcross([MIGRATION_FILES.planMatrix], 'plan_features');
 
   const seeded = new Map<string, Map<string, number | null>>();
   for (const tuple of tuples) {

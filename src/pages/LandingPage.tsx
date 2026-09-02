@@ -56,7 +56,7 @@ export default function LandingPage() {
                 </h2>
                 <p className="text-muted-foreground mt-4 text-base leading-relaxed sm:text-lg">
                   Centralisez vos interventions terrain, vos calculs normés et votre suivi de
-                  matériel. Quatorze jours d’essai, sans carte bancaire.
+                  matériel. Commencez sur la formule Gratuite, sans carte bancaire.
                 </p>
 
                 <div className="mt-8">

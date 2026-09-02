@@ -1,11 +1,16 @@
 import { Command } from 'cmdk';
-import { Search } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useNavigate } from 'react-router';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from '@/components/layout/nav-icons';
 import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
-import { ACCOUNT_NAV, ROOT_NAV, SIDEBAR_GROUPS } from '@/config/navigation';
+import {
+  ACCOUNT_NAV,
+  ROOT_NAV,
+  SIDEBAR_GROUPS,
+  type ResolvedNavItem,
+} from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useVisibleNavGroups } from '@/features/organizations';
 import { CATEGORY_METADATA, listTools } from '@/features/tools';
@@ -47,7 +52,15 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
     « Journal » à qui n'a pas `audit.view` mènerait à une page vide.
   */
   const visibleGroups = useVisibleNavGroups(SIDEBAR_GROUPS);
-  const destinations = [...ROOT_NAV, ...visibleGroups.flatMap((group) => group.items), ...ACCOUNT_NAV];
+
+  // Le tableau de bord et le compte n'appartiennent à aucune formule : ils sont
+  // marqués ouverts explicitement, sinon le type de la liste se réduirait au
+  // plus petit dénominateur et le cadenas disparaîtrait pour tout le monde.
+  const destinations: readonly ResolvedNavItem[] = [
+    ...ROOT_NAV.map((item) => ({ ...item, locked: false })),
+    ...visibleGroups.flatMap((group) => group.items),
+    ...ACCOUNT_NAV.map((item) => ({ ...item, locked: false })),
+  ];
 
   const go = (path: string) => {
     onOpenChange(false);
@@ -143,7 +156,15 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                       className={ITEM_CLASSES}
                     >
                       <Icon />
-                      {item.label}
+                      <span className={cn(item.locked && 'text-subtle-foreground')}>
+                        {item.label}
+                      </span>
+                      {item.locked ? (
+                        <span className="text-subtle-foreground ml-auto flex items-center gap-1 text-3xs">
+                          <Lock className="size-3" aria-hidden="true" />
+                          Formule supérieure
+                        </span>
+                      ) : null}
                     </Command.Item>
                   );
                 })}

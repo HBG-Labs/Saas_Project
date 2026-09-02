@@ -90,6 +90,12 @@ interface StripeSubscriptionItem {
   current_period_end?: number;
 }
 
+/** Le moyen de paiement, tel qu'il arrive une fois `expand` demandé. */
+interface StripePaymentMethod {
+  id?: string;
+  card?: { fingerprint?: string | null };
+}
+
 interface StripeSubscription {
   id: string;
   customer: string;
@@ -102,6 +108,65 @@ interface StripeSubscription {
   cancel_at_period_end?: boolean;
   metadata?: { organization_id?: string; plan_code?: string };
   items?: { data?: StripeSubscriptionItem[] };
+  /** Chaîne sans `expand`, objet complet avec — d'où le type union. */
+  default_payment_method?: string | StripePaymentMethod | null;
+}
+
+/**
+ * Les paramètres à joindre à toute lecture d'abonnement.
+ *
+ * Sans `expand`, `default_payment_method` n'est qu'un identifiant `pm_...` — il
+ * faudrait un second appel pour obtenir l'empreinte de la carte. L'expansion ne
+ * coûte pas une requête de plus, seulement une réponse un peu plus grosse.
+ */
+const AVEC_MOYEN_PAIEMENT = { 'expand[]': 'default_payment_method' };
+
+/** L'empreinte portée par un moyen de paiement déjà développé, s'il y en a une. */
+function empreinteDe(moyen: string | StripePaymentMethod | null | undefined): string | null {
+  if (moyen === null || moyen === undefined || typeof moyen === 'string') return null;
+  return moyen.card?.fingerprint ?? null;
+}
+
+/**
+ * L'empreinte de la carte rattachée à l'abonnement, si elle est lisible.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI DEUX EMPLACEMENTS, COMME POUR LA PÉRIODE
+ *
+ * Stripe Checkout enregistre le moyen de paiement sur le CLIENT
+ * (`invoice_settings.default_payment_method`) et, selon le chemin emprunté, le
+ * pose aussi sur l'abonnement. Ne lire que l'abonnement ferait donc échouer le
+ * contrôle en silence — l'empreinte serait nulle, aucune erreur ne serait levée,
+ * et l'essai frauduleux passerait. C'est exactement le mode de panne qu'on
+ * cherche à éviter : un garde-fou qui s'ouvre sans rien dire.
+ *
+ * Le second appel n'a lieu que si le premier emplacement est vide, et seulement
+ * pour un abonnement en période d'essai.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+async function lireEmpreinteCarte(sub: StripeSubscription): Promise<string | null> {
+  const surAbonnement = empreinteDe(sub.default_payment_method);
+  if (surAbonnement !== null) return surAbonnement;
+
+  if (typeof sub.customer !== 'string' || sub.customer === '') return null;
+
+  try {
+    const client = (await stripeRequest(
+      `/v1/customers/${sub.customer}`,
+      { 'expand[]': 'invoice_settings.default_payment_method' },
+      'GET',
+    )) as unknown as {
+      invoice_settings?: { default_payment_method?: string | StripePaymentMethod | null };
+    };
+
+    return empreinteDe(client.invoice_settings?.default_payment_method);
+  } catch (error) {
+    // Un client Stripe illisible ne doit pas faire échouer le webhook : on
+    // perdrait l'écriture de l'abonnement — bien plus grave que de laisser
+    // passer un essai. On renonce au contrôle, on ne renonce pas au paiement.
+    console.warn('Empreinte de carte introuvable via le client Stripe :', error);
+    return null;
+  }
 }
 
 /** Un instant Stripe (secondes) en horodatage ISO, ou `null`. */
@@ -209,7 +274,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         if (session.subscription) {
           const sub = (await stripeRequest(
             `/v1/subscriptions/${session.subscription}`,
-            {},
+            AVEC_MOYEN_PAIEMENT,
             'GET',
           )) as unknown as StripeSubscription;
           await applySubscription(admin, sub, event.id);
@@ -245,7 +310,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
         const courant = (await stripeRequest(
           `/v1/subscriptions/${recu.id}`,
-          {},
+          AVEC_MOYEN_PAIEMENT,
           'GET',
         )) as unknown as StripeSubscription;
 
@@ -281,7 +346,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         if (invoice.subscription) {
           const courant = (await stripeRequest(
             `/v1/subscriptions/${invoice.subscription}`,
-            {},
+            AVEC_MOYEN_PAIEMENT,
             'GET',
           )) as unknown as StripeSubscription;
 
@@ -315,10 +380,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
  */
 async function applySubscription(
   admin: ReturnType<typeof adminClient>,
-  sub: StripeSubscription,
+  subRecu: StripeSubscription,
   eventId: string,
 ): Promise<void> {
-  let organizationId = sub.metadata?.organization_id;
+  let organizationId = subRecu.metadata?.organization_id;
 
   if (!organizationId) {
     // REPLI PAR IDENTIFIANT. Nos sessions de paiement posent l'organisation en
@@ -334,15 +399,20 @@ async function applySubscription(
     const { data: connu } = await admin
       .from('subscriptions')
       .select('organization_id')
-      .eq('provider_subscription_id', sub.id)
+      .eq('provider_subscription_id', subRecu.id)
       .maybeSingle();
 
     organizationId = connu?.organization_id ?? undefined;
   }
 
   if (!organizationId) {
-    throw new Error(`Abonnement ${sub.id} sans organisation connue ni en métadonnées.`);
+    throw new Error(`Abonnement ${subRecu.id} sans organisation connue ni en métadonnées.`);
   }
+
+  // UN ESSAI PAR CARTE. Peut couper l'essai en cours chez Stripe et renvoyer
+  // l'abonnement mis à jour — tout ce qui suit doit donc lire `sub`, l'état
+  // effectif, et non `subRecu`, l'état reçu.
+  const sub = await appliquerUnEssaiParCarte(admin, subRecu, organizationId);
 
   let planCode = sub.metadata?.plan_code;
 
@@ -438,4 +508,88 @@ async function applySubscription(
   }
 
   await admin.from('stripe_events').update({ organization_id: organizationId }).eq('id', eventId);
+}
+
+/**
+ * Un essai gratuit par CARTE, et non par organisation.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE CETTE FONCTION FERME
+ *
+ * L'éligibilité à l'essai se juge ailleurs par organisation. Or une nouvelle
+ * adresse mail donne un nouvel utilisateur, donc une nouvelle organisation,
+ * donc une nouvelle éligibilité : la même personne, avec la même carte, obtenait
+ * 14 jours autant de fois qu'elle créait de comptes. `payment_method_collection:
+ * 'always'` rendait l'abus coûteux en effort, pas impossible.
+ *
+ * `card.fingerprint` est le seul invariant qui traverse les comptes : Stripe le
+ * calcule sur le numéro de carte et le renvoie identique d'un client à l'autre.
+ *
+ * POURQUOI ICI ET PAS AU MOMENT DU CHECKOUT
+ *
+ * Quand `create-checkout-session` décide de `trial_period_days`, la carte n'est
+ * pas encore saisie — elle l'est ensuite, sur la page hébergée par Stripe.
+ * L'empreinte n'existe donc pas encore. Le contrôle est nécessairement
+ * postérieur : on accorde, puis on retire si la carte a déjà servi.
+ *
+ * COUPER PLUTÔT QUE REFUSER
+ *
+ * `trial_end=now` met fin à l'essai sur-le-champ ; Stripe facture aussitôt.
+ * L'abonnement reste valide et l'organisation garde ses données — elle paie,
+ * simplement, ce qu'elle allait devoir payer. Annuler l'abonnement punirait un
+ * client peut-être légitime (une carte d'entreprise partagée) pour un soupçon.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+async function appliquerUnEssaiParCarte(
+  admin: ReturnType<typeof adminClient>,
+  sub: StripeSubscription,
+  organizationId: string,
+): Promise<StripeSubscription> {
+  if (sub.status !== 'trialing') return sub;
+
+  const empreinte = await lireEmpreinteCarte(sub);
+  if (empreinte === null) return sub;
+
+  // APPROPRIATION D'ABORD, LECTURE ENSUITE — et non l'inverse.
+  //
+  // Lire puis écrire laisserait une fenêtre entre les deux : deux webhooks
+  // simultanés liraient tous deux « empreinte inconnue » et s'accorderaient
+  // chacun l'essai. Ici c'est la clé primaire qui arbitre. `ignoreDuplicates`
+  // rend l'insertion silencieuse si la carte est déjà connue : le premier
+  // arrivé reste propriétaire.
+  const { error: appropriationError } = await admin
+    .from('trial_card_fingerprints')
+    .upsert(
+      { fingerprint: empreinte, organization_id: organizationId },
+      { onConflict: 'fingerprint', ignoreDuplicates: true },
+    );
+
+  if (appropriationError) {
+    throw new Error(`Empreinte de carte non enregistrable : ${appropriationError.message}`);
+  }
+
+  const { data: proprietaire, error: lectureError } = await admin
+    .from('trial_card_fingerprints')
+    .select('organization_id')
+    .eq('fingerprint', empreinte)
+    .maybeSingle();
+
+  if (lectureError) {
+    throw new Error(`Empreinte de carte illisible : ${lectureError.message}`);
+  }
+
+  // C'est nous : premier usage de cette carte, l'essai est légitime.
+  if (proprietaire?.organization_id === organizationId) return sub;
+
+  // Une AUTRE organisation a déjà eu l'essai avec cette carte — ou l'a eu puis a
+  // été supprimée, auquel cas `organization_id` est `null` et l'empreinte reste
+  // parquée. Dans les deux cas, l'essai s'arrête maintenant.
+  const misAJour = (await stripeRequest(`/v1/subscriptions/${sub.id}`, {
+    trial_end: 'now',
+  })) as unknown as StripeSubscription;
+
+  // Les métadonnées sont conservées pour la même raison qu'ailleurs dans ce
+  // fichier : elles peuvent avoir été posées à la session et manquer sur
+  // l'objet renvoyé, alors qu'elles portent l'organisation et la formule.
+  return { ...misAJour, metadata: misAJour.metadata ?? sub.metadata };
 }

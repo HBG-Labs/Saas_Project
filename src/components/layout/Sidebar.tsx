@@ -2,13 +2,19 @@ import {
   Briefcase,
   Building2,
   ChevronDown,
+  Lock,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
-import { ACCOUNT_NAV, SIDEBAR_GROUPS, type NavGroup, type NavItem } from '@/config/navigation';
+import {
+  ACCOUNT_NAV,
+  SIDEBAR_GROUPS,
+  type NavGroup,
+  type ResolvedNavItem,
+} from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useCurrentIndustry } from '@/features/industries';
 import { useCurrentOrganization, useVisibleNavGroups } from '@/features/organizations';
@@ -61,7 +67,7 @@ function SidebarLink({
   collapsed,
   onNavigate,
 }: {
-  item: NavItem;
+  item: ResolvedNavItem;
   collapsed: boolean;
   onNavigate?: (() => void) | undefined;
 }) {
@@ -92,12 +98,28 @@ function SidebarLink({
     return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
   })();
 
+  /*
+    LE LIEN RESTE CLIQUABLE, MÊME VERROUILLÉ.
+
+    Un lien inerte laisse la personne sans réponse : elle voit qu'il existe
+    quelque chose, pas ce qu'il faut faire pour l'obtenir. La route est gardée
+    par `RequirePlan`, qui nomme la formule requise, son prix, et propose la
+    mise à niveau — soit exactement l'explication qu'une barre de 240 px ne peut
+    pas donner. Le cadenas annonce le mur ; la page le justifie.
+
+    `aria-disabled` serait donc faux : la destination est atteignable. C'est le
+    libellé accessible qui porte l'information.
+  */
+  const libelleAccessible = item.locked
+    ? `${item.label} — non inclus dans votre formule`
+    : item.label;
+
   return (
     <li>
       <NavLink
         to={item.to}
         onClick={onNavigate}
-        title={collapsed ? item.label : undefined}
+        title={collapsed || item.locked ? libelleAccessible : undefined}
         className={cn(
           'group relative flex min-h-9 items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium',
           'transition-all duration-150',
@@ -105,7 +127,12 @@ function SidebarLink({
           collapsed ? 'justify-center px-0 size-9 mx-auto' : 'w-full',
           isActive
             ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-            : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+            : item.locked
+              ? // Atténué, jamais effacé : le contraste reste au-dessus du seuil
+                // de lecture, sans quoi on n'aurait fait que cacher l'entrée
+                // d'une autre manière.
+                'text-subtle-foreground hover:bg-surface-hover hover:text-muted-foreground'
+              : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
         )}
       >
         <Icon
@@ -116,6 +143,25 @@ function SidebarLink({
           aria-hidden="true"
         />
         <span className={cn(collapsed && 'sr-only', 'truncate')}>{item.label}</span>
+
+        {item.locked ? (
+          <>
+            <Lock
+              className={cn(
+                'size-3 shrink-0',
+                // Replié, l'icône de section occupe déjà la case : le cadenas
+                // se pose en pastille dans l'angle plutôt qu'à côté du libellé,
+                // qui est alors masqué.
+                collapsed
+                  ? 'absolute -top-0.5 -right-0.5 rounded-full bg-surface'
+                  : 'ml-auto',
+                isActive ? 'text-primary-foreground' : 'text-subtle-foreground',
+              )}
+              aria-hidden="true"
+            />
+            <span className="sr-only">non inclus dans votre formule</span>
+          </>
+        ) : null}
       </NavLink>
     </li>
   );
@@ -359,8 +405,14 @@ export function Sidebar({
           isOpen={openGroupId === 'account'}
           onToggle={() => handleToggleGroup('account')}
         >
+          {/* Profil et Paramètres n'appartiennent à aucune formule : jamais de cadenas. */}
           {ACCOUNT_NAV.map((item) => (
-            <SidebarLink key={item.to} item={item} collapsed={isCollapsed} onNavigate={onNavigate} />
+            <SidebarLink
+              key={item.to}
+              item={{ ...item, locked: false }}
+              collapsed={isCollapsed}
+              onNavigate={onNavigate}
+            />
           ))}
         </CollapsibleSidebarSection>
       </div>

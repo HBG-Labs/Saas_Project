@@ -15,11 +15,17 @@ import { useDocumentTitle } from '@/lib/use-document-title';
  *
  * CE QUE CE TEXTE DÉCRIT EST CE QUE LE CODE FAIT
  *
- * Essai de quatorze jours sans carte, reprise du reliquat à la souscription,
- * prélèvement au prorata des sièges supplémentaires sur la facture suivante,
- * résiliation prenant effet en fin de période, retour à la formule Gratuite
- * sans suppression des données. Chacune de ces phrases correspond à un
- * comportement éprouvé, non à une intention.
+ * Essai de quatorze jours activé à la souscription et conditionné à un moyen
+ * de paiement, un seul par entreprise et par carte, prélèvement au prorata des
+ * sièges supplémentaires sur la facture suivante, résiliation prenant effet en
+ * fin de période, retour à la formule Gratuite sans suppression des données.
+ * Chacune de ces phrases correspond à un comportement éprouvé, non à une
+ * intention.
+ *
+ * C'est aussi ce qui rend ce fichier fragile : il décrit un comportement, donc
+ * il PÉRIME quand le comportement change. Le §2 a promis pendant deux semaines
+ * un essai automatique sans carte que le code n'accordait plus. Toute
+ * modification de la monétisation doit repasser ici.
  *
  * ⚠️ Rédigé par un ingénieur d'après le fonctionnement réel du produit, non par
  * un juriste. À relire avant l'ouverture commerciale.
@@ -49,10 +55,35 @@ export default function TermsPage() {
       </Section>
 
       <Section titre="2. Période d’essai">
+        {/*
+          RÉÉCRIT le 02/09/2026, après la refonte de la monétisation.
+
+          Ce paragraphe engageait REZO360 sur deux points devenus faux le jour
+          où `app.start_organization_trial` a cessé d'ouvrir un essai :
+
+            • « toute entreprise nouvellement créée bénéficie de quatorze jours
+              d'essai » — une entreprise neuve démarre désormais sur la formule
+              Gratuite ;
+            • « sans carte bancaire » — l'essai s'active par Stripe Checkout
+              avec saisie d'un moyen de paiement.
+
+          Un contrat qui promet plus que le produit ne délivre se retourne
+          contre son auteur : c'est le client qui l'oppose, pas l'inverse.
+        */}
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Toute entreprise nouvellement créée bénéficie de{' '}
-          <strong className="text-foreground">quatorze jours d’essai</strong>, sans carte bancaire
-          et sans engagement. Aucun prélèvement n’intervient pendant cette période.
+          Une entreprise nouvellement créée démarre sur la{' '}
+          <strong className="text-foreground">formule Gratuite</strong>, sans carte bancaire ni
+          limite de durée. Les formules payantes ouvrent{' '}
+          <strong className="text-foreground">quatorze jours d’essai</strong>, activés lors de la
+          souscription : un moyen de paiement est alors demandé pour vérification, mais{' '}
+          <strong className="text-foreground">aucun prélèvement n’intervient avant l’échéance</strong>{' '}
+          de l’essai, et la résiliation reste possible à tout moment d’ici là.
+        </p>
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          L’essai est accordé une seule fois par entreprise et par moyen de paiement. Une
+          souscription présentant une carte ayant déjà servi à un essai débute directement en
+          période payante. À l’échéance, en l’absence de moyen de paiement valide, l’abonnement
+          s’arrête au lieu de donner lieu à une facture impayée.
         </p>
         <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
           Souscrire pendant l’essai ne l’interrompt pas : les jours restants sont conservés, et le

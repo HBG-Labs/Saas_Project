@@ -54,6 +54,16 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     catalog_access: null,
     calculation_history: 10,
     favorites: 3,
+
+    // Un aperçu plafonné du terrain. Sans ces trois lignes, un patron qui
+    // s'inscrit et crée son entreprise ne rencontre qu'un mur « Mettre à
+    // niveau » sur chaque section, sans avoir rien vu fonctionner.
+    // Les plafonds sont appliqués côté serveur par
+    // `app.enforce_plan_row_quota` — un quota tenu par la seule interface
+    // n'est pas un quota.
+    customers: 3,
+    missions: 5,
+    interventions: 10,
   },
 
   starter: {

@@ -1,10 +1,10 @@
 import {
   ArrowRight,
+  BadgeCheck,
   Calendar,
   ChevronRight,
   Clock,
   MapPin,
-  ShieldCheck,
   Smartphone,
   Wrench,
   Zap,
@@ -80,7 +80,7 @@ export function Hero() {
         <div className="max-w-2xl lg:max-w-3xl">
           <Badge variant="primary" className="mb-5">
             <Zap className="size-3.5" aria-hidden="true" />
-            Essai de 14 jours, sans carte bancaire
+            Formule Gratuite sans carte · 14 jours d’essai sur les formules payantes
           </Badge>
 
           <h1 className="text-foreground text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
@@ -128,9 +128,21 @@ export function Hero() {
               <Zap className="text-primary size-4 shrink-0" aria-hidden="true" />
               Suivi des interventions en direct
             </li>
+            {/*
+              Ce badge annonçait « Hébergement européen, conforme RGPD ».
+              C'était FAUX : le projet qui sert REZO360 tourne en
+              `ca-central-1` — Montréal. Le Canada bénéficie d'une décision
+              d'adéquation de la Commission européenne, donc le transfert est
+              licite et le produit peut rester conforme ; mais l'hébergement
+              n'est pas européen, et l'écrire sur une page publique est une
+              allégation vérifiable par n'importe qui.
+
+              À ne rétablir que le jour où la base sera effectivement migrée
+              sur une région de l'Union.
+            */}
             <li className="flex items-center gap-2">
-              <ShieldCheck className="text-primary size-4 shrink-0" aria-hidden="true" />
-              Hébergement européen, conforme RGPD
+              <BadgeCheck className="text-primary size-4 shrink-0" aria-hidden="true" />
+              14 jours d’essai, sans engagement
             </li>
           </ul>
         </div>

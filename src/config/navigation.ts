@@ -26,6 +26,27 @@ export interface NavGroup {
   items: readonly NavItem[];
 }
 
+/**
+ * Une entrée de menu une fois confrontée à l'abonnement de l'organisation.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UN TYPE À PART PLUTÔT QU'UN CHAMP OPTIONNEL SUR `NavItem`
+ *
+ * `locked` n'est pas une donnée de configuration : personne ne l'écrit à la
+ * main, elle se CALCULE au rendu, pour une organisation donnée, à un instant
+ * donné. La poser dans `NavItem` inviterait à la déclarer en dur — et une
+ * entrée verrouillée en dur le resterait pour les abonnés qui l'ont payée.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export interface ResolvedNavItem extends NavItem {
+  /** La formule de l'organisation n'inclut pas cette destination. */
+  locked: boolean;
+}
+
+export interface ResolvedNavGroup extends NavGroup {
+  items: readonly ResolvedNavItem[];
+}
+
 export const ROOT_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Dashboard', icon: 'dashboard', primary: true },
 ];
@@ -78,32 +99,57 @@ export const METIERS_TOOLS_NAV: readonly NavItem[] = [
   { to: `${ROUTES.metiers}/reseaux`, label: 'Réseaux & Télécoms', icon: 'network' },
 ];
 
+/*
+  LA `feature` DÉCLARÉE ICI EST CELLE QUE LA RLS EXIGE.
+
+  Ces six entrées n'en déclaraient aucune. Elles s'affichaient donc pour tout le
+  monde, sans indication — et une organisation Gratuite qui cliquait « Articles
+  & Fournitures » tombait sur un mur « Mettre à niveau » qu'aucun signe ne
+  laissait prévoir.
+
+  La source de vérité est la POLICY, pas le nom de l'écran ni même le garde de
+  route : c'est elle qui décide ce que le serveur renverra. `stock_consumables`
+  et `stock_movements` exigent `stock` ; `equipment`, `vehicles` et leurs
+  entretiens exigent `equipment`. `router.tsx` a été aligné sur cette même
+  découpe — les trois écrans partageaient auparavant un garde `equipment` unique.
+*/
 export const STOCK_NAV: readonly NavItem[] = [
-  { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', primary: true },
-  { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right' },
-  { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench' },
+  { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', feature: 'stock', primary: true },
+  { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right', feature: 'stock' },
+  { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench', feature: 'equipment' },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [
-  { to: ROUTES.purchaseOrders, label: 'Commandes', icon: 'shopping-cart', primary: true },
-  { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store' },
-  { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator' },
+  { to: ROUTES.purchaseOrders, label: 'Commandes', icon: 'shopping-cart', feature: 'purchases', primary: true },
+  { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store', feature: 'purchases' },
+  { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator', feature: 'quotes' },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [
   { to: ROUTES.teams, label: 'Équipes', icon: 'users-round', feature: 'teams' },
   {
+    // PAS de `feature: 'members'`. Ces deux écrans ne sont gardés que par la
+    // permission `member.view` — aucun `RequirePlan` ne les protège. Déclarer
+    // une formule ici posait un cadenas MENSONGER sur les organisations
+    // Gratuites : la page s'ouvre, et c'est le quota de sièges
+    // (`plans.max_users`) qui refuse la seconde invitation, avec son propre
+    // message. Un cadenas doit annoncer un mur qui existe.
     to: ROUTES.organizationMembers,
     label: 'Techniciens',
     icon: 'users',
-    feature: 'members',
     vocabulary: { term: 'worker', plural: true },
   },
   {
+    // `equipment`, comme le stock — et non `members`, comme déclaré autrefois.
+    // Les six policies RLS de `vehicles` passent par
+    // `can_use_pro_module(..., 'equipment')` : sans cette formule, le serveur
+    // renvoie une flotte vide et refuse toute écriture. Mesuré sur une
+    // organisation Gratuite : la page s'ouvrait sur « Aucun véhicule trouvé »
+    // et un bouton « Ajouter un véhicule » voué à l'échec.
     to: ROUTES.vehicles,
     label: 'Véhicules',
     icon: 'truck',
-    feature: 'members',
+    feature: 'equipment',
   },
   {
     to: ROUTES.organization,
@@ -120,9 +166,14 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
     permission: 'billing.view',
   },
   {
+    // `RequirePlan feature={FEATURES.auditLog}` garde cette route, et NI Starter
+    // NI Pro n'incluent `audit_log`. Sans cette déclaration, l'entrée
+    // s'affichait ouverte à leurs propriétaires — qui ont bien la permission —
+    // et le clic butait sur un mur que rien n'annonçait.
     to: ROUTES.auditLog,
     label: 'Journal d’activité',
     icon: 'scroll',
+    feature: 'audit_log',
     permission: 'audit.view',
   },
 ];

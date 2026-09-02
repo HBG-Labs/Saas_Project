@@ -205,9 +205,17 @@ export const routes: RouteObject[] = [
                   },
 
                   {
-                    element: (
-                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel & stock" />
-                    ),
+                    // DEUX FORMULES DISTINCTES, ET NON UNE SEULE.
+                    //
+                    // Ces trois écrans partageaient un garde `equipment`. Or les
+                    // policies RLS de `stock_consumables` et `stock_movements`
+                    // exigent `stock`, pas `equipment` — seul `equipment` porte
+                    // le matériel. Les deux formules coïncident dans la grille
+                    // actuelle (Pro et au-delà les incluent ensemble), si bien
+                    // que rien ne se voyait ; le jour où l'une serait accordée
+                    // sans l'autre, les pages de stock se seraient ouvertes sur
+                    // un inventaire vide, sans expliquer pourquoi.
+                    element: <RequirePlan feature={FEATURES.stock} label="Le stock & les consommables" />,
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
@@ -220,6 +228,19 @@ export const routes: RouteObject[] = [
                             path: ROUTES.stockMovements,
                             lazy: lazyPage(() => import('@/pages/stock/StockMovementsPage')),
                           },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    element: (
+                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />
+                    ),
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
+                        children: [
                           {
                             path: ROUTES.equipment,
                             lazy: lazyPage(() => import('@/pages/equipment/EquipmentPage')),
@@ -327,8 +348,26 @@ export const routes: RouteObject[] = [
                         lazy: lazyPage(() => import('@/pages/organization/MembersPage')),
                       },
                       {
-                        path: ROUTES.vehicles,
-                        lazy: lazyPage(() => import('@/pages/vehicles/VehiclesPage')),
+                        // La flotte n'était gardée que par la permission, alors
+                        // que ses policies RLS exigent toutes `equipment`. Une
+                        // organisation Gratuite atteignait donc une page qui
+                        // s'affichait normalement, ne renvoyait aucun véhicule
+                        // et refusait le moindre ajout — sans jamais dire que
+                        // c'était la formule qui était en cause. C'est
+                        // exactement le malentendu que `RequirePlan` existe
+                        // pour lever.
+                        element: (
+                          <RequirePlan
+                            feature={FEATURES.equipment}
+                            label="La flotte de véhicules"
+                          />
+                        ),
+                        children: [
+                          {
+                            path: ROUTES.vehicles,
+                            lazy: lazyPage(() => import('@/pages/vehicles/VehiclesPage')),
+                          },
+                        ],
                       },
                     ],
                   },

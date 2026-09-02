@@ -33,13 +33,29 @@ const FAQS: FaqItem[] = [
     id: '4',
     question: 'Puis-je tester REZO360 gratuitement ?',
     answer:
-      'Absolument. Vous bénéficiez de 14 jours d’essai gratuit sans carte bancaire sur les formules payantes, ainsi que d’un plan Gratuit permanent sans limite de temps.',
+      // « sans carte bancaire » n'est plus vrai : l'essai passe désormais par
+      // Stripe avec saisie d'un moyen de paiement (0 € débité), sans quoi il
+      // suffisait de changer d'adresse e-mail pour renouveler les 14 jours
+      // indéfiniment. Promettre le contraire sur la page d'accueil se paierait
+      // à l'écran suivant.
+      'Oui. Les formules payantes ouvrent 14 jours d’essai : une carte est demandée pour vérification, rien n’est débité avant la fin de l’essai et vous pouvez résilier à tout moment. La formule Gratuite, elle, reste sans carte et sans limite de durée.',
   },
   {
     id: '5',
     question: 'Comment mes données d’entreprise sont-elles protégées ?',
     answer:
-      'Toutes vos données sont hébergées en Europe et chiffrées de bout en bout (AES-256). L’accès est strictement cloisonné par organisation (PostgreSQL Row Level Security).',
+      // Deux corrections de fait.
+      //
+      // « en Europe » : la base tourne en `ca-central-1`, à Montréal. Le Canada
+      // relève d'une décision d'adéquation de la Commission européenne, donc le
+      // transfert est licite — mais l'hébergement n'est pas européen.
+      //
+      // « chiffrées de bout en bout » : l'expression a un sens précis — seuls
+      // les extrémités peuvent déchiffrer, l'hébergeur en est incapable. Ce
+      // n'est pas ce que fait Supabase, qui chiffre en transit et au repos tout
+      // en pouvant lire la donnée. Revendiquer le bout-en-bout est l'allégation
+      // de sécurité la plus facilement démentie qui soit.
+      'Vos données sont hébergées au Canada, pays reconnu par la Commission européenne comme offrant un niveau de protection adéquat. Elles sont chiffrées en transit (TLS) et au repos (AES-256), et l’accès est strictement cloisonné par organisation au niveau de la base (PostgreSQL Row Level Security).',
   },
 ];
 

@@ -86,7 +86,18 @@ export const HEBERGEURS = [
  * registre de traitements en a besoin.
  */
 export const SOUS_TRAITANTS = [
-  { nom: 'Supabase', objet: 'Base de données, authentification, stockage', zone: 'Union européenne' },
+  // Zone VÉRIFIÉE auprès de l'API Supabase, et non supposée : le projet tourne
+  // en `ca-central-1` (Montréal). L'annoncer « Union européenne » était une
+  // erreur de fait dans un document que l'article 13 du RGPD rend opposable —
+  // un client professionnel recopie cette ligne dans son propre registre de
+  // traitements. Le Canada fait l'objet d'une décision d'adéquation de la
+  // Commission pour les organismes privés, ce qui rend le transfert licite
+  // sans clauses contractuelles types.
+  {
+    nom: 'Supabase',
+    objet: 'Base de données, authentification, stockage',
+    zone: 'Canada, décision d’adéquation',
+  },
   { nom: 'Vercel', objet: 'Diffusion de l’application', zone: 'États-Unis, clauses contractuelles types' },
   { nom: 'Stripe', objet: 'Paiement et facturation des abonnements', zone: 'Union européenne / États-Unis' },
   { nom: 'Infomaniak', objet: 'Envoi des courriels transactionnels', zone: 'Suisse' },
