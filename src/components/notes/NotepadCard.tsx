@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useCreateNote, useDeleteNote, useNotes, useUpdateNote } from '@/features/notes';
 import { usePermission } from '@/features/organizations';
 import type { Note } from '@/types/domain';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
 
@@ -119,7 +120,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const [lastSavedTime, setLastSavedTime] = useState<string>('Synchronisé');
 
   /**
@@ -243,8 +244,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
   const handleCopyContent = () => {
     if (!activeNote) return;
     void navigator.clipboard.writeText(activeNote.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   const handleDownloadNote = () => {

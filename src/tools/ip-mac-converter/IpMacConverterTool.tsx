@@ -1,5 +1,6 @@
 import { Check, Copy, Cpu, Network, Terminal } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
 function ipToLong(ip: string): number | null {
   const parts = ip.split('.');
@@ -88,7 +89,7 @@ export default function IpMacConverterTool() {
   const [macInput, setMacInput] = useState<string>('001a2b3c4d5e');
   const [multicastIpInput, setMulticastIpInput] = useState<string>('239.255.255.250');
 
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedField, signalerCopie] = useEphemeralValue<string>();
 
   // Computations
   const subnetMask = useMemo(() => cidrToSubnetMask(cidrPrefix), [cidrPrefix]);
@@ -111,8 +112,7 @@ export default function IpMacConverterTool() {
 
   const copyText = (text: string, label: string) => {
     void navigator.clipboard.writeText(text);
-    setCopiedField(label);
-    setTimeout(() => setCopiedField(null), 2000);
+    signalerCopie(label);
   };
 
   return (

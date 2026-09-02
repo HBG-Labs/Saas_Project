@@ -15,6 +15,7 @@ import { ROUTES } from '@/config/routes';
 import { useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import type { CalculationHistoryEntry } from '../types/tools.types';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 interface AttachCalculationModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export function AttachCalculationModal({
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
 
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const [selectedMissionId, setSelectedMissionId] = useState<string>('');
 
   const missionsQuery = useMissions(organizationId, {
@@ -53,11 +54,11 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
     // n'annoncer « Copié » qu'une fois l'écriture réellement acceptée.
     void navigator.clipboard.writeText(technicalNote).then(
       () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        signalerCopied();
       },
       () => {
-        setCopied(false);
+        // Échec d'écriture dans le presse-papiers : l'indicateur n'a jamais
+        // été levé, il n'y a rien à rabaisser.
       },
     );
   };

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 import {
   calcWavelength,
@@ -38,7 +39,7 @@ type ModuleId =
 
 export default function RfCalculatorsTool() {
   const [activeModule, setActiveModule] = useState<ModuleId>('wavelength');
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   // 1. Longueur d'onde
   const [freqMhz, setFreqMhz] = useState(2400);
@@ -145,8 +146,7 @@ export default function RfCalculatorsTool() {
     else summary = `Zone de Fresnel @ ${fresnelD1Km}+${fresnelD2Km} km (${fresnelFreqGhz} GHz) -> r1 = ${resFresnel.r1Meters} m (Clairance 60%: ${resFresnel.clearance60PercentMeters} m)`;
 
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

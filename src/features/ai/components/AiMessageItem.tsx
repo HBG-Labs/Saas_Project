@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 import type { AiMessage } from '../types/ai.types';
 
@@ -81,14 +82,13 @@ function formatInline(text: string): string {
 
 export function AiMessageItem({ message, onExecuteAction, onRetry }: AiMessageItemProps) {
   const isUser = message.role === 'user';
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      signalerCopied();
     } catch {
       // Ignore clipboard write failure
     }

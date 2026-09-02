@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 
 import { computeOhmLaw, type OhmLawResult } from './compute';
 import type { CurrentUnit, ResistanceUnit, TargetVariable, VoltageUnit } from './schema';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function OhmLawTool() {
   const [target, setTarget] = useState<TargetVariable>('U');
@@ -21,7 +22,7 @@ export default function OhmLawTool() {
   const [resistance, setResistance] = useState<string>('50');
   const [resistanceUnit, setResistanceUnit] = useState<ResistanceUnit>('Ω');
 
-  const [copied, setCopied] = useState<boolean>(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const [showDoc, setShowDoc] = useState<boolean>(false);
 
   // Exécution dynamique du calcul
@@ -57,8 +58,7 @@ export default function OhmLawTool() {
     if (!result.success || !result.formattedValue) return;
     const text = `[LOI D'OHM] ${target} = ${result.formattedValue} (${result.formulaUsed}) -> ${result.explanation}`;
     void navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

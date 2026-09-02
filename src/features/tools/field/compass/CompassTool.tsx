@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 interface GeoLocationState {
   lat: number | null;
@@ -50,7 +51,7 @@ export default function CompassTool() {
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [hasOrientationSensor, setHasOrientationSensor] = useState<boolean | null>(null);
   const [permissionRequested, setPermissionRequested] = useState(false);
-  const [copiedGps, setCopiedGps] = useState(false);
+  const [copiedGps, signalerCopiedGps] = useEphemeralFlag();
 
   const [coords, setCoords] = useState<GeoLocationState>({
     lat: null,
@@ -134,8 +135,7 @@ export default function CompassTool() {
   const copyCoordinates = () => {
     if (coords.lat !== null && coords.lng !== null) {
       navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`);
-      setCopiedGps(true);
-      setTimeout(() => setCopiedGps(false), 2000);
+      signalerCopiedGps();
     }
   };
 

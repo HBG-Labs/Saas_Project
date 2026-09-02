@@ -1,5 +1,6 @@
 import { Calendar, Check, Copy, FileCode, Globe, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 type TimeUnit = 'seconds' | 'minutes' | 'hours' | 'days';
 
@@ -27,7 +28,7 @@ export default function DnsTtlCalculatorTool() {
   const [recordType, setRecordType] = useState<'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'SPF'>('A');
   const [recordValue, setRecordValue] = useState<string>('192.0.2.1');
 
-  const [copied, setCopied] = useState<boolean>(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const ttlAnalysis = useMemo(() => {
     const currentSeconds = currentTtlValue * TIME_UNIT_SECONDS[currentTtlUnit];
@@ -71,8 +72,7 @@ export default function DnsTtlCalculatorTool() {
 
   const copyRecord = () => {
     void navigator.clipboard.writeText(generatedRecord);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

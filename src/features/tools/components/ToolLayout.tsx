@@ -18,6 +18,7 @@ import { useToolFavorites } from '../hooks/useToolFavorites';
 import { useToolHistory } from '../hooks/useToolHistory';
 import type { CalculationHistoryEntry } from '../types/tools.types';
 import { AttachCalculationModal } from './AttachCalculationModal';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 interface ToolLayoutProps {
   toolSlug: string;
@@ -225,13 +226,12 @@ export function CopyResultButton({
   label?: string;
   className?: string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(textToCopy);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      signalerCopied();
     } catch {
       // Fallback
     }

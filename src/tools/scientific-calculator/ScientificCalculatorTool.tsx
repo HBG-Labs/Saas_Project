@@ -17,6 +17,7 @@ import { HistoryUpgradeBanner, useCalculationHistory } from '@/features/history'
 
 import { evaluateScientificExpression } from './compute';
 import { ScientificCalculatorDocsModal } from './components/ScientificCalculatorDocsModal';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 type CalculatorMobileMode = 'scientific' | 'standard';
 
@@ -24,7 +25,7 @@ export default function ScientificCalculatorTool() {
   const [expression, setExpression] = useState('');
   const [angleUnit, setAngleUnit] = useState<'deg' | 'rad'>('deg');
   const [memory, setMemory] = useState<number>(0);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const [mobileMode, setMobileMode] = useState<CalculatorMobileMode>('scientific');
 
   // Hook d'historique centralisé sensible aux abonnements
@@ -155,8 +156,7 @@ export default function ScientificCalculatorTool() {
   const handleCopy = () => {
     const summary = `${expression ? expression + ' = ' : ''}${currentResult.formattedResult}`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   // Styles de touches unifiés et ultra-tactiles

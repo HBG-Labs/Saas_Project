@@ -50,6 +50,7 @@ import {
   type NewLeaveSubmission,
 } from '@/features/planning';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
 /**
  * Planning & congés.
@@ -97,7 +98,7 @@ export default function PlanningPage() {
   const [isNewEventOpen, setIsNewEventOpen] = useState(false);
   const [selectedPlanDate, setSelectedPlanDate] = useState<string | null>(null);
   const [isImportICSOpen, setIsImportICSOpen] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, signalerNotification] = useEphemeralValue<string>(4000);
 
   const membersQuery = useMembers(organizationId);
   const leavesQuery = useLeaveRequests(organizationId);
@@ -143,8 +144,7 @@ export default function PlanningPage() {
   const pendingLeavesCount = leaves.filter((leave) => leave.status === 'pending').length;
 
   const showNotification = (message: string) => {
-    setNotification(message);
-    setTimeout(() => setNotification(null), 4000);
+    signalerNotification(message);
   };
 
   const handleAddLeave = (submission: NewLeaveSubmission) => {

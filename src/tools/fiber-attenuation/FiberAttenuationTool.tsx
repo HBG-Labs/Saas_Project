@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 
 import { computeFiberAttenuation } from './compute';
 import type { FiberAttenuationInputs } from './schema';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function FiberAttenuationTool() {
   const [wavelength, setWavelength] = useState<'1310' | '1550'>('1310');
@@ -17,7 +18,7 @@ export default function FiberAttenuationTool() {
   const [connectorsCount, setConnectorsCount] = useState(4);
   const [connectorLossDb, setConnectorLossDb] = useState(0.5);
   const [safetyMarginDb, setSafetyMarginDb] = useState(1.5);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const result = useMemo(() => {
     const inputs: FiberAttenuationInputs = {
@@ -35,8 +36,7 @@ export default function FiberAttenuationTool() {
   const handleCopy = () => {
     const summary = `Atténuation totale liaison optique (${wavelength} nm, ${distanceKm} km) : -${result.totalWithMarginDb} dB (${result.statusLabel})`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

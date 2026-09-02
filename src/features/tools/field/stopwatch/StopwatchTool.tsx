@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 interface LapItem {
   lapIndex: number;
@@ -64,7 +65,7 @@ export default function StopwatchTool() {
   const [timerFinished, setTimerFinished] = useState(false);
   const timerEndTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
-  const [copiedLaps, setCopiedLaps] = useState(false);
+  const [copiedLaps, signalerCopiedLaps] = useEphemeralFlag();
 
   // Émission sonore pour la fin du minuteur
   const playAlarm = useCallback(() => {
@@ -169,8 +170,7 @@ export default function StopwatchTool() {
       )
       .join('\n');
     navigator.clipboard.writeText(text);
-    setCopiedLaps(true);
-    setTimeout(() => setCopiedLaps(false), 2000);
+    signalerCopiedLaps();
   };
 
   // Trouver le tour le plus rapide et le plus lent

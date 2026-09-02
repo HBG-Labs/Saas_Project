@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 
 import { computeSubnet } from './compute';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function SubnetCalculatorTool() {
   const [ipAddress, setIpAddress] = useState('192.168.10.0');
   const [cidr, setCidr] = useState(24);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const result = useMemo(
     () => computeSubnet({ ipAddress: ipAddress.trim() || '192.168.1.0', cidr }),
@@ -21,8 +22,7 @@ export default function SubnetCalculatorTool() {
   const handleCopy = () => {
     const summary = `Sous-réseau IP : ${result.networkAddress}/${result.cidr} | Masque: ${result.netmask} | Hôtes utiles: ${result.usableHosts} (${result.firstUsableIp} -> ${result.lastUsableIp})`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

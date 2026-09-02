@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 
 import { computeOhmLawPower } from './compute';
 import type { OhmLawPowerInputs } from './schema';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function OhmLawPowerTool() {
   const [phaseType, setPhaseType] = useState<'single' | 'three'>('single');
@@ -16,7 +17,7 @@ export default function OhmLawPowerTool() {
   const [cosPhi, setCosPhi] = useState(0.9);
   const [cableLengthMeters, setCableLengthMeters] = useState(25);
   const [cableSectionMm2, setCableSectionMm2] = useState(2.5);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   /**
    * L'objet est construit DANS le `useMemo`, pas à côté.
@@ -42,8 +43,7 @@ export default function OhmLawPowerTool() {
   const handleCopy = () => {
     const summary = `Puissance électrique (${phaseType === 'three' ? 'Triphasé 400V' : 'Monophasé 230V'}) : ${result.activePowerKw} kW (${result.apparentPowerKva} kVA) | Courant: ${currentAmps} A | Chute de tension: ${result.voltageDropPercent} %`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

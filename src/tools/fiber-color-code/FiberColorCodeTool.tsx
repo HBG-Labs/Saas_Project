@@ -14,6 +14,7 @@ import {
 } from './compute';
 import { CAPACITIES_MODULO_6, CAPACITIES_MODULO_12 } from './schema';
 import type { CableCapacity, ColorStandard, ModuleType } from './schema';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function FiberColorCodeTool() {
   const [standard, setStandard] = useState<ColorStandard>('orange_ft');
@@ -26,7 +27,7 @@ export default function FiberColorCodeTool() {
   const [reverseTube, setReverseTube] = useState(4);
   const [reverseFiber, setReverseFiber] = useState(11);
 
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   // Capacités selon le modulo sélectionné
   const availableCapacities = useMemo(() => {
@@ -60,8 +61,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
 ----------------------------------------`;
 
     void navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   const handleSelectColorInTube = (positionIndex: number) => {

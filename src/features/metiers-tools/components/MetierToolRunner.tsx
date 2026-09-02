@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ProToolUpgradeModal, useUserEntitlements } from '@/features/billing';
 import { cn } from '@/lib/cn';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 import { useMetierHistory } from '../hooks/useMetierHistory';
 import type { MetierToolDefinition, ReliabilityLevel } from '../types';
 
@@ -68,7 +69,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   const [inputs, setInputs] = useState<Record<string, any>>(initialInputs);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
   const { addHistoryEntry } = useMetierHistory();
 
   // Réinitialiser si l'outil change
@@ -146,8 +147,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
     ].filter(Boolean);
 
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      signalerCopied();
     });
   };
 

@@ -3,6 +3,7 @@ import { Cable, Check, Copy, Minus, Plus, ShieldCheck } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 // -----------------------------------------------------------------------------
 // SPÉCIFICATION EXACTE DU CODE 28 PAIRES TÉLÉCOM (4 AMORCES DE 7 PAIRES)
@@ -75,7 +76,7 @@ export default function CopperColorCodeTool() {
   // Mode PTT / Capacité
   const [selectedCapacity, setSelectedCapacity] = useState<number>(28);
   const [pttPairNumber, setPttPairNumber] = useState<number>(1);
-  const [copied, setCopied] = useState<boolean>(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const pttResult = getPttPairDetails(pttPairNumber);
 
@@ -91,8 +92,7 @@ export default function CopperColorCodeTool() {
   const handleCopyRepérage = () => {
     const summary = `Repérage Câble Cuivre Télécom ${selectedCapacity} paires — Paire #${pttPairNumber} : Fil A = ${pttResult.amorce.name} | Fil B = ${pttResult.accomp.name} (Amorce #${pttResult.amorceGroupNumber})`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   const handlePairChange = (val: number) => {

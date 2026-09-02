@@ -18,6 +18,7 @@ import {
   SecuritySettingsTab,
 } from '@/features/settings';
 import { cn } from '@/lib/cn';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 type SettingsTab = 'appearance' | 'planning_gps' | 'notifications' | 'organization_billing' | 'security';
 
@@ -41,11 +42,10 @@ export default function SettingsPage() {
   });
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
-  const [savedFeedback, setSavedFeedback] = useState(false);
+  const [savedFeedback, signalerSavedFeedback] = useEphemeralFlag(2500);
 
   const triggerSavedFeedback = () => {
-    setSavedFeedback(true);
-    setTimeout(() => setSavedFeedback(false), 2500);
+    signalerSavedFeedback();
   };
 
   return (

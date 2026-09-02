@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 
 import { computeDbmMwConversion } from './compute';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export default function DbmMwConverterTool() {
   const [mode, setMode] = useState<'dbm_to_mw' | 'mw_to_dbm'>('dbm_to_mw');
   const [value, setValue] = useState(10);
   const [impedanceOhms, setImpedanceOhms] = useState(50);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const result = useMemo(
     () =>
@@ -26,8 +27,7 @@ export default function DbmMwConverterTool() {
   const handleCopy = () => {
     const summary = `Conversion Puissance : ${result.powerDbm} dBm = ${result.powerMw} mW (${result.powerWatts} W) | Vrms: ${result.vrmsVolts} V @ ${impedanceOhms} Ω`;
     void navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    signalerCopied();
   };
 
   return (

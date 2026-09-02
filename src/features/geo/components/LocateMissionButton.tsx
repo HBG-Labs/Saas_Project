@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { getCurrentPosition } from '../geolocation';
 import { useUpdateMission } from '@/features/missions';
 import type { GeoError } from '../types';
+import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
 interface LocateMissionButtonProps {
   missionId: string;
@@ -30,15 +31,15 @@ export function LocateMissionButton({
   size = 'sm',
 }: LocateMissionButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [successAccuracy, setSuccessAccuracy] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [successAccuracy, signalerPrecision, effacerPrecision] = useEphemeralValue<number>(5000);
+  const [error, signalerErreur, effacerErreur] = useEphemeralValue<string>(6000);
 
   const updateMissionMutation = useUpdateMission(missionId);
 
   const handleLocate = async () => {
     setIsLoading(true);
-    setError(null);
-    setSuccessAccuracy(null);
+    effacerErreur();
+    effacerPrecision();
 
     try {
       const pos = await getCurrentPosition();
@@ -47,12 +48,10 @@ export function LocateMissionButton({
         longitude: pos.longitude,
       });
 
-      setSuccessAccuracy(Math.round(pos.accuracy));
-      setTimeout(() => setSuccessAccuracy(null), 5000);
+      signalerPrecision(Math.round(pos.accuracy));
     } catch (err) {
       const geoErr = err as GeoError;
-      setError(geoErr.message || 'Erreur lors de la capture GPS.');
-      setTimeout(() => setError(null), 6000);
+      signalerErreur(geoErr.message || 'Erreur lors de la capture GPS.');
     } finally {
       setIsLoading(false);
     }

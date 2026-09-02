@@ -12,6 +12,7 @@ import { useCreateMemberAccount } from '../hooks/useMembers';
 import { ROLE_LABELS } from '../rbac';
 
 import { RoleSelect } from './RoleSelect';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export interface AddMemberDialogProps {
   organizationId: string;
@@ -38,7 +39,7 @@ export function AddMemberDialog({
   const [role, setRole] = useState<OrgRole>('technician');
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [account, setAccount] = useState<CreatedMemberAccount | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, signalerCopied] = useEphemeralFlag();
 
   const createAccount = useCreateMemberAccount(organizationId);
 
@@ -78,8 +79,7 @@ export function AddMemberDialog({
         `Accès REZO360\nIdentifiant : ${account.email}\nMot de passe provisoire : ${account.password}`,
       )
       .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        signalerCopied();
       })
       .catch(() => {
         // Hors contexte sécurisé, l'écriture presse-papiers est refusée. Le

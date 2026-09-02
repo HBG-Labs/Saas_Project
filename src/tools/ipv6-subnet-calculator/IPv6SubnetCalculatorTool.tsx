@@ -1,5 +1,6 @@
 import { Check, Copy, Cpu, Globe, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
 function expandIPv6(input: string): string | null {
   const trimmed = input.trim().toLowerCase();
@@ -127,7 +128,7 @@ export default function IPv6SubnetCalculatorTool() {
   const [ipv6Input, setIpv6Input] = useState<string>('2001:db8:85a3::8a2e:370:7334');
   const [prefixLength, setPrefixLength] = useState<number>(64);
   const [macInput, setMacInput] = useState<string>('00:1A:2B:3C:4D:5E');
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedField, signalerCopie] = useEphemeralValue<string>();
 
   const expanded = useMemo(() => expandIPv6(ipv6Input), [ipv6Input]);
   const compressed = useMemo(() => (expanded ? compressIPv6(expanded) : null), [expanded]);
@@ -163,8 +164,7 @@ export default function IPv6SubnetCalculatorTool() {
 
   const copyToClipboard = (text: string, label: string) => {
     void navigator.clipboard.writeText(text);
-    setCopiedField(label);
-    setTimeout(() => setCopiedField(null), 2000);
+    signalerCopie(label);
   };
 
   return (

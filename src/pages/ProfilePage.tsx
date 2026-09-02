@@ -42,6 +42,7 @@ import {
   type FullProfile,
 } from '@/features/profile';
 import { formatDate } from '@/lib/format';
+import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 import { supabase } from '@/services/supabase';
 
 
@@ -156,7 +157,7 @@ export default function ProfilePage() {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [draftProfile, setDraftProfile] = useState<UserProfileData>(profile);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [savedSuccess, signalerSavedSuccess] = useEphemeralFlag(3000);
   const [submitError, setSubmitError] = useState<unknown>(null);
 
   // Gestion du mot de passe
@@ -166,13 +167,14 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordSuccess, signalerPasswordSuccess, effacerPasswordSuccess] =
+    useEphemeralFlag(5000);
   const [passwordError, setPasswordError] = useState<unknown>(null);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError(null);
-    setPasswordSuccess(false);
+    effacerPasswordSuccess();
 
     if (newPassword.length < 6) {
       setPasswordError(new Error('Le nouveau mot de passe doit contenir au moins 6 caractères.'));
@@ -187,11 +189,10 @@ export default function ProfilePage() {
     setIsChangingPassword(true);
     try {
       await updatePassword(newPassword);
-      setPasswordSuccess(true);
+      signalerPasswordSuccess();
       setNewPassword('');
       setConfirmPassword('');
       setIsPasswordModalOpen(false);
-      setTimeout(() => setPasswordSuccess(false), 5000);
     } catch (err) {
       setPasswordError(err);
     } finally {
@@ -265,8 +266,7 @@ export default function ProfilePage() {
       },
       {
         onSuccess: () => {
-          setSavedSuccess(true);
-          setTimeout(() => setSavedSuccess(false), 3000);
+          signalerSavedSuccess();
         },
         onError: setSubmitError,
       },

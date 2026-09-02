@@ -27,6 +27,7 @@ import { useCurrentOrganization } from '@/features/organizations';
 import { useQuotes } from '@/features/quotes';
 import { useTeams } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
 type ViewMode = 'month' | 'quarter' | 'year';
 type QuarterCode = 'Q1' | 'Q2' | 'Q3' | 'Q4';
@@ -45,7 +46,7 @@ export default function AnalyticsPage() {
   const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
 
   const [isExporting, setIsExporting] = useState(false);
-  const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
+  const [exportSuccessMessage, signalerExport, effacerExport] = useEphemeralValue<string>(5000);
 
   const quarterLabels: Record<QuarterCode, string> = {
     Q1: 'T1 (Janv - Mars)',
@@ -188,7 +189,7 @@ export default function AnalyticsPage() {
   // Génération d'un Document PDF Haute Définition Exécutif
   const handleExportPDF = () => {
     setIsExporting(true);
-    setExportSuccessMessage(null);
+    effacerExport();
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -578,8 +579,7 @@ export default function AnalyticsPage() {
 
     setTimeout(() => {
       setIsExporting(false);
-      setExportSuccessMessage('Rapport PDF Officiel généré avec succès !');
-      setTimeout(() => setExportSuccessMessage(null), 5000);
+      signalerExport('Rapport PDF Officiel généré avec succès !');
     }, 800);
   };
 
@@ -758,7 +758,7 @@ export default function AnalyticsPage() {
           </span>
           <button
             type="button"
-            onClick={() => setExportSuccessMessage(null)}
+            onClick={effacerExport}
             className="text-success/80 hover:text-success"
           >
             ✕
