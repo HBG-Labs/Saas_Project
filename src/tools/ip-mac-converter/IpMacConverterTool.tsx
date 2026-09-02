@@ -118,17 +118,17 @@ export default function IpMacConverterTool() {
   return (
     <div className="space-y-6">
       {/* ------------------- MODULE 1 : WILDCARD MASK & CISCO ACL */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <Terminal className="size-5 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+          <Terminal className="size-5 text-primary" />
+          <h3 className="text-sm font-bold text-foreground dark:text-white">
             Calculateur de Masque Wildcard (Cisco ACL & OSPF)
           </h3>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <label htmlFor="ip-mac-net-ip-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-net-ip-input" className="block text-xs font-semibold text-muted-foreground">
               Adresse IP de réseau
             </label>
             <input
@@ -137,16 +137,16 @@ export default function IpMacConverterTool() {
               value={ipInput}
               onChange={(e) => setIpInput(e.target.value)}
               placeholder="ex: 192.168.1.0"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="ip-mac-cidr-prefix-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-cidr-prefix-input" className="block text-xs font-semibold text-muted-foreground">
               Masque / Notation CIDR
             </label>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-bold text-slate-500">/</span>
+              <span className="font-mono text-sm font-bold text-muted-foreground">/</span>
               <input
                 id="ip-mac-cidr-prefix-input"
                 type="number"
@@ -154,13 +154,13 @@ export default function IpMacConverterTool() {
                 max="32"
                 value={cidrPrefix}
                 onChange={(e) => setCidrPrefix(Math.min(32, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-bold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="ip-mac-subnet-mask-output" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-subnet-mask-output" className="block text-xs font-semibold text-muted-foreground">
               Masque de sous-réseau calculé
             </label>
             <input
@@ -168,38 +168,38 @@ export default function IpMacConverterTool() {
               type="text"
               readOnly
               value={subnetMask}
-              className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2 font-mono text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300"
+              className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-bold text-muted-foreground dark:border-border dark:bg-surface-sunken dark:text-muted-foreground"
             />
           </div>
         </div>
 
         {/* Résultats Wildcard */}
         <div className="grid gap-4 sm:grid-cols-2 pt-2">
-          <div className="rounded-xl border border-blue-500/20 bg-blue-50/50 p-4 dark:bg-blue-950/20 space-y-1">
-            <span className="block text-xs font-bold text-blue-600 dark:text-blue-400">
+          <div className="rounded-xl border border-primary/20 bg-primary/10 p-4 dark:bg-primary/20 space-y-1">
+            <span className="block text-xs font-bold text-primary">
               Masque Wildcard d&apos;Inversion (Cisco / OSPF)
             </span>
-            <p className="font-mono text-lg font-black text-slate-900 dark:text-white">
+            <p className="font-mono text-lg font-black text-foreground dark:text-white">
               {wildcardMask}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Formule : 255.255.255.255 - SubnetMask ({subnetMask})
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-200/80 bg-slate-950 p-4 text-white space-y-2">
+          <div className="rounded-xl border border-border/80 bg-surface-sunken p-4 text-white space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-bold">Commande Cisco ACL générée :</span>
+              <span className="text-muted-foreground font-bold">Commande Cisco ACL générée :</span>
               <button
                 type="button"
                 onClick={() => copyText(ciscoAclCommand, 'acl')}
-                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+                className="text-primary hover:text-primary flex items-center gap-1 text-xs font-semibold cursor-pointer"
               >
                 {copiedField === 'acl' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                 Copier
               </button>
             </div>
-            <code className="block font-mono text-xs text-blue-400 font-bold">
+            <code className="block font-mono text-xs text-primary font-bold">
               {ciscoAclCommand}
             </code>
           </div>
@@ -207,20 +207,20 @@ export default function IpMacConverterTool() {
 
         {/* Représentation Binaire / Hexadécimale */}
         {binaryIp && (
-          <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t border-border">
             <div className="space-y-1">
-              <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <span className="block text-xs font-semibold text-muted-foreground">
                 Représentation Binaire IP (32 Bits) :
               </span>
-              <code className="block font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              <code className="block font-mono text-xs font-bold text-primary">
                 {binaryIp}
               </code>
             </div>
             <div className="space-y-1">
-              <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <span className="block text-xs font-semibold text-muted-foreground">
                 Représentation Hexadécimale IP :
               </span>
-              <code className="block font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
+              <code className="block font-mono text-xs font-bold text-warning">
                 {hexIp}
               </code>
             </div>
@@ -229,16 +229,16 @@ export default function IpMacConverterTool() {
       </div>
 
       {/* ------------------- MODULE 2 : NORMALISATEUR MAC */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <Cpu className="size-5 text-indigo-500" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+          <Cpu className="size-5 text-primary" />
+          <h3 className="text-sm font-bold text-foreground dark:text-white">
             Normaliseur & Formateur d&apos;Adresse MAC
           </h3>
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="ip-mac-raw-mac-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <label htmlFor="ip-mac-raw-mac-input" className="block text-xs font-semibold text-muted-foreground">
             Saisissez une adresse MAC (n&apos;importe quel format)
           </label>
           <input
@@ -247,34 +247,34 @@ export default function IpMacConverterTool() {
             value={macInput}
             onChange={(e) => setMacInput(e.target.value)}
             placeholder="ex: 001a2b3c4d5e ou 00:1A:2B:3C:4D:5E"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+            className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
           />
 
           {macFormats ? (
             <div className="grid gap-3 sm:grid-cols-3 pt-2">
-              <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Deux-Points (Standard)</span>
-                <code className="mt-1 block font-mono text-xs font-bold text-slate-900 dark:text-white">
+              <div className="rounded-xl border border-border/80 bg-surface-sunken p-3 dark:border-border dark:bg-surface-sunken">
+                <span className="block text-xs font-bold text-muted-foreground uppercase">Format Deux-Points (Standard)</span>
+                <code className="mt-1 block font-mono text-xs font-bold text-foreground dark:text-white">
                   {macFormats.colon}
                 </code>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Cisco (Point Quad)</span>
-                <code className="mt-1 block font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
+              <div className="rounded-xl border border-border/80 bg-surface-sunken p-3 dark:border-border dark:bg-surface-sunken">
+                <span className="block text-xs font-bold text-muted-foreground uppercase">Format Cisco (Point Quad)</span>
+                <code className="mt-1 block font-mono text-xs font-bold text-primary">
                   {macFormats.cisco}
                 </code>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Format Tirés (Windows)</span>
-                <code className="mt-1 block font-mono text-xs font-bold text-slate-900 dark:text-white">
+              <div className="rounded-xl border border-border/80 bg-surface-sunken p-3 dark:border-border dark:bg-surface-sunken">
+                <span className="block text-xs font-bold text-muted-foreground uppercase">Format Tirés (Windows)</span>
+                <code className="mt-1 block font-mono text-xs font-bold text-foreground dark:text-white">
                   {macFormats.hyphen}
                 </code>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-rose-500">
+            <p className="text-xs text-error">
               Veuillez saisir une adresse MAC valide à 12 caractères hexadécimaux.
             </p>
           )}
@@ -282,17 +282,17 @@ export default function IpMacConverterTool() {
       </div>
 
       {/* ------------------- MODULE 3 : MULTICAST IP VERS MAC MULTICAST */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <Network className="size-5 text-amber-500" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+          <Network className="size-5 text-warning" />
+          <h3 className="text-sm font-bold text-foreground dark:text-white">
             Mapping IP Multicast vers MAC Multicast (IEEE 802.3)
           </h3>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 items-end">
           <div className="space-y-1.5">
-            <label htmlFor="ip-mac-multicast-ip-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ip-mac-multicast-ip-input" className="block text-xs font-semibold text-muted-foreground">
               Adresse IP Multicast de Classe D (224.0.0.0 – 239.255.255.255)
             </label>
             <input
@@ -301,22 +301,22 @@ export default function IpMacConverterTool() {
               value={multicastIpInput}
               onChange={(e) => setMulticastIpInput(e.target.value)}
               placeholder="ex: 224.0.0.5 (OSPF) ou 239.255.255.250 (UPnP)"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
             />
           </div>
 
           <div>
             {macMulticast ? (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-50/50 p-3 dark:bg-amber-950/20 space-y-1">
-                <span className="block text-[10px] font-bold text-amber-800 dark:text-amber-300">
+              <div className="rounded-xl border border-warning/20 bg-warning/10 p-3 dark:bg-warning/20 space-y-1">
+                <span className="block text-xs font-bold text-warning">
                   Adresse MAC Ethernet Multicast correspondante :
                 </span>
-                <p className="font-mono text-sm font-bold text-slate-900 dark:text-white">
+                <p className="font-mono text-sm font-bold text-foreground dark:text-white">
                   {macMulticast}
                 </p>
               </div>
             ) : (
-              <span className="text-xs text-rose-500">
+              <span className="text-xs text-error">
                 L&apos;IP doit appartenir au bloc Multicast (224.0.0.0 à 239.255.255.255).
               </span>
             )}

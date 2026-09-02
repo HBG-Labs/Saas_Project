@@ -124,7 +124,7 @@ export default function OhmLawTool() {
                 onClick={() => setTarget('U')}
                 className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer font-mono ${
                   target === 'U'
-                    ? 'bg-blue-600 text-white font-extrabold border-blue-500 shadow-xs'
+                    ? 'bg-primary text-primary-foreground font-extrabold border-primary shadow-xs'
                     : 'bg-surface text-foreground border-border/40 hover:bg-surface-hover'
                 }`}
               >
@@ -136,7 +136,7 @@ export default function OhmLawTool() {
                 onClick={() => setTarget('I')}
                 className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer font-mono ${
                   target === 'I'
-                    ? 'bg-emerald-600 text-white font-extrabold border-emerald-500 shadow-xs'
+                    ? 'bg-success text-success-foreground font-extrabold border-success shadow-xs'
                     : 'bg-surface text-foreground border-border/40 hover:bg-surface-hover'
                 }`}
               >
@@ -148,7 +148,7 @@ export default function OhmLawTool() {
                 onClick={() => setTarget('R')}
                 className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer font-mono ${
                   target === 'R'
-                    ? 'bg-amber-600 text-white font-extrabold border-amber-500 shadow-xs'
+                    ? 'bg-warning text-warning-foreground font-extrabold border-warning shadow-xs'
                     : 'bg-surface text-foreground border-border/40 hover:bg-surface-hover'
                 }`}
               >
@@ -163,7 +163,7 @@ export default function OhmLawTool() {
             <div
               className={`p-2 rounded-xl border transition-all ${
                 target === 'U'
-                  ? 'border-blue-500/60 bg-blue-500/5 ring-1 ring-blue-500/30'
+                  ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                   : 'border-border/60 bg-surface'
               }`}
             >
@@ -172,7 +172,7 @@ export default function OhmLawTool() {
                   Tension (U)
                 </label>
                 {target === 'U' && (
-                  <Badge variant="primary" className="text-[10px] px-1 py-0 font-mono">
+                  <Badge variant="primary" className="text-xs px-1 py-0 font-mono">
                     Cible
                   </Badge>
                 )}
@@ -204,7 +204,7 @@ export default function OhmLawTool() {
             <div
               className={`p-2 rounded-xl border transition-all ${
                 target === 'I'
-                  ? 'border-emerald-500/60 bg-emerald-500/5 ring-1 ring-emerald-500/30'
+                  ? 'border-success/60 bg-success/5 ring-1 ring-success/30'
                   : 'border-border/60 bg-surface'
               }`}
             >
@@ -213,7 +213,7 @@ export default function OhmLawTool() {
                   Intensité (I)
                 </label>
                 {target === 'I' && (
-                  <Badge variant="primary" className="text-[10px] px-1 py-0 font-mono">
+                  <Badge variant="primary" className="text-xs px-1 py-0 font-mono">
                     Cible
                   </Badge>
                 )}
@@ -245,7 +245,7 @@ export default function OhmLawTool() {
             <div
               className={`p-2 rounded-xl border transition-all ${
                 target === 'R'
-                  ? 'border-amber-500/60 bg-amber-500/5 ring-1 ring-amber-500/30'
+                  ? 'border-warning/60 bg-warning/5 ring-1 ring-warning/30'
                   : 'border-border/60 bg-surface'
               }`}
             >
@@ -254,7 +254,7 @@ export default function OhmLawTool() {
                   Résistance (R)
                 </label>
                 {target === 'R' && (
-                  <Badge variant="primary" className="text-[10px] px-1 py-0 font-mono">
+                  <Badge variant="primary" className="text-xs px-1 py-0 font-mono">
                     Cible
                   </Badge>
                 )}
@@ -287,10 +287,10 @@ export default function OhmLawTool() {
           {/* Bandeau de Résultat / Message d'Erreur Integré */}
           <div>
             {result.success ? (
-              <div className="bg-surface-sunken border border-blue-500/40 rounded-xl p-2.5 flex items-center justify-between gap-3 shadow-xs">
+              <div className="bg-surface-sunken border border-primary/40 rounded-xl p-2.5 flex items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-2 font-mono">
                   <span className="text-2xs text-muted-foreground uppercase font-bold">{result.formulaUsed} :</span>
-                  <span className="text-base font-black text-blue-500">
+                  <span className="text-base font-black text-primary">
                     {target} = {result.formattedValue}
                   </span>
                 </div>
@@ -340,13 +340,13 @@ export default function OhmLawTool() {
             <div className="bg-surface-sunken border border-border/60 rounded-xl p-2 flex flex-col items-center justify-center font-mono text-center">
               <span className="text-2xs font-bold text-muted-foreground uppercase mb-1">Triangle de la Loi d&apos;Ohm</span>
               <div className="w-28 bg-surface border border-border/80 rounded-lg p-1.5 space-y-1">
-                <div className="bg-blue-600/10 border border-blue-500/40 text-blue-500 font-black py-0.5 rounded text-xs">
+                <div className="bg-primary/10 border border-primary/40 text-primary font-black py-0.5 rounded text-xs">
                   U
                 </div>
                 <div className="h-0.5 bg-border/60" />
                 <div className="grid grid-cols-2 gap-1 text-2xs font-bold">
-                  <div className="bg-emerald-600/10 border border-emerald-500/40 text-emerald-500 py-0.5 rounded">I</div>
-                  <div className="bg-amber-600/10 border border-amber-500/40 text-amber-500 py-0.5 rounded">R</div>
+                  <div className="bg-success/10 border border-success/40 text-success py-0.5 rounded">I</div>
+                  <div className="bg-warning/10 border border-warning/40 text-warning py-0.5 rounded">R</div>
                 </div>
               </div>
             </div>
@@ -355,13 +355,13 @@ export default function OhmLawTool() {
             <div className="md:col-span-2 space-y-2 text-2xs text-muted-foreground">
               <div className="grid grid-cols-3 gap-1.5 text-foreground font-medium">
                 <div className="bg-surface-sunken p-1.5 rounded border border-border/40">
-                  <strong className="text-blue-500">U — Tension</strong> : Volt (V)
+                  <strong className="text-primary">U — Tension</strong> : Volt (V)
                 </div>
                 <div className="bg-surface-sunken p-1.5 rounded border border-border/40">
-                  <strong className="text-emerald-500">I — Intensité</strong> : Ampère (A)
+                  <strong className="text-success">I — Intensité</strong> : Ampère (A)
                 </div>
                 <div className="bg-surface-sunken p-1.5 rounded border border-border/40">
-                  <strong className="text-amber-500">R — Résistance</strong> : Ohm (Ω)
+                  <strong className="text-warning">R — Résistance</strong> : Ohm (Ω)
                 </div>
               </div>
 

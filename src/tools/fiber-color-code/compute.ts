@@ -25,33 +25,33 @@ export interface FiberMappingResult {
 
 // 12 Couleurs Norme France Télécom / Orange (FTTH)
 export const ORANGE_FT_COLORS: ColorDef[] = [
-  { code: 'RG', name: 'Rouge', hex: '#EF4444', textColor: 'white' },
-  { code: 'BL', name: 'Bleu', hex: '#3B82F6', textColor: 'white' },
-  { code: 'VE', name: 'Vert', hex: '#22C55E', textColor: 'white' },
+  { code: 'RG', name: 'Rouge', hex: '#EF4444', textColor: 'black' },
+  { code: 'BL', name: 'Bleu', hex: '#3B82F6', textColor: 'black' },
+  { code: 'VE', name: 'Vert', hex: '#22C55E', textColor: 'black' },
   { code: 'JA', name: 'Jaune', hex: '#EAB308', textColor: 'black' },
-  { code: 'VI', name: 'Violet', hex: '#A855F7', textColor: 'white' },
+  { code: 'VI', name: 'Violet', hex: '#A855F7', textColor: 'black' },
   { code: 'BC', name: 'Blanc', hex: '#FFFFFF', textColor: 'black', borderColor: '#CBD5E1' },
-  { code: 'OR', name: 'Orange', hex: '#F97316', textColor: 'white' },
+  { code: 'OR', name: 'Orange', hex: '#F97316', textColor: 'black' },
   { code: 'GR', name: 'Gris', hex: '#64748B', textColor: 'white' },
   { code: 'MA', name: 'Marron', hex: '#9A3412', textColor: 'white' },
   { code: 'NR', name: 'Noir', hex: '#1E293B', textColor: 'white', borderColor: '#475569' },
   { code: 'TQ', name: 'Turquoise', hex: '#06B6D4', textColor: 'black' },
-  { code: 'RS', name: 'Rose', hex: '#EC4899', textColor: 'white' },
+  { code: 'RS', name: 'Rose', hex: '#EC4899', textColor: 'black' },
 ];
 
 // 12 Couleurs Norme FOTAG (IEEE 802.8)
 export const FOTAG_COLORS: ColorDef[] = [
-  { code: 'BL', name: 'Bleu', hex: '#3B82F6', textColor: 'white' },
-  { code: 'OR', name: 'Orange', hex: '#F97316', textColor: 'white' },
-  { code: 'VE', name: 'Vert', hex: '#22C55E', textColor: 'white' },
+  { code: 'BL', name: 'Bleu', hex: '#3B82F6', textColor: 'black' },
+  { code: 'OR', name: 'Orange', hex: '#F97316', textColor: 'black' },
+  { code: 'VE', name: 'Vert', hex: '#22C55E', textColor: 'black' },
   { code: 'MA', name: 'Marron', hex: '#9A3412', textColor: 'white' },
   { code: 'GR', name: 'Gris', hex: '#64748B', textColor: 'white' },
   { code: 'BC', name: 'Blanc', hex: '#FFFFFF', textColor: 'black', borderColor: '#CBD5E1' },
-  { code: 'RG', name: 'Rouge', hex: '#EF4444', textColor: 'white' },
+  { code: 'RG', name: 'Rouge', hex: '#EF4444', textColor: 'black' },
   { code: 'NR', name: 'Noir', hex: '#1E293B', textColor: 'white', borderColor: '#475569' },
   { code: 'JA', name: 'Jaune', hex: '#EAB308', textColor: 'black' },
-  { code: 'VI', name: 'Violet', hex: '#A855F7', textColor: 'white' },
-  { code: 'RS', name: 'Rose', hex: '#EC4899', textColor: 'white' },
+  { code: 'VI', name: 'Violet', hex: '#A855F7', textColor: 'black' },
+  { code: 'RS', name: 'Rose', hex: '#EC4899', textColor: 'black' },
   { code: 'TQ', name: 'Turquoise', hex: '#06B6D4', textColor: 'black' },
 ];
 

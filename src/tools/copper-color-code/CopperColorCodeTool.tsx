@@ -10,39 +10,39 @@ import { Button } from '@/components/ui/Button';
 const PTT_28_PATTERN = [
   // Amorce 1 (Paires 1 à 7)
   { amorce: 'Gris', accomp: 'Blanc', amorceHex: '#6b7280', accompHex: '#f9fafb', textDarkA: false, textDarkB: true, amorceGroup: 1 },
-  { amorce: 'Incolore', accomp: 'Bleu', amorceHex: '#e5e7eb', accompHex: '#3b82f6', textDarkA: true, textDarkB: false, amorceGroup: 1 },
+  { amorce: 'Incolore', accomp: 'Bleu', amorceHex: '#e5e7eb', accompHex: '#3b82f6', textDarkA: true, textDarkB: true, amorceGroup: 1 },
   { amorce: 'Gris', accomp: 'Jaune', amorceHex: '#6b7280', accompHex: '#facc15', textDarkA: false, textDarkB: true, amorceGroup: 1 },
   { amorce: 'Incolore', accomp: 'Marron', amorceHex: '#e5e7eb', accompHex: '#854d0e', textDarkA: true, textDarkB: false, amorceGroup: 1 },
   { amorce: 'Gris', accomp: 'Noir', amorceHex: '#6b7280', accompHex: '#18181b', textDarkA: false, textDarkB: false, amorceGroup: 1 },
-  { amorce: 'Incolore', accomp: 'Rouge', amorceHex: '#e5e7eb', accompHex: '#ef4444', textDarkA: true, textDarkB: false, amorceGroup: 1 },
-  { amorce: 'Gris', accomp: 'Vert', amorceHex: '#6b7280', accompHex: '#22c55e', textDarkA: false, textDarkB: false, amorceGroup: 1 },
+  { amorce: 'Incolore', accomp: 'Rouge', amorceHex: '#e5e7eb', accompHex: '#ef4444', textDarkA: true, textDarkB: true, amorceGroup: 1 },
+  { amorce: 'Gris', accomp: 'Vert', amorceHex: '#6b7280', accompHex: '#22c55e', textDarkA: false, textDarkB: true, amorceGroup: 1 },
 
   // Amorce 2 (Paires 8 à 14)
   { amorce: 'Incolore', accomp: 'Blanc', amorceHex: '#e5e7eb', accompHex: '#f9fafb', textDarkA: true, textDarkB: true, amorceGroup: 2 },
-  { amorce: 'Gris', accomp: 'Bleu', amorceHex: '#6b7280', accompHex: '#3b82f6', textDarkA: false, textDarkB: false, amorceGroup: 2 },
+  { amorce: 'Gris', accomp: 'Bleu', amorceHex: '#6b7280', accompHex: '#3b82f6', textDarkA: false, textDarkB: true, amorceGroup: 2 },
   { amorce: 'Incolore', accomp: 'Jaune', amorceHex: '#e5e7eb', accompHex: '#facc15', textDarkA: true, textDarkB: true, amorceGroup: 2 },
   { amorce: 'Gris', accomp: 'Marron', amorceHex: '#6b7280', accompHex: '#854d0e', textDarkA: false, textDarkB: false, amorceGroup: 2 },
   { amorce: 'Incolore', accomp: 'Noir', amorceHex: '#e5e7eb', accompHex: '#18181b', textDarkA: true, textDarkB: false, amorceGroup: 2 },
-  { amorce: 'Gris', accomp: 'Rouge', amorceHex: '#6b7280', accompHex: '#ef4444', textDarkA: false, textDarkB: false, amorceGroup: 2 },
-  { amorce: 'Incolore', accomp: 'Vert', amorceHex: '#e5e7eb', accompHex: '#22c55e', textDarkA: true, textDarkB: false, amorceGroup: 2 },
+  { amorce: 'Gris', accomp: 'Rouge', amorceHex: '#6b7280', accompHex: '#ef4444', textDarkA: false, textDarkB: true, amorceGroup: 2 },
+  { amorce: 'Incolore', accomp: 'Vert', amorceHex: '#e5e7eb', accompHex: '#22c55e', textDarkA: true, textDarkB: true, amorceGroup: 2 },
 
   // Amorce 3 (Paires 15 à 21)
-  { amorce: 'Orange', accomp: 'Blanc', amorceHex: '#fb923c', accompHex: '#f9fafb', textDarkA: false, textDarkB: true, amorceGroup: 3 },
-  { amorce: 'Violet', accomp: 'Bleu', amorceHex: '#a855f7', accompHex: '#3b82f6', textDarkA: false, textDarkB: false, amorceGroup: 3 },
-  { amorce: 'Orange', accomp: 'Jaune', amorceHex: '#fb923c', accompHex: '#facc15', textDarkA: false, textDarkB: true, amorceGroup: 3 },
+  { amorce: 'Orange', accomp: 'Blanc', amorceHex: '#fb923c', accompHex: '#f9fafb', textDarkA: true, textDarkB: true, amorceGroup: 3 },
+  { amorce: 'Violet', accomp: 'Bleu', amorceHex: '#a855f7', accompHex: '#3b82f6', textDarkA: false, textDarkB: true, amorceGroup: 3 },
+  { amorce: 'Orange', accomp: 'Jaune', amorceHex: '#fb923c', accompHex: '#facc15', textDarkA: true, textDarkB: true, amorceGroup: 3 },
   { amorce: 'Violet', accomp: 'Marron', amorceHex: '#a855f7', accompHex: '#854d0e', textDarkA: false, textDarkB: false, amorceGroup: 3 },
-  { amorce: 'Orange', accomp: 'Noir', amorceHex: '#fb923c', accompHex: '#18181b', textDarkA: false, textDarkB: false, amorceGroup: 3 },
-  { amorce: 'Violet', accomp: 'Rouge', amorceHex: '#a855f7', accompHex: '#ef4444', textDarkA: false, textDarkB: false, amorceGroup: 3 },
-  { amorce: 'Orange', accomp: 'Vert', amorceHex: '#fb923c', accompHex: '#22c55e', textDarkA: false, textDarkB: false, amorceGroup: 3 },
+  { amorce: 'Orange', accomp: 'Noir', amorceHex: '#fb923c', accompHex: '#18181b', textDarkA: true, textDarkB: false, amorceGroup: 3 },
+  { amorce: 'Violet', accomp: 'Rouge', amorceHex: '#a855f7', accompHex: '#ef4444', textDarkA: false, textDarkB: true, amorceGroup: 3 },
+  { amorce: 'Orange', accomp: 'Vert', amorceHex: '#fb923c', accompHex: '#22c55e', textDarkA: true, textDarkB: true, amorceGroup: 3 },
 
   // Amorce 4 (Paires 22 à 28)
   { amorce: 'Violet', accomp: 'Blanc', amorceHex: '#a855f7', accompHex: '#f9fafb', textDarkA: false, textDarkB: true, amorceGroup: 4 },
-  { amorce: 'Orange', accomp: 'Bleu', amorceHex: '#fb923c', accompHex: '#3b82f6', textDarkA: false, textDarkB: false, amorceGroup: 4 },
+  { amorce: 'Orange', accomp: 'Bleu', amorceHex: '#fb923c', accompHex: '#3b82f6', textDarkA: true, textDarkB: true, amorceGroup: 4 },
   { amorce: 'Violet', accomp: 'Jaune', amorceHex: '#a855f7', accompHex: '#facc15', textDarkA: false, textDarkB: true, amorceGroup: 4 },
-  { amorce: 'Orange', accomp: 'Marron', amorceHex: '#fb923c', accompHex: '#854d0e', textDarkA: false, textDarkB: false, amorceGroup: 4 },
+  { amorce: 'Orange', accomp: 'Marron', amorceHex: '#fb923c', accompHex: '#854d0e', textDarkA: true, textDarkB: false, amorceGroup: 4 },
   { amorce: 'Violet', accomp: 'Noir', amorceHex: '#a855f7', accompHex: '#18181b', textDarkA: false, textDarkB: false, amorceGroup: 4 },
-  { amorce: 'Orange', accomp: 'Rouge', amorceHex: '#fb923c', accompHex: '#ef4444', textDarkA: false, textDarkB: false, amorceGroup: 4 },
-  { amorce: 'Violet', accomp: 'Vert', amorceHex: '#a855f7', accompHex: '#22c55e', textDarkA: false, textDarkB: false, amorceGroup: 4 },
+  { amorce: 'Orange', accomp: 'Rouge', amorceHex: '#fb923c', accompHex: '#ef4444', textDarkA: true, textDarkB: true, amorceGroup: 4 },
+  { amorce: 'Violet', accomp: 'Vert', amorceHex: '#a855f7', accompHex: '#22c55e', textDarkA: false, textDarkB: true, amorceGroup: 4 },
 ];
 
 const CABLE_CAPACITIES = [
@@ -151,7 +151,7 @@ export default function CopperColorCodeTool() {
               }}
               className={`rounded-md py-1.5 px-2 text-xs font-extrabold transition-all cursor-pointer text-center ${
                 selectedCapacity === cap.pairs
-                  ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-500/40'
+                  ? 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/40'
                   : 'bg-surface-sunken text-foreground hover:bg-surface-hover border border-border/40'
               }`}
             >
@@ -192,7 +192,7 @@ export default function CopperColorCodeTool() {
                       setPttPairNumber(item.pairNumber);
                       setActiveTab('ptt');
                     }}
-                    className="hover:bg-blue-500/10 cursor-pointer transition-colors"
+                    className="hover:bg-primary/10 cursor-pointer transition-colors"
                   >
                     <td className="py-1.5 px-3 font-bold text-foreground">
                       Paire n°{item.pairNumber}
@@ -258,7 +258,7 @@ export default function CopperColorCodeTool() {
                 onBlur={() => {
                   handlePairChange(pttPairNumber);
                 }}
-                className="w-20 text-center font-mono font-black text-lg bg-surface border border-blue-500/60 rounded-lg py-1 px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-20 text-center font-mono font-black text-lg bg-surface border border-primary/60 rounded-lg py-1 px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
 
               <Button
@@ -289,7 +289,7 @@ export default function CopperColorCodeTool() {
           </div>
 
           {/* Ligne 2 : Affichage Compact des 2 Fils & Résultat */}
-          <div className="bg-surface rounded-xl p-3 border-2 border-blue-500/30 space-y-3">
+          <div className="bg-surface rounded-xl p-3 border-2 border-primary/30 space-y-3">
             <div className="flex items-center justify-between">
               <Badge variant="primary" className="font-mono text-xs px-2.5 py-0.5">
                 Paire n°{pttPairNumber} / {selectedCapacity}
@@ -354,7 +354,7 @@ export default function CopperColorCodeTool() {
             <Button
               variant="outline"
               size="sm"
-              className="w-full font-bold text-xs py-2 cursor-pointer hover:bg-blue-600 hover:text-white transition-colors"
+              className="w-full font-bold text-xs py-2 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={handleCopyRepérage}
             >
               {copied ? <Check className="size-4 mr-1.5 text-success" /> : <Copy className="size-4 mr-1.5" />}

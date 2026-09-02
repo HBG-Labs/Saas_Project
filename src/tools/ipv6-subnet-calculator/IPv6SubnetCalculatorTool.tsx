@@ -170,15 +170,15 @@ export default function IPv6SubnetCalculatorTool() {
   return (
     <div className="space-y-6">
       {/* ------------------- FORMULAIRE DE SAISIE */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <Globe className="size-5 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Analyseur IPv6 & Préfixe</h3>
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+          <Globe className="size-5 text-primary" />
+          <h3 className="text-sm font-bold text-foreground dark:text-white">Analyseur IPv6 & Préfixe</h3>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2 space-y-1.5">
-            <label htmlFor="ipv6-addr-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-addr-input" className="block text-xs font-semibold text-muted-foreground">
               Adresse IPv6 (Abrégée ou complète)
             </label>
             <input
@@ -187,16 +187,16 @@ export default function IPv6SubnetCalculatorTool() {
               value={ipv6Input}
               onChange={(e) => setIpv6Input(e.target.value)}
               placeholder="ex: 2001:db8::1 ou fe80::1"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="ipv6-prefix-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-prefix-input" className="block text-xs font-semibold text-muted-foreground">
               Longueur du préfixe (CIDR /N)
             </label>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-bold text-slate-500">/</span>
+              <span className="font-mono text-sm font-bold text-muted-foreground">/</span>
               <input
                 id="ipv6-prefix-input"
                 type="number"
@@ -204,7 +204,7 @@ export default function IPv6SubnetCalculatorTool() {
                 max="128"
                 value={prefixLength}
                 onChange={(e) => setPrefixLength(Math.min(128, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-bold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
             </div>
           </div>
@@ -216,37 +216,37 @@ export default function IPv6SubnetCalculatorTool() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Forme Compressée (RFC 5952) */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="rounded-2xl border border-border/80 bg-white p-4 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-semibold">Forme Canonique Compressée (RFC 5952)</span>
                 <button
                   type="button"
                   onClick={() => compressed && copyToClipboard(`${compressed}/${prefixLength}`, 'compressed')}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+                  className="text-primary hover:text-primary flex items-center gap-1 text-xs font-semibold cursor-pointer"
                 >
                   {copiedField === 'compressed' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                   Copier
                 </button>
               </div>
-              <p className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 break-all">
+              <p className="font-mono text-sm font-bold text-primary break-all">
                 {compressed}/{prefixLength}
               </p>
             </div>
 
             {/* Forme Développement Complète */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="rounded-2xl border border-border/80 bg-white p-4 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-semibold">Forme Développée (8 Hextets)</span>
                 <button
                   type="button"
                   onClick={() => expanded && copyToClipboard(expanded, 'expanded')}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+                  className="text-primary hover:text-primary flex items-center gap-1 text-xs font-semibold cursor-pointer"
                 >
                   {copiedField === 'expanded' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                   Copier
                 </button>
               </div>
-              <p className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 break-all">
+              <p className="font-mono text-xs font-semibold text-muted-foreground break-all">
                 {expanded}
               </p>
             </div>
@@ -254,54 +254,54 @@ export default function IPv6SubnetCalculatorTool() {
 
           {/* Analyse & Type d'Adresse */}
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-2">
-              <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="rounded-2xl border border-border/80 bg-white p-4 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-2">
+              <span className="block text-xs font-semibold text-muted-foreground">
                 Classification & Type d&apos;Adresse
               </span>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="size-5 text-emerald-500 shrink-0" />
+                <ShieldCheck className="size-5 text-success shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                  <p className="text-xs font-bold text-foreground dark:text-white">
                     {classification?.type}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {classification?.description} · Portée : <strong>{classification?.scope}</strong>
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-2">
-              <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="rounded-2xl border border-border/80 bg-white p-4 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-2">
+              <span className="block text-xs font-semibold text-muted-foreground">
                 Adresse Réseau de Sous-réseau
               </span>
-              <p className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 break-all">
+              <p className="font-mono text-xs font-bold text-primary break-all">
                 {networkPrefix}/{prefixLength}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Espace total : 2<sup>{128 - prefixLength}</sup> adresses d&apos;hôtes.
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-50/50 p-4 text-xs font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+        <div className="rounded-2xl border border-warning/30 bg-warning/10 p-4 text-xs font-medium text-warning dark:bg-warning/30 dark:text-warning">
           ⚠️ Veuillez saisir une adresse IPv6 valide (ex: 2001:db8::1 ou fe80::1).
         </div>
       )}
 
       {/* ------------------- MODULE SECONDAIRE : MAC VERS EUI-64 */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <Cpu className="size-5 text-indigo-500" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+          <Cpu className="size-5 text-primary" />
+          <h3 className="text-sm font-bold text-foreground dark:text-white">
             Générateur d&apos;Adresse EUI-64 (MAC vers IPv6 Link-Local)
           </h3>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 items-end">
           <div className="space-y-1.5">
-            <label htmlFor="ipv6-eui-mac-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="ipv6-eui-mac-input" className="block text-xs font-semibold text-muted-foreground">
               Adresse MAC du matériel (48 bits)
             </label>
             <input
@@ -310,22 +310,22 @@ export default function IPv6SubnetCalculatorTool() {
               value={macInput}
               onChange={(e) => setMacInput(e.target.value)}
               placeholder="ex: 00:1A:2B:3C:4D:5E"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 font-mono text-xs font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
             />
           </div>
 
           <div>
             {eui64Result ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-3 dark:bg-emerald-950/20 space-y-1">
-                <span className="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="rounded-xl border border-success/20 bg-success/10 p-3 dark:bg-success/20 space-y-1">
+                <span className="block text-xs font-bold text-success">
                   Adresse Link-Local EUI-64 Générée :
                 </span>
-                <p className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                <p className="font-mono text-xs font-bold text-foreground dark:text-white">
                   {eui64Result}
                 </p>
               </div>
             ) : (
-              <span className="text-xs text-rose-500">Adresse MAC invalide (format 12 caractères hex).</span>
+              <span className="text-xs text-error">Adresse MAC invalide (format 12 caractères hex).</span>
             )}
           </div>
         </div>

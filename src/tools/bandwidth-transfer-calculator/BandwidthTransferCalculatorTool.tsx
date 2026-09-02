@@ -95,14 +95,14 @@ export default function BandwidthTransferCalculatorTool() {
       {/* ------------------- FORMULAIRE DE CALCUL */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Colonne 1 : Taille des données */}
-        <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-            <HardDrive className="size-5 text-blue-600 dark:text-blue-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Volume de Données</h3>
+        <div className="space-y-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken">
+          <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+            <HardDrive className="size-5 text-primary" />
+            <h3 className="text-sm font-bold text-foreground dark:text-white">Volume de Données</h3>
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="bw-data-size-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="bw-data-size-input" className="block text-xs font-semibold text-muted-foreground">
               Taille totale du fichier / archive
             </label>
             <div className="flex gap-2">
@@ -113,13 +113,13 @@ export default function BandwidthTransferCalculatorTool() {
                 step="any"
                 value={dataSize}
                 onChange={(e) => setDataSize(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
               <select
                 aria-label="Unité de données"
                 value={dataUnit}
                 onChange={(e) => setDataUnit(e.target.value as DataUnit)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-xs font-bold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               >
                 <option value="MB">MB (Mo)</option>
                 <option value="GB">GB (Go)</option>
@@ -130,7 +130,7 @@ export default function BandwidthTransferCalculatorTool() {
 
             {/* Presets rapides */}
             <div className="space-y-1.5 pt-2">
-              <span className="text-[11px] font-semibold text-muted-foreground">Préréglages fréquents :</span>
+              <span className="text-xs font-semibold text-muted-foreground">Préréglages fréquents :</span>
               <div className="flex flex-wrap gap-1.5">
                 {PRESETS.map((p) => (
                   <button
@@ -140,7 +140,7 @@ export default function BandwidthTransferCalculatorTool() {
                       setDataSize(p.size);
                       setDataUnit(p.unit);
                     }}
-                    className="rounded-lg border border-slate-200 bg-slate-100/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:text-white cursor-pointer"
+                    className="rounded-lg border border-border bg-surface-sunken/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary dark:border-border dark:bg-surface-sunken dark:text-muted-foreground dark:hover:text-white cursor-pointer"
                   >
                     {p.label}
                   </button>
@@ -151,14 +151,14 @@ export default function BandwidthTransferCalculatorTool() {
         </div>
 
         {/* Colonne 2 : Vitesse Réseau & Overhead */}
-        <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-            <Zap className="size-5 text-amber-500" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Débit & Protocole</h3>
+        <div className="space-y-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken">
+          <div className="flex items-center gap-2 border-b border-border pb-3 dark:border-border">
+            <Zap className="size-5 text-warning" />
+            <h3 className="text-sm font-bold text-foreground dark:text-white">Débit & Protocole</h3>
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="bw-network-speed-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label htmlFor="bw-network-speed-input" className="block text-xs font-semibold text-muted-foreground">
               Vitesse nominale de la ligne
             </label>
             <div className="flex gap-2">
@@ -169,12 +169,12 @@ export default function BandwidthTransferCalculatorTool() {
                 step="any"
                 value={networkSpeed}
                 onChange={(e) => setNetworkSpeed(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
               <select
                 value={speedUnit}
                 onChange={(e) => setSpeedUnit(e.target.value as SpeedUnit)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-xs font-bold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               >
                 <option value="Mbps">Mbps</option>
                 <option value="Gbps">Gbps</option>
@@ -186,10 +186,10 @@ export default function BandwidthTransferCalculatorTool() {
             {/* Slider d'Overhead */}
             <div className="space-y-1.5 pt-2">
               <div className="flex justify-between text-xs">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                <span className="font-semibold text-muted-foreground">
                   Surcharge protocolaire (Overhead TCP/IP, Ethernet) :
                 </span>
-                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                <span className="font-mono font-bold text-primary">
                   {overheadPercent}%
                 </span>
               </div>
@@ -202,7 +202,7 @@ export default function BandwidthTransferCalculatorTool() {
                 onChange={(e) => setOverheadPercent(parseInt(e.target.value, 10))}
                 className="w-full accent-blue-600 cursor-pointer"
               />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Compense les en-têtes de paquets TCP/IP, réémissions et encadrement Ethernet (~5% typique).
               </p>
             </div>
@@ -212,58 +212,58 @@ export default function BandwidthTransferCalculatorTool() {
 
       {/* ------------------- RÉSULTATS PRINCIPAUX */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-50/50 p-5 shadow-xs dark:bg-blue-950/20">
-          <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400">
+        <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5 shadow-xs dark:bg-primary/20">
+          <div className="flex items-center justify-between text-xs text-primary">
             <span className="font-semibold">Temps de Transfert Estimé</span>
             <Clock className="size-4" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-black text-slate-900 dark:text-white">
+          <p className="mt-2 font-mono text-2xl font-black text-foreground dark:text-white">
             {formatDuration(results.secondsTotal)}
           </p>
-          <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-400">
+          <span className="mt-1 block text-xs text-muted-foreground">
             Prend en compte les {overheadPercent}% de perte d&apos;overhead
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-semibold">Débit Utile Réel (Mo/s)</span>
-            <Layers className="size-4 text-emerald-500" />
+            <Layers className="size-4 text-success" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400">
+          <p className="mt-2 font-mono text-2xl font-black text-success">
             {results.effectiveMBps >= 1000
               ? `${(results.effectiveMBps / 1024).toFixed(2)} Go/s`
               : `${results.effectiveMBps.toFixed(2)} Mo/s`}
           </p>
-          <span className="mt-1 block text-[10px] text-muted-foreground">
+          <span className="mt-1 block text-xs text-muted-foreground">
             Vitesse de copie réelle perçue par le système
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-semibold">Temps Théorique Brut</span>
-            <RefreshCw className="size-4 text-amber-500" />
+            <RefreshCw className="size-4 text-warning" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-black text-slate-900 dark:text-white">
+          <p className="mt-2 font-mono text-2xl font-black text-foreground dark:text-white">
             {formatDuration(results.nominalSecondsTotal)}
           </p>
-          <span className="mt-1 block text-[10px] text-muted-foreground">
+          <span className="mt-1 block text-xs text-muted-foreground">
             Sans aucune perte ou surcharge de paquet
           </span>
         </div>
       </div>
 
       {/* ------------------- TABLEAU COMPARATIF DES LIGNES RÉSEAUX */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-slate-900 space-y-4">
-        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-          <Info className="size-4 text-blue-500" />
+      <div className="rounded-2xl border border-border/80 bg-white p-5 shadow-xs dark:border-border/80 dark:bg-surface-sunken space-y-4">
+        <h4 className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-white">
+          <Info className="size-4 text-primary" />
           Comparatif de durée pour {dataSize} {dataUnit} selon le type de liaison
         </h4>
 
-        <div className="scroll-x rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="scroll-x rounded-xl border border-border">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <thead className="bg-surface-sunken text-muted-foreground dark:bg-surface-sunken dark:text-muted-foreground">
               <tr>
                 <th className="px-4 py-2.5 font-bold">Type de Connexion Réseau</th>
                 <th className="px-4 py-2.5 font-bold text-right">Durée Estimée</th>
@@ -271,11 +271,11 @@ export default function BandwidthTransferCalculatorTool() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {networkComparisons.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                <tr key={idx} className="hover:bg-surface-sunken/50 dark:hover:bg-surface-sunken">
+                  <td className="px-4 py-2.5 font-medium text-foreground dark:text-white">
                     {row.name}
                   </td>
-                  <td className="px-4 py-2.5 font-mono font-bold text-blue-600 dark:text-blue-400 text-right">
+                  <td className="px-4 py-2.5 font-mono font-bold text-primary text-right">
                     {row.duration}
                   </td>
                 </tr>

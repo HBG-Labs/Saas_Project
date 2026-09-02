@@ -160,7 +160,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     }}
                     className={`px-2 py-0.5 rounded text-2xs font-mono font-extrabold transition-all cursor-pointer ${
                       moduleType === 6
-                        ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-500/40'
+                        ? 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/40'
                         : 'bg-surface-sunken text-foreground border border-border/60 hover:bg-surface-hover'
                     }`}
                   >
@@ -176,7 +176,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     }}
                     className={`px-2 py-0.5 rounded text-2xs font-mono font-extrabold transition-all cursor-pointer ${
                       moduleType === 12
-                        ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-500/40'
+                        ? 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/40'
                         : 'bg-surface-sunken text-foreground border border-border/60 hover:bg-surface-hover'
                     }`}
                   >
@@ -424,8 +424,8 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                   onClick={() => handleSelectColorInTube(posInSequence)}
                   className={`rounded-lg border p-2 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
                     isSelectedFiber
-                      ? 'border-blue-500 shadow-modal ring-2 ring-blue-500/40 bg-surface'
-                      : 'border-border/60 bg-surface-sunken/40 hover:border-blue-400 hover:bg-surface'
+                      ? 'border-primary shadow-modal ring-2 ring-primary/40 bg-surface'
+                      : 'border-border/60 bg-surface-sunken/40 hover:border-primary hover:bg-surface'
                   }`}
                 >
                   <div
@@ -441,7 +441,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
 
                   <div className="overflow-hidden w-full">
                     <div className="font-semibold text-2xs text-foreground truncate">{color.name}</div>
-                    <div className="text-subtle-foreground text-[10px] font-mono">{color.code}</div>
+                    <div className="text-subtle-foreground text-xs font-mono">{color.code}</div>
                   </div>
                 </button>
               );

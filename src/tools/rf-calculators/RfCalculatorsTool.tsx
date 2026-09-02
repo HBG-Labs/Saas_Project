@@ -168,7 +168,7 @@ export default function RfCalculatorsTool() {
             >
               <Icon className={`size-4 mb-1 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
               <span className="text-xs font-bold leading-tight text-foreground line-clamp-1">{m.title}</span>
-              <span className="text-[10px] font-mono text-cyan-500 font-semibold mt-0.5 truncate w-full">{m.sub}</span>
+              <span className="text-xs font-mono text-primary font-semibold mt-0.5 truncate w-full">{m.sub}</span>
             </button>
           );
         })}
@@ -361,7 +361,7 @@ export default function RfCalculatorsTool() {
                   <span className="font-mono font-bold text-foreground">{resLink.fadeMarginDb} dB</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-bold pt-1">
-                  <CheckCircle2 className={`size-4 ${resLink.isLinkViable ? 'text-emerald-500' : 'text-amber-500'}`} />
+                  <CheckCircle2 className={`size-4 ${resLink.isLinkViable ? 'text-success' : 'text-warning'}`} />
                   <span>{resLink.isLinkViable ? 'Liaison Radio Viable (Marge ≥ 10dB)' : 'Attention : Marge insuffisante'}</span>
                 </div>
               </div>
