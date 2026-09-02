@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/Badge';
+import { usePrefersReducedMotion } from '@/lib/use-prefers-reduced-motion';
 
 const LEFT_SECTORS = [
   {
@@ -85,6 +86,7 @@ const RIGHT_SECTORS = [
 export function BuiltForTech() {
   const sectionRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const mouvementReduit = usePrefersReducedMotion();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -137,13 +139,23 @@ export function BuiltForTech() {
               return (
                 <div
                   key={item.name}
-                  style={{
-                    opacity: isVisible ? itemProgress : 0,
-                    transform: isVisible
-                      ? `translateX(${(1 - itemProgress) * -15}px)`
-                      : 'translateX(-15px)',
-                    transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
+                  /*
+                    Sous « réduire les animations », on ne pose aucun style :
+                    les douze secteurs s'affichent d'emblée. Les annuler après
+                    coup en CSS serait vain — un style en ligne l'emporte.
+                  */
+                  style={
+                    mouvementReduit
+                      ? undefined
+                      : {
+                          opacity: isVisible ? itemProgress : 0,
+                          transform: isVisible
+                            ? `translateX(${(1 - itemProgress) * -15}px)`
+                            : 'translateX(-15px)',
+                          transition:
+                            'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }
+                  }
                   className="group border-border flex min-w-0 items-center gap-2.5 border-b py-2"
                 >
                   <div className="bg-primary-subtle text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
