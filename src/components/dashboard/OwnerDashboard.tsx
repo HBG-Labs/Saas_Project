@@ -30,6 +30,8 @@ import {
 } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
 
+import { FirstStepsCard } from './FirstStepsCard';
+
 /**
  * Tableau de bord — direction et propriétaire.
  *
@@ -126,6 +128,10 @@ export function OwnerDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Le parcours guidé, tant qu'il n'est pas bouclé. Avant les indicateurs :
+          une entreprise qui n'a pas encore de mission n'a pas de KPI à lire. */}
+      <FirstStepsCard />
 
       {/* ------------------------------------------------------ 1. CE QUI ATTEND */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -145,9 +145,9 @@ export function TechnicianDashboard() {
           {/* 1. Missions */}
           <Link
             to={ROUTES.missions}
-            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-emerald-500/50 hover:bg-surface-hover transition-all group"
+            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-primary/40 hover:bg-surface-hover transition-all group"
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-105 transition-transform">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-subtle text-primary mb-2 group-hover:scale-105 transition-transform">
               <ClipboardList className="size-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">{jobPlural}</span>
@@ -157,9 +157,9 @@ export function TechnicianDashboard() {
           {/* 2. Bloc-notes Terrain */}
           <Link
             to={ROUTES.notes}
-            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-amber-500/50 hover:bg-surface-hover transition-all group"
+            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-primary/40 hover:bg-surface-hover transition-all group"
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-subtle text-primary mb-2 group-hover:scale-105 transition-transform">
               <FileText className="size-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Bloc-notes Terrain</span>
@@ -181,9 +181,9 @@ export function TechnicianDashboard() {
           {/* 4. Mon Profil */}
           <Link
             to={ROUTES.profile}
-            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-sky-500/50 hover:bg-surface-hover transition-all group"
+            className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface text-center hover:border-primary/40 hover:bg-surface-hover transition-all group"
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 mb-2 group-hover:scale-105 transition-transform">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-subtle text-primary mb-2 group-hover:scale-105 transition-transform">
               <User className="size-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Mon Profil</span>

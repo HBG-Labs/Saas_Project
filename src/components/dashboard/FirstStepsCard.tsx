@@ -179,7 +179,7 @@ export function FirstStepsCard() {
                   className={cn(
                     'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border',
                     etape.fait
-                      ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      ? 'border-success/40 bg-success/15 text-success'
                       : 'border-border text-muted-foreground',
                   )}
                 >
