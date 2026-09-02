@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
+import { useToast } from '@/components/feedback/toast-context';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -27,6 +28,7 @@ export default function MissionCreatePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
+  const toast = useToast();
   const createMission = useCreateMission();
   const job = useLabel('job');
   const titleText = formatNewNoun(job);
@@ -106,6 +108,15 @@ export default function MissionCreatePage() {
         ...(finalLat !== null ? { latitude: finalLat, longitude: finalLng } : {}),
       });
 
+      /*
+        Le toast est emis AVANT la navigation, et c'est tout l'interet : la
+        page de creation disparait, donc un message affiche dessus ne serait
+        jamais lu. La notification, elle, survit au changement de page et
+        confirme la creation sur l'ecran d'arrivee -- ou l'on ne voyait
+        jusqu'ici qu'une mission apparaitre sans savoir si l'enregistrement
+        avait abouti.
+      */
+      toast.succes(`${job} créée`, mission.reference);
       await navigate(ROUTES.mission(mission.id));
     } catch (error) {
       setSubmitError(error);

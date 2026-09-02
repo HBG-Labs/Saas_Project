@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { CookieConsentBanner } from '@/components/feedback/CookieConsentBanner';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
+import { ToastProvider } from '@/components/feedback/Toast';
 import { SupportBubble } from '@/components/feedback/SupportBubble';
 import { AuthProvider } from '@/features/auth';
 import { OrganizationProvider } from '@/features/organizations';
@@ -35,7 +36,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <OrganizationProvider>
-              {children}
+              <ToastProvider>{children}</ToastProvider>
               <SupportBubble />
               <CustomizerDrawer />
               <CookieConsentBanner />
