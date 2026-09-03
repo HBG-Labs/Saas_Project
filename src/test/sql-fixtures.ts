@@ -20,6 +20,7 @@ import aiAssistantDocumentsSql from '../../supabase/migrations/20260902150000_ai
 import aiAssistantConversationsSql from '../../supabase/migrations/20260902150100_ai_assistant_conversations.sql?raw';
 import aiAssistantQuotaSql from '../../supabase/migrations/20260902150200_ai_assistant_quota.sql?raw';
 import aiAssistantEnterpriseQuotaSql from '../../supabase/migrations/20260902160000_ai_assistant_enterprise_quota.sql?raw';
+import aiAssistantProPlusSql from '../../supabase/migrations/20260902190000_ai_assistant_pro_plus.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -69,6 +70,7 @@ const MIGRATIONS: Record<string, string> = {
   aiAssistantConversations: aiAssistantConversationsSql,
   aiAssistantQuota: aiAssistantQuotaSql,
   aiAssistantEnterpriseQuota: aiAssistantEnterpriseQuotaSql,
+  aiAssistantProPlus: aiAssistantProPlusSql,
 };
 
 export const MIGRATION_FILES = {
@@ -94,6 +96,7 @@ export const MIGRATION_FILES = {
   aiAssistantConversations: 'aiAssistantConversations',
   aiAssistantQuota: 'aiAssistantQuota',
   aiAssistantEnterpriseQuota: 'aiAssistantEnterpriseQuota',
+  aiAssistantProPlus: 'aiAssistantProPlus',
 } as const;
 
 /**

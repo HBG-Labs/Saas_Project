@@ -230,12 +230,17 @@ describe('synchronisation avec le seed SQL', () => {
   // Doit rester APRÈS `aiAssistantQuota` dans ce tableau — l'ordre détermine
   // quelle valeur l'emporte pour la même paire (plan, feature), exactement
   // comme `on conflict ... do update` en base.
+  // `aiAssistantProPlus` retire l'accès de Starter (mis à `0`, décision du
+  // 02/09/2026) — doit rester DERNIER dans ce tableau pour la même raison
+  // que `aiAssistantEnterpriseQuota` : l'ordre détermine quelle valeur
+  // l'emporte pour la même paire (plan, feature).
   const tuples = extractInsertTuplesAcross(
     [
       MIGRATION_FILES.planMatrix,
       MIGRATION_FILES.attachmentsInPro,
       MIGRATION_FILES.aiAssistantQuota,
       MIGRATION_FILES.aiAssistantEnterpriseQuota,
+      MIGRATION_FILES.aiAssistantProPlus,
     ],
     'plan_features',
   );

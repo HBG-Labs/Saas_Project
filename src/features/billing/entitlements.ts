@@ -79,7 +79,10 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     missions: null,
     interventions: null,
     quotes: null,
-    ai_assistant: 30,
+    // `0` et non l'absence de clé : la formule l'a explicitement eu, on le
+    // lui retire explicitement (décision du 02/09/2026, Pro et au-dessus
+    // seulement) — distinct de « n'a jamais été inclus ».
+    ai_assistant: 0,
   },
 
   pro: {
