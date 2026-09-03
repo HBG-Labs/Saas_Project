@@ -50,6 +50,14 @@ const COMPARISON_FEATURES = [
     enterprise: true,
   },
   {
+    name: 'Assistant IA (données de l’entreprise + documentation technique)',
+    free: false,
+    starter: false,
+    pro: '100 req./mois',
+    business: '300 req./mois',
+    enterprise: '1 000 req./mois',
+  },
+  {
     name: 'Recherche universelle ⌘K',
     free: true,
     starter: true,

@@ -95,6 +95,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaLink: `${ROUTES.register}?plan=pro`,
     ctaVariant: 'primary',
     features: [
+      'Assistant IA — 100 requêtes/mois (données de l’entreprise + documentation)',
       'Calculateurs Métiers certifiés (Fibre, Élec, BTP...)',
       '5 utilisateurs inclus (+5 € / util. supp.)',
       'Toutes les fonctionnalités du plan Starter',
@@ -120,6 +121,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaLink: `${ROUTES.register}?plan=business`,
     ctaVariant: 'primary',
     features: [
+      'Assistant IA — 300 requêtes/mois',
       'Toutes les fonctionnalités du plan Pro',
       '10 utilisateurs inclus (+5 € / util. supp.)',
       'Planning avancé & calendrier d’équipe',
@@ -143,6 +145,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaLink: `${ROUTES.register}?plan=enterprise`,
     ctaVariant: 'primary',
     features: [
+      'Assistant IA — 1 000 requêtes/mois',
       'Toutes les fonctionnalités du plan Business',
       '20 utilisateurs inclus',
       '+5 € / utilisateur supplémentaire / mois',

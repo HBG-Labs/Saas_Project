@@ -66,6 +66,11 @@ export default function PrivacyPage() {
             ['Signature manuscrite', 'Valider un compte rendu auprès du client final', 'Exécution du contrat'],
             ['Journal d’activité', 'Tracer qui a modifié quoi, en cas de litige', 'Intérêt légitime'],
             ['Données de facturation', 'Encaisser l’abonnement, tenir la comptabilité', 'Obligation légale'],
+            [
+              'Questions posées à l’Assistant IA (formules Pro et au-dessus)',
+              'Générer une réponse à partir de vos données et de votre documentation technique',
+              'Exécution du contrat',
+            ],
           ]}
         />
         <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
@@ -77,8 +82,8 @@ export default function PrivacyPage() {
 
       <Section titre="Qui d’autre y a accès">
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Aucune donnée n’est vendue ni cédée. Quatre prestataires interviennent, chacun pour une
-          fonction précise :
+          Aucune donnée n’est vendue ni cédée. Plusieurs prestataires interviennent, chacun pour
+          une fonction précise :
         </p>
         <ul className="mt-3 space-y-2">
           {SOUS_TRAITANTS.map((s) => (
