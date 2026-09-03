@@ -23,6 +23,8 @@ import { Modal } from '@/components/ui/Modal';
 import { ROUTES } from '@/config/routes';
 import { useCurrentOrganization } from '@/features/organizations';
 import {
+  DEFAULT_QUOTE_PAYMENT_METHOD,
+  DEFAULT_QUOTE_PAYMENT_TERMS,
   toEuros,
   useCreateQuote,
   useCreateQuoteTemplate,
@@ -778,8 +780,14 @@ export default function QuotesPage() {
             {/* Récapitulatif Financier */}
             <div className="flex flex-col sm:flex-row justify-between items-end border-t border-slate-300 pt-4 gap-4">
               <div className="text-3xs text-slate-500 space-y-1">
-                <p><strong>Conditions de règlement :</strong> Paiement à 30 jours à compter de la réception.</p>
-                <p><strong>Mode de paiement :</strong> Virement bancaire / Carte bancaire Pro.</p>
+                <p>
+                  <strong>Conditions de règlement :</strong>{' '}
+                  {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                </p>
+                <p>
+                  <strong>Mode de paiement :</strong>{' '}
+                  {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                </p>
                 <p><em>En cas de retard de paiement, une indemnité forfaitaire de 40 € sera appliquée.</em></p>
               </div>
 

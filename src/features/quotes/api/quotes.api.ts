@@ -28,6 +28,15 @@ export function toEuros(cents: number): number {
   return cents / 100;
 }
 
+/**
+ * Texte affiché sur le devis tant que l'organisation n'a pas personnalisé
+ * `quote_payment_terms` / `quote_payment_method` (voir Paramètres > Entreprise).
+ * Reprend mot pour mot le texte auparavant codé en dur, pour qu'aucune
+ * organisation existante ne voie son devis changer sans l'avoir demandé.
+ */
+export const DEFAULT_QUOTE_PAYMENT_TERMS = 'Paiement à 30 jours à compter de la réception.';
+export const DEFAULT_QUOTE_PAYMENT_METHOD = 'Virement bancaire / Carte bancaire Pro.';
+
 // -----------------------------------------------------------------------------
 // Catalogue de prestations
 // -----------------------------------------------------------------------------

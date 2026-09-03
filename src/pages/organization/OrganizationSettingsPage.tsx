@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Textarea } from '@/components/ui/Textarea';
 import { FormError } from '@/components/feedback/FormError';
 import { ROUTES } from '@/config/routes';
 import { useIndustries } from '@/features/industries';
@@ -23,6 +24,7 @@ import {
   usePermission,
   useUpdateOrganization,
 } from '@/features/organizations';
+import { DEFAULT_QUOTE_PAYMENT_METHOD, DEFAULT_QUOTE_PAYMENT_TERMS } from '@/features/quotes';
 import {
   organizationSettingsSchema,
   type OrganizationSettingsValues,
@@ -78,6 +80,8 @@ export default function OrganizationSettingsPage() {
             postalCode: toFormValue(data.postal_code),
             city: toFormValue(data.city),
             country: toFormValue(data.country),
+            quotePaymentTerms: toFormValue(data.quote_payment_terms),
+            quotePaymentMethod: toFormValue(data.quote_payment_method),
           },
         }
       : {}),
@@ -111,6 +115,8 @@ export default function OrganizationSettingsPage() {
         postal_code: toPatchValue(values.postalCode),
         city: toPatchValue(values.city),
         country: toPatchValue(values.country),
+        quote_payment_terms: toPatchValue(values.quotePaymentTerms),
+        quote_payment_method: toPatchValue(values.quotePaymentMethod),
       });
       setSaved(true);
       setTimeout(() => {
@@ -268,6 +274,36 @@ export default function OrganizationSettingsPage() {
                   {...register('country')}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Devis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                label="Conditions de règlement"
+                placeholder={DEFAULT_QUOTE_PAYMENT_TERMS}
+                hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
+                rows={2}
+                disabled={!canUpdate}
+                {...(errors.quotePaymentTerms?.message
+                  ? { error: errors.quotePaymentTerms.message }
+                  : {})}
+                {...register('quotePaymentTerms')}
+              />
+              <Textarea
+                label="Mode de paiement"
+                placeholder={DEFAULT_QUOTE_PAYMENT_METHOD}
+                hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
+                rows={2}
+                disabled={!canUpdate}
+                {...(errors.quotePaymentMethod?.message
+                  ? { error: errors.quotePaymentMethod.message }
+                  : {})}
+                {...register('quotePaymentMethod')}
+              />
             </CardContent>
           </Card>
 

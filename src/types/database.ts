@@ -339,6 +339,10 @@ export interface Database {
           industry: string | null;
           /** Taux de TVA par défaut (%) appliqué aux devis et chiffrages. */
           default_vat_rate: number | null;
+          /** Conditions de règlement affichées sur les devis. `null` = texte par défaut côté client. */
+          quote_payment_terms: string | null;
+          /** Moyens de paiement acceptés, affichés sur les devis. `null` = texte par défaut côté client. */
+          quote_payment_method: string | null;
           /**
            * Territoire de référence pour les jours fériés.
            *
@@ -370,6 +374,8 @@ export interface Database {
           country?: string | null;
           industry?: string | null;
           default_vat_rate?: number | null;
+          quote_payment_terms?: string | null;
+          quote_payment_method?: string | null;
           /** Imposé à `auth.uid()` par la policy `organizations_insert_self`. */
           created_by: string;
         };
@@ -389,6 +395,8 @@ export interface Database {
           country?: string | null;
           industry?: string | null;
           default_vat_rate?: number | null;
+          quote_payment_terms?: string | null;
+          quote_payment_method?: string | null;
           status?: OrganizationStatus;
         };
         Relationships: [];

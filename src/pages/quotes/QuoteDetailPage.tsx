@@ -11,7 +11,14 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { toEuros, useDeleteQuote, useQuote, useUpdateQuote } from '@/features/quotes';
+import {
+  DEFAULT_QUOTE_PAYMENT_METHOD,
+  DEFAULT_QUOTE_PAYMENT_TERMS,
+  toEuros,
+  useDeleteQuote,
+  useQuote,
+  useUpdateQuote,
+} from '@/features/quotes';
 import { formatDate } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { QuoteStatus } from '@/types/database';
@@ -248,10 +255,12 @@ export default function QuoteDetailPage() {
         <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
           <div className="space-y-1 text-3xs text-slate-500">
             <p>
-              <strong>Conditions de règlement :</strong> Paiement à 30 jours à compter de la réception.
+              <strong>Conditions de règlement :</strong>{' '}
+              {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
             </p>
             <p>
-              <strong>Mode de paiement :</strong> Virement bancaire / Carte bancaire Pro.
+              <strong>Mode de paiement :</strong>{' '}
+              {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
             </p>
           </div>
 

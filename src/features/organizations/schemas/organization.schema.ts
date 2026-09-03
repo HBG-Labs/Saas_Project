@@ -75,6 +75,8 @@ export const organizationSettingsSchema = z.object({
     .min(0, { error: 'Le taux de TVA ne peut pas être négatif.' })
     .max(100, { error: 'Le taux de TVA ne peut pas dépasser 100 %.' })
     .optional(),
+  quotePaymentTerms: z.string().trim().max(500).optional().or(z.literal('')),
+  quotePaymentMethod: z.string().trim().max(500).optional().or(z.literal('')),
   // `char_length(country) = 2` en base : un code ISO, pas un nom de pays.
   country: z
     .string()
