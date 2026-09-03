@@ -86,6 +86,9 @@ const CLIENT: Customer = {
   city: 'Saint-Pierre',
   country: 'FR',
   notes: null,
+  // `null` et non `'company'` : le formulaire ne demande pas encore le type de
+  // client, et le supposer entreprise ferait réclamer un SIRET à un particulier.
+  customer_type: null,
   status: 'active',
   created_by: null,
   created_at: '2026-09-01T00:00:00Z',

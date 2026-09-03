@@ -333,7 +333,82 @@ end
 $$;
 
 -- =============================================================================
-do $$ begin raise notice ''; raise notice '=== PARTIE 4 — Etancheite entre entreprises et entre roles ==='; end $$;
+do $$ begin raise notice ''; raise notice '=== PARTIE 4 — L''emetteur est fige a l''emission ==='; end $$;
+-- =============================================================================
+
+do $$
+declare
+  v_org uuid;
+  v_inv uuid;
+  v_nom text;
+  v_iban text;
+begin
+  select id into v_org from public.organizations where slug = 'factu-a';
+
+  update public.organizations
+     set legal_name = 'Facturation A SARL',
+         registration_number = '12345678900012',
+         legal_form = 'SARL',
+         iban = 'FR7630001007941234567890185',
+         vat_regime = 'reel_normal',
+         city = 'Fort-de-France'
+   where id = v_org;
+
+  insert into public.invoices (organization_id, title) values (v_org, 'Instantane emetteur')
+  returning id into v_inv;
+
+  -- Un brouillon ne porte AUCUN instantane : rien n'est fige tant que rien
+  -- n'est emis.
+  perform pg_temp.ok(
+    (select seller_name from public.invoices where id = v_inv) is null,
+    'Un brouillon ne porte pas encore d''instantane de l''emetteur');
+
+  update public.invoices set status = 'issued', issued_at = now() where id = v_inv;
+
+  select seller_name, seller_iban into v_nom, v_iban
+  from public.invoices where id = v_inv;
+
+  perform pg_temp.ok(v_nom = 'Facturation A', 'L''emission recopie le nom de l''entreprise');
+  perform pg_temp.ok(v_iban = 'FR7630001007941234567890185', 'Et ses coordonnees bancaires');
+  perform pg_temp.ok(
+    (select seller_legal_form from public.invoices where id = v_inv) = 'SARL',
+    'Et sa forme juridique');
+  perform pg_temp.ok(
+    (select seller_registration_number from public.invoices where id = v_inv) = '12345678900012',
+    'Et son SIRET');
+
+  -- LE TEST QUI JUSTIFIE TOUT L'INSTANTANE : l'entreprise demenage, change de
+  -- banque et de raison sociale. La facture deja emise ne doit pas bouger d'un
+  -- caractere — sans quoi elle mentirait retroactivement.
+  update public.organizations
+     set legal_name = 'Facturation A SAS',
+         iban = 'FR7630004000031234567890143',
+         city = 'Le Lamentin'
+   where id = v_org;
+
+  perform pg_temp.ok(
+    (select seller_iban from public.invoices where id = v_inv) = 'FR7630001007941234567890185',
+    'Changer de banque ne reecrit PAS les factures deja emises');
+  perform pg_temp.ok(
+    (select seller_city from public.invoices where id = v_inv) = 'Fort-de-France',
+    'Demenager non plus');
+
+  -- Et l'instantane lui-meme est gele par l'immuabilite, comme le reste.
+  perform pg_temp.refuses(
+    format($sql$ update public.invoices set seller_iban = 'FR001' where id = %L $sql$, v_inv),
+    'L''instantane de l''emetteur ne se retouche pas'
+  );
+
+  -- Reemettre ne doit pas ecraser l'instantane d'origine.
+  update public.invoices set status = 'sent' where id = v_inv;
+  perform pg_temp.ok(
+    (select seller_legal_name from public.invoices where id = v_inv) = 'Facturation A SARL',
+    'Faire evoluer le statut ne rejoue pas le gel');
+end
+$$;
+
+-- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 5 — Etancheite entre entreprises et entre roles ==='; end $$;
 -- =============================================================================
 
 do $$

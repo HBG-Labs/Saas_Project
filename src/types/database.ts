@@ -93,6 +93,16 @@ export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
 export type InvoiceDocumentType = 'invoice' | 'credit_note';
 
 /**
+ * Nature du destinataire. `null` en base signifie « non renseigne » : la
+ * validation le reclame avant emission, la saisie ne le bloque pas — un
+ * particulier n'a pas de SIRET, et l'exiger interdirait de creer sa fiche.
+ */
+export type CustomerType = 'company' | 'individual' | 'public_body';
+
+/** franchise (art. 293 B du CGI) | reel_simplifie | reel_normal. */
+export type VatRegime = 'franchise' | 'reel_simplifie' | 'reel_normal';
+
+/**
  * Codes de catégorie de TVA UNCL5305, repris par la norme EN 16931.
  * S standard · Z taux zéro · E exonéré · AE autoliquidation ·
  * K livraison intracommunautaire · G exportation · O hors champ.
@@ -362,6 +372,13 @@ export interface Database {
           quote_payment_terms: string | null;
           /** Moyens de paiement acceptés, affichés sur les devis. `null` = texte par défaut côté client. */
           quote_payment_method: string | null;
+          legal_form: string | null;
+          ape_code: string | null;
+          share_capital_cents: number | null;
+          rcs_city: string | null;
+          iban: string | null;
+          bic: string | null;
+          vat_regime: VatRegime | null;
           /**
            * Territoire de référence pour les jours fériés.
            *
@@ -395,6 +412,13 @@ export interface Database {
           default_vat_rate?: number | null;
           quote_payment_terms?: string | null;
           quote_payment_method?: string | null;
+          legal_form?: string | null;
+          ape_code?: string | null;
+          share_capital_cents?: number | null;
+          rcs_city?: string | null;
+          iban?: string | null;
+          bic?: string | null;
+          vat_regime?: VatRegime | null;
           /** Imposé à `auth.uid()` par la policy `organizations_insert_self`. */
           created_by: string;
         };
@@ -416,6 +440,13 @@ export interface Database {
           default_vat_rate?: number | null;
           quote_payment_terms?: string | null;
           quote_payment_method?: string | null;
+          legal_form?: string | null;
+          ape_code?: string | null;
+          share_capital_cents?: number | null;
+          rcs_city?: string | null;
+          iban?: string | null;
+          bic?: string | null;
+          vat_regime?: VatRegime | null;
           status?: OrganizationStatus;
         };
         Relationships: [];
@@ -952,6 +983,7 @@ export interface Database {
           city: string | null;
           country: string | null;
           notes: string | null;
+          customer_type: CustomerType | null;
           status: ContentStatus;
           created_by: string | null;
           created_at: string;
@@ -973,6 +1005,7 @@ export interface Database {
           city?: string | null;
           country?: string | null;
           notes?: string | null;
+          customer_type?: CustomerType | null;
           status?: ContentStatus;
           created_by?: string | null;
         };
@@ -2169,6 +2202,31 @@ export interface Database {
           payment_terms: string | null;
           payment_method: string | null;
           notes: string | null;
+          /*
+            Instantane de l'emetteur, pose PAR LA BASE au moment de l'emission
+            (`app.freeze_invoice_seller`). Jamais ecrit par l'application : un
+            chemin d'emission qui oublierait de le faire produirait une facture
+            sans emetteur, et rien ne le signalerait.
+
+            Absent de `Insert` et de `Update` pour cette raison — l'exposer
+            laisserait ecrire du code que le trigger d'immuabilite rejettera.
+          */
+          seller_name: string | null;
+          seller_legal_name: string | null;
+          seller_registration_number: string | null;
+          seller_vat_number: string | null;
+          seller_legal_form: string | null;
+          seller_ape_code: string | null;
+          seller_share_capital_cents: number | null;
+          seller_rcs_city: string | null;
+          seller_address_line1: string | null;
+          seller_address_line2: string | null;
+          seller_postal_code: string | null;
+          seller_city: string | null;
+          seller_country: string | null;
+          seller_iban: string | null;
+          seller_bic: string | null;
+          seller_vat_regime: VatRegime | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
