@@ -34,6 +34,10 @@ export function useAiAssistant() {
   // backend répond, et afficher un avertissement avant de le savoir serait
   // aussi faux que de ne jamais l'afficher.
   const [isDegraded, setIsDegraded] = useState<boolean | null>(null);
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
+  // Conversation serveur reprise d'un message à l'autre — `undefined` tant
+  // qu'aucun échange n'a encore créé de ligne côté base.
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 
   const {
     history: searchHistory,
@@ -45,7 +49,7 @@ export function useAiAssistant() {
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || isGenerating) return;
+      if (!trimmed || isGenerating || isQuotaExceeded) return;
 
       addSearchEntry(trimmed);
 
@@ -65,6 +69,7 @@ export function useAiAssistant() {
           organizationId,
           query: trimmed,
           history: [...messages, userMsg],
+          ...(conversationId ? { conversationId } : {}),
         });
 
         const assistantMsg: AiMessage = {
@@ -78,13 +83,15 @@ export function useAiAssistant() {
 
         setMessages((prev) => [...prev, assistantMsg]);
         setIsDegraded(response.degraded);
+        setIsQuotaExceeded(response.quotaExceeded === true);
+        if (response.conversationId) setConversationId(response.conversationId);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du traitement.');
       } finally {
         setIsGenerating(false);
       }
     },
-    [addSearchEntry, isGenerating, messages, organizationId],
+    [addSearchEntry, conversationId, isGenerating, isQuotaExceeded, messages, organizationId],
   );
 
   const executeAction = useCallback(
@@ -173,6 +180,8 @@ export function useAiAssistant() {
     setMessages([INITIAL_GREETING]);
     setError(null);
     setIsDegraded(null);
+    setIsQuotaExceeded(false);
+    setConversationId(undefined);
   }, []);
 
   const selectSuggestion = useCallback(
@@ -187,6 +196,7 @@ export function useAiAssistant() {
     isGenerating,
     error,
     isDegraded,
+    isQuotaExceeded,
     suggestions: DEFAULT_AI_SUGGESTIONS,
     searchHistory,
     sendMessage,

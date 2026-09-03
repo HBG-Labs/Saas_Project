@@ -125,8 +125,22 @@ export const routes: RouteObject[] = [
                 element: <RequireOrganization />,
                 children: [
                   {
-                    path: ROUTES.aiAssistant,
-                    lazy: lazyPage(() => import('@/pages/ai/AiAssistantPage')),
+                    element: <RequirePlan feature={FEATURES.aiAssistant} label="L’Assistant IA" />,
+                    children: [
+                      {
+                        path: ROUTES.aiAssistant,
+                        lazy: lazyPage(() => import('@/pages/ai/AiAssistantPage')),
+                      },
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.aiManageDocuments} />,
+                        children: [
+                          {
+                            path: ROUTES.aiAssistantDocuments,
+                            lazy: lazyPage(() => import('@/pages/ai/AiDocumentsPage')),
+                          },
+                        ],
+                      },
+                    ],
                   },
                   {
                     element: <RequirePlan feature={FEATURES.customers} label="Le module Clients" />,

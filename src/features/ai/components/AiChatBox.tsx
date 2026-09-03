@@ -1,16 +1,20 @@
 import {
   ArrowUp,
+  FileText,
   History,
   Loader2,
   Plus,
   PlugZap,
   RotateCcw,
   ShieldCheck,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/Button';
+import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
 import type {
@@ -32,6 +36,10 @@ interface AiChatBoxProps {
    * `null` tant qu'aucune question n'a été posée.
    */
   isDegraded?: boolean | null;
+  /** Quota mensuel de l'organisation épuisé — distinct de `isDegraded` : pas une panne, un plafond atteint. */
+  isQuotaExceeded?: boolean;
+  /** Affiche le lien vers la bibliothèque documentaire — réservé à `ai.manage_documents`. */
+  canManageDocuments?: boolean;
   suggestions: readonly AiSuggestion[];
   searchHistory?: readonly AiSearchHistoryItem[];
   onSendMessage: (text: string) => void;
@@ -48,6 +56,8 @@ export function AiChatBox({
   isGenerating,
   error,
   isDegraded = null,
+  isQuotaExceeded = false,
+  canManageDocuments = false,
   suggestions,
   searchHistory = [],
   onSendMessage,
@@ -129,6 +139,22 @@ export function AiChatBox({
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Bibliothèque documentaire — réservée à ai.manage_documents */}
+          {canManageDocuments && (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground hover:bg-surface-hover px-2 rounded-lg shrink-0 gap-1.5"
+              title="Gérer les documents de l’assistant"
+            >
+              <Link to={ROUTES.aiAssistantDocuments}>
+                <FileText className="size-3.5 text-primary" />
+                <span className="hidden sm:inline">Documents</span>
+              </Link>
+            </Button>
+          )}
+
           {/* Bouton Historique des recherches */}
           <Button
             variant="ghost"
@@ -167,18 +193,39 @@ export function AiChatBox({
         <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
           {/* Dit une fois, en haut du fil, ce que les réponses répètent : rien
               de ce qui suit n'a été lu dans les données de l'organisation. */}
-          {isDegraded === true && (
-            <div className="flex items-start gap-2.5 rounded-2xl border border-warning/40 bg-warning-subtle p-3.5 text-xs text-foreground">
-              <PlugZap className="size-4 shrink-0 text-warning mt-0.5" />
-              <div>
-                <p className="font-semibold">L’assistant n’est pas encore relié à vos données</p>
-                <p className="mt-0.5 text-muted-foreground">
-                  Il peut vous orienter vers le bon module et vous proposer des trames, mais il ne
-                  lit ni vos interventions, ni votre parc, ni votre planning. Aucun chiffre ci-dessous
-                  ne provient de votre organisation.
-                </p>
+          {isQuotaExceeded ? (
+            <div className="flex items-start gap-2.5 rounded-2xl border border-error-border bg-error-subtle p-3.5 text-xs text-foreground">
+              <TrendingUp className="size-4 shrink-0 text-error mt-0.5" />
+              <div className="space-y-2">
+                <div>
+                  <p className="font-semibold">Quota mensuel de l’Assistant IA atteint</p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    Il sera réinitialisé le mois prochain. Passez à une formule supérieure pour
+                    obtenir davantage de requêtes dès maintenant.
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="gap-1.5">
+                  <Link to={ROUTES.organizationBilling}>
+                    <TrendingUp className="size-3.5" />
+                    Voir les formules
+                  </Link>
+                </Button>
               </div>
             </div>
+          ) : (
+            isDegraded === true && (
+              <div className="flex items-start gap-2.5 rounded-2xl border border-warning/40 bg-warning-subtle p-3.5 text-xs text-foreground">
+                <PlugZap className="size-4 shrink-0 text-warning mt-0.5" />
+                <div>
+                  <p className="font-semibold">L’assistant n’est pas encore relié à vos données</p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    Il peut vous orienter vers le bon module et vous proposer des trames, mais il ne
+                    lit ni vos interventions, ni votre parc, ni votre planning. Aucun chiffre ci-dessous
+                    ne provient de votre organisation.
+                  </p>
+                </div>
+              </div>
+            )
           )}
 
           {messages.map((message) => (
@@ -252,7 +299,7 @@ export function AiChatBox({
               <AiSuggestionChips
                 suggestions={suggestions}
                 onSelect={onSelectSuggestion}
-                disabled={isGenerating}
+                disabled={isGenerating || isQuotaExceeded}
               />
             </div>
           )}
@@ -279,9 +326,13 @@ export function AiChatBox({
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Poser une question sur vos interventions, matériels, missions ou planning…"
+                placeholder={
+                  isQuotaExceeded
+                    ? 'Quota mensuel atteint — réessayez le mois prochain'
+                    : 'Poser une question sur vos interventions, matériels, missions ou planning…'
+                }
                 rows={1}
-                disabled={isGenerating}
+                disabled={isGenerating || isQuotaExceeded}
                 className="w-full resize-none border-none bg-transparent p-0 text-xs sm:text-sm text-foreground placeholder:text-subtle-foreground focus:outline-none focus:ring-0 leading-relaxed max-h-[120px]"
               />
             </div>
@@ -289,7 +340,7 @@ export function AiChatBox({
             {/* Bouton d'envoi circulaire */}
             <button
               type="submit"
-              disabled={!input.trim() || isGenerating}
+              disabled={!input.trim() || isGenerating || isQuotaExceeded}
               className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary-hover active:scale-95 disabled:opacity-30 disabled:bg-surface-hover disabled:text-subtle-foreground transition-all cursor-pointer disabled:cursor-not-allowed"
               title="Envoyer le message"
               aria-label="Envoyer"

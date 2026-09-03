@@ -230,6 +230,12 @@ export const qk = {
       [...qk.locations.all, 'trail', memberId, sinceIso] as const,
   },
 
+  // ---------------------------------------------------------- assistant IA
+  aiDocuments: {
+    all: ['ai-documents'] as const,
+    list: (organizationId: string) => [...qk.aiDocuments.all, organizationId] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

@@ -82,6 +82,8 @@ export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 
+export type AiDocumentStatus = 'pending' | 'processing' | 'ready' | 'error';
+
 export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
 
 export type LeaveType = 'paid_leave' | 'rtt' | 'sick_leave' | 'unpaid' | 'family' | 'recovery';
@@ -2120,6 +2122,46 @@ export interface Database {
       };
 
       // =======================================================================
+      // Assistant IA — bibliothèque documentaire
+      // =======================================================================
+      ai_documents: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          description: string | null;
+          category: string | null;
+          filename: string;
+          mime_type: string | null;
+          storage_path: string;
+          file_size: number | null;
+          status: AiDocumentStatus;
+          error_message: string | null;
+          uploaded_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          description?: string | null;
+          category?: string | null;
+          filename: string;
+          mime_type?: string | null;
+          storage_path: string;
+          file_size?: number | null;
+          uploaded_by?: string | null;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          category?: string | null;
+        };
+        Relationships: [];
+      };
+
+      // =======================================================================
       // Bloc-notes personnel
       // =======================================================================
       /**
@@ -2775,6 +2817,7 @@ export interface Database {
       equipment_condition: EquipmentCondition;
       quote_status: QuoteStatus;
       note_category: NoteCategory;
+      ai_document_status: AiDocumentStatus;
     };
 
     CompositeTypes: Record<never, never>;

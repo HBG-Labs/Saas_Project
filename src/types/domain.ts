@@ -163,6 +163,9 @@ export interface QuoteWithTotals extends Quote {
   totals: QuoteTotals | null;
 }
 
+// ------------------------------------------------------------- assistant IA
+export type AiDocument = Tables<'ai_documents'>;
+
 // ----------------------------------------------------------------- bloc-notes
 export type Note = Tables<'notes'>;
 

@@ -64,6 +64,7 @@ export const ROUTES = {
   dashboard: '/dashboard',
   analytics: '/analytics',
   aiAssistant: '/assistant-ia',
+  aiAssistantDocuments: '/assistant-ia/documents',
   planning: '/planning',
   map: '/carte',
   tools: '/tools',

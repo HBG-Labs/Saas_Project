@@ -33,6 +33,8 @@ export interface AiQueryResult {
   content: string;
   actions?: AiProposedAction[];
   sources?: string[];
+  /** Conversation serveur à reprendre pour le message suivant du même fil. */
+  conversationId?: string;
   /**
    * Vrai quand l'Edge Function `ai-assistant` n'a pas répondu et que la réponse
    * vient du mode dégradé local.
@@ -42,6 +44,13 @@ export interface AiQueryResult {
    * le contraire.
    */
   degraded: boolean;
+  /**
+   * Vrai quand la formule a bien l'Assistant IA, mais que le quota mensuel de
+   * l'organisation est épuisé. Distinct de `degraded` : ce n'est pas une panne,
+   * c'est une réponse serveur explicite — un mode dégradé la présenterait à
+   * tort comme « pas encore relié aux données ».
+   */
+  quotaExceeded?: boolean;
 }
 
 /**
@@ -56,6 +65,8 @@ export async function sendAiQuery(params: {
   organizationId: string;
   query: string;
   history: AiMessage[];
+  /** Reprend une conversation déjà commencée — absent au premier message. */
+  conversationId?: string;
 }): Promise<AiQueryResult> {
   try {
     const response: {
@@ -63,17 +74,20 @@ export async function sendAiQuery(params: {
         content?: string;
         actions?: AiProposedAction[];
         sources?: string[];
+        conversationId?: string;
       } | null;
       error: unknown;
     } = await supabase.functions.invoke<{
       content: string;
       actions?: AiProposedAction[];
       sources?: string[];
+      conversationId?: string;
     }>('ai-assistant', {
       body: {
         organizationId: params.organizationId,
         query: params.query,
         history: params.history.map((m) => ({ role: m.role, content: m.content })),
+        ...(params.conversationId ? { conversationId: params.conversationId } : {}),
       },
     });
 
@@ -82,8 +96,38 @@ export async function sendAiQuery(params: {
         content: response.data.content,
         ...(response.data.actions !== undefined ? { actions: response.data.actions } : {}),
         ...(response.data.sources !== undefined ? { sources: response.data.sources } : {}),
+        ...(response.data.conversationId !== undefined
+          ? { conversationId: response.data.conversationId }
+          : {}),
         degraded: false,
       };
+    }
+
+    // Le quota épuisé est une réponse SERVEUR EXPLICITE, pas une panne : elle
+    // ne doit pas tomber dans le mode dégradé ci-dessous, qui laisserait
+    // croire à une fonction injoignable plutôt qu'à un plafond atteint pour de
+    // bon. `functions.invoke` ne remonte le corps de la réponse que via
+    // `error.context` (une `Response`), jamais dans `data`, sur un statut
+    // non-2xx — même lecture que `sendInvitationEmail`.
+    if (response.error) {
+      const context: unknown = (response.error as { context?: unknown }).context;
+      if (context instanceof Response) {
+        try {
+          const body = (await context.clone().json()) as { error?: string; message?: string };
+          if (body.error === 'AI_QUOTA_EXCEEDED') {
+            return {
+              content:
+                body.message ??
+                "Vous avez atteint votre quota mensuel d'utilisation de l'Assistant IA.",
+              quotaExceeded: true,
+              degraded: false,
+            };
+          }
+        } catch {
+          // Réponse non-JSON (502 d'infrastructure, coupure) : on bascule sur
+          // le mode dégradé, la meilleure information restante.
+        }
+      }
     }
   } catch {
     // Fonction absente ou injoignable : on bascule sur le mode dégradé.
