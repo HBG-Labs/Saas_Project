@@ -213,7 +213,15 @@ describe('synchronisation avec le seed SQL', () => {
   // D'où la règle : une migration appliquée ne se corrige pas en l'éditant. On
   // en écrit une nouvelle, et ce bloc pointe vers la plus récente.
   // ───────────────────────────────────────────────────────────────────────────
-  const tuples = extractInsertTuplesAcross([MIGRATION_FILES.planMatrix], 'plan_features');
+  //
+  // `attachmentsInPro` s'ajoute à cette même remise à plat sans la redéfinir —
+  // décision explicite du 02/09/2026 : l'ajout de photos et documents,
+  // jusque-là réservé à Business et Enterprise, rejoint la formule Pro. Même
+  // schéma que `stock`/`purchases` après `pricing_model`.
+  const tuples = extractInsertTuplesAcross(
+    [MIGRATION_FILES.planMatrix, MIGRATION_FILES.attachmentsInPro],
+    'plan_features',
+  );
 
   const seeded = new Map<string, Map<string, number | null>>();
   for (const tuple of tuples) {

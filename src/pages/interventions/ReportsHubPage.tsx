@@ -20,6 +20,7 @@ import {
   useSaveReport,
   useSubmitReport,
 } from '@/features/interventions';
+import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
 import { useMissions } from '@/features/missions';
 import { useNotes } from '@/features/notes';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -46,6 +47,7 @@ export default function ReportsHubPage() {
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
+  const { has } = useOrganizationEntitlements(organizationId);
 
   const missionsQuery = useMissions(organizationId);
   const interventionsQuery = useOrganizationInterventions(organizationId);
@@ -333,6 +335,7 @@ export default function ReportsHubPage() {
                   uploadedBy={user?.id ?? ''}
                   attachments={attachments.data ?? []}
                   canEdit={isEditable}
+                  hasAttachmentsFeature={has(FEATURES.attachments)}
                 />
               </CardContent>
             </Card>

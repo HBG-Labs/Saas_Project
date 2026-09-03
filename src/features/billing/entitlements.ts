@@ -97,6 +97,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     stock: null,
     purchases: null,
     quotes: null,
+    attachments: null,
   },
 
   business: {

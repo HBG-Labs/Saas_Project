@@ -23,6 +23,7 @@ import {
   useUpdateInterventionNotes,
   useWorkedSeconds,
 } from '@/features/interventions';
+import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
 import { useMission, useUpdateMission } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -39,6 +40,7 @@ export default function InterventionPage() {
   const { interventionId } = useParams<{ interventionId: string }>();
   const { user } = useAuth();
   const { organization, membership } = useCurrentOrganization();
+  const { has } = useOrganizationEntitlements(organization?.id ?? null);
 
   const intervention = useIntervention(interventionId);
   const timeEntries = useTimeEntries(interventionId);
@@ -310,6 +312,7 @@ export default function InterventionPage() {
             uploadedBy={user?.id ?? ''}
             attachments={attachments.data ?? []}
             canEdit={canTrack && data.status !== 'completed'}
+            hasAttachmentsFeature={has(FEATURES.attachments)}
           />
         </CardContent>
       </Card>

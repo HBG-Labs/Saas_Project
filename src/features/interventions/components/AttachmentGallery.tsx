@@ -13,12 +13,16 @@ import {
   ZoomIn,
 } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
+import { Link } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { FEATURES, getMinimumRequiredPlan } from '@/features/billing';
+import { PERMISSIONS, usePermission } from '@/features/organizations';
+import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 import { compressImage } from '@/lib/image-compression';
 import type { AttachmentKind } from '@/types/database';
@@ -37,6 +41,27 @@ export interface AttachmentGalleryProps {
   uploadedBy: string;
   attachments: readonly InterventionAttachment[];
   canEdit: boolean;
+  /**
+   * La formule de l'organisation inclut-elle les pièces jointes ?
+   *
+   * ─────────────────────────────────────────────────────────────────────────
+   * POURQUOI CE N'EST PAS LA MÊME CHOSE QUE `canEdit`
+   *
+   * `canEdit` répond à « cette intervention accepte-t-elle encore des
+   * modifications ? » (permission, statut). Ce booléen répond à une question
+   * différente : « le dépôt de fichier est-il gardé, côté serveur, par
+   * `app.org_has_feature(org_id, 'attachments')` ? » — réservé aux formules
+   * Business et Enterprise.
+   *
+   * Sans cette distinction, un compte Starter ou Pro voyait les cinq boutons
+   * d'ajout, cliquait, sélectionnait une photo, et recevait un rejet RLS brut
+   * habillé en « Une erreur inattendue s'est produite » — exactement le
+   * malentendu que `RequirePlan` existe pour éviter ailleurs dans
+   * l'application, qui manquait ici parce que la galerie n'est pas une route
+   * à part, seulement une section d'une page déjà accessible à ces formules.
+   * ─────────────────────────────────────────────────────────────────────────
+   */
+  hasAttachmentsFeature: boolean;
 }
 
 export type PhotoCategory = 'all' | 'before' | 'during' | 'after' | 'proof' | 'document';
@@ -109,6 +134,7 @@ export function AttachmentGallery({
   uploadedBy,
   attachments,
   canEdit,
+  hasAttachmentsFeature,
 }: AttachmentGalleryProps) {
   const upload = useUploadAttachment(interventionId);
   const remove = useDeleteAttachment(interventionId);
@@ -116,6 +142,15 @@ export function AttachmentGallery({
   const [activeFilter, setActiveFilter] = useState<PhotoCategory>('all');
   const [previewAttachment, setPreviewAttachment] = useState<InterventionAttachment | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const { can } = usePermission();
+
+  // Les commandes d'ajout n'apparaissent que si LES DEUX conditions tiennent.
+  // Les pièces jointes déjà déposées restent visibles et supprimables dans
+  // tous les cas — une formule qui perd cette fonctionnalité (rétrogradation)
+  // ne doit pas faire disparaître ce qui existe déjà.
+  const canUpload = canEdit && hasAttachmentsFeature;
+  const requiredPlan = getMinimumRequiredPlan(FEATURES.attachments);
+  const peutVoirFacturation = can(PERMISSIONS.billingView);
 
   // Une référence par type de pièce jointe.
   //
@@ -179,7 +214,7 @@ export function AttachmentGallery({
       <FormError error={error} />
 
       {/* Hidden inputs pour déclenchement d'upload par catégorie */}
-      {canEdit && (
+      {canUpload && (
         <>
           <input
             ref={beforeInputRef}
@@ -243,8 +278,35 @@ export function AttachmentGallery({
         </>
       )}
 
+      {/*
+        L'INCITATION N'APPARAÎT QUE SI LA FORMULE EST LA SEULE RAISON.
+
+        `canEdit && !hasAttachmentsFeature` : une intervention déjà terminée
+        (canEdit=false) n'a pas besoin qu'on lui vante une mise à niveau, elle
+        n'accepte plus aucune modification, quelle que soit la formule.
+      */}
+      {canEdit && !hasAttachmentsFeature && (
+        <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="text-primary size-4 shrink-0" aria-hidden="true" />
+            <p className="text-xs text-muted-foreground">
+              L’ajout de photos et documents nécessite la formule{' '}
+              <span className="text-foreground font-semibold">{requiredPlan.name}</span> (
+              {requiredPlan.priceMonthly} €/mois).
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0 text-xs">
+            {peutVoirFacturation ? (
+              <Link to={ROUTES.organizationBilling}>Mettre à niveau</Link>
+            ) : (
+              <Link to={ROUTES.pricing}>Découvrir les offres</Link>
+            )}
+          </Button>
+        </div>
+      )}
+
       {/* BOUTONS D'AJOUT PAR CATÉGORIE */}
-      {canEdit && (
+      {canUpload && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-foreground">Ajouter des photos & justificatifs :</span>

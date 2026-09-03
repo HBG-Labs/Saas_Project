@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
+import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
 import { ChecklistCard, InterventionFormCard } from '@/features/industries';
 import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
@@ -43,6 +44,7 @@ export default function ReportEditorPage() {
   const { interventionId } = useParams<{ interventionId: string }>();
   const { user } = useAuth();
   const { organization, membership } = useCurrentOrganization();
+  const { has } = useOrganizationEntitlements(organization?.id ?? null);
 
   const intervention = useIntervention(interventionId);
   const workedSecondsQuery = useWorkedSeconds(interventionId);
@@ -345,6 +347,7 @@ export default function ReportEditorPage() {
                 uploadedBy={user?.id ?? ''}
                 attachments={attachments.data ?? []}
                 canEdit={isEditable}
+                hasAttachmentsFeature={has(FEATURES.attachments)}
               />
             </CardContent>
           </Card>
