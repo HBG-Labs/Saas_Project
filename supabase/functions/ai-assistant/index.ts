@@ -1,39 +1,39 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { CORS_HEADERS, adminClient, extractJwt, json } from '../_shared/billing.ts';
+import {
+  createChatCompletion,
+  estimateCompletionCost,
+  getAiQuotaStatus,
+  requireAiAccess,
+  requireAiFeature,
+  searchDocumentChunks,
+  type DocumentChunkMatch,
+} from '../_shared/ai.ts';
 
 /**
- * Edge Function : Assistant IA REZO360 (RAG Universel & Analyse Métier)
+ * Edge Function : Assistant IA REZO360 (RAG documentaire + Analyse Métier)
  *
- * Couvre l'intégralité du progiciel :
- *   1. Équipe & Techniciens (membres, rôles, statuts, disponibilités)
- *   2. Missions & Interventions (en cours, en retard, planifiées, terminées)
- *   3. Stock & Consommables (quantités, seuils d'alerte, catégories)
- *   4. Parc Matériel & Outillage (étalonnages, contrôles, affectations)
- *   5. Flotte Véhicules (contrôles techniques, révisions, kilométrages)
- *   6. Achats & Fournisseurs (commandes en cours, réceptions)
- *   7. Devis & Chiffrage (validité, clients, montants)
- *   8. Répertoire Clients (villes, coordonnées)
- *   9. Planning & Congés (absences validées)
- *  10. Trames & Comptes-rendus d'interventions (fibre optique, télécom, élec)
- *  11. Formules & Calculs techniques (Loi d'Ohm, optique, dBm, réseaux)
+ * Deux sources de contexte, fusionnées dans un seul prompt système :
+ *   A. Données métier en direct — couvre l'intégralité du progiciel :
+ *      équipe, missions/interventions, stock, parc matériel, véhicules,
+ *      achats, devis, clients, planning/congés. Inchangé depuis la version
+ *      d'origine, section « Extraction globale » ci-dessous.
+ *   B. Documentation technique déposée par l'entreprise (RAG) — recherche
+ *      vectorielle via `_shared/ai.ts` → `match_ai_document_chunks`, jamais
+ *      un accès direct à `ai_document_chunks`.
+ *
+ * Gemini a été retiré (décision explicite du 02/09/2026) : un seul
+ * fournisseur, `gpt-5.6-luna` via `_shared/ai.ts`. Le moteur de réponses
+ * déterministes (section C, plus bas) reste le filet de sécurité si OpenAI
+ * est indisponible — c'est lui qui fait tenir Phase 17 sans dépendre d'un
+ * fournisseur externe.
  */
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-  });
-}
 
 interface RequestBody {
   organizationId: string;
   query: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Reprend une conversation existante. Absent → une nouvelle est créée. */
+  conversationId?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -52,48 +52,44 @@ Deno.serve(async (req: Request) => {
     }
 
     const body: RequestBody = await req.json();
-    const { organizationId, query, history = [] } = body;
+    const { organizationId, query, history = [], conversationId: requestedConversationId } = body;
 
     if (!organizationId || !query?.trim()) {
       return json({ error: 'organizationId et query sont requis' }, 400);
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? supabaseAnonKey;
+    const admin = adminClient();
+    const jwt = extractJwt(authHeader);
 
-    // 1. Vérification de la session utilisateur
-    const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${jwt}` } },
-      auth: { persistSession: false },
-    });
+    // 1. Session, appartenance et permission `ai.use`.
+    const access = await requireAiAccess({ admin, jwt, organizationId, permission: 'ai.use' });
+    if ('error' in access) return access.error;
+    const { userId } = access.context;
 
-    const {
-      data: { user },
-      error: userError,
-    } = await userClient.auth.getUser(jwt);
+    // 2. La formule inclut-elle l'Assistant IA ?
+    const feature = await requireAiFeature(admin, organizationId);
+    if ('error' in feature) return feature.error;
 
-    if (userError || !user) {
-      return json({ error: 'Session utilisateur invalide ou expirée' }, 401);
+    // 3. Quota mensuel — AVANT tout appel au modèle, jamais après. Un échec
+    // de lecture du quota refuse par prudence : c'est une garde devant un
+    // appel payant, pas un compteur d'affichage qu'on peut se permettre de
+    // rater ouvert.
+    const quota = await getAiQuotaStatus(admin, organizationId);
+    if (!quota) {
+      return json({ error: 'Quota IA illisible pour cette organisation.' }, 500);
+    }
+    if (!quota.unlimited && quota.remaining !== null && quota.remaining <= 0) {
+      return json(
+        {
+          error: 'AI_QUOTA_EXCEEDED',
+          message: "Vous avez atteint votre quota mensuel d'utilisation de l'Assistant IA.",
+          quota,
+        },
+        429,
+      );
     }
 
-    // 2. Vérification d'appartenance à l'organisation
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-    const { data: callerMembership, error: memberCheckError } = await adminClient
-      .from('organization_members')
-      .select('id, role, status')
-      .eq('organization_id', organizationId)
-      .eq('user_id', user.id)
-      .in('status', ['active', 'invited'])
-      .maybeSingle();
-
-    if (memberCheckError || !callerMembership) {
-      return json({ error: 'Accès non autorisé à cette organisation' }, 403);
-    }
-
-    // 3. Extraction globale des données de l'organisation
+    // 4. Extraction globale des données de l'organisation
     const [
       membersRes,
       teamsRes,
@@ -108,65 +104,65 @@ Deno.serve(async (req: Request) => {
       leavesRes,
       orgRes,
     ] = await Promise.all([
-      adminClient
+      admin
         .from('organization_members')
-        .select('id, user_id, role, status, job_title, phone, profile:profiles(id, display_name, avatar_url)')
+        .select('id, user_id, role, status, job_title, phone, profile:profiles(id, display_name, avatar_id)')
         .eq('organization_id', organizationId)
         .in('status', ['active', 'invited']),
-      adminClient
+      admin
         .from('teams')
         .select('id, name, description')
         .eq('organization_id', organizationId),
-      adminClient
+      admin
         .from('missions')
         .select('id, reference, title, status, priority, scheduled_start, scheduled_end, customer_name, city')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(50),
-      adminClient
+      admin
         .from('stock_consumables')
         .select('id, name, reference, category, quantity_in_stock, min_alert_threshold, unit')
         .eq('organization_id', organizationId)
         .limit(50),
-      adminClient
+      admin
         .from('equipment')
         .select('id, name, brand, serial_number, category, status, condition, next_calibration')
         .eq('organization_id', organizationId)
         .limit(40),
-      adminClient
+      admin
         .from('vehicles')
         .select('id, plate, brand, model, type, status, mileage, next_ct_date, next_revision_date')
         .eq('organization_id', organizationId)
         .limit(30),
-      adminClient
+      admin
         .from('suppliers')
         .select('id, name, code, contact_name, city, phone')
         .eq('organization_id', organizationId)
         .limit(30),
-      adminClient
+      admin
         .from('purchase_orders')
         .select('id, reference, supplier_name, status, order_date, expected_delivery_date')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(30),
-      adminClient
+      admin
         .from('quotes')
         .select('id, reference, title, customer_name, status, valid_until')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(30),
-      adminClient
+      admin
         .from('customers')
         .select('id, name, reference, city, status, phone')
         .eq('organization_id', organizationId)
         .limit(40),
-      adminClient
+      admin
         .from('leave_requests')
         .select('id, user_id, type, start_date, end_date, status')
         .eq('organization_id', organizationId)
         .eq('status', 'approved')
         .limit(30),
-      adminClient
+      admin
         .from('organizations')
         .select('id, name, slug, max_members, industry')
         .eq('id', organizationId)
@@ -547,80 +543,75 @@ Données en direct de l'organisation "${organization?.name || 'REZO360'}" :
       });
     }
 
-    // 5. Moteur d'IA & Réponses Déterministes Enrichies
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_AI_API_KEY');
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-
-    let aiContent = '';
-
-    // A. Appel LLM Google Gemini
-    if (geminiApiKey) {
+    // 5. Recherche documentaire (RAG)
+    //
+    // Pas fatale si elle échoue : l'assistant répond quand même à partir des
+    // données métier ci-dessus. Un incident sur la recherche vectorielle ne
+    // doit pas priver l'utilisateur de la partie qui fonctionne.
+    let documentChunks: DocumentChunkMatch[] = [];
+    const openaiApiKeyForSearch = Deno.env.get('OPENAI_API_KEY');
+    if (openaiApiKeyForSearch) {
       try {
-        const systemPrompt = `Tu es l'Assistant IA expert de REZO360, progiciel de gestion d'interventions techniques, télécom, fibre optique (FTTH/FTTE), courants faibles et réseaux.
-Tu as un accès direct aux données en temps réel de l'entreprise :
-${orgContext}
-
-Règles de réponse :
-1. Réponds toujours en français professionnel, précis et chaleureux.
-2. Si la question porte sur un chiffre (ex: combien de techniciens, de missions, de véhicules, d'articles en alerte), donne les chiffres exacts puis liste les éléments clés pertinents.
-3. Si la question est technique (ex: calcul d'atténuation fibre, formule électrique, trame de compte-rendu), donne la méthode technique rigoureuse adaptée aux métiers télécom / élec.
-4. Ne dis JAMAIS que tu n'as pas accès aux données de l'organisation.`;
-
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                { role: 'user', parts: [{ text: `${systemPrompt}\n\nHistorique :\n${JSON.stringify(history)}\n\nQuestion utilisateur : ${query}` }] },
-              ],
-              generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 1200,
-              },
-            }),
-          },
-        );
-
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        }
-      } catch (err) {
-        console.error('Erreur appel Gemini:', err);
+        documentChunks = await searchDocumentChunks({
+          admin,
+          organizationId,
+          query,
+          openaiApiKey: openaiApiKeyForSearch,
+        });
+      } catch (ragError) {
+        console.error('Recherche documentaire indisponible:', ragError);
       }
     }
 
-    // B. Appel LLM OpenAI (si Gemini absent ou en erreur)
-    if (!aiContent && openaiApiKey) {
-      try {
-        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openaiApiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `Tu es l'Assistant IA de REZO360. Voici les données réelles de l'organisation :\n${orgContext}\nRéponds de manière concise, précise et professionnelle.`,
-              },
-              ...history.map((h) => ({ role: h.role, content: h.content })),
-              { role: 'user', content: query },
-            ],
-            temperature: 0.2,
-          }),
-        });
+    const docContext =
+      documentChunks.length > 0
+        ? `\nExtraits pertinents de la documentation technique de l'entreprise :\n${documentChunks
+            .map((chunk, i) => {
+              const title = (chunk.metadata.document_title as string | undefined) ?? 'Document';
+              const page = chunk.metadata.page as number | undefined;
+              return `[Extrait ${i + 1}] ${title}${page ? ` (page ${page})` : ''}\n${chunk.content}`;
+            })
+            .join('\n\n')}\n`
+        : '';
 
-        if (openaiRes.ok) {
-          const data = await openaiRes.json();
-          aiContent = data.choices?.[0]?.message?.content || '';
-        }
+    // 6. Moteur d'IA & Réponses Déterministes Enrichies
+    //
+    // Prompt système unique (Phase 9) : privilégie la documentation fournie,
+    // n'invente jamais une procédure/mesure/norme, distingue explicitement
+    // ce qui vient des documents de ce qui relève d'une connaissance
+    // générale ou d'une hypothèse, et cite sa source quand elle existe.
+    const systemPrompt = `Tu es Luna, l'Assistant Technique de REZO360.
+
+Tu aides des professionnels du terrain (fibre optique, télécom, courants faibles, électricité) dans leur activité technique et dans le pilotage de leur entreprise.
+
+Règles de réponse, dans cet ordre de priorité :
+1. Privilégie TOUJOURS les informations du contexte documentaire ci-dessous quand il en contient une pertinente pour la question — c'est la documentation propre de cette entreprise, plus fiable qu'une connaissance générale sur le sujet.
+2. N'invente JAMAIS une procédure, une mesure, une norme ou une valeur technique. Si ni la documentation ni les données ci-dessous ne permettent de répondre avec suffisamment de certitude, dis-le clairement plutôt que d'improviser.
+3. Distingue explicitement, quand la nuance importe : ce qui vient des documents de l'entreprise, ce qui relève d'une connaissance générale du métier, et ce qui est une hypothèse de ta part.
+4. Quand tu t'appuies sur un extrait documentaire, cite sa source (nom du document, page si connue).
+5. Si la question porte sur un chiffre issu des données de l'organisation (combien de techniciens, de missions, de véhicules, d'articles en alerte...), donne le chiffre exact puis les éléments clés pertinents.
+6. Réponds en français professionnel, clair, concis et pratique — adapté à un technicien qui te lit depuis un smartphone sur le terrain. Évite les réponses longues sans valeur ajoutée.
+
+Données en direct de l'organisation :
+${orgContext}
+${docContext}`;
+
+    let aiContent = '';
+    let tokenUsage: { inputTokens: number; outputTokens: number } | null = null;
+
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (openaiApiKey) {
+      try {
+        const completion = await createChatCompletion({
+          apiKey: openaiApiKey,
+          systemPrompt,
+          history,
+          query,
+        });
+        aiContent = completion.content;
+        tokenUsage = { inputTokens: completion.inputTokens, outputTokens: completion.outputTokens };
       } catch (err) {
-        console.error('Erreur appel OpenAI:', err);
+        console.error('Erreur appel OpenAI ai-assistant:', err);
       }
     }
 
@@ -773,10 +764,69 @@ Règles de réponse :
       }
     }
 
+    // 7. Sources documentaires réellement utilisées — jamais affichées si
+    // aucun fragment n'a été retrouvé (Phase 16 : ne pas laisser croire à une
+    // recherche documentaire qui n'a rien donné).
+    if (documentChunks.length > 0) {
+      const documentSources = new Set<string>();
+      for (const chunk of documentChunks) {
+        const title = (chunk.metadata.document_title as string | undefined) ?? 'Document';
+        const page = chunk.metadata.page as number | undefined;
+        documentSources.add(`${title}${page ? ` (page ${page})` : ''}`);
+      }
+      sources.push(...documentSources);
+    }
+
+    // 8. Persistance de la conversation et du message.
+    //
+    // Best-effort : une erreur d'écriture ici ne doit pas priver
+    // l'utilisateur d'une réponse déjà calculée. Elle est journalisée, pas
+    // remontée en échec de la requête.
+    let conversationId = requestedConversationId ?? null;
+    try {
+      if (!conversationId) {
+        const { data: newConversation, error: createError } = await admin
+          .from('ai_conversations')
+          .insert({ organization_id: organizationId, user_id: userId, title: query.slice(0, 80) })
+          .select('id')
+          .single();
+        if (createError) throw createError;
+        conversationId = newConversation.id;
+      }
+
+      await admin.from('ai_messages').insert([
+        { conversation_id: conversationId, role: 'user', content: query },
+        {
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: aiContent,
+          sources: sources.length > 0 ? sources : null,
+        },
+      ]);
+    } catch (persistError) {
+      console.error('Persistance de la conversation échouée:', persistError);
+    }
+
+    // 9. Consommation — seulement quand un appel payant a réellement eu
+    // lieu. Une réponse issue du moteur déterministe (OpenAI absent ou en
+    // erreur) ne coûte rien et ne doit pas entamer le quota de l'organisation.
+    if (tokenUsage) {
+      const { error: usageError } = await admin.from('ai_usage').insert({
+        organization_id: organizationId,
+        user_id: userId,
+        request_type: 'chat',
+        input_tokens: tokenUsage.inputTokens,
+        output_tokens: tokenUsage.outputTokens,
+        estimated_cost: estimateCompletionCost(tokenUsage.inputTokens, tokenUsage.outputTokens),
+      });
+      if (usageError) console.error('Enregistrement de la consommation IA échoué:', usageError);
+    }
+
     return json({
       content: aiContent,
       actions: proposedActions,
       sources: sources.length > 0 ? sources : ['Base de données PostgreSQL REZO360'],
+      conversationId,
       degraded: false,
     });
   } catch (err) {
