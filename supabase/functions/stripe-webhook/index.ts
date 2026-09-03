@@ -30,6 +30,41 @@ import { adminClient, env, json, stripeRequest } from '../_shared/billing.ts';
  * main est une source classique de faille — comparaison paresseuse, rejeu hors
  * fenêtre accepté. On s'appuie sur `crypto.subtle`, et la tolérance est
  * explicite.
+ *
+ * RELECTURE_INDEPENDANTE_DE_LA_VERSION
+ *
+ * De chaque événement reçu, on ne lit que `id` — puis on relit l'objet chez
+ * Stripe. Cette règle vaut pour les quatre branches.
+ *
+ * Seule exception, assumée : `metadata` sur les abonnements, conservé en
+ * repli parce que des métadonnées posées à la session peuvent manquer sur
+ * l'objet relu. Comme `id`, c'est un champ de tronc commun qu'aucune version
+ * de l'API n'a jamais déplacé.
+ *
+ * Elle a d'abord été adoptée contre le désordre des rejeux (voir le
+ * raisonnement détaillé sur `customer.subscription.*`). Une seconde raison,
+ * indépendante, la rend obligatoire.
+ *
+ * La forme des objets envoyés par un webhook est fixée par la version d'API
+ * configurée SUR L'ENDPOINT, dans le tableau de bord — pas par le code. Or
+ * `stripeRequest` épingle `2024-06-20`, et Stripe ne propose plus, à la
+ * création d'un endpoint, que la version courante du compte et de plus
+ * récentes. L'écart n'est donc pas une éventualité : il est certain, et il
+ * grandira.
+ *
+ * Ce que cet écart casse, concrètement : `invoice.subscription` a été retiré
+ * en version Basil (2025-03-31) au profit de
+ * `invoice.parent.subscription_details.subscription`, et
+ * `subscription.current_period_end` a migré vers les lignes d'abonnement. Un
+ * code qui lit ces champs dans la charge utile ne lève aucune erreur — il
+ * trouve `undefined`, saute la branche, et journalise l'événement comme
+ * traité. Une panne parfaitement muette, sur des branches qui décident de
+ * l'argent.
+ *
+ * `id` est le seul champ qu'aucune version n'a jamais déplacé. En ne
+ * dépendant que de lui, la fonction devient insensible au réglage d'un menu
+ * déroulant qu'elle ne contrôle pas. Le coût est un appel d'API par
+ * événement.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -263,11 +298,16 @@ Deno.serve(async (request: Request): Promise<Response> => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as {
-          subscription?: string;
-          customer?: string;
-          metadata?: { organization_id?: string };
-        };
+        // On ne lit de l'événement QUE son identifiant, puis on relit la
+        // session — même principe que les abonnements plus bas, et pour une
+        // raison de plus, expliquée à `RELECTURE_INDEPENDANTE_DE_LA_VERSION`.
+        const recu = event.data.object as { id: string };
+
+        const session = (await stripeRequest(
+          `/v1/checkout/sessions/${recu.id}`,
+          {},
+          'GET',
+        )) as { subscription?: string };
 
         // La session ne porte pas l'état de l'abonnement : on va le chercher,
         // plutôt que de déduire un statut d'un événement qui ne le contient pas.
@@ -341,11 +381,30 @@ Deno.serve(async (request: Request): Promise<Response> => {
         // `applySubscription` fait les deux correctement : on relit, on lui
         // passe l'objet courant, elle lève si l'écriture échoue — et
         // l'événement est alors retiré du journal pour que Stripe rejoue.
-        const invoice = event.data.object as { subscription?: string };
+        const recuFacture = event.data.object as { id: string };
 
-        if (invoice.subscription) {
+        const invoice = (await stripeRequest(
+          `/v1/invoices/${recuFacture.id}`,
+          {},
+          'GET',
+        )) as {
+          subscription?: string;
+          parent?: { subscription_details?: { subscription?: string } };
+        };
+
+        // Ceinture ET bretelles : la relecture ci-dessus rend déjà la forme
+        // prévisible, mais `invoice.subscription` est précisément le champ que
+        // Stripe a retiré en version Basil (2025-03-31) au profit de
+        // `invoice.parent.subscription_details.subscription`. Si l'épinglage
+        // venait un jour à être relevé, lire les deux emplacements évite que ce
+        // soit CETTE branche — celle de l'argent qui ne rentre pas — qui
+        // redevienne muette.
+        const subscriptionId =
+          invoice.subscription ?? invoice.parent?.subscription_details?.subscription;
+
+        if (subscriptionId) {
           const courant = (await stripeRequest(
-            `/v1/subscriptions/${invoice.subscription}`,
+            `/v1/subscriptions/${subscriptionId}`,
             AVEC_MOYEN_PAIEMENT,
             'GET',
           )) as unknown as StripeSubscription;
