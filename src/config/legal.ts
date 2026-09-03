@@ -101,6 +101,15 @@ export const SOUS_TRAITANTS = [
   { nom: 'Vercel', objet: 'Diffusion de l’application', zone: 'États-Unis, clauses contractuelles types' },
   { nom: 'Stripe', objet: 'Paiement et facturation des abonnements', zone: 'Union européenne / États-Unis' },
   { nom: 'Infomaniak', objet: 'Envoi des courriels transactionnels', zone: 'Suisse' },
+  // Formules Pro et au-dessus uniquement (§ Assistant IA). Ce qui transite :
+  // la question posée et un résumé des données de l'organisation pertinentes
+  // pour y répondre (missions, stock, clients...), jamais les identifiants de
+  // connexion ni les moyens de paiement.
+  {
+    nom: 'OpenAI',
+    objet: 'Génération des réponses de l’Assistant IA, à partir de votre question et des données pertinentes de votre organisation',
+    zone: 'États-Unis, clauses contractuelles types',
+  },
 ] as const;
 
 /** Durées de conservation annoncées, par nature de donnée. */
