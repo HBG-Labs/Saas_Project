@@ -298,6 +298,27 @@ export const routes: RouteObject[] = [
                   },
 
                   {
+                    element: (
+                      <RequirePlan feature={FEATURES.invoicing} label="Le module Factures" />
+                    ),
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.invoiceView} />,
+                        children: [
+                          {
+                            path: ROUTES.invoices,
+                            lazy: lazyPage(() => import('@/pages/invoices/InvoicesPage')),
+                          },
+                          {
+                            path: ROUTE_PATTERNS.invoiceDetail,
+                            lazy: lazyPage(() => import('@/pages/invoices/InvoiceDetailPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
                     /*
                       Les Achats ont leur propre formule et leurs propres
                       permissions. Ils empruntaient celles des Devis faute de

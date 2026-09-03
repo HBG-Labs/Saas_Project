@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, Ban, CheckCircle2, Download, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, Download, ReceiptText, Send, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
+import { useCreateInvoiceFromQuote } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import {
   DEFAULT_QUOTE_PAYMENT_METHOD,
@@ -43,6 +45,7 @@ export default function QuoteDetailPage() {
 
   const updateQuote = useUpdateQuote(quoteId ?? '');
   const deleteQuote = useDeleteQuote();
+  const createInvoice = useCreateInvoiceFromQuote();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   useDocumentTitle(quote ? `Devis ${quote.reference}` : 'Devis');
@@ -280,6 +283,49 @@ export default function QuoteDetailPage() {
           </div>
         </div>
       </div>
+
+      {/*
+        FACTURER, ET SEULEMENT UN DEVIS ACCEPTÉ.
+
+        Proposer le bouton sur un devis encore en discussion inviterait à
+        facturer ce que le client n'a pas validé. La condition est donc le
+        statut, pas la seule permission.
+
+        La facture naît en BROUILLON : elle reprend les lignes, mais son
+        identité de destinataire est relue dans la fiche client — un devis ne
+        retient que le nom, une facture doit porter raison sociale, SIRET et
+        numéro de TVA. Rien n'est figé tant qu'elle n'est pas émise.
+      */}
+      {canManage && quote.status === 'accepted' && (
+        <Card className="border-primary/20">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <div>
+              <p className="text-foreground text-xs font-semibold">Facturer ce devis</p>
+              <p className="text-muted-foreground text-3xs">
+                Crée une facture en brouillon reprenant les lignes, le client et les montants. Vous
+                pourrez la relire avant de l’émettre.
+              </p>
+              <FormError error={createInvoice.error} />
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              className="gap-1.5 text-xs"
+              disabled={createInvoice.isPending}
+              onClick={() => {
+                if (!quote.organization_id) return;
+                createInvoice.mutate(
+                  { quoteId: quote.id, organizationId: quote.organization_id },
+                  { onSuccess: (invoice) => void navigate(ROUTES.invoiceDetail(invoice.id)) },
+                );
+              }}
+            >
+              <ReceiptText className="size-3.5" aria-hidden="true" />
+              {createInvoice.isPending ? 'Création…' : 'Créer la facture'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {canManage && (
         <Card className="border-error/20">

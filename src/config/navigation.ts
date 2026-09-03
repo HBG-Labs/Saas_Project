@@ -135,6 +135,25 @@ export const ACHATS_NAV: readonly NavItem[] = [
   { to: ROUTES.purchaseOrders, label: 'Commandes', icon: 'shopping-cart', feature: 'purchases', primary: true },
   { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store', feature: 'purchases' },
   { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator', feature: 'quotes' },
+  /*
+    `feature` ET `permission`, et les deux ne font pas la même chose.
+
+    `invoicing` laisse l'entrée VISIBLE, cadenassée, pour qui n'a pas la
+    formule : cacher le module reviendrait à cacher le produit — un patron qui
+    ignore que REZO360 facture ne l'achètera jamais.
+
+    `invoice.view` RETIRE l'entrée à qui n'a pas le rôle. Un technicien n'aura
+    jamais accès au chiffre d'affaires quelle que soit la formule : un cadenas
+    lui promettrait une porte qui ne s'ouvrira pas, et renseignerait au passage
+    sur ce que gagne l'entreprise.
+  */
+  {
+    to: ROUTES.invoices,
+    label: 'Factures',
+    icon: 'file-text',
+    feature: 'invoicing',
+    permission: 'invoice.view',
+  },
 ];
 
 export const ADMINISTRATION_NAV: readonly NavItem[] = [
