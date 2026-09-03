@@ -10,6 +10,14 @@ interface DownloadAppModalProps {
   onClose: () => void;
 }
 
+/**
+ * Domaine à taper, affiché aux étapes Android/iPhone, sous le QR code et dans
+ * son attribut `alt`. Le SVG lui-même encode `https://` + ce même domaine —
+ * voir la constante `INSTALL_URL` de `scripts/generate-install-qr.mjs`, à
+ * modifier en même temps que celle-ci si l'adresse change un jour.
+ */
+const INSTALL_URL = 'rezo360.vercel.app';
+
 /** Marches à suivre, par plateforme. Aucune n'exige de magasin d'applications. */
 const PARCOURS = [
   {
@@ -17,7 +25,7 @@ const PARCOURS = [
     icone: Globe,
     titre: 'Android — Chrome',
     etapes: [
-      'Ouvrez rezo360.fr dans Chrome.',
+      `Ouvrez ${INSTALL_URL} dans Chrome.`,
       'Menu ⋮ en haut à droite.',
       '« Installer l’application » ou « Ajouter à l’écran d’accueil ».',
     ],
@@ -27,7 +35,7 @@ const PARCOURS = [
     icone: Apple,
     titre: 'iPhone / iPad — Safari',
     etapes: [
-      'Ouvrez rezo360.fr dans Safari.',
+      `Ouvrez ${INSTALL_URL} dans Safari.`,
       'Bouton Partager, en bas de l’écran.',
       '« Sur l’écran d’accueil ».',
     ],
@@ -216,6 +224,47 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
                 </div>
               );
             })}
+          </div>
+
+          {/*
+            LE QR CODE N'EST PAS UNE ÉTAPE D'INSTALLATION, D'OÙ SA SORTIE DES CARTES.
+
+            Il vivait dans la carte « Ordinateur », en dessous de ses deux
+            points, où il se lisait comme un troisième point de la marche à
+            suivre — alors qu'il fait exactement l'inverse : il fait CHANGER
+            d'appareil. Et une colonne d'un tiers de modale écrasait sa légende
+            sur six lignes de trois mots pour un carré de 56 px, à la limite du
+            scannable.
+
+            En pleine largeur, la légende tient sur deux lignes et le code
+            atteint une taille qu'un téléphone accroche du premier coup.
+
+            La formulation évite « votre téléphone » : sur mobile, la modale
+            s'affiche aussi, et le seul usage qui reste — montrer le code à un
+            collègue pour qu'il l'installe — mérite de ne pas être contredit
+            par le texte.
+
+            Généré par `scripts/generate-install-qr.mjs`, jamais écrit à la
+            main : le SVG ne peut pas encoder une autre adresse que celle de la
+            constante du script.
+          */}
+          <div className="border-border bg-surface-sunken flex items-center gap-3 sm:gap-3.5 rounded-xl border p-3 sm:p-3.5">
+            <img
+              src="/images/rezo360-install-qr.svg"
+              alt={`QR code vers ${INSTALL_URL}`}
+              width={72}
+              height={72}
+              className="border-border size-16 sm:size-18 shrink-0 rounded-lg border bg-white p-1.5"
+            />
+            <div className="min-w-0 space-y-1">
+              <p className="text-foreground text-xs sm:text-sm font-bold">
+                Ouvrir sur un téléphone
+              </p>
+              <p className="text-muted-foreground text-3xs sm:text-2xs leading-relaxed">
+                Scannez ce code pour arriver directement sur {INSTALL_URL}, sans avoir à taper
+                l’adresse.
+              </p>
+            </div>
           </div>
         </div>
 
