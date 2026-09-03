@@ -130,6 +130,16 @@ describe('useVisibleNavGroups', () => {
     expect(result.current).toHaveLength(0);
   });
 
+  it('relègue les entrées cadenassées en fin de volet, sans changer leur ordre entre elles', () => {
+    // Déclarées Missions, Devis, Bloc-notes ; seul « Devis » est verrouillé
+    // (formule sans `quotes`). Il doit se retrouver dernier, et l'ordre des
+    // deux autres — accessibles — rester celui de `navigation.ts`.
+    const { result } = renderHook(() => useVisibleNavGroups(SECTIONS));
+    const terrain = result.current.find((g) => g.id === 'terrain');
+
+    expect(terrain?.items.map((item) => item.to)).toEqual(['/missions', '/notes', '/devis']);
+  });
+
   it('affiche une section entièrement verrouillée plutôt que de la masquer', () => {
     // C'est le cas d'une organisation Gratuite devant « Stock » ou « Achats ».
     // Masquer la section entière reviendrait à masquer ce qu'on vend.

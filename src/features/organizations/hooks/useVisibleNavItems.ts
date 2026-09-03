@@ -163,7 +163,12 @@ export function useVisibleNavGroups(groups: readonly NavGroup[]): readonly Resol
         .map((item) => ({
           ...withVocabulary(item, vocabulary, overrides),
           locked: !estOuverte(item, has),
-        }));
+        }))
+        // Cadenassées en dernier, dans le volet. `sort` est stable : l'ordre
+        // métier déclaré dans `navigation.ts` reste intact à l'intérieur de
+        // chacun des deux groupes — seule la frontière accessible/verrouillé
+        // se déplace en fin de liste.
+        .sort((a, b) => Number(a.locked) - Number(b.locked));
 
       if (items.length > 0) visible.push({ ...group, items });
     }
