@@ -80,7 +80,13 @@ export function useCreateMission() {
   return useMutation({
     mutationFn: createMission,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+      // Les statistiques comptent des missions par statut : les laisser hors
+      // de cette invalidation reproduirait le défaut mesuré — la page Analyse
+      // n'aurait montré la mission qu'après un rechargement manuel.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+        queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
+      ]);
     },
   });
 }
@@ -91,7 +97,13 @@ export function useUpdateMission(missionId: string) {
   return useMutation({
     mutationFn: (patch: TablesUpdate<'missions'>) => updateMission(missionId, patch),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+      // Les statistiques comptent des missions par statut : les laisser hors
+      // de cette invalidation reproduirait le défaut mesuré — la page Analyse
+      // n'aurait montré la mission qu'après un rechargement manuel.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+        queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
+      ]);
     },
   });
 }
@@ -105,7 +117,13 @@ export function useAssignMission(missionId: string) {
     onSuccess: async () => {
       // L'affectation change AUSSI le statut (`draft` → `assigned`) et écrit une
       // ligne d'historique : les trois vues du domaine sont concernées.
-      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+      // Les statistiques comptent des missions par statut : les laisser hors
+      // de cette invalidation reproduirait le défaut mesuré — la page Analyse
+      // n'aurait montré la mission qu'après un rechargement manuel.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+        queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
+      ]);
     },
   });
 }
@@ -128,7 +146,13 @@ export function useChangeMissionStatus(missionId: string) {
   return useMutation({
     mutationFn: (status: MissionStatus) => changeMissionStatus(missionId, status),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+      // Les statistiques comptent des missions par statut : les laisser hors
+      // de cette invalidation reproduirait le défaut mesuré — la page Analyse
+      // n'aurait montré la mission qu'après un rechargement manuel.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+        queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
+      ]);
     },
   });
 }
@@ -139,7 +163,13 @@ export function useDeleteMission() {
   return useMutation({
     mutationFn: (missionId: string) => deleteMission(missionId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
+      // Les statistiques comptent des missions par statut : les laisser hors
+      // de cette invalidation reproduirait le défaut mesuré — la page Analyse
+      // n'aurait montré la mission qu'après un rechargement manuel.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+        queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
+      ]);
     },
   });
 }

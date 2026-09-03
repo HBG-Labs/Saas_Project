@@ -92,8 +92,50 @@ export default function AnalyticsPage() {
     };
   })();
 
+  /**
+   * La période équivalente juste avant, pour mesurer une évolution RÉELLE.
+   *
+   * La carte affichait « Tendance : +14.2% de croissance d'activité » —
+   * texte figé dans le JSX, jamais calculé, affiché même quand tout le reste
+   * de l'écran indiquait zéro donnée sur la période. Une organisation qui
+   * vient de s'inscrire aurait vu son activité déclarée en croissance avant
+   * d'avoir consigné la moindre mission.
+   *
+   * `month` recule de 30 jours supplémentaires ; `quarter` et `year` reculent
+   * d'un cran sur le même calendrier — le trimestre ou l'année précédente,
+   * pas un intervalle glissant, pour rester comparable à ce que l'utilisateur
+   * a sélectionné.
+   */
+  const previousRange = (() => {
+    if (viewMode === 'month') {
+      const to = new Date();
+      to.setDate(to.getDate() - 30);
+      const from = new Date(to);
+      from.setDate(from.getDate() - 30);
+      return { from: from.toISOString(), to: to.toISOString() };
+    }
+
+    if (viewMode === 'quarter') {
+      const quarterIndex = Number(selectedQuarter.slice(1)) - 1;
+      const previousQuarterIndex = quarterIndex === 0 ? 3 : quarterIndex - 1;
+      const previousYear = quarterIndex === 0 ? selectedYear - 1 : selectedYear;
+      return {
+        from: new Date(Date.UTC(previousYear, previousQuarterIndex * 3, 1)).toISOString(),
+        to: new Date(Date.UTC(previousYear, previousQuarterIndex * 3 + 3, 0, 23, 59, 59)).toISOString(),
+      };
+    }
+
+    return {
+      from: new Date(Date.UTC(selectedYear - 1, 0, 1)).toISOString(),
+      to: new Date(Date.UTC(selectedYear - 1, 11, 31, 23, 59, 59)).toISOString(),
+    };
+  })();
+
   const statsQuery = useActivityStats(organization?.id ?? null, range);
   const stats = statsQuery.data ?? null;
+
+  const previousStatsQuery = useActivityStats(organization?.id ?? null, previousRange);
+  const previousStats = previousStatsQuery.data ?? null;
 
   const teamsQuery = useTeams(organization?.id ?? null);
   const teams = teamsQuery.data ?? [];
@@ -136,6 +178,7 @@ export default function AnalyticsPage() {
         totalMissions: 0,
         chartData: [{ label: 'Aucune mission', count: 0 }],
         clientBreakdown: [],
+        trend: null,
       };
     }
 
@@ -156,6 +199,26 @@ export default function AnalyticsPage() {
 
     const totalCustomerMissions = stats.customers.reduce((sum, c) => sum + c.missions, 0);
     const palette = ['#ea580c', '#dc2626', '#0891b2', '#ca8a04', '#7c3aed', '#059669'];
+
+    /**
+     * `null` tant que la comparaison n'a rien de fiable à dire — la période
+     * précédente charge encore, ou les deux périodes sont vides. Un
+     * pourcentage affiché dans ces cas serait soit un chiffre en attente
+     * habillé en résultat, soit une division par zéro déguisée.
+     */
+    const trend = (() => {
+      if (previousStatsQuery.isPending) return null;
+
+      const previousTotal = previousStats?.missions_total ?? 0;
+
+      if (previousTotal === 0) {
+        return stats.missions_total > 0 ? 'Nouvelle activité sur la période' : null;
+      }
+
+      const variation = ((stats.missions_total - previousTotal) / previousTotal) * 100;
+      const signe = variation >= 0 ? '+' : '';
+      return `${signe}${variation.toFixed(1)}% par rapport à la période précédente`;
+    })();
 
     return {
       periodLabel,
@@ -181,6 +244,7 @@ export default function AnalyticsPage() {
         count: customer.missions,
         color: palette[index % palette.length] ?? '#64748b',
       })),
+      trend,
     };
   })();
 
@@ -927,7 +991,7 @@ export default function AnalyticsPage() {
                   <span className="bg-primary size-3 shrink-0 rounded" />
                   Missions Réalisées & Validées
                 </span>
-                <span>Tendance : +14.2% de croissance d&apos;activité</span>
+                {currentData.trend ? <span>Tendance : {currentData.trend}</span> : null}
               </div>
             </div>
           </CardContent>

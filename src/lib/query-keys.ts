@@ -115,6 +115,22 @@ export const qk = {
       [...qk.interventions.all, organizationId, 'pending-review'] as const,
   },
 
+  // ------------------------------------------------------------- statistiques
+  /**
+   * `useActivityStats` écrivait sa propre clé en dur (`['analytics', ...]`),
+   * hors de cette fabrique — précisément le défaut que ce fichier existe pour
+   * éviter. Conséquence mesurée : aucune mutation ne pouvait l'invalider,
+   * faute d'un `qk.analytics.all` vers lequel pointer. Une mission créée
+   * n'apparaissait dans les statistiques qu'après un rechargement manuel de
+   * la page — le cache n'était jamais faux, seulement jamais informé qu'il
+   * l'était devenu.
+   */
+  analytics: {
+    all: ['analytics'] as const,
+    activity: (organizationId: string, from: string | null, to: string | null) =>
+      [...qk.analytics.all, organizationId, from, to] as const,
+  },
+
   // ----------------------------------------------------------- parc matériel
   /**
    * Le parc ROULANT, distinct de l'outillage malgré des droits communs : les

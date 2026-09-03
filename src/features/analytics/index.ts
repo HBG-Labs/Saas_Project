@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { mapPostgrestError } from '@/lib/errors';
+import { qk } from '@/lib/query-keys';
 import { supabase } from '@/services/supabase';
 
 /**
@@ -51,7 +52,7 @@ export function useActivityStats(
   range: { from?: string; to?: string } = {},
 ) {
   return useQuery({
-    queryKey: ['analytics', organizationId ?? 'none', range.from ?? null, range.to ?? null],
+    queryKey: qk.analytics.activity(organizationId ?? 'none', range.from ?? null, range.to ?? null),
     queryFn: () =>
       organizationId === null
         ? Promise.resolve(null)
