@@ -53,7 +53,19 @@ export const ROOT_NAV: readonly NavItem[] = [
 
 export const INTERVENTIONS_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
-  { to: ROUTES.aiAssistant, label: 'Assistant IA', icon: 'sparkles' },
+  {
+    // `feature: 'ai_assistant'` — sans elle, l'entrée s'affichait pour tout le
+    // monde, sans cadenas, sur une destination que Free et Starter n'ont pas :
+    // le clic menait tout droit au mur « Mettre à niveau » sans que rien ne
+    // l'ait annoncé. `permission: 'ai.use'`, elle, RETIRE l'entrée (pas de
+    // cadenas) pour qui n'est pas propriétaire : ce n'est pas une histoire de
+    // formule, personne d'autre n'y aura jamais accès.
+    to: ROUTES.aiAssistant,
+    label: 'Assistant IA',
+    icon: 'sparkles',
+    feature: 'ai_assistant',
+    permission: 'ai.use',
+  },
   {
     to: ROUTES.missions,
     label: 'Missions',
