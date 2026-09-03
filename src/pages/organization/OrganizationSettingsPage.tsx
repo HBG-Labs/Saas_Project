@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -25,6 +25,7 @@ import {
   useUpdateOrganization,
 } from '@/features/organizations';
 import { DEFAULT_QUOTE_PAYMENT_METHOD, DEFAULT_QUOTE_PAYMENT_TERMS } from '@/features/quotes';
+import { cn } from '@/lib/cn';
 import {
   organizationSettingsSchema,
   type OrganizationSettingsValues,
@@ -40,6 +41,52 @@ function toFormValue(value: string | null | undefined): string {
 function toPatchValue(value: string | undefined): string | null {
   const trimmed = value?.trim() ?? '';
   return trimmed === '' ? null : trimmed;
+}
+
+/**
+ * Choix rapides pour les deux champs du devis — remplissent le texte libre,
+ * ne le remplacent pas.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI DES PUCES SUR UN CHAMP TEXTE PLUTÔT QU'UN VRAI SÉLECTEUR
+ *
+ * Un `<Select>` imposerait une valeur parmi une liste fermée — inadapté à
+ * « Conditions de règlement », où une entreprise peut vouloir un acompte, une
+ * échéance à cheval sur deux mentions, ou une formulation qui lui est propre.
+ * Les puces ACCÉLÈRENT la saisie du cas courant sans jamais retirer la
+ * possibilité d'écrire autre chose : cliquer en pose le texte, la zone reste
+ * éditable ensuite.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const PAYMENT_TERMS_PRESETS = [
+  { label: 'À réception', text: 'Paiement à réception de la facture.' },
+  { label: '15 jours', text: 'Paiement à 15 jours à compter de la réception.' },
+  { label: '30 jours', text: 'Paiement à 30 jours à compter de la réception.' },
+  { label: '45 jours', text: 'Paiement à 45 jours à compter de la réception.' },
+  { label: '60 jours', text: 'Paiement à 60 jours à compter de la réception.' },
+] as const;
+
+/**
+ * Contrairement aux conditions de règlement, plusieurs moyens de paiement
+ * cohabitent couramment (« Virement / CB »). Les puces basculent donc chacune
+ * indépendamment, ajoutant ou retirant leur libellé du texte — jamais en le
+ * remplaçant en entier, pour ne pas effacer une mention personnalisée déjà
+ * présente à côté.
+ */
+const PAYMENT_METHOD_CHOICES = [
+  'Virement bancaire',
+  'Carte bancaire',
+  'Chèque',
+  'Espèces',
+  'Prélèvement automatique',
+] as const;
+
+/** Segments d'un texte « A / B / C », nettoyés des vides et des espaces superflus. */
+function splitMethods(value: string): string[] {
+  return value
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment !== '');
 }
 
 export default function OrganizationSettingsPage() {
@@ -61,6 +108,7 @@ export default function OrganizationSettingsPage() {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<OrganizationSettingsValues>({
     resolver: zodResolver(organizationSettingsSchema) as any,
@@ -126,6 +174,30 @@ export default function OrganizationSettingsPage() {
       setSubmitError(error);
     }
   });
+
+  // `useWatch`, pas `watch()` : la seconde renvoie une fonction que React
+  // Compiler ne peut pas mémoïser sans risquer un affichage périmé — même
+  // patron que `CustomerFormDialog`/`SitesPanel`.
+  const [paymentTermsValue, paymentMethodValue] = useWatch({
+    control,
+    name: ['quotePaymentTerms', 'quotePaymentMethod'],
+  });
+
+  // Une puce « Conditions de règlement » remplace tout le champ : ce sont des
+  // formulations mutuellement exclusives, jamais des mentions qui cohabitent.
+  function applyPaymentTermsPreset(text: string) {
+    setValue('quotePaymentTerms', text, { shouldDirty: true, shouldTouch: true });
+  }
+
+  // Une puce « Mode de paiement » bascule SA seule mention, sans toucher au
+  // reste du texte : plusieurs moyens de paiement cohabitent couramment.
+  const selectedMethods = splitMethods(paymentMethodValue ?? '');
+  function togglePaymentMethod(method: string) {
+    const next = selectedMethods.includes(method)
+      ? selectedMethods.filter((m) => m !== method)
+      : [...selectedMethods, method];
+    setValue('quotePaymentMethod', next.join(' / '), { shouldDirty: true, shouldTouch: true });
+  }
 
   if (query.isError) {
     return (
@@ -282,28 +354,80 @@ export default function OrganizationSettingsPage() {
               <CardTitle>Devis</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                label="Conditions de règlement"
-                placeholder={DEFAULT_QUOTE_PAYMENT_TERMS}
-                hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
-                rows={2}
-                disabled={!canUpdate}
-                {...(errors.quotePaymentTerms?.message
-                  ? { error: errors.quotePaymentTerms.message }
-                  : {})}
-                {...register('quotePaymentTerms')}
-              />
-              <Textarea
-                label="Mode de paiement"
-                placeholder={DEFAULT_QUOTE_PAYMENT_METHOD}
-                hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
-                rows={2}
-                disabled={!canUpdate}
-                {...(errors.quotePaymentMethod?.message
-                  ? { error: errors.quotePaymentMethod.message }
-                  : {})}
-                {...register('quotePaymentMethod')}
-              />
+              <div>
+                <Textarea
+                  label="Conditions de règlement"
+                  placeholder={DEFAULT_QUOTE_PAYMENT_TERMS}
+                  hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
+                  rows={2}
+                  disabled={!canUpdate}
+                  {...(errors.quotePaymentTerms?.message
+                    ? { error: errors.quotePaymentTerms.message }
+                    : {})}
+                  {...register('quotePaymentTerms')}
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-subtle-foreground text-3xs font-medium">Suggestions :</span>
+                  {PAYMENT_TERMS_PRESETS.map((preset) => {
+                    const isActive = (paymentTermsValue || DEFAULT_QUOTE_PAYMENT_TERMS) === preset.text;
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        disabled={!canUpdate}
+                        onClick={() => applyPaymentTermsPreset(preset.text)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                          'disabled:cursor-not-allowed disabled:opacity-50',
+                          isActive
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <Textarea
+                  label="Mode de paiement"
+                  placeholder={DEFAULT_QUOTE_PAYMENT_METHOD}
+                  hint="Affiché sur chaque devis. Laissez vide pour garder le texte par défaut."
+                  rows={2}
+                  disabled={!canUpdate}
+                  {...(errors.quotePaymentMethod?.message
+                    ? { error: errors.quotePaymentMethod.message }
+                    : {})}
+                  {...register('quotePaymentMethod')}
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-subtle-foreground text-3xs font-medium">Suggestions :</span>
+                  {PAYMENT_METHOD_CHOICES.map((method) => {
+                    const isActive = selectedMethods.includes(method);
+                    return (
+                      <button
+                        key={method}
+                        type="button"
+                        disabled={!canUpdate}
+                        onClick={() => togglePaymentMethod(method)}
+                        aria-pressed={isActive}
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                          'disabled:cursor-not-allowed disabled:opacity-50',
+                          isActive
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-surface text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+                        )}
+                      >
+                        {method}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
