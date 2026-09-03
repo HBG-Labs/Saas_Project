@@ -3,6 +3,7 @@ import {
   Building2,
   Calendar,
   Check,
+  ChevronRight,
   Palette,
   Shield,
 } from 'lucide-react';
@@ -55,29 +56,47 @@ export default function SettingsPage() {
         description="Personnalisez votre interface, vos options cartographiques, vos alertes et vos accès de sécurité."
       />
 
-      {/* Navigation par Onglets */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-border no-scrollbar">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+      {/*
+        Navigation par onglets.
 
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'min-h-touch sm:min-h-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer',
-                isActive
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',
-              )}
-            >
-              <Icon className="size-3.5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+        `max-w-4xl` (896 px) exige les cinq onglets sur une seule ligne : ils
+        ne tiennent qu'à partir d'environ 1136 px de fenêtre (896 px de
+        contenu + la barre latérale). En dessous — un ordinateur portable
+        classique en fenêtre non maximisée, pas seulement un mobile — le
+        dernier onglet dépassait sans le moindre indice qu'il restait
+        atteignable en faisant défiler : `no-scrollbar` masque la barre de
+        défilement qui aurait, seule, laissé deviner qu'il y avait plus à
+        voir. Le dégradé ci-dessous restitue cet indice.
+      */}
+      <div className="relative">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pr-6 border-b border-border no-scrollbar">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'min-h-touch sm:min-h-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',
+                )}
+              >
+                <Icon className="size-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Indice de défilement — dégradé + chevron, jamais un obstacle au clic. */}
+        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-background via-background/90 to-transparent pointer-events-none flex items-center justify-end pr-1">
+          <ChevronRight className="size-4 text-primary" aria-hidden="true" />
+        </div>
       </div>
 
       {/* Feedback de sauvegarde automatique */}
