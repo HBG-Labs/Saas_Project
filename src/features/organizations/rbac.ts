@@ -24,6 +24,8 @@ import type { OrgRole } from '@/types/database';
  *           supabase/migrations/20260817100000_retire_live_tracking.sql
  *           supabase/migrations/20260820110000_stock.sql
  *           supabase/migrations/20260821100000_purchases.sql
+ *           supabase/migrations/20260902150000_ai_assistant_documents.sql
+ *           supabase/migrations/20260902150100_ai_assistant_conversations.sql
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -82,6 +84,9 @@ export const PERMISSIONS = {
 
   auditView: 'audit.view',
   statisticsView: 'statistics.view',
+
+  aiUse: 'ai.use',
+  aiManageDocuments: 'ai.manage_documents',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -162,6 +167,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.manage',
     'audit.view',
     'statistics.view',
+    'ai.use',
+    'ai.manage_documents',
   ],
 
   admin: [
@@ -204,6 +211,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.manage',
     'audit.view',
     'statistics.view',
+    'ai.use',
+    'ai.manage_documents',
   ],
 
   manager: [
@@ -242,6 +251,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.view',
     'planning.manage',
     'statistics.view',
+    'ai.use',
+    'ai.manage_documents',
   ],
 
   team_leader: [
@@ -273,6 +284,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.request',
     'planning.view',
     'statistics.view',
+    'ai.use',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -306,9 +318,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.view',
     'leave.request',
     'planning.view',
+    'ai.use',
   ],
 
-  employee: ['organization.view', 'member.view', 'leave.request'],
+  employee: ['organization.view', 'member.view', 'leave.request', 'ai.use'],
 };
 
 export function roleHasPermission(role: OrgRole | null, permission: Permission): boolean {

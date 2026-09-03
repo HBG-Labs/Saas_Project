@@ -218,8 +218,25 @@ describe('synchronisation avec le seed SQL', () => {
   // décision explicite du 02/09/2026 : l'ajout de photos et documents,
   // jusque-là réservé à Business et Enterprise, rejoint la formule Pro. Même
   // schéma que `stock`/`purchases` après `pricing_model`.
+  //
+  // `aiAssistantQuota` de même : ajoute `ai_assistant` (30/100/300 requêtes
+  // mensuelles pour Starter/Pro/Business) sans toucher au reste de la
+  // matrice. Absent de la formule Gratuite — sans ligne, `app.org_has_feature`
+  // refuse et la route se ferme proprement.
+  //
+  // `aiAssistantEnterpriseQuota` corrige ENSUITE le plafond Enterprise, resté
+  // `null` (illimité) dans `aiAssistantQuota` : même un modèle facturé au
+  // token n'a de palier "sans limite" nulle part ailleurs dans le produit.
+  // Doit rester APRÈS `aiAssistantQuota` dans ce tableau — l'ordre détermine
+  // quelle valeur l'emporte pour la même paire (plan, feature), exactement
+  // comme `on conflict ... do update` en base.
   const tuples = extractInsertTuplesAcross(
-    [MIGRATION_FILES.planMatrix, MIGRATION_FILES.attachmentsInPro],
+    [
+      MIGRATION_FILES.planMatrix,
+      MIGRATION_FILES.attachmentsInPro,
+      MIGRATION_FILES.aiAssistantQuota,
+      MIGRATION_FILES.aiAssistantEnterpriseQuota,
+    ],
     'plan_features',
   );
 

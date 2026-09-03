@@ -16,6 +16,10 @@ import stockSql from '../../supabase/migrations/20260820110000_stock.sql?raw';
 import purchasesSql from '../../supabase/migrations/20260821100000_purchases.sql?raw';
 import planMatrixSql from '../../supabase/migrations/20260902100000_realigne_la_matrice_des_formules.sql?raw';
 import attachmentsInProSql from '../../supabase/migrations/20260902130000_attachments_in_pro.sql?raw';
+import aiAssistantDocumentsSql from '../../supabase/migrations/20260902150000_ai_assistant_documents.sql?raw';
+import aiAssistantConversationsSql from '../../supabase/migrations/20260902150100_ai_assistant_conversations.sql?raw';
+import aiAssistantQuotaSql from '../../supabase/migrations/20260902150200_ai_assistant_quota.sql?raw';
+import aiAssistantEnterpriseQuotaSql from '../../supabase/migrations/20260902160000_ai_assistant_enterprise_quota.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -61,6 +65,10 @@ const MIGRATIONS: Record<string, string> = {
   purchases: purchasesSql,
   planMatrix: planMatrixSql,
   attachmentsInPro: attachmentsInProSql,
+  aiAssistantDocuments: aiAssistantDocumentsSql,
+  aiAssistantConversations: aiAssistantConversationsSql,
+  aiAssistantQuota: aiAssistantQuotaSql,
+  aiAssistantEnterpriseQuota: aiAssistantEnterpriseQuotaSql,
 };
 
 export const MIGRATION_FILES = {
@@ -82,6 +90,10 @@ export const MIGRATION_FILES = {
   purchases: 'purchases',
   planMatrix: 'planMatrix',
   attachmentsInPro: 'attachmentsInPro',
+  aiAssistantDocuments: 'aiAssistantDocuments',
+  aiAssistantConversations: 'aiAssistantConversations',
+  aiAssistantQuota: 'aiAssistantQuota',
+  aiAssistantEnterpriseQuota: 'aiAssistantEnterpriseQuota',
 } as const;
 
 /**

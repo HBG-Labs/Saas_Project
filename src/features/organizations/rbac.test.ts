@@ -66,15 +66,20 @@ describe('moindre privilège', () => {
     expect(roleHasPermission('technician', PERMISSIONS.memberInvite)).toBe(false);
   });
 
-  it("limite l'employé à la consultation, hors demande de congé", () => {
-    // `leave.request` est la SEULE écriture ouverte à l'employé, et elle ne
-    // porte que sur lui-même : le trigger `enforce_leave_decision` refuse une
-    // demande déposée au nom d'un tiers sans `leave.approve`. Poser un congé
-    // n'est pas un acte de gestion, c'est un droit du salarié.
+  it("limite l'employé à la consultation, hors demande de congé et assistant IA", () => {
+    // `leave.request` est la SEULE écriture de GESTION ouverte à l'employé, et
+    // elle ne porte que sur lui-même : le trigger `enforce_leave_decision`
+    // refuse une demande déposée au nom d'un tiers sans `leave.approve`. Poser
+    // un congé n'est pas un acte de gestion, c'est un droit du salarié.
+    //
+    // `ai.use` est accordée à tous les rôles, y compris ici : interroger
+    // l'assistant n'est pas un privilège de gestion, et le vrai frein est le
+    // quota du plan, pas le rôle.
     expect(ROLE_PERMISSIONS.employee).toEqual([
       'organization.view',
       'member.view',
       'leave.request',
+      'ai.use',
     ]);
   });
 
@@ -175,6 +180,8 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.retireTracking,
       MIGRATION_FILES.stock,
       MIGRATION_FILES.purchases,
+      MIGRATION_FILES.aiAssistantDocuments,
+      MIGRATION_FILES.aiAssistantConversations,
     ],
     'role_permissions',
   );

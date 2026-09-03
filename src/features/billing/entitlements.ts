@@ -38,6 +38,7 @@ export const FEATURES = {
   purchases: 'purchases',
   quotes: 'quotes',
   planning: 'planning',
+  aiAssistant: 'ai_assistant',
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -78,6 +79,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     missions: null,
     interventions: null,
     quotes: null,
+    ai_assistant: 30,
   },
 
   pro: {
@@ -98,6 +100,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     purchases: null,
     quotes: null,
     attachments: null,
+    ai_assistant: 100,
   },
 
   business: {
@@ -122,6 +125,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     purchases: null,
     quotes: null,
     planning: null,
+    ai_assistant: 300,
   },
 
   enterprise: {
@@ -146,6 +150,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     purchases: null,
     quotes: null,
     planning: null,
+    ai_assistant: 1000,
   },
 };
 
