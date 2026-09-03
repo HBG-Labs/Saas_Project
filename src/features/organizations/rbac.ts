@@ -74,6 +74,8 @@ export const PERMISSIONS = {
 
   quoteView: 'quote.view',
   quoteManage: 'quote.manage',
+  invoiceView: 'invoice.view',
+  invoiceManage: 'invoice.manage',
 
   leaveView: 'leave.view',
   leaveRequest: 'leave.request',
@@ -160,6 +162,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.manage',
     'quote.view',
     'quote.manage',
+    'invoice.view',
+    'invoice.manage',
     'leave.view',
     'leave.request',
     'leave.approve',
@@ -204,6 +208,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.manage',
     'quote.view',
     'quote.manage',
+    'invoice.view',
+    'invoice.manage',
     'leave.view',
     'leave.request',
     'leave.approve',
@@ -241,6 +247,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.manage',
     'quote.view',
     'quote.manage',
+    'invoice.view',
+    'invoice.manage',
     // Accorde les congés : c'est une décision d'employeur, et le responsable
     // l'exerce au quotidien. Le trigger `enforce_leave_decision` lui interdit
     // en revanche de statuer sur les siens.
@@ -276,6 +284,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // Il n'engage pas la dépense pour autant.
     'purchase.view',
     'quote.view',
+    'invoice.view',
     // Constate les absences pour organiser ses semaines, et voit qui est où
     // pour répartir une urgence. Il n'ACCORDE pas les congés.
     'leave.view',

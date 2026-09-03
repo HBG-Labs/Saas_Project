@@ -82,6 +82,23 @@ export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 
+/**
+ * Cycle de vie d'une facture. `sent` dit que le document est parti chez le
+ * client, PAS qu'il a été transmis à une plateforme agréée : le statut de
+ * transmission électronique aura ses propres colonnes, et un document peut être
+ * réglé sans jamais avoir transité par une plateforme.
+ */
+export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
+
+export type InvoiceDocumentType = 'invoice' | 'credit_note';
+
+/**
+ * Codes de catégorie de TVA UNCL5305, repris par la norme EN 16931.
+ * S standard · Z taux zéro · E exonéré · AE autoliquidation ·
+ * K livraison intracommunautaire · G exportation · O hors champ.
+ */
+export type VatCategory = 'S' | 'Z' | 'E' | 'AE' | 'K' | 'G' | 'O';
+
 export type AiDocumentStatus = 'pending' | 'processing' | 'ready' | 'error';
 
 export type NoteCategory = 'technique' | 'urgent' | 'client' | 'memo';
@@ -2122,6 +2139,168 @@ export interface Database {
       };
 
       // =======================================================================
+      // Factures
+      // =======================================================================
+      invoices: {
+        Row: {
+          id: string;
+          organization_id: string;
+          reference: string;
+          document_type: InvoiceDocumentType;
+          corrects_invoice_id: string | null;
+          title: string | null;
+          customer_id: string | null;
+          site_id: string | null;
+          quote_id: string | null;
+          customer_name: string | null;
+          customer_legal_name: string | null;
+          customer_registration_number: string | null;
+          customer_vat_number: string | null;
+          customer_address_line1: string | null;
+          customer_address_line2: string | null;
+          customer_postal_code: string | null;
+          customer_city: string | null;
+          customer_country: string | null;
+          site_name: string | null;
+          currency: string;
+          status: InvoiceStatus;
+          issued_at: string | null;
+          due_date: string | null;
+          payment_terms: string | null;
+          payment_method: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          /** Generee par trigger si omise : `FAC-AAAA-NNNNN`, ou `AV-` pour un avoir. */
+          reference?: string;
+          document_type?: InvoiceDocumentType;
+          corrects_invoice_id?: string | null;
+          title?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
+          quote_id?: string | null;
+          customer_name?: string | null;
+          customer_legal_name?: string | null;
+          customer_registration_number?: string | null;
+          customer_vat_number?: string | null;
+          customer_address_line1?: string | null;
+          customer_address_line2?: string | null;
+          customer_postal_code?: string | null;
+          customer_city?: string | null;
+          customer_country?: string | null;
+          site_name?: string | null;
+          currency?: string;
+          status?: InvoiceStatus;
+          issued_at?: string | null;
+          due_date?: string | null;
+          payment_terms?: string | null;
+          payment_method?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+        };
+        /**
+         * Volontairement etroit : passe l'emission, `app.enforce_invoice_immutable`
+         * refuse toute modification des champs comptables. Les exposer ici
+         * laisserait ecrire du code que la base rejettera.
+         */
+        Update: {
+          title?: string | null;
+          status?: InvoiceStatus;
+          notes?: string | null;
+          issued_at?: string | null;
+          due_date?: string | null;
+          payment_terms?: string | null;
+          payment_method?: string | null;
+          customer_id?: string | null;
+          site_id?: string | null;
+          customer_name?: string | null;
+          customer_legal_name?: string | null;
+          customer_registration_number?: string | null;
+          customer_vat_number?: string | null;
+          customer_address_line1?: string | null;
+          customer_address_line2?: string | null;
+          customer_postal_code?: string | null;
+          customer_city?: string | null;
+          customer_country?: string | null;
+          site_name?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoices_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoices_quote_id_fkey';
+            columns: ['quote_id'];
+            referencedRelation: 'quotes';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      invoice_items: {
+        Row: {
+          id: string;
+          invoice_id: string;
+          organization_id: string;
+          description: string;
+          unit: string;
+          quantity: number;
+          unit_price_cents: number;
+          vat_rate: number;
+          vat_category: VatCategory;
+          vat_exemption_reason: string | null;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          invoice_id: string;
+          /** Ecrase par trigger depuis la facture ; requis par la contrainte NOT NULL. */
+          organization_id: string;
+          description: string;
+          unit?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          vat_rate?: number;
+          vat_category?: VatCategory;
+          vat_exemption_reason?: string | null;
+          position?: number;
+        };
+        Update: {
+          description?: string;
+          unit?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          vat_rate?: number;
+          vat_category?: VatCategory;
+          vat_exemption_reason?: string | null;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_items_invoice_id_fkey';
+            columns: ['invoice_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
       // Assistant IA — bibliothèque documentaire
       // =======================================================================
       ai_documents: {
@@ -2601,6 +2780,36 @@ export interface Database {
           subtotal_cents: number;
           vat_cents: number;
           total_cents: number;
+        };
+        Relationships: [];
+      };
+
+      invoice_totals: {
+        Row: {
+          invoice_id: string;
+          organization_id: string;
+          subtotal_cents: number;
+          vat_cents: number;
+          total_cents: number;
+        };
+        Relationships: [];
+      };
+
+      /**
+       * Ventilation de la TVA par taux, exigee par EN 16931 : plusieurs lignes
+       * par facture. L'arrondi se fait sur la somme des bases d'un meme taux,
+       * jamais ligne a ligne — sommer des lignes arrondies ferait deriver le
+       * total de quelques centimes, assez pour qu'un controle rejette la
+       * facture.
+       */
+      invoice_vat_breakdown: {
+        Row: {
+          invoice_id: string;
+          organization_id: string;
+          vat_rate: number;
+          vat_category: VatCategory;
+          base_cents: number;
+          vat_cents: number;
         };
         Relationships: [];
       };

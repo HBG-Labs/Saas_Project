@@ -234,6 +234,12 @@ describe('synchronisation avec le seed SQL', () => {
   // 02/09/2026) — doit rester DERNIER dans ce tableau pour la même raison
   // que `aiAssistantEnterpriseQuota` : l'ordre détermine quelle valeur
   // l'emporte pour la même paire (plan, feature).
+  //
+  // `invoices` ouvre `invoicing` aux quatre formules payantes, dès Starter :
+  // vendre le chiffrage sans la facture qui le suit n'aurait pas de sens pour
+  // un artisan. Il ne touche à aucune paire déjà présente, sa position dans ce
+  // tableau est donc indifférente — on le range à la suite, par ordre
+  // chronologique.
   const tuples = extractInsertTuplesAcross(
     [
       MIGRATION_FILES.planMatrix,
@@ -241,6 +247,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.aiAssistantQuota,
       MIGRATION_FILES.aiAssistantEnterpriseQuota,
       MIGRATION_FILES.aiAssistantProPlus,
+      MIGRATION_FILES.invoices,
     ],
     'plan_features',
   );

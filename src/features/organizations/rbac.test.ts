@@ -188,6 +188,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.purchases,
       MIGRATION_FILES.aiAssistantDocuments,
       MIGRATION_FILES.aiAssistantConversations,
+      MIGRATION_FILES.invoices,
     ],
     'role_permissions',
   );

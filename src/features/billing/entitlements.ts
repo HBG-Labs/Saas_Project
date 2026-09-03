@@ -37,6 +37,9 @@ export const FEATURES = {
   stock: 'stock',
   purchases: 'purchases',
   quotes: 'quotes',
+  // Factures et avoirs. Distincte de `quotes` : un devis est une proposition,
+  // une facture est un document comptable inaltérable, conservé dix ans.
+  invoicing: 'invoicing',
   planning: 'planning',
   aiAssistant: 'ai_assistant',
 } as const;
@@ -79,6 +82,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     missions: null,
     interventions: null,
     quotes: null,
+    invoicing: null,
     // `0` et non l'absence de clé : la formule l'a explicitement eu, on le
     // lui retire explicitement (décision du 02/09/2026, Pro et au-dessus
     // seulement) — distinct de « n'a jamais été inclus ».
@@ -102,6 +106,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     stock: null,
     purchases: null,
     quotes: null,
+    invoicing: null,
     attachments: null,
     ai_assistant: 100,
   },
@@ -127,6 +132,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     stock: null,
     purchases: null,
     quotes: null,
+    invoicing: null,
     planning: null,
     ai_assistant: 300,
   },
@@ -152,6 +158,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     stock: null,
     purchases: null,
     quotes: null,
+    invoicing: null,
     planning: null,
     ai_assistant: 1000,
   },
