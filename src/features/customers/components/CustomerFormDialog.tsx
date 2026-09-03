@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
 import type { Customer } from '@/types/domain';
 
+import { useSyncPrimarySiteLocation } from '../hooks/useCustomerChildren';
 import { useCreateCustomer, useUpdateCustomer } from '../hooks/useCustomers';
 import {
   customerSchema,
@@ -43,6 +44,7 @@ export function CustomerFormDialog({
 
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer(customer?.id ?? '');
+  const syncPrimarySite = useSyncPrimarySiteLocation();
   const isEdit = customer !== undefined;
 
   const {
@@ -72,22 +74,33 @@ export function CustomerFormDialog({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      let finalLat = coords?.latitude ?? null;
-      let finalLng = coords?.longitude ?? null;
-
-      // Si aucune coordonnée n'a été saisie au clic mais qu'une adresse est renseignée, géocodage automatique
-      if (finalLat === null && values.addressLine1 && (values.city || values.postalCode)) {
-        const fullAddress = [values.addressLine1, values.postalCode, values.city].filter(Boolean).join(' ');
-        const matches = await forwardGeocode(fullAddress);
-        if (matches.length > 0 && matches[0]) {
-          finalLat = matches[0].latitude;
-          finalLng = matches[0].longitude;
-        }
-      }
-
       if (isEdit) {
-        // `null` et non `undefined` : en édition, vider un champ doit l'effacer
-        // en base, alors qu'`undefined` le laisserait inchangé.
+        /*
+          LES COORDONNÉES NE PARTENT PLUS D'ICI — ELLES FAISAIENT ÉCHOUER TOUTE
+          MODIFICATION DE FICHE.
+
+          Le patch ajoutait `latitude` et `longitude` à `customers`, or ces deux
+          colonnes n'existent QUE sur `sites` (vérifié en base : `customers` en
+          compte dix-neuf, aucune des deux). PostgREST rejetait donc la requête.
+
+          Et le défaut se déclenchait presque toujours : le géocodage
+          automatique se lançait dès qu'une adresse était renseignée, ce qui est
+          le cas de la plupart des fiches. Modifier un client existant échouait
+          donc en pratique.
+
+          Il passait inaperçu à la CRÉATION parce que `createCustomer` intercepte
+          ces deux champs pour les poser sur le « Site Principal » qu'il crée —
+          jamais sur le client. Seule l'édition, qui envoie son patch directement
+          à `customers`, tombait dessus.
+
+          Le géocodage ne sert donc plus qu'à la création, où les coordonnées ont
+          une destination réelle. Reporter la position sur le site principal lors
+          d'une édition reste à faire — c'est une fonctionnalité, pas ce
+          correctif.
+
+          `null` et non `undefined` : en édition, vider un champ doit l'effacer
+          en base, alors qu'`undefined` le laisserait inchangé.
+        */
         await updateCustomer.mutateAsync({
           name: values.name,
           legal_name: emptyToNull(values.legalName),
@@ -100,13 +113,55 @@ export function CustomerFormDialog({
           city: emptyToNull(values.city),
           country: emptyToNull(values.country),
           notes: emptyToNull(values.notes),
-          ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
+
+        /*
+          La position va sur le SITE PRINCIPAL, seul porteur de coordonnées.
+
+          Et seulement si l'utilisateur a explicitement pointé sur la carte.
+          Géocoder à chaque enregistrement — ce que faisait la version
+          précédente — déclenchait un appel réseau sur la moindre correction de
+          numéro de téléphone, et surtout déplaçait un chantier sans que
+          personne ne l'ait demandé. Une position qui bouge toute seule est pire
+          qu'une position absente.
+        */
+        if (coords && customer) {
+          await syncPrimarySite.mutateAsync({
+            customerId: customer.id,
+            organizationId,
+            addressLine1: emptyToNull(values.addressLine1),
+            postalCode: emptyToNull(values.postalCode),
+            city: emptyToNull(values.city),
+            country: emptyToNull(values.country),
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          });
+        }
       } else {
+        let finalLat = coords?.latitude ?? null;
+        let finalLng = coords?.longitude ?? null;
+
+        // Aucune coordonnée saisie au clic mais une adresse renseignée : on la
+        // géocode pour que le site principal soit plaçable sur la carte.
+        if (finalLat === null && values.addressLine1 && (values.city || values.postalCode)) {
+          const fullAddress = [values.addressLine1, values.postalCode, values.city]
+            .filter(Boolean)
+            .join(' ');
+          const matches = await forwardGeocode(fullAddress);
+          if (matches.length > 0 && matches[0]) {
+            finalLat = matches[0].latitude;
+            finalLng = matches[0].longitude;
+          }
+        }
+
         await createCustomer.mutateAsync({
           organizationId,
           name: values.name,
           ...defined('legalName', omitEmpty(values.legalName)),
+          // Ces deux-là manquaient : le N° TVA saisi était perdu en silence, et
+          // le SIRET n'avait de toute façon aucun champ pour être saisi.
+          ...defined('registrationNumber', omitEmpty(values.registrationNumber)),
+          ...defined('vatNumber', omitEmpty(values.vatNumber)),
           ...defined('email', omitEmpty(values.email)),
           ...defined('phone', omitEmpty(values.phone)),
           ...defined('addressLine1', omitEmpty(values.addressLine1)),
@@ -159,9 +214,29 @@ export function CustomerFormDialog({
           {...register('name')}
         />
 
+        <Input label="Raison sociale" {...register('legalName')} />
+
+        {/*
+          LE SIRET N'ÉTAIT SAISISSABLE NULLE PART.
+
+          `registrationNumber` figurait déjà dans le schéma de validation et
+          dans les valeurs par défaut, la fiche client l'AFFICHAIT en lecture,
+          et l'export CSV lui réservait une colonne — mais aucun champ ne
+          permettait de le renseigner. La donnée ne pouvait donc entrer que par
+          la base.
+
+          Ce n'est pas un détail cosmétique : l'identifiant du destinataire est
+          une mention obligatoire de la facture électronique. Sans ce champ,
+          aucune facture ne peut partir vers ce client.
+        */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Raison sociale" {...register('legalName')} />
-          <Input label="N° TVA" {...register('vatNumber')} />
+          <Input
+            label="SIRET / SIREN"
+            placeholder="123 456 789 00012"
+            hint="Obligatoire pour facturer électroniquement une entreprise."
+            {...register('registrationNumber')}
+          />
+          <Input label="N° TVA intracommunautaire" placeholder="FR12345678901" {...register('vatNumber')} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

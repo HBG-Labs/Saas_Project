@@ -21,6 +21,7 @@ export {
   listSites,
   restoreCustomer,
   setPrimaryContact,
+  syncPrimarySiteLocation,
   updateContact,
   updateCustomer,
   updateSite,
@@ -47,6 +48,7 @@ export {
   useDeleteContact,
   useOrganizationSites,
   useSetPrimaryContact,
+  useSyncPrimarySiteLocation,
   useUpdateContact,
   useUpdateSite,
 } from './hooks/useCustomerChildren';

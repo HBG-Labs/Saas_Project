@@ -65,6 +65,20 @@ export async function createCustomer(input: {
   organizationId: string;
   name: string;
   legalName?: string;
+  /**
+   * SIRET ou SIREN. Absent de cette signature jusqu'au 03/09/2026 : le champ
+   * existait en base et dans le schéma de validation, mais aucun chemin
+   * d'écriture ne l'atteignait à la création. Sans lui, aucune facture
+   * électronique ne peut être émise vers ce client — l'identifiant du
+   * destinataire est une mention obligatoire.
+   */
+  registrationNumber?: string;
+  /**
+   * Même histoire : le formulaire proposait déjà un champ « N° TVA », et sa
+   * valeur était perdue en silence à la création. Elle n'était conservée qu'en
+   * modifiant la fiche ensuite.
+   */
+  vatNumber?: string;
   email?: string;
   phone?: string;
   addressLine1?: string;
@@ -89,6 +103,10 @@ export async function createCustomer(input: {
         name: input.name,
         created_by: userData.user.id,
         ...(input.legalName !== undefined ? { legal_name: input.legalName } : {}),
+        ...(input.registrationNumber !== undefined
+          ? { registration_number: input.registrationNumber }
+          : {}),
+        ...(input.vatNumber !== undefined ? { vat_number: input.vatNumber } : {}),
         ...(input.email !== undefined ? { email: input.email } : {}),
         ...(input.phone !== undefined ? { phone: input.phone } : {}),
         ...(input.addressLine1 !== undefined ? { address_line1: input.addressLine1 } : {}),
@@ -308,6 +326,82 @@ export async function updateSite(siteId: string, patch: TablesUpdate<'sites'>): 
 
 export async function archiveSite(siteId: string): Promise<Site> {
   return updateSite(siteId, { status: 'archived' });
+}
+
+/**
+ * Reporte l'adresse et la position d'une fiche client sur son site principal.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI CE DÉTOUR PLUTÔT QU'UNE COLONNE SUR `customers`
+ *
+ * `customers` ne porte ni `latitude` ni `longitude` — seul `sites` les a. Le
+ * formulaire d'édition les glissait pourtant dans son patch, que PostgREST
+ * rejetait : toute modification de fiche échouait. Corrigé le 03/09/2026.
+ *
+ * Les coordonnées ont bien une destination, mais c'est le site principal, celui
+ * que `createCustomer` fabrique à la création. Cette fonction est le chemin qui
+ * manquait pour l'atteindre depuis une édition.
+ *
+ * CE QU'ELLE REFUSE DE DEVINER
+ *
+ * Un client peut avoir plusieurs sites, et rien ne dit alors lequel porte
+ * « l'adresse du client ». En déplacer un au hasard vaudrait moins que ne rien
+ * faire — un chantier qui bouge sur la carte sans raison est pire qu'un
+ * chantier non géolocalisé. D'où trois cas seulement :
+ *
+ *   • aucun site        → on crée « Site Principal » ;
+ *   • un seul site      → c'est lui, sans ambiguïté ;
+ *   • plusieurs sites   → uniquement celui nommé « Site Principal », sinon rien.
+ *
+ * Les erreurs ne sont pas avalées : `updateCustomer` étant idempotent, une
+ * nouvelle soumission réessaie sans dégât.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const PRIMARY_SITE_NAME = 'Site Principal';
+
+export async function syncPrimarySiteLocation(input: {
+  customerId: string;
+  organizationId: string;
+  addressLine1?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  country?: string | null;
+  latitude: number;
+  longitude: number;
+}): Promise<Site | null> {
+  const sites = await listSites(input.customerId);
+
+  const patch: TablesUpdate<'sites'> = {
+    address_line1: input.addressLine1 ?? null,
+    postal_code: input.postalCode ?? null,
+    city: input.city ?? null,
+    country: input.country ?? 'FR',
+    latitude: input.latitude,
+    longitude: input.longitude,
+  };
+
+  if (sites.length === 0) {
+    return createSite({
+      customerId: input.customerId,
+      organizationId: input.organizationId,
+      name: PRIMARY_SITE_NAME,
+      ...(input.addressLine1 != null ? { addressLine1: input.addressLine1 } : {}),
+      ...(input.postalCode != null ? { postalCode: input.postalCode } : {}),
+      ...(input.city != null ? { city: input.city } : {}),
+      ...(input.country != null ? { country: input.country } : {}),
+      latitude: input.latitude,
+      longitude: input.longitude,
+    });
+  }
+
+  const cible =
+    sites.length === 1 ? sites[0] : sites.find((s) => s.name === PRIMARY_SITE_NAME);
+
+  // Plusieurs sites et aucun « Site Principal » : on ne choisit pas à la place
+  // de l'utilisateur, il modifiera le bon site depuis l'onglet Sites.
+  if (!cible) return null;
+
+  return updateSite(cible.id, patch);
 }
 
 // -----------------------------------------------------------------------------

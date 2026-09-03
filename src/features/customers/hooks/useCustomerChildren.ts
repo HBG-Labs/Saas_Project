@@ -12,6 +12,7 @@ import {
   listOrganizationSites,
   listSites,
   setPrimaryContact,
+  syncPrimarySiteLocation,
   updateContact,
   updateSite,
 } from '../api/customers.api';
@@ -134,6 +135,25 @@ export function useArchiveSite(customerId: string) {
     mutationFn: archiveSite,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.customers.sites(customerId) });
+    },
+  });
+}
+
+/**
+ * Reporte l'adresse et la position de la fiche client sur son site principal.
+ *
+ * Invalidation large, pour la raison exposée sur `useCreateSite` : la fonction
+ * peut CRÉER le site principal quand le client n'en a aucun, et ce site
+ * apparaît alors aussi dans `organizationSites`, qui alimente le sélecteur du
+ * formulaire de mission.
+ */
+export function useSyncPrimarySiteLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: syncPrimarySiteLocation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.customers.all });
     },
   });
 }
