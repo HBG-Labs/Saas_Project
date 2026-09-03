@@ -17,7 +17,30 @@ import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { usePrefersReducedMotion } from '@/lib/use-prefers-reduced-motion';
 
-const LEFT_SECTORS = [
+/**
+ * Groupée par famille de métier plutôt que dans un ordre arbitraire.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUE CET ORDRE CORRIGE
+ *
+ * L'ancien découpage (deux tableaux `LEFT_SECTORS`/`RIGHT_SECTORS` concaténés
+ * puis posés dans une grille CSS à deux colonnes) laissait la grille CSS
+ * décider seule du remplissage : par défaut ligne par ligne, elle envoyait un
+ * secteur sur deux dans chaque colonne. Résultat mesuré sur desktop —
+ * Électricité, Plomberie, Réseaux IT, Sécurité électronique, Propreté et
+ * Maintenance se retrouvaient TOUS dans la colonne de droite, sans qu'aucun
+ * regroupement ne l'explique, et l'ordre de lecture mobile (colonne unique)
+ * ne correspondait à aucune des deux colonnes desktop.
+ *
+ * Les douze métiers sont ici groupés par famille — réseaux & électro-
+ * technique, génie climatique & fluides, extérieur & entretien — et la
+ * grille est en `grid-flow-col` (voir plus bas) : la colonne de gauche
+ * porte exactement les six premiers de cette liste, la droite les six
+ * suivants, dans le MÊME ordre qu'en lecture mobile.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const SECTORS = [
+  // Réseaux & électro-technique
   {
     name: 'Fibre Optique & Télécoms',
     sub: 'Réseaux FTTH & Infrastructures télécom',
@@ -29,14 +52,20 @@ const LEFT_SECTORS = [
     icon: Zap,
   },
   {
+    name: 'Réseaux Informatiques & IT',
+    sub: 'Infrastructures VDI, Baies & Systèmes IP',
+    icon: Cpu,
+  },
+  {
+    name: 'Sécurité Électronique & Alarme',
+    sub: 'Vidéosurveillance, Alarmes & Contrôle d’accès',
+    icon: ShieldCheck,
+  },
+  // Génie climatique & fluides
+  {
     name: 'Froid & Climatisation (CVC)',
     sub: 'Génie frigorifique & Traitement d’air',
     icon: Snowflake,
-  },
-  {
-    name: 'Plomberie & Sanitaire',
-    sub: 'Réseaux d’eau, Canalisations & Sanitaire',
-    icon: Droplet,
   },
   {
     name: 'Chauffage & Génie Thermique',
@@ -44,23 +73,16 @@ const LEFT_SECTORS = [
     icon: Flame,
   },
   {
-    name: 'Réseaux Informatiques & IT',
-    sub: 'Infrastructures VDI, Baies & Systèmes IP',
-    icon: Cpu,
+    name: 'Plomberie & Sanitaire',
+    sub: 'Réseaux d’eau, Canalisations & Sanitaire',
+    icon: Droplet,
   },
-];
-
-const RIGHT_SECTORS = [
   {
     name: 'Énergies Renouvelables & IRVE',
     sub: 'Solaire photovoltaïque & Bornes de recharge',
     icon: SunMedium,
   },
-  {
-    name: 'Sécurité Électronique & Alarme',
-    sub: 'Vidéosurveillance, Alarmes & Contrôle d’accès',
-    icon: ShieldCheck,
-  },
+  // Extérieur & entretien
   {
     name: 'Paysage & Espaces Verts',
     sub: 'Création paysagère & Aménagement extérieur',
@@ -106,8 +128,6 @@ export function BuiltForTech() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const ALL_SECTORS = [...LEFT_SECTORS, ...RIGHT_SECTORS];
-
   return (
     <section ref={sectionRef} className="py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -127,12 +147,20 @@ export function BuiltForTech() {
             </p>
           </div>
 
-          {/* Grille des 12 secteurs en 2 colonnes ultra-compactes sur mobile et desktop */}
-          <div className="grid w-full grid-cols-1 gap-x-8 sm:grid-cols-2">
-            {ALL_SECTORS.map((item, index) => {
+          {/*
+            Grille des 12 secteurs, groupés par famille de métier.
+
+            `sm:grid-flow-col sm:grid-rows-6` REMPLACE le remplissage par
+            défaut de CSS Grid (ligne par ligne) par un remplissage par
+            colonne : la colonne de gauche reçoit exactement les six premiers
+            secteurs du tableau, la droite les six suivants — le même ordre
+            que la colonne unique du mobile, jamais réparti autrement.
+          */}
+          <div className="grid w-full grid-cols-1 gap-x-8 sm:grid-cols-2 sm:grid-flow-col sm:grid-rows-6">
+            {SECTORS.map((item, index) => {
               const Icon = item.icon;
               // Calcul de déclenchement progressif au fur et à mesure du scroll
-              const threshold = (index / ALL_SECTORS.length) * 0.75;
+              const threshold = (index / SECTORS.length) * 0.75;
               const isVisible = scrollProgress >= threshold;
               const itemProgress = Math.min(1, Math.max(0, (scrollProgress - threshold) / 0.25));
 
