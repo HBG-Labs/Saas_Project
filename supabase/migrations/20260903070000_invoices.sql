@@ -284,41 +284,46 @@ create trigger invoices_relations_guard
 -- corrige par un avoir. La règle vit ici et non dans l'application, parce
 -- qu'une règle applicative ne protège que les chemins qui pensent à l'appeler.
 --
--- Ce qui reste modifiable après émission : le statut — il doit bien pouvoir
--- passer à `sent`, `paid` ou `cancelled` — et les colonnes que les phases
--- suivantes ajouteront (règlement, transmission électronique). Tout le reste
--- est figé, et la liste est explicite : une colonne ajoutée demain sera
--- modifiable tant que personne ne l'aura inscrite ici, ce qui est le sens de
--- lecture le moins dangereux.
+-- ON DÉCLARE CE QUI RESTE MODIFIABLE, PAS CE QUI EST FIGÉ
+--
+-- La première version faisait l'inverse : une longue liste de colonnes à
+-- comparer une à une. La suite de tests l'a prise en défaut dès son premier
+-- passage — `title` manquait à l'appel, et le titre d'une facture émise se
+-- modifiait donc librement. `notes`, `site_name` et `quote_id` manquaient
+-- aussi.
+--
+-- Ce n'était pas un oubli isolé mais un sens de lecture dangereux : toute
+-- colonne ajoutée par la suite serait modifiable jusqu'à ce que quelqu'un pense
+-- à l'inscrire dans la liste. Pour un document légal, le défaut sûr est
+-- l'inverse.
+--
+-- La comparaison porte donc sur la ligne ENTIÈRE, moins les colonnes
+-- explicitement autorisées. Une colonne ajoutée demain sera figée sans que
+-- personne n'ait à y penser ; la rendre modifiable devient un acte délibéré,
+-- ce qu'il doit être.
 create or replace function app.enforce_invoice_immutable()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  -- `status` doit pouvoir passer à `sent`, `paid` ou `cancelled` : faire vivre
+  -- le document n'est pas le modifier. `updated_at` est posé par un autre
+  -- trigger. Les phases suivantes ajouteront ici le règlement et la
+  -- transmission électronique — chaque ajout étant une décision, pas un effet
+  -- de bord.
+  v_modifiables constant text[] := array['status', 'updated_at'];
+  v_avant jsonb;
+  v_apres jsonb;
 begin
   if old.status = 'draft' then
     return new;
   end if;
 
-  if new.reference        is distinct from old.reference
-     or new.document_type is distinct from old.document_type
-     or new.organization_id is distinct from old.organization_id
-     or new.issued_at     is distinct from old.issued_at
-     or new.due_date      is distinct from old.due_date
-     or new.currency      is distinct from old.currency
-     or new.customer_id   is distinct from old.customer_id
-     or new.customer_name is distinct from old.customer_name
-     or new.customer_legal_name is distinct from old.customer_legal_name
-     or new.customer_registration_number is distinct from old.customer_registration_number
-     or new.customer_vat_number is distinct from old.customer_vat_number
-     or new.customer_address_line1 is distinct from old.customer_address_line1
-     or new.customer_postal_code is distinct from old.customer_postal_code
-     or new.customer_city is distinct from old.customer_city
-     or new.customer_country is distinct from old.customer_country
-     or new.payment_terms is distinct from old.payment_terms
-     or new.payment_method is distinct from old.payment_method
-     or new.corrects_invoice_id is distinct from old.corrects_invoice_id
-  then
+  v_avant := to_jsonb(old) - v_modifiables;
+  v_apres := to_jsonb(new) - v_modifiables;
+
+  if v_avant is distinct from v_apres then
     raise exception
       'Facture % déjà émise : son contenu ne peut plus être modifié. Émettez un avoir.',
       old.reference

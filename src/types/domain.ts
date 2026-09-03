@@ -163,6 +163,32 @@ export interface QuoteWithTotals extends Quote {
   totals: QuoteTotals | null;
 }
 
+// -------------------------------------------------------------- factures
+export type Invoice = Tables<'invoices'>;
+export type InvoiceItem = Tables<'invoice_items'>;
+export type InvoiceTotals = Database['public']['Views']['invoice_totals']['Row'];
+
+/**
+ * Ventilation de la TVA par taux — PLUSIEURS lignes par facture.
+ *
+ * C'est la différence de fond avec un devis, qui n'a qu'un taux. EN 16931
+ * exige ce détail, et un artisan facture couramment 8,5 % de main-d'œuvre et
+ * 20 % de fournitures sur le même document.
+ */
+export type InvoiceVatBreakdown = Database['public']['Views']['invoice_vat_breakdown']['Row'];
+
+/** Facture complète : ses lignes, ses totaux et sa ventilation de TVA. */
+export interface InvoiceWithItems extends Invoice {
+  items: InvoiceItem[];
+  totals: InvoiceTotals | null;
+  vatBreakdown: InvoiceVatBreakdown[];
+}
+
+/** Une facture de liste, montant TTC compris — sans le détail de ses lignes. */
+export interface InvoiceWithTotals extends Invoice {
+  totals: InvoiceTotals | null;
+}
+
 // ------------------------------------------------------------- assistant IA
 export type AiDocument = Tables<'ai_documents'>;
 

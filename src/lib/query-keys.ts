@@ -168,6 +168,14 @@ export const qk = {
       [...qk.quotes.all, organizationId, 'templates'] as const,
   },
 
+  // ----------------------------------------------------------------- factures
+  invoices: {
+    all: ['invoices'] as const,
+    list: (organizationId: string, filters?: unknown) =>
+      [...qk.invoices.all, organizationId, 'list', filters ?? null] as const,
+    detail: (invoiceId: string) => [...qk.invoices.all, 'detail', invoiceId] as const,
+  },
+
   // ------------------------------------------------------------------- achats
   purchases: {
     all: ['purchases'] as const,
