@@ -4,6 +4,7 @@ import {
   extractDeletedValuesAcross,
   extractInsertTuplesAcross,
   MIGRATION_FILES,
+  readMigration,
   stripCast,
 } from '@/test/sql-fixtures';
 import type { OrgRole } from '@/types/database';
@@ -66,21 +67,26 @@ describe('moindre privilège', () => {
     expect(roleHasPermission('technician', PERMISSIONS.memberInvite)).toBe(false);
   });
 
-  it("limite l'employé à la consultation, hors demande de congé et assistant IA", () => {
+  it("limite l'employé à la consultation, hors demande de congé", () => {
     // `leave.request` est la SEULE écriture de GESTION ouverte à l'employé, et
     // elle ne porte que sur lui-même : le trigger `enforce_leave_decision`
     // refuse une demande déposée au nom d'un tiers sans `leave.approve`. Poser
     // un congé n'est pas un acte de gestion, c'est un droit du salarié.
-    //
-    // `ai.use` est accordée à tous les rôles, y compris ici : interroger
-    // l'assistant n'est pas un privilège de gestion, et le vrai frein est le
-    // quota du plan, pas le rôle.
     expect(ROLE_PERMISSIONS.employee).toEqual([
       'organization.view',
       'member.view',
       'leave.request',
-      'ai.use',
     ]);
+  });
+
+  it("réserve l'usage de l'Assistant IA au propriétaire", () => {
+    // Décision du 02/09/2026, qui renverse le choix initial (ouvert à tous,
+    // le frein étant le quota du plan) : seul `owner` porte `ai.use`.
+    // `ai.manage_documents` (bibliothèque documentaire) n'est PAS concernée —
+    // administrer les documents reste distinct d'interroger l'assistant.
+    for (const role of ORG_ROLES) {
+      expect(roleHasPermission(role, PERMISSIONS.aiUse)).toBe(role === 'owner');
+    }
   });
 
   it("n'accorde plus aucun droit de suivi de position", () => {
@@ -202,6 +208,21 @@ describe('synchronisation avec le seed SQL', () => {
     if (revoked.has(permission)) continue;
     if (!seeded.has(role)) seeded.set(role, new Set());
     seeded.get(role)?.add(permission);
+  }
+
+  // `aiAssistantOwnerOnly` retire `ai.use` À TOUS LES RÔLES SAUF `owner`
+  // (`where permission = 'ai.use' and role <> 'owner'`) — une condition
+  // composite que `extractDeletedValuesAcross` (une seule colonne, une seule
+  // valeur) ne peut pas parser. Plutôt qu'un parseur générique pour ce cas
+  // unique, une vérification textuelle du SQL réel, puis l'application
+  // manuelle du même effet : si la migration change un jour de forme sans que
+  // cette ligne soit mise à jour, l'assertion `toContain` échoue la première,
+  // et c'est elle qui pointe vers ce commentaire.
+  const ownerOnlySql = readMigration(MIGRATION_FILES.aiAssistantOwnerOnly);
+  expect(ownerOnlySql).toContain("permission = 'ai.use'");
+  expect(ownerOnlySql).toContain("role <> 'owner'");
+  for (const role of ORG_ROLES) {
+    if (role !== 'owner') seeded.get(role)?.delete('ai.use');
   }
 
   it('extrait une matrice non vide', () => {

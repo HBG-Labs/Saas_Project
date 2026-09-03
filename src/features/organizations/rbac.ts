@@ -211,7 +211,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.manage',
     'audit.view',
     'statistics.view',
-    'ai.use',
     'ai.manage_documents',
   ],
 
@@ -251,7 +250,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.view',
     'planning.manage',
     'statistics.view',
-    'ai.use',
     'ai.manage_documents',
   ],
 
@@ -284,7 +282,6 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.request',
     'planning.view',
     'statistics.view',
-    'ai.use',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -318,10 +315,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.view',
     'leave.request',
     'planning.view',
-    'ai.use',
   ],
 
-  employee: ['organization.view', 'member.view', 'leave.request', 'ai.use'],
+  employee: ['organization.view', 'member.view', 'leave.request'],
 };
 
 export function roleHasPermission(role: OrgRole | null, permission: Permission): boolean {
