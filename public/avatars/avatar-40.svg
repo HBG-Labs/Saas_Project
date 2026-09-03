@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Avatar avatar-40">
+<circle cx="64" cy="64" r="64" fill="#e6ecf1"/>
+<g clip-path="url(#r)">
+<path d="M 40 50 C 36 68 39 82 37 90 L 91 90 C 89 82 92 68 88 50 Z" fill="#1c1c22"/><rect x="40.4" y="52" width="7.2" height="36" rx="3.6" fill="#1c1c22"/><rect x="49.4" y="52" width="7.2" height="30" rx="3.6" fill="#1c1c22"/><rect x="60.4" y="52" width="7.2" height="36" rx="3.6" fill="#1c1c22"/><rect x="71.4" y="52" width="7.2" height="30" rx="3.6" fill="#1c1c22"/><rect x="80.4" y="52" width="7.2" height="36" rx="3.6" fill="#1c1c22"/>
+<path d="M 56 74.5 L 56 96 L 72 96 L 72 74.5 Z" fill="#5c301d"/>
+<path d="M 12 128 C 14 104 34 92 64 92 C 94 92 114 104 116 128 Z" fill="#41515f"/><path d="M 56 92 C 58 104 58 116 58 128 L 70 128 C 70 116 70 104 72 92 Z" fill="#41515f"/><rect x="62.8" y="94" width="2.4" height="34" fill="#eef2f7" opacity="0.7"/><path d="M 56 92 C 60 96 68 96 72 92 L 72 96 C 68 100 60 100 56 96 Z" fill="#eef2f7" opacity="0.55"/>
+<g fill="#74402a">
+    <ellipse cx="41" cy="57" rx="4" ry="5.5"/>
+    <ellipse cx="87" cy="57" rx="4" ry="5.5"/>
+  </g>
+<path d="M 40.5 54 C 40.5 29.5 87.5 29.5 87.5 54 C 87.5 66.74 79 78.5 64 78.5 C 49 78.5 40.5 66.74 40.5 54 Z" fill="#74402a"/>
+<g stroke="#1c1c22" stroke-width="2.6" stroke-linecap="round">
+    <path d="M 46 45 C 49 42 55 42 58 44" fill="none"/>
+    <path d="M 70 44 C 73 42 79 42 82 45" fill="none"/>
+  </g>
+<g fill="#14202b">
+    <ellipse cx="52" cy="54" rx="2.6" ry="3"/>
+    <ellipse cx="76" cy="54" rx="2.6" ry="3"/>
+  </g>
+<path d="M 62 61 C 62 64 66 64 66.5 62" stroke="#5c301d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+<path d="M 57 67 C 61 72 67 72 71 67" stroke="#14202b" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+
+<path d="M 42 47 C 42 27 86 27 86 47 C 79 37 49 37 42 47 Z" fill="#1c1c22"/>
+
+</g>
+<clipPath id="r"><circle cx="64" cy="64" r="64"/></clipPath>
+</svg>

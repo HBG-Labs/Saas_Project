@@ -3,7 +3,6 @@ export {
   type ActivityItem,
   type ActivityTimelineProps,
 } from './ActivityTimeline';
-export { Avatar, type AvatarProps } from './Avatar';
 export { Badge, type BadgeProps } from './Badge';
 export { Button, type ButtonProps } from './Button';
 export { buttonVariants } from './button-variants';
@@ -32,3 +31,4 @@ export { Switch, type SwitchProps } from './Switch';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';
 export { Tooltip, type TooltipProps } from './Tooltip';
+export { UserAvatar, type UserAvatarProps } from './UserAvatar';

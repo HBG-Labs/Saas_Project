@@ -18,7 +18,7 @@ const mockMembers = vi.hoisted(() => ({
       profile: {
         id: 'user-1',
         display_name: 'Alice Boss',
-        avatar_url: null,
+        avatar_id: null,
       },
     },
     {
@@ -33,7 +33,7 @@ const mockMembers = vi.hoisted(() => ({
       profile: {
         id: 'user-2',
         display_name: 'Bob Tech',
-        avatar_url: null,
+        avatar_id: null,
       },
     },
   ],

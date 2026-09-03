@@ -129,20 +129,20 @@ export interface Database {
         Row: {
           id: string;
           display_name: string | null;
-          avatar_url: string | null;
+          avatar_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           display_name?: string | null;
-          avatar_url?: string | null;
+          avatar_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           display_name?: string | null;
-          avatar_url?: string | null;
+          avatar_id?: string | null;
           updated_at?: string;
         };
         Relationships: [];

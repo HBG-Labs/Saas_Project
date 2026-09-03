@@ -35,7 +35,7 @@ export async function getTeamWithMembers(teamId: string): Promise<TeamWithMember
       .select(
         `*, members:team_members(
            *, member:organization_members(
-             *, profile:profiles(id, display_name, avatar_url)
+             *, profile:profiles(id, display_name, avatar_id)
            )
          )`,
       )

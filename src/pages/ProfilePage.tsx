@@ -25,18 +25,17 @@ import {
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FormError } from '@/components/feedback/FormError';
 import { updatePassword, useAuth } from '@/features/auth';
 import { ROLE_LABELS, useCurrentOrganization } from '@/features/organizations';
 import {
-  AvatarPickerModal,
-  useAvatarStore,
+  AvatarPicker,
   useMyProfile,
   useUpdateMyProfile,
   type FullProfile,
@@ -153,7 +152,7 @@ export default function ProfilePage() {
     }
   }, [profileQuery.data, fallbackName, fallbackJobTitle]);
 
-  const { avatarUrl } = useAvatarStore();
+  const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [draftProfile, setDraftProfile] = useState<UserProfileData>(profile);
@@ -367,10 +366,10 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
                 className="relative block rounded-full focus:outline-none focus:ring-4 focus:ring-primary/40 cursor-pointer"
-                title="Changer de photo de profil 3D"
+                title="Changer de photo de profil"
               >
-                <Avatar
-                  src={avatarUrl}
+                <UserAvatar
+                  avatarId={avatarId}
                   name={profile.displayName}
                   size="lg"
                   className="size-20 text-xl font-bold ring-4 ring-primary/40 shadow-lg transition-transform group-hover:scale-105"
@@ -394,10 +393,10 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setIsAvatarModalOpen(true)}
                   className="flex items-center gap-1 text-3xs font-bold text-primary hover:underline cursor-pointer bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md transition-colors"
-                  title="Choisir un avatar 3D (patron, technicien, etc.)"
+                  title="Choisir un avatar parmi les 50 disponibles"
                 >
                   <Sparkles className="size-3 text-warning" />
-                  <span>Changer d'avatar 3D</span>
+                  <span>Changer d'avatar</span>
                 </button>
                 <Badge
                   variant="outline"
@@ -951,8 +950,8 @@ export default function ProfilePage() {
         </form>
       </Modal>
 
-      {/* Modale de Sélection d'Avatar 3D */}
-      <AvatarPickerModal
+      {/* Sélection d'avatar */}
+      <AvatarPicker
         open={isAvatarModalOpen}
         onOpenChange={setIsAvatarModalOpen}
       />

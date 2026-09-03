@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Avatar avatar-11">
+<circle cx="64" cy="64" r="64" fill="#f3e6d5"/>
+<g clip-path="url(#r)">
+<path d="M 38 46 L 38 70 C 44 76 84 76 90 70 L 90 46 Z" fill="#8a4a2b"/>
+<path d="M 56 77 L 56 96 L 72 96 L 72 77 Z" fill="#cb9066"/>
+<path d="M 12 128 C 14 104 34 92 64 92 C 94 92 114 104 116 128 Z" fill="#a0522d"/><path d="M 55 92 C 58 100 70 100 73 92 C 70 98 58 98 55 92 Z" fill="#a0522d" opacity="0.5"/>
+<g fill="#e2ad84">
+    <ellipse cx="41" cy="57" rx="4" ry="5.5"/>
+    <ellipse cx="87" cy="57" rx="4" ry="5.5"/>
+  </g>
+<path d="M 42 54 C 42 27 86 27 86 54 C 86 68.04 75 81 64 81 C 53 81 42 68.04 42 54 Z" fill="#e2ad84"/>
+<g stroke="#8a4a2b" stroke-width="2.6" stroke-linecap="round">
+    <path d="M 46 45 C 49 42 55 42 58 44" fill="none"/>
+    <path d="M 70 44 C 73 42 79 42 82 45" fill="none"/>
+  </g>
+<g fill="#14202b">
+    <ellipse cx="52" cy="54" rx="2.6" ry="3"/>
+    <ellipse cx="76" cy="54" rx="2.6" ry="3"/>
+  </g>
+<path d="M 62 61 C 62 64 66 64 66.5 62" stroke="#cb9066" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+<path d="M 57 67 C 61 72 67 72 71 67" stroke="#14202b" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+
+<path d="M 40 50 C 39 23 89 23 88 50 C 82 37 46 37 40 50 Z" fill="#8a4a2b"/>
+
+</g>
+<clipPath id="r"><circle cx="64" cy="64" r="64"/></clipPath>
+</svg>

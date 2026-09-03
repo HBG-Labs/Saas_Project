@@ -12,7 +12,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Switch } from '@/components/ui/Switch';
-import { AvatarPickerModal, useAvatarStore } from '@/features/profile';
+import { UserAvatar } from '@/components/ui/UserAvatar';
+import { AvatarPicker, useMyProfile } from '@/features/profile';
 import { ACCENT_COLORS } from '@/features/theme/accent-colors';
 import { THEME_PRESETS } from '@/features/theme/theme-presets';
 import { useTheme } from '@/features/theme/useTheme';
@@ -31,37 +32,36 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
     resetCustomization,
   } = useTheme();
 
-  const { avatarUrl } = useAvatarStore();
+  const profileQuery = useMyProfile();
+  const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
+  const displayName = profileQuery.data?.identity?.display_name ?? '';
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   return (
     <div className="space-y-4 animate-in fade-in">
-      {/* Photo de Profil 3D (Avatar) */}
+      {/* Photo de profil (Avatar) */}
       <Card>
         <CardHeader className="py-3 px-4 pb-2">
           <CardTitle className="text-xs font-bold flex items-center gap-1.5">
             <User className="size-3.5 text-primary" />
-            <span>Photo de profil 3D (Avatar)</span>
+            <span>Photo de profil</span>
           </CardTitle>
           <CardDescription className="text-3xs">
-            Personnalisez votre avatar animé pour vos fiches d'intervention et votre compte.
+            Choisissez votre avatar pour vos fiches d'intervention et votre compte.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-4 pb-3.5 pt-0">
           <div className="flex items-center justify-between gap-4 p-2.5 rounded-xl bg-surface border border-border">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-full overflow-hidden border-2 border-primary/40 shadow-xs shrink-0">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar 3D" className="size-full object-cover" />
-                ) : (
-                  <div className="size-full bg-primary-subtle text-primary font-bold flex items-center justify-center text-xs">
-                    HB
-                  </div>
-                )}
-              </div>
+              <UserAvatar
+                avatarId={avatarId}
+                name={displayName}
+                size="lg"
+                className="border-primary/40 shrink-0 border-2 shadow-xs"
+              />
               <div>
-                <h4 className="text-xs font-bold text-foreground">Avatar 3D sélectionné</h4>
-                <p className="text-3xs text-muted-foreground">Patrons, techniciens, artisanes & styles variés.</p>
+                <h4 className="text-xs font-bold text-foreground">Avatar sélectionné</h4>
+                <p className="text-3xs text-muted-foreground">50 avatars REZO360 au choix.</p>
               </div>
             </div>
 
@@ -259,7 +259,7 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
         </CardContent>
       </Card>
 
-      <AvatarPickerModal
+      <AvatarPicker
         open={isAvatarPickerOpen}
         onOpenChange={setIsAvatarPickerOpen}
       />

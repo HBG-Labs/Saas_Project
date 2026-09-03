@@ -2,10 +2,10 @@ import { UserMinus, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { memberDisplayName, RoleBadge } from '@/features/organizations';
 import type { TeamMemberRole } from '@/types/database';
 import type { MemberWithProfile, TeamWithMembers } from '@/types/domain';
@@ -81,7 +81,7 @@ export function TeamMembersPanel({
 
             return (
               <li key={entry.id} className="flex flex-wrap items-center gap-3 py-3">
-                <Avatar name={name} size="sm" />
+                <UserAvatar avatarId={entry.member.profile?.avatar_id ?? null} name={name} size="sm" />
 
                 <div className="min-w-0 flex-1">
                   <p className="text-foreground truncate text-sm font-medium">{name}</p>

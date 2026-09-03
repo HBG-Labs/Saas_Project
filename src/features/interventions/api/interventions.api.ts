@@ -348,7 +348,7 @@ export async function listReportsPendingReview(
            id,
            mission:missions(id, reference, title),
            technician:organization_members(
-             *, profile:profiles(id, display_name, avatar_url)
+             *, profile:profiles(id, display_name, avatar_id)
            )
          )`,
       )

@@ -25,7 +25,7 @@ import type { Equipment, EquipmentWithAssignee } from '@/types/domain';
 const EQUIPMENT_SELECT = `
   *,
   assigned_member:organization_members(
-    *, profile:profiles(id, display_name, avatar_url)
+    *, profile:profiles(id, display_name, avatar_id)
   )
 ` as const;
 

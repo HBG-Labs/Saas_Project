@@ -30,7 +30,7 @@ import type {
 
 const MEMBER_SELECT = `
   member:organization_members(
-    *, profile:profiles(id, display_name, avatar_url)
+    *, profile:profiles(id, display_name, avatar_id)
   )
 ` as const;
 
@@ -279,7 +279,7 @@ const RECURRING_SELECT = `
   customer:customers(id, name),
   site:sites(id, name, address_line1, city),
   assigned_member:organization_members(
-    *, profile:profiles(id, display_name, avatar_url)
+    *, profile:profiles(id, display_name, avatar_id)
   )
 ` as const;
 

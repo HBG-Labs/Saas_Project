@@ -325,7 +325,7 @@ export async function listCustomerMissions(
         `*,
          category:categories(id, slug, name),
          assigned_team:teams(id, name, color),
-         assigned_member:organization_members(*, profile:profiles(id, display_name, avatar_url)),
+         assigned_member:organization_members(*, profile:profiles(id, display_name, avatar_id)),
          customer:customers(id, reference, name),
          site:sites(id, name, city, access_notes)`,
       )

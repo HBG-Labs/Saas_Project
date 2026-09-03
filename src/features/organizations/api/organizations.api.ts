@@ -177,7 +177,7 @@ export async function listMembers(organizationId: string): Promise<MemberWithPro
   return unwrap(
     supabase
       .from('organization_members')
-      .select('*, profile:profiles(id, display_name, avatar_url)')
+      .select('*, profile:profiles(id, display_name, avatar_id)')
       .eq('organization_id', organizationId)
       .in('status', ['active', 'invited'])
       .order('role', { ascending: true })
@@ -267,7 +267,7 @@ export async function updateMemberDetails(
   return unwrap(
     supabase
       .from('organization_members')
-      .select('*, profile:profiles(id, display_name, avatar_url)')
+      .select('*, profile:profiles(id, display_name, avatar_id)')
       .eq('id', memberId)
       .single()
       .returns<MemberWithProfile>(),

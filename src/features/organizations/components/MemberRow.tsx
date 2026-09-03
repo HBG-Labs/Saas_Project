@@ -1,12 +1,12 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { cn } from '@/lib/cn';
 import type { OrgRole } from '@/types/database';
 import type { MemberWithProfile, Team } from '@/types/domain';
@@ -84,7 +84,7 @@ export function MemberRow({
   return (
     <li className="border-border flex flex-wrap items-start justify-between gap-4 border-b py-4 last:border-b-0">
       <div className="flex items-start gap-3 min-w-0 flex-1">
-        <Avatar name={name} size="sm" className="mt-0.5" />
+        <UserAvatar avatarId={member.profile?.avatar_id ?? null} name={name} size="sm" className="mt-0.5" />
 
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">

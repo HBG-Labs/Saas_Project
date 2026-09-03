@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Avatar avatar-38">
+<circle cx="64" cy="64" r="64" fill="#e7e1f2"/>
+<g clip-path="url(#r)">
+<path d="M 38 46 L 38 70 C 44 76 84 76 90 70 L 90 46 Z" fill="#a8492a"/>
+<path d="M 56 78 L 56 96 L 72 96 L 72 78 Z" fill="#b6754a"/>
+<path d="M 12 128 C 14 104 34 92 64 92 C 94 92 114 104 116 128 Z" fill="#1b44c8"/><path d="M 55 92 L 64 106 L 73 92 L 68 91 L 64 99 L 60 91 Z" fill="#ffffff" opacity="0.9"/><rect x="62.6" y="100" width="2.8" height="16" rx="1.4" fill="#ffffff" opacity="0.55"/>
+<g fill="#d19265">
+    <ellipse cx="41" cy="57" rx="4" ry="5.5"/>
+    <ellipse cx="87" cy="57" rx="4" ry="5.5"/>
+  </g>
+<path d="M 42 54 C 42 26 86 26 86 54 C 86 68.56 71.5 82 64 82 C 56.5 82 42 68.56 42 54 Z" fill="#d19265"/>
+<g stroke="#a8492a" stroke-width="2.6" stroke-linecap="round">
+    <path d="M 46 45 C 49 42 55 42 58 44" fill="none"/>
+    <path d="M 70 44 C 73 42 79 42 82 45" fill="none"/>
+  </g>
+<g fill="#14202b">
+    <ellipse cx="52" cy="54" rx="2.6" ry="3"/>
+    <ellipse cx="76" cy="54" rx="2.6" ry="3"/>
+  </g>
+<path d="M 62 61 C 62 64 66 64 66.5 62" stroke="#b6754a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+<path d="M 56 67 C 60 74 68 74 72 67 Z" fill="#14202b"/>
+
+<path d="M 40 50 C 39 23 89 23 88 50 C 82 37 46 37 40 50 Z" fill="#a8492a"/>
+
+</g>
+<clipPath id="r"><circle cx="64" cy="64" r="64"/></clipPath>
+</svg>

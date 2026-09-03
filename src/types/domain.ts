@@ -41,7 +41,7 @@ export type RolePermission = Tables<'role_permissions'>;
  * vivent dans `profile_details`, que son seul titulaire peut lire.
  */
 export interface MemberWithProfile extends OrganizationMember {
-  profile: Pick<Profile, 'id' | 'display_name' | 'avatar_url'> | null;
+  profile: Pick<Profile, 'id' | 'display_name' | 'avatar_id'> | null;
 }
 
 // -------------------------------------------------------------------------- équipes

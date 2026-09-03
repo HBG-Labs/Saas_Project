@@ -4,7 +4,6 @@ import { Link, Outlet, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { PwaInstallBanner, usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
-import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import {
   Dropdown,
@@ -13,6 +12,7 @@ import {
   DropdownSeparator,
 } from '@/components/ui/Dropdown';
 import { Kbd } from '@/components/ui/Kbd';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ROUTES } from '@/config/routes';
 import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 import { useAuth } from '@/features/auth';
@@ -20,7 +20,7 @@ import { TrialBanner } from '@/features/billing';
 import { NotificationBell } from '@/features/notifications';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
-import { useAvatarStore } from '@/features/profile';
+import { useMigrateLegacyAvatar, useMyProfile } from '@/features/profile';
 import { useCommandBar } from '@/features/search/useCommandBar';
 import { ThemeMenuItems, ThemeToggle } from '@/features/theme/ThemeToggle';
 import { cn } from '@/lib/cn';
@@ -44,7 +44,9 @@ export function AppLayout() {
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
 
-  const { avatarUrl } = useAvatarStore();
+  const profileQuery = useMyProfile();
+  const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
+  useMigrateLegacyAvatar();
   const { isInstallable, installPwa } = usePwaInstall();
   const isAuthenticated = status === 'authenticated';
   const displayName = displayNameOf(user);
@@ -233,7 +235,7 @@ export function AppLayout() {
                     className="ring-border hover:ring-border-strong flex size-touch items-center justify-center rounded-full ring-2 transition-all sm:size-9 cursor-pointer overflow-hidden"
                     aria-label="Menu du compte"
                   >
-                    <Avatar src={avatarUrl} name={displayName} size="sm" />
+                    <UserAvatar avatarId={avatarId} name={displayName} size="sm" />
                   </button>
                 }
               >

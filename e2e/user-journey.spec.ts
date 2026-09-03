@@ -52,7 +52,7 @@ test.describe('Parcours utilisateur complet', () => {
         body: JSON.stringify({
           id: 'test-user-id-123',
           display_name: 'Alex Technicien',
-          avatar_url: null,
+          avatar_id: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }),

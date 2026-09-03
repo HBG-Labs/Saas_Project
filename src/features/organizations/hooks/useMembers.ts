@@ -123,7 +123,7 @@ export function useUpdateMemberDetails(organizationId: string) {
               profile: {
                 id: m.profile?.id ?? `prof-${memberId}`,
                 display_name: displayName !== undefined ? displayName : (m.profile?.display_name ?? ''),
-                avatar_url: m.profile?.avatar_url ?? null,
+                avatar_id: m.profile?.avatar_id ?? null,
               },
             };
           });
