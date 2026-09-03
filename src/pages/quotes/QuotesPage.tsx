@@ -6,10 +6,12 @@ import {
   FileText,
   Building,
   Download,
+  History,
   Send,
   Sparkles,
   X,
 } from 'lucide-react';
+import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -18,6 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { ROUTES } from '@/config/routes';
 import { useCurrentOrganization } from '@/features/organizations';
 import {
   toEuros,
@@ -103,8 +106,9 @@ export default function QuotesPage() {
    */
   const nextLineId = useRef(1);
 
-  /** Référence attribuée par la base une fois le devis enregistré. */
+  /** Référence et identifiant attribués par la base une fois le devis enregistré. */
   const [savedReference, setSavedReference] = useState<string | null>(null);
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
 
   const handleAddItem = (preset?: { label: string; unit: string; price: number }) => {
     const newItem: QuoteLineItem = {
@@ -118,6 +122,7 @@ export default function QuotesPage() {
     // Toute modification invalide la référence déjà émise : ce n'est plus le
     // même devis, et laisser l'ancien numéro affiché serait trompeur.
     setSavedReference(null);
+    setSavedQuoteId(null);
   };
 
   const handleCreateCustomPreset = (e: React.FormEvent) => {
@@ -155,11 +160,13 @@ export default function QuotesPage() {
       previous.map((it) => (it.id === id ? { ...it, [key]: value } : it)),
     );
     setSavedReference(null);
+    setSavedQuoteId(null);
   };
 
   const handleRemoveItem = (id: string) => {
     setItems((previous) => previous.filter((it) => it.id !== id));
     setSavedReference(null);
+    setSavedQuoteId(null);
   };
 
   // Calculs Totaux — affichage seul. Le total qui fait foi est celui de la vue
@@ -205,7 +212,10 @@ export default function QuotesPage() {
         })),
       },
       {
-        onSuccess: (quote) => setSavedReference(quote.reference),
+        onSuccess: (quote) => {
+          setSavedReference(quote.reference);
+          setSavedQuoteId(quote.id);
+        },
         onError: setSubmitError,
       },
     );
@@ -232,6 +242,14 @@ export default function QuotesPage() {
       <PageHeader
         title="Devis & Chiffrage Express"
         description="Simulateur et générateur de chiffrage instantané pour les prestations sur site et devis clients."
+        actions={
+          <Button asChild variant="outline" className="gap-2">
+            <Link to={ROUTES.quotesHistory}>
+              <History className="size-4" aria-hidden="true" />
+              Historique des devis
+            </Link>
+          </Button>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -578,6 +596,20 @@ export default function QuotesPage() {
                       ? `Devis ${savedReference} enregistré`
                       : 'Valider & Enregistrer le devis'}
                 </Button>
+
+                {/*
+                  C'est précisément ce qui manquait : le devis était bien
+                  enregistré, mais rien à l'écran ne menait vers lui ensuite —
+                  seul le PDF, téléchargé sur-le-champ, en gardait une trace.
+                */}
+                {savedQuoteId !== null ? (
+                  <Button asChild variant="outline" className="w-full justify-center gap-2 text-xs">
+                    <Link to={ROUTES.quoteDetail(savedQuoteId)}>
+                      <FileText className="size-4" />
+                      Voir le devis enregistré
+                    </Link>
+                  </Button>
+                ) : null}
 
                 <Button
                   variant="outline"

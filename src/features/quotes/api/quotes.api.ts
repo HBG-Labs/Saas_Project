@@ -1,6 +1,6 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { TablesInsert, TablesUpdate } from '@/types/database';
-import type { Quote, QuoteItem, QuoteTemplate, QuoteWithItems } from '@/types/domain';
+import type { Quote, QuoteItem, QuoteTemplate, QuoteTotals, QuoteWithItems, QuoteWithTotals } from '@/types/domain';
 
 /**
  * Accès aux devis et au catalogue de prestations.
@@ -118,6 +118,30 @@ export async function listQuotes(organizationId: string, limit = 50): Promise<Qu
       .order('created_at', { ascending: false })
       .limit(limit),
   );
+}
+
+/**
+ * L'historique, montants compris.
+ *
+ * Même raison qu'expliquée pour `getQuote` : `quote_totals` est une vue sans
+ * clé étrangère déclarée, PostgREST ne peut pas la joindre à `quotes` en une
+ * seule requête. Deux lectures en parallèle, scindées par `quote_id` — le
+ * coût est un aller simultané, pas un aller-retour de plus.
+ */
+export async function listQuotesWithTotals(
+  organizationId: string,
+  limit = 50,
+): Promise<QuoteWithTotals[]> {
+  const [quotes, totals] = await Promise.all([
+    listQuotes(organizationId, limit),
+    unwrap(
+      supabase.from('quote_totals').select('*').eq('organization_id', organizationId),
+    ) as Promise<QuoteTotals[]>,
+  ]);
+
+  const totalsByQuoteId = new Map(totals.map((t) => [t.quote_id, t]));
+
+  return quotes.map((quote) => ({ ...quote, totals: totalsByQuoteId.get(quote.id) ?? null }));
 }
 
 /**

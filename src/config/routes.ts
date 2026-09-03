@@ -77,6 +77,8 @@ export const ROUTES = {
   purchaseOrders: '/achats/commandes',
   suppliers: '/achats/fournisseurs',
   quotes: '/devis',
+  quotesHistory: '/devis/historique',
+  quoteDetail: (quoteId: string) => `/devis/${quoteId}`,
   notes: '/bloc-notes',
   reports: '/comptes-rendus',
   profile: '/profile',
@@ -110,4 +112,5 @@ export const ROUTE_PATTERNS = {
   mission: '/missions/:missionId',
   intervention: '/interventions/:interventionId',
   interventionReport: '/interventions/:interventionId/rapport',
+  quoteDetail: '/devis/:quoteId',
 } as const;

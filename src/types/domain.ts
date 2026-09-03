@@ -158,6 +158,11 @@ export interface QuoteWithItems extends Quote {
   totals: QuoteTotals | null;
 }
 
+/** Un devis d'historique, montant TTC compris — sans le détail de ses lignes. */
+export interface QuoteWithTotals extends Quote {
+  totals: QuoteTotals | null;
+}
+
 // ----------------------------------------------------------------- bloc-notes
 export type Note = Tables<'notes'>;
 

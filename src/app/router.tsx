@@ -260,6 +260,19 @@ export const routes: RouteObject[] = [
                             path: ROUTES.quotes,
                             lazy: lazyPage(() => import('@/pages/quotes/QuotesPage')),
                           },
+                          {
+                            path: ROUTES.quotesHistory,
+                            lazy: lazyPage(() => import('@/pages/quotes/QuoteHistoryPage')),
+                          },
+                          {
+                            // Motif statique ET dynamique enregistrés côte à
+                            // côte : react-router fait toujours primer le
+                            // segment fixe (`/historique`) sur le paramètre
+                            // (`/:quoteId`), quel que soit l'ordre d'écriture
+                            // ci-dessus.
+                            path: ROUTE_PATTERNS.quoteDetail,
+                            lazy: lazyPage(() => import('@/pages/quotes/QuoteDetailPage')),
+                          },
                         ],
                       },
                     ],

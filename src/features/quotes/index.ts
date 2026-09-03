@@ -7,11 +7,14 @@
 export {
   useCreateQuote,
   useCreateQuoteTemplate,
+  useDeleteQuote,
   useDeleteQuoteTemplate,
   useQuote,
   useQuoteTemplates,
   useQuotes,
+  useQuotesWithTotals,
   useSeedQuoteTemplates,
+  useUpdateQuote,
 } from './hooks/useQuotes';
 
 export { toCents, toEuros, type QuoteLineInput } from './api/quotes.api';

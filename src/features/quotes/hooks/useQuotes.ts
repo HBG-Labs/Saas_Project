@@ -1,15 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { qk } from '@/lib/query-keys';
+import type { TablesUpdate } from '@/types/database';
 
 import {
   createQuote,
   createQuoteTemplate,
   createQuoteTemplates,
+  deleteQuote,
   deleteQuoteTemplate,
   getQuote,
-  listQuoteTemplates,
   listQuotes,
+  listQuoteTemplates,
+  listQuotesWithTotals,
+  updateQuote,
   type QuoteLineInput,
 } from '../api/quotes.api';
 
@@ -72,6 +76,22 @@ export function useQuote(quoteId: string | undefined) {
   });
 }
 
+/**
+ * L'historique, montants compris — ce que consulte `QuoteHistoryPage`.
+ *
+ * Clé de cache distincte de `useQuotes` (`'with-totals'` en filtre) : les deux
+ * lisent la même table `quotes` mais ne renvoient pas la même forme, et
+ * `useQuotes` reste utilisée telle quelle par `AnalyticsPage`, qui n'a besoin
+ * que des statuts, pas des montants.
+ */
+export function useQuotesWithTotals(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.quotes.list(organizationId ?? 'none', 'with-totals'),
+    queryFn: () => (organizationId === null ? [] : listQuotesWithTotals(organizationId)),
+    enabled: organizationId !== null,
+  });
+}
+
 export function useCreateQuote(organizationId: string) {
   const queryClient = useQueryClient();
 
@@ -83,6 +103,29 @@ export function useCreateQuote(organizationId: string) {
       vatRate: number;
       items: readonly QuoteLineInput[];
     }) => createQuote({ ...input, organizationId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.all });
+    },
+  });
+}
+
+/** Changement de statut ou modification d'en-tête — jamais les lignes, non éditables après coup. */
+export function useUpdateQuote(quoteId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (patch: TablesUpdate<'quotes'>) => updateQuote(quoteId, patch),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.all });
+    },
+  });
+}
+
+export function useDeleteQuote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (quoteId: string) => deleteQuote(quoteId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.quotes.all });
     },
