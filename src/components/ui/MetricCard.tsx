@@ -63,7 +63,7 @@ export function MetricCard({
     <Link
       to={to}
       className={cn(
-        'group bg-surface hover:shadow-raised flex flex-col justify-between gap-3 rounded-xl border p-4 transition-shadow',
+        'group bg-surface hover:shadow-raised flex flex-col justify-between gap-2 rounded-xl border p-3 transition-shadow sm:gap-3 sm:p-4',
         attention ? 'border-warning-border bg-warning-subtle' : 'border-border hover:border-border-strong',
         className,
       )}
@@ -71,7 +71,7 @@ export function MetricCard({
       <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-lg',
+            'flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9',
             attention ? 'bg-warning/15 text-warning' : 'bg-primary-subtle text-primary',
           )}
         >
@@ -82,7 +82,7 @@ export function MetricCard({
 
       <div>
         <p className="text-muted-foreground text-sm">{label}</p>
-        <div className="mt-1 flex items-baseline justify-between gap-3">
+        <div className="mt-0.5 flex items-baseline justify-between gap-3 sm:mt-1">
           <span
             className={cn(
               'text-3xl font-bold tracking-tight tabular-nums',
