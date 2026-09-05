@@ -29,7 +29,8 @@ const MESSAGES: Record<AppErrorCode, string> = {
  * row-level security policy for table "missions" ». Les afficher divulguerait
  * la structure de la base à qui provoque une erreur exprès.
  */
-const POSTGRES_INTERNALS = /violates|constraint|relation\s|column\s|duplicate key|permission denied/i;
+const POSTGRES_INTERNALS =
+  /violates|constraint|relation\s|column\s|duplicate key|permission denied/i;
 
 /**
  * Message écrit POUR être lu, s'il y en a un.
@@ -111,6 +112,18 @@ function mapPostgrestCode(error: SupabaseLikeError): AppErrorCode {
 export function mapAuthError(error: SupabaseLikeError): AppError {
   const msg = (error.message ?? '').toLowerCase();
   const code = (error.code ?? '').toLowerCase();
+
+  if (
+    msg.includes('provider is not enabled') ||
+    msg.includes('unsupported provider') ||
+    (code === 'validation_failed' && msg.includes('provider'))
+  ) {
+    return new AppError(
+      'validation',
+      'La connexion avec Google n’est pas encore activée. Utilisez l’adresse e-mail ou réessayez plus tard.',
+      { cause: error },
+    );
+  }
 
   if (
     code === 'same_password' ||

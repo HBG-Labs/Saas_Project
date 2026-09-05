@@ -9,15 +9,17 @@ import { Input } from '@/components/ui/Input';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { AuthCard } from '@/features/auth/components/AuthCard';
+import { GoogleAuthButton } from '@/features/auth/components/GoogleAuthButton';
 import { FormError } from '@/components/feedback/FormError';
 import { loginSchema, type LoginValues } from '@/features/auth/schemas/auth.schema';
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
   const {
     register,
@@ -40,6 +42,19 @@ export default function LoginPage() {
     }
   });
 
+  const onGoogleSignIn = async () => {
+    setSubmitError(null);
+    setIsGoogleSubmitting(true);
+
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      setSubmitError(error);
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
   return (
     <AuthCard
       title="Connexion"
@@ -55,7 +70,23 @@ export default function LoginPage() {
     >
       <FormError error={submitError} />
 
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <div className="space-y-4">
+        <GoogleAuthButton
+          isLoading={isGoogleSubmitting}
+          disabled={isSubmitting}
+          onClick={() => void onGoogleSignIn()}
+        />
+
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="bg-border h-px flex-1" />
+          <span className="text-3xs text-muted-foreground font-medium">
+            ou se connecter avec une adresse e-mail
+          </span>
+          <span className="bg-border h-px flex-1" />
+        </div>
+      </div>
+
+      <form onSubmit={onSubmit} noValidate className="mt-4 space-y-4">
         <Input
           label="Adresse e-mail"
           type="email"
@@ -83,7 +114,7 @@ export default function LoginPage() {
                 }}
                 aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 // 28 px : le pouce visait l'œil et sélectionnait le champ.
-                className="text-subtle-foreground hover:text-foreground flex size-touch items-center justify-center rounded transition-colors sm:size-7"
+                className="text-subtle-foreground hover:text-foreground size-touch flex items-center justify-center rounded transition-colors sm:size-7"
               >
                 {showPassword ? (
                   <EyeOff className="size-4" aria-hidden="true" />
@@ -103,7 +134,13 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Button type="submit" size="lg" className="w-full" isLoading={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          isLoading={isSubmitting}
+          disabled={isGoogleSubmitting}
+        >
           Se connecter
         </Button>
       </form>

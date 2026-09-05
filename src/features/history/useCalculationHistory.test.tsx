@@ -28,6 +28,7 @@ describe('useCalculationHistory — Isolation stricte par compte', () => {
         ? ({ id: userId, email: `${userId}@test.com` } as AuthContextValue['user'])
         : null,
       signIn: vi.fn(),
+      signInWithGoogle: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
       resetPassword: vi.fn(),
@@ -40,10 +41,9 @@ describe('useCalculationHistory — Isolation stricte par compte', () => {
 
   it('isole l’historique de la calculatrice entre deux comptes distincts', () => {
     // 1. Utilisateur A calcule une formule dans la calculatrice
-    const { result: hookUserA } = renderHook(
-      () => useCalculationHistory('scientific-calculator'),
-      { wrapper: createWrapper('user_leduc') },
-    );
+    const { result: hookUserA } = renderHook(() => useCalculationHistory('scientific-calculator'), {
+      wrapper: createWrapper('user_leduc'),
+    });
 
     act(() => {
       hookUserA.current.addEntry({
@@ -58,10 +58,9 @@ describe('useCalculationHistory — Isolation stricte par compte', () => {
     expect(hookUserA.current.entries[0]?.formattedResult).toBe('1 000');
 
     // 2. Utilisateur B se connecte sur la même machine
-    const { result: hookUserB } = renderHook(
-      () => useCalculationHistory('scientific-calculator'),
-      { wrapper: createWrapper('user_nouveau_compte') },
-    );
+    const { result: hookUserB } = renderHook(() => useCalculationHistory('scientific-calculator'), {
+      wrapper: createWrapper('user_nouveau_compte'),
+    });
 
     // L'utilisateur B a un historique VIERGE
     expect(hookUserB.current.entries).toHaveLength(0);

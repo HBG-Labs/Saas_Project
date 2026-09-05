@@ -20,6 +20,7 @@ describe('useToolHistory — Isolation stricte par compte utilisateur', () => {
         ? ({ id: userId, email: `${userId}@test.com` } as AuthContextValue['user'])
         : null,
       signIn: vi.fn(),
+      signInWithGoogle: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
       resetPassword: vi.fn(),

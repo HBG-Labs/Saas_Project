@@ -31,6 +31,7 @@ function createWrapper(userId: string | null = null) {
     user: userId ? ({ id: userId, email: 'test@example.com' } as any) : null,
     session: null,
     signIn: vi.fn(),
+    signInWithGoogle: vi.fn(),
     signUp: vi.fn(),
     signOut: vi.fn(),
     resetPassword: vi.fn(),

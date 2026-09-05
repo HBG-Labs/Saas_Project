@@ -36,7 +36,9 @@ describe('mapPostgrestError', () => {
     });
 
     expect(rls.message).not.toContain('missions');
-    expect(rls.message).toBe("Vous n'avez pas les droits nécessaires pour accéder à cette ressource.");
+    expect(rls.message).toBe(
+      "Vous n'avez pas les droits nécessaires pour accéder à cette ressource.",
+    );
   });
 
   it('retombe sur le statut HTTP quand le code est inconnu', () => {
@@ -65,12 +67,27 @@ describe('mapAuthError', () => {
 
   it('traduit les erreurs de mot de passe identique ou trop faible', () => {
     expect(
-      mapAuthError({ message: 'New password should be different from the old password.', status: 422 }).message,
+      mapAuthError({
+        message: 'New password should be different from the old password.',
+        status: 422,
+      }).message,
     ).toBe("Le nouveau mot de passe doit être différent de l'ancien mot de passe.");
 
     expect(
-      mapAuthError({ code: 'weak_password', message: 'Password should be at least 6 characters' }).message,
+      mapAuthError({ code: 'weak_password', message: 'Password should be at least 6 characters' })
+        .message,
     ).toBe('Le mot de passe est trop simple ou ne respecte pas les critères de sécurité.');
   });
-});
 
+  it('explique quand le fournisseur Google n’est pas encore activé', () => {
+    const error = mapAuthError({
+      code: 'validation_failed',
+      message: 'Unsupported provider: provider is not enabled',
+      status: 400,
+    });
+
+    expect(error.code).toBe('validation');
+    expect(error.message).toContain('Google');
+    expect(error.message).not.toContain('Unsupported provider');
+  });
+});

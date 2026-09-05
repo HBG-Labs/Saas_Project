@@ -7,10 +7,12 @@ import RegisterPage from '@/pages/RegisterPage';
 import { renderWithProviders } from '@/test/utils';
 
 const mockSignUp = vi.fn();
+const mockSignInWithGoogle = vi.fn();
 
 vi.mock('@/features/auth', () => ({
   useAuth: () => ({
     signUp: mockSignUp,
+    signInWithGoogle: mockSignInWithGoogle,
     status: 'unauthenticated',
     user: null,
     session: null,
@@ -30,7 +32,36 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     expect(screen.getByLabelText(/Adresse e-mail/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^Mot de passe/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Confirmer le mot de passe/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continuer avec Google/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Créer mon compte gratuit/i })).toBeInTheDocument();
+  });
+
+  it('ouvre le parcours Google sans valider les champs du formulaire', async () => {
+    const user = userEvent.setup();
+    mockSignInWithGoogle.mockResolvedValueOnce(undefined);
+
+    renderWithProviders(<RegisterPage />, { route: '/register?plan=pro' });
+
+    await user.click(screen.getByRole('button', { name: /Continuer avec Google/i }));
+
+    expect(mockSignInWithGoogle).toHaveBeenCalledOnce();
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('explique un échec du parcours Google sans masquer le formulaire e-mail', async () => {
+    const user = userEvent.setup();
+    mockSignInWithGoogle.mockRejectedValueOnce(
+      new AppError('validation', 'La connexion avec Google n’est pas encore activée.'),
+    );
+
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await user.click(screen.getByRole('button', { name: /Continuer avec Google/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La connexion avec Google n’est pas encore activée.',
+    );
+    expect(screen.getByLabelText(/Adresse e-mail/i)).toBeInTheDocument();
   });
 
   it('pré-sélectionne le plan spécifié dans l’URL (?plan=pro)', () => {
@@ -57,7 +88,9 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     await user.click(businessBtn);
 
     expect(screen.getAllByText(/Formule Business/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer mon essai Business/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Démarrer mon essai Business/i }),
+    ).toBeInTheDocument();
   });
 
   it('bloque la soumission et affiche les erreurs de validation si les champs sont vides', async () => {
@@ -69,7 +102,9 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     await waitFor(() => {
       expect(screen.getByText(/Le nom doit contenir au moins 2 caractères/i)).toBeInTheDocument();
       expect(screen.getByText(/Adresse e-mail invalide/i)).toBeInTheDocument();
-      expect(screen.getByText(/Le mot de passe doit contenir au moins 8 caractères/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Le mot de passe doit contenir au moins 8 caractères/i),
+      ).toBeInTheDocument();
     });
 
     expect(mockSignUp).not.toHaveBeenCalled();
@@ -92,6 +127,26 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     });
 
     expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('permet d’afficher séparément le mot de passe et sa confirmation', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    const password = screen.getByLabelText(/^Mot de passe/i);
+    const confirmation = screen.getByLabelText(/Confirmer le mot de passe/i);
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(confirmation).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: 'Afficher le mot de passe' }));
+    expect(password).toHaveAttribute('type', 'text');
+    expect(confirmation).toHaveAttribute('type', 'password');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Afficher la confirmation du mot de passe' }),
+    );
+    expect(confirmation).toHaveAttribute('type', 'text');
   });
 
   it('soumet les informations valides et affiche la page de confirmation mail', async () => {

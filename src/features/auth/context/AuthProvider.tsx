@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import {
   getCurrentSession,
   requestPasswordReset,
+  signInWithGoogle as signInWithGoogleRequest,
   signInWithPassword,
   signOut as signOutRequest,
   signUpWithPassword,
@@ -81,6 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithPassword(email, password);
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    await signInWithGoogleRequest();
+  }, []);
+
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     await signUpWithPassword(email, password, displayName ? { displayName } : undefined);
   }, []);
@@ -99,11 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session: state.session,
       user: state.session?.user ?? null,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
       resetPassword,
     }),
-    [state, signIn, signUp, signOut, resetPassword],
+    [state, signIn, signInWithGoogle, signUp, signOut, resetPassword],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

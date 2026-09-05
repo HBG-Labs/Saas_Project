@@ -43,6 +43,23 @@ export async function signInWithPassword(email: string, password: string): Promi
   if (error) throw mapAuthError(error);
 }
 
+/**
+ * Ouvre le flux OAuth Google géré par Supabase.
+ *
+ * Le client est configuré en PKCE : le secret Google ne transite jamais dans
+ * le navigateur et le code à usage unique est consommé au retour par
+ * `detectSessionInUrl`.
+ */
+export async function signInWithGoogle(): Promise<void> {
+  const redirectTo = new URL('/auth/callback', window.location.origin).toString();
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo },
+  });
+
+  if (error) throw mapAuthError(error);
+}
+
 export async function signUpWithPassword(
   email: string,
   password: string,

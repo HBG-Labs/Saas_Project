@@ -32,14 +32,18 @@ export default function AuthCallbackPage() {
   const { status } = useAuth();
 
   /**
-   * Supabase place ses erreurs dans le FRAGMENT (`#error=...`), pas dans la
-   * chaîne de requête : le fragment n'est jamais transmis au serveur, ce qui
-   * évite qu'un motif d'échec d'authentification n'atterrisse dans les journaux
-   * d'accès. On le lit donc à la main.
+   * Les liens par e-mail renvoient encore certaines erreurs dans le fragment,
+   * tandis qu'un fournisseur OAuth peut les placer dans la chaîne de requête.
+   * Lire les deux garde un écran d'erreur utile quel que soit le parcours.
    */
   const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  const errorCode = fragment.get('error_code') ?? fragment.get('error');
-  const errorDescription = fragment.get('error_description');
+  const query = new URLSearchParams(window.location.search);
+  const errorCode =
+    query.get('error_code') ??
+    query.get('error') ??
+    fragment.get('error_code') ??
+    fragment.get('error');
+  const errorDescription = query.get('error_description') ?? fragment.get('error_description');
 
   if (errorCode !== null) {
     const isExpired = errorCode.includes('expired') || errorDescription?.includes('expired');
