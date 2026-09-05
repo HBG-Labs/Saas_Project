@@ -7,6 +7,14 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
+const MOBILE_NAV_ICON_COLORS: Record<string, string> = {
+  Accueil: 'text-[#2563EB]',
+  Missions: 'text-[#10B981]',
+  Planning: 'text-[#F59E0B]',
+  Outils: 'text-[#7C3AED]',
+  Clients: 'text-[#1D4ED8]',
+};
+
 /**
  * Navigation basse, mobile uniquement.
  *
@@ -53,7 +61,14 @@ export function MobileNav() {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon className={cn('size-5 shrink-0 transition-transform', isActive && 'scale-110')} aria-hidden="true" />
+                    <Icon
+                      className={cn(
+                        'size-5 shrink-0 transition-transform',
+                        MOBILE_NAV_ICON_COLORS[item.label],
+                        isActive && 'scale-110',
+                      )}
+                      aria-hidden="true"
+                    />
                     <span className="w-full truncate text-center">{item.label}</span>
                     {isActive ? (
                       <span className="absolute top-1 size-1 rounded-full bg-primary" aria-hidden="true" />

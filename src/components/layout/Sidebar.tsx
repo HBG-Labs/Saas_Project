@@ -124,7 +124,7 @@ function SidebarLink({
           'group relative flex min-h-9 items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium',
           'transition-all duration-150',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-          collapsed ? 'justify-center px-0 size-9 mx-auto' : 'w-full',
+          collapsed ? 'justify-center px-0 size-9 mx-auto' : 'w-full pl-7 pr-3',
           isActive
             ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
             : item.locked
