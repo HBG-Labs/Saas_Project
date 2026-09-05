@@ -3,6 +3,7 @@ import { Dialog } from 'radix-ui';
 import { Calendar, Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { FormError } from '@/components/feedback/FormError';
 import { memberDisplayName } from '@/features/organizations';
 import type { MissionPriority } from '@/types/database';
@@ -63,7 +64,7 @@ export function NewEventModal({
   );
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('12:00');
-  const [assignment, setAssignment] = useState('');
+  const [assignment, setAssignment] = useState('unassigned');
   const [details, setDetails] = useState('');
 
   // Synchronise la date si `initialDate` change — au RENDU, pas dans un effet.
@@ -154,38 +155,30 @@ export function NewEventModal({
               </div>
 
               <div>
-                <label htmlFor="evt-assignment" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Affectation
-                </label>
-                <select
+                <Select
                   id="evt-assignment"
+                  label="Affectation"
                   value={assignment}
-                  onChange={(e) => setAssignment(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
-                >
-                  <option value="">À affecter plus tard</option>
-                  {teams.length > 0 && (
-                    <optgroup label="Équipes">
-                      {teams.map((team) => (
-                        <option key={team.id} value={`team:${team.id}`}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {members.length > 0 && (
-                    <optgroup label="Intervenants">
-                      {members.map((member) => (
-                        <option key={member.id} value={`member:${member.id}`}>
-                          {memberDisplayName(member)}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-                <p className="mt-1 text-3xs text-muted-foreground">
-                  Une équipe permet à chacun de ses membres d’intervenir.
-                </p>
+                  onValueChange={setAssignment}
+                  options={[{ value: 'unassigned', label: 'À affecter plus tard' }]}
+                  groups={[
+                    {
+                      label: 'Équipes',
+                      options: teams.map((team) => ({
+                        value: `team:${team.id}`,
+                        label: team.name,
+                      })),
+                    },
+                    {
+                      label: 'Intervenants',
+                      options: members.map((member) => ({
+                        value: `member:${member.id}`,
+                        label: memberDisplayName(member),
+                      })),
+                    },
+                  ]}
+                  hint="Une équipe permet à chacun de ses membres d’intervenir."
+                />
               </div>
             </div>
 

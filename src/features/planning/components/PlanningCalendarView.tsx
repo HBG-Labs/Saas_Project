@@ -70,6 +70,20 @@ function formatFullDateFR(dateStr: string): string {
   return `${DAYS_FULL_FR[dayIndex]} ${day} ${MONTHS_FR[month - 1]} ${year}`;
 }
 
+/**
+ * Évite qu'un intitulé vide ou uniquement numérique soit confondu avec
+ * le compteur d'activités affiché dans les cellules du calendrier.
+ */
+function getEventDisplayTitle(event: PlanningCalendarEvent): string {
+  const title = event.title.trim();
+
+  if (title && !/^\d+(?:[.,]\d+)?$/.test(title)) return title;
+
+  return event.type === 'recurring_task'
+    ? 'Tâche sans intitulé'
+    : 'Intervention sans intitulé';
+}
+
 /** Calcule le numéro de semaine ISO */
 function getWeekNumber(d: Date): number {
   const target = new Date(d.valueOf());
@@ -687,7 +701,7 @@ export function PlanningCalendarView({
                             ? 'bg-primary/15 border-primary/30 text-primary'
                             : 'bg-success/15 border-success/30 text-success',
                         )}
-                        title={`${evt.startTime ? `${evt.startTime} • ` : ''}${evt.title} (${evt.clientName ?? 'Client'})`}
+                        title={`${evt.startTime ? `${evt.startTime} • ` : ''}${getEventDisplayTitle(evt)} (${evt.clientName ?? 'Client'})`}
                       >
                         <Wrench className="size-2.5 shrink-0 opacity-80" />
                         <span className="truncate">
@@ -695,7 +709,7 @@ export function PlanningCalendarView({
                             <span className="font-mono opacity-85 mr-0.5">{evt.startTime}</span>
                           )}
                           {evt.technicianInitials ? `[${evt.technicianInitials}] ` : ''}
-                          {evt.title}
+                          {getEventDisplayTitle(evt)}
                         </span>
                       </div>
                     ))}
@@ -828,7 +842,7 @@ export function PlanningCalendarView({
                         </div>
 
                         <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-                          {evt.title}
+                          {getEventDisplayTitle(evt)}
                         </h4>
 
                         {evt.clientName && (
@@ -1052,7 +1066,9 @@ export function PlanningCalendarView({
 
                           {/* Corps : Titre, Client, Adresse */}
                           <div>
-                            <h4 className="text-sm font-bold text-foreground">{evt.title}</h4>
+                            <h4 className="text-sm font-bold text-foreground">
+                              {getEventDisplayTitle(evt)}
+                            </h4>
                             {evt.clientName && (
                               <p className="text-xs font-semibold text-primary/90 mt-0.5">
                                 🏢 {evt.clientName}
@@ -1240,7 +1256,9 @@ export function PlanningCalendarView({
                         </div>
 
                         <div>
-                          <h4 className="text-xs font-bold text-foreground">{evt.title}</h4>
+                          <h4 className="text-xs font-bold text-foreground">
+                            {getEventDisplayTitle(evt)}
+                          </h4>
                           {evt.clientName && (
                             <p className="text-xs text-primary font-semibold mt-0.5">
                               🏢 {evt.clientName}

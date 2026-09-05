@@ -1,9 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { MemberWithProfile, Team } from '@/types/domain';
 
 import { NewEventModal } from './NewEventModal';
+
+beforeAll(() => {
+  Object.defineProperties(HTMLElement.prototype, {
+    hasPointerCapture: { configurable: true, value: () => false },
+    setPointerCapture: { configurable: true, value: () => undefined },
+    releasePointerCapture: { configurable: true, value: () => undefined },
+    scrollIntoView: { configurable: true, value: () => undefined },
+  });
+});
 
 const TEAM = {
   id: 'team-1',
@@ -38,28 +48,29 @@ function renderModal(onSubmit = vi.fn()) {
 }
 
 describe('NewEventModal', () => {
-  it('sépare clairement les équipes des intervenants', () => {
+  it('sépare clairement les équipes des intervenants', async () => {
+    const user = userEvent.setup();
     renderModal();
 
     const assignment = screen.getByRole('combobox', { name: 'Affectation' });
-    expect(assignment.querySelector('optgroup[label="Équipes"]')).toBeInTheDocument();
-    expect(assignment.querySelector('optgroup[label="Intervenants"]')).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: TEAM.name })).toHaveValue(`team:${TEAM.id}`);
-    expect(screen.getByRole('option', { name: 'Alex Martin' })).toHaveValue(
-      `member:${MEMBER.id}`,
-    );
+    await user.click(assignment);
+
+    expect(screen.getByText('Équipes')).toBeInTheDocument();
+    expect(screen.getByText('Intervenants')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: TEAM.name })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Alex Martin' })).toBeInTheDocument();
   });
 
-  it('transmet exclusivement l’équipe sélectionnée à la création', () => {
+  it('transmet exclusivement l’équipe sélectionnée à la création', async () => {
+    const user = userEvent.setup();
     const onSubmit = renderModal();
 
     fireEvent.change(screen.getByLabelText(/intitulé/i), {
       target: { value: 'Maintenance armoire réseau' },
     });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Affectation' }), {
-      target: { value: `team:${TEAM.id}` },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Planifier la mission' }));
+    await user.click(screen.getByRole('combobox', { name: 'Affectation' }));
+    await user.click(screen.getByRole('option', { name: TEAM.name }));
+    await user.click(screen.getByRole('button', { name: 'Planifier la mission' }));
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({

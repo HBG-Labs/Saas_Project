@@ -11,8 +11,14 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
+export interface SelectOptionGroup {
+  label: string;
+  options: readonly SelectOption[];
+}
+
 export interface SelectProps {
   options: readonly SelectOption[];
+  groups?: readonly SelectOptionGroup[] | undefined;
   value?: string | undefined;
   defaultValue?: string | undefined;
   onValueChange?: ((value: string) => void) | undefined;
@@ -36,6 +42,7 @@ export interface SelectProps {
  */
 export function Select({
   options,
+  groups,
   value,
   defaultValue,
   onValueChange,
@@ -52,6 +59,26 @@ export function Select({
   const selectId = id ?? generatedId;
   const hintId = `${selectId}-hint`;
   const errorId = `${selectId}-error`;
+
+  const renderOption = (option: SelectOption) => (
+    <RadixSelect.Item
+      key={option.value}
+      value={option.value}
+      {...definedProps({ disabled: option.disabled })}
+      className={cn(
+        'flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none',
+        'data-[highlighted]:bg-surface-hover',
+        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      )}
+    >
+      <RadixSelect.ItemText className="min-w-0 flex-1 truncate">
+        {option.label}
+      </RadixSelect.ItemText>
+      <RadixSelect.ItemIndicator>
+        <Check className="text-primary size-3.5" aria-hidden="true" />
+      </RadixSelect.ItemIndicator>
+    </RadixSelect.Item>
+  );
 
   return (
     <div className={cn('w-full', className)}>
@@ -92,26 +119,23 @@ export function Select({
           <RadixSelect.Content
             position="popper"
             sideOffset={6}
-            className="bg-surface-raised border-border shadow-overlay z-50 max-h-64 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border p-1"
+            className="bg-surface-raised border-border shadow-overlay z-50 max-h-64 max-w-[calc(100vw-2rem)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border p-1"
           >
             <RadixSelect.Viewport>
-              {options.map((option) => (
-                <RadixSelect.Item
-                  key={option.value}
-                  value={option.value}
-                  {...definedProps({ disabled: option.disabled })}
-                  className={cn(
-                    'flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none',
-                    'data-[highlighted]:bg-surface-hover',
-                    'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-                  )}
-                >
-                  <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
-                  <RadixSelect.ItemIndicator>
-                    <Check className="text-primary size-3.5" aria-hidden="true" />
-                  </RadixSelect.ItemIndicator>
-                </RadixSelect.Item>
-              ))}
+              {options.map(renderOption)}
+              {options.length > 0 && groups?.some((group) => group.options.length > 0) ? (
+                <RadixSelect.Separator className="bg-border my-1 h-px" />
+              ) : null}
+              {groups?.map((group) =>
+                group.options.length > 0 ? (
+                  <RadixSelect.Group key={group.label}>
+                    <RadixSelect.Label className="text-subtle-foreground px-2 pb-1 pt-1.5 text-3xs font-semibold uppercase tracking-wider">
+                      {group.label}
+                    </RadixSelect.Label>
+                    {group.options.map(renderOption)}
+                  </RadixSelect.Group>
+                ) : null,
+              )}
             </RadixSelect.Viewport>
           </RadixSelect.Content>
         </RadixSelect.Portal>
