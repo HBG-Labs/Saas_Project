@@ -22,6 +22,16 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
+const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
+  interventions: 'text-[#2563EB]',
+  stock: 'text-[#10B981]',
+  achats: 'text-[#F59E0B]',
+  administration: 'text-[#7C3AED]',
+  outils: 'text-[#0891B2]',
+  'outils-metiers': 'text-[#1D4ED8]',
+  account: 'text-[#4F46E5]',
+};
+
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -66,10 +76,12 @@ function SidebarLink({
   item,
   collapsed,
   onNavigate,
+  iconColor,
 }: {
   item: ResolvedNavItem;
   collapsed: boolean;
   onNavigate?: (() => void) | undefined;
+  iconColor?: string | undefined;
 }) {
   const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
   const location = useLocation();
@@ -138,6 +150,7 @@ function SidebarLink({
         <Icon
           className={cn(
             'size-4 shrink-0 transition-transform group-hover:scale-105',
+            iconColor,
             isActive && 'text-primary-foreground',
           )}
           aria-hidden="true"
@@ -201,7 +214,9 @@ function CollapsibleSidebarSection({
           aria-expanded={isOpen}
         >
           <div className="flex items-center gap-2 truncate">
-            {Icon && <Icon className="size-3.5 text-primary/80 shrink-0" />}
+            {Icon && (
+              <Icon className={cn('size-3.5 shrink-0', SIDEBAR_GROUP_ICON_COLORS[group.id])} />
+            )}
             <span className="truncate">{group.label}</span>
           </div>
           <ChevronDown
@@ -226,7 +241,12 @@ function CollapsibleSidebarSection({
           aria-expanded={isOpen}
         >
           {Icon ? (
-            <Icon className="size-4 shrink-0 transition-transform group-hover:scale-110" />
+            <Icon
+              className={cn(
+                'size-4 shrink-0 transition-transform group-hover:scale-110',
+                SIDEBAR_GROUP_ICON_COLORS[group.id],
+              )}
+            />
           ) : (
             <div className="size-2 rounded-full bg-border group-hover:bg-primary" />
           )}
@@ -392,6 +412,7 @@ export function Sidebar({
                 item={item}
                 collapsed={isCollapsed}
                 onNavigate={onNavigate}
+                iconColor={SIDEBAR_GROUP_ICON_COLORS[group.id]}
               />
             ))}
           </CollapsibleSidebarSection>
@@ -412,6 +433,7 @@ export function Sidebar({
               item={{ ...item, locked: false }}
               collapsed={isCollapsed}
               onNavigate={onNavigate}
+              iconColor={SIDEBAR_GROUP_ICON_COLORS.account}
             />
           ))}
         </CollapsibleSidebarSection>
