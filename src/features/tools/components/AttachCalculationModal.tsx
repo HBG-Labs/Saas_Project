@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Briefcase,
   Check,
@@ -116,7 +117,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
           </label>
 
           <div className="flex gap-2">
-            <select
+            <SelectField
               id="mission-select"
               value={selectedMissionId}
               onChange={(e) => setSelectedMissionId(e.target.value)}
@@ -128,7 +129,7 @@ Conformité : Calcul certifié selon algorithmes et formules normées REZO360.`;
                   #{m.id.slice(0, 8)} — {m.title}
                 </option>
               ))}
-            </select>
+            </SelectField>
 
             <Button
               type="button"

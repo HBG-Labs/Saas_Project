@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Compass,
   Ruler,
@@ -124,7 +125,7 @@ export default function DistanceCalculatorTool() {
                 placeholder="Ex: 1250"
                 className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
-              <select
+              <SelectField
                 value={unit}
                 onChange={(e) => setUnit(e.target.value as DistanceUnit)}
                 className="h-11 min-w-32 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -134,7 +135,7 @@ export default function DistanceCalculatorTool() {
                     {u.name} ({u.symbol})
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 
@@ -215,7 +216,7 @@ export default function DistanceCalculatorTool() {
 
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-bold text-foreground">Unité des coordonnées :</span>
-            <select
+            <SelectField
               value={unit}
               onChange={(e) => setUnit(e.target.value as DistanceUnit)}
               className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground"
@@ -225,7 +226,7 @@ export default function DistanceCalculatorTool() {
                   {u.name} ({u.symbol})
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
 
           <Button

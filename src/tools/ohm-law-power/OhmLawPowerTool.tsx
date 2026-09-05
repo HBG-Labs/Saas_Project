@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Copy, Zap, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -132,7 +133,7 @@ export default function OhmLawPowerTool() {
               >
                 Section cuivre (mm²)
               </label>
-              <select
+              <SelectField
                 id="ohm-cable-section"
                 value={cableSectionMm2}
                 onChange={(e) => setCableSectionMm2(parseFloat(e.target.value))}
@@ -143,7 +144,7 @@ export default function OhmLawPowerTool() {
                     {sec} mm²
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
         </CardContent>

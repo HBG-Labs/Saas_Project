@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -124,7 +125,7 @@ export function ConsumableFormModal({
             <label htmlFor="consumableformmodal-categorie" className="block text-xs font-semibold text-foreground mb-1">
               Catégorie *
             </label>
-            <select id="consumableformmodal-categorie"
+            <SelectField id="consumableformmodal-categorie"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -134,7 +135,7 @@ export function ConsumableFormModal({
                   {cat}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
         </div>
 
@@ -157,7 +158,7 @@ export function ConsumableFormModal({
             <label htmlFor="consumableformmodal-unite" className="block text-xs font-semibold text-foreground mb-1">
               Unité *
             </label>
-            <select id="consumableformmodal-unite"
+            <SelectField id="consumableformmodal-unite"
               value={formData.unit}
               onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -167,7 +168,7 @@ export function ConsumableFormModal({
                   {unit}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
 
           {/* Quantité initiale / en stock */}

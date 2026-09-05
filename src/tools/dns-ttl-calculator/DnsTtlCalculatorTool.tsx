@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Calendar, Check, Copy, FileCode, Globe, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
@@ -98,7 +99,7 @@ export default function DnsTtlCalculatorTool() {
                 onChange={(e) => setCurrentTtlValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
                 className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
-              <select
+              <SelectField
                 aria-label="Unité TTL actuel"
                 value={currentTtlUnit}
                 onChange={(e) => setCurrentTtlUnit(e.target.value as TimeUnit)}
@@ -108,7 +109,7 @@ export default function DnsTtlCalculatorTool() {
                 <option value="minutes">Minutes</option>
                 <option value="hours">Heures</option>
                 <option value="days">Jours</option>
-              </select>
+              </SelectField>
             </div>
 
             <div className="space-y-1 pt-1">
@@ -157,7 +158,7 @@ export default function DnsTtlCalculatorTool() {
                 onChange={(e) => setReducedTtlValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
                 className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
-              <select
+              <SelectField
                 aria-label="Unité TTL transitoire"
                 value={reducedTtlUnit}
                 onChange={(e) => setReducedTtlUnit(e.target.value as TimeUnit)}
@@ -166,7 +167,7 @@ export default function DnsTtlCalculatorTool() {
                 <option value="seconds">Secondes</option>
                 <option value="minutes">Minutes</option>
                 <option value="hours">Heures</option>
-              </select>
+              </SelectField>
             </div>
             <p className="text-xs text-muted-foreground">
               Un TTL bas (ex: 300s = 5 min) permet d&apos;annuler la bascule quasi-instantanément en cas de problème.
@@ -288,7 +289,7 @@ export default function DnsTtlCalculatorTool() {
             <label htmlFor="dns-record-type-select" className="block text-xs font-semibold text-muted-foreground">
               Type d&apos;enregistrement
             </label>
-            <select
+            <SelectField
               id="dns-record-type-select"
               value={recordType}
               onChange={(e) => setRecordType(e.target.value as 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'SPF')}
@@ -300,7 +301,7 @@ export default function DnsTtlCalculatorTool() {
               <option value="MX">MX (Mail Server)</option>
               <option value="TXT">TXT (Texte)</option>
               <option value="SPF">SPF (Sécurité Mail)</option>
-            </select>
+            </SelectField>
           </div>
 
           <div className="space-y-1">

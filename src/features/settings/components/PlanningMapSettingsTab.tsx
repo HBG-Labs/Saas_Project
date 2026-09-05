@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Calendar, Globe } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -88,7 +89,7 @@ export function PlanningMapSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 Optimise les itinéraires selon le type de véhicule pour éviter les voies restreintes.
               </p>
             </div>
-            <select
+            <SelectField
               value={preferences.vehicle_type}
               onChange={(e) => {
                 updatePreference('vehicle_type', e.target.value);
@@ -99,7 +100,7 @@ export function PlanningMapSettingsTab({ onSaved }: { onSaved?: () => void }) {
               <option value="car">Voiture / Commercial</option>
               <option value="van">Fourgonnette / Utilitaire (L1H1/L2H2)</option>
               <option value="truck">Camion Nacelle / Poids Lourd</option>
-            </select>
+            </SelectField>
           </div>
 
           <div className="flex items-center justify-between gap-4 p-2.5 rounded-xl bg-surface border border-border">
@@ -109,7 +110,7 @@ export function PlanningMapSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 Cadence d'actualisation de la géolocalisation des techniciens en intervention.
               </p>
             </div>
-            <select
+            <SelectField
               value={String(preferences.gps_refresh_rate)}
               onChange={(e) => {
                 updatePreference('gps_refresh_rate', Number(e.target.value));
@@ -121,7 +122,7 @@ export function PlanningMapSettingsTab({ onSaved }: { onSaved?: () => void }) {
               <option value="30">Standard équilibré (30 secondes)</option>
               <option value="60">Économie batterie (1 minute)</option>
               <option value="120">Faible consommation (2 minutes)</option>
-            </select>
+            </SelectField>
           </div>
         </CardContent>
       </Card>

@@ -1,3 +1,5 @@
+import { Input } from '@/components/ui/Input';
+import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
 import { Dialog } from 'radix-ui';
 import { Calendar, Plus, X } from 'lucide-react';
@@ -141,7 +143,7 @@ export function NewEventModal({
                 <label htmlFor="evt-priority" className="block text-xs font-semibold text-foreground mb-1.5">
                   Priorité
                 </label>
-                <select
+                <SelectField
                   id="evt-priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as MissionPriority)}
@@ -151,7 +153,7 @@ export function NewEventModal({
                   <option value="normal">Normale</option>
                   <option value="high">Haute</option>
                   <option value="urgent">Urgente</option>
-                </select>
+                </SelectField>
               </div>
 
               <div>
@@ -187,7 +189,7 @@ export function NewEventModal({
                 <label htmlFor="evt-date" className="block text-xs font-semibold text-foreground mb-1.5">
                   Date
                 </label>
-                <input
+                <Input
                   id="evt-date"
                   type="date"
                   required
@@ -202,7 +204,7 @@ export function NewEventModal({
                   <label htmlFor="evt-start" className="block text-xs font-semibold text-foreground mb-1.5">
                     Début
                   </label>
-                  <input
+                  <Input
                     id="evt-start"
                     type="time"
                     required
@@ -215,7 +217,7 @@ export function NewEventModal({
                   <label htmlFor="evt-end" className="block text-xs font-semibold text-foreground mb-1.5">
                     Fin
                   </label>
-                  <input
+                  <Input
                     id="evt-end"
                     type="time"
                     value={endTime}

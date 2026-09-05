@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { useState, useRef } from 'react';
 import { Dialog } from 'radix-ui';
 import { Upload, Calendar, CheckCircle2, AlertCircle, X, FileText, User } from 'lucide-react';
@@ -180,7 +181,7 @@ export function ImportICSModal({
                   <User className="size-3 text-primary" />
                   <span>Assigner ces missions à :</span>
                 </label>
-                <select
+                <SelectField
                   id="tech-assign-select"
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
@@ -192,7 +193,7 @@ export function ImportICSModal({
                       {memberDisplayName(member)}
                     </option>
                   ))}
-                </select>
+                </SelectField>
                 <p className="text-3xs text-muted-foreground">
                   Chaque événement deviendra une mission planifiée à sa date.
                 </p>

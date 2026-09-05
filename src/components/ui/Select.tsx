@@ -29,7 +29,12 @@ export interface SelectProps {
   disabled?: boolean | undefined;
   id?: string | undefined;
   className?: string | undefined;
+  triggerClassName?: string | undefined;
   hideLabel?: boolean | undefined;
+  name?: string | undefined;
+  required?: boolean | undefined;
+  'aria-label'?: string | undefined;
+  'aria-describedby'?: string | undefined;
 }
 
 /**
@@ -53,7 +58,12 @@ export function Select({
   disabled,
   id,
   className,
+  triggerClassName,
   hideLabel = false,
+  name,
+  required,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
 }: SelectProps) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
@@ -91,22 +101,26 @@ export function Select({
         </label>
       ) : null}
 
-      <RadixSelect.Root {...definedProps({ value, defaultValue, onValueChange, disabled })}>
+      <RadixSelect.Root
+        {...definedProps({ value, defaultValue, onValueChange, disabled, name, required })}
+      >
         <RadixSelect.Trigger
           id={selectId}
+          aria-label={ariaLabel}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : hint ? hintId : undefined}
+          aria-describedby={error ? errorId : hint ? hintId : ariaDescribedBy}
           className={cn(
             // 44 px au doigt, 36 px au pointeur — comme `Button`, qui suit
             // déjà cette règle. Le déclencheur était figé à `h-9` : 36 px, soit
             // sous la cible tactile de WCAG 2.5.5 sur un champ que l'on ouvre
             // en permanence dans les filtres de liste.
-            'bg-surface text-foreground h-touch sm:h-9 flex w-full items-center justify-between gap-2 rounded-md border px-3 text-sm',
+            'bg-surface text-foreground h-touch flex w-full items-center justify-between gap-2 rounded-md border px-3 text-sm sm:h-9',
             'transition-colors duration-[120ms]',
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'data-[placeholder]:text-subtle-foreground',
             error ? 'border-error' : 'border-border-strong',
+            triggerClassName,
           )}
         >
           <RadixSelect.Value placeholder={placeholder} />
@@ -129,7 +143,7 @@ export function Select({
               {groups?.map((group) =>
                 group.options.length > 0 ? (
                   <RadixSelect.Group key={group.label}>
-                    <RadixSelect.Label className="text-subtle-foreground px-2 pb-1 pt-1.5 text-3xs font-semibold uppercase tracking-wider">
+                    <RadixSelect.Label className="text-subtle-foreground text-3xs px-2 pt-1.5 pb-1 font-semibold tracking-wider uppercase">
                       {group.label}
                     </RadixSelect.Label>
                     {group.options.map(renderOption)}

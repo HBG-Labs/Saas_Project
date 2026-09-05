@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { useEffect, useRef, useState } from 'react';
 import {
   Calculator,
@@ -650,7 +651,7 @@ export default function QuotesPage() {
               <label htmlFor="quote-new-preset-unit" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Unité de facturation
               </label>
-              <select
+              <SelectField
                 id="quote-new-preset-unit"
                 value={newPreset.unit}
                 onChange={(e) => setNewPreset({ ...newPreset, unit: e.target.value })}
@@ -661,7 +662,7 @@ export default function QuotesPage() {
                 <option value="mètre">Au mètre (m)</option>
                 <option value="Heure">À l'heure (h)</option>
                 <option value="Intervention">Par Intervention</option>
-              </select>
+              </SelectField>
             </div>
 
             <Input

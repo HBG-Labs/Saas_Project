@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   AlertTriangle,
   Calendar,
@@ -333,7 +334,7 @@ export default function EquipmentPage() {
             au bout d'une rangée.
           */}
           <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
-            <select
+            <SelectField
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               aria-label="Filtrer par catégorie"
@@ -345,9 +346,9 @@ export default function EquipmentPage() {
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectField>
 
-            <select
+            <SelectField
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | EquipmentStatus)}
               aria-label="Filtrer par statut"
@@ -359,9 +360,9 @@ export default function EquipmentPage() {
                   {EQUIPMENT_STATUS_LABELS[option.value]}
                 </option>
               ))}
-            </select>
+            </SelectField>
 
-            <select
+            <SelectField
               value={filterCalibration}
               onChange={(e) => setFilterCalibration(e.target.value as 'all' | 'valid' | 'due_soon' | 'expired')}
               aria-label="Filtrer par conformité étalonnage"
@@ -371,7 +372,7 @@ export default function EquipmentPage() {
               <option value="valid">✅ Étalonnage Conforme</option>
               <option value="due_soon">⚠️ Échéance &lt; 30 jours</option>
               <option value="expired">🚫 Étalonnage Expiré</option>
-            </select>
+            </SelectField>
 
             {list.length > 0 && (
               <Button
@@ -582,7 +583,7 @@ export default function EquipmentPage() {
               <label htmlFor="new-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Catégorie technique
               </label>
-              <select
+              <SelectField
                 id="new-eq-category"
                 value={newEq.categoryId}
                 onChange={(e) => setNewEq({ ...newEq, categoryId: e.target.value })}
@@ -593,14 +594,14 @@ export default function EquipmentPage() {
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
 
             <div>
               <label htmlFor="new-eq-member" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Affecter à un technicien
               </label>
-              <select
+              <SelectField
                 id="new-eq-member"
                 value={newEq.assignedMemberId}
                 onChange={(e) => setNewEq({ ...newEq, assignedMemberId: e.target.value })}
@@ -612,7 +613,7 @@ export default function EquipmentPage() {
                     {memberDisplayName(member)}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 
@@ -680,7 +681,7 @@ export default function EquipmentPage() {
                 <label htmlFor="edit-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Catégorie technique
                 </label>
-                <select
+                <SelectField
                   id="edit-eq-category"
                   value={editing.category_id ?? ''}
                   onChange={(e) =>
@@ -693,14 +694,14 @@ export default function EquipmentPage() {
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </div>
 
               <div>
                 <label htmlFor="edit-eq-status" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Statut du matériel
                 </label>
-                <select
+                <SelectField
                   id="edit-eq-status"
                   value={editing.status}
                   onChange={(e) =>
@@ -713,7 +714,7 @@ export default function EquipmentPage() {
                       {EQUIPMENT_STATUS_LABELS[option.value]}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </div>
             </div>
 
@@ -722,7 +723,7 @@ export default function EquipmentPage() {
                 <label htmlFor="edit-eq-member" className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Attribué au technicien
                 </label>
-                <select
+                <SelectField
                   id="edit-eq-member"
                   value={editing.assigned_member_id ?? ''}
                   onChange={(e) =>
@@ -739,7 +740,7 @@ export default function EquipmentPage() {
                       {memberDisplayName(member)}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </div>
 
               <Input

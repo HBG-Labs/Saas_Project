@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   AlertTriangle,
   ArrowDownLeft,
@@ -84,7 +85,7 @@ export function ConsumablesTable({
 
           {/* Filtres déroulants */}
           <div className="flex items-center gap-2">
-            <select
+            <SelectField
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -95,9 +96,9 @@ export function ConsumablesTable({
                   {cat}
                 </option>
               ))}
-            </select>
+            </SelectField>
 
-            <select
+            <SelectField
               value={stockStatusFilter}
               onChange={(e) => setStockStatusFilter(e.target.value as 'all' | 'low' | 'ok')}
               className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -105,7 +106,7 @@ export function ConsumablesTable({
               <option value="all">Tous niveaux</option>
               <option value="low">⚠️ Stock faible</option>
               <option value="ok">✅ Stock suffisant</option>
-            </select>
+            </SelectField>
           </div>
         </div>
       </div>

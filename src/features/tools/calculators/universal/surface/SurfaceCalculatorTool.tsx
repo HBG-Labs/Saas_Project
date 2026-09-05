@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Circle,
   Hash,
@@ -163,7 +164,7 @@ export default function SurfaceCalculatorTool() {
           </label>
           <div className="flex items-center gap-1.5 text-xs font-semibold">
             <span className="text-muted-foreground">Unité de saisie :</span>
-            <select id="surfacecalculatortool-dimensions"
+            <SelectField id="surfacecalculatortool-dimensions"
               value={inputUnit}
               onChange={(e) => setInputUnit(e.target.value as 'm' | 'cm' | 'mm')}
               className="h-8 rounded-lg border border-border bg-surface-raised px-2 text-xs font-bold text-foreground"
@@ -171,7 +172,7 @@ export default function SurfaceCalculatorTool() {
               <option value="m">Mètre (m)</option>
               <option value="cm">Centimètre (cm)</option>
               <option value="mm">Millimètre (mm)</option>
-            </select>
+            </SelectField>
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Check, ChevronDown, Copy, HelpCircle, RefreshCw, RotateCcw, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -188,7 +189,7 @@ export default function OhmLawTool() {
                   disabled={target === 'U'}
                   className="font-mono text-sm font-bold h-8 px-2 flex-1"
                 />
-                <select
+                <SelectField
                   value={voltageUnit}
                   onChange={(e) => setVoltageUnit(e.target.value as VoltageUnit)}
                   className="bg-surface-sunken border-border/60 text-foreground h-8 rounded-md border px-1.5 text-2xs font-mono font-bold outline-none cursor-pointer"
@@ -196,7 +197,7 @@ export default function OhmLawTool() {
                   <option value="mV">mV</option>
                   <option value="V">V</option>
                   <option value="kV">kV</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 
@@ -229,7 +230,7 @@ export default function OhmLawTool() {
                   disabled={target === 'I'}
                   className="font-mono text-sm font-bold h-8 px-2 flex-1"
                 />
-                <select
+                <SelectField
                   value={currentUnit}
                   onChange={(e) => setCurrentUnit(e.target.value as CurrentUnit)}
                   className="bg-surface-sunken border-border/60 text-foreground h-8 rounded-md border px-1.5 text-2xs font-mono font-bold outline-none cursor-pointer"
@@ -237,7 +238,7 @@ export default function OhmLawTool() {
                   <option value="mA">mA</option>
                   <option value="A">A</option>
                   <option value="kA">kA</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 
@@ -270,7 +271,7 @@ export default function OhmLawTool() {
                   disabled={target === 'R'}
                   className="font-mono text-sm font-bold h-8 px-2 flex-1"
                 />
-                <select
+                <SelectField
                   value={resistanceUnit}
                   onChange={(e) => setResistanceUnit(e.target.value as ResistanceUnit)}
                   className="bg-surface-sunken border-border/60 text-foreground h-8 rounded-md border px-1.5 text-2xs font-mono font-bold outline-none cursor-pointer"
@@ -279,7 +280,7 @@ export default function OhmLawTool() {
                   <option value="Ω">Ω</option>
                   <option value="kΩ">kΩ</option>
                   <option value="MΩ">MΩ</option>
-                </select>
+                </SelectField>
               </div>
             </div>
           </div>

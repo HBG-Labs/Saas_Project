@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -487,7 +488,7 @@ export function PlanningCalendarView({
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <div className="flex min-w-0 items-center gap-1.5">
               <User className="size-3.5 text-muted-foreground hidden sm:inline" />
-              <select
+              <SelectField
                 value={selectedTechFilter}
                 onChange={(e) => setSelectedTechFilter(e.target.value)}
                 className="h-8 w-full min-w-0 rounded-xl border border-border bg-surface px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden sm:w-auto"
@@ -498,7 +499,7 @@ export function PlanningCalendarView({
                     {memberDisplayName(member)}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
 
             {/* Filtre Type d'Activité */}

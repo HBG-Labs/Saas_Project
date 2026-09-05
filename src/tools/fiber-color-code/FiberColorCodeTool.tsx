@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Cable, Copy, Layers, Palette, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -185,7 +186,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                 </div>
               </div>
 
-              <select
+              <SelectField
                 id="fiber-color-capacity"
                 value={capacity}
                 onChange={(e) => {
@@ -200,7 +201,7 @@ Fibre N°${mapping.fiberNumber} / ${mapping.capacity} FO (Norme: ${mapping.stand
                     {cap} FO ({Math.ceil(cap / moduleType)} {Math.ceil(cap / moduleType) > 1 ? 'tubes' : 'tube'} x {moduleType} FO)
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 

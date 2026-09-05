@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/Input';
 import {
   Calculator,
   Clock,
@@ -152,7 +153,7 @@ export default function TimeCalculatorTool() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
                 <label htmlFor="timecalculatortool-heure-de-debut" className="text-xs font-bold text-foreground">Heure de début :</label>
-                <input id="timecalculatortool-heure-de-debut"
+                <Input id="timecalculatortool-heure-de-debut"
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
@@ -161,7 +162,7 @@ export default function TimeCalculatorTool() {
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="timecalculatortool-heure-de-fin" className="text-xs font-bold text-foreground">Heure de fin :</label>
-                <input id="timecalculatortool-heure-de-fin"
+                <Input id="timecalculatortool-heure-de-fin"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}

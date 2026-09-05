@@ -1,3 +1,5 @@
+import { Input } from '@/components/ui/Input';
+import { SelectField } from '@/components/ui/SelectField';
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -244,7 +246,7 @@ export function StockMovementsTable({
                 <label htmlFor="stockmovementstable-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
                   Choisir un mois précis :
                 </label>
-                <input id="stockmovementstable-choisir-un-mois-precis"
+                <Input id="stockmovementstable-choisir-un-mois-precis"
                   type="month"
                   value={customMonth}
                   onChange={(e) => {
@@ -259,7 +261,7 @@ export function StockMovementsTable({
             </Dropdown>
 
             {/* Filtre Type de mouvement */}
-            <select
+            <SelectField
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
@@ -272,7 +274,7 @@ export function StockMovementsTable({
               <option value="out">Sorties (Chantiers)</option>
               <option value="transfer">Transferts (Véhicules)</option>
               <option value="adjustment">Régularisations (Inventaire)</option>
-            </select>
+            </SelectField>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Package, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -244,7 +245,7 @@ export function PurchaseOrderFormModal({
               <label htmlFor="purchaseorderformmodal-fournisseur-partenaire" className="block text-xs font-semibold text-foreground mb-1.5">
                 Fournisseur Partenaire *
               </label>
-              <select id="purchaseorderformmodal-fournisseur-partenaire"
+              <SelectField id="purchaseorderformmodal-fournisseur-partenaire"
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
                 required
@@ -256,7 +257,7 @@ export function PurchaseOrderFormModal({
                     {s.name} {s.code ? `(${s.code})` : ''}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
 
             <div>
@@ -363,7 +364,7 @@ export function PurchaseOrderFormModal({
                             <Sparkles className="size-3 text-warning" />
                             Catalogue Stock :
                           </span>
-                          <select
+                          <SelectField
                             onChange={(e) => {
                               if (e.target.value) handleSelectConsumable(index, e.target.value);
                             }}
@@ -376,7 +377,7 @@ export function PurchaseOrderFormModal({
                                 [{c.reference}] {c.name} ({c.unitPriceEur?.toFixed(2) ?? '0.00'} €)
                               </option>
                             ))}
-                          </select>
+                          </SelectField>
                         </div>
                       )}
 
@@ -435,7 +436,7 @@ export function PurchaseOrderFormModal({
                       <label htmlFor="purchaseorderformmodal-unite-de-mesure" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         Unité de mesure
                       </label>
-                      <select id="purchaseorderformmodal-unite-de-mesure"
+                      <SelectField id="purchaseorderformmodal-unite-de-mesure"
                         value={item.unit || 'pièce'}
                         onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                         className="w-full h-10 rounded-xl border border-border bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none font-medium"
@@ -445,7 +446,7 @@ export function PurchaseOrderFormModal({
                             {u.label}
                           </option>
                         ))}
-                      </select>
+                      </SelectField>
                     </div>
 
                     {/* Quantité commandée */}
@@ -548,7 +549,7 @@ export function PurchaseOrderFormModal({
               <span className="font-semibold uppercase tracking-wider text-3xs">
                 Taux de TVA appliqué :
               </span>
-              <select
+              <SelectField
                 value={taxRate}
                 onChange={(e) => setTaxRate(Number(e.target.value))}
                 className="h-8 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none font-medium"
@@ -557,7 +558,7 @@ export function PurchaseOrderFormModal({
                 <option value={0.1}>10 % (TVA Intermédiaire)</option>
                 <option value={0.055}>5.5 % (TVA Réduite)</option>
                 <option value={0}>0 % (Exonéré / Autoliquidation)</option>
-              </select>
+              </SelectField>
             </div>
             <span className="font-mono font-bold text-foreground">
               {taxEur.toLocaleString('fr-FR', {
@@ -585,14 +586,14 @@ export function PurchaseOrderFormModal({
             <label htmlFor="purchaseorderformmodal-statut-initial-de-la-commande" className="block text-xs font-semibold text-foreground mb-1.5">
               Statut initial de la commande
             </label>
-            <select id="purchaseorderformmodal-statut-initial-de-la-commande"
+            <SelectField id="purchaseorderformmodal-statut-initial-de-la-commande"
               value={status}
               onChange={(e) => setStatus(e.target.value as 'draft' | 'sent')}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none font-medium"
             >
               <option value="draft">Brouillon (À valider avant envoi)</option>
               <option value="sent">Envoyée / En attente de livraison</option>
-            </select>
+            </SelectField>
           </div>
 
           <div>

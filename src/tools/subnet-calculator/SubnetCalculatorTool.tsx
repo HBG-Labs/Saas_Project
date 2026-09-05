@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Copy, Network } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -50,7 +51,7 @@ export default function SubnetCalculatorTool() {
               <label className="text-foreground text-xs font-semibold block mb-1.5">
                 Masque CIDR (/{cidr})
               </label>
-              <select
+              <SelectField
                 value={cidr}
                 onChange={(e) => setCidr(parseInt(e.target.value, 10))}
                 className="bg-surface border-border/80 text-foreground h-9 w-full rounded-md border px-3 text-xs font-mono outline-none focus:ring-2 focus:ring-ring"
@@ -60,7 +61,7 @@ export default function SubnetCalculatorTool() {
                     /{mask} ({Math.pow(2, 32 - mask) - 2 > 0 ? Math.pow(2, 32 - mask) - 2 : 0} hôtes)
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 

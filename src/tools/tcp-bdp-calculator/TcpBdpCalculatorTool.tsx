@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Activity, Gauge, Info, Layers, Sliders, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -97,7 +98,7 @@ export default function TcpBdpCalculatorTool() {
                   onChange={(e) => setSpeedValue(Math.max(0, parseFloat(e.target.value) || 0))}
                   className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
                 />
-                <select
+                <SelectField
                   aria-label="Unité de débit"
                   value={speedUnit}
                   onChange={(e) => setSpeedUnit(e.target.value as SpeedUnit)}
@@ -106,7 +107,7 @@ export default function TcpBdpCalculatorTool() {
                   <option value="Mbps">Mbps</option>
                   <option value="Gbps">Gbps</option>
                   <option value="10GbE">10 GbE</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 

@@ -3,6 +3,8 @@ import { useId } from 'react';
 
 import { cn } from '@/lib/cn';
 
+import { DateTimeInput, type DateTimeInputType } from './DateTimeInput';
+
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   /** Texte d'aide affiché sous le champ. Masqué quand une erreur est présente. */
@@ -23,20 +25,30 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
  * ce qu'il est en train de remplir, et n'est pas fiablement annoncé par les
  * lecteurs d'écran.
  */
-export function Input({
-  className,
-  label,
-  hint,
-  error,
-  leadingIcon,
-  trailingSlot,
-  hideLabel = false,
-  id,
-  disabled,
-  required,
-  ...props
-}: InputProps) {
+export function Input(inputProps: InputProps) {
   const generatedId = useId();
+  const isDateTimeInput = (type: unknown): type is DateTimeInputType =>
+    type === 'date' || type === 'datetime-local' || type === 'month' || type === 'time';
+
+  if (isDateTimeInput(inputProps.type)) {
+    return (
+      <DateTimeInput {...inputProps} id={inputProps.id ?? generatedId} type={inputProps.type} />
+    );
+  }
+
+  const {
+    className,
+    label,
+    hint,
+    error,
+    leadingIcon,
+    trailingSlot,
+    hideLabel = false,
+    id,
+    disabled,
+    required,
+    ...props
+  } = inputProps;
   const inputId = id ?? generatedId;
   const hintId = `${inputId}-hint`;
   const errorId = `${inputId}-error`;

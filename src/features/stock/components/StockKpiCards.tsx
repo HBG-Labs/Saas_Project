@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/Input';
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -255,7 +256,7 @@ export function StockKpiCards({
                   <label htmlFor="stockkpicards-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
                     Choisir un mois précis :
                   </label>
-                  <input id="stockkpicards-choisir-un-mois-precis"
+                  <Input id="stockkpicards-choisir-un-mois-precis"
                     type="month"
                     value={customMonth}
                     onChange={(e) => {

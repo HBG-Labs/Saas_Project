@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   AlertTriangle,
   BookOpen,
@@ -221,7 +222,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                         {field.label}
                       </label>
                       <div className="relative">
-                        <select
+                        <SelectField
                           id={field.id}
                           value={String(val)}
                           onChange={(e) => handleInputChange(field.id, e.target.value)}
@@ -236,7 +237,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                               {opt.label}
                             </option>
                           ))}
-                        </select>
+                        </SelectField>
                       </div>
                       {field.helpText && (
                         <p className="text-3xs text-muted-foreground flex items-center gap-1">

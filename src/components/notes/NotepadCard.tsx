@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   BookOpen,
   Check,
@@ -524,7 +525,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                     {/* Selector Category */}
                     <div className="flex items-center gap-1 shrink-0">
                       <Tag className="size-3.5 text-muted-foreground" />
-                      <select
+                      <SelectField
                         value={activeNote.category ?? ''}
                         onChange={(e) =>
                           handleUpdateCategory(
@@ -538,7 +539,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                         <option value="urgent">Urgent</option>
                         <option value="client">Client</option>
                         <option value="memo">Pense-bête</option>
-                      </select>
+                      </SelectField>
                     </div>
                   </div>
 

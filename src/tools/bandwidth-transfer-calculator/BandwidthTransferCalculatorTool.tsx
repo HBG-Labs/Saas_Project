@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { Clock, HardDrive, Info, Layers, RefreshCw, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -115,7 +116,7 @@ export default function BandwidthTransferCalculatorTool() {
                 onChange={(e) => setDataSize(Math.max(0, parseFloat(e.target.value) || 0))}
                 className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
-              <select
+              <SelectField
                 aria-label="Unité de données"
                 value={dataUnit}
                 onChange={(e) => setDataUnit(e.target.value as DataUnit)}
@@ -125,7 +126,7 @@ export default function BandwidthTransferCalculatorTool() {
                 <option value="GB">GB (Go)</option>
                 <option value="TB">TB (To)</option>
                 <option value="PB">PB (Po)</option>
-              </select>
+              </SelectField>
             </div>
 
             {/* Presets rapides */}
@@ -171,7 +172,7 @@ export default function BandwidthTransferCalculatorTool() {
                 onChange={(e) => setNetworkSpeed(Math.max(0, parseFloat(e.target.value) || 0))}
                 className="w-full rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-sm font-semibold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
               />
-              <select
+              <SelectField
                 value={speedUnit}
                 onChange={(e) => setSpeedUnit(e.target.value as SpeedUnit)}
                 className="rounded-xl border border-border bg-surface-sunken px-3.5 py-2 text-xs font-bold text-foreground focus:border-primary focus:outline-none dark:border-border dark:bg-surface-sunken dark:text-white"
@@ -180,7 +181,7 @@ export default function BandwidthTransferCalculatorTool() {
                 <option value="Gbps">Gbps</option>
                 <option value="10GbE">10 GbE</option>
                 <option value="100GbE">100 GbE</option>
-              </select>
+              </SelectField>
             </div>
 
             {/* Slider d'Overhead */}

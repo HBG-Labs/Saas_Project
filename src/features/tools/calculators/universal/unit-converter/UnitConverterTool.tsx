@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   ArrowLeftRight,
   ArrowRightLeft,
@@ -135,7 +136,7 @@ export default function UnitConverterTool() {
                 placeholder="Ex: 1250"
                 className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
-              <select
+              <SelectField
                 value={fromUnit}
                 onChange={(e) => setFromUnit(e.target.value)}
                 className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -145,7 +146,7 @@ export default function UnitConverterTool() {
                     {u.name} ({u.symbol})
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 
@@ -164,7 +165,7 @@ export default function UnitConverterTool() {
                 <span>Intervertir</span>
               </button>
             </div>
-            <select id="unitconvertertool-convertir-vers"
+            <SelectField id="unitconvertertool-convertir-vers"
               value={toUnit}
               onChange={(e) => setToUnit(e.target.value)}
               className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -174,7 +175,7 @@ export default function UnitConverterTool() {
                   {u.name} ({u.symbol})
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
         </div>
 

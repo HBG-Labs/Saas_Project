@@ -1,3 +1,5 @@
+import { Input } from '@/components/ui/Input';
+import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
 import { Dialog } from 'radix-ui';
 import { Calendar, CheckCircle2, X } from 'lucide-react';
@@ -140,7 +142,7 @@ export function NewLeaveModal({
               <label htmlFor="leave-tech-select" className="block text-xs font-semibold text-foreground mb-1.5">
                 Membre du personnel
               </label>
-              <select
+              <SelectField
                 id="leave-tech-select"
                 value={effectiveMemberId}
                 disabled={!canRequestForOthers}
@@ -152,7 +154,7 @@ export function NewLeaveModal({
                     {memberDisplayName(member)} — {ROLE_LABELS[member.role]}
                   </option>
                 ))}
-              </select>
+              </SelectField>
               {!canRequestForOthers && (
                 <p className="text-3xs text-muted-foreground mt-1">
                   Vous ne pouvez déposer une demande que pour vous-même.
@@ -165,7 +167,7 @@ export function NewLeaveModal({
               <label htmlFor="leave-type-select" className="block text-xs font-semibold text-foreground mb-1.5">
                 Motif de l'absence
               </label>
-              <select
+              <SelectField
                 id="leave-type-select"
                 value={leaveType}
                 onChange={(e) => setLeaveType(e.target.value as LeaveType)}
@@ -176,7 +178,7 @@ export function NewLeaveModal({
                     {t.label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
 
             {/* Période De / À */}
@@ -185,7 +187,7 @@ export function NewLeaveModal({
                 <label htmlFor="leave-start-date" className="block text-xs font-semibold text-foreground mb-1.5">
                   Date de début
                 </label>
-                <input
+                <Input
                   id="leave-start-date"
                   type="date"
                   required
@@ -198,7 +200,7 @@ export function NewLeaveModal({
                 <label htmlFor="leave-end-date" className="block text-xs font-semibold text-foreground mb-1.5">
                   Date de fin (inclus)
                 </label>
-                <input
+                <Input
                   id="leave-end-date"
                   type="date"
                   required

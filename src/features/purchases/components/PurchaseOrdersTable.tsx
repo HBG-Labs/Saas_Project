@@ -1,3 +1,5 @@
+import { Input } from '@/components/ui/Input';
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Calendar,
   Edit2,
@@ -109,7 +111,7 @@ export function PurchaseOrdersTable({
           </div>
 
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-            <select
+            <SelectField
               value={periodFilter}
               onChange={(e) => setPeriodFilter(e.target.value)}
               className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
@@ -119,10 +121,10 @@ export function PurchaseOrdersTable({
               <option value="last_month">Mois dernier</option>
               <option value="custom_month">Mois précis…</option>
               <option value="this_year">Cette année</option>
-            </select>
+            </SelectField>
 
             {periodFilter === 'custom_month' && (
-              <input
+              <Input
                 type="month"
                 value={customMonth}
                 onChange={(e) => setCustomMonth(e.target.value)}
@@ -130,7 +132,7 @@ export function PurchaseOrdersTable({
               />
             )}
 
-            <select
+            <SelectField
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
@@ -141,9 +143,9 @@ export function PurchaseOrdersTable({
               <option value="partially_received">Partiellement reçues</option>
               <option value="received">Reçues & Soldées</option>
               <option value="cancelled">Annulées</option>
-            </select>
+            </SelectField>
 
-            <select
+            <SelectField
               value={supplierFilter}
               onChange={(e) => setSupplierFilter(e.target.value)}
               className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
@@ -154,7 +156,7 @@ export function PurchaseOrdersTable({
                   {sup}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
         </div>
       </div>

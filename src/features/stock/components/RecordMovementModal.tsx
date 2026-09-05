@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, RefreshCw } from 'lucide-react';
 
@@ -216,7 +217,7 @@ export function RecordMovementModal({
               Aucun article enregistré dans le stock. Veuillez d'abord ajouter un article.
             </div>
           ) : (
-            <select id="recordmovementmodal-article-concerne"
+            <SelectField id="recordmovementmodal-article-concerne"
               value={selectedConsumableId}
               onChange={(e) => handleConsumableChange(e.target.value)}
               className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-medium"
@@ -227,7 +228,7 @@ export function RecordMovementModal({
                   [{c.reference}] {c.name} — En stock : {c.quantityInStock} {c.unit}
                 </option>
               ))}
-            </select>
+            </SelectField>
           )}
         </div>
 

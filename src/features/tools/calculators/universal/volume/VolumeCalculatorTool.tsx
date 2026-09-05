@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Box,
   CircleDot,
@@ -138,7 +139,7 @@ export default function VolumeCalculatorTool() {
           </label>
           <div className="flex items-center gap-1.5 text-xs font-semibold">
             <span className="text-muted-foreground">Unité :</span>
-            <select id="volumecalculatortool-dimensions"
+            <SelectField id="volumecalculatortool-dimensions"
               value={inputUnit}
               onChange={(e) => setInputUnit(e.target.value as 'm' | 'cm' | 'mm')}
               className="h-8 rounded-lg border border-border bg-surface-raised px-2 text-xs font-bold text-foreground"
@@ -146,7 +147,7 @@ export default function VolumeCalculatorTool() {
               <option value="m">Mètre (m)</option>
               <option value="cm">Centimètre (cm)</option>
               <option value="mm">Millimètre (mm)</option>
-            </select>
+            </SelectField>
           </div>
         </div>
 

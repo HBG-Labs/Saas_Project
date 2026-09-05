@@ -116,9 +116,8 @@ describe('correction d’un brouillon', () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     const user = userEvent.setup();
     renderEditor();
-    fireEvent.change(screen.getByLabelText('Date de prestation ou de livraison'), {
-      target: { value: '2026-09-02' },
-    });
+    await user.click(screen.getByRole('button', { name: 'Date de prestation ou de livraison' }));
+    await user.click(screen.getByRole('button', { name: '02/09/2026' }));
     screen.getByRole('combobox', { name: 'Nature de l’opération' }).focus();
     await user.keyboard('{ArrowDown}p{Enter}');
     fireEvent.change(screen.getByLabelText('Conditions d’escompte'), {

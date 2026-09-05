@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   BatteryCharging,
   Sparkles,
@@ -116,7 +117,7 @@ export default function PowerCalculatorTool() {
                 placeholder="Ex: 5"
                 className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground font-mono"
               />
-              <select
+              <SelectField
                 value={unit}
                 onChange={(e) => setUnit(e.target.value as PowerUnit)}
                 className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -126,7 +127,7 @@ export default function PowerCalculatorTool() {
                     {u.symbol} ({u.name})
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
           </div>
 

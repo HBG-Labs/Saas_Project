@@ -1,3 +1,4 @@
+import { SelectField } from '@/components/ui/SelectField';
 import {
   Droplets,
   Hourglass,
@@ -131,14 +132,14 @@ export default function FlowCalculatorTool() {
                   placeholder="Ex: 500"
                   className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground font-mono"
                 />
-                <select
+                <SelectField
                   value={volumeUnit1}
                   onChange={(e) => setVolumeUnit1(e.target.value as 'l' | 'm3')}
                   className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground"
                 >
                   <option value="l">Litres (L)</option>
                   <option value="m3">Mètre cube (m³)</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 
@@ -154,7 +155,7 @@ export default function FlowCalculatorTool() {
                   placeholder="Ex: 30"
                   className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground font-mono"
                 />
-                <select
+                <SelectField
                   value={timeUnit1}
                   onChange={(e) => setTimeUnit1(e.target.value as 'min' | 'h' | 's')}
                   className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground"
@@ -162,7 +163,7 @@ export default function FlowCalculatorTool() {
                   <option value="min">Minutes</option>
                   <option value="h">Heures</option>
                   <option value="s">Secondes</option>
-                </select>
+                </SelectField>
               </div>
             </div>
           </div>
@@ -180,14 +181,14 @@ export default function FlowCalculatorTool() {
                   placeholder="Ex: 1000"
                   className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground font-mono"
                 />
-                <select
+                <SelectField
                   value={volumeUnit2}
                   onChange={(e) => setVolumeUnit2(e.target.value as 'l' | 'm3')}
                   className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground"
                 >
                   <option value="l">Litres (L)</option>
                   <option value="m3">Mètre cube (m³)</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 
@@ -203,14 +204,14 @@ export default function FlowCalculatorTool() {
                   placeholder="Ex: 20"
                   className="w-full h-11 rounded-xl border border-border bg-surface-raised px-3.5 text-base font-bold text-foreground font-mono"
                 />
-                <select
+                <SelectField
                   value={flowUnit2}
                   onChange={(e) => setFlowUnit2(e.target.value as 'lmin' | 'm3h')}
                   className="h-11 min-w-28 rounded-xl border border-border bg-surface-raised px-2.5 text-xs font-semibold text-foreground"
                 >
                   <option value="lmin">L / min</option>
                   <option value="m3h">m³ / h</option>
-                </select>
+                </SelectField>
               </div>
             </div>
           </div>
