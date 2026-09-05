@@ -103,7 +103,8 @@ export const qk = {
   // ------------------------------------------------------------ interventions
   interventions: {
     all: ['interventions'] as const,
-    detail: (interventionId: string) => [...qk.interventions.all, 'detail', interventionId] as const,
+    detail: (interventionId: string) =>
+      [...qk.interventions.all, 'detail', interventionId] as const,
     ofMission: (missionId: string) => [...qk.interventions.all, 'mission', missionId] as const,
     timeEntries: (interventionId: string) =>
       [...qk.interventions.all, interventionId, 'time-entries'] as const,
@@ -154,8 +155,7 @@ export const qk = {
     all: ['stock'] as const,
     consumables: (organizationId: string) =>
       [...qk.stock.all, organizationId, 'consumables'] as const,
-    movements: (organizationId: string) =>
-      [...qk.stock.all, organizationId, 'movements'] as const,
+    movements: (organizationId: string) => [...qk.stock.all, organizationId, 'movements'] as const,
   },
 
   // -------------------------------------------------------------------- devis
@@ -164,8 +164,7 @@ export const qk = {
     list: (organizationId: string, filters?: unknown) =>
       [...qk.quotes.all, organizationId, 'list', filters ?? null] as const,
     detail: (quoteId: string) => [...qk.quotes.all, 'detail', quoteId] as const,
-    templates: (organizationId: string) =>
-      [...qk.quotes.all, organizationId, 'templates'] as const,
+    templates: (organizationId: string) => [...qk.quotes.all, organizationId, 'templates'] as const,
   },
 
   // ----------------------------------------------------------------- factures
@@ -174,6 +173,15 @@ export const qk = {
     list: (organizationId: string, filters?: unknown) =>
       [...qk.invoices.all, organizationId, 'list', filters ?? null] as const,
     detail: (invoiceId: string) => [...qk.invoices.all, 'detail', invoiceId] as const,
+  },
+
+  einvoicing: {
+    all: ['einvoicing'] as const,
+    connection: (organizationId: string) =>
+      [...qk.einvoicing.all, 'connection', organizationId] as const,
+    providerReadiness: (organizationId: string) =>
+      [...qk.einvoicing.all, 'provider-readiness', organizationId] as const,
+    transmission: (invoiceId: string) => [...qk.einvoicing.all, 'transmission', invoiceId] as const,
   },
 
   // ------------------------------------------------------------------- achats

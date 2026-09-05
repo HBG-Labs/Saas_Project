@@ -1,6 +1,14 @@
 import { AppError } from '@/lib/errors';
+import { validerFactureAvantEmission } from '@/features/einvoicing';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { InvoiceStatus, TablesInsert, TablesUpdate, VatCategory } from '@/types/database';
+import type {
+  CustomerType,
+  Database,
+  InvoiceStatus,
+  TablesInsert,
+  TablesUpdate,
+  VatCategory,
+} from '@/types/database';
 import type {
   Invoice,
   InvoiceItem,
@@ -9,6 +17,11 @@ import type {
   InvoiceWithItems,
   InvoiceWithTotals,
 } from '@/types/domain';
+import {
+  DEFAULT_EARLY_PAYMENT_TERMS,
+  suggestedOperationType,
+  type InvoiceOperationType,
+} from '../draft-defaults';
 
 /**
  * Accès aux factures et aux avoirs.
@@ -149,6 +162,66 @@ export async function listInvoiceItems(invoiceId: string): Promise<InvoiceItem[]
   );
 }
 
+export async function getRelatedCreditNotes(invoiceId: string): Promise<Invoice[]> {
+  return unwrap(
+    supabase
+      .from('invoices')
+      .select('*')
+      .eq('corrects_invoice_id', invoiceId)
+      .eq('document_type', 'credit_note')
+      .order('created_at', { ascending: false }),
+  );
+}
+
+export type CreditableInvoiceLine =
+  Database['public']['Functions']['get_creditable_invoice_lines']['Returns'][number];
+
+export async function getCreditableInvoiceLines(
+  invoiceId: string,
+): Promise<CreditableInvoiceLine[]> {
+  return unwrap(supabase.rpc('get_creditable_invoice_lines', { p_invoice_id: invoiceId }));
+}
+
+/** The server copies only selected original lines and reuses an existing draft. */
+export async function createCreditNoteDraft(input: {
+  invoiceId: string;
+  expectedUpdatedAt: string;
+  reason: string;
+  scope: 'full' | 'partial';
+  lines: Array<{ invoiceItemId: string; quantity: number }>;
+}): Promise<Invoice> {
+  return unwrap(
+    supabase.rpc('create_credit_note_draft', {
+      p_invoice_id: input.invoiceId,
+      p_expected_updated_at: input.expectedUpdatedAt,
+      p_reason: input.reason.trim(),
+      p_scope: input.scope,
+      p_lines: input.lines.map((line) => ({
+        invoice_item_id: line.invoiceItemId,
+        quantity: line.quantity,
+      })),
+    }),
+  );
+}
+
+export async function saveFullCreditNoteDraft(input: {
+  invoiceId: string;
+  expectedUpdatedAt: string;
+  reason: string;
+  dueDate: string;
+  paymentTerms: string;
+}): Promise<Invoice> {
+  return unwrap(
+    supabase.rpc('save_full_credit_note_draft', {
+      p_invoice_id: input.invoiceId,
+      p_expected_updated_at: input.expectedUpdatedAt,
+      p_reason: input.reason.trim(),
+      p_due_date: input.dueDate,
+      p_payment_terms: input.paymentTerms.trim(),
+    }),
+  );
+}
+
 // -----------------------------------------------------------------------------
 // Écriture
 // -----------------------------------------------------------------------------
@@ -180,11 +253,19 @@ export interface CreateInvoiceInput {
     postalCode?: string | null;
     city?: string | null;
     country?: string | null;
+    /**
+     * Fige aussi la NATURE du destinataire : c'est elle qui commande les
+     * mentions obligatoires. La relire sur la fiche client apres coup
+     * changerait le verdict si le client est requalifie plus tard.
+     */
+    type?: CustomerType | null;
   };
   siteName?: string | null;
   dueDate?: string | null;
   paymentTerms?: string | null;
   paymentMethod?: string | null;
+  operationType?: InvoiceOperationType | null;
+  earlyPaymentTerms?: string | null;
   notes?: string | null;
   items: readonly InvoiceLineInput[];
 }
@@ -198,8 +279,7 @@ export interface CreateInvoiceInput {
  * qu'on crée en brouillon : un document incomplet ne doit pas consommer un
  * numéro de la série définitive.
  *
- * `reference` n'est pas fournie : le trigger la produit en prélevant un compteur
- * verrouillé.
+ * La base attribue une référence provisoire ; le numéro définitif vient à l’émission.
  */
 export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
   const { data: userData } = await supabase.auth.getUser();
@@ -228,10 +308,15 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     ...(c?.postalCode !== undefined ? { customer_postal_code: c.postalCode } : {}),
     ...(c?.city !== undefined ? { customer_city: c.city } : {}),
     ...(c?.country !== undefined ? { customer_country: c.country } : {}),
+    ...(c?.type !== undefined ? { customer_type: c.type } : {}),
     ...(input.siteName !== undefined ? { site_name: input.siteName } : {}),
     ...(input.dueDate !== undefined ? { due_date: input.dueDate } : {}),
     ...(input.paymentTerms !== undefined ? { payment_terms: input.paymentTerms } : {}),
     ...(input.paymentMethod !== undefined ? { payment_method: input.paymentMethod } : {}),
+    ...(input.operationType !== undefined ? { operation_type: input.operationType } : {}),
+    ...(input.earlyPaymentTerms !== undefined
+      ? { early_payment_terms: input.earlyPaymentTerms }
+      : {}),
     ...(input.notes !== undefined ? { notes: input.notes } : {}),
   };
 
@@ -281,21 +366,61 @@ export async function updateInvoice(
   return unwrap(supabase.from('invoices').update(patch).eq('id', invoiceId).select('*').single());
 }
 
-/**
- * Émet la facture : c'est ce geste qui la fige.
- *
- * `issued_at` est posé côté client, faute de RPC dédiée. Ce n'est pas idéal —
- * l'horloge du navigateur peut dériver — mais la contrainte
- * `invoices_issued_needs_date` garantit au moins qu'aucun document ne quitte
- * l'état de brouillon sans date. Une fonction serveur qui poserait `now()` sera
- * le bon endroit le jour où l'émission déclenchera aussi la transmission
- * électronique.
- */
-export async function issueInvoice(invoiceId: string): Promise<Invoice> {
-  return updateInvoice(invoiceId, {
-    status: 'issued',
-    issued_at: new Date().toISOString(),
+/** Valide puis émet ; la base attribue la date, le numéro et fige les identités. */
+export async function issueInvoice(invoiceId: string, expectedUpdatedAt: string): Promise<Invoice> {
+  const invoice = await getInvoice(invoiceId);
+  if (!invoice) throw new AppError('not_found', 'Facture introuvable.');
+  if (invoice.status !== 'draft')
+    throw new AppError('conflict', 'Cette facture a déjà été émise. Actualisez la page.');
+  if (invoice.updated_at !== expectedUpdatedAt)
+    throw new AppError(
+      'conflict',
+      'Cette facture a changé depuis son ouverture. Actualisez-la et relisez-la avant de l’émettre.',
+    );
+  const organization = await unwrapMaybe(
+    supabase.from('organizations').select('*').eq('id', invoice.organization_id).single(),
+  );
+  const verdict = validerFactureAvantEmission(invoice, organization);
+  if (!verdict.emissionPossible)
+    throw new AppError(
+      'validation',
+      `Complétez la facture avant de l’émettre : ${verdict.bloquants.map((m) => m.message).join(' ; ')}.`,
+    );
+  return unwrap(
+    supabase.rpc('issue_invoice', {
+      p_invoice_id: invoiceId,
+      p_expected_updated_at: invoice.updated_at,
+    }),
+  );
+}
+
+/** L'en-tête et les lignes sont enregistrés dans une même transaction. */
+export async function saveInvoiceDraft(input: {
+  invoiceId: string;
+  expectedUpdatedAt: string;
+  patch: TablesUpdate<'invoices'>;
+  items: readonly InvoiceLineInput[];
+}): Promise<Invoice> {
+  const result = await supabase.rpc('save_invoice_draft', {
+    p_invoice_id: input.invoiceId,
+    p_expected_updated_at: input.expectedUpdatedAt,
+    p_patch: { ...input.patch },
+    p_items: input.items.map((item) => ({
+      description: item.description,
+      unit: item.unit,
+      quantity: item.quantity,
+      unit_price_cents: toCents(item.priceEuros),
+      vat_rate: item.vatRate,
+      vat_category: item.vatCategory ?? 'S',
+      vat_exemption_reason: item.vatExemptionReason || null,
+    })),
   });
+  if (result.error?.code === '40001')
+    throw new AppError(
+      'conflict',
+      'Ce brouillon a été modifié dans une autre session. Fermez cet éditeur, actualisez la facture, puis reprenez vos changements.',
+    );
+  return unwrap(Promise.resolve(result));
 }
 
 /**
@@ -315,15 +440,11 @@ export async function replaceInvoiceItems(
   organizationId: string,
   items: readonly InvoiceLineInput[],
 ): Promise<void> {
-  // Remplacement complet plutôt que réconciliation ligne à ligne : les lignes
-  // n'ont pas d'identité métier, seulement une position. Le trigger refuse de
-  // toute façon l'opération si la facture n'est plus un brouillon.
-  const { error } = await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId);
-  if (error) throw error;
-
-  if (items.length > 0) {
-    await insertInvoiceItems(invoiceId, organizationId, items);
-  }
+  const invoice = await getInvoice(invoiceId);
+  if (!invoice) throw new AppError('not_found', 'Facture introuvable.');
+  if (invoice.organization_id !== organizationId)
+    throw new AppError('forbidden', 'Facture inaccessible.');
+  await saveInvoiceDraft({ invoiceId, expectedUpdatedAt: invoice.updated_at, patch: {}, items });
 }
 
 // -----------------------------------------------------------------------------
@@ -368,6 +489,7 @@ export async function createInvoiceFromQuote(input: {
       .single()
       .returns<{
         id: string;
+        status: string;
         organization_id: string;
         title: string | null;
         customer_id: string | null;
@@ -393,6 +515,9 @@ export async function createInvoiceFromQuote(input: {
   if (quote.organization_id !== input.organizationId) {
     throw new AppError('forbidden', "Ce devis n'appartient pas à cette organisation.");
   }
+
+  if (quote.status !== 'accepted')
+    throw new AppError('validation', 'Seul un devis accepté peut être facturé.');
 
   const customer =
     quote.customer_id === null
@@ -428,10 +553,13 @@ export async function createInvoiceFromQuote(input: {
       postalCode: customer?.postal_code ?? null,
       city: customer?.city ?? null,
       country: customer?.country ?? null,
+      type: customer?.customer_type ?? null,
     },
     ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
     ...(input.paymentTerms !== undefined ? { paymentTerms: input.paymentTerms } : {}),
     ...(input.paymentMethod !== undefined ? { paymentMethod: input.paymentMethod } : {}),
+    operationType: suggestedOperationType(lignes),
+    earlyPaymentTerms: DEFAULT_EARLY_PAYMENT_TERMS,
     ...(quote.notes !== null ? { notes: quote.notes } : {}),
     items: lignes,
   });

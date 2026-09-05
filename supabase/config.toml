@@ -408,6 +408,19 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # Set enabled = false to fall back to the legacy migra engine.
 [experimental.pgdelta]
 enabled = true
+
+[functions.generate-facturx]
+verify_jwt = false
+
+[functions.superpdp-connection]
+verify_jwt = false
+
+[functions.superpdp-oauth-callback]
+verify_jwt = false
+
+[functions.superpdp-invoice]
+verify_jwt = false
+static_files = ["./functions/generate-facturx/assets/*.ttf", "./functions/generate-facturx/assets/LICENSE.txt"]
 # Directory under `supabase/` where declarative files are written.
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.

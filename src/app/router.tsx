@@ -65,8 +65,14 @@ export const routes: RouteObject[] = [
 
           // Nouveau volet indépendant « Outils Métiers » (6 métiers, 36 calculateurs spécialisés)
           { path: ROUTES.metiers, lazy: lazyPage(() => import('@/pages/metiers/MetiersHomePage')) },
-          { path: ROUTE_PATTERNS.metierTrade, lazy: lazyPage(() => import('@/pages/metiers/MetierTradePage')) },
-          { path: ROUTE_PATTERNS.metierTool, lazy: lazyPage(() => import('@/pages/metiers/MetierToolPage')) },
+          {
+            path: ROUTE_PATTERNS.metierTrade,
+            lazy: lazyPage(() => import('@/pages/metiers/MetierTradePage')),
+          },
+          {
+            path: ROUTE_PATTERNS.metierTool,
+            lazy: lazyPage(() => import('@/pages/metiers/MetierToolPage')),
+          },
 
           // Publiques et sans session : un prospect doit pouvoir lire les
           // conditions AVANT de créer un compte, et un tiers doit pouvoir
@@ -106,8 +112,14 @@ export const routes: RouteObject[] = [
               // d'entreprise, que la RLS refuserait à une session absente. Les
               // laisser publics ne montrerait qu'une coquille vide.
               { path: ROUTES.dashboard, Component: DashboardPage },
-              { path: ROUTES.analytics, lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
-              { path: '/statistiques', lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')) },
+              {
+                path: ROUTES.analytics,
+                lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
+              },
+              {
+                path: '/statistiques',
+                lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
+              },
               { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
               { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
@@ -198,7 +210,10 @@ export const routes: RouteObject[] = [
 
                   {
                     element: (
-                      <RequirePlan feature={FEATURES.interventions} label="Le suivi d’intervention" />
+                      <RequirePlan
+                        feature={FEATURES.interventions}
+                        label="Le suivi d’intervention"
+                      />
                     ),
                     children: [
                       {
@@ -210,9 +225,7 @@ export const routes: RouteObject[] = [
                         lazy: lazyPage(() => import('@/pages/interventions/ReportEditorPage')),
                       },
                       {
-                        element: (
-                          <RequirePermission permission={PERMISSIONS.interventionReview} />
-                        ),
+                        element: <RequirePermission permission={PERMISSIONS.interventionReview} />,
                         children: [
                           {
                             path: ROUTES.review,
@@ -234,7 +247,9 @@ export const routes: RouteObject[] = [
                     // que rien ne se voyait ; le jour où l'une serait accordée
                     // sans l'autre, les pages de stock se seraient ouvertes sur
                     // un inventaire vide, sans expliquer pourquoi.
-                    element: <RequirePlan feature={FEATURES.stock} label="Le stock & les consommables" />,
+                    element: (
+                      <RequirePlan feature={FEATURES.stock} label="Le stock & les consommables" />
+                    ),
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
@@ -253,9 +268,7 @@ export const routes: RouteObject[] = [
                   },
 
                   {
-                    element: (
-                      <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />
-                    ),
+                    element: <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />,
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.equipmentView} />,
@@ -376,9 +389,7 @@ export const routes: RouteObject[] = [
                     ),
                     children: [
                       {
-                        element: (
-                          <RequirePermission permission={PERMISSIONS.planningView} />
-                        ),
+                        element: <RequirePermission permission={PERMISSIONS.planningView} />,
                         children: [
                           {
                             path: ROUTES.planning,
@@ -392,6 +403,10 @@ export const routes: RouteObject[] = [
                   {
                     path: ROUTES.organization,
                     lazy: lazyPage(() => import('@/pages/organization/OrganizationSettingsPage')),
+                  },
+                  {
+                    path: ROUTES.organizationEinvoicing,
+                    lazy: lazyPage(() => import('@/pages/organization/EinvoicingSettingsPage')),
                   },
                   {
                     element: <RequirePermission permission={PERMISSIONS.memberView} />,

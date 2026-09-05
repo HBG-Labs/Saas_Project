@@ -59,22 +59,12 @@ export type VehicleType = 'van' | 'truck' | 'car' | 'aerial_lift' | 'utility';
 export type VehicleFuel = 'diesel' | 'essence' | 'electric' | 'hybrid';
 export type VehicleStatus = 'in_service' | 'available' | 'maintenance' | 'out_of_service';
 export type VehicleMaintenanceType =
-  | 'revision'
-  | 'controle_technique'
-  | 'pneus'
-  | 'freins'
-  | 'vidange'
-  | 'reparation'
-  | 'autre';
+  'revision' | 'controle_technique' | 'pneus' | 'freins' | 'vidange' | 'reparation' | 'autre';
 
 export type StockMovementType = 'in' | 'out' | 'transfer' | 'adjustment';
 
 export type PurchaseOrderStatus =
-  | 'draft'
-  | 'sent'
-  | 'partially_received'
-  | 'received'
-  | 'cancelled';
+  'draft' | 'sent' | 'partially_received' | 'received' | 'cancelled';
 
 export type EquipmentCategory = 'optique' | 'electricite' | 'radio' | 'securite' | 'autre';
 export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expired';
@@ -91,6 +81,22 @@ export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
 
 export type InvoiceDocumentType = 'invoice' | 'credit_note';
+
+export type InvoiceTransmissionStatus =
+  | 'queued'
+  | 'submitting'
+  | 'submitted'
+  | 'delivered'
+  | 'accepted'
+  | 'rejected'
+  | 'failed'
+  | 'cancelled';
+
+export type EinvoicingConnectionStatus =
+  | 'pending_verification'
+  | 'connected'
+  | 'action_required'
+  | 'disconnected';
 
 /**
  * Nature du destinataire. `null` en base signifie « non renseigne » : la
@@ -132,13 +138,7 @@ export type TechnicianPresence = 'on_road' | 'on_site' | 'available' | 'offline'
  * téléversement vers `intervention_attachments`, qui n'a jamais été exercé.
  */
 export type FormFieldType =
-  | 'text'
-  | 'textarea'
-  | 'number'
-  | 'boolean'
-  | 'select'
-  | 'multiselect'
-  | 'date';
+  'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'multiselect' | 'date';
 
 export interface Database {
   public: {
@@ -1009,7 +1009,9 @@ export interface Database {
           status?: ContentStatus;
           created_by?: string | null;
         };
-        Update: Partial<Omit<Database['public']['Tables']['customers']['Insert'], 'organization_id'>>;
+        Update: Partial<
+          Omit<Database['public']['Tables']['customers']['Insert'], 'organization_id'>
+        >;
         Relationships: [
           {
             foreignKeyName: 'customers_organization_id_fkey';
@@ -2181,6 +2183,10 @@ export interface Database {
           reference: string;
           document_type: InvoiceDocumentType;
           corrects_invoice_id: string | null;
+          credit_note_scope: 'full' | 'partial' | null;
+          credit_note_reason: string | null;
+          corrected_invoice_reference: string | null;
+          corrected_invoice_issued_at: string | null;
           title: string | null;
           customer_id: string | null;
           site_id: string | null;
@@ -2194,6 +2200,19 @@ export interface Database {
           customer_postal_code: string | null;
           customer_city: string | null;
           customer_country: string | null;
+          customer_type: CustomerType | null;
+          service_date: string | null;
+          operation_type: 'goods' | 'services' | 'mixed' | null;
+          buyer_reference: string | null;
+          purchase_order_reference: string | null;
+          delivery_address_line1: string | null;
+          delivery_address_line2: string | null;
+          delivery_postal_code: string | null;
+          delivery_city: string | null;
+          delivery_country: string | null;
+          early_payment_terms: string | null;
+          late_payment_terms: string | null;
+          vat_on_debits: boolean | null;
           site_name: string | null;
           currency: string;
           status: InvoiceStatus;
@@ -2238,6 +2257,7 @@ export interface Database {
           reference?: string;
           document_type?: InvoiceDocumentType;
           corrects_invoice_id?: string | null;
+          credit_note_scope?: 'full' | 'partial' | null;
           title?: string | null;
           customer_id?: string | null;
           site_id?: string | null;
@@ -2251,6 +2271,19 @@ export interface Database {
           customer_postal_code?: string | null;
           customer_city?: string | null;
           customer_country?: string | null;
+          customer_type?: CustomerType | null;
+          service_date?: string | null;
+          operation_type?: 'goods' | 'services' | 'mixed' | null;
+          buyer_reference?: string | null;
+          purchase_order_reference?: string | null;
+          delivery_address_line1?: string | null;
+          delivery_address_line2?: string | null;
+          delivery_postal_code?: string | null;
+          delivery_city?: string | null;
+          delivery_country?: string | null;
+          early_payment_terms?: string | null;
+          late_payment_terms?: string | null;
+          vat_on_debits?: boolean | null;
           site_name?: string | null;
           currency?: string;
           status?: InvoiceStatus;
@@ -2285,6 +2318,19 @@ export interface Database {
           customer_postal_code?: string | null;
           customer_city?: string | null;
           customer_country?: string | null;
+          customer_type?: CustomerType | null;
+          service_date?: string | null;
+          operation_type?: 'goods' | 'services' | 'mixed' | null;
+          buyer_reference?: string | null;
+          purchase_order_reference?: string | null;
+          delivery_address_line1?: string | null;
+          delivery_address_line2?: string | null;
+          delivery_postal_code?: string | null;
+          delivery_city?: string | null;
+          delivery_country?: string | null;
+          early_payment_terms?: string | null;
+          late_payment_terms?: string | null;
+          vat_on_debits?: boolean | null;
           site_name?: string | null;
         };
         Relationships: [
@@ -2309,11 +2355,237 @@ export interface Database {
         ];
       };
 
+      einvoicing_provider_connections: {
+        Row: {
+          organization_id: string;
+          provider_code: string;
+          status: EinvoicingConnectionStatus;
+          provider_company_id: string | null;
+          provider_environment: 'sandbox' | 'production' | null;
+          company_verification_status: 'verified' | 'needs_review' | 'failed' | null;
+          user_identity_verification_status:
+            | 'verified'
+            | 'needs_review'
+            | 'failed'
+            | 'not_verified'
+            | null;
+          access_token_ciphertext: string | null;
+          refresh_token_ciphertext: string | null;
+          access_token_expires_at: string | null;
+          token_type: string | null;
+          connected_by: string | null;
+          connected_at: string | null;
+          last_verified_at: string | null;
+          last_error_code: string | null;
+          last_error_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          provider_code?: string;
+          status?: EinvoicingConnectionStatus;
+          provider_company_id?: string | null;
+          provider_environment?: 'sandbox' | 'production' | null;
+          company_verification_status?: 'verified' | 'needs_review' | 'failed' | null;
+          user_identity_verification_status?:
+            | 'verified'
+            | 'needs_review'
+            | 'failed'
+            | 'not_verified'
+            | null;
+          access_token_ciphertext?: string | null;
+          refresh_token_ciphertext?: string | null;
+          access_token_expires_at?: string | null;
+          token_type?: string | null;
+          connected_by?: string | null;
+          connected_at?: string | null;
+          last_verified_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Update: {
+          status?: EinvoicingConnectionStatus;
+          provider_company_id?: string | null;
+          provider_environment?: 'sandbox' | 'production' | null;
+          company_verification_status?: 'verified' | 'needs_review' | 'failed' | null;
+          user_identity_verification_status?:
+            | 'verified'
+            | 'needs_review'
+            | 'failed'
+            | 'not_verified'
+            | null;
+          access_token_ciphertext?: string | null;
+          refresh_token_ciphertext?: string | null;
+          access_token_expires_at?: string | null;
+          token_type?: string | null;
+          connected_by?: string | null;
+          connected_at?: string | null;
+          last_verified_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'einvoicing_provider_connections_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      einvoicing_oauth_states: {
+        Row: {
+          id: string;
+          state_sha256: string;
+          organization_id: string;
+          user_id: string;
+          return_url: string;
+          expires_at: string;
+          consumed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          state_sha256: string;
+          organization_id: string;
+          user_id: string;
+          return_url: string;
+          expires_at: string;
+          consumed_at?: string | null;
+        };
+        Update: {
+          consumed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'einvoicing_oauth_states_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      invoice_transmissions: {
+        Row: {
+          id: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_code: string;
+          status: InvoiceTransmissionStatus;
+          idempotency_key: string;
+          provider_submission_id: string | null;
+          attempt_count: number;
+          last_attempt_at: string | null;
+          next_attempt_at: string | null;
+          submitted_at: string | null;
+          delivered_at: string | null;
+          completed_at: string | null;
+          last_error_code: string | null;
+          last_error_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_code: string;
+          status?: InvoiceTransmissionStatus;
+          idempotency_key?: string;
+          provider_submission_id?: string | null;
+          attempt_count?: number;
+          last_attempt_at?: string | null;
+          next_attempt_at?: string | null;
+          submitted_at?: string | null;
+          delivered_at?: string | null;
+          completed_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Update: {
+          status?: InvoiceTransmissionStatus;
+          provider_submission_id?: string | null;
+          attempt_count?: number;
+          last_attempt_at?: string | null;
+          next_attempt_at?: string | null;
+          submitted_at?: string | null;
+          delivered_at?: string | null;
+          completed_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_transmissions_invoice_id_fkey';
+            columns: ['invoice_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoice_transmissions_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      invoice_transmission_events: {
+        Row: {
+          id: string;
+          transmission_id: string;
+          invoice_id: string;
+          organization_id: string;
+          source: 'application' | 'provider' | 'administration';
+          event_type: string;
+          normalized_status: InvoiceTransmissionStatus | null;
+          provider_status_code: string | null;
+          provider_event_id: string | null;
+          message: string | null;
+          payload_sha256: string | null;
+          occurred_at: string;
+          recorded_at: string;
+        };
+        Insert: {
+          id?: string;
+          transmission_id: string;
+          invoice_id: string;
+          organization_id: string;
+          source: 'application' | 'provider' | 'administration';
+          event_type: string;
+          normalized_status?: InvoiceTransmissionStatus | null;
+          provider_status_code?: string | null;
+          provider_event_id?: string | null;
+          message?: string | null;
+          payload_sha256?: string | null;
+          occurred_at: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_transmission_events_transmission_id_fkey';
+            columns: ['transmission_id'];
+            referencedRelation: 'invoice_transmissions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoice_transmission_events_invoice_id_fkey';
+            columns: ['invoice_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       invoice_items: {
         Row: {
           id: string;
           invoice_id: string;
           organization_id: string;
+          source_invoice_item_id: string | null;
           description: string;
           unit: string;
           quantity: number;
@@ -2329,6 +2601,7 @@ export interface Database {
           invoice_id: string;
           /** Ecrase par trigger depuis la facture ; requis par la contrainte NOT NULL. */
           organization_id: string;
+          source_invoice_item_id?: string | null;
           description: string;
           unit?: string;
           quantity?: number;
@@ -2339,6 +2612,7 @@ export interface Database {
           position?: number;
         };
         Update: {
+          source_invoice_item_id?: string | null;
           description?: string;
           unit?: string;
           quantity?: number;
@@ -2874,6 +3148,62 @@ export interface Database {
     };
 
     Functions: {
+      can_manage_einvoicing_connection: {
+        Args: { p_organization_id: string };
+        Returns: boolean;
+      };
+      can_transmit_invoice: {
+        Args: { p_invoice_id: string };
+        Returns: boolean;
+      };
+      save_invoice_draft: {
+        Args: { p_invoice_id: string; p_expected_updated_at: string; p_patch: Json; p_items: Json };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      create_full_credit_note_draft: {
+        Args: { p_invoice_id: string; p_expected_updated_at: string; p_reason: string };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      create_credit_note_draft: {
+        Args: {
+          p_invoice_id: string;
+          p_expected_updated_at: string;
+          p_reason: string;
+          p_scope: 'full' | 'partial';
+          p_lines: Json;
+        };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      get_creditable_invoice_lines: {
+        Args: { p_invoice_id: string };
+        Returns: Array<{
+          invoice_item_id: string;
+          description: string;
+          unit: string;
+          unit_price_cents: number;
+          vat_rate: number;
+          vat_category: VatCategory;
+          vat_exemption_reason: string | null;
+          line_position: number;
+          original_quantity: number;
+          credited_quantity: number;
+          available_quantity: number;
+        }>;
+      };
+      save_full_credit_note_draft: {
+        Args: {
+          p_invoice_id: string;
+          p_expected_updated_at: string;
+          p_reason: string;
+          p_due_date: string;
+          p_payment_terms: string;
+        };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      issue_invoice: {
+        Args: { p_invoice_id: string; p_expected_updated_at: string };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
       /**
        * Enregistre un mouvement et met à jour la quantité, dans la même
        * transaction.
@@ -3085,6 +3415,8 @@ export interface Database {
       quote_status: QuoteStatus;
       note_category: NoteCategory;
       ai_document_status: AiDocumentStatus;
+      invoice_transmission_status: InvoiceTransmissionStatus;
+      einvoicing_connection_status: EinvoicingConnectionStatus;
     };
 
     CompositeTypes: Record<never, never>;

@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { ArrowLeft, Ban, CheckCircle2, Download, Lock, Send, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  Lock,
+  Pencil,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -11,7 +20,21 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
+  emetteurFacture,
+  ExportUblPanel,
+  TransmissionStatusPanel,
+  mentionsReglement,
+  OPERATION_LABELS,
+  validerFactureAvantEmission,
+  type Cible,
+  type Manque,
+} from '@/features/einvoicing';
+import {
   estFigee,
+  CreateCreditNotePanel,
+  CreditNoteDraftEditor,
+  CreditNoteOrigin,
+  InvoiceDraftEditor,
   toEuros,
   useDeleteInvoice,
   useInvoice,
@@ -19,9 +42,31 @@ import {
   useUpdateInvoice,
 } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { formatDate } from '@/lib/format';
+import { formatInvoiceDate } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
+
+/**
+ * Le lien de correction, décidé ICI et non par la règle.
+ *
+ * Une règle réglementaire qui sait où vit un bouton n'est plus testable seule,
+ * et déménage avec lui. Elle rend une cible ; la page en déduit la route.
+ */
+const LIBELLE_CORRECTION: Record<Cible, string> = {
+  organisation: 'Compléter mon entreprise',
+  client: 'Modifier le client',
+  facture: 'Corriger la facture',
+};
+
+function lienDeCorrection(manque: Manque, customerId: string | null): string {
+  if (manque.cible === 'organisation') return ROUTES.organizationEinvoicing;
+  // Le client a pu être supprimé depuis : on retombe sur la liste plutôt que
+  // sur une fiche qui n'existe plus.
+  if (manque.cible === 'client') {
+    return customerId === null ? ROUTES.customers : ROUTES.customer(customerId);
+  }
+  return ROUTES.invoices;
+}
 
 const STATUS_CONFIG: Record<
   InvoiceStatus,
@@ -48,10 +93,19 @@ export default function InvoiceDetailPage() {
   const issueInvoice = useIssueInvoice(invoiceId ?? '');
   const deleteInvoice = useDeleteInvoice();
 
+  const [edition, setEdition] = useState(false);
   const [confirmationEmission, setConfirmationEmission] = useState(false);
   const [confirmationSuppression, setConfirmationSuppression] = useState(false);
 
-  useDocumentTitle(invoice ? `Facture ${invoice.reference}` : 'Facture');
+  useDocumentTitle(
+    invoice
+      ? invoice.status === 'draft'
+        ? invoice.document_type === 'credit_note'
+          ? 'Brouillon d’avoir'
+          : 'Brouillon de facture'
+        : `${invoice.document_type === 'credit_note' ? 'Avoir' : 'Facture'} ${invoice.reference}`
+      : 'Facture',
+  );
 
   if (invoiceQuery.isError) {
     return (
@@ -72,6 +126,9 @@ export default function InvoiceDetailPage() {
 
   const status = STATUS_CONFIG[invoice.status];
   const figee = estFigee(invoice);
+
+  const verdict = validerFactureAvantEmission(invoice, organization);
+  const seller = emetteurFacture(invoice, organization);
   const estAvoir = invoice.document_type === 'credit_note';
   const totalHT = invoice.totals ? toEuros(invoice.totals.subtotal_cents) : 0;
   const totalTVA = invoice.totals ? toEuros(invoice.totals.vat_cents) : 0;
@@ -91,12 +148,18 @@ export default function InvoiceDetailPage() {
 
       <div className="print:hidden">
         <PageHeader
-          title={invoice.reference}
+          title={
+            invoice.status === 'draft'
+              ? estAvoir
+                ? 'Brouillon d’avoir'
+                : 'Brouillon de facture'
+              : invoice.reference
+          }
           description={invoice.customer_name || invoice.title || 'Client non renseigné'}
           actions={
             <>
               <Badge variant={status.variant} className="self-center">
-                {status.label}
+                {estAvoir && invoice.status === 'paid' ? 'Remboursé / imputé' : status.label}
               </Badge>
               <Button variant="outline" className="gap-2" onClick={() => window.print()}>
                 <Download className="size-4" aria-hidden="true" />
@@ -118,18 +181,85 @@ export default function InvoiceDetailPage() {
         artisan qui découvre l'irréversibilité au message d'échec a déjà perdu
         confiance dans l'outil.
       */}
+      {/*
+        CE QUI MANQUE, DIT AVANT LE CLIC ET DANS LA LANGUE DE L'UTILISATEUR.
+
+        Pas « HTTP 422 », pas « contrainte violée » : le champ qui manque, et où
+        aller le remplir. Le bouton d'émission reste inactif tant qu'un manque
+        bloquant subsiste — une facture émise ne se corrige plus qu'avec un
+        avoir, il vaut mieux empêcher que réparer.
+
+        Les avertissements, eux, n'empêchent rien : ils annoncent ce que la
+        transmission électronique exigera à partir du 1er septembre 2027.
+      */}
+      {canManage && !figee && verdict.manques.length > 0 && (
+        <div
+          className={`rounded-xl border p-4 print:hidden ${
+            verdict.emissionPossible
+              ? 'border-warning/30 bg-warning/5'
+              : 'border-error/30 bg-error/5'
+          }`}
+        >
+          <p className="text-foreground flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle
+              className={`size-4 ${verdict.emissionPossible ? 'text-warning' : 'text-error'}`}
+              aria-hidden="true"
+            />
+            {verdict.emissionPossible
+              ? 'Cette facture peut être émise, mais il manque des informations'
+              : 'Cette facture ne peut pas être émise'}
+          </p>
+
+          <ul className="mt-3 space-y-2">
+            {verdict.manques.map((manque) => (
+              <li key={manque.code} className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`size-1.5 shrink-0 rounded-full ${
+                    manque.gravite === 'bloquant' ? 'bg-error' : 'bg-warning'
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="text-muted-foreground">{manque.message}</span>
+                {manque.cible === 'organisation' ? (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to={lienDeCorrection(manque, invoice.customer_id)}>
+                      {LIBELLE_CORRECTION[manque.cible]}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => setEdition(true)}>
+                    Corriger le brouillon
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {!verdict.emissionPossible && (
+            <p className="text-muted-foreground text-2xs mt-3 leading-relaxed">
+              Une facture émise ne peut plus être corrigée : il faudrait émettre un avoir. C’est
+              pourquoi ces informations sont demandées maintenant.
+            </p>
+          )}
+        </div>
+      )}
+
       {canManage && !figee && (
         <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center gap-2 rounded-xl border p-3 print:hidden">
           <span className="text-muted-foreground text-xs font-medium">Brouillon :</span>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEdition(true)}>
+            <Pencil className="size-3.5" aria-hidden="true" />
+            Modifier le brouillon
+          </Button>
           <Button
             variant="primary"
             size="sm"
             className="gap-1.5 text-xs"
-            disabled={issueInvoice.isPending}
+            disabled={issueInvoice.isPending || !verdict.emissionPossible}
             onClick={() => setConfirmationEmission(true)}
           >
             <Lock className="size-3.5" aria-hidden="true" />
-            Émettre la facture
+            {estAvoir ? 'Émettre l’avoir' : 'Émettre la facture'}
           </Button>
           <Button
             variant="outline"
@@ -176,20 +306,31 @@ export default function InvoiceDetailPage() {
             onClick={() => updateInvoice.mutate({ status: 'paid' })}
           >
             <CheckCircle2 className="size-3.5" aria-hidden="true" />
-            Marquer comme payée
+            {estAvoir ? 'Marquer comme remboursé / imputé' : 'Marquer comme payée'}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-error/40 text-error hover:bg-error/10 gap-1.5 text-xs"
-            disabled={updateInvoice.isPending}
-            onClick={() => updateInvoice.mutate({ status: 'cancelled' })}
-          >
-            <Ban className="size-3.5" aria-hidden="true" />
-            Annuler
-          </Button>
+          <p className="text-muted-foreground w-full text-xs">
+            Suivi manuel : ces actions ne transmettent aucune facture et ne déclenchent aucun
+            paiement. Une correction du montant après émission nécessite un avoir.
+          </p>
         </div>
+      )}
+
+      {!estAvoir && ['issued', 'sent', 'paid'].includes(invoice.status) && (
+        <CreateCreditNotePanel
+          key={`credit-${invoice.id}`}
+          invoice={invoice}
+          canManage={canManage}
+        />
+      )}
+      <ExportUblPanel key={`export-${invoice.id}`} invoice={invoice} organization={organization} />
+      {invoice.status !== 'draft' && (
+        <TransmissionStatusPanel
+          invoiceId={invoice.id}
+          organizationId={invoice.organization_id}
+          canManage={canManage}
+          customerType={invoice.customer_type}
+        />
       )}
 
       {/*
@@ -210,17 +351,15 @@ export default function InvoiceDetailPage() {
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-blue-900">
-              {organization?.name ?? 'REZO360 Pro'}
+              {seller.name || seller.legal_name || 'Émetteur à renseigner'}
             </h2>
-            {organization?.legal_name && organization.legal_name !== organization.name && (
-              <p className="text-xs font-semibold text-slate-600">{organization.legal_name}</p>
+            {seller.legal_name && seller.legal_name !== seller.name && (
+              <p className="text-xs font-semibold text-slate-600">{seller.legal_name}</p>
             )}
             <p className="text-2xs mt-1 text-slate-500">
-              {organization?.registration_number
-                ? `SIRET : ${organization.registration_number}`
-                : ''}
-              {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
-              {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
+              {seller.registration_number ? `SIRET : ${seller.registration_number}` : ''}
+              {seller.registration_number && seller.vat_number ? ' • ' : ''}
+              {seller.vat_number ? `TVA : ${seller.vat_number}` : ''}
             </p>
           </div>
 
@@ -230,21 +369,51 @@ export default function InvoiceDetailPage() {
                 estAvoir ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'
               }`}
             >
-              {libelle} N° {invoice.reference}
+              {invoice.status === 'draft'
+                ? `${libelle} — BROUILLON`
+                : `${libelle} N° ${invoice.reference}`}
             </span>
             <p className="text-2xs mt-1 text-slate-500">
               {invoice.issued_at
-                ? `Émise le : ${formatDate(invoice.issued_at)}`
-                : 'Brouillon — non émise'}
+                ? `${estAvoir ? 'Émis' : 'Émise'} le : ${formatInvoiceDate(invoice.issued_at)}`
+                : estAvoir
+                  ? 'Brouillon — non émis'
+                  : 'Brouillon — non émise'}
             </p>
             {invoice.due_date && (
               <p className="text-2xs text-slate-500">
-                Échéance : {formatDate(invoice.due_date)}
+                {estAvoir ? 'Remboursement / imputation prévu le' : 'Échéance'} :{' '}
+                {formatInvoiceDate(invoice.due_date)}
               </p>
             )}
           </div>
         </div>
 
+        {estAvoir && <CreditNoteOrigin invoice={invoice} />}
+        <div className="text-xs text-slate-600">
+          <p>
+            {[
+              seller.address_line1,
+              seller.address_line2,
+              seller.postal_code,
+              seller.city,
+              seller.country,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <p>
+            {[
+              seller.legal_form,
+              seller.rcs_city ? 'RCS ' + seller.rcs_city : null,
+              seller.share_capital_cents != null
+                ? 'Capital : ' + toEuros(seller.share_capital_cents).toFixed(2) + ' €'
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        </div>
         {/*
           L'identité du destinataire vient de l'INSTANTANÉ figé sur la facture,
           jamais de la fiche client actuelle : une facture doit continuer
@@ -310,10 +479,10 @@ export default function InvoiceDetailPage() {
                     <td className="px-3 py-2.5 text-right tabular-nums">
                       {prixEuros.toFixed(2)} €
                     </td>
-                    <td className="px-2 py-2.5 text-center tabular-nums text-slate-500">
+                    <td className="px-2 py-2.5 text-center text-slate-500 tabular-nums">
                       {item.vat_rate} %
                     </td>
-                    <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">
+                    <td className="px-3 py-2.5 text-right font-semibold text-slate-900 tabular-nums">
                       {(item.quantity * prixEuros).toFixed(2)} €
                     </td>
                   </tr>
@@ -323,13 +492,38 @@ export default function InvoiceDetailPage() {
           </table>
         </div>
 
+        <div className="space-y-1 text-xs text-slate-600">
+          {invoice.service_date && (
+            <p>Date de prestation ou de livraison : {formatInvoiceDate(invoice.service_date)}</p>
+          )}
+          {invoice.operation_type && (
+            <p>Nature de l’opération : {OPERATION_LABELS[invoice.operation_type]}</p>
+          )}
+          {invoice.buyer_reference && <p>Référence acheteur : {invoice.buyer_reference}</p>}
+          {invoice.purchase_order_reference && (
+            <p>Bon de commande : {invoice.purchase_order_reference}</p>
+          )}
+          {invoice.delivery_address_line1 && (
+            <p>
+              Livraison :{' '}
+              {[
+                invoice.delivery_address_line1,
+                invoice.delivery_address_line2,
+                invoice.delivery_postal_code,
+                invoice.delivery_city,
+                invoice.delivery_country,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+            </p>
+          )}
+          {invoice.vat_on_debits && <p>Option pour le paiement de la taxe d’après les débits.</p>}
+        </div>
         <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
           <div className="text-3xs space-y-1 text-slate-500">
-            {invoice.payment_terms && (
-              <p>
-                <strong>Conditions de règlement :</strong> {invoice.payment_terms}
-              </p>
-            )}
+            {mentionsReglement(invoice).map((mention, index) => (
+              <p key={index}>{mention}</p>
+            ))}
             {invoice.payment_method && (
               <p>
                 <strong>Mode de paiement :</strong> {invoice.payment_method}
@@ -340,7 +534,7 @@ export default function InvoiceDetailPage() {
           <div className="w-full space-y-1.5 border-t border-slate-200 pt-3 text-right text-xs sm:w-64 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
             <div className="flex justify-between text-slate-600">
               <span>Total HT :</span>
-              <span className="font-semibold tabular-nums text-slate-900">
+              <span className="font-semibold text-slate-900 tabular-nums">
                 {totalHT.toFixed(2)} €
               </span>
             </div>
@@ -372,38 +566,72 @@ export default function InvoiceDetailPage() {
             )}
 
             <div className="flex justify-between border-t border-slate-300 pt-2 text-sm font-bold text-blue-900">
-              <span>TOTAL TTC :</span>
-              <span className="text-base tabular-nums text-blue-900">{totalTTC.toFixed(2)} €</span>
+              <span>{estAvoir ? 'TOTAL À CRÉDITER :' : 'TOTAL TTC :'}</span>
+              <span className="text-base text-blue-900 tabular-nums">{totalTTC.toFixed(2)} €</span>
             </div>
           </div>
         </div>
+        <div className="space-y-1 border-t border-slate-200 pt-4 text-xs text-slate-600">
+          {seller.vat_regime === 'franchise' && <p>TVA non applicable, art. 293 B du CGI.</p>}
+          {[
+            ...new Set(
+              invoice.items.map((item) => item.vat_exemption_reason?.trim()).filter(Boolean),
+            ),
+          ].map((reason) => (
+            <p key={reason}>{reason}</p>
+          ))}
+          {seller.iban && !estAvoir && (
+            <p>
+              IBAN : {seller.iban}
+              {seller.bic ? ' · BIC : ' + seller.bic : ''}
+            </p>
+          )}
+        </div>
       </div>
+
+      {!figee && canManage && !estAvoir && (
+        <InvoiceDraftEditor invoice={invoice} open={edition} onOpenChange={setEdition} />
+      )}
+      {!figee && canManage && estAvoir && (
+        <CreditNoteDraftEditor invoice={invoice} open={edition} onOpenChange={setEdition} />
+      )}
 
       <Modal
         open={confirmationEmission}
         onOpenChange={setConfirmationEmission}
-        title="Émettre cette facture ?"
+        title={estAvoir ? 'Émettre cet avoir ?' : 'Émettre cette facture ?'}
         description="Ce geste est définitif."
       >
         <div className="space-y-4">
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Une fois émise, la facture <strong className="text-foreground">{invoice.reference}</strong>{' '}
-            ne pourra plus être modifiée ni supprimée — ni son contenu, ni ses lignes, ni son
-            numéro. Une erreur découverte ensuite se corrige en émettant un{' '}
-            <strong className="text-foreground">avoir</strong>.
-          </p>
+          {estAvoir ? (
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Un numéro d’avoir définitif sera attribué. Ce document créditera la totalité de la
+              facture {invoice.corrected_invoice_reference} et sera figé. La facture d’origine reste
+              conservée. Aucun remboursement ni envoi automatique ne sera effectué.
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Un numéro définitif sera attribué à cette facture. Une fois émise, elle ne pourra plus
+              être modifiée ni supprimée — ni son contenu, ni ses lignes, ni son numéro. Une erreur
+              découverte ensuite se corrige en émettant un{' '}
+              <strong className="text-foreground">avoir</strong>.
+            </p>
+          )}
           <p className="text-muted-foreground text-sm leading-relaxed">
             Vérifiez le destinataire, les lignes et les taux de TVA avant de continuer.
           </p>
+          <FormError error={issueInvoice.error} />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setConfirmationEmission(false)}>
               Relire d’abord
             </Button>
             <Button
               variant="primary"
-              disabled={issueInvoice.isPending}
+              disabled={issueInvoice.isPending || !verdict.emissionPossible}
               onClick={() => {
-                issueInvoice.mutate(undefined, { onSuccess: () => setConfirmationEmission(false) });
+                issueInvoice.mutate(invoice.updated_at, {
+                  onSuccess: () => setConfirmationEmission(false),
+                });
               }}
             >
               {issueInvoice.isPending ? 'Émission…' : 'Émettre définitivement'}
@@ -419,9 +647,8 @@ export default function InvoiceDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Le brouillon {invoice.reference} sera supprimé. Son numéro ne sera{' '}
-            <strong className="text-foreground">pas</strong> réattribué : la série des factures
-            reste continue, c’est ce qui la rend vérifiable.
+            Le brouillon sera supprimé. Un brouillon ne consomme aucun numéro dans la série des
+            factures émises.
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setConfirmationSuppression(false)}>

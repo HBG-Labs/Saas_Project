@@ -22,6 +22,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { ROUTES } from '@/config/routes';
+import { validerDestinataire } from '@/features/einvoicing';
 import {
   ContactsPanel,
   CustomerFormDialog,
@@ -98,6 +99,9 @@ export default function CustomerDetailPage() {
 
   const data = customer.data;
   const isArchived = data.status === 'archived';
+  const manquesFacturation = validerDestinataire(data).filter(
+    (manque) => manque.gravite === 'bloquant',
+  );
 
   const handleDelete = async () => {
     await deleteCustomer.mutateAsync(data.id);
@@ -107,7 +111,7 @@ export default function CustomerDetailPage() {
     await navigate(ROUTES.customers);
   };
 
-   return (
+  return (
     <div className="space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={ROUTES.customers}>
@@ -116,8 +120,18 @@ export default function CustomerDetailPage() {
         </Link>
       </Button>
 
+      <div className="border-border bg-surface-subtle flex flex-wrap items-center gap-2 rounded-xl border p-3 text-xs">
+        <Badge variant={manquesFacturation.length === 0 ? 'success' : 'warning'}>
+          Données de facturation : {manquesFacturation.length === 0 ? 'renseignées' : 'à compléter'}
+        </Badge>
+        {manquesFacturation.length > 0 && (
+          <span className="text-muted-foreground">
+            {manquesFacturation.map((manque) => manque.message).join(' · ')}
+          </span>
+        )}
+      </div>
       {/* Hero Header Card */}
-      <Card className="overflow-hidden border-border bg-surface-raised/50 backdrop-blur-xs">
+      <Card className="border-border bg-surface-raised/50 overflow-hidden backdrop-blur-xs">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
@@ -162,7 +176,7 @@ export default function CustomerDetailPage() {
             </div>
 
             {/* Action Toolbar */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border lg:border-0 lg:pt-0">
+            <div className="border-border flex flex-wrap items-center gap-2 border-t pt-2 lg:border-0 lg:pt-0">
               {canEdit && organizationId !== null ? (
                 <CustomerFormDialog
                   organizationId={organizationId}
@@ -206,7 +220,7 @@ export default function CustomerDetailPage() {
 
               {canDelete ? (
                 <>
-                  <div className="hidden h-5 w-px bg-border lg:block" aria-hidden="true" />
+                  <div className="bg-border hidden h-5 w-px lg:block" aria-hidden="true" />
                   <Button
                     variant="danger-outline"
                     size="sm"
@@ -255,8 +269,10 @@ export default function CustomerDetailPage() {
         }
       >
         <p className="text-muted-foreground text-sm">
-          Cette action est <strong className="text-foreground font-semibold">définitive et irréversible</strong>.
-          Toutes les informations associées à ce client (contacts et sites d'intervention) seront supprimées.
+          Cette action est{' '}
+          <strong className="text-foreground font-semibold">définitive et irréversible</strong>.
+          Toutes les informations associées à ce client (contacts et sites d'intervention) seront
+          supprimées.
         </p>
       </Modal>
 
@@ -273,7 +289,7 @@ export default function CustomerDetailPage() {
             {/* Coordonnées */}
             <Card>
               <CardContent className="space-y-4 pt-6">
-                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
                   Coordonnées & Contact
                 </h3>
                 <dl className="grid gap-3 text-sm">
@@ -302,7 +318,7 @@ export default function CustomerDetailPage() {
             {/* Informations légales */}
             <Card>
               <CardContent className="space-y-4 pt-6">
-                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
                   Informations Légales & Fiscales
                 </h3>
                 <dl className="grid gap-3 text-sm">
@@ -319,10 +335,10 @@ export default function CustomerDetailPage() {
           {data.notes !== null && data.notes !== '' ? (
             <Card>
               <CardContent className="space-y-2 pt-6">
-                <h3 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
                   Notes & Remarques
                 </h3>
-                <p className="text-muted-foreground text-sm whitespace-pre-line leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                   {data.notes}
                 </p>
               </CardContent>

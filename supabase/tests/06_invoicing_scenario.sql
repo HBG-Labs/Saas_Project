@@ -125,6 +125,21 @@ insert into public.organization_members (organization_id, user_id, role, status)
 select id, pg_temp.uid('technicien'), 'technician', 'active'
 from public.organizations where slug = 'factu-a';
 
+update public.organizations set legal_form = 'SARL', share_capital_cents = 100000, registration_number = '12345678900012', vat_regime = 'reel_normal',
+  vat_number = 'FR12345678901', address_line1 = '1 rue du Test', postal_code = '97200', city = 'Fort-de-France', country = 'FR'
+where slug in ('factu-a','factu-b');
+
+create function pg_temp.complete_invoice(p_id uuid) returns void language plpgsql as $$
+begin
+  update public.invoices set customer_name = 'Client test', customer_type = 'individual',
+    customer_address_line1 = '2 rue du Test', customer_postal_code = '97200', customer_city = 'Fort-de-France', customer_country = 'FR',
+    service_date = current_date, operation_type = 'services', early_payment_terms = 'Escompte : néant.', late_payment_terms = 'Trois fois le taux légal.', vat_on_debits = false,
+    due_date = current_date + 30, payment_terms = 'Paiement sous 30 jours.' where id = p_id;
+  insert into public.invoice_items(invoice_id, organization_id, description, quantity, unit_price_cents, vat_rate)
+    select id, organization_id, 'Prestation test', 1, 10000, 20 from public.invoices
+    where id = p_id and not exists (select 1 from public.invoice_items where invoice_id = p_id);
+end $$;
+
 -- =============================================================================
 do $$ begin raise notice '=== PARTIE 1 — La numerotation ne se reattribue jamais ==='; end $$;
 -- =============================================================================
@@ -133,55 +148,19 @@ select pg_temp.login('patron_a');
 set local role authenticated;
 
 do $$
-declare
-  v_org  uuid;
-  v_an   text := extract(year from now())::text;
-  v_f1   text;
-  v_f2   text;
-  v_f3   text;
-  v_id2  uuid;
+declare v_org uuid; v_one public.invoices; v_two public.invoices;
 begin
   select id into v_org from public.organizations where slug = 'factu-a';
-
-  insert into public.invoices (organization_id) values (v_org) returning reference into v_f1;
-  insert into public.invoices (organization_id) values (v_org)
-    returning reference, id into v_f2, v_id2;
-  insert into public.invoices (organization_id) values (v_org) returning reference into v_f3;
-
-  perform pg_temp.ok(v_f1 = 'FAC-' || v_an || '-00001', 'La premiere facture porte le numero 1');
-  perform pg_temp.ok(v_f2 = 'FAC-' || v_an || '-00002', 'La deuxieme suit');
-  perform pg_temp.ok(v_f3 = 'FAC-' || v_an || '-00003', 'La troisieme aussi');
-
-  -- LE DEFAUT DES DEVIS, ECRIT NOIR SUR BLANC : leur trigger fait `max() + 1`,
-  -- donc supprimer le dernier fait REGRESSER le compteur et reattribue un
-  -- numero deja utilise. Le compteur des factures, lui, ne redescend pas.
-  delete from public.invoices where id = v_id2;
-
-  insert into public.invoices (organization_id) values (v_org) returning reference into v_f3;
-  perform pg_temp.ok(v_f3 = 'FAC-' || v_an || '-00004',
-    'Supprimer un brouillon ne rend PAS son numero');
-
-  -- Les avoirs ont leur propre serie : les meler aux factures rendrait la serie
-  -- des factures discontinue.
-  insert into public.invoices (organization_id, document_type)
-  values (v_org, 'credit_note') returning reference into v_f1;
-  perform pg_temp.ok(v_f1 = 'AV-' || v_an || '-00001', 'Les avoirs ont leur propre serie');
-end
-$$;
-
--- Chaque entreprise a sa propre serie, remise a 1.
+  insert into public.invoices (organization_id) values (v_org) returning * into v_one;
+  insert into public.invoices (organization_id) values (v_org) returning * into v_two;
+  perform pg_temp.ok(v_one.reference like 'BR-%' and v_two.reference like 'BR-%', 'Les brouillons ont une reference provisoire');
+  perform pg_temp.ok(v_one.reference <> v_two.reference, 'Les references provisoires sont uniques');
+  delete from public.invoices where id = v_two.id;
+  perform pg_temp.ok(v_one.issued_at is null, 'La date emission reste absente du brouillon');
+end $$;
 select pg_temp.login('patron_b');
 set local role authenticated;
-
-do $$
-declare v_org uuid; v_ref text;
-begin
-  select id into v_org from public.organizations where slug = 'factu-b';
-  insert into public.invoices (organization_id) values (v_org) returning reference into v_ref;
-  perform pg_temp.ok(v_ref = 'FAC-' || extract(year from now())::text || '-00001',
-    'La serie repart a 1 dans une autre entreprise');
-end
-$$;
+insert into public.invoices (organization_id) select id from public.organizations where slug = 'factu-b';
 
 reset role;
 
@@ -282,11 +261,12 @@ begin
   -- ce soit.
   perform pg_temp.refuses(
     format($sql$ update public.invoices set status = 'issued' where id = %L $sql$, v_inv),
-    'Emettre sans date d''emission est refuse'
+    'Une facture incomplete ne peut pas etre emise par ecriture directe'
   );
 
-  update public.invoices set status = 'issued', issued_at = now() where id = v_inv;
-  perform pg_temp.ok(true, 'L''emission avec date passe');
+  perform pg_temp.complete_invoice(v_inv);
+  update public.invoices set status = 'issued' where id = v_inv;
+  perform pg_temp.ok(true, 'Une facture complete est emise avec la date du serveur');
 
   perform pg_temp.refuses(
     format($sql$ update public.invoices set title = 'Retouche' where id = %L $sql$, v_inv),
@@ -363,7 +343,8 @@ begin
     (select seller_name from public.invoices where id = v_inv) is null,
     'Un brouillon ne porte pas encore d''instantane de l''emetteur');
 
-  update public.invoices set status = 'issued', issued_at = now() where id = v_inv;
+  perform pg_temp.complete_invoice(v_inv);
+  update public.invoices set status = 'issued' where id = v_inv;
 
   select seller_name, seller_iban into v_nom, v_iban
   from public.invoices where id = v_inv;
@@ -497,6 +478,180 @@ begin
   raise notice '=============================================';
 end
 $$;
+
+
+select pg_temp.login('patron_a');
+set local role authenticated;
+do $$
+declare v_org uuid; v_one public.invoices; v_two public.invoices; v_before integer; v_lines jsonb; v_title text; v_previous timestamptz;
+begin
+  select id into v_org from public.organizations where slug = 'factu-a';
+  select count(*) into v_before from public.invoices where organization_id = v_org and status <> 'draft' and document_type = 'invoice';
+  insert into public.invoices(organization_id, title) values(v_org, 'Original') returning * into v_one;
+  perform pg_temp.complete_invoice(v_one.id);
+  select * into v_one from public.invoices where id = v_one.id;
+  v_previous := v_one.updated_at;
+  update public.invoice_items set description = 'Prestation corrigée' where invoice_id = v_one.id;
+  perform pg_temp.refuses(format('select public.issue_invoice(%L, %L)', v_one.id, v_previous), 'Une modification de ligne seule invalide la version ouverte');
+  select * into v_one from public.invoices where id = v_one.id;
+  v_lines := '[{"description":"Nouvelle prestation","unit":"u","quantity":2,"unit_price_cents":1234,"vat_rate":20,"vat_category":"S"}]'::jsonb;
+  perform pg_temp.refuses(format('select public.save_invoice_draft(%L, %L, %L, %L)', v_one.id, '2000-01-01', '{}', v_lines), 'Une version perimee du brouillon est refusee');
+  perform pg_temp.refuses(format('select public.save_invoice_draft(%L, %L, %L, %L)', v_one.id, v_one.updated_at, '{"title":"Perdu"}', '[{"description":"Erreur","unit":"u","quantity":-1,"unit_price_cents":10,"vat_rate":20}]'), 'Un echec sur les lignes annule aussi le changement de titre');
+  select title into v_title from public.invoices where id = v_one.id;
+  perform pg_temp.ok(v_title = 'Original', 'Le titre initial est conserve apres echec');
+  perform pg_temp.ok((select count(*) from public.invoice_items where invoice_id = v_one.id) = 1, 'Les lignes initiales sont conservees apres echec');
+  v_previous := v_one.updated_at;
+  select * into v_one from public.save_invoice_draft(v_one.id, v_one.updated_at, '{"title":"Corrige"}', v_lines);
+  perform pg_temp.ok(v_one.updated_at > v_previous, 'La version avance lors de l enregistrement');
+  perform pg_temp.refuses(format('select public.save_invoice_draft(%L, %L, %L, %L)', v_one.id, v_previous, '{}', v_lines), 'Un deuxieme enregistrement avec la meme version est refuse');
+  perform pg_temp.ok(v_one.title = 'Corrige', 'Le brouillon et ses lignes sont enregistres');
+  perform pg_temp.ok((select total_cents from public.invoice_totals where invoice_id = v_one.id) = 2962, 'Les totaux sont recalcules apres correction');
+  perform pg_temp.refuses(format('select public.save_invoice_draft(%L, %L, %L, %L)', v_one.id, v_one.updated_at, '{"status":"issued"}', v_lines), 'L editeur ne contourne pas emission');
+  select * into v_one from public.issue_invoice(v_one.id, v_one.updated_at);
+  perform pg_temp.ok(v_one.reference = 'FAC-' || extract(year from current_date)::text || '-' || lpad((v_before + 1)::text,5,'0'), 'Les brouillons supprimes et emissions refusees ne consomment aucun numero');
+  perform pg_temp.refuses(format('select public.issue_invoice(%L, %L)', v_one.id, v_one.updated_at), 'Un second clic ne reemet pas la facture');
+  perform pg_temp.refuses(format('update public.invoices set status = ''draft'' where id = %L', v_one.id), 'Impossible de rouvrir une facture emise');
+  insert into public.invoices(organization_id) values(v_org) returning * into v_two;
+  perform pg_temp.refuses(format('update public.invoice_items set invoice_id = %L where invoice_id = %L', v_two.id, v_one.id), 'Impossible de deplacer une ligne emise vers un brouillon');
+  perform pg_temp.complete_invoice(v_two.id);
+  select * into v_two from public.invoices where id = v_two.id;
+  select * into v_two from public.issue_invoice(v_two.id, v_two.updated_at);
+  perform pg_temp.ok(v_two.reference = 'FAC-' || extract(year from current_date)::text || '-' || lpad((v_before + 2)::text,5,'0'), 'La facture suivante recoit le numero consecutif');
+  perform pg_temp.refuses(format('select public.issue_invoice(%L, now())', (select v from pg_temp.t_ref where k = 'facture_b')), 'Emission chez un autre tenant refusee');
+  perform pg_temp.refuses(format('select public.save_invoice_draft(%L, now(), ''{}'', ''[]'')', (select v from pg_temp.t_ref where k = 'facture_b')), 'Edition chez un autre tenant refusee');
+end $$;
+reset role;
+
+
+select pg_temp.login('patron_a');
+set local role authenticated;
+do $$
+declare v_org uuid; v public.invoices; v_lines jsonb;
+begin
+  select id into v_org from public.organizations where slug = 'factu-a';
+  insert into public.invoices(organization_id) values (v_org) returning * into v;
+  perform pg_temp.complete_invoice(v.id);
+  update public.invoices set service_date = null where id = v.id;
+  perform pg_temp.refuses(format('update public.invoices set status = ''issued'' where id = %L', v.id), 'La date de prestation manquante bloque aussi une emission directe');
+  select * into v from public.invoices where id = v.id;
+  v_lines := '[{"description":"Prestation","unit":"h","quantity":1,"unit_price_cents":1000,"vat_rate":20,"vat_category":"S"}]'::jsonb;
+  select * into v from public.save_invoice_draft(v.id, v.updated_at,
+    jsonb_build_object('service_date', current_date, 'operation_type', 'mixed', 'early_payment_terms', 'Escompte : néant', 'late_payment_terms', 'Taux applicable', 'vat_on_debits', false, 'buyer_reference', 'SERVICE-42', 'purchase_order_reference', 'BC-42', 'delivery_address_line1', '3 rue du Chantier', 'delivery_city', 'Le Marin', 'delivery_postal_code', '97290', 'delivery_country', 'FR'), v_lines);
+  perform pg_temp.ok(v.buyer_reference = 'SERVICE-42' and v.operation_type = 'mixed' and v.delivery_city = 'Le Marin' and v.vat_on_debits = false, 'Les champs structures sont sauvegardes dans la transaction du brouillon');
+  select * into v from public.issue_invoice(v.id, v.updated_at);
+  perform pg_temp.refuses(format('update public.invoices set service_date = current_date - 1 where id = %L', v.id), 'La date de prestation est figee apres emission');
+  perform pg_temp.refuses(format('update public.invoices set delivery_city = ''Autre'' where id = %L', v.id), 'L adresse de livraison est figee apres emission');
+  perform pg_temp.refuses(format('update public.invoices set vat_on_debits = true where id = %L', v.id), 'Le choix de TVA est fige apres emission');
+end $$;
+reset role;
+
+-- Documents conservés : même accès que la facture, aucune écriture cliente.
+reset role;
+insert into t_ref (k, v)
+select 'document_facture', i.id from public.invoices i
+join public.organizations o on o.id = i.organization_id
+where o.slug = 'factu-a' and i.status in ('issued','sent','paid') and i.document_type = 'invoice'
+limit 1;
+
+grant select on pg_temp.t_ref to service_role;
+set local role service_role;
+insert into public.invoice_electronic_documents
+  (invoice_id, organization_id, profile, generator_version, object_path, xml_sha256, pdf_sha256, byte_size)
+select i.id, i.organization_id, 'EN 16931', 'test',
+  i.organization_id::text || '/' || i.id::text || '/factur-x.pdf', repeat('a',64), repeat('b',64), 123
+from public.invoices i where i.id = (select v from pg_temp.t_ref where k = 'document_facture');
+reset role;
+
+select pg_temp.refuses($sql$ update public.invoice_electronic_documents set byte_size = 124 $sql$,
+  'Même un accès privilégié ne remplace pas un document conservé');
+select pg_temp.refuses($sql$ delete from public.invoice_electronic_documents $sql$,
+  'Un document conservé ne peut pas être supprimé');
+select pg_temp.refuses($sql$
+  insert into public.invoice_electronic_documents
+    (invoice_id, organization_id, profile, generator_version, object_path, xml_sha256, pdf_sha256, byte_size)
+  select i.id, i.organization_id, 'EN 16931', 'test', i.organization_id::text || '/' || i.id::text || '/factur-x.pdf', repeat('a',64), repeat('b',64), 123
+  from public.invoices i where i.id = (select v from pg_temp.t_ref where k = 'facture_b')
+$sql$, 'Un brouillon ne reçoit aucun document définitif');
+
+select pg_temp.login('patron_a'); set local role authenticated;
+select pg_temp.ok((select count(*) from public.invoice_electronic_documents) = 1, 'Le propriétaire voit le document de son entreprise');
+select pg_temp.refuses($sql$ insert into public.invoice_electronic_documents select * from public.invoice_electronic_documents $sql$, 'Le navigateur ne peut pas enregistrer de faux document');
+select pg_temp.refuses($sql$ update public.invoice_electronic_documents set byte_size = 124 $sql$, 'Le navigateur ne remplace pas un document');
+select pg_temp.login('patron_b');
+select pg_temp.ok((select count(*) from public.invoice_electronic_documents) = 0, 'Aucun document de A visible par B');
+select pg_temp.login('technicien');
+select pg_temp.ok((select count(*) from public.invoice_electronic_documents) = 0, 'Un technicien sans accès aux factures ne voit pas leur document');
+reset role;
+select pg_temp.ok((select public is false from storage.buckets where id = 'invoice-electronic-documents'), 'Le stockage des PDF est privé');
+-- Identifiants : même garde pour RPC et UPDATE direct, sans perdre de numéro.
+create function pg_temp.refuse_identifier(p_id uuid, p_message text, p_direct boolean default false)
+returns void language plpgsql as $$
+declare v_invoice public.invoices;
+begin
+  select * into strict v_invoice from public.invoices where id = p_id;
+  begin
+    if p_direct then
+      update public.invoices set status = 'issued' where id = p_id;
+    else
+      perform public.issue_invoice(p_id, v_invoice.updated_at);
+    end if;
+    raise exception 'Une émission avec identifiant invalide a réussi' using errcode = 'assert_failure';
+  exception when check_violation then
+    perform pg_temp.ok(position(p_message in sqlerrm) > 0, 'Refus pour le bon identifiant : ' || sqlerrm);
+  end;
+  perform pg_temp.ok((select status = 'draft' and issued_at is null and reference = v_invoice.reference
+    and updated_at = v_invoice.updated_at from public.invoices where id = p_id),
+    'Un refus conserve le brouillon, sa référence et sa version');
+end $$;
+
+select pg_temp.login('patron_a');
+do $$
+declare v_org uuid; v_invoice public.invoices; v_counter_before bigint; v_counter_after bigint;
+begin
+  select id into v_org from public.organizations where slug = 'factu-a';
+  select coalesce(sum(last_value), 0) into v_counter_before from public.invoice_counters where organization_id = v_org;
+  set local role authenticated;
+  insert into public.invoices (organization_id) values (v_org) returning * into v_invoice;
+  perform pg_temp.complete_invoice(v_invoice.id);
+  update public.invoices set customer_type = 'company', customer_registration_number = '109198440054594',
+    customer_vat_number = null where id = v_invoice.id;
+  perform pg_temp.refuse_identifier(v_invoice.id, 'Identifiant invalide pour ce client');
+  perform pg_temp.refuse_identifier(v_invoice.id, 'Identifiant invalide pour ce client', true);
+  update public.invoices set customer_type = 'public_body' where id = v_invoice.id;
+  perform pg_temp.refuse_identifier(v_invoice.id, 'Identifiant invalide pour ce client');
+  update public.invoices set customer_registration_number = '123 456 789', customer_vat_number = '0919191951' where id = v_invoice.id;
+  perform pg_temp.refuse_identifier(v_invoice.id, 'Numéro de TVA invalide pour ce client');
+  update public.invoices set customer_vat_number = null where id = v_invoice.id;
+  update public.organizations set vat_number = 'TVA-invalide' where id = v_org;
+  perform pg_temp.refuse_identifier(v_invoice.id, 'Numéro de TVA invalide pour votre entreprise');
+  update public.organizations set vat_number = 'FR12345678901' where id = v_org;
+  reset role;
+  select coalesce(sum(last_value), 0) into v_counter_after from public.invoice_counters where organization_id = v_org;
+  perform pg_temp.ok(v_counter_after = v_counter_before, 'Les émissions refusées ne consomment aucun numéro');
+
+  set local role authenticated;
+  select * into v_invoice from public.invoices where id = v_invoice.id;
+  perform public.issue_invoice(v_invoice.id, v_invoice.updated_at);
+  perform pg_temp.ok((select status = 'issued' and customer_vat_number is null from public.invoices where id = v_invoice.id),
+    'Le même brouillon corrigé est émis, sans imposer une TVA client absente');
+
+  insert into public.invoices (organization_id) values (v_org) returning * into v_invoice;
+  perform pg_temp.complete_invoice(v_invoice.id);
+  update public.invoices set customer_type = 'company', customer_country = 'BE',
+    customer_registration_number = '0123.456.789', customer_vat_number = 'BE0123456789' where id = v_invoice.id;
+  select * into v_invoice from public.invoices where id = v_invoice.id;
+  perform public.issue_invoice(v_invoice.id, v_invoice.updated_at);
+  perform pg_temp.ok((select status = 'issued' from public.invoices where id = v_invoice.id), 'Les identifiants étrangers ne subissent pas le format français');
+
+  insert into public.invoices (organization_id) values (v_org) returning * into v_invoice;
+  perform pg_temp.complete_invoice(v_invoice.id);
+  update public.invoices set customer_type = 'company', customer_registration_number = '123 456 789',
+    customer_vat_number = 'fr 12 345678901' where id = v_invoice.id;
+  select * into v_invoice from public.invoices where id = v_invoice.id;
+  perform public.issue_invoice(v_invoice.id, v_invoice.updated_at);
+  perform pg_temp.ok((select status = 'issued' from public.invoices where id = v_invoice.id), 'Espaces de présentation et TVA en minuscules acceptés');
+  reset role;
+end $$;
 
 select 'TOUS LES TESTS PASSENT' as resultat;
 

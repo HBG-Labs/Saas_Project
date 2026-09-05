@@ -116,6 +116,27 @@ describe('CustomerFormDialog', () => {
     expect(screen.getByLabelText(/SIRET/i)).toBeInTheDocument();
   });
 
+  it('signale les identifiants invalides sur la fiche et actualise l’alerte à la correction', async () => {
+    const user = await ouvrir(
+      <CustomerFormDialog
+        organizationId="org-1"
+        customer={{
+          ...CLIENT,
+          customer_type: 'company',
+          registration_number: '109198440054594',
+          vat_number: '0919191951',
+        }}
+        trigger={<button>ouvrir</button>}
+      />,
+    );
+    expect(screen.getByLabelText(/SIRET/i)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText(/TVA/i)).toHaveAttribute('aria-invalid', 'true');
+    await user.clear(screen.getByLabelText(/SIRET/i));
+    await user.type(screen.getByLabelText(/SIRET/i), '123 456 789');
+    expect(screen.getByLabelText(/SIRET/i)).not.toHaveAttribute('aria-invalid');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it('transmet le SIRET et le N° TVA à la création', async () => {
     const user = await ouvrir(
       <CustomerFormDialog organizationId="org-1" trigger={<button>ouvrir</button>} />,
@@ -194,4 +215,25 @@ describe('CustomerFormDialog', () => {
     const patch = mockUpdate.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(patch).not.toHaveProperty('latitude');
   });
+});
+
+it('conserve le type particulier dans les données enregistrées', async () => {
+  mockUpdate.mockClear();
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+  const user = await ouvrir(
+    <CustomerFormDialog
+      organizationId="org-1"
+      customer={CLIENT}
+      trigger={<button>ouvrir</button>}
+    />,
+  );
+  screen.getByRole('combobox', { name: 'Type de client' }).focus();
+  await user.keyboard('{ArrowDown}');
+  await user.keyboard('{p}{Enter}');
+  await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  await waitFor(() =>
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ customer_type: 'individual' }),
+    ),
+  );
 });

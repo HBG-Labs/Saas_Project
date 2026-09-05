@@ -113,6 +113,16 @@ comment on column public.organizations.quote_payment_method is
 -- Le trigger d'immuabilité les gèle sans qu'on ait à l'y aider : il compare la
 -- ligne entière moins les colonnes explicitement modifiables. C'est exactement
 -- l'intérêt de ce sens de lecture.
+-- LE TYPE DE DESTINATAIRE APPARTIENT AUSSI À L'INSTANTANÉ.
+--
+-- La migration précédente ne pouvait pas le figer : l'énumération n'existait
+-- pas encore. Or c'est lui qui commande les mentions obligatoires — un
+-- particulier n'a pas de SIRET, une entreprise doit en avoir un. Le relire sur
+-- la fiche client donnerait un verdict juste sur des données que la facture ne
+-- porte pas, et changerait si le client est requalifié plus tard.
+alter table public.invoices
+  add column if not exists customer_type public.customer_type;
+
 alter table public.invoices
   add column if not exists seller_name                text,
   add column if not exists seller_legal_name          text,
@@ -156,7 +166,7 @@ declare
 begin
   -- Seulement au passage de brouillon à autre chose, et seulement si
   -- l'instantané n'existe pas déjà : réémettre ne réécrit rien.
-  if old.status <> 'draft' or new.status = 'draft' or new.seller_name is not null then
+  if old.status <> 'draft' or new.status = 'draft' then
     return new;
   end if;
 

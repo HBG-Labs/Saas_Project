@@ -15,6 +15,7 @@
 
     /* Émission : Vite transpile, tsc ne sert qu'au typecheck */
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "composite": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,

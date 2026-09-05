@@ -27,6 +27,7 @@ export const customerSchema = z.object({
     .min(2, { error: 'Le nom doit contenir au moins 2 caractères.' })
     .max(150, { error: 'Le nom ne peut pas dépasser 150 caractères.' }),
   legalName: optionalText(150),
+  customerType: z.enum(['company', 'individual', 'public_body', '']).optional(),
   registrationNumber: optionalText(50),
   vatNumber: optionalText(50),
   email: optionalEmail,

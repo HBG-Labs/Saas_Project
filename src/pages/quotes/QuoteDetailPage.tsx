@@ -315,7 +315,18 @@ export default function QuoteDetailPage() {
               onClick={() => {
                 if (!quote.organization_id) return;
                 createInvoice.mutate(
-                  { quoteId: quote.id, organizationId: quote.organization_id },
+                  {
+                    quoteId: quote.id,
+                    organizationId: quote.organization_id,
+                    paymentTerms:
+                      organization?.id === quote.organization_id
+                        ? (organization.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS)
+                        : DEFAULT_QUOTE_PAYMENT_TERMS,
+                    paymentMethod:
+                      organization?.id === quote.organization_id
+                        ? (organization.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD)
+                        : DEFAULT_QUOTE_PAYMENT_METHOD,
+                  },
                   { onSuccess: (invoice) => void navigate(ROUTES.invoiceDetail(invoice.id)) },
                 );
               }}

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { toEuros, useInvoices } from '@/features/invoices';
 import { useCurrentOrganization } from '@/features/organizations';
-import { formatDate } from '@/lib/format';
+import { formatInvoiceDate } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
 
@@ -112,9 +112,15 @@ export default function InvoicesPage() {
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-foreground font-mono text-sm font-bold">
-                        {invoice.reference}
+                        {invoice.status === 'draft'
+                          ? invoice.title || 'Facture à préparer'
+                          : invoice.reference}
                       </span>
-                      <Badge variant={status.variant}>{status.label}</Badge>
+                      <Badge variant={status.variant}>
+                        {estAvoir && invoice.status === 'paid'
+                          ? 'Remboursé / imputé'
+                          : status.label}
+                      </Badge>
                       {estAvoir && <Badge variant="warning">Avoir</Badge>}
                     </div>
                     <p className="text-muted-foreground truncate text-xs">
@@ -128,9 +134,10 @@ export default function InvoicesPage() {
                       {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
                     </p>
                     <p className="text-subtle-foreground text-3xs">
+                      {estAvoir && <span>À créditer · </span>}
                       {/* Un brouillon n'a pas de date d'émission : on montre alors
                           celle de création, seule date qui existe. */}
-                      {formatDate(invoice.issued_at ?? invoice.created_at)}
+                      {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
                     </p>
                   </div>
 

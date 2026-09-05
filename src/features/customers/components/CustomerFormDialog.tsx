@@ -1,14 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, type ReactNode } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
+import { Select } from '@/components/ui/Select';
 import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
 import type { Customer } from '@/types/domain';
+import { frenchRegistrationError, frenchVatError } from '@/lib/business-identifiers';
 
 import { useSyncPrimarySiteLocation } from '../hooks/useCustomerChildren';
 import { useCreateCustomer, useUpdateCustomer } from '../hooks/useCustomers';
@@ -33,11 +35,7 @@ export interface CustomerFormDialogProps {
  * formulaires jumeaux divergent toujours — l'un gagne un champ que l'autre
  * n'aura jamais.
  */
-export function CustomerFormDialog({
-  organizationId,
-  customer,
-  trigger,
-}: CustomerFormDialogProps) {
+export function CustomerFormDialog({ organizationId, customer, trigger }: CustomerFormDialogProps) {
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -59,6 +57,7 @@ export function CustomerFormDialog({
     defaultValues: {
       name: customer?.name ?? '',
       legalName: customer?.legal_name ?? '',
+      customerType: customer?.customer_type ?? '',
       registrationNumber: customer?.registration_number ?? '',
       vatNumber: customer?.vat_number ?? '',
       email: customer?.email ?? '',
@@ -70,6 +69,16 @@ export function CustomerFormDialog({
       notes: customer?.notes ?? '',
     },
   });
+
+  const [customerType, country, registrationNumber, vatNumber] = useWatch({
+    control,
+    name: ['customerType', 'country', 'registrationNumber', 'vatNumber'],
+  });
+  const professional = customerType === 'company' || customerType === 'public_body';
+  const registrationIssue = professional
+    ? frenchRegistrationError(registrationNumber, country)
+    : undefined;
+  const vatIssue = professional ? frenchVatError(vatNumber, country) : undefined;
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
@@ -104,6 +113,7 @@ export function CustomerFormDialog({
         await updateCustomer.mutateAsync({
           name: values.name,
           legal_name: emptyToNull(values.legalName),
+          customer_type: values.customerType || null,
           registration_number: emptyToNull(values.registrationNumber),
           vat_number: emptyToNull(values.vatNumber),
           email: emptyToNull(values.email),
@@ -157,6 +167,7 @@ export function CustomerFormDialog({
         await createCustomer.mutateAsync({
           organizationId,
           name: values.name,
+          ...(values.customerType ? { customerType: values.customerType } : {}),
           ...defined('legalName', omitEmpty(values.legalName)),
           // Ces deux-là manquaient : le N° TVA saisi était perdu en silence, et
           // le SIRET n'avait de toute façon aucun champ pour être saisi.
@@ -216,6 +227,25 @@ export function CustomerFormDialog({
 
         <Input label="Raison sociale" {...register('legalName')} />
 
+        <Controller
+          control={control}
+          name="customerType"
+          render={({ field }) => (
+            <Select
+              label="Type de client"
+              value={field.value || 'unknown'}
+              onValueChange={(value) => field.onChange(value === 'unknown' ? '' : value)}
+              options={[
+                { value: 'unknown', label: 'À renseigner plus tard' },
+                { value: 'company', label: 'Entreprise' },
+                { value: 'individual', label: 'Particulier' },
+                { value: 'public_body', label: 'Organisme public' },
+              ]}
+              hint="Détermine les informations demandées avant l’émission d’une facture."
+            />
+          )}
+        />
+
         {/*
           LE SIRET N'ÉTAIT SAISISSABLE NULLE PART.
 
@@ -233,11 +263,27 @@ export function CustomerFormDialog({
           <Input
             label="SIRET / SIREN"
             placeholder="123 456 789 00012"
-            hint="Obligatoire pour facturer électroniquement une entreprise."
+            hint="Pour une entreprise française : SIREN de 9 chiffres ou SIRET de 14 chiffres."
+            {...(registrationIssue ? { error: registrationIssue } : {})}
+            {...(errors.registrationNumber?.message
+              ? { error: errors.registrationNumber.message }
+              : {})}
             {...register('registrationNumber')}
           />
-          <Input label="N° TVA intracommunautaire" placeholder="FR12345678901" {...register('vatNumber')} />
+          <Input
+            label="N° TVA intracommunautaire"
+            placeholder="FR12345678901"
+            {...(vatIssue ? { error: vatIssue } : {})}
+            {...(errors.vatNumber?.message ? { error: errors.vatNumber.message } : {})}
+            {...register('vatNumber')}
+          />
         </div>
+        {(registrationIssue || vatIssue) && (
+          <p className="text-muted-foreground text-xs">
+            Cette fiche peut être enregistrée. Les identifiants signalés devront être corrigés avant
+            l’émission d’une facture.
+          </p>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
@@ -251,12 +297,13 @@ export function CustomerFormDialog({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">Adresse postale</span>
+            <span className="text-foreground text-xs font-semibold">Adresse postale</span>
             <MapLocationPickerDialog
               initialAddress={initialAddress}
               onSelectLocation={(loc) => {
                 setCoords({ latitude: loc.latitude, longitude: loc.longitude });
-                if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
+                if (loc.addressLine1)
+                  setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
                 if (loc.postalCode) setValue('postalCode', loc.postalCode, { shouldDirty: true });
                 if (loc.city) setValue('city', loc.city, { shouldDirty: true });
                 if (loc.country) setValue('country', loc.country, { shouldDirty: true });

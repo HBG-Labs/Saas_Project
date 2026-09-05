@@ -5,6 +5,10 @@ import type { TablesUpdate } from '@/types/database';
 
 import {
   createInvoice,
+  createCreditNoteDraft,
+  saveFullCreditNoteDraft,
+  getRelatedCreditNotes,
+  getCreditableInvoiceLines,
   createInvoiceFromQuote,
   deleteInvoice,
   getInvoice,
@@ -12,6 +16,7 @@ import {
   listInvoicesWithTotals,
   replaceInvoiceItems,
   updateInvoice,
+  saveInvoiceDraft,
   type CreateInvoiceInput,
   type InvoiceFilters,
   type InvoiceLineInput,
@@ -56,6 +61,40 @@ export function useCreateInvoice() {
   });
 }
 
+export function useRelatedCreditNotes(invoiceId: string) {
+  return useQuery({
+    queryKey: [...qk.invoices.detail(invoiceId), 'credit-notes'],
+    queryFn: () => getRelatedCreditNotes(invoiceId),
+  });
+}
+
+export function useCreditableInvoiceLines(invoiceId: string) {
+  return useQuery({
+    queryKey: [...qk.invoices.detail(invoiceId), 'creditable-lines'],
+    queryFn: () => getCreditableInvoiceLines(invoiceId),
+  });
+}
+
+export function useCreateCreditNoteDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCreditNoteDraft,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
+export function useSaveFullCreditNoteDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveFullCreditNoteDraft,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
 /**
  * Convertit un devis accepté en facture brouillon.
  *
@@ -87,12 +126,23 @@ export function useUpdateInvoice(invoiceId: string) {
   });
 }
 
+export function useSaveInvoiceDraft(invoiceId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Omit<Parameters<typeof saveInvoiceDraft>[0], 'invoiceId'>) =>
+      saveInvoiceDraft({ invoiceId, ...input }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
 /** Émet la facture — c'est ce geste qui la fige définitivement. */
 export function useIssueInvoice(invoiceId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => issueInvoice(invoiceId),
+    mutationFn: (expectedUpdatedAt: string) => issueInvoice(invoiceId, expectedUpdatedAt),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
     },

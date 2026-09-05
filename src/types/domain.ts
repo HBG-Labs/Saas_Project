@@ -1,4 +1,4 @@
-import type { Database, Tables } from './database';
+import type { Database, Tables } from './database.ts';
 
 /**
  * Types métier de l'application.
@@ -167,6 +167,9 @@ export interface QuoteWithTotals extends Quote {
 export type Invoice = Tables<'invoices'>;
 export type InvoiceItem = Tables<'invoice_items'>;
 export type InvoiceTotals = Database['public']['Views']['invoice_totals']['Row'];
+export type InvoiceTransmission = Tables<'invoice_transmissions'>;
+export type InvoiceTransmissionEvent = Tables<'invoice_transmission_events'>;
+export type EinvoicingProviderConnection = Tables<'einvoicing_provider_connections'>;
 
 /**
  * Ventilation de la TVA par taux — PLUSIEURS lignes par facture.

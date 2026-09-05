@@ -21,6 +21,7 @@ export {
   toCents,
   toEuros,
   updateInvoice,
+  saveInvoiceDraft,
   STATUTS_FIGES,
   type CreateInvoiceInput,
   type InvoiceFilters,
@@ -36,4 +37,12 @@ export {
   useIssueInvoice,
   useReplaceInvoiceItems,
   useUpdateInvoice,
+  useSaveInvoiceDraft,
 } from './hooks/useInvoices';
+
+export { InvoiceDraftEditor } from './components/InvoiceDraftEditor';
+export {
+  CreateCreditNotePanel,
+  CreditNoteDraftEditor,
+  CreditNoteOrigin,
+} from './components/CreditNoteWorkflow';

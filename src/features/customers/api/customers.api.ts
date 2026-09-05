@@ -1,6 +1,6 @@
 import { AppError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { ContentStatus, TablesUpdate } from '@/types/database';
+import type { ContentStatus, CustomerType, TablesUpdate } from '@/types/database';
 import type { Customer, CustomerContact, MissionWithRelations, Site } from '@/types/domain';
 
 /**
@@ -79,6 +79,7 @@ export async function createCustomer(input: {
    * modifiant la fiche ensuite.
    */
   vatNumber?: string;
+  customerType?: CustomerType;
   email?: string;
   phone?: string;
   addressLine1?: string;
@@ -107,6 +108,7 @@ export async function createCustomer(input: {
           ? { registration_number: input.registrationNumber }
           : {}),
         ...(input.vatNumber !== undefined ? { vat_number: input.vatNumber } : {}),
+        ...(input.customerType !== undefined ? { customer_type: input.customerType } : {}),
         ...(input.email !== undefined ? { email: input.email } : {}),
         ...(input.phone !== undefined ? { phone: input.phone } : {}),
         ...(input.addressLine1 !== undefined ? { address_line1: input.addressLine1 } : {}),
@@ -394,8 +396,7 @@ export async function syncPrimarySiteLocation(input: {
     });
   }
 
-  const cible =
-    sites.length === 1 ? sites[0] : sites.find((s) => s.name === PRIMARY_SITE_NAME);
+  const cible = sites.length === 1 ? sites[0] : sites.find((s) => s.name === PRIMARY_SITE_NAME);
 
   // Plusieurs sites et aucun « Site Principal » : on ne choisit pas à la place
   // de l'utilisateur, il modifiera le bon site depuis l'onglet Sites.
