@@ -70,9 +70,6 @@ export function MobileNav() {
                       aria-hidden="true"
                     />
                     <span className="w-full truncate text-center">{item.label}</span>
-                    {isActive ? (
-                      <span className="absolute top-1 size-1 rounded-full bg-primary" aria-hidden="true" />
-                    ) : null}
                   </>
                 )}
               </NavLink>

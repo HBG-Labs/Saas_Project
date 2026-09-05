@@ -34,8 +34,13 @@ export function EmptyState({
       )}
     >
       {Icon ? (
-        <div className="bg-primary/10 border border-primary/20 text-primary flex size-12 items-center justify-center rounded-2xl shadow-xs">
-          <Icon className="size-6" aria-hidden="true" />
+        <div className="relative isolate flex size-20 items-center justify-center" aria-hidden="true">
+          <span className="bg-primary/5 absolute inset-1 rotate-6 rounded-[1.75rem]" />
+          <span className="bg-primary-subtle/70 border-primary/15 absolute inset-2 rounded-full border" />
+          <span className="bg-surface-raised border-primary/20 text-primary relative flex size-12 items-center justify-center rounded-2xl border shadow-sm">
+            <Icon className="size-7" strokeWidth={1.7} />
+          </span>
+          <span className="bg-signal-cyan absolute right-1.5 top-3 size-2 rounded-full ring-4 ring-surface" />
         </div>
       ) : null}
 
