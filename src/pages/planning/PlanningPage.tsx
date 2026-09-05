@@ -24,6 +24,7 @@ import {
   usePermission,
 } from '@/features/organizations';
 import { useMissions } from '@/features/missions';
+import { useTeams } from '@/features/teams';
 import {
   PlanningCalendarView,
   LeavesManagementTab,
@@ -101,6 +102,7 @@ export default function PlanningPage() {
   const [notification, signalerNotification] = useEphemeralValue<string>(4000);
 
   const membersQuery = useMembers(organizationId);
+  const teamsQuery = useTeams(organizationId);
   const leavesQuery = useLeaveRequests(organizationId);
   const balancesQuery = useLeaveBalances(organizationId, new Date().getFullYear());
   const tasksQuery = useRecurringTasks(organizationId);
@@ -194,6 +196,9 @@ export default function PlanningPage() {
           : {}),
         ...(submission.assignedMemberId !== null
           ? { assignedUserId: submission.assignedMemberId }
+          : {}),
+        ...(submission.assignedTeamId !== null
+          ? { assignedTeamId: submission.assignedTeamId }
           : {}),
         ...(submission.notes !== '' ? { notes: submission.notes } : {}),
       },
@@ -464,6 +469,7 @@ export default function PlanningPage() {
           if (!open) setSelectedPlanDate(null);
         }}
         initialDate={selectedPlanDate}
+        teams={teamsQuery.data ?? []}
         members={membersQuery.data ?? []}
         submitting={createMission.isPending}
         error={createMission.error}

@@ -89,9 +89,14 @@ export default function LegalNoticePage() {
         </p>
         <ul className="mt-3 space-y-1.5">
           {CONSERVATION.map((c) => (
-            <li key={c.donnee} className="text-muted-foreground flex justify-between gap-4 text-sm">
-              <span>{c.donnee}</span>
-              <span className="text-foreground shrink-0 font-medium">{c.duree}</span>
+            <li
+              key={c.donnee}
+              className="text-muted-foreground flex min-w-0 flex-col gap-0.5 text-sm sm:flex-row sm:justify-between sm:gap-4"
+            >
+              <span className="min-w-0">{c.donnee}</span>
+              <span className="text-foreground min-w-0 font-medium sm:shrink-0 sm:text-right">
+                {c.duree}
+              </span>
             </li>
           ))}
         </ul>

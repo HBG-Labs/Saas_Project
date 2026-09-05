@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { FormError } from '@/components/feedback/FormError';
 import { memberDisplayName } from '@/features/organizations';
 import type { MissionPriority } from '@/types/database';
-import type { MemberWithProfile } from '@/types/domain';
+import type { MemberWithProfile, Team } from '@/types/domain';
 
 /**
  * Planifier depuis le calendrier, c'est créer une MISSION.
@@ -25,6 +25,7 @@ export interface NewEventSubmission {
   scheduledStart: string;
   scheduledEnd?: string;
   priority: MissionPriority;
+  assignedTeamId: string | null;
   assignedMemberId: string | null;
   notes: string;
 }
@@ -32,6 +33,7 @@ export interface NewEventSubmission {
 interface NewEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  teams: readonly Team[];
   members: readonly MemberWithProfile[];
   submitting: boolean;
   error: unknown;
@@ -47,6 +49,7 @@ function toIso(date: string, time: string): string {
 export function NewEventModal({
   open,
   onOpenChange,
+  teams,
   members,
   submitting,
   error,
@@ -60,7 +63,7 @@ export function NewEventModal({
   );
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('12:00');
-  const [memberId, setMemberId] = useState('');
+  const [assignment, setAssignment] = useState('');
   const [details, setDetails] = useState('');
 
   // Synchronise la date si `initialDate` change — au RENDU, pas dans un effet.
@@ -83,7 +86,8 @@ export function NewEventModal({
       scheduledStart: toIso(date, startTime),
       ...(endTime !== '' ? { scheduledEnd: toIso(date, endTime) } : {}),
       priority,
-      assignedMemberId: memberId === '' ? null : memberId,
+      assignedTeamId: assignment.startsWith('team:') ? assignment.slice(5) : null,
+      assignedMemberId: assignment.startsWith('member:') ? assignment.slice(7) : null,
       notes: details.trim(),
     });
   };
@@ -150,22 +154,38 @@ export function NewEventModal({
               </div>
 
               <div>
-                <label htmlFor="evt-tech" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Intervenant assigné
+                <label htmlFor="evt-assignment" className="block text-xs font-semibold text-foreground mb-1.5">
+                  Affectation
                 </label>
                 <select
-                  id="evt-tech"
-                  value={memberId}
-                  onChange={(e) => setMemberId(e.target.value)}
+                  id="evt-assignment"
+                  value={assignment}
+                  onChange={(e) => setAssignment(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
                 >
                   <option value="">À affecter plus tard</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {memberDisplayName(member)}
-                    </option>
-                  ))}
+                  {teams.length > 0 && (
+                    <optgroup label="Équipes">
+                      {teams.map((team) => (
+                        <option key={team.id} value={`team:${team.id}`}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {members.length > 0 && (
+                    <optgroup label="Intervenants">
+                      {members.map((member) => (
+                        <option key={member.id} value={`member:${member.id}`}>
+                          {memberDisplayName(member)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
+                <p className="mt-1 text-3xs text-muted-foreground">
+                  Une équipe permet à chacun de ses membres d’intervenir.
+                </p>
               </div>
             </div>
 
