@@ -283,9 +283,9 @@ export default function QuotesPage() {
 
           {/* Catalog Prestations Rapides */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
-              <CardTitle className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <Sparkles className="size-3.5 text-warning" />
+            <CardHeader className="flex flex-col items-stretch gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="flex min-w-0 items-start gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:items-center">
+                <Sparkles className="mt-0.5 size-3.5 shrink-0 text-warning sm:mt-0" />
                 Catalogue des Prestations Standards & Perso
               </CardTitle>
 
@@ -293,7 +293,7 @@ export default function QuotesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddCustomModalOpen(true)}
-                className="cursor-pointer gap-1.5 text-2xs text-primary border-primary/30 hover:bg-primary/10"
+                className="w-full cursor-pointer justify-center gap-1.5 border-primary/30 text-2xs text-primary hover:bg-primary/10 sm:w-auto"
               >
                 <Plus className="size-3" />
                 Créer une prestation perso

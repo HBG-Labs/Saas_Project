@@ -212,7 +212,7 @@ export function StockKpiCards({
       <Card className="border-accent/20 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-2xs font-semibold uppercase tracking-wider text-accent truncate">
+            <p className="text-2xs font-semibold uppercase leading-snug tracking-wider text-accent">
               Mouvements Stock
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl font-mono">

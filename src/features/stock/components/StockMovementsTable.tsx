@@ -193,7 +193,7 @@ export function StockMovementsTable({
       <div className="p-3 sm:p-4 border-b border-border space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           {/* Champ de recherche */}
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
@@ -208,14 +208,14 @@ export function StockMovementsTable({
           </div>
 
           {/* Filtres déroulants et menu calendrier */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {/* Popover Période / Calendrier */}
             <Dropdown
               align="end"
               trigger={
                 <button
                   type="button"
-                  className="h-9 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-foreground hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer"
+                  className="h-9 min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-foreground hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer sm:flex-none"
                   title="Filtrer par mois ou période"
                 >
                   <Calendar className="size-3.5 text-accent shrink-0" />
@@ -265,7 +265,7 @@ export function StockMovementsTable({
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
             >
               <option value="all">Tous les types</option>
               <option value="in">Entrées (Réceptions)</option>
@@ -277,29 +277,27 @@ export function StockMovementsTable({
         </div>
       </div>
 
-      {/* Tableau compact sans scroll horizontal */}
-      <table className="w-full text-left text-xs border-collapse">
-        <thead>
-          <tr className="border-b border-border bg-surface-raised/50 text-muted-foreground text-3xs font-bold uppercase tracking-wider">
-            <th className="py-2.5 px-3 sm:px-4">Date &amp; Type</th>
-            <th className="py-2.5 px-3">Article Concerné</th>
-            <th className="py-2.5 px-3 text-center">Quantité</th>
-            <th className="py-2.5 px-3 hidden md:table-cell">Motif &amp; Justificatif</th>
-            <th className="py-2.5 px-3 sm:px-4 text-right">Intervenant / Emplacement</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {paginatedMovements.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-10 text-center text-muted-foreground">
-                <p className="text-sm font-semibold">Aucun mouvement pour cette sélection</p>
-                <p className="text-2xs text-subtle-foreground mt-1">
-                  Changez de période ou ajustez vos critères de recherche.
-                </p>
-              </td>
-            </tr>
-          ) : (
-            paginatedMovements.map((mov) => {
+      {paginatedMovements.length === 0 ? (
+        <div className="px-4 py-10 text-center text-muted-foreground">
+          <p className="text-sm font-semibold">Aucun mouvement pour cette sélection</p>
+          <p className="mx-auto mt-1 max-w-md text-2xs text-subtle-foreground">
+            Changez de période ou ajustez vos critères de recherche.
+          </p>
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[640px] w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-border bg-surface-raised/50 text-3xs font-bold uppercase tracking-wider text-muted-foreground">
+                <th className="py-2.5 px-3 sm:px-4">Date &amp; Type</th>
+                <th className="py-2.5 px-3">Article Concerné</th>
+                <th className="py-2.5 px-3 text-center">Quantité</th>
+                <th className="py-2.5 px-3 hidden md:table-cell">Motif &amp; Justificatif</th>
+                <th className="py-2.5 px-3 sm:px-4 text-right">Intervenant / Emplacement</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {paginatedMovements.map((mov) => {
               const variant = STOCK_MOVEMENT_TYPE_VARIANTS[mov.type];
 
               return (
@@ -376,10 +374,11 @@ export function StockMovementsTable({
                   </td>
                 </tr>
               );
-            })
-          )}
-        </tbody>
-      </table>
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Pagination & Compteur */}
       {filteredMovements.length > 0 && (

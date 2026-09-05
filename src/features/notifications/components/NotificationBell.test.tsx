@@ -64,6 +64,23 @@ describe('NotificationBell', () => {
     expect(screen.getByText('Tout marquer lu')).toBeInTheDocument();
   });
 
+  it('garde le panneau dans la largeur de l’écran sur mobile', () => {
+    render(
+      <BrowserRouter>
+        <NotificationBell />
+      </BrowserRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Notifications d'activité/i }));
+
+    expect(screen.getByRole('dialog', { name: 'Centre de notifications' })).toHaveClass(
+      'fixed',
+      'inset-x-3',
+      'sm:absolute',
+      'sm:right-0',
+    );
+  });
+
   it('permet de tout marquer comme lu', () => {
     render(
       <BrowserRouter>

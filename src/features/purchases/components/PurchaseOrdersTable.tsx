@@ -97,7 +97,7 @@ export function PurchaseOrdersTable({
       {/* Barre de recherche et filtres */}
       <div className="p-3 sm:p-4 border-b border-border space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
@@ -108,11 +108,11 @@ export function PurchaseOrdersTable({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <select
               value={periodFilter}
               onChange={(e) => setPeriodFilter(e.target.value)}
-              className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
             >
               <option value="all">Toutes les dates</option>
               <option value="this_month">Ce mois-ci</option>
@@ -126,14 +126,14 @@ export function PurchaseOrdersTable({
                 type="month"
                 value={customMonth}
                 onChange={(e) => setCustomMonth(e.target.value)}
-                className="h-9 rounded-xl border border-border bg-surface-raised px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none cursor-pointer"
+                className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none cursor-pointer sm:flex-none"
               />
             )}
 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
             >
               <option value="all">Tous les statuts</option>
               <option value="draft">Brouillons</option>
@@ -146,7 +146,7 @@ export function PurchaseOrdersTable({
             <select
               value={supplierFilter}
               onChange={(e) => setSupplierFilter(e.target.value)}
-              className="h-9 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
             >
               <option value="all">Tous fournisseurs</option>
               {uniqueSuppliers.map((sup) => (
@@ -159,30 +159,28 @@ export function PurchaseOrdersTable({
         </div>
       </div>
 
-      {/* Tableau compact sans slider horizontal */}
-      <table className="w-full text-left text-xs border-collapse">
-        <thead>
-          <tr className="border-b border-border bg-surface-raised/50 text-muted-foreground text-3xs font-bold uppercase tracking-wider">
-            <th className="py-2.5 px-3 sm:px-4">Commande &amp; Dates</th>
-            <th className="py-2.5 px-3">Fournisseur &amp; Chantier</th>
-            <th className="py-2.5 px-3 hidden md:table-cell">Articles &amp; Réception</th>
-            <th className="py-2.5 px-3 text-right">Montant HT</th>
-            <th className="py-2.5 px-3 text-center">Statut</th>
-            <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {filteredOrders.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="py-10 text-center text-muted-foreground">
-                <p className="text-sm font-semibold">Aucun bon de commande trouvé</p>
-                <p className="text-2xs text-subtle-foreground mt-1">
-                  Créez une nouvelle commande fournisseur ou modifiez vos critères de recherche.
-                </p>
-              </td>
-            </tr>
-          ) : (
-            filteredOrders.map((order) => {
+      {filteredOrders.length === 0 ? (
+        <div className="px-4 py-10 text-center text-muted-foreground">
+          <p className="text-sm font-semibold">Aucun bon de commande trouvé</p>
+          <p className="mx-auto mt-1 max-w-md text-2xs text-subtle-foreground">
+            Créez une nouvelle commande fournisseur ou modifiez vos critères de recherche.
+          </p>
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[680px] w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-border bg-surface-raised/50 text-3xs font-bold uppercase tracking-wider text-muted-foreground">
+                <th className="py-2.5 px-3 sm:px-4">Commande &amp; Dates</th>
+                <th className="py-2.5 px-3">Fournisseur &amp; Chantier</th>
+                <th className="py-2.5 px-3 hidden md:table-cell">Articles &amp; Réception</th>
+                <th className="py-2.5 px-3 text-right">Montant HT</th>
+                <th className="py-2.5 px-3 text-center">Statut</th>
+                <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredOrders.map((order) => {
               const totalItemsCount = order.items.reduce(
                 (sum, i) => sum + i.quantityOrdered,
                 0,
@@ -358,10 +356,11 @@ export function PurchaseOrdersTable({
                   </td>
                 </tr>
               );
-            })
-          )}
-        </tbody>
-      </table>
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Card>
   );
 }

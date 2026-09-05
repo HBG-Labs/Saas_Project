@@ -196,13 +196,13 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
             </p>
 
             {/* Bouton calendrier ouvrant le menu de sélection de période */}
-            <div className="mt-1.5 flex items-center gap-1.5">
+            <div className="mt-1.5 flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center">
               <Dropdown
                 align="start"
                 trigger={
                   <button
                     type="button"
-                    className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-success/50 hover:bg-success/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="min-h-touch sm:min-h-0 inline-flex min-w-0 max-w-full items-center gap-1 rounded-lg border border-border bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground transition-colors hover:border-success/50 hover:bg-success/10 cursor-pointer"
                     title="Cliquer pour changer le mois ou la période"
                   >
                     <Calendar className="size-3 text-success shrink-0" />

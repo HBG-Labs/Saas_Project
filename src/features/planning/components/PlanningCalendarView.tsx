@@ -449,7 +449,7 @@ export function PlanningCalendarView({
         {/* Ligne Inférieure : Filtres (Recherche, Technicien, Type) */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-border/60 flex-wrap">
           {/* Recherche rapide */}
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative w-full min-w-0 flex-1 sm:min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
               type="text"
@@ -470,13 +470,13 @@ export function PlanningCalendarView({
           </div>
 
           {/* Filtre Technicien */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-center gap-1.5">
               <User className="size-3.5 text-muted-foreground hidden sm:inline" />
               <select
                 value={selectedTechFilter}
                 onChange={(e) => setSelectedTechFilter(e.target.value)}
-                className="h-8 px-2.5 rounded-xl border border-border bg-surface text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
+                className="h-8 w-full min-w-0 rounded-xl border border-border bg-surface px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden sm:w-auto"
               >
                 <option value="all">Tous les techniciens</option>
                 {members.map((member) => (
@@ -488,12 +488,12 @@ export function PlanningCalendarView({
             </div>
 
             {/* Filtre Type d'Activité */}
-            <div className="flex items-center gap-1 bg-surface-subtle p-0.5 rounded-xl border border-border">
+            <div className="grid w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-surface-subtle p-0.5 sm:flex sm:w-auto">
               <button
                 type="button"
                 onClick={() => setActivityTypeFilter('all')}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'all'
                     ? 'bg-surface text-foreground shadow-2xs font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
@@ -505,7 +505,7 @@ export function PlanningCalendarView({
                 type="button"
                 onClick={() => setActivityTypeFilter('intervention')}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'intervention'
                     ? 'bg-success/20 text-success font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
@@ -517,7 +517,7 @@ export function PlanningCalendarView({
                 type="button"
                 onClick={() => setActivityTypeFilter('leave')}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
                   activityTypeFilter === 'leave'
                     ? 'bg-warning/20 text-warning font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',

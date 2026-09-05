@@ -132,13 +132,16 @@ export function NotificationBell() {
       {/* Popover Panneau des Notifications */}
       {isOpen && (
         <div
+          role="dialog"
+          aria-label="Centre de notifications"
           className={cn(
-            'absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl border border-border bg-surface shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150',
+            'border-border bg-surface fixed inset-x-3 top-[3.75rem] z-50 flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150',
+            'sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 sm:max-h-none',
           )}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3.5 border-b border-border bg-surface-sunken/40">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Bell className="size-4 text-primary" />
                 <span>Notifications</span>
@@ -159,7 +162,7 @@ export function NotificationBell() {
                   title="Tout marquer comme lu"
                 >
                   <CheckCheck className="size-3.5" />
-                  <span>Tout marquer lu</span>
+                  <span className="hidden xs:inline">Tout marquer lu</span>
                 </button>
               )}
               <button
@@ -202,7 +205,7 @@ export function NotificationBell() {
           </div>
 
           {/* Liste des Notifications */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-border/50 scrollbar-thin">
+          <div className="scrollbar-thin min-h-0 max-h-[380px] flex-1 divide-y divide-border/50 overflow-y-auto">
             {displayedNotifications.length === 0 ? (
               <div className="p-8 text-center space-y-2">
                 <CheckCircle2 className="size-8 text-success/60 mx-auto" />
