@@ -17,8 +17,10 @@ import { ROUTES } from '@/config/routes';
 import { useIndustries } from '@/features/industries';
 import {
   OrganizationBillingCard,
+  CompanyLookupInput,
   OrganizationNavTabs,
   PERMISSIONS,
+  type FrenchCompanyCandidate,
   useCurrentOrganization,
   useOrganization,
   usePermission,
@@ -101,6 +103,7 @@ export default function OrganizationSettingsPage() {
   const industries = useIndustries();
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
+  const [verifiedCompany, setVerifiedCompany] = useState<string | null>(null);
 
   const data = query.data;
 
@@ -199,6 +202,25 @@ export default function OrganizationSettingsPage() {
     setValue('quotePaymentMethod', next.join(' / '), { shouldDirty: true, shouldTouch: true });
   }
 
+  function applyOfficialCompany(company: FrenchCompanyCandidate) {
+    setValue('name', company.commercialName ?? company.name, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setValue('legalName', company.legalName, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setValue('registrationNumber', company.siret, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setVerifiedCompany(company.name);
+  }
+
   if (query.isError) {
     return (
       <ErrorState
@@ -255,12 +277,26 @@ export default function OrganizationSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label="Nom de l’entreprise (Nom commercial)"
-                  required
-                  disabled={!canUpdate}
-                  {...(errors.name?.message ? { error: errors.name.message } : {})}
-                  {...register('name')}
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field }) => (
+                    <CompanyLookupInput
+                      mode="name"
+                      label="Nom de l’entreprise (Nom commercial)"
+                      required
+                      disabled={!canUpdate}
+                      name={field.name}
+                      value={field.value ?? ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setVerifiedCompany(null);
+                      }}
+                      onBlur={field.onBlur}
+                      onCompanySelect={applyOfficialCompany}
+                      {...(errors.name?.message ? { error: errors.name.message } : {})}
+                    />
+                  )}
                 />
 
                 <Controller
@@ -289,13 +325,28 @@ export default function OrganizationSettingsPage() {
                 hint="Si elle diffère du nom commercial."
                 disabled={!canUpdate}
                 {...(errors.legalName?.message ? { error: errors.legalName.message } : {})}
-                {...register('legalName')}
+                {...register('legalName', { onChange: () => setVerifiedCompany(null) })}
               />
               <div className="grid gap-4 sm:grid-cols-3">
-                <Input
-                  label="SIRET"
-                  disabled={!canUpdate}
-                  {...register('registrationNumber')}
+                <Controller
+                  control={control}
+                  name="registrationNumber"
+                  render={({ field }) => (
+                    <CompanyLookupInput
+                      mode="siret"
+                      label="SIRET"
+                      disabled={!canUpdate}
+                      inputMode="numeric"
+                      name={field.name}
+                      value={field.value ?? ''}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setVerifiedCompany(null);
+                      }}
+                      onBlur={field.onBlur}
+                      onCompanySelect={applyOfficialCompany}
+                    />
+                  )}
                 />
                 <Input label="N° TVA intracommunautaire" disabled={!canUpdate} {...register('vatNumber')} />
                 <Input
@@ -310,6 +361,12 @@ export default function OrganizationSettingsPage() {
                   {...register('defaultVatRate')}
                 />
               </div>
+              {verifiedCompany ? (
+                <p className="text-success flex items-center gap-1.5 text-xs" role="status">
+                  <Check className="size-3.5" aria-hidden="true" />
+                  Informations officielles appliquées : {verifiedCompany}
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
