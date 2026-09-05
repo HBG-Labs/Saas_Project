@@ -40,7 +40,13 @@ function daysUntil(iso: string): number {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / MS_PER_DAY);
 }
 
-export function TrialBanner({ organizationId }: { organizationId: string | null }) {
+export function TrialBanner({
+  organizationId,
+  urgentOnly = false,
+}: {
+  organizationId: string | null;
+  urgentOnly?: boolean;
+}) {
   const subscription = useOrganizationSubscription(organizationId);
   const row = subscription.data ?? null;
 
@@ -59,6 +65,10 @@ export function TrialBanner({ organizationId }: { organizationId: string | null 
   if (endsAt === null) return null;
 
   const remaining = daysUntil(endsAt);
+
+  // Hors tableau de bord, ne reprendre de la place que lorsque l'échéance
+  // devient réellement urgente. L'état expiré reste naturellement visible.
+  if (urgentOnly && remaining > 3) return null;
 
   // Au-delà d'un mois, l'échéance n'est pas une information : elle deviendrait
   // un bandeau permanent, donc invisible le jour où elle compte vraiment.

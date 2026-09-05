@@ -1,6 +1,6 @@
 import { Building2, Download, LogOut, Menu, Search, Settings, User, WifiOff } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { PwaInstallBanner, usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
@@ -43,6 +43,7 @@ export function AppLayout() {
   const organizationId = organization?.id ?? null;
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const profileQuery = useMyProfile();
   const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
@@ -329,14 +330,15 @@ export function AppLayout() {
           )}
 
           {/*
-            Au-dessus du contenu, pas dans une page : l'échéance d'essai suspend
-            l'accès à TOUS les modules professionnels, pas seulement à celui
-            qu'on regarde. La cantonner au tableau de bord serait la manquer.
-
-            Le bandeau se retire de lui-même : hors période d'essai, à plus d'un
-            mois de l'échéance, ou pour qui n'a pas `billing.view`.
+            Tant que l'échéance n'est pas imminente, le rappel commercial reste
+            sur le tableau de bord : le répéter sur chaque écran prend trop de
+            place, surtout sur mobile. Dans les trois derniers jours, il redevient
+            global car la suspension prochaine concerne tous les modules.
           */}
-          <TrialBanner organizationId={organizationId} />
+          <TrialBanner
+            organizationId={organizationId}
+            urgentOnly={location.pathname !== ROUTES.dashboard}
+          />
 
           <PwaInstallBanner />
 
