@@ -1039,9 +1039,15 @@ $$;
 -- 5.1 — Élévation de privilèges
 -- -----------------------------------------------------------------------------
 do $$
-declare v_org uuid; v_raised boolean; v_member uuid;
+declare
+  v_org uuid;
+  v_org_b uuid;
+  v_raised boolean;
+  v_member uuid;
+  v_self_member uuid;
 begin
   select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select id into v_org_b from public.organizations where slug = 'reseaux-du-sud';
 
   -- Personne ne modifie son propre rôle, pas même un propriétaire.
   v_raised := false;
@@ -1059,6 +1065,56 @@ begin
   end;
 
   perform pg_temp.ok(v_raised, 'Nul ne peut modifier son propre role');
+
+  -- L'auto-édition du profil n'autorise que le poste et le téléphone. Sans le
+  -- trigger de colonnes, la policy `user_id = auth.uid()` permettrait aussi de
+  -- déplacer sa ligne dans une autre organisation en conservant son rôle.
+  select id into v_self_member
+  from public.organization_members
+  where organization_id = v_org and user_id = pg_temp.uid('a_tech1');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.organization_members
+    set organization_id = v_org_b
+    where id = v_self_member;
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(
+    v_raised
+      and (select organization_id from public.organization_members where id = v_self_member) = v_org,
+    'Un membre ne peut PAS deplacer son appartenance vers une autre organisation');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    update public.organization_members set status = 'suspended' where id = v_self_member;
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(v_raised, 'Un membre ne peut PAS modifier son propre statut');
+
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  update public.organization_members
+  set job_title = 'Technicien fibre', phone = '+33 6 00 00 00 00'
+  where id = v_self_member;
+  reset role;
+
+  perform pg_temp.ok(
+    (select job_title = 'Technicien fibre' and phone = '+33 6 00 00 00 00'
+     from public.organization_members where id = v_self_member),
+    'Un membre peut toujours modifier son poste et son telephone');
 
   -- Seul un propriétaire peut en désigner un autre. Le manager a pourtant un
   -- rôle élevé : c'est bien la nature de l'action qui est refusée, pas le niveau
@@ -1083,6 +1139,51 @@ begin
   perform pg_temp.ok(
     v_raised or (select role from public.organization_members where id = v_member) <> 'owner',
     'Un non-proprietaire ne peut pas creer un proprietaire');
+
+  -- Être membre ne suffit pas pour lire les montants de facturation.
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_tech1');
+    set local role authenticated;
+    perform * from public.organization_billing_summary(v_org);
+    reset role;
+  exception when others then
+    v_raised := true;
+    reset role;
+  end;
+
+  perform pg_temp.ok(v_raised,
+    'Un technicien ne peut PAS lire la synthese de facturation');
+
+  perform pg_temp.login('a_owner');
+  set local role authenticated;
+  perform * from public.organization_billing_summary(v_org);
+  reset role;
+
+  perform pg_temp.ok(true,
+    'Un proprietaire peut toujours lire la synthese de facturation');
+
+  perform pg_temp.ok(
+    not exists (
+      select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.proname in ('ai_quota_status', 'match_ai_document_chunks')
+        and has_function_privilege('authenticated', p.oid, 'execute')
+    ),
+    'Les RPC IA documentaires ne sont pas executables depuis le navigateur');
+
+  perform pg_temp.ok(
+    not exists (
+      select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname in ('app', 'public')
+        and p.proname = 'intervention_worked_seconds'
+        and p.prosecdef
+    ),
+    'Le calcul du temps travaille respecte la RLS');
 end
 $$;
 
