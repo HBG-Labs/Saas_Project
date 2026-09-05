@@ -36,33 +36,34 @@ export function PricingSimulator() {
   ];
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-surface via-surface to-primary/5 shadow-raised overflow-hidden">
-      <CardContent className="p-4 sm:p-5 space-y-4">
-        {/* En-tête compact */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="primary" className="gap-1 text-3xs py-0.5 px-2 uppercase font-bold tracking-wide">
-              <Calculator className="size-3" />
-              Simulateur
+    <Card className="overflow-hidden border-primary/30 bg-surface shadow-overlay">
+      <CardContent className="space-y-8 p-5 sm:p-8">
+        <div className="grid gap-5 border-b border-border pb-7 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <Badge variant="primary" className="mb-3 px-3 py-1 font-bold tracking-wide uppercase">
+              <Calculator className="size-3.5" aria-hidden="true" />
+              Simulateur d’équipe
             </Badge>
-            <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Estimez votre tarif sur-mesure (1 à 100 utilisateurs)
+            <h3 className="text-2xl font-bold text-balance text-foreground sm:text-3xl">
+              Combien de personnes utiliseront REZO360 ?
             </h3>
+            <p className="mt-3 text-base text-muted-foreground">
+              Déplacez le curseur : la formule conseillée et le prix total se mettent à jour.
+            </p>
           </div>
 
-          {/* Raccourcis ultra-compacts */}
-          <div className="flex items-center gap-1 overflow-x-auto py-0.5">
-            <span className="text-3xs text-muted-foreground mr-1 hidden sm:inline">Paliers :</span>
+          <div className="flex flex-wrap gap-2 lg:col-span-5 lg:justify-end" aria-label="Tailles d’équipe fréquentes">
             {presets.map((preset) => (
               <button
                 key={preset.count}
                 type="button"
                 onClick={() => setUsersCount(preset.count)}
-                className={`min-h-touch sm:min-h-0 inline-flex items-center justify-center text-3xs px-2 py-1 rounded-md border font-medium transition-all cursor-pointer ${
+                className={`inline-flex min-h-touch items-center justify-center rounded-lg border px-3 text-sm font-semibold transition-colors ${
                   usersCount === preset.count
-                    ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
-                    : 'bg-surface border-border/60 text-muted-foreground hover:text-foreground hover:bg-surface-hover'
+                    ? 'border-primary bg-primary text-primary-foreground shadow-raised'
+                    : 'border-border bg-surface text-muted-foreground hover:border-primary/50 hover:text-foreground'
                 }`}
+                aria-pressed={usersCount === preset.count}
               >
                 {preset.label}
               </button>
@@ -70,40 +71,35 @@ export function PricingSimulator() {
           </div>
         </div>
 
-        {/* Corps du simulateur — Grille compacte */}
-        <div className="grid gap-4 lg:grid-cols-12 items-center">
-          {/* Curseur et détails */}
-          <div className="lg:col-span-7 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <label htmlFor="compact-team-slider" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <Users className="size-3.5 text-primary" />
-                Nombre d&apos;utilisateurs :
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+          <div className="space-y-5 lg:col-span-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label htmlFor="compact-team-slider" className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <Users className="size-5 text-primary" aria-hidden="true" />
+                Taille de l’équipe
               </label>
 
-              {/* Sélecteur pas à pas */}
-              <div className="flex items-center gap-1 bg-surface-sunken border border-border/80 p-0.5 rounded-lg">
+              <div className="flex w-fit items-center gap-1 rounded-xl border border-border bg-surface-sunken p-1">
                 <button
                   type="button"
-                  onClick={() => setUsersCount((c) => Math.max(1, c - 1))}
+                  onClick={() => setUsersCount((count) => Math.max(1, count - 1))}
                   disabled={usersCount <= 1}
-                  className="size-touch sm:size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-                  aria-label="Diminuer"
+                  className="flex size-touch items-center justify-center rounded-lg bg-surface text-foreground shadow-xs transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Diminuer le nombre d’utilisateurs"
                 >
-                  <Minus className="size-3" />
+                  <Minus className="size-4" aria-hidden="true" />
                 </button>
-
-                <span className="font-mono text-xs font-extrabold text-primary px-2 min-w-[60px] text-center tabular-nums">
-                  {usersCount} {usersCount > 1 ? 'users' : 'user'}
-                </span>
-
+                <output htmlFor="compact-team-slider" className="min-w-28 px-3 text-center font-mono text-lg font-bold text-primary tabular-nums">
+                  {usersCount} {usersCount > 1 ? 'utilisateurs' : 'utilisateur'}
+                </output>
                 <button
                   type="button"
-                  onClick={() => setUsersCount((c) => Math.min(100, c + 1))}
+                  onClick={() => setUsersCount((count) => Math.min(100, count + 1))}
                   disabled={usersCount >= 100}
-                  className="size-touch sm:size-6 rounded bg-surface flex items-center justify-center text-foreground hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
-                  aria-label="Augmenter"
+                  className="flex size-touch items-center justify-center rounded-lg bg-surface text-foreground shadow-xs transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Augmenter le nombre d’utilisateurs"
                 >
-                  <Plus className="size-3" />
+                  <Plus className="size-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -115,60 +111,47 @@ export function PricingSimulator() {
               max="100"
               step="1"
               value={usersCount}
-              onChange={(e) => setUsersCount(parseInt(e.target.value, 10))}
-              className="w-full h-2 bg-surface-sunken rounded-lg appearance-none cursor-pointer accent-primary"
+              onChange={(event) => setUsersCount(parseInt(event.target.value, 10))}
+              className="h-3 w-full cursor-pointer appearance-none rounded-full bg-surface-sunken accent-primary"
             />
-
-            <div className="flex justify-between text-3xs text-muted-foreground font-mono">
-              <span>1 (Free)</span>
-              <span>2 (Starter)</span>
-              <span>5 (Pro)</span>
-              <span>10 (Business)</span>
-              <span>20 (Enterprise)</span>
+            <div className="flex justify-between font-mono text-xs text-muted-foreground" aria-hidden="true">
+              <span>1</span>
+              <span>20</span>
               <span>50</span>
               <span>100</span>
             </div>
 
-            {/* Ligne récapitulative compacte */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-surface-sunken/80 border border-border/60 text-2xs">
-              <span className="font-semibold text-foreground flex items-center gap-1">
-                <CheckCircle2 className="size-3 text-success shrink-0" />
-                Formule conseillée : <strong className="text-primary">{optimalTier.name}</strong> ({optimalTier.includedUsers} inclus)
+            <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary-subtle p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <CheckCircle2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                Formule conseillée : <strong className="text-primary">{optimalTier.name}</strong>
               </span>
-
-              <span className="text-muted-foreground font-mono">
-                {extraUsers > 0 && optimalTier.additionalUserPriceMonthly > 0 ? (
-                  <span>
-                    Base {optimalTier.priceMonthly}€ + {extraUsers} supp. (+{extraCostMonthly}€)
-                  </span>
-                ) : (
-                  <span>Forfait complet (aucun supplément)</span>
-                )}
+              <span className="text-muted-foreground">
+                {extraUsers > 0 && optimalTier.additionalUserPriceMonthly > 0
+                  ? `${extraUsers} siège${extraUsers > 1 ? 's' : ''} supplémentaire${extraUsers > 1 ? 's' : ''} · +${extraCostMonthly} €`
+                  : `${optimalTier.includedUsers} siège${optimalTier.includedUsers > 1 ? 's' : ''} inclus`}
               </span>
             </div>
           </div>
 
-          {/* Résultat et action */}
-          <div className="lg:col-span-5 bg-surface border border-border/80 rounded-xl p-3.5 shadow-xs flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="text-3xs uppercase font-bold tracking-wider text-muted-foreground block">
-                Total estimé
+          <div className="rounded-2xl bg-brand-night p-6 text-white shadow-modal lg:col-span-5 sm:p-8">
+            <span className="text-sm font-semibold tracking-wider text-cyan-100 uppercase">Total mensuel estimé</span>
+            <div className="mt-3 flex items-end gap-2">
+              <span className="font-display text-5xl font-bold tracking-tight tabular-nums">
+                {activePrice} €
               </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-foreground font-mono tabular-nums">
-                  {activePrice === 0 ? '0 €' : `${activePrice} €`}
-                </span>
-                <span className="text-2xs text-muted-foreground font-medium">/ mois</span>
-              </div>
-              <p className="text-3xs text-muted-foreground">
-                Soit <strong className="text-foreground">{costPerUser} €</strong> / user / mois
-              </p>
+              <span className="pb-1 text-base text-blue-100">/ mois</span>
             </div>
-
-            <Button asChild variant="primary" className="font-bold text-xs h-9 px-4 shrink-0 shadow-sm">
+            <p className="mt-3 text-sm text-blue-100">
+              Soit <strong className="text-white">{costPerUser} €</strong> par utilisateur et par mois.
+            </p>
+            <Button
+              asChild
+              className="mt-6 min-h-touch w-full border-signal-lime bg-signal-lime text-brand-night hover:border-white hover:bg-white"
+            >
               <Link to={`${ROUTES.register}?plan=${optimalTier.id}`}>
                 {optimalTier.id === 'free' ? 'Créer un compte' : `Choisir ${optimalTier.name}`}
-                <ArrowRight className="size-3.5 ml-1" />
+                <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
           </div>

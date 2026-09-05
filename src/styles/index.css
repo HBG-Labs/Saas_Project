@@ -41,6 +41,13 @@
     --primary-foreground: #ffffff;
     --primary-subtle: #e4e9fb;
 
+    /* Signaux de marque des surfaces marketing « cockpit opérationnel ». */
+    --brand-night: #0a1b43;
+    --brand-blue: #1b44c8;
+    --signal-cyan: #39cede;
+    --signal-orange: #f97316;
+    --signal-lime: #b9f442;
+
     --accent: #0f62c4;
     --accent-foreground: #ffffff;
     --accent-subtle: #e1ecfa;
@@ -106,6 +113,12 @@
     --primary-foreground: #0b1117;
     --primary-subtle: #1a2540;
 
+    --brand-night: #0a1b43;
+    --brand-blue: #1b44c8;
+    --signal-cyan: #39cede;
+    --signal-orange: #f97316;
+    --signal-lime: #b9f442;
+
     --accent: #6fb0f0;
     --accent-foreground: #0b1117;
     --accent-subtle: #14293d;
@@ -165,6 +178,12 @@
   --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-subtle: var(--primary-subtle);
+
+  --color-brand-night: var(--brand-night);
+  --color-brand-blue: var(--brand-blue);
+  --color-signal-cyan: var(--signal-cyan);
+  --color-signal-orange: var(--signal-orange);
+  --color-signal-lime: var(--signal-lime);
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);

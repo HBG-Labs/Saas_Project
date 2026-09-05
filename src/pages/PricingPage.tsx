@@ -1,19 +1,26 @@
-import { ArrowRight, Check, Minus, Shield, Sparkles, User, Users } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ArrowRight,
+  Check,
+  CreditCard,
+  Headphones,
+  Minus,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { Link } from 'react-router';
 
-import { PageHeader } from '@/components/layout/PageHeader';
 import { PricingRoiCard } from '@/components/pricing/PricingRoiCard';
 import { PricingSimulator } from '@/components/pricing/PricingSimulator';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/ui/Card';
 import { PRICING_PLANS } from '@/config/pricing';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { useOrganizationEntitlements } from '@/features/billing';
 import { useCurrentOrganization } from '@/features/organizations';
+import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const COMPARISON_FEATURES = [
@@ -181,287 +188,288 @@ const COMPARISON_FEATURES = [
 
 export default function PricingPage() {
   useDocumentTitle('Tarifs');
-  const [proModalOpen, setProModalOpen] = useState(false);
-
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
   const { planCode: currentPlanCode } = useOrganizationEntitlements(organizationId);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-10">
-      <div className="space-y-6">
-        <PageHeader
-          title="Une offre claire et transparente pour tous les professionnels"
-          description="Choisissez la formule adaptée à vos besoins. Des offres sans engagement, ajustables selon la taille de votre équipe."
-        />
+    <div className="max-w-full contain-paint overflow-x-hidden pb-16 sm:pb-24">
+      <section className="relative overflow-hidden bg-brand-night py-16 text-white sm:py-20">
+        <div className="absolute -right-20 -top-28 size-80 rounded-full border-[4rem] border-signal-cyan/15" aria-hidden="true" />
+        <div className="absolute -bottom-28 left-[45%] size-72 rounded-full border-[3rem] border-signal-lime/10" aria-hidden="true" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:items-end lg:px-8">
+          <div className="lg:col-span-7">
+            <Badge className="border-white/20 bg-white/10 px-3 py-1 text-cyan-100">
+              Tarifs REZO360
+            </Badge>
+            <h1 className="mt-6 text-4xl leading-[1.04] font-bold tracking-tight text-balance sm:text-6xl">
+              Des tarifs clairs. Le bon niveau dès aujourd’hui.
+            </h1>
+          </div>
+          <div className="lg:col-span-4 lg:col-start-9">
+            <p className="text-lg leading-relaxed text-blue-100">
+              Choisissez selon la taille de votre équipe et les fonctions dont elle a besoin. Le
+              simulateur applique le tarif mensuel réel, sièges supplémentaires compris.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <p className="text-muted-foreground mt-4 text-center text-xs">
-          Facturation mensuelle, sans engagement.{' '}
-          <strong className="text-foreground">Quatorze jours d’essai gratuit</strong> sur toutes
-          les formules payantes (0 € débité aujourd’hui). Au-delà des utilisateurs compris dans la
-          formule, chaque siège supplémentaire coûte 5 € par mois.
-        </p>
+      <div className="mx-auto max-w-7xl space-y-16 px-4 pt-10 sm:px-6 sm:pt-14 lg:px-8">
+        <section aria-labelledby="pricing-simulator-title">
+          <h2 id="pricing-simulator-title" className="sr-only">Simuler le tarif selon la taille de l’équipe</h2>
+          <PricingSimulator />
+        </section>
 
-        {/* Grille des Cartes Tarifaires — 5 Formules */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {PRICING_PLANS.map((tier) => {
-            const displayPrice = tier.priceMonthly;
-            const isCurrentPlan = user != null && tier.id === currentPlanCode;
+        <section aria-labelledby="pricing-plans-title">
+          <div className="max-w-3xl">
+            <span className="font-mono text-sm font-bold tracking-[0.16em] text-primary uppercase">Les formules</span>
+            <h2 id="pricing-plans-title" className="mt-3 text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl">
+              Comparez l’essentiel en un regard.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Les cartes montrent les bénéfices décisifs. Le tableau plus bas conserve le détail complet.
+            </p>
+          </div>
 
-            let targetLink = tier.ctaLink ?? ROUTES.register;
-            let targetText = tier.ctaText;
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {PRICING_PLANS.map((tier) => {
+              const isCurrentPlan = user != null && tier.id === currentPlanCode;
+              const decisiveFeatures = tier.features
+                .filter((feature) => !/^\d+ utilisateurs? inclus/.test(feature))
+                .slice(0, 4);
 
-            if (user != null) {
-              if (isCurrentPlan) {
-                targetText = 'Formule actuelle';
-                targetLink = ROUTES.organizationBilling;
-              } else if (tier.id === 'free') {
-                targetText = 'Accéder à l’application';
-                targetLink = ROUTES.missions;
-              } else {
-                targetText = `Passer à ${tier.name}`;
-                targetLink = ROUTES.organizationBilling;
+              let targetLink = tier.ctaLink ?? ROUTES.register;
+              let targetText = tier.ctaText;
+
+              if (user != null) {
+                if (isCurrentPlan) {
+                  targetText = 'Formule actuelle';
+                  targetLink = ROUTES.organizationBilling;
+                } else if (tier.id === 'free') {
+                  targetText = 'Accéder à l’application';
+                  targetLink = ROUTES.missions;
+                } else {
+                  targetText = `Passer à ${tier.name}`;
+                  targetLink = ROUTES.organizationBilling;
+                }
               }
-            }
 
-            return (
-              <Card
-                key={tier.id}
-                className={`relative flex flex-col justify-between transition-all duration-200 ${
-                  tier.popular
-                    ? 'border-primary/60 shadow-modal bg-surface ring-2 ring-primary/20'
-                    : 'hover:border-border-strong bg-surface'
-                }`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <Badge
-                      className="gap-1 bg-surface border-2 border-primary text-primary py-0.5 px-3.5 text-2xs font-extrabold uppercase tracking-wide shadow-xs"
-                    >
-                      <Sparkles className="size-3 text-primary" />
+              return (
+                <Card
+                  key={tier.id}
+                  className={cn(
+                    'relative flex min-h-full flex-col overflow-visible p-5 transition-[transform,box-shadow,border-color] duration-200',
+                    tier.popular
+                      ? 'border-brand-night bg-brand-night text-white shadow-modal xl:-translate-y-4'
+                      : 'bg-surface hover:border-primary/40 hover:shadow-raised',
+                  )}
+                >
+                  {tier.popular ? (
+                    <span className="absolute -top-3 left-5 inline-flex items-center gap-1.5 rounded-full bg-signal-lime px-3 py-1 text-xs font-bold text-brand-night shadow-raised">
+                      <Sparkles className="size-3" aria-hidden="true" />
                       Recommandé
-                    </Badge>
-                  </div>
-                )}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      {tier.badge}
+                    </span>
+                  )}
 
-                <div>
-                  <CardHeader className="pt-6">
-                    {!tier.popular && (
-                      <Badge variant="neutral" className="w-fit text-2xs mb-2">
-                        {tier.badge}
-                      </Badge>
-                    )}
-                    <CardTitle className="text-lg font-bold">{tier.name}</CardTitle>
-                    <p className="text-muted-foreground text-xs mt-1 min-h-[32px]">{tier.tagline}</p>
+                  <h3 className="mt-3 text-xl font-bold">{tier.name}</h3>
+                  <p className={cn('mt-2 min-h-10 text-sm leading-snug', tier.popular ? 'text-blue-100' : 'text-muted-foreground')}>
+                    {tier.tagline}
+                  </p>
 
-                    <div className="mt-3 border-t border-border/40 pt-3">
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-mono text-3xl font-extrabold text-foreground tabular-nums">
-                          {displayPrice === 0 ? '0 €' : `${displayPrice % 1 === 0 ? displayPrice : displayPrice.toFixed(2)} €`}
+                  <div className={cn('mt-5 border-t pt-4', tier.popular ? 'border-white/20' : 'border-border')}>
+                    <div className="flex items-end gap-1.5">
+                      <span className="font-display text-4xl font-bold tracking-tight tabular-nums">
+                        {tier.priceMonthly} €
+                      </span>
+                      {tier.priceMonthly > 0 ? (
+                        <span className={cn('pb-1 text-sm', tier.popular ? 'text-blue-100' : 'text-muted-foreground')}>
+                          / mois
                         </span>
-                        {displayPrice > 0 && <span className="text-muted-foreground text-xs font-medium">/ mois</span>}
-                      </div>
-                      <p className="text-subtle-foreground text-2xs mt-1">
-                        {tier.id === 'free' ? 'Accès gratuit permanent' : 'Facturé mensuellement'}
+                      ) : null}
+                    </div>
+                    <div className={cn('mt-4 rounded-xl border p-3', tier.popular ? 'border-white/15 bg-white/10' : 'border-border bg-surface-sunken')}>
+                      <p className="flex items-center gap-2 text-sm font-semibold">
+                        <Users className={cn('size-4', tier.popular ? 'text-signal-cyan' : 'text-primary')} aria-hidden="true" />
+                        {tier.includedUsers} {tier.includedUsers > 1 ? 'utilisateurs inclus' : 'utilisateur inclus'}
+                      </p>
+                      <p className={cn('mt-1 text-xs', tier.popular ? 'text-blue-100' : 'text-muted-foreground')}>
+                        {tier.additionalUserPriceMonthly > 0
+                          ? `+${tier.additionalUserPriceMonthly} € par siège supplémentaire`
+                          : 'Un compte, sans dépassement'}
                       </p>
                     </div>
+                  </div>
 
-                    {/* Quota utilisateurs & Sièges supplémentaires */}
-                    <div className="mt-3.5 p-2.5 rounded-xl bg-surface-hover/60 border border-border/60 text-2xs space-y-1">
-                      <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                        {tier.includedUsers === 1 ? <User className="size-3.5 text-primary" /> : <Users className="size-3.5 text-primary" />}
-                        <span>{tier.includedUsers} {tier.includedUsers > 1 ? 'utilisateurs inclus' : 'utilisateur inclus'}</span>
-                      </div>
-                      {tier.additionalUserPriceMonthly > 0 ? (
-                        <p className="text-muted-foreground font-medium">
-                          +5 € / utilisateur supp. / mois
-                        </p>
-                      ) : (
-                        <p className="text-muted-foreground">
-                          Monocompte (Max 1)
-                        </p>
-                      )}
-                    </div>
-                  </CardHeader>
+                  <ul className="mt-5 flex-1 space-y-3">
+                    {decisiveFeatures.map((feature) => (
+                      <li
+                        key={feature}
+                        className={cn(
+                          'flex items-start gap-2 text-sm leading-snug',
+                          tier.popular ? 'text-blue-50' : 'text-muted-foreground',
+                        )}
+                      >
+                        <Check
+                          className={cn('mt-0.5 size-4 shrink-0', tier.popular ? 'text-signal-lime' : 'text-primary')}
+                          aria-hidden="true"
+                        />
+                        <span>{feature.replace(/^❌\s*/, '')}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                  <CardContent className="mt-1 space-y-2.5">
-                    <p className="text-subtle-foreground text-3xs font-bold uppercase tracking-wider">
-                      Inclus dans cette offre :
-                    </p>
-                    <ul className="space-y-2 text-2xs">
-                      {tier.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-1.5 text-foreground leading-tight">
-                          <Check className={`size-3.5 shrink-0 mt-0.5 ${feat.startsWith('❌') ? 'text-error' : 'text-success'}`} />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </div>
-
-                <div className="p-5 pt-0">
-                  {/*
-                    La formule en cours passe par la VARIANTE `outline`, et non
-                    par un fond réécrit à la main.
-
-                    La version précédente gardait `variant="primary"` — donc le
-                    texte blanc de cette variante — tout en repeignant le fond
-                    en `bg-surface-sunken`, un gris clair. Résultat mesuré :
-                    blanc sur #E6ECF1, soit 1,19:1. Le libellé « Formule
-                    actuelle » était illisible pour tout client connecté.
-                  */}
                   <Button
                     asChild={!isCurrentPlan}
                     disabled={isCurrentPlan}
-                    variant={isCurrentPlan ? 'outline' : tier.popular ? 'primary' : tier.ctaVariant}
-                    className={`h-9 w-full text-xs font-bold ${
-                      isCurrentPlan ? 'cursor-default' : 'cursor-pointer'
-                    }`}
+                    variant={isCurrentPlan ? 'outline' : tier.popular ? 'primary' : 'outline'}
+                    className={cn(
+                      'mt-7 min-h-touch w-full font-bold',
+                      tier.popular && !isCurrentPlan &&
+                        'border-signal-lime bg-signal-lime text-brand-night hover:border-white hover:bg-white',
+                      tier.popular && isCurrentPlan &&
+                        'cursor-default border-white/30 bg-white/10 text-white opacity-100',
+                      isCurrentPlan && !tier.popular && 'cursor-default',
+                    )}
                   >
                     {isCurrentPlan ? (
                       <span>{targetText}</span>
                     ) : (
                       <Link to={targetLink}>
                         {targetText}
-                        <ArrowRight className="size-3.5 ml-1 inline" />
+                        <ArrowRight className="size-4" aria-hidden="true" />
                       </Link>
                     )}
                   </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Suggestion 1 : Simulateur interactif de taille d'équipe */}
-      <section>
-        <PricingSimulator />
-      </section>
-
-      {/* Suggestion 2 : Calculateur et présentation du ROI Métier */}
-      <section>
-        <PricingRoiCard />
-      </section>
-
-      {/* Tableau comparatif détaillé */}
-      <section>
-        <div className="text-center mb-8">
-          <h2 className="text-foreground text-2xl font-bold tracking-tight">Comparatif détaillé des 5 formules</h2>
-          <p className="text-muted-foreground text-xs mt-1">Visualisez l&apos;ensemble des prestations incluses et les fonctionnalités disponibles.</p>
-        </div>
-
-        <div className="bg-surface border-border/80 shadow-raised overflow-hidden rounded-2xl border">
-          <div className="scroll-x">
-            <table className="w-full text-left text-xs min-w-[700px]">
-              <thead className="bg-surface-sunken border-b border-border/60">
-                <tr>
-                  <th scope="col" className="p-3.5 font-semibold text-foreground">Fonctionnalité</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-foreground w-[15%]">Free</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Starter</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-primary font-bold w-[15%]">Pro ⭐</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Business</th>
-                  <th scope="col" className="p-3.5 font-semibold text-center text-primary w-[15%]">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {COMPARISON_FEATURES.map((row) => (
-                  <tr key={row.name} className="hover:bg-surface-hover/50 transition-colors">
-                    <td className="p-3.5 font-medium text-foreground">{row.name}</td>
-
-                    <td className="p-3.5 text-center text-muted-foreground">
-                      {typeof row.free === 'boolean' ? (
-                        row.free ? <Check className="size-4 text-success inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
-                      ) : (
-                        <span className="font-mono text-2xs">{row.free}</span>
-                      )}
-                    </td>
-
-                    <td className="p-3.5 text-center text-foreground">
-                      {typeof row.starter === 'boolean' ? (
-                        row.starter ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
-                      ) : (
-                        <span className="font-mono text-2xs text-primary font-semibold">{row.starter}</span>
-                      )}
-                    </td>
-
-                    <td className="p-3.5 text-center text-foreground bg-primary/5 font-semibold">
-                      {typeof row.pro === 'boolean' ? (
-                        row.pro ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
-                      ) : (
-                        <span className="font-mono text-2xs text-primary font-bold">{row.pro}</span>
-                      )}
-                    </td>
-
-                    <td className="p-3.5 text-center text-foreground font-semibold">
-                      {typeof row.business === 'boolean' ? (
-                        row.business ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
-                      ) : (
-                        <span className="font-mono text-2xs text-primary">{row.business}</span>
-                      )}
-                    </td>
-
-                    <td className="p-3.5 text-center text-foreground font-semibold">
-                      {typeof row.enterprise === 'boolean' ? (
-                        row.enterprise ? <Check className="size-4 text-primary inline" /> : <Minus className="size-4 text-subtle-foreground/50 inline" />
-                      ) : (
-                        <span className="font-mono text-2xs text-primary">{row.enterprise}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Garantie de transparence */}
-      <div className="bg-surface-sunken/60 border-border/60 flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 sm:flex-row sm:p-8">
-        <div className="flex items-center gap-3">
-          <Shield className="size-6 text-primary shrink-0" />
-          <div>
-            <h3 className="text-foreground text-sm font-semibold">Paiements sécurisés & Sans engagement</h3>
-            <p className="text-muted-foreground text-xs">
-              Abonnez-vous en toute sérénité. Toutes nos formules sont sans engagement et résiliables à tout moment en 1 clic.
+        <section aria-label="Garanties tarifaires" className="grid overflow-hidden rounded-2xl border border-border bg-surface shadow-raised sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: '14 jours d’essai', detail: 'Sur les formules payantes', icon: Sparkles },
+            { label: '5 € par siège', detail: 'Au-delà des sièges inclus', icon: Users },
+            { label: 'Sans engagement', detail: 'Facturation mensuelle', icon: ShieldCheck },
+            { label: 'Support prioritaire', detail: 'À partir de la formule Pro', icon: Headphones },
+          ].map(({ label, detail, icon: Icon }) => (
+            <div key={label} className="border-border p-5 sm:[&:nth-child(even)]:border-l lg:[&:not(:first-child)]:border-l">
+              <Icon className="size-5 text-primary" aria-hidden="true" />
+              <p className="mt-3 text-sm font-bold text-foreground">{label}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+            </div>
+          ))}
+        </section>
+
+        <section aria-labelledby="pricing-roi-title">
+          <h2 id="pricing-roi-title" className="sr-only">Rentabilité opérationnelle</h2>
+          <PricingRoiCard />
+        </section>
+
+        <section aria-labelledby="pricing-comparison-title">
+          <div className="max-w-3xl">
+            <span className="font-mono text-sm font-bold tracking-[0.16em] text-primary uppercase">Comparatif détaillé</span>
+            <h2 id="pricing-comparison-title" className="mt-3 text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl">
+              Toutes les fonctions, formule par formule.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Sur mobile, faites défiler le tableau horizontalement sans déplacer le reste de la page.
             </p>
           </div>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={ROUTES.faq}>Consulter la FAQ Tarifs</Link>
-        </Button>
-      </div>
 
-      {/* Modale d'information Formule Pro */}
-      <Modal
-        open={proModalOpen}
-        onOpenChange={setProModalOpen}
-        title="Offre Pro — Formule recommandée"
-        description="Le plan recommandé et cœur de cible de REZO360 pour artisans et équipes."
-      >
-        <div className="space-y-4 text-xs text-muted-foreground">
-          <p>
-            La formule Pro (39 € / mois) inclut 5 utilisateurs, la gestion complète des missions et interventions terrain, le suivi du matériel et des véhicules, ainsi que l&apos;exportation des rapports d&apos;intervention.
-          </p>
-          <div className="bg-surface-sunken rounded-lg p-3 border border-border/40 text-foreground font-medium">
-            💡 +5 € / utilisateur supplémentaire par mois au-delà des 5 utilisateurs inclus.
+          <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-surface shadow-raised">
+            {/* Le conteneur de défilement doit pouvoir recevoir le focus au clavier. */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <div className="scroll-x" role="region" aria-label="Comparaison des formules" tabIndex={0}>
+              <table className="min-w-[840px] w-full text-left text-sm">
+                <thead className="border-b border-border bg-surface-sunken">
+                  <tr>
+                    <th scope="col" className="min-w-60 bg-surface-sunken p-4 font-bold text-foreground">
+                      Fonctionnalité
+                    </th>
+                    {PRICING_PLANS.map((plan) => (
+                      <th
+                        key={plan.id}
+                        scope="col"
+                        className={cn(
+                          'w-[15%] p-4 text-center font-bold text-foreground',
+                          plan.id === 'pro' && 'bg-primary/10 text-primary',
+                        )}
+                      >
+                        {plan.name}
+                        {plan.id === 'pro' ? <span className="sr-only">, formule recommandée</span> : null}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {COMPARISON_FEATURES.map((row) => (
+                    <tr key={row.name} className="hover:bg-surface-hover/50">
+                      <th scope="row" className="bg-surface p-4 font-medium text-foreground">
+                        {row.name}
+                      </th>
+                      <ComparisonCell value={row.free} />
+                      <ComparisonCell value={row.starter} />
+                      <ComparisonCell value={row.pro} featured />
+                      <ComparisonCell value={row.business} />
+                      <ComparisonCell value={row.enterprise} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setProModalOpen(false)}>
-              Fermer
-            </Button>
-            <Button asChild size="sm">
-              <Link
-                to={user != null ? ROUTES.organizationBilling : `${ROUTES.register}?plan=pro`}
-                onClick={() => setProModalOpen(false)}
-              >
-                {user != null ? 'Gérer mon abonnement' : 'Choisir le plan Pro'}
+        </section>
+
+        <section className="relative overflow-hidden rounded-3xl bg-brand-blue px-6 py-12 text-white shadow-modal sm:px-12 sm:py-16">
+          <div className="absolute -right-14 -top-16 size-60 rounded-full border-[2.5rem] border-signal-cyan/20" aria-hidden="true" />
+          <div className="relative max-w-3xl">
+            <span className="font-mono text-sm font-bold tracking-[0.16em] text-signal-lime uppercase">Une trajectoire simple</span>
+            <h2 className="mt-4 text-4xl leading-tight font-bold text-balance sm:text-5xl">
+              Commencez petit. Évoluez sans changer d’outil.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-blue-100">
+              Créez votre compte, choisissez la formule adaptée et ajustez-la quand votre équipe évolue.
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="mt-8 min-h-touch border-signal-lime bg-signal-lime px-6 text-brand-night hover:border-white hover:bg-white"
+            >
+              <Link to={ROUTES.register}>
+                Commencer maintenant
+                <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
+            <p className="mt-5 flex items-center gap-2 text-sm text-blue-50">
+              <CreditCard className="size-4 text-signal-cyan" aria-hidden="true" />
+              Aucun débit aujourd’hui pour l’essai d’une formule payante.
+            </p>
           </div>
-        </div>
-      </Modal>
+        </section>
+      </div>
     </div>
+  );
+}
+
+function ComparisonCell({ value, featured = false }: { value: boolean | string; featured?: boolean }) {
+  return (
+    <td className={cn('p-4 text-center text-muted-foreground', featured && 'bg-primary/5 font-semibold text-foreground')}>
+      {typeof value === 'boolean' ? (
+        value ? (
+          <Check className="inline size-5 text-primary" aria-label="Inclus" />
+        ) : (
+          <Minus className="inline size-5 text-subtle-foreground" aria-label="Non inclus" />
+        )
+      ) : (
+        <span className="text-xs leading-snug font-medium">{value}</span>
+      )}
+    </td>
   );
 }

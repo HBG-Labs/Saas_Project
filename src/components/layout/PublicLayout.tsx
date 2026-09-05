@@ -86,7 +86,7 @@ export function PublicLayout() {
         )}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
-          <Logo className="shrink-0 text-base sm:text-lg" />
+          <Logo className="min-h-touch shrink-0 text-base sm:text-lg" />
 
           <nav aria-label="Navigation du site" className="hidden lg:block">
             <ul className="flex items-center gap-1">

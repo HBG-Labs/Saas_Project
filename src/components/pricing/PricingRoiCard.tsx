@@ -1,90 +1,62 @@
-import { CheckCircle, Clock, FileCheck2, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { ClipboardCheck, Clock, FileCheck2, Route, Sparkles } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 
+const ROI_LEVERS = [
+  {
+    icon: Clock,
+    title: 'Temps administratif',
+    detail: 'Regroupez missions, notes et comptes rendus au même endroit pour limiter la ressaisie.',
+  },
+  {
+    icon: FileCheck2,
+    title: 'Délai de transmission',
+    detail: 'Le compte rendu suit l’intervention jusqu’au contrôle et à la validation.',
+  },
+  {
+    icon: Route,
+    title: 'Visibilité opérationnelle',
+    detail: 'Le tableau de bord relie priorités, équipes et missions en cours.',
+  },
+] as const;
+
 export function PricingRoiCard() {
-  const stats = [
-    {
-      icon: Clock,
-      value: '~3h / sem.',
-      label: 'Temps administratif gagné',
-      detail: 'Par technicien grâce aux formulaires et fiches préremplies sur site.',
-    },
-    {
-      icon: TrendingUp,
-      value: '450 € / mois',
-      label: 'Économie moyenne estimée',
-      detail: 'En heures de bureau éliminées et devis envoyés 2x plus vite.',
-    },
-    {
-      icon: Zap,
-      value: 'Dès le 1ᵉʳ devis',
-      label: 'Seuil de rentabilité',
-      detail: 'Amorti dès la première intervention facturée sans litige.',
-    },
-  ];
-
   return (
-    <Card className="border-border/80 bg-surface-sunken/50 shadow-xs overflow-hidden">
-      <CardContent className="p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="primary" className="gap-1 text-3xs uppercase font-bold tracking-wide">
-              <Sparkles className="size-3" />
-              Rentabilité
-            </Badge>
-            <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Un investissement 100% amorti dès le premier mois
-            </h3>
-          </div>
-          <span className="text-3xs font-semibold text-success">
-            Zéro double saisie • Rapports certifiés
-          </span>
+    <Card className="overflow-hidden border-border bg-surface shadow-raised">
+      <CardContent className="grid gap-8 p-5 sm:p-8 lg:grid-cols-12 lg:items-center">
+        <div className="lg:col-span-4">
+          <Badge variant="primary" className="mb-4 px-3 py-1 font-bold tracking-wide uppercase">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Retour opérationnel
+          </Badge>
+          <h3 className="text-2xl font-bold text-balance text-foreground sm:text-3xl">
+            Mesurez la valeur sur votre propre activité.
+          </h3>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Le gain réel dépend de votre volume de missions, de votre organisation et du temps que
+            vous consacrez aujourd’hui aux tâches de suivi.
+          </p>
         </div>
 
-        {/* 3 métriques compactes */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="bg-surface rounded-xl p-3 border border-border/60 shadow-2xs space-y-1.5 flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                    <Icon className="size-3.5" />
-                  </div>
-                  <span className="font-mono text-base font-extrabold text-foreground tabular-nums">
-                    {stat.value}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">{stat.label}</h4>
-                  <p className="text-3xs text-muted-foreground mt-0.5 leading-snug">
-                    {stat.detail}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid gap-4 sm:grid-cols-3 lg:col-span-8">
+          {ROI_LEVERS.map(({ icon: Icon, title, detail }) => (
+            <div key={title} className="rounded-2xl border border-border bg-surface-sunken p-5">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary-subtle text-primary">
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <h4 className="mt-4 text-base font-bold text-foreground">{title}</h4>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Bénéfices en 1 ligne */}
-        <div className="grid gap-2 sm:grid-cols-2 pt-1 border-t border-border/40 text-2xs">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <CheckCircle className="size-3.5 text-success shrink-0" />
-            <span>
-              <strong className="text-foreground">Conformité UTE & ITU-T :</strong> Évitez les erreurs de dimensionnement.
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <FileCheck2 className="size-3.5 text-primary shrink-0" />
-            <span>
-              <strong className="text-foreground">Signature client sur mobile :</strong> Facturation immédiate le jour même.
-            </span>
-          </div>
+        <div className="flex items-start gap-3 border-t border-border pt-6 lg:col-span-12">
+          <ClipboardCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Le simulateur chiffre uniquement l’abonnement. Il ne présente pas d’économie théorique :
+            vous pouvez comparer son montant à vos propres coûts de coordination et de traitement.
+          </p>
         </div>
       </CardContent>
     </Card>

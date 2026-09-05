@@ -26,7 +26,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           type="button"
           aria-label="Changer de thème"
           className={cn(
-            'text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-8 sm:size-9 items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0',
+            'text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-touch items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0',
             className,
           )}
         >
