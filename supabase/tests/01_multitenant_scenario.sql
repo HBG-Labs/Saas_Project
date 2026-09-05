@@ -744,22 +744,30 @@ end
 $$;
 
 -- =============================================================================
--- 3.4 — L'abonnement conditionne réellement l'accès
+-- 3.4 — Le retour à Gratuit conserve le cœur terrain, pas le pilotage
 -- =============================================================================
 do $$
-declare v_org uuid; v_visible int;
+declare v_org uuid; v_missions int; v_missions_attendues int; v_equipes int;
 begin
   select id into v_org from public.organizations where slug = 'fibre-atlantique';
 
   update public.subscriptions set status = 'canceled' where organization_id = v_org;
+  select count(*) into v_missions_attendues
+  from public.missions
+  where organization_id = v_org;
 
   perform pg_temp.login('a_manager');
   set local role authenticated;
-  select count(*) into v_visible from public.missions;
+  select count(*) into v_missions from public.missions;
+  select count(*) into v_equipes from public.teams;
   reset role;
 
-  perform pg_temp.ok(v_visible = 0,
-    'Abonnement resilie : le module professionnel se ferme cote serveur');
+  -- Depuis la grille 20260902100000, Gratuit donne un aperçu plafonné du
+  -- terrain (missions/interventions), tandis que les équipes restent payantes.
+  perform pg_temp.ok(v_missions = v_missions_attendues and v_missions > 0,
+    'Retour a Gratuit : les missions existantes restent accessibles');
+  perform pg_temp.ok(v_equipes = 0,
+    'Retour a Gratuit : le pilotage des equipes se ferme cote serveur');
 
   update public.subscriptions set status = 'active' where organization_id = v_org;
 end

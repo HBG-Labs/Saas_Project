@@ -633,6 +633,17 @@ insert into public.organizations (slug, name, created_by, industry)
 values ('essai-resil', 'Essai Resiliation', pg_temp.uid('patron_a'), 'hvac');
 reset role;
 
+-- Une organisation neuve est désormais en Gratuit. Cette fixture représente
+-- un abonnement non-Stripe encore en cours, seul type que la RPC locale de
+-- résiliation est autorisée à gérer.
+insert into public.subscriptions
+  (organization_id, plan_code, status, current_period_start,
+   current_period_end, trial_ends_at)
+select id, 'business', 'trialing', now(),
+       now() + interval '30 days', now() + interval '30 days'
+from public.organizations
+where slug = 'essai-resil';
+
 do $$
 declare
   v_org  uuid;
@@ -672,8 +683,10 @@ begin
 
   perform pg_temp.ok(app.org_effective_plan(v_org) = 'free',
     'Passee l''echeance, l''organisation retombe sur Free');
-  perform pg_temp.ok(not app.org_has_feature(v_org, 'missions'),
-    'Et perd alors les modules professionnels');
+  perform pg_temp.ok(app.org_has_feature(v_org, 'missions'),
+    'Le coeur terrain plafonne reste disponible en Gratuit');
+  perform pg_temp.ok(not app.org_has_feature(v_org, 'teams'),
+    'Le pilotage des equipes reste reserve aux offres payantes');
 
   -- ---- on ne reprend pas un abonnement deja eteint
   perform pg_temp.refuses(
@@ -763,7 +776,8 @@ begin
   perform pg_temp.ok(app.org_effective_plan(v_org) = 'free',
     'L''organisation est bien retombee sur Gratuit');
 
-  -- CE QUI RESTE. Gratuit n'est pas un mur : c'est l'offre calculatrices.
+  -- CE QUI RESTE. Gratuit n'est pas un mur : il conserve les outils et un
+  -- coeur terrain plafonne.
   perform pg_temp.ok(app.org_has_feature(v_org, 'catalog_access'),
     'Gratuit conserve l''acces au catalogue d''outils');
   perform pg_temp.ok(app.org_feature_limit(v_org, 'favorites') = 3,
@@ -771,9 +785,12 @@ begin
   perform pg_temp.ok(app.org_feature_limit(v_org, 'calculation_history') = 10,
     'Gratuit conserve dix calculs d''historique');
 
-  -- CE QUI SE FERME, et c'est voulu.
-  perform pg_temp.ok(not app.org_has_feature(v_org, 'missions'),
-    'Les modules professionnels sont bien fermes');
+  perform pg_temp.ok(app.org_has_feature(v_org, 'missions'),
+    'Gratuit conserve les missions dans la limite de son quota');
+
+  -- CE QUI SE FERME, et c'est voulu : le pilotage avance reste payant.
+  perform pg_temp.ok(not app.org_has_feature(v_org, 'teams'),
+    'La gestion des equipes est bien fermee');
 
   -- RIEN N'EST SUPPRIME : c'est ce que promet la fenetre de confirmation, et
   -- une promesse d'interface qui n'est pas verifiee en base n'engage personne.
@@ -811,11 +828,10 @@ begin
     'Le proprietaire lit sa formule Gratuite depuis l''ecran de facturation');
   perform pg_temp.ok(v_total = 0, 'Aucun montant ne lui est reclame');
 
-  -- Et il ne voit plus ses missions : le cloisonnement par formule s'applique
-  -- a la lecture, pas seulement au menu.
+  -- La mission existante reste visible dans le coeur terrain de Gratuit.
   perform pg_temp.ok(
-    (select count(*) from public.missions m where m.organization_id = v_org) = 0,
-    'Les missions lui sont invisibles, sans avoir ete effacees');
+    (select count(*) from public.missions m where m.organization_id = v_org) = 1,
+    'La mission reste visible apres le retour a Gratuit');
 end
 $$;
 reset role;
@@ -836,12 +852,15 @@ insert into public.organizations (slug, name, created_by, industry)
 values ('essai-stripe', 'Essai Paye', pg_temp.uid('patron_a'), 'hvac');
 reset role;
 
--- L'essai d'origine est remplace par celui que Stripe porte : meme echeance,
--- mais desormais adosse a une carte.
-update public.subscriptions
-   set plan_code = 'pro', status = 'trialing',
-       provider = 'stripe', provider_subscription_id = 'sub_essai_paye'
- where organization_id in (select id from public.organizations where slug = 'essai-stripe');
+-- Depuis 20260830100000, il n'existe plus d'essai d'origine sans carte : le
+-- webhook Stripe crée directement l'abonnement d'essai qui porte les droits.
+insert into public.subscriptions
+  (organization_id, plan_code, status, current_period_start,
+   current_period_end, trial_ends_at, provider, provider_subscription_id)
+select id, 'pro', 'trialing', now(), now() + interval '14 days',
+       now() + interval '14 days', 'stripe', 'sub_essai_paye'
+from public.organizations
+where slug = 'essai-stripe';
 
 do $$
 declare v_org uuid;
@@ -870,27 +889,34 @@ begin
 end
 $$;
 
--- Contre-exemple : l'essai SANS carte de la creation, qui lui doit rester
--- resiliable ici. Sans cette assertion, la precedente ne prouverait rien.
+-- Contre-exemple : un abonnement géré manuellement, sans identifiant Stripe,
+-- reste résiliable ici. Ce n'est pas un essai automatique à la création : ce
+-- modèle a été supprimé par 20260830100000.
 select pg_temp.login('patron_a');
 set local role authenticated;
 insert into public.organizations (slug, name, created_by, industry)
-values ('essai-sans-carte', 'Essai Sans Carte', pg_temp.uid('patron_a'), 'hvac');
+values ('abonnement-manuel', 'Abonnement Manuel', pg_temp.uid('patron_a'), 'hvac');
 reset role;
+
+insert into public.subscriptions
+  (organization_id, plan_code, status, current_period_start, current_period_end)
+select id, 'starter', 'active', now(), now() + interval '30 days'
+from public.organizations
+where slug = 'abonnement-manuel';
 
 do $$
 declare v_org uuid;
 begin
-  select id into v_org from public.organizations where slug = 'essai-sans-carte';
+  select id into v_org from public.organizations where slug = 'abonnement-manuel';
 
   perform pg_temp.ok(not app.org_is_billed(v_org),
-    'Un essai ouvert a la creation n''est adosse a aucune carte');
+    'Un abonnement manuel n''est pas adosse a Stripe');
 
   perform pg_temp.login('patron_a');
   perform public.cancel_organization_subscription(v_org);
   perform pg_temp.ok(
     (select cancel_at_period_end from public.subscriptions where organization_id = v_org),
-    'Et il se resilie, lui, sans passer par Stripe');
+    'Il se resilie sans passer par le portail Stripe');
 end
 $$;
 

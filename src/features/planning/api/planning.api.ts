@@ -140,9 +140,10 @@ export async function createLeaveRequest(
 /**
  * Demander un changement de statut.
  *
- * `approved` et `rejected` échoueront si l'appelant n'a pas `leave.approve`, ou
- * s'il s'agit de ses propres congés — la séparation des pouvoirs est appliquée
- * par le trigger, comme pour les comptes rendus d'intervention.
+ * `approved` et `rejected` échoueront si l'appelant n'a pas `leave.approve`.
+ * Hors propriétaire, statuer sur ses propres congés reste interdit ; le
+ * propriétaire constitue l'exception prévue pour les petites entreprises.
+ * Cette règle est appliquée par le trigger, comme pour les comptes rendus.
  */
 export async function setLeaveStatus(
   leaveId: string,

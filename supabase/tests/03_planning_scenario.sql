@@ -11,11 +11,11 @@
 -- CE QUE CE FICHIER PROTÈGE EN PARTICULIER
 --
 -- Deux règles de cette architecture ne vivent PAS dans une policy, et ne
--- peuvent donc pas y vivre : « on ne statue pas sur ses propres congés » et
--- « une demande décidée est figée » portent sur une TRANSITION, pas sur un
--- état. Une policy raisonne par ligne ; ces règles comparent l'avant et
--- l'après. Elles sont dans `app.enforce_leave_decision`, et rien d'autre que ce
--- fichier ne les vérifie.
+-- peuvent donc pas y vivre : « hors propriétaire, on ne statue pas sur ses
+-- propres congés » et « hors propriétaire, une demande décidée est figée »
+-- portent sur une TRANSITION, pas sur un état. Une policy raisonne par ligne ;
+-- ces règles comparent l'avant et l'après. Elles sont dans
+-- `app.enforce_leave_decision`, et rien d'autre que ce fichier ne les vérifie.
 --
 -- COMMENT L'EXÉCUTER
 --
@@ -127,6 +127,15 @@ insert into public.organizations (slug, name, created_by, industry)
 values ('essai-voisin', 'Essai Voisin', pg_temp.uid('etranger'), 'landscaping');
 reset role;
 
+-- Depuis 20260830100000, une organisation neuve démarre en Gratuit et aucun
+-- essai n'est ouvert sans Stripe. Le planning est une capacité Business : ce
+-- scénario l'attribue explicitement, comme le ferait le webhook en production.
+insert into public.subscriptions
+  (organization_id, plan_code, status, current_period_start, current_period_end)
+select id, 'business', 'active', now(), now() + interval '30 days'
+from public.organizations
+where slug = 'essai-planning';
+
 -- Le responsable et le poseur sont ajoutés en tant que FIXTURE, hors session :
 -- passer par l'invitation exercerait la messagerie, qui n'est pas le sujet ici.
 insert into public.organization_members (organization_id, user_id, role)
@@ -214,14 +223,13 @@ $$;
 
 reset role;
 
--- Le patron dépose une demande POUR LUI, puis tente de la valider lui-même.
--- Il a pourtant `leave.approve` : c'est la séparation des pouvoirs qui
--- l'arrête, pas le manque de droit.
+-- Depuis 20260820120000, le propriétaire peut statuer sur ses propres congés :
+-- dans une petite entreprise, il n'existe pas forcément de valideur distinct.
 select pg_temp.login('patron');
 set local role authenticated;
 
 do $$
-declare v_org uuid; v_moi uuid; v_leave uuid;
+declare v_org uuid; v_moi uuid; v_leave uuid; v_status public.leave_status; v_by uuid;
 begin
   select id into v_org from public.organizations where slug = 'essai-planning';
   v_moi := pg_temp.member('essai-planning', 'patron');
@@ -231,10 +239,16 @@ begin
   values (v_org, v_moi, 'rtt', '2026-11-02', '2026-11-02', 1)
   returning id into v_leave;
 
-  perform pg_temp.refuses(
-    format($sql$ update public.leave_requests set status = 'approved' where id = %L $sql$, v_leave),
-    'Meme un proprietaire ne valide pas ses propres conges'
-  );
+  update public.leave_requests set status = 'approved' where id = v_leave;
+
+  select status, reviewed_by into v_status, v_by
+  from public.leave_requests
+  where id = v_leave;
+
+  perform pg_temp.ok(v_status = 'approved',
+    'Le proprietaire peut valider ses propres conges');
+  perform pg_temp.ok(v_by = pg_temp.uid('patron'),
+    'Le serveur signe aussi la decision du proprietaire');
 end
 $$;
 
