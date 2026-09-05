@@ -40,7 +40,6 @@ export function EmptyState({
           <span className="bg-surface-raised border-primary/20 text-primary relative flex size-12 items-center justify-center rounded-2xl border shadow-sm">
             <Icon className="size-7" strokeWidth={1.7} />
           </span>
-          <span className="bg-signal-cyan absolute right-1.5 top-3 size-2 rounded-full ring-4 ring-surface" />
         </div>
       ) : null}
 
