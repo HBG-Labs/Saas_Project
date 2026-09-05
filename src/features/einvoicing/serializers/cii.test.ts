@@ -33,6 +33,10 @@ describe('CII pour Factur-X', () => {
     expect(xml).toContain('<ram:URIID schemeID="0225">123456789</ram:URIID>');
     expect(xml).toContain('<ram:URIID schemeID="0225">987654321</ram:URIID>');
     expect(xml).toContain('Client &amp; Associés');
+    expect(xml).toContain('<ram:SubjectCode>PMT</ram:SubjectCode>');
+    expect(xml).toContain('<ram:SubjectCode>PMD</ram:SubjectCode>');
+    expect(xml).toContain('<ram:SubjectCode>AAB</ram:SubjectCode>');
+    expect(xml).toContain('<ram:SubjectCode>REG</ram:SubjectCode>');
   });
 
   it('conserve une adresse de livraison distincte et le motif de TVA', () => {

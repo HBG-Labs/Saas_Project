@@ -175,7 +175,14 @@ export function serializeCii(invoice: CanonicalInvoice): string {
       text('ID', invoice.id) +
       text('TypeCode', invoice.documentType === 'credit_note' ? '381' : '380') +
       date('IssueDateTime', invoice.issueDate) +
-      (invoice.note ? element('IncludedNote', text('Content', invoice.note)) : '') +
+      invoice.documentNotes
+        .map((note) =>
+          element(
+            'IncludedNote',
+            text('Content', note.content) + text('SubjectCode', note.subjectCode),
+          ),
+        )
+        .join('') +
       '</rsm:ExchangedDocument>',
     '<rsm:SupplyChainTradeTransaction>',
     lines,

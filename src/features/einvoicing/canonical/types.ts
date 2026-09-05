@@ -35,6 +35,14 @@ export interface CanonicalVatBreakdown {
   exemptionReason: string | null;
 }
 
+/** Codes de notes BT-21 utilisés par le profil français AFNOR. */
+export type InvoiceNoteSubjectCode = 'PMT' | 'PMD' | 'AAB' | 'REG' | 'TXD' | 'AAI';
+
+export interface CanonicalInvoiceNote {
+  subjectCode: InvoiceNoteSubjectCode;
+  content: string;
+}
+
 /** Contrat indépendant de la base et des formats de sortie. Montants en centimes. */
 interface CanonicalDocument {
   /** Ephemeral simulation only; never returned by the normal invoice mapper. */
@@ -49,7 +57,7 @@ interface CanonicalDocument {
   buyerReference: string | null;
   purchaseOrderReference: string | null;
   deliveryAddress: PostalAddress | null;
-  note: string;
+  documentNotes: CanonicalInvoiceNote[];
   paymentTerms: string;
   /** Code UNCL 4461, lorsque le mode de règlement est connu sans ambiguïté. */
   paymentMeansCode: '1' | '20' | '30' | '48' | null;

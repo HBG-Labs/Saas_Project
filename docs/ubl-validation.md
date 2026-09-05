@@ -19,7 +19,15 @@ Pour l’envoi, la fonction serveur ajoute `ProfileID = M1`, valeur observée da
 
 Les cinq fichiers passent le XSD officiel UBL 2.1 et les assertions officielles EN 16931, version `validation-1.3.16`. Le contrôle négatif modifie le montant payable d’un fichier : la règle `BR-CO-16` détecte l’écart.
 
-Le vendeur en franchise sans numéro de TVA reprend son SIREN en BT-32, avec un `TaxScheme/ID` différent de `VAT`, conformément à la [règle décrite dans la documentation AFNOR publiée par la DGFiP](https://www.impots.gouv.fr/sites/default/files/media/1_metier/2_professionnel/EV/2_gestion/290_facturation_electronique/specification_externes_b2b/afnor/norme-afnor-factures.pdf).
+## Notes françaises structurées
+
+Le profil français exige que certaines mentions soient portées dans des notes BG-3 avec un code BT-21. Le contrat canonique produit une note distincte pour les frais de recouvrement (`PMT`), les pénalités de retard (`PMD`) et l’escompte ou son absence (`AAB`). Il code aussi la nature de l’opération (`REG`), l’option TVA sur les débits lorsqu’elle s’applique (`TXD`) et les informations générales (`AAI`).
+
+En UBL, chaque note suit la forme `#CODE#contenu` attendue pour `cbc:Note`. En CII, le contenu et le code sont séparés dans `ram:Content` et `ram:SubjectCode`. Les tests vérifient la présence unique des codes obligatoires et la validation indépendante confirme que les documents restent conformes aux XSD, à Factur-X et au cœur EN 16931.
+
+Le test partenaire du 4 septembre 2026 confirme la CIUS française : `FAC-2026-00005` a été téléversée, validée et remise au destinataire fictif par SUPER PDP en une tentative. La facture précédente, qui portait les mêmes textes sans leurs codes, avait été rejetée par `BR-FR-05`.
+
+Le vendeur en franchise sans numéro de TVA reprend son SIREN en BT-32, avec un `TaxScheme/ID` différent de `VAT`, conformément aux [spécifications externes B2B et documents AFNOR publiés par la DGFiP](https://www.impots.gouv.fr/specifications-externes-b2b). La forme `#CODE#` des notes UBL suit la [règle Peppol BR-CL-08](https://docs.peppol.eu/poacc/billing/3.0/2024-Q4/rules/ubl-tc434/BR-CL-08/).
 
 ## Reproduire les contrôles
 

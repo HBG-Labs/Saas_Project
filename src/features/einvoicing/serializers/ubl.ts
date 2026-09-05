@@ -57,7 +57,9 @@ export function serializeUbl(invoice: CanonicalInvoice, options: { profileId?: s
       isCreditNote ? 'cbc:CreditNoteTypeCode' : 'cbc:InvoiceTypeCode',
       isCreditNote ? '381' : '380',
     ),
-    optional('cbc:Note', invoice.note),
+    ...invoice.documentNotes.map((note) =>
+      text('cbc:Note', `#${note.subjectCode}#${note.content}`),
+    ),
     text('cbc:DocumentCurrencyCode', invoice.currency),
     optional('cbc:BuyerReference', invoice.buyerReference),
     invoice.purchaseOrderReference

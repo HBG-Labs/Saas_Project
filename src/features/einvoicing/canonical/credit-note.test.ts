@@ -46,9 +46,10 @@ describe('export électronique des avoirs', () => {
     expect(ubl.getElementsByTagName('cac:InvoiceDocumentReference')[0]!.textContent).toBe(
       source.corrected_invoice_reference + '2026-09-03',
     );
-    expect(ubl.getElementsByTagName('cbc:Note')[0]!.textContent).toContain(
-      source.credit_note_reason,
+    const creditReasonNote = [...ubl.getElementsByTagName('cbc:Note')].find((note) =>
+      note.textContent?.startsWith('#AAI#Avoir'),
     );
+    expect(creditReasonNote?.textContent).toContain(source.credit_note_reason);
     expect(ubl.getElementsByTagName('cbc:PayableAmount')[0]!.textContent).toBe('29.62');
     expect(ubl.getElementsByTagName('cac:InvoiceLine').length).toBe(0);
     expect(JSON.stringify(source)).toBe(before);

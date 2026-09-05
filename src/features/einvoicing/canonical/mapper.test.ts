@@ -50,7 +50,20 @@ describe('export UBL', () => {
     expect(serializeUbl(result.invoice!, { profileId: 'M1' })).toContain(
       '<cbc:ProfileID>M1</cbc:ProfileID>',
     );
+    expect(xml.match(/<cbc:Note>#PMT#/g)).toHaveLength(1);
+    expect(xml.match(/<cbc:Note>#PMD#/g)).toHaveLength(1);
+    expect(xml.match(/<cbc:Note>#AAB#/g)).toHaveLength(1);
+    expect(xml.match(/<cbc:Note>#REG#/g)).toHaveLength(1);
+    expect(xml.match(/<cbc:Note>#AAI#/g)).toHaveLength(1);
+    expect(xml).toContain('#PMT#Indemnité forfaitaire pour frais de recouvrement');
     expect(result.invoice?.paymentMeansCode).toBe('30');
+  });
+
+  it('code la mention TVA sur les débits une seule fois', () => {
+    const invoice = completeInvoice();
+    invoice.vat_on_debits = true;
+    const xml = exportXml(invoice);
+    expect(xml.match(/<cbc:Note>#TXD#/g)).toHaveLength(1);
   });
   it('arrondit chaque base puis la TVA par taux avec une arithmétique exacte', () => {
     const invoice = completeInvoice();

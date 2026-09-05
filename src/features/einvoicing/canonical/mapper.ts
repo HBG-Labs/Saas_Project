@@ -350,16 +350,39 @@ function validateAndMap(
         : null,
       buyerReference: clean(source.buyer_reference),
       purchaseOrderReference: clean(source.purchase_order_reference),
-      note: [
-        isCreditNote
-          ? `Avoir ${source.credit_note_scope === 'partial' ? 'partiel' : 'total'}. Motif de l’avoir : ${source.credit_note_reason!.trim()}`
-          : null,
-        source.operation_type ? OPERATION_LABELS[source.operation_type] : null,
-        source.vat_on_debits ? 'Option pour le paiement de la taxe d’après les débits.' : null,
-        source.notes,
-      ]
-        .filter(Boolean)
-        .join('\n'),
+      documentNotes: [
+        {
+          subjectCode: 'PMT' as const,
+          content:
+            'Indemnité forfaitaire pour frais de recouvrement en cas de retard de paiement : 40 €.',
+        },
+        { subjectCode: 'PMD' as const, content: source.late_payment_terms!.trim() },
+        { subjectCode: 'AAB' as const, content: source.early_payment_terms!.trim() },
+        ...(source.operation_type
+          ? [
+              {
+                subjectCode: 'REG' as const,
+                content: OPERATION_LABELS[source.operation_type],
+              },
+            ]
+          : []),
+        ...(source.vat_on_debits
+          ? [
+              {
+                subjectCode: 'TXD' as const,
+                content: 'Option pour le paiement de la taxe d’après les débits.',
+              },
+            ]
+          : []),
+        ...([
+          isCreditNote
+            ? `Avoir ${source.credit_note_scope === 'partial' ? 'partiel' : 'total'}. Motif de l’avoir : ${source.credit_note_reason!.trim()}`
+            : null,
+          source.notes,
+        ]
+          .filter((note): note is string => !!note?.trim())
+          .map((content) => ({ subjectCode: 'AAI' as const, content: content.trim() }))),
+      ],
       paymentTerms: [
         ...mentionsReglement(source),
         !isCreditNote && source.payment_method

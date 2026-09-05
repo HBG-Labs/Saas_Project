@@ -543,7 +543,11 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
         <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
           Annuler
         </Button>
-        <Button type="submit" variant="primary" disabled={isSubmitting || !isDirty}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+        >
           {isSubmitting ? 'Enregistrement…' : 'Enregistrer le brouillon'}
         </Button>
       </div>

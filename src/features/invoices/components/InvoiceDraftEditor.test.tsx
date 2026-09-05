@@ -138,7 +138,7 @@ describe('correction d’un brouillon', () => {
     );
   });
 
-  it('propose les valeurs certaines sans les enregistrer avant validation', () => {
+  it('propose les valeurs certaines et permet de les confirmer sans saisie artificielle', () => {
     renderEditor();
     expect(screen.getByRole('combobox', { name: 'Nature de l’opération' })).toHaveTextContent(
       'Prestation de services',
@@ -147,7 +147,7 @@ describe('correction d’un brouillon', () => {
       'Escompte pour paiement anticipé : néant.',
     );
     expect(screen.getByText(/Des valeurs sûres ont été proposées/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Enregistrer le brouillon' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Enregistrer le brouillon' })).toBeEnabled();
     expect(state.save).not.toHaveBeenCalled();
   });
 
