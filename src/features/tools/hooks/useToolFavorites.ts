@@ -2,8 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { AuthContext } from '@/features/auth';
-import { useCatalogTools, useFavorites } from '@/features/catalog';
-import { addFavorite, removeFavorite } from '@/features/catalog/api/catalog.api';
+import { addFavorite, removeFavorite, useCatalogTools, useFavorites } from '@/features/catalog';
 import { qk } from '@/lib/query-keys';
 
 const FAVORITES_EVENT = 'rezo360:favorites-updated';
@@ -27,11 +26,13 @@ function readStoredFavorites(key: string): string[] {
   }
 }
 
-function persistFavorites(key: string, items: string[]): void {
+function persistFavorites(key: string, items: string[], notify = true): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: { key, items } }));
+    if (notify) {
+      window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: { key, items } }));
+    }
   } catch {
     // Ignore quota errors
   }
@@ -85,8 +86,9 @@ export function useToolFavorites() {
       const serverSlugs = favoritesQuery.data.map((tool) => tool.slug);
       const combined = Array.from(new Set([...serverSlugs, ...readStoredFavorites(storageKey)]));
       if (combined.length !== localFavorites.length || !combined.every((s) => localFavorites.includes(s))) {
-        setLocalFavorites(combined);
-        persistFavorites(storageKey, combined);
+        // Le rendu inclut déjà `serverSlugs`. Ici on prépare seulement le
+        // prochain démarrage hors connexion, sans provoquer un second rendu.
+        persistFavorites(storageKey, combined, false);
       }
     }
   }, [userId, favoritesQuery.data, storageKey, localFavorites]);
@@ -142,4 +144,3 @@ export function useToolFavorites() {
     error: favoritesQuery.error ?? catalogQuery.error,
   };
 }
-

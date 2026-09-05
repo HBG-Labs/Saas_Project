@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 import { useAuth } from '@/features/auth';
-import { OrganizationContext } from '@/features/organizations/context/organization-context';
+import { OrganizationContext } from '@/features/organizations';
 import { qk } from '@/lib/query-keys';
 
 import {

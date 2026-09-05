@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
+import { calibrationState, useEquipmentList } from '@/features/equipment';
 import { useReportsPendingReview } from '@/features/interventions';
 import { useMissions } from '@/features/missions';
 import {
@@ -12,6 +13,7 @@ import {
   usePermission,
 } from '@/features/organizations';
 import { useLeaveRequests } from '@/features/planning';
+import { useUserPreferences } from '@/features/settings';
 import { useStock } from '@/features/stock';
 
 import type { AppNotification } from '../types/notifications.types';
@@ -53,6 +55,7 @@ export function useNotifications() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
   const { can, role } = usePermission();
+  const { preferences } = useUserPreferences();
 
   const isManagerOrOwner =
     can(PERMISSIONS.leaveApprove) || role === 'owner' || role === 'admin' || role === 'manager';
@@ -91,6 +94,9 @@ export function useNotifications() {
   const pendingReportsQuery = useReportsPendingReview(isManagerOrOwner ? organizationId : null);
   const { lowStockArticles } = useStock(organizationId);
   const missionsQuery = useMissions(organizationId, { limit: 20 });
+  const equipmentQuery = useEquipmentList(
+    can(PERMISSIONS.equipmentView) ? organizationId : null,
+  );
 
   // Génération des notifications d'activité
   const notifications = useMemo(() => {
@@ -98,7 +104,7 @@ export function useNotifications() {
 
     // 1. Demandes de congés
     const leaves = leavesQuery.data ?? [];
-    for (const leave of leaves) {
+    for (const leave of preferences.notify_leave_requests ? leaves : []) {
       const isMyLeave = Boolean(
         (leave.member?.user_id && leave.member.user_id === userId) ||
           (currentMember?.id && leave.member_id === currentMember.id),
@@ -158,7 +164,7 @@ export function useNotifications() {
 
     // 3. Alertes de stock bas
     if (isManagerOrOwner) {
-      for (const item of lowStockArticles) {
+      for (const item of preferences.notify_stock_low ? lowStockArticles : []) {
         list.push({
           id: `stock_low_${item.id}_${item.quantityInStock}`,
           type: 'stock_alert',
@@ -174,7 +180,7 @@ export function useNotifications() {
     }
 
     // 4. Nouvelles missions attribuées récemment (pour les techniciens)
-    if (role === 'technician' && currentMember) {
+    if (preferences.notify_new_mission && role === 'technician' && currentMember) {
       const myMissions = (missionsQuery.data ?? []).filter(
         (m) => m.assigned_member?.id === currentMember.id,
       );
@@ -195,6 +201,30 @@ export function useNotifications() {
       }
     }
 
+    // 5. Étalonnages et contrôles du matériel à moins de 30 jours
+    if (preferences.notify_maintenance_due) {
+      for (const equipment of equipmentQuery.data ?? []) {
+        const state = calibrationState(equipment.next_calibration);
+        if (state !== 'due_soon' && state !== 'expired') continue;
+
+        const id = `equipment_calibration_${equipment.id}_${equipment.next_calibration ?? 'unknown'}`;
+        list.push({
+          id,
+          type: 'equipment_alert',
+          category: 'equipment',
+          severity: state === 'expired' ? 'urgent' : 'warning',
+          title: state === 'expired' ? 'Étalonnage expiré' : 'Étalonnage à prévoir',
+          description:
+            state === 'expired'
+              ? `Le contrôle de « ${equipment.name} » est arrivé à échéance.`
+              : `Le contrôle de « ${equipment.name} » est prévu le ${equipment.next_calibration}.`,
+          timestamp: equipment.updated_at,
+          read: readIds.has(id),
+          link: ROUTES.equipment,
+        });
+      }
+    }
+
     // Filtrer les notifications supprimées / masquées
     const filtered = list.filter((n) => !dismissedIds.has(n.id));
 
@@ -207,12 +237,17 @@ export function useNotifications() {
     pendingReportsQuery.data,
     lowStockArticles,
     missionsQuery.data,
+    equipmentQuery.data,
     userId,
     currentMember,
     isManagerOrOwner,
     role,
     readIds,
     dismissedIds,
+    preferences.notify_leave_requests,
+    preferences.notify_stock_low,
+    preferences.notify_new_mission,
+    preferences.notify_maintenance_due,
   ]);
 
   const unreadCount = useMemo(() => {

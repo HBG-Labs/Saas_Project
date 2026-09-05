@@ -14,9 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/Switch';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { AvatarPicker, useMyProfile } from '@/features/profile';
-import { ACCENT_COLORS } from '@/features/theme/accent-colors';
-import { THEME_PRESETS } from '@/features/theme/theme-presets';
-import { useTheme } from '@/features/theme/useTheme';
+import { ACCENT_COLORS, THEME_PRESETS, useTheme } from '@/features/theme';
 import { cn } from '@/lib/cn';
 
 export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {

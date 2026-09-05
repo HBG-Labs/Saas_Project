@@ -25,6 +25,33 @@ interface AudioRecording {
 
 const STORAGE_KEY = 'rezo360_field_voice_recordings';
 
+interface WebkitAudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
+function isAudioRecording(value: unknown): value is AudioRecording {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<AudioRecording>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.dataUrl === 'string' &&
+    typeof candidate.duration === 'number' &&
+    typeof candidate.createdAt === 'string'
+  );
+}
+
+function readStoredRecordings(): AudioRecording[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return [];
+    const parsed: unknown = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed.filter(isAudioRecording) : [];
+  } catch {
+    return [];
+  }
+}
+
 function formatDuration(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -35,7 +62,7 @@ export default function VoiceRecorderTool() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
-  const [recordings, setRecordings] = useState<AudioRecording[]>([]);
+  const [recordings, setRecordings] = useState<AudioRecording[]>(readStoredRecordings);
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // Lecteur Audio
@@ -53,18 +80,6 @@ export default function VoiceRecorderTool() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
-
-  // Charger les enregistrements locaux
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setRecordings(JSON.parse(saved));
-      }
-    } catch {
-      // Ignorer
-    }
-  }, []);
 
   const saveRecordings = (updated: AudioRecording[]) => {
     setRecordings(updated);
@@ -156,7 +171,7 @@ export default function VoiceRecorderTool() {
 
       // Web Audio Analyser pour l'onde (facultatif si non supporté)
       try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioCtx = window.AudioContext || (window as WebkitAudioWindow).webkitAudioContext;
         if (AudioCtx) {
           const audioCtx = new AudioCtx();
           audioContextRef.current = audioCtx;
@@ -204,7 +219,7 @@ export default function VoiceRecorderTool() {
         }
       };
 
-      mediaRecorder.onstop = async () => {
+      mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: selectedMime });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
@@ -232,15 +247,16 @@ export default function VoiceRecorderTool() {
       }, 1000);
 
       drawWaveform();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Erreur accès micro dictaphone:', err);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      const errorName = err instanceof Error ? err.name : '';
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
         setPermissionError(
           'Autorisation refusée par votre navigateur. Vous devez autoriser le microphone dans les paramètres de votre navigateur pour enregistrer des mémos vocaux.'
         );
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
         setPermissionError('Aucun microphone physique détecté sur cet appareil.');
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      } else if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
         setPermissionError('Le microphone est déjà utilisé par une autre application.');
       } else {
         setPermissionError('Impossible d’accéder au microphone de l’appareil.');
@@ -298,7 +314,7 @@ export default function VoiceRecorderTool() {
     if (activePlayingId === rec.id) {
       if (audioPlayerRef.current) {
         if (audioPlayerRef.current.paused) {
-          audioPlayerRef.current.play();
+          void audioPlayerRef.current.play();
         } else {
           audioPlayerRef.current.pause();
           setActivePlayingId(null);

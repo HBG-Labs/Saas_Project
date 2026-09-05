@@ -12,17 +12,16 @@ export function ScrollRevealSection({
   delay = 0,
 }: ScrollRevealSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const observerSupported =
+    typeof window !== 'undefined' && typeof IntersectionObserver !== 'undefined';
+  const [isVisible, setIsVisible] = useState(!observerSupported);
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
 
     // Sécurité SSR / environnements de test jsdom
-    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
-      setIsVisible(true);
-      return;
-    }
+    if (!observerSupported) return;
 
     // Utilisation d'un IntersectionObserver haute performance
     const observer = new IntersectionObserver(
@@ -40,7 +39,7 @@ export function ScrollRevealSection({
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [observerSupported]);
 
   return (
     <div

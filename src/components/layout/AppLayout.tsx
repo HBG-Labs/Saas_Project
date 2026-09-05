@@ -3,7 +3,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
-import { PwaInstallBanner, usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
+import { PwaInstallBanner } from '@/components/feedback/PwaInstallPrompt';
+import { usePwaInstall } from '@/components/feedback/usePwaInstall';
 import { Button } from '@/components/ui/Button';
 import {
   Dropdown,
@@ -324,7 +325,9 @@ export function AppLayout() {
             <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 text-warning border border-warning/30 text-xs font-semibold animate-in fade-in">
               <WifiOff className="size-4 shrink-0 text-warning" />
               <span>
-                <strong>Mode Hors-Ligne actif.</strong> Vous travaillez en autonomie locale. Vos interventions, calculs et saisies sont conservés sur votre appareil et seront synchronisés dès le retour du réseau.
+                <strong>Mode hors connexion.</strong> Les pages déjà ouvertes restent accessibles.
+                Les brouillons de compte rendu sont conservés sur cet appareil et pourront être
+                enregistrés au retour du réseau.
               </span>
             </div>
           )}

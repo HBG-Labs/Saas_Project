@@ -274,6 +274,21 @@ export async function updateMemberDetails(
   );
 }
 
+/** Met à jour les coordonnées professionnelles du membre connecté. */
+export async function updateOwnMemberContact(
+  memberId: string,
+  input: { jobTitle: string | null; phone: string | null },
+): Promise<void> {
+  await unwrap(
+    supabase
+      .from('organization_members')
+      .update({ job_title: input.jobTitle, phone: input.phone })
+      .eq('id', memberId)
+      .select('id')
+      .single(),
+  );
+}
+
 /**
  * Change le rôle d'un membre.
  *

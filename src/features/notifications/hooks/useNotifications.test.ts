@@ -24,6 +24,7 @@ vi.mock('@/features/organizations', () => ({
     m?.full_name || m?.email || 'Membre',
   PERMISSIONS: {
     leaveApprove: 'leave.approve',
+    equipmentView: 'equipment.view',
   },
 }));
 
@@ -59,6 +60,35 @@ vi.mock('@/features/interventions', () => ({
   }),
 }));
 
+vi.mock('@/features/settings', () => ({
+  useUserPreferences: () => ({
+    preferences: {
+      notify_new_mission: true,
+      notify_maintenance_due: true,
+      notify_stock_low: true,
+      notify_leave_requests: true,
+      sms_urgent_alerts: false,
+      traffic_layer: true,
+      vehicle_type: 'van',
+      gps_refresh_rate: 30,
+    },
+  }),
+}));
+
+vi.mock('@/features/equipment', () => ({
+  calibrationState: () => 'due_soon',
+  useEquipmentList: () => ({
+    data: [
+      {
+        id: 'equipment_1',
+        name: 'Réflectomètre OTDR',
+        next_calibration: '2026-09-15',
+        updated_at: '2026-08-20T13:00:00Z',
+      },
+    ],
+  }),
+}));
+
 vi.mock('@/features/stock', () => ({
   useStock: () => ({
     lowStockArticles: [
@@ -88,8 +118,8 @@ describe('useNotifications', () => {
   it('agrège correctement les notifications pour un Dirigeant/Manager', () => {
     const { result } = renderHook(() => useNotifications());
 
-    expect(result.current.notifications.length).toBe(3);
-    expect(result.current.unreadCount).toBe(3);
+    expect(result.current.notifications.length).toBe(4);
+    expect(result.current.unreadCount).toBe(4);
 
     // Vérifie la présence de la demande de congé
     const leaveNotif = result.current.notifications.find((n) => n.type === 'leave_request');
@@ -103,12 +133,15 @@ describe('useNotifications', () => {
     // Vérifie la présence du stock bas
     const stockNotif = result.current.notifications.find((n) => n.type === 'stock_alert');
     expect(stockNotif).toBeDefined();
+
+    const equipmentNotif = result.current.notifications.find((n) => n.type === 'equipment_alert');
+    expect(equipmentNotif?.description).toContain('Réflectomètre OTDR');
   });
 
   it('permet de marquer une notification comme lue et de tout marquer comme lu', () => {
     const { result } = renderHook(() => useNotifications());
 
-    expect(result.current.unreadCount).toBe(3);
+    expect(result.current.unreadCount).toBe(4);
 
     const firstId = result.current.notifications[0]!.id;
 
@@ -116,7 +149,7 @@ describe('useNotifications', () => {
       result.current.markAsRead(firstId);
     });
 
-    expect(result.current.unreadCount).toBe(2);
+    expect(result.current.unreadCount).toBe(3);
 
     act(() => {
       result.current.markAllAsRead();

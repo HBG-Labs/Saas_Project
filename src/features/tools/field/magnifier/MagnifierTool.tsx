@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
 
+function applyCameraConstraint(
+  track: MediaStreamTrack,
+  constraint: MediaTrackConstraintSet & { torch?: boolean; zoom?: number },
+): Promise<void> {
+  return track.applyConstraints({ advanced: [constraint] });
+}
+
 type FilterMode = 'normal' | 'high-contrast' | 'invert' | 'grayscale' | 'sepia';
 
 const FILTER_STYLES: Record<FilterMode, { label: string; filter: string; desc: string }> = {
@@ -56,7 +63,6 @@ export default function MagnifierTool() {
   // Initialisation du flux caméra arrière
   const startCamera = useCallback(async () => {
     try {
-      setStreamError(null);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
@@ -70,6 +76,7 @@ export default function MagnifierTool() {
       });
 
       streamRef.current = stream;
+      setStreamError(null);
       const track = stream.getVideoTracks()[0] ?? null;
       trackRef.current = track;
 
@@ -79,10 +86,11 @@ export default function MagnifierTool() {
       }
 
       setStreamActive(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Erreur accès caméra loupe:', err);
+      const errorName = err instanceof Error ? err.name : '';
       setStreamError(
-        err.name === 'NotAllowedError'
+        errorName === 'NotAllowedError'
           ? 'Autorisation d’accès à la caméra refusée. Veuillez autoriser l’appareil photo dans votre navigateur.'
           : 'Impossible d’accéder à la caméra arrière de l’appareil.',
       );
@@ -110,9 +118,7 @@ export default function MagnifierTool() {
         const capabilities = trackRef.current.getCapabilities?.() as { zoom?: { max: number } } | undefined;
         if (capabilities?.zoom) {
           const hwZoom = Math.min(clamped, capabilities.zoom.max);
-          await (trackRef.current as any).applyConstraints({
-            advanced: [{ zoom: hwZoom }],
-          });
+          await applyCameraConstraint(trackRef.current, { zoom: hwZoom });
         }
       } catch {
         // Fallback sur zoom CSS
@@ -125,9 +131,7 @@ export default function MagnifierTool() {
     if (!trackRef.current) return;
     try {
       const nextTorch = !isTorchOn;
-      await (trackRef.current as any).applyConstraints({
-        advanced: [{ torch: nextTorch }],
-      });
+      await applyCameraConstraint(trackRef.current, { torch: nextTorch });
       setIsTorchOn(nextTorch);
     } catch (err) {
       console.warn('Torche non supportée sur ce capteur:', err);
@@ -169,8 +173,9 @@ export default function MagnifierTool() {
   }, [frozenImage]);
 
   useEffect(() => {
-    startCamera();
+    const startTimer = window.setTimeout(() => void startCamera(), 0);
     return () => {
+      window.clearTimeout(startTimer);
       stopCamera();
     };
   }, [startCamera, stopCamera]);
@@ -378,10 +383,10 @@ export default function MagnifierTool() {
 
           {/* Filtres de Netteté et Rendu */}
           <div className="space-y-2 min-w-0">
-            <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
               <Sliders className="size-3.5 text-primary shrink-0" />
               <span>Filtres de Lecture & Contraste</span>
-            </label>
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2">
               {(Object.keys(FILTER_STYLES) as FilterMode[]).map((fKey) => {
                 const config = FILTER_STYLES[fKey];

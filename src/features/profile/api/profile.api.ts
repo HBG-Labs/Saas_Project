@@ -70,8 +70,8 @@ export async function updateMyProfile(
           user_id: userId,
           phone: patch.details.phone ?? null,
           zone: patch.details.zone ?? null,
-          certifications: (patch.details.certifications ?? []) as any,
-          equipments: (patch.details.equipments ?? []) as any,
+          certifications: patch.details.certifications ?? [],
+          equipments: patch.details.equipments ?? [],
         },
         { onConflict: 'user_id' },
       );

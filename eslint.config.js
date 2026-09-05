@@ -26,6 +26,13 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       'supabase/**',
+      '.codex/**',
+      '.claude/**',
+      '.codex-remote-attachments/**',
+      'output/**',
+      'COdeFinal/**',
+      'Test/**',
+      'Saas_Project/**',
     ],
   },
 
@@ -192,11 +199,23 @@ export default tseslint.config(
 
   // ------------------------------------------------------------- tests
   {
-    files: ['src/**/*.{test,spec}.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
+    files: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/test/**/*.{ts,tsx}',
+      'e2e/**/*.{test,spec}.{ts,tsx}',
+    ],
     languageOptions: { globals: { ...globals.node } },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/consistent-type-imports': 'off',
       'no-restricted-imports': 'off',
       '@typescript-eslint/no-restricted-imports': 'off',
       // Les helpers de test ne sont pas des composants : Fast Refresh ne les

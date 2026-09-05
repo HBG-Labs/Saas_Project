@@ -31,6 +31,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // La suite comporte des scénarios de formulaire complets. Sous CI, où les
+    // 120 fichiers tournent en parallèle, le délai Vitest de 5 s produisait des
+    // faux négatifs alors que les mêmes scénarios réussissaient isolément.
+    testTimeout: 15_000,
     // `src/config/env.ts` valide l'environnement au chargement du module et
     // échoue s'il est incomplet. Ces valeurs factices — jamais des secrets —
     // permettent aux tests de s'exécuter sans fichier .env local, y compris en

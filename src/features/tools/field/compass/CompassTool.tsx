@@ -20,6 +20,14 @@ interface GeoLocationState {
   accuracy: number | null;
 }
 
+interface DeviceOrientationEventWithCompass extends DeviceOrientationEvent {
+  webkitCompassHeading?: number;
+}
+
+type DeviceOrientationConstructorWithPermission = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<'granted' | 'denied'>;
+};
+
 function getCardinalDirection(heading: number): string {
   const directions = [
     { label: 'Nord', short: 'N', min: 348.75, max: 360 },
@@ -62,12 +70,13 @@ export default function CompassTool() {
 
   // Demande d'autorisation pour iOS 13+
   const requestOrientationPermission = useCallback(async () => {
+    const orientationEvent = DeviceOrientationEvent as DeviceOrientationConstructorWithPermission;
     if (
       typeof window !== 'undefined' &&
-      typeof (DeviceOrientationEvent as any)?.requestPermission === 'function'
+      typeof orientationEvent.requestPermission === 'function'
     ) {
       try {
-        const response = await (DeviceOrientationEvent as any).requestPermission();
+        const response = await orientationEvent.requestPermission();
         if (response === 'granted') {
           setHasOrientationSensor(true);
           setPermissionRequested(true);
@@ -88,8 +97,9 @@ export default function CompassTool() {
       let compassHeading: number | null = null;
 
       // Spécifique iOS (webkitCompassHeading est le cap magnétique direct)
-      if ((event as any).webkitCompassHeading !== undefined) {
-        compassHeading = (event as any).webkitCompassHeading;
+      const iosHeading = (event as DeviceOrientationEventWithCompass).webkitCompassHeading;
+      if (iosHeading !== undefined) {
+        compassHeading = iosHeading;
       } else if (event.alpha !== null) {
         // Standard Android / Web (alpha inversé)
         compassHeading = 360 - event.alpha;
@@ -134,7 +144,7 @@ export default function CompassTool() {
   // Copie des coordonnées GPS
   const copyCoordinates = () => {
     if (coords.lat !== null && coords.lng !== null) {
-      navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`);
+      void navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`);
       signalerCopiedGps();
     }
   };

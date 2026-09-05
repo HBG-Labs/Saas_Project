@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Apple, CheckCircle2, Download, Globe, MonitorSmartphone, Smartphone, X } from 'lucide-react';
 
-import { usePwaInstall } from '@/components/feedback/PwaInstallPrompt';
+import { usePwaInstall } from '@/components/feedback/usePwaInstall';
 import { Button } from '@/components/ui/Button';
 
 interface DownloadAppModalProps {
@@ -80,12 +80,13 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
   };
 
   return createPortal(
-    <div
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      className="bg-black/70 animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-md duration-200 overflow-y-auto"
-    >
+    <div className="bg-black/70 animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-md duration-200 overflow-y-auto">
+      <button
+        type="button"
+        aria-label="Fermer la fenêtre d'installation"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+      />
       {/*
         CETTE MODALE AVAIT ÉTÉ ÉCRITE POUR LE THÈME SOMBRE, ET SEULEMENT LUI.
 
@@ -106,7 +107,7 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="install-title"
-        className="border-border bg-surface-raised text-foreground animate-in zoom-in-95 relative w-full max-w-2xl max-h-[88dvh] flex flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200 my-auto"
+        className="border-border bg-surface-raised text-foreground animate-in zoom-in-95 relative z-10 w-full max-w-2xl max-h-[88dvh] flex flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200 my-auto"
       >
         <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-primary/10 blur-3xl" />
 

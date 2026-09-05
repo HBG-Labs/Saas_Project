@@ -14,6 +14,14 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
 
+type DeviceOrientationConstructorWithPermission = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<'granted' | 'denied'>;
+};
+
+interface WebkitAudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 export default function LevelTool() {
   const [pitch, setPitch] = useState(0); // Axe Y (-90° à +90°)
   const [roll, setRoll] = useState(0); // Axe X (-90° à +90°)
@@ -26,12 +34,13 @@ export default function LevelTool() {
 
   // Demande d'autorisation pour iOS 13+
   const requestOrientationPermission = useCallback(async () => {
+    const orientationEvent = DeviceOrientationEvent as DeviceOrientationConstructorWithPermission;
     if (
       typeof window !== 'undefined' &&
-      typeof (DeviceOrientationEvent as any)?.requestPermission === 'function'
+      typeof orientationEvent.requestPermission === 'function'
     ) {
       try {
-        const response = await (DeviceOrientationEvent as any).requestPermission();
+        const response = await orientationEvent.requestPermission();
         if (response === 'granted') {
           setHasOrientationSensor(true);
           setPermissionRequested(true);
@@ -88,7 +97,10 @@ export default function LevelTool() {
 
       if (soundEnabled) {
         try {
-          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const AudioContextConstructor =
+            window.AudioContext || (window as WebkitAudioWindow).webkitAudioContext;
+          if (!AudioContextConstructor) return;
+          const ctx = new AudioContextConstructor();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';

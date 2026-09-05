@@ -22,6 +22,8 @@ const envSchema = z.object({
    * page. Facultative — voir `buildInvitationUrl`.
    */
   VITE_PUBLIC_APP_URL: z.url().optional(),
+  /** Identifiant du déploiement affiché dans les journaux d'erreurs. */
+  VITE_APP_VERSION: z.string().min(1).max(120).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

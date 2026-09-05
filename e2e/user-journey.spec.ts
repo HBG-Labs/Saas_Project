@@ -104,13 +104,13 @@ test.describe('Parcours utilisateur complet', () => {
 
     // ------------------------------------------------------------- 4. Redirection vers Dashboard
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByRole('heading', { name: /tableau de bord/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Bonjour, Alex Technicien/i })).toBeVisible();
 
     // ------------------------------------------------------------- 5. Navigation & Ouverture d'un outil
-    const toolsNavLink = page.getByRole('link', { name: /outils/i }).first();
+    const toolsNavLink = page.getByRole('link', { name: 'Catalogue complet', exact: true });
     await toolsNavLink.click();
 
     await expect(page).toHaveURL(/\/tools$/);
-    await expect(page.getByRole('heading', { name: /outils/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Catalogue des outils/i })).toBeVisible();
   });
 });

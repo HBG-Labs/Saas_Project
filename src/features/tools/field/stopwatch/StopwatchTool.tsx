@@ -16,6 +16,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
+
+interface WebkitAudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 interface LapItem {
@@ -71,7 +75,10 @@ export default function StopwatchTool() {
   const playAlarm = useCallback(() => {
     if (!timerSound) return;
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextConstructor =
+        window.AudioContext || (window as WebkitAudioWindow).webkitAudioContext;
+      if (!AudioContextConstructor) return;
+      const ctx = new AudioContextConstructor();
       const playBeep = (time: number, freq: number) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -102,17 +109,15 @@ export default function StopwatchTool() {
     }
   }, [timerSound]);
 
-  // Boucle d'animation fluide du chronomètre
-  const updateStopwatch = useCallback(() => {
-    if (!swRunning) return;
-    const now = performance.now();
-    const elapsed = now - swStartTimeRef.current + swAccumulatedRef.current;
-    setSwTime(elapsed);
-    swAnimFrameRef.current = requestAnimationFrame(updateStopwatch);
-  }, [swRunning]);
-
   useEffect(() => {
     if (swRunning) {
+      const updateStopwatch = () => {
+        const now = performance.now();
+        const elapsed = now - swStartTimeRef.current + swAccumulatedRef.current;
+        setSwTime(elapsed);
+        swAnimFrameRef.current = requestAnimationFrame(updateStopwatch);
+      };
+
       swStartTimeRef.current = performance.now();
       swAnimFrameRef.current = requestAnimationFrame(updateStopwatch);
     } else if (swAnimFrameRef.current) {
@@ -122,7 +127,7 @@ export default function StopwatchTool() {
     return () => {
       if (swAnimFrameRef.current) cancelAnimationFrame(swAnimFrameRef.current);
     };
-  }, [swRunning, updateStopwatch]);
+  }, [swRunning]);
 
   // Commandes Chronomètre
   const toggleStopwatch = () => {
@@ -169,7 +174,7 @@ export default function StopwatchTool() {
           `Tour #${l.lapIndex} : ${formatTime(l.lapTime).main}.${formatTime(l.lapTime).hundredths} (Cumul : ${formatTime(l.totalTime).main}.${formatTime(l.totalTime).hundredths})`,
       )
       .join('\n');
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     signalerCopiedLaps();
   };
 
@@ -184,7 +189,6 @@ export default function StopwatchTool() {
       return;
     }
 
-    timerEndTimeRef.current = Date.now() + timerRemaining;
     const interval = window.setInterval(() => {
       const remaining = Math.max(0, timerEndTimeRef.current - Date.now());
       setTimerRemaining(remaining);
@@ -205,9 +209,9 @@ export default function StopwatchTool() {
     if (timerRunning) {
       setTimerRunning(false);
     } else {
-      if (timerRemaining <= 0) {
-        setTimerRemaining(timerInitial);
-      }
+      const duration = timerRemaining <= 0 ? timerInitial : timerRemaining;
+      if (timerRemaining <= 0) setTimerRemaining(duration);
+      timerEndTimeRef.current = Date.now() + duration;
       setTimerFinished(false);
       setTimerRunning(true);
     }

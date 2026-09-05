@@ -101,6 +101,7 @@ export const inviteMemberSchema = z.object({
 });
 
 export type CreateOrganizationValues = z.infer<typeof createOrganizationSchema>;
+export type OrganizationSettingsInputValues = z.input<typeof organizationSettingsSchema>;
 export type OrganizationSettingsValues = z.infer<typeof organizationSettingsSchema>;
 export type InviteMemberValues = z.infer<typeof inviteMemberSchema>;
 

@@ -354,9 +354,9 @@ export default function BillingPage() {
                   disabled={isCurrent || updatePlan.isPending || !canManageBilling}
                   onClick={() => {
                     if (isDowngrade && gereParStripe) {
-                      setPlanToDowngrade(tier.id as PlanCode);
+                      setPlanToDowngrade(tier.id);
                     } else {
-                      updatePlan.mutate(tier.id as PlanCode, {
+                      updatePlan.mutate(tier.id, {
                         onSuccess: (res) => {
                           if (res.updatedInPlace) {
                             setPlanSuccessMessage(
@@ -622,4 +622,3 @@ export default function BillingPage() {
     </div>
   );
 }
-

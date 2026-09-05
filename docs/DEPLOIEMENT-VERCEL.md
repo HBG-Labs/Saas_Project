@@ -4,7 +4,7 @@ REZO360 est une application monopage : Vite produit des fichiers statiques,
 et toute la logique serveur vit dans Supabase — policies RLS, triggers, et une
 Edge Function pour l'envoi des invitations. Vercel n'a donc rien à exécuter : il
 compile, sert des fichiers et redirige les routes. **Aucun secret ne lui est
-confié**, uniquement les trois variables publiques du frontend.
+confié**, uniquement les variables publiques du frontend.
 
 ---
 
@@ -38,7 +38,7 @@ déploiement se fait toujours en deux temps.
 | [`.vercelignore`](../.vercelignore) | Écarte du transfert ce que le build ne lit **jamais** |
 | [`scripts/check-deploy-package.mjs`](../scripts/check-deploy-package.mjs) | Vérifie que la ligne précédente est tenue |
 | `package.json` → `predeploy` | Types, tests, cohérence du paquet, construction |
-| `package.json` → `engines.node` | `>=20.19.0` — Vercel s'y conforme automatiquement |
+| `package.json` → `engines.node` | `>=22.12.0` — Vercel s'y conforme automatiquement |
 
 Rien d'autre n'est à créer. Les réglages ci-dessous se font dans l'interface
 Vercel et dans le tableau de bord Supabase.
@@ -67,6 +67,7 @@ Trois variables, à déclarer dans **Vercel → Settings → Environment Variabl
 | `VITE_SUPABASE_URL` | `https://wtsiaisfwtthmcxygeei.supabase.co` | Production, Preview, Development |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Clé publiable — Dashboard Supabase → Project Settings → API | Production, Preview, Development |
 | `VITE_APP_ENV` | `production` en Production, `staging` en Preview | selon l'environnement |
+| `VITE_APP_VERSION` | SHA du commit déployé, facultatif | Production, Preview |
 
 > **La clé publiable est faite pour le navigateur.** Elle finit dans le bundle,
 > par construction : toute la protection repose sur les politiques RLS. Ce n'est

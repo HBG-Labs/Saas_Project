@@ -1,12 +1,12 @@
 # REZO360
 
-Plateforme SaaS de boîte à outils technique destinée aux techniciens,
-ingénieurs et étudiants techniques : fibre optique, réseaux, électricité et
-calculs généraux.
+Plateforme SaaS de gestion des activités terrain : entreprises, équipes,
+clients, missions, planification, comptes rendus, devis, factures, achats,
+stocks et outils techniques spécialisés.
 
-> **État : Phase 1 — fondations.** L'architecture, le routing, l'authentification
-> et le système modulaire d'outils sont en place. Aucun outil métier n'est encore
-> développé : c'est l'objet des phases suivantes.
+> **État : stabilisation avant commercialisation.** Les principaux parcours
+> métier sont opérationnels. La priorité actuelle porte sur la fiabilité en
+> production, les parcours automatisés et l'expérience mobile hors connexion.
 
 ## Démarrage
 
@@ -30,7 +30,7 @@ Les migrations de base de données s'appliquent séparément : voir
 | `npm run build` | Typecheck puis build de production |
 | `npm run preview` | Sert le build de production |
 | `npm run typecheck` | TypeScript seul |
-| `npm run lint` | ESLint (inclut les règles d'architecture) |
+| `npm run lint` | ESLint (qualité, accessibilité et règles d'architecture) |
 | `npm run lint:fix` | ESLint avec corrections automatiques |
 | `npm run format` | Prettier — écriture |
 | `npm run format:check` | Prettier — vérification |
@@ -50,6 +50,7 @@ Définies dans `.env.local`, jamais versionné. Modèle : `.env.example`.
 | `VITE_SUPABASE_URL` | URL du projet Supabase |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Clé publique (`sb_publishable_…` ou clé `anon` legacy) |
 | `VITE_APP_ENV` | `development` \| `staging` \| `production` |
+| `VITE_APP_VERSION` | Identifiant facultatif du déploiement pour le journal d'erreurs |
 
 Elles sont validées par Zod au démarrage : une variable manquante ou mal formée
 provoque un échec immédiat et explicite, plutôt qu'un `undefined` silencieux.
@@ -61,7 +62,7 @@ provoque un échec immédiat et explicite, plutôt qu'un `undefined` silencieux.
 ## Déploiement
 
 L'application est un frontend statique : `vercel.json` est versionné, et le seul
-travail restant est de renseigner les trois variables ci-dessus dans Vercel puis
+travail restant est de renseigner les trois variables obligatoires ci-dessus dans Vercel puis
 d'autoriser le domaine dans Supabase Auth.
 
 Procédure complète, réglages Supabase compris :
@@ -91,20 +92,16 @@ routes privées).
 
 ### End-to-end
 
-Playwright est **configuré mais volontairement non installé** en Phase 1 :
-il télécharge ~500 Mo de navigateurs alors qu'aucun parcours utilisateur réel
-n'existe encore (les pages sont des coquilles).
-
-Activation en Phase 2 :
+Playwright vérifie les pages publiques et les premiers parcours applicatifs sur
+Chrome bureau et sur un téléphone Pixel simulé :
 
 ```bash
-npm install -D @playwright/test
 npx playwright install chromium
-npx playwright test
+npm run test:e2e
 ```
 
-Retirer alors les exclusions de `e2e/` et `playwright.config.ts` dans
-`tsconfig.node.json` et `eslint.config.js`.
+Les contrôles de types, de qualité, les tests et le build sont également
+exécutés automatiquement à chaque pull request et à chaque push sur `main`.
 
 ## Note OneDrive
 

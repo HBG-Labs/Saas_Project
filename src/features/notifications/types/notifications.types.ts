@@ -4,6 +4,7 @@ export type NotificationType =
   | 'mission_assigned'
   | 'report_review'
   | 'stock_alert'
+  | 'equipment_alert'
   | 'vehicle_alert';
 
 export type NotificationCategory = 'hr' | 'mission' | 'stock' | 'equipment';

@@ -79,9 +79,12 @@ export function StockMovementsTable({
   };
 
   // Mois actuel et précédent pour affichage dynamique
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const currentMonthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthDate = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() - 1, 1),
+    [now],
+  );
   const prevMonthName = prevMonthDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
   const currentYear = now.getFullYear();
 

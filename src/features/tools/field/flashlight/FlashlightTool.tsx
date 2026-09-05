@@ -16,6 +16,11 @@ import { cn } from '@/lib/cn';
 type LightColor = 'white' | 'warm' | 'red' | 'amber';
 type FlashMode = 'steady' | 'strobe' | 'sos';
 
+function applyTorchConstraint(track: MediaStreamTrack, enabled: boolean): Promise<void> {
+  const torchConstraint = { torch: enabled } as MediaTrackConstraintSet;
+  return track.applyConstraints({ advanced: [torchConstraint] });
+}
+
 const COLOR_CONFIGS: Record<
   LightColor,
   { label: string; bgClass: string; hex: string; desc: string }
@@ -100,9 +105,7 @@ export default function FlashlightTool() {
             const capabilities = track.getCapabilities?.() as { torch?: boolean } | undefined;
             if (capabilities && 'torch' in capabilities) {
               setHasTorchSupport(true);
-              await (track as any).applyConstraints({
-                advanced: [{ torch: true }],
-              });
+              await applyTorchConstraint(track, true);
               setTorchActive(true);
             } else {
               setHasTorchSupport(false);
@@ -110,17 +113,13 @@ export default function FlashlightTool() {
             }
           }
         } else if (videoTrackRef.current) {
-          await (videoTrackRef.current as any).applyConstraints({
-            advanced: [{ torch: true }],
-          });
+          await applyTorchConstraint(videoTrackRef.current, true);
           setTorchActive(true);
         }
       } else {
         if (videoTrackRef.current) {
           try {
-            await (videoTrackRef.current as any).applyConstraints({
-              advanced: [{ torch: false }],
-            });
+            await applyTorchConstraint(videoTrackRef.current, false);
           } catch {
             // Ignorer
           }
@@ -165,7 +164,6 @@ export default function FlashlightTool() {
         clearInterval(strobeTimerRef.current);
         strobeTimerRef.current = null;
       }
-      setStrobeState(true);
       return undefined;
     }
 
@@ -213,7 +211,7 @@ export default function FlashlightTool() {
   }, []);
 
   const colorConfig = COLOR_CONFIGS[selectedColor];
-  const isLightEmitting = isOn && strobeState;
+  const isLightEmitting = isOn && (flashMode === 'steady' || strobeState);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -228,13 +226,19 @@ export default function FlashlightTool() {
             backgroundColor: isLightEmitting ? colorConfig.hex : '#000000',
             opacity: isLightEmitting ? brightness / 100 : 1,
           }}
-          onClick={() => setFullScreenActive(false)}
         >
-          <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs font-semibold shadow-lg">
+          <button
+            type="button"
+            aria-label="Quitter le plein écran torche"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setFullScreenActive(false)}
+          />
+
+          <div className="relative z-10 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs font-semibold shadow-lg">
             Touchez l’écran pour quitter le plein écran
           </div>
 
-          <div className="text-center bg-black/50 backdrop-blur-md px-6 py-4 rounded-2xl text-white shadow-xl space-y-1">
+          <div className="relative z-10 text-center bg-black/50 backdrop-blur-md px-6 py-4 rounded-2xl text-white shadow-xl space-y-1">
             <p className="text-sm font-bold uppercase tracking-wider">{colorConfig.label}</p>
             <p className="text-xs opacity-80">
               {flashMode === 'steady'
@@ -251,9 +255,9 @@ export default function FlashlightTool() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              handleToggle(false);
+              void handleToggle(false);
             }}
-            className="bg-black/80 text-white border-white/20 hover:bg-black"
+            className="relative z-10 bg-black/80 text-white border-white/20 hover:bg-black"
           >
             Éteindre la lampe
           </Button>
@@ -321,7 +325,7 @@ export default function FlashlightTool() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (!isOn) handleToggle(true);
+                  if (!isOn) void handleToggle(true);
                   setFullScreenActive(true);
                 }}
                 className="gap-2 text-xs"
@@ -335,7 +339,7 @@ export default function FlashlightTool() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => togglePhysicalTorch(false)}
+                  onClick={() => void togglePhysicalTorch(false)}
                   className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   <Zap className="size-3.5 text-warning" />
@@ -347,10 +351,10 @@ export default function FlashlightTool() {
 
           {/* Sélecteur de Teinte / Température de Couleur */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
               <Moon className="size-3.5 text-primary" />
               <span>Température & Mode Couleur</span>
-            </label>
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {(Object.keys(COLOR_CONFIGS) as LightColor[]).map((colorKey) => {
                 const config = COLOR_CONFIGS[colorKey];
@@ -386,10 +390,10 @@ export default function FlashlightTool() {
 
           {/* Mode de Diffusion (Fixe / Stroboscope / SOS) */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
               <Flame className="size-3.5 text-primary" />
               <span>Mode de Clignotement & Signalisation</span>
-            </label>
+            </p>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"

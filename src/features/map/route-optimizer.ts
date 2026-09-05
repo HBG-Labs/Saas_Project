@@ -23,6 +23,16 @@ export interface OptimizedRoute {
   isRoadGeometryLoading?: boolean;
 }
 
+interface OsrmRouteResponse {
+  code: string;
+  routes?: Array<{
+    distance: number;
+    duration: number;
+    geometry: { coordinates: Array<[number, number]> };
+    legs?: Array<{ distance: number; duration: number }>;
+  }>;
+}
+
 /**
  * Facteur de détour routier moyen (Circuity factor).
  * Les routes réelles (notamment insulaires, périurbaines ou montagneuses) font ~1.4x la distance vol d'oiseau.
@@ -248,20 +258,20 @@ export async function fetchRealRoadRoute(
 
     if (!res.ok) return null;
 
-    const data = await res.json();
-    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+    const data = (await res.json()) as OsrmRouteResponse;
+    const route = data.routes?.[0];
+    if (data.code !== 'Ok' || !route) {
       return null;
     }
 
-    const route = data.routes[0];
     const geometry: [number, number][] = route.geometry.coordinates.map(
-      ([lng, lat]: [number, number]) => [lat, lng],
+      ([lng, lat]) => [lat, lng],
     );
 
     const totalDistanceKm = Math.round((route.distance / 1000) * 10) / 10;
     const totalDurationMinutes = Math.round(route.duration / 60);
 
-    const legs = (route.legs || []).map((leg: { distance: number; duration: number }) => ({
+    const legs = (route.legs ?? []).map((leg) => ({
       distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
       durationMinutes: Math.round(leg.duration / 60),
     }));
@@ -291,11 +301,19 @@ export function useOptimizedRoadRoute(
     [sites, startPosition],
   );
 
-  const [realRoute, setRealRoute] = useState<OptimizedRoute>(initialRoute);
+  const routeKey = useMemo(() => {
+    const start = startPosition
+      ? `${startPosition.latitude},${startPosition.longitude}`
+      : 'first-site';
+    return `${start}|${sites.map((site) => `${site.id}:${site.lat},${site.lng}`).join('|')}`;
+  }, [sites, startPosition]);
+
+  const [resolvedRoute, setResolvedRoute] = useState<{
+    key: string;
+    route: OptimizedRoute;
+  } | null>(null);
 
   useEffect(() => {
-    setRealRoute(initialRoute);
-
     if (initialRoute.steps.length < 2) return;
 
     let isMounted = true;
@@ -307,24 +325,24 @@ export function useOptimizedRoadRoute(
       waypoints.push({ lat: s.site.lat, lng: s.site.lng });
     });
 
-    fetchRealRoadRoute(waypoints).then((osrmResult) => {
+    void fetchRealRoadRoute(waypoints).then((osrmResult) => {
       if (!isMounted || !osrmResult) return;
 
-      setRealRoute((prev) => {
-        // Mise à jour des distances par étape avec les données réelles du réseau routier
-        const updatedSteps = prev.steps.map((step, idx) => {
-          const leg = osrmResult.legs[idx];
-          if (!leg) return step;
-          return {
-            ...step,
-            distanceFromPreviousKm: leg.distanceKm,
-            formattedDistanceFromPrevious: formatDistance(leg.distanceKm),
-            estimatedDriveTimeMinutes: leg.durationMinutes,
-          };
-        });
-
+      const updatedSteps = initialRoute.steps.map((step, idx) => {
+        const leg = osrmResult.legs[idx];
+        if (!leg) return step;
         return {
-          ...prev,
+          ...step,
+          distanceFromPreviousKm: leg.distanceKm,
+          formattedDistanceFromPrevious: formatDistance(leg.distanceKm),
+          estimatedDriveTimeMinutes: leg.durationMinutes,
+        };
+      });
+
+      setResolvedRoute({
+        key: routeKey,
+        route: {
+          ...initialRoute,
           steps: updatedSteps,
           totalDistanceKm: osrmResult.totalDistanceKm,
           formattedTotalDistance: formatDistance(osrmResult.totalDistanceKm),
@@ -332,16 +350,16 @@ export function useOptimizedRoadRoute(
           formattedTotalTime: formatDurationMinutes(osrmResult.totalDurationMinutes),
           roadGeometry: osrmResult.geometry,
           isRoadGeometryLoading: false,
-        };
+        },
       });
     });
 
     return () => {
       isMounted = false;
     };
-  }, [initialRoute, startPosition]);
+  }, [initialRoute, routeKey, startPosition]);
 
-  return realRoute;
+  return resolvedRoute?.key === routeKey ? resolvedRoute.route : initialRoute;
 }
 
 /**
@@ -358,4 +376,3 @@ export function getAppleMapsNavigationUrl(latitude: number, longitude: number): 
 export function getGoogleMapsNavigationUrl(latitude: number, longitude: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
 }
-

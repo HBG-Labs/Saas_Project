@@ -89,7 +89,7 @@ export default function AuditLogPage() {
     ...(entityType !== '' ? { entityType } : {}),
   });
 
-  const rawList = logs.data ?? [];
+  const rawList = useMemo(() => logs.data ?? [], [logs.data]);
 
   // Filtrage local supplémentaire (recherche textuelle sur acteur ou description)
   const filteredList = useMemo(() => {

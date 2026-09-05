@@ -54,3 +54,10 @@ export { InterventionTimer } from './components/InterventionTimer';
 export { MissionInterventionsPanel } from './components/MissionInterventionsPanel';
 export { SignaturePadModal } from './components/SignaturePadModal';
 export { InterventionPdfModal } from './components/InterventionPdfModal';
+
+export {
+  clearLocalReportDraft,
+  readLocalReportDraft,
+  writeLocalReportDraft,
+  type LocalReportDraft,
+} from './local-report-draft';

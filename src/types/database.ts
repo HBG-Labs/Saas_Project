@@ -3058,6 +3058,52 @@ export interface Database {
         ];
       };
 
+      client_error_events: {
+        Row: {
+          id: string;
+          organization_id: string | null;
+          user_id: string;
+          event_id: string;
+          error_kind: string;
+          error_name: string;
+          message: string;
+          stack: string | null;
+          component_stack: string | null;
+          route: string;
+          app_version: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string | null;
+          user_id?: string;
+          event_id: string;
+          error_kind: string;
+          error_name: string;
+          message: string;
+          stack?: string | null;
+          component_stack?: string | null;
+          route: string;
+          app_version?: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'client_error_events_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'client_error_events_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       technician_location_pings: {
         Row: {
           id: string;

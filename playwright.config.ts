@@ -13,6 +13,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
+  expect: {
+    // Le premier chargement d'une route lazy peut inclure la compilation Vite
+    // à froid, particulièrement sur les runners CI et les mobiles émulés.
+    timeout: 15_000,
+  },
 
   use: {
     baseURL: 'http://localhost:5173',

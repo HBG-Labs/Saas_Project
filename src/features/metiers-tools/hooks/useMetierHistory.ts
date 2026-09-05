@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface MetierHistoryEntry {
   id: string;
@@ -18,11 +18,25 @@ function getStoredHistory(): MetierHistoryEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isMetierHistoryEntry) : [];
   } catch {
     return [];
   }
+}
+
+function isMetierHistoryEntry(value: unknown): value is MetierHistoryEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Partial<MetierHistoryEntry>;
+  return (
+    typeof entry.id === 'string' &&
+    typeof entry.tradeSlug === 'string' &&
+    typeof entry.toolSlug === 'string' &&
+    typeof entry.toolTitle === 'string' &&
+    typeof entry.result === 'string' &&
+    typeof entry.summary === 'string' &&
+    typeof entry.timestamp === 'string'
+  );
 }
 
 function saveStoredHistory(entries: MetierHistoryEntry[]) {
@@ -36,10 +50,6 @@ function saveStoredHistory(entries: MetierHistoryEntry[]) {
 
 export function useMetierHistory() {
   const [history, setHistory] = useState<MetierHistoryEntry[]>(getStoredHistory);
-
-  useEffect(() => {
-    setHistory(getStoredHistory());
-  }, []);
 
   const addHistoryEntry = useCallback(
     (entry: Omit<MetierHistoryEntry, 'id' | 'timestamp'>) => {

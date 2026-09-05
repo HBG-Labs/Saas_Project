@@ -30,10 +30,12 @@ export {
   revokeInvitation,
   suggestOrganizationSlug,
   updateMemberRole,
+  updateOwnMemberContact,
   updateOrganization,
 } from './api/organizations.api';
 
 export { OrganizationProvider } from './context/OrganizationProvider';
+export { OrganizationContext } from './context/organization-context';
 export type {
   OrganizationContextValue,
   OrganizationStatus,

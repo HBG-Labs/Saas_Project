@@ -1,0 +1,55 @@
+name: Qualité REZO360
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Types, qualité, tests et build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://test-project.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_only
+      VITE_APP_ENV: production
+      VITE_APP_VERSION: ${{ github.sha }}
+
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier les types
+        run: npm run typecheck
+
+      - name: Vérifier la qualité du code
+        run: npm run lint
+
+      - name: Exécuter les tests
+        run: npm run test
+
+      - name: Installer Chromium pour les parcours navigateur
+        run: npx playwright install --with-deps chromium
+
+      - name: Vérifier les parcours ordinateur et mobile
+        run: npm run test:e2e
+
+      - name: Vérifier le paquet de déploiement
+        run: npm run check:deploy
+
+      - name: Construire la version de production
+        run: npm run build

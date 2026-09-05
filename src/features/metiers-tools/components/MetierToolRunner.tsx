@@ -23,7 +23,7 @@ import { ProToolUpgradeModal, useUserEntitlements } from '@/features/billing';
 import { cn } from '@/lib/cn';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 import { useMetierHistory } from '../hooks/useMetierHistory';
-import type { MetierToolDefinition, ReliabilityLevel } from '../types';
+import type { MetierInputValue, MetierToolDefinition, ReliabilityLevel } from '../types';
 
 interface MetierToolRunnerProps {
   tool: MetierToolDefinition;
@@ -58,7 +58,7 @@ function getReliabilityBadge(level: ReliabilityLevel) {
 export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
   // 1. Initialisation de l'état des champs à partir des valeurs par défaut
   const initialInputs = useMemo(() => {
-    const obj: Record<string, any> = {};
+    const obj: Record<string, MetierInputValue> = {};
     for (const f of tool.fields) {
       obj[f.id] = f.defaultValue;
     }
@@ -69,14 +69,17 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
   const isProUnlocked = has('pro_tools');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const [inputs, setInputs] = useState<Record<string, any>>(initialInputs);
+  const [inputs, setInputs] = useState<Record<string, MetierInputValue>>(initialInputs);
+  const [inputToolSlug, setInputToolSlug] = useState(tool.slug);
   const [copied, signalerCopied] = useEphemeralFlag();
   const { addHistoryEntry } = useMetierHistory();
 
-  // Réinitialiser si l'outil change
-  useEffect(() => {
+  // Réinitialiser pendant le rendu si l'outil change, sans peindre un résultat
+  // calculé avec les valeurs de l'outil précédent.
+  if (inputToolSlug !== tool.slug) {
+    setInputToolSlug(tool.slug);
     setInputs(initialInputs);
-  }, [initialInputs]);
+  }
 
   // 2. Calcul dynamique en direct (uniquement si débloqué ou pour preview)
   const output = useMemo(() => {
@@ -112,7 +115,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
     return undefined;
   }, [tool, output, addHistoryEntry, isProUnlocked]);
 
-  const handleInputChange = (fieldId: string, value: any) => {
+  const handleInputChange = (fieldId: string, value: MetierInputValue) => {
     setInputs((prev) => ({ ...prev, [fieldId]: value }));
   };
 
@@ -147,7 +150,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
       `Généré via REZO360 Outils Métiers — ${new Date().toLocaleDateString('fr-FR')}`,
     ].filter(Boolean);
 
-    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    void navigator.clipboard.writeText(lines.join('\n')).then(() => {
       signalerCopied();
     });
   };
@@ -262,6 +265,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                         )}
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
+                        <span className="sr-only">{field.label}</span>
                         <input
                           type="checkbox"
                           checked={Boolean(val)}
@@ -295,7 +299,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                       label={field.label}
                       hideLabel
                       type={field.type === 'number' ? 'number' : 'text'}
-                      value={val}
+                      value={String(val)}
                       min={field.min}
                       max={field.max}
                       step={field.step}

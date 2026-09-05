@@ -1,7 +1,7 @@
 import type { MetierToolDefinition } from '../../types';
 
 // Helpers IPv4
-function parseNum(val: any, fallback = 0): number {
+function parseNum(val: unknown, fallback = 0): number {
   if (val === undefined || val === null || val === '') return fallback;
   const num = Number(val);
   return isNaN(num) || !isFinite(num) ? fallback : num;

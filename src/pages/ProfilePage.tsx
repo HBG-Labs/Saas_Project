@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   User,
   Mail,
@@ -33,7 +33,11 @@ import { Modal } from '@/components/ui/Modal';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FormError } from '@/components/feedback/FormError';
 import { updatePassword, useAuth } from '@/features/auth';
-import { ROLE_LABELS, useCurrentOrganization } from '@/features/organizations';
+import {
+  ROLE_LABELS,
+  updateOwnMemberContact,
+  useCurrentOrganization,
+} from '@/features/organizations';
 import {
   AvatarPicker,
   useMyProfile,
@@ -42,7 +46,6 @@ import {
 } from '@/features/profile';
 import { formatDate } from '@/lib/format';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
-import { supabase } from '@/services/supabase';
 
 
 export interface EquipmentItem {
@@ -68,6 +71,15 @@ export interface UserProfileData {
   equipments: EquipmentItem[];
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readText(value: Record<string, unknown>, key: string): string | undefined {
+  const candidate = value[key];
+  return typeof candidate === 'string' ? candidate : undefined;
+}
+
 /**
  * Ligne `profiles` → formulaire.
  *
@@ -84,19 +96,35 @@ function toFormProfile(
   const identity = full?.identity ?? null;
   const details = full?.details ?? null;
 
-  const rawCertifications = Array.isArray(details?.certifications)
-    ? (details.certifications as any[])
+  const rawCertifications: Record<string, unknown>[] = Array.isArray(details?.certifications)
+    ? details.certifications.reduce<Record<string, unknown>[]>((items, item) => {
+        if (isJsonObject(item)) items.push(item);
+        return items;
+      }, [])
     : [];
-  const equipments = Array.isArray(details?.equipments)
-    ? (details.equipments as { id?: string; name?: string; serial?: string }[])
+  const rawEquipments: Record<string, unknown>[] = Array.isArray(details?.equipments)
+    ? details.equipments.reduce<Record<string, unknown>[]>((items, item) => {
+        if (isJsonObject(item)) items.push(item);
+        return items;
+      }, [])
     : [];
 
-  const certifications: CertificationItem[] = rawCertifications.map((item, index) => ({
-    id: item.id ?? `cert-${index}`,
-    name: item.name ?? item.label ?? '',
-    validity: item.validity ?? item.detail ?? item.expires_at ?? '',
-    detail: item.info ?? item.details ?? (item.label ? '' : item.detail ?? ''),
-  }));
+  const certifications: CertificationItem[] = rawCertifications.map((item, index) => {
+    const label = readText(item, 'label');
+    return {
+      id: readText(item, 'id') ?? `cert-${index}`,
+      name: readText(item, 'name') ?? label ?? '',
+      validity:
+        readText(item, 'validity') ??
+        readText(item, 'detail') ??
+        readText(item, 'expires_at') ??
+        '',
+      detail:
+        readText(item, 'info') ??
+        readText(item, 'details') ??
+        (label ? '' : (readText(item, 'detail') ?? '')),
+    };
+  });
 
   return {
     displayName: identity?.display_name ?? fallbackName,
@@ -104,10 +132,10 @@ function toFormProfile(
     phone: details?.phone ?? '',
     zone: details?.zone ?? '',
     certifications,
-    equipments: equipments.map((item, index) => ({
-      id: item.id ?? `eq-${index}`,
-      name: item.name ?? '',
-      serial: item.serial ?? '',
+    equipments: rawEquipments.map((item, index) => ({
+      id: readText(item, 'id') ?? `eq-${index}`,
+      name: readText(item, 'name') ?? '',
+      serial: readText(item, 'serial') ?? '',
       color: 'blue' as const,
     })),
   };
@@ -144,13 +172,14 @@ export default function ProfilePage() {
    * Tampon d'édition réactif.
    */
   const [profile, setProfile] = useState<UserProfileData>(remoteProfile);
+  const [profileSource, setProfileSource] = useState(profileQuery.data);
 
-  // Synchronisation dès la réception ou l'invalidation des données distantes
-  useEffect(() => {
-    if (profileQuery.data) {
-      setProfile(toFormProfile(profileQuery.data, fallbackName, fallbackJobTitle));
-    }
-  }, [profileQuery.data, fallbackName, fallbackJobTitle]);
+  // Ajustement pendant le rendu : évite le rendu intermédiaire avec l'ancienne
+  // fiche qu'une synchronisation dans un effet produirait.
+  if (profileQuery.data !== profileSource) {
+    setProfileSource(profileQuery.data);
+    setProfile(remoteProfile);
+  }
 
   const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -224,13 +253,10 @@ export default function ProfilePage() {
     // 2. Synchronisation du poste et du téléphone dans l'organisation courante (grâce à la policy organization_members_update_self)
     if (membership?.id) {
       try {
-        await supabase
-          .from('organization_members')
-          .update({
-            job_title: trimmedJobTitle === '' ? null : trimmedJobTitle,
-            phone: trimmedPhone === '' ? null : trimmedPhone,
-          })
-          .eq('id', membership.id);
+        await updateOwnMemberContact(membership.id, {
+          jobTitle: trimmedJobTitle === '' ? null : trimmedJobTitle,
+          phone: trimmedPhone === '' ? null : trimmedPhone,
+        });
       } catch (err) {
         console.warn('Synchronisation membership:', err);
       }

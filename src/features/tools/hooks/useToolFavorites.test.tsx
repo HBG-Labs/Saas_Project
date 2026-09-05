@@ -14,9 +14,6 @@ const mockRemoveFavorite = vi.fn();
 vi.mock('@/features/catalog', () => ({
   useFavorites: () => mockUseFavorites(),
   useCatalogTools: () => mockUseCatalogTools(),
-}));
-
-vi.mock('@/features/catalog/api/catalog.api', () => ({
   addFavorite: (...args: unknown[]) => mockAddFavorite(...args),
   removeFavorite: (...args: unknown[]) => mockRemoveFavorite(...args),
 }));
@@ -27,7 +24,7 @@ function createWrapper(userId: string | null = null) {
   });
 
   const authValue = {
-    status: (userId ? 'authenticated' : 'unauthenticated') as 'authenticated' | 'unauthenticated',
+    status: userId ? ('authenticated' as const) : ('unauthenticated' as const),
     user: userId ? ({ id: userId, email: 'test@example.com' } as any) : null,
     session: null,
     signIn: vi.fn(),

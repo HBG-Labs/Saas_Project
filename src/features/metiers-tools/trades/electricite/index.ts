@@ -1,6 +1,6 @@
 import type { MetierToolDefinition } from '../../types';
 
-function parseNum(val: any, fallback = 0): number {
+function parseNum(val: unknown, fallback = 0): number {
   if (val === undefined || val === null || val === '') return fallback;
   const num = Number(val);
   return isNaN(num) || !isFinite(num) ? fallback : num;
@@ -365,7 +365,7 @@ export const electriciteTools: MetierToolDefinition[] = [
     reliabilityLevel: 'pro_validation',
     standardReference: 'NF C 15-100 § 524 & UTE C 15-105',
     assumptions: [
-      'Conducteur cuivre sous charge thermique maximale 70°C ($\rho = 0.023\ \Omega\cdot\text{mm}^2/\text{m}$)',
+      'Conducteur cuivre sous charge thermique maximale 70 °C (ρ = 0,023 Ω·mm²/m)',
       'Sections normalisées du commerce : 1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70 mm²',
     ],
     limits: [

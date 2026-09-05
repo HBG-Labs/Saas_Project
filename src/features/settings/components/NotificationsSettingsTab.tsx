@@ -16,7 +16,7 @@ export function NotificationsSettingsTab({ onSaved }: { onSaved?: () => void }) 
             <span>Alertes & Notifications Terrain</span>
           </CardTitle>
           <CardDescription className="text-3xs">
-            Choisissez les notifications automatiques que vous souhaitez recevoir sur votre compte et par SMS.
+            Choisissez les alertes affichées dans votre centre de notifications.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-4 pb-3.5 pt-0 space-y-3">
@@ -93,20 +93,17 @@ export function NotificationsSettingsTab({ onSaved }: { onSaved?: () => void }) 
               <div className="flex items-center gap-1.5">
                 <h4 className="text-xs font-semibold text-foreground">Alertes SMS d'Urgence</h4>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                  Option Pro / Business
+                  Bientôt disponible
                 </span>
               </div>
               <p className="text-3xs text-muted-foreground">
-                Envoi d'un SMS prioritaire pour les dépannages urgents et incidents critiques sur site.
+                Le canal SMS sera activé lorsqu'un fournisseur d'envoi aura été configuré.
               </p>
             </div>
             <Switch
               label="Alertes SMS d'Urgence"
-              checked={preferences.sms_urgent_alerts}
-              onCheckedChange={(val) => {
-                updatePreference('sms_urgent_alerts', val);
-                onSaved?.();
-              }}
+              checked={false}
+              disabled
             />
           </div>
         </CardContent>

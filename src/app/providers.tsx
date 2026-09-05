@@ -10,6 +10,7 @@ import { AuthProvider } from '@/features/auth';
 import { OrganizationProvider } from '@/features/organizations';
 import { CustomizerDrawer } from '@/features/theme';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
+import { captureClientError, ClientErrorMonitor } from '@/features/telemetry';
 import { createQueryClient } from '@/lib/query-client';
 
 /**
@@ -31,11 +32,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createQueryClient);
 
   return (
-    <ErrorBoundary fallback={({ error, reset }) => <ErrorFallback error={error} reset={reset} />}>
+    <ErrorBoundary
+      fallback={({ error, reset }) => <ErrorFallback error={error} reset={reset} />}
+      onError={(error, info) => {
+        void captureClientError(error, {
+          kind: 'react',
+          componentStack: info.componentStack ?? null,
+        });
+      }}
+    >
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <OrganizationProvider>
+              <ClientErrorMonitor />
               <ToastProvider>{children}</ToastProvider>
               <SupportBubble />
               <CustomizerDrawer />

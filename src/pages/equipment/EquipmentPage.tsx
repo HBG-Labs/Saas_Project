@@ -192,13 +192,13 @@ export default function EquipmentPage() {
     );
   };
 
-  const rawList = equipmentQuery.data ?? [];
+  const rawList = useMemo(() => equipmentQuery.data ?? [], [equipmentQuery.data]);
   const list = useMemo(() => {
     if (filterCalibration === 'all') return rawList;
     return rawList.filter((eq) => calibrationState(eq.next_calibration) === filterCalibration);
   }, [rawList, filterCalibration]);
 
-  const parc = parcQuery.data ?? [];
+  const parc = useMemo(() => parcQuery.data ?? [], [parcQuery.data]);
 
   const handleExportCsv = () => {
     exportToCsv(

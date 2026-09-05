@@ -1,5 +1,5 @@
 import { SelectField } from '@/components/ui/SelectField';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Calculator,
   Plus,
@@ -71,12 +71,12 @@ export default function QuotesPage() {
   const [vatInput, setVatInput] = useState<string>(() =>
     organization?.default_vat_rate != null ? String(organization.default_vat_rate) : '20',
   );
-
-  useEffect(() => {
-    if (organization?.default_vat_rate != null) {
-      setVatInput(String(organization.default_vat_rate));
-    }
-  }, [organization?.default_vat_rate]);
+  const organizationVatRate = organization?.default_vat_rate ?? 20;
+  const [vatSource, setVatSource] = useState(organizationVatRate);
+  if (vatSource !== organizationVatRate) {
+    setVatSource(organizationVatRate);
+    setVatInput(String(organizationVatRate));
+  }
 
   const vatRate = parseFloat(vatInput.replace(',', '.')) || 0;
 

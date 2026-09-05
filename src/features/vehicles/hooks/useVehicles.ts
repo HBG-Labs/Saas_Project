@@ -73,13 +73,12 @@ export function useVehicles(organizationId: string | null) {
   });
 
   const membersQuery = useMembers(organizationId);
-  const members = membersQuery.data ?? [];
 
-  // `useMemo` et non `?? []` directement : un tableau neuf à chaque rendu
-  // change l'identité des dépendances de `addMaintenanceRecord`, qui se
-  // recrée alors sans cesse et fait re-rendre les modales qui le reçoivent.
+  // La valeur de repli est créée à l'intérieur du calcul pour que l'absence de
+  // membres ne change pas artificiellement l'identité des dépendances.
   const vehicles: Vehicle[] = useMemo(() => {
     const rawVehicles = query.data ?? [];
+    const members = membersQuery.data ?? [];
     if (members.length === 0) return rawVehicles;
 
     const membersMap = new Map(
@@ -92,7 +91,7 @@ export function useVehicles(organizationId: string | null) {
         ? (membersMap.get(v.assignedMemberId) ?? v.assignedMemberName ?? null)
         : null,
     }));
-  }, [query.data, members]);
+  }, [query.data, membersQuery.data]);
 
   const addVehicle = useCallback(
     (input: VehicleInput) => {

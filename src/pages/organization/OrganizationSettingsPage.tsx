@@ -30,6 +30,7 @@ import { DEFAULT_QUOTE_PAYMENT_METHOD, DEFAULT_QUOTE_PAYMENT_TERMS } from '@/fea
 import { cn } from '@/lib/cn';
 import {
   organizationSettingsSchema,
+  type OrganizationSettingsInputValues,
   type OrganizationSettingsValues,
 } from '@/features/organizations/schemas/organization.schema';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -113,8 +114,8 @@ export default function OrganizationSettingsPage() {
     control,
     setValue,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<OrganizationSettingsValues>({
-    resolver: zodResolver(organizationSettingsSchema) as any,
+  } = useForm<OrganizationSettingsInputValues, unknown, OrganizationSettingsValues>({
+    resolver: zodResolver(organizationSettingsSchema),
     ...(data
       ? {
           values: {
@@ -148,7 +149,7 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const onSubmit = handleSubmit(async (values) => {
+  const saveOrganization = async (values: OrganizationSettingsValues): Promise<void> => {
     setSubmitError(null);
     setSaved(false);
     try {
@@ -176,7 +177,9 @@ export default function OrganizationSettingsPage() {
     } catch (error) {
       setSubmitError(error);
     }
-  });
+  };
+
+  const onSubmit = handleSubmit(saveOrganization);
 
   // `useWatch`, pas `watch()` : la seconde renvoie une fonction que React
   // Compiler ne peut pas mémoïser sans risquer un affichage périmé — même

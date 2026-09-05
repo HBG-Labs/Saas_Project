@@ -13,7 +13,6 @@ import { MetierSearchBar } from '@/features/metiers-tools/components/MetierSearc
 import { MetierToolCard } from '@/features/metiers-tools/components/MetierToolCard';
 import { useMetierFavorites } from '@/features/metiers-tools/hooks/useMetierFavorites';
 import { getTrade, listToolsForTrade } from '@/features/metiers-tools/registry';
-import type { TradeSlug } from '@/features/metiers-tools/types';
 import { FALLBACK_NAV_ICON, NAV_ICONS } from '@/components/layout/nav-icons';
 
 export default function MetierTradePage() {
@@ -31,7 +30,7 @@ export default function MetierTradePage() {
 
   const allTradeTools = useMemo(() => {
     if (!trade) return [];
-    return listToolsForTrade(trade.slug as TradeSlug);
+    return listToolsForTrade(trade.slug);
   }, [trade]);
 
   const filteredTools = useMemo(() => {

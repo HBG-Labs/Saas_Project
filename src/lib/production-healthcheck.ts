@@ -15,6 +15,10 @@ export interface ProductionHealthReport {
   checks: HealthCheckItem[];
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erreur inconnue';
+}
+
 export async function runProductionHealthCheck(): Promise<ProductionHealthReport> {
   const checks: HealthCheckItem[] = [];
 
@@ -43,13 +47,13 @@ export async function runProductionHealthCheck(): Promise<ProductionHealthReport
         message: `Opérationnel (${latencyDb} ms) — ${data?.length ?? 0} plan(s) vérifié(s)`,
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     checks.push({
       id: 'database_postgrest',
       name: 'Base de données PostgreSQL & RLS',
       category: 'database',
       status: 'error',
-      message: `Connexion impossible : ${err.message}`,
+      message: `Connexion impossible : ${errorMessage(err)}`,
     });
   }
 
@@ -73,13 +77,13 @@ export async function runProductionHealthCheck(): Promise<ProductionHealthReport
         message: data.session ? `Connecté (${data.session.user.email})` : 'Service Auth actif (visiteur anonyme)',
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     checks.push({
       id: 'supabase_auth',
       name: 'Authentification Supabase Auth',
       category: 'auth',
       status: 'error',
-      message: `Erreur service auth : ${err.message}`,
+      message: `Erreur service auth : ${errorMessage(err)}`,
     });
   }
 
@@ -107,13 +111,13 @@ export async function runProductionHealthCheck(): Promise<ProductionHealthReport
           : `Bucket intervention-attachments à initialiser (${bucketNames.length} bucket(s) trouvés)`,
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     checks.push({
       id: 'supabase_storage',
       name: 'Stockage Fichiers & Pièces Jointes',
       category: 'storage',
       status: 'warning',
-      message: `Vérification stockage : ${err.message}`,
+      message: `Vérification stockage : ${errorMessage(err)}`,
     });
   }
 

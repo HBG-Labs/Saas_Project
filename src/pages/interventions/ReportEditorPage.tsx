@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, Pen, Printer, Send, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -26,6 +26,9 @@ import {
   useSaveReport,
   useSubmitReport,
   useWorkedSeconds,
+  clearLocalReportDraft,
+  readLocalReportDraft,
+  writeLocalReportDraft,
 } from '@/features/interventions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -79,12 +82,44 @@ export default function ReportEditorPage() {
    *
    * La garde sur l'identifiant est essentielle : sans elle, chaque
    * rafraîchissement de la requête écraserait la saisie en cours.
-   */
+  */
   if (report !== null && report.id !== loadedReportId) {
+    const localDraft = readLocalReportDraft(user?.id, report.id, report.updated_at);
     setLoadedReportId(report.id);
-    setWorkDescription(report.work_description ?? '');
-    setObservations(report.observations ?? '');
+    setWorkDescription(localDraft?.workDescription ?? report.work_description ?? '');
+    setObservations(localDraft?.observations ?? report.observations ?? '');
   }
+
+  const canKeepLocalDraft =
+    report !== null &&
+    membership !== null &&
+    intervention.data?.technician_id === membership.id &&
+    (report.status === 'draft' || report.status === 'rejected');
+
+  // Les deux zones de texte sont le cœur du travail terrain. Elles sont mises
+  // à l'abri sur l'appareil après 300 ms, sans tenter une mutation réseau tant
+  // que l'utilisateur n'appuie pas sur « Enregistrer ».
+  useEffect(() => {
+    if (!canKeepLocalDraft || report === null || loadedReportId !== report.id) return undefined;
+
+    const matchesServer =
+      workDescription === (report.work_description ?? '') &&
+      observations === (report.observations ?? '');
+    if (matchesServer) {
+      clearLocalReportDraft(user?.id, report.id);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      writeLocalReportDraft(user?.id, {
+        reportId: report.id,
+        baseUpdatedAt: report.updated_at,
+        workDescription,
+        observations,
+      });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [canKeepLocalDraft, loadedReportId, observations, report, user?.id, workDescription]);
 
   if (intervention.isPending) {
     return <Skeleton className="h-64 w-full" />;
@@ -181,6 +216,7 @@ export default function ReportEditorPage() {
       { work_description: workDescription, observations },
       {
         onSuccess: (updatedReport) => {
+          clearLocalReportDraft(user?.id, report.id);
           setSavedAt(new Date());
           if (updatedReport) {
             setWorkDescription(updatedReport.work_description ?? '');
@@ -302,7 +338,9 @@ export default function ReportEditorPage() {
                   </Button>
 
                   {hasUnsavedChanges ? (
-                    <span className="text-warning text-xs">Modifications non enregistrées.</span>
+                    <span className="text-warning text-xs">
+                      Modifications conservées sur cet appareil jusqu’à l’enregistrement.
+                    </span>
                   ) : savedAt !== null ? (
                     <span className="text-success text-xs">
                       Enregistré à {savedAt.toLocaleTimeString('fr-FR')}
@@ -488,7 +526,12 @@ export default function ReportEditorPage() {
                               setError(null);
                               saveReport.mutate(
                                 { work_description: workDescription, observations },
-                                { onSuccess: () => setSavedAt(new Date()) },
+                                {
+                                  onSuccess: () => {
+                                    clearLocalReportDraft(user?.id, report.id);
+                                    setSavedAt(new Date());
+                                  },
+                                },
                               );
                               advanceMission.mutate(unblock.to);
                             }}
@@ -517,6 +560,7 @@ export default function ReportEditorPage() {
                       { work_description: workDescription, observations },
                       {
                         onSuccess: () => {
+                          clearLocalReportDraft(user?.id, report.id);
                           submitReport.mutate(report.id, {
                             onError: (mutationError) => {
                               setError(mutationError);

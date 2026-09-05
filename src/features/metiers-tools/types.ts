@@ -7,6 +7,11 @@ export type TradeSlug =
   | 'reseaux';
 
 export type ReliabilityLevel = 'simple' | 'indicative' | 'pro_validation';
+/**
+ * Les calculateurs restent défensifs face à des données restaurées d'une
+ * ancienne session ou reçues d'une source externe.
+ */
+export type MetierInputValue = string | number | boolean | null | undefined;
 
 export interface TradeDefinition {
   slug: TradeSlug;
@@ -26,7 +31,7 @@ export interface MetierToolField {
   id: string;
   label: string;
   type: 'number' | 'select' | 'text' | 'boolean';
-  defaultValue: any;
+  defaultValue: NonNullable<MetierInputValue>;
   options?: { value: string; label: string }[];
   unit?: string;
   min?: number;
@@ -74,5 +79,5 @@ export interface MetierToolDefinition {
   limits?: string[];
   disclaimer?: string;
   fields: MetierToolField[];
-  compute: (inputs: Record<string, any>) => MetierCalculationOutput;
+  compute: (inputs: Record<string, MetierInputValue>) => MetierCalculationOutput;
 }
