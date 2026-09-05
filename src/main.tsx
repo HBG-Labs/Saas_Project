@@ -2,7 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { renderBootFailure } from '@/app/boot-failure';
+import { clearChunkLoadRecoveryGuard, installChunkLoadRecovery } from '@/lib/chunk-load-recovery';
 import '@/styles/index.css';
+
+// Installé avant les imports différés de `boot` : il couvre aussi une version
+// devenue obsolète avant que React et le routeur aient pu démarrer.
+installChunkLoadRecovery();
 
 /**
  * Amorçage.
@@ -54,6 +59,10 @@ async function boot(): Promise<void> {
         <App />
       </StrictMode>,
     );
+
+    // Un rendu resté stable confirme que les modules du nouveau déploiement
+    // sont accessibles. Une future mise à jour pourra alors récupérer à son tour.
+    window.setTimeout(clearChunkLoadRecoveryGuard, 15_000);
 
     // Enregistrement du Service Worker PWA pour l'installation mobile & hors-ligne
     if ('serviceWorker' in navigator && import.meta.env.PROD) {

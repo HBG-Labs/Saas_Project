@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouteError } from 'react-router';
 
 import { Button } from '@/components/ui/Button';
+import { isChunkLoadError } from '@/lib/chunk-load-recovery';
 import { toAppError } from '@/lib/errors';
 
 interface ErrorFallbackProps {
@@ -22,13 +23,12 @@ export function ErrorFallback({
   const rawError = error ?? routeError;
   const appError = toAppError(rawError);
   const [showDetails, setShowDetails] = useState(false);
+  const chunkLoadFailed = isChunkLoadError(rawError);
 
-  const rawMessage =
-    rawError instanceof Error
-      ? rawError.message
-      : typeof rawError === 'object' && rawError !== null && 'statusText' in rawError
-        ? String((rawError as any).statusText)
-        : null;
+  const displayedTitle = chunkLoadFailed ? 'Actualisation nécessaire' : title;
+  const displayedMessage = chunkLoadFailed
+    ? 'Cette page n’a pas pu être chargée après une mise à jour ou une coupure réseau. Actualisez REZO360 pour continuer. Vos données sont conservées.'
+    : appError.message;
 
   return (
     <div
@@ -38,12 +38,10 @@ export function ErrorFallback({
       <div className="bg-error-subtle text-error mb-2 flex size-12 items-center justify-center rounded-2xl text-xl font-black">
         !
       </div>
-      <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
-      <p className="text-muted-foreground text-sm">
-        {rawMessage || appError.message}
-      </p>
+      <h1 className="text-xl font-bold tracking-tight text-foreground">{displayedTitle}</h1>
+      <p className="text-muted-foreground text-sm">{displayedMessage}</p>
 
-      {rawError instanceof Error && rawError.stack && (
+      {import.meta.env.DEV && rawError instanceof Error && rawError.stack && (
         <div className="w-full text-left">
           <button
             type="button"
@@ -61,7 +59,11 @@ export function ErrorFallback({
       )}
 
       <div className="flex gap-2 mt-2">
-        {reset ? (
+        {chunkLoadFailed ? (
+          <Button onClick={() => window.location.reload()} variant="primary">
+            Actualiser REZO360
+          </Button>
+        ) : reset ? (
           <Button onClick={reset} variant="primary">
             Réessayer
           </Button>
@@ -77,4 +79,3 @@ export function ErrorFallback({
     </div>
   );
 }
-
