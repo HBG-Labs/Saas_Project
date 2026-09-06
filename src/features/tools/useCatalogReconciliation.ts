@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 
 import { listPublishedToolSlugs } from '@/features/catalog';
 
+import { UNIVERSAL_TOOLS } from './calculators/universal';
+import { listRegisteredSlugs } from './registry';
+
 import { logReconciliationReport, reconcileRegistryWithCatalog } from './registry/reconcile';
 
 /**
@@ -35,8 +38,15 @@ export function useCatalogReconciliation(): void {
 
     void (async () => {
       try {
-        const slugs = await listPublishedToolSlugs();
-        logReconciliationReport(reconcileRegistryWithCatalog(slugs));
+        const publies = await listPublishedToolSlugs();
+        // Les outils universels sont implémentés hors du registre : les omettre
+        // faisait passer douze outils fonctionnels pour des pages vides. Ils
+        // sont en revanche servis depuis le code, donc on ne leur réclame pas
+        // de ligne en base — seuls ceux du registre y sont adossés.
+        const implementes = [...listRegisteredSlugs(), ...UNIVERSAL_TOOLS.map((o) => o.slug)];
+        logReconciliationReport(
+          reconcileRegistryWithCatalog(publies, implementes, listRegisteredSlugs()),
+        );
       } catch {
         // Sans base joignable, il n'y a rien à comparer. Se taire vaut mieux
         // qu'un avertissement de catalogue pour un problème de réseau.

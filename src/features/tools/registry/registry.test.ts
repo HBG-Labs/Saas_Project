@@ -72,4 +72,39 @@ describe('reconcileRegistryWithCatalog', () => {
 
     expect(reconcileRegistryWithCatalog([]).missingCatalogEntry).toEqual(['ohms-law']);
   });
+
+  /*
+    Le registre de `src/tools/` n'est pas la seule source d'implémentations :
+    les calculateurs universels vivent dans une liste à part. Les ignorer
+    faisait passer douze outils fonctionnels pour des pages vides, et ce bruit
+    masquait les vrais écarts.
+  */
+  it('tient compte des implémentations hors registre', () => {
+    registerTool(makeTool());
+
+    const report = reconcileRegistryWithCatalog(
+      ['ohms-law', 'unit-converter'],
+      ['ohms-law', 'unit-converter'],
+    );
+
+    expect(report.missingImplementation).toEqual([]);
+  });
+
+  /*
+    Tout ce qui est implémenté n'a pas vocation à figurer en base. Les outils
+    universels sont servis depuis le code ; leur réclamer une ligne produisait
+    sept faux signalements, qui noyaient les vrais.
+  */
+  it('ne réclame pas de ligne en base pour un outil servi depuis le code', () => {
+    registerTool(makeTool());
+
+    const report = reconcileRegistryWithCatalog(
+      ['ohms-law'],
+      ['ohms-law', 'flashlight'],
+      ['ohms-law'],
+    );
+
+    expect(report.missingCatalogEntry).toEqual([]);
+    expect(report.missingImplementation).toEqual([]);
+  });
 });

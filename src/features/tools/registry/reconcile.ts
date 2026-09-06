@@ -18,15 +18,38 @@ export interface ReconciliationReport {
   missingCatalogEntry: string[];
 }
 
+/**
+ * Rapproche le catalogue et les implémentations.
+ *
+ * Les deux paramètres facultatifs corrigent deux faux signalements qui
+ * rendaient ce contrôle inutilisable — seize lignes de bruit à chaque
+ * chargement, qui masquaient les rares écarts réels.
+ *
+ * `implementedSlugs` — le registre de `src/tools/` n'est pas la seule source
+ * d'implémentations : les outils universels vivent dans une liste à part, qui
+ * ne s'y déclare pas. Les ignorer faisait passer douze outils parfaitement
+ * fonctionnels pour des pages vides.
+ *
+ * `cataloguedSlugs` — tout ce qui est implémenté n'a pas vocation à figurer en
+ * base. Les outils universels sont servis depuis le code ; leur réclamer une
+ * ligne n'aurait aucun sens. Seuls ceux du registre sont adossés au catalogue.
+ *
+ * Reste une limite assumée : la RLS de `tools` n'expose que les lignes
+ * `active`. Un outil laissé en brouillon est donc indiscernable d'un outil
+ * absent, et apparaîtra ici. C'est peu, et c'est le prix d'un contrôle qui
+ * tourne côté navigateur.
+ */
 export function reconcileRegistryWithCatalog(
-  catalogSlugs: readonly string[],
+  publishedSlugs: readonly string[],
+  implementedSlugs: readonly string[] = listRegisteredSlugs(),
+  cataloguedSlugs: readonly string[] = implementedSlugs,
 ): ReconciliationReport {
-  const registered = new Set(listRegisteredSlugs());
-  const catalog = new Set(catalogSlugs);
+  const implemented = new Set(implementedSlugs);
+  const published = new Set(publishedSlugs);
 
   return {
-    missingImplementation: [...catalog].filter((slug) => !registered.has(slug)),
-    missingCatalogEntry: [...registered].filter((slug) => !catalog.has(slug)),
+    missingImplementation: [...published].filter((slug) => !implemented.has(slug)),
+    missingCatalogEntry: [...new Set(cataloguedSlugs)].filter((slug) => !published.has(slug)),
   };
 }
 
