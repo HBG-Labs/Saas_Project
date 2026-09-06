@@ -153,9 +153,14 @@ export function ProviderConnectionCard({
               !awaitingConfiguration &&
               (status === 'disconnected' || status === 'action_required') &&
               !authorizationUrl && (
-                <Button className="gap-2" disabled={pending} onClick={() => start.mutate()}>
+                <Button
+                  variant="secondary"
+                  className="border border-violet-600 bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 dark:border-violet-500 dark:bg-violet-600 dark:text-white dark:hover:bg-violet-500"
+                  disabled={pending}
+                  onClick={() => start.mutate()}
+                >
                   <ExternalLink className="size-4" aria-hidden="true" />
-                  {start.isPending ? 'Préparation…' : 'Connecter SUPER PDP'}
+                  {start.isPending ? 'Préparation…' : 'Préparer la connexion'}
                 </Button>
               )}
             {(status === 'disconnected' || status === 'action_required') && authorizationUrl && (
