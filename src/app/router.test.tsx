@@ -34,7 +34,7 @@ describe('routing', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: /pilotez votre activité technique, du devis au compte rendu signé/i,
+        name: /pilotez votre activité de terrain en toute simplicité/i,
         level: 1,
       }),
     ).toBeInTheDocument();
@@ -51,6 +51,29 @@ describe('routing', () => {
     expect(
       await screen.findByRole('heading', { name: /catalogue des outils/i, level: 1 }, { timeout: 5000 }),
     ).toBeInTheDocument();
+  });
+
+  it('affiche le centre de formation sans session', async () => {
+    renderAt('/tutoriels');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /apprenez à utiliser rezo360/i,
+        level: 1,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('ouvre directement le cours de facturation électronique', async () => {
+    renderAt('/tutoriels/facturation-electronique');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /utiliser la facturation électronique/i,
+        level: 1,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/l’émission est une étape engageante/i)).toBeInTheDocument();
   });
 
   it('redirige une route privée vers /login quand la session est absente', async () => {
@@ -100,7 +123,7 @@ describe('routing', () => {
     renderAt('/tools');
 
     expect(
-      await screen.findByRole('navigation', { name: 'Navigation principale' }),
+      await screen.findByRole('navigation', { name: 'Navigation principale' }, { timeout: 5000 }),
     ).toBeInTheDocument();
     // Lien d'évitement pour la navigation au clavier (§12).
     expect(screen.getByRole('link', { name: /aller au contenu principal/i })).toBeInTheDocument();

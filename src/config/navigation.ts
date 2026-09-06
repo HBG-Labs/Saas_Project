@@ -111,6 +111,10 @@ export const METIERS_TOOLS_NAV: readonly NavItem[] = [
   { to: `${ROUTES.metiers}/reseaux`, label: 'Réseaux & Télécoms', icon: 'network' },
 ];
 
+export const RESOURCES_NAV: readonly NavItem[] = [
+  { to: ROUTES.tutorials, label: 'Tutoriels & Formation', icon: 'book', primary: true },
+];
+
 /*
   LA `feature` DÉCLARÉE ICI EST CELLE QUE LA RLS EXIGE.
 
@@ -214,6 +218,7 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
   { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
+  { id: 'resources', label: 'Aide & formation', icon: 'book', items: RESOURCES_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
   { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
 ];

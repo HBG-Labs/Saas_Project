@@ -16,6 +16,7 @@ import { Logo } from './Logo';
 const MARKETING_LINKS = [
   { to: ROUTES.features, label: 'Fonctionnalités' },
   { to: ROUTES.tools, label: 'Outils' },
+  { to: ROUTES.tutorials, label: 'Tutoriels' },
   { to: ROUTES.pricing, label: 'Tarifs' },
   { to: ROUTES.faq, label: 'FAQ' },
 ] as const;
@@ -218,6 +219,7 @@ const FOOTER_SECTIONS = [
     links: [
       { to: ROUTES.features, label: 'Fonctions' },
       { to: ROUTES.tools, label: 'Outils' },
+      { to: ROUTES.tutorials, label: 'Tutoriels' },
       { to: ROUTES.pricing, label: 'Tarifs' },
       { to: ROUTES.faq, label: 'FAQ' },
     ],

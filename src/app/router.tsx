@@ -62,6 +62,14 @@ export const routes: RouteObject[] = [
           { path: ROUTE_PATTERNS.tool, lazy: lazyPage(() => import('@/pages/ToolDetailPage')) },
           { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
+          {
+            path: ROUTES.tutorials,
+            lazy: lazyPage(() => import('@/pages/training/TutorialsPage')),
+          },
+          {
+            path: ROUTE_PATTERNS.tutorial,
+            lazy: lazyPage(() => import('@/pages/training/TutorialDetailPage')),
+          },
 
           // Nouveau volet indépendant « Outils Métiers » (6 métiers, 36 calculateurs spécialisés)
           { path: ROUTES.metiers, lazy: lazyPage(() => import('@/pages/metiers/MetiersHomePage')) },

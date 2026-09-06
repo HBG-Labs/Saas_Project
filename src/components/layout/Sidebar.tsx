@@ -29,6 +29,7 @@ const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
   administration: 'text-[#7C3AED]',
   outils: 'text-[#0891B2]',
   'outils-metiers': 'text-[#1D4ED8]',
+  resources: 'text-[#0F766E]',
   account: 'text-[#4F46E5]',
 };
 

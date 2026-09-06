@@ -20,6 +20,8 @@ export const ROUTES = {
   features: '/features',
   pricing: '/pricing',
   faq: '/faq',
+  tutorials: '/tutoriels',
+  tutorial: (tutorialSlug: string) => `/tutoriels/${tutorialSlug}`,
 
   /**
    * Module professionnel. Chemins en français : ils sont lus par des
@@ -118,4 +120,5 @@ export const ROUTE_PATTERNS = {
   interventionReport: '/interventions/:interventionId/rapport',
   quoteDetail: '/devis/:quoteId',
   invoiceDetail: '/factures/:invoiceId',
+  tutorial: '/tutoriels/:tutorialSlug',
 } as const;
