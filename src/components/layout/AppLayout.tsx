@@ -45,6 +45,7 @@ export function AppLayout() {
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
   const location = useLocation();
+  const isTrainingPage = location.pathname.startsWith(ROUTES.tutorials);
 
   const profileQuery = useMyProfile();
   const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
@@ -320,7 +321,7 @@ export function AppLayout() {
           sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
-        <div className="mx-auto max-w-7xl space-y-4">
+        <div className={cn('mx-auto space-y-4', isTrainingPage ? 'max-w-none' : 'max-w-7xl')}>
           {!isOnline && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 text-warning border border-warning/30 text-xs font-semibold animate-in fade-in">
               <WifiOff className="size-4 shrink-0 text-warning" />

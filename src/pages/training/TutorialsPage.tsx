@@ -44,19 +44,19 @@ const LEARNING_PATH = [
     number: '01',
     title: 'Configurez',
     description: 'Préparez votre entreprise, votre équipe et vos premiers clients.',
-    accent: 'bg-signal-cyan',
+    accent: 'bg-primary',
   },
   {
     number: '02',
     title: 'Passez à l’action',
     description: 'Planifiez les missions et accompagnez le travail sur le terrain.',
-    accent: 'bg-signal-lime',
+    accent: 'bg-primary',
   },
   {
     number: '03',
     title: 'Pilotez',
     description: 'Suivez les documents, la facturation et le matériel au même endroit.',
-    accent: 'bg-signal-orange',
+    accent: 'bg-primary',
   },
 ];
 
@@ -75,7 +75,7 @@ export default function TutorialsPage() {
 
   return (
     <div className="relative -mx-4 -mt-4 overflow-hidden pb-16 sm:-mx-6 lg:-mx-8">
-      <section className="text-brand-night relative isolate overflow-hidden border-y border-slate-200 bg-[#f7f6f1] px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
+      <section className="text-brand-night relative isolate overflow-hidden border-y border-slate-200 bg-white px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
         <div
           className="absolute inset-0 -z-10 opacity-45"
           aria-hidden="true"
@@ -86,7 +86,7 @@ export default function TutorialsPage() {
           }}
         />
 
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.95fr)]">
+        <div className="mx-auto grid max-w-[1480px] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.95fr)]">
           <div>
             <div className="border-primary/15 text-primary mb-6 inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-xs font-bold tracking-wide uppercase shadow-sm">
               <GraduationCap className="size-4" aria-hidden="true" />

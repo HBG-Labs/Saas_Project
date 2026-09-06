@@ -134,8 +134,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Direction et gestionnaires',
     theme: 'Pilotage',
     icon: Users,
-    image: '/images/training/clients-sites.png',
-    imageAlt: 'Technicien antillais présentant les informations d’un site à une cliente',
+    image: '/images/training/clients-sites-v2.png',
+    imageAlt: 'Dossier client, plan et repère de chantier devant un site en rénovation',
     chapters: [
       {
         id: 'creer-client',
@@ -198,8 +198,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Responsables et techniciens',
     theme: 'Pilotage',
     icon: ClipboardCheck,
-    image: '/images/training/missions-planning.png',
-    imageAlt: 'Équipe technique préparant les missions autour d’un plan et d’une tablette',
+    image: '/images/training/missions-planning-v2.png',
+    imageAlt: 'Planning de missions organisé sur un plan de chantier vu du dessus',
     chapters: [
       {
         id: 'creer-mission',
@@ -263,8 +263,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Techniciens et responsables',
     theme: 'Terrain',
     icon: FileCheck2,
-    image: '/images/training/reports.png',
-    imageAlt: 'Technicienne antillaise rédigeant un compte rendu dans un local technique',
+    image: '/images/training/reports-v2.png',
+    imageAlt: 'Compte rendu de terrain illustré par des contrôles et des photos techniques',
     chapters: [
       {
         id: 'saisie',
@@ -326,8 +326,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Direction et gestionnaires',
     theme: 'Gestion',
     icon: ReceiptText,
-    image: '/images/training/quotes-invoices.png',
-    imageAlt: 'Chef d’entreprise antillais contrôlant un devis devant son ordinateur',
+    image: '/images/training/quotes-invoices-v2.png',
+    imageAlt: 'Transformation visuelle d’un devis en facture validée',
     chapters: [
       {
         id: 'devis',
@@ -392,8 +392,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Gestionnaires et équipes terrain',
     theme: 'Gestion',
     icon: Boxes,
-    image: '/images/training/stock-equipment.png',
-    imageAlt: 'Équipe antillaise réalisant l’inventaire d’un stock de matériel',
+    image: '/images/training/stock-equipment-v2.png',
+    imageAlt: 'Stock de matériel organisé autour d’un chariot d’inventaire',
     chapters: [
       {
         id: 'articles',
@@ -456,8 +456,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Propriétaires et administrateurs',
     theme: 'Gestion',
     icon: Landmark,
-    image: '/images/training/einvoicing.png',
-    imageAlt: 'Responsables d’entreprise contrôlant ensemble une facture électronique',
+    image: '/images/training/einvoicing-v2.png',
+    imageAlt: 'Facture électronique validée et transmise depuis plusieurs appareils',
     featured: true,
     chapters: [
       {
