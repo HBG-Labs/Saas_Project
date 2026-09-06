@@ -110,6 +110,29 @@ export const SOUS_TRAITANTS = [
     objet: 'Génération des réponses de l’Assistant IA, à partir de votre question et des données pertinentes de votre organisation',
     zone: 'États-Unis, clauses contractuelles types',
   },
+  // Module Facturation électronique uniquement, et seulement après que
+  // l'organisation a autorisé le raccordement. Ce qui transite : la facture
+  // elle-même — identité et adresse du client, identifiants légaux, lignes et
+  // montants — puisque c'est l'objet même du dépôt sur le réseau réglementaire.
+  //
+  // ZONE À CONFIRMER avant publication : SUPER PDP figure sur la liste des
+  // plateformes agréées publiée par la DGFiP, mais la localisation exacte de
+  // ses traitements n'est pas vérifiée dans ce dépôt. Ne pas écrire « France »
+  // ou « Union européenne » sans l'avoir lu dans le contrat ou la
+  // documentation du partenaire : l'article 13 rend cette ligne opposable.
+  {
+    nom: 'SUPER PDP',
+    objet: 'Dépôt et suivi des factures électroniques sur le réseau des plateformes agréées',
+    zone: 'À confirmer auprès du partenaire',
+  },
+  // Appel émis par le navigateur, sans compte ni jeton, lorsqu'un utilisateur
+  // recherche une entreprise pour préremplir une fiche. Ce qui transite : le
+  // texte saisi. Aucune donnée de l'organisation n'est envoyée.
+  {
+    nom: 'Annuaire des entreprises (DINUM)',
+    objet: 'Recherche d’une entreprise par nom ou SIRET, à partir du texte saisi',
+    zone: 'France, service de l’État',
+  },
 ] as const;
 
 /** Durées de conservation annoncées, par nature de donnée. */
