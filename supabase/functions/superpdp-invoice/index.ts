@@ -11,6 +11,7 @@ import {
   type SuperPdpInvoiceEvent,
 } from '../../../src/features/einvoicing/provider/superpdp-contract.ts';
 import { preparerExportUbl } from '../../../src/features/einvoicing/canonical/mapper.ts';
+import { prochaineTentative } from '../../../src/features/einvoicing/transmission/retry-policy.ts';
 import { serializeUbl } from '../../../src/features/einvoicing/serializers/ubl.ts';
 import type { InvoiceWithItems } from '../../../src/types/domain.ts';
 import {
@@ -531,6 +532,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
           status: 'failed',
           last_error_code: 'submission_failed',
           last_error_message: message,
+          // Echeance de reprise. `attempt_count` a deja ete incremente lors de
+          // la reservation, il compte donc les tentatives consommees. `null`
+          // signifie que le plafond est atteint : la transmission reste en
+          // echec, visible, et attend un regard humain.
+          next_attempt_at: prochaineTentative(transmission.attempt_count, new Date()),
         })
         .eq('id', transmission.id)
         .eq('status', 'submitting');
