@@ -22,6 +22,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -42,11 +43,33 @@ const env = Object.fromEntries(
     }),
 );
 
-const email = process.env['AUDIT_EMAIL'];
-const password = process.env['AUDIT_PASSWORD'];
+/**
+ * Demande une valeur au terminal. Un mot de passe saisi ici ne passe ni par
+ * l'environnement du shell ni par son historique, contrairement à une variable
+ * posée en ligne de commande.
+ */
+function demander(invite, masquer = false) {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    if (masquer) {
+      // Seule l'invite est rendue : les frappes ne sont jamais réaffichées.
+      rl._writeToOutput = (sortie) => {
+        if (sortie.includes(invite)) rl.output.write(sortie);
+      };
+    }
+    rl.question(invite, (reponse) => {
+      rl.close();
+      if (masquer) console.log('');
+      resolve(reponse.trim());
+    });
+  });
+}
+
+const email = process.env['AUDIT_EMAIL'] || (await demander('Adresse e-mail : '));
+const password = process.env['AUDIT_PASSWORD'] || (await demander('Mot de passe : ', true));
 
 if (!email || !password) {
-  console.error('AUDIT_EMAIL et AUDIT_PASSWORD sont requis : ce contrôle passe par une session.');
+  console.error('Une adresse et un mot de passe sont requis : ce contrôle passe par une session.');
   process.exit(1);
 }
 
