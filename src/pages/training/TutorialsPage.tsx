@@ -16,33 +16,26 @@ import { TRAINING_COURSES, TRAINING_THEMES, type TrainingTheme } from '@/feature
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
-const THEME_STYLES: Record<
-  TrainingTheme,
-  { gradient: string; accent: string; badge: string; number: string }
-> = {
+const THEME_STYLES: Record<TrainingTheme, { badge: string; marker: string; icon: string }> = {
   Démarrage: {
-    gradient: 'from-cyan-500 via-blue-600 to-blue-950',
-    accent: 'bg-signal-cyan',
     badge: 'bg-cyan-50 text-cyan-800 border-cyan-200',
-    number: 'text-cyan-100/20',
+    marker: 'bg-signal-cyan',
+    icon: 'bg-cyan-500 text-white',
   },
   Pilotage: {
-    gradient: 'from-emerald-500 via-teal-600 to-cyan-950',
-    accent: 'bg-emerald-400',
     badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    number: 'text-emerald-100/20',
+    marker: 'bg-emerald-500',
+    icon: 'bg-emerald-600 text-white',
   },
   Terrain: {
-    gradient: 'from-orange-500 via-rose-500 to-violet-900',
-    accent: 'bg-signal-orange',
     badge: 'bg-orange-50 text-orange-800 border-orange-200',
-    number: 'text-orange-100/20',
+    marker: 'bg-signal-orange',
+    icon: 'bg-orange-600 text-white',
   },
   Gestion: {
-    gradient: 'from-violet-600 via-blue-700 to-[#0A1B43]',
-    accent: 'bg-violet-400',
     badge: 'bg-violet-50 text-violet-800 border-violet-200',
-    number: 'text-violet-100/20',
+    marker: 'bg-violet-500',
+    icon: 'bg-violet-600 text-white',
   },
 };
 
@@ -82,44 +75,35 @@ export default function TutorialsPage() {
 
   return (
     <div className="relative -mx-4 -mt-4 overflow-hidden pb-16 sm:-mx-6 lg:-mx-8">
-      <section className="bg-brand-night relative isolate overflow-hidden px-4 py-12 text-white sm:px-8 sm:py-16 lg:px-12 lg:py-20">
+      <section className="text-brand-night relative isolate overflow-hidden border-y border-slate-200 bg-[#f7f6f1] px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
         <div
-          className="absolute inset-0 -z-20 opacity-25"
+          className="absolute inset-0 -z-10 opacity-45"
           aria-hidden="true"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px)',
+              'linear-gradient(rgba(15,35,75,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(15,35,75,.055) 1px, transparent 1px)',
             backgroundSize: '42px 42px',
-            maskImage: 'linear-gradient(to bottom, black, transparent 92%)',
           }}
         />
-        <div
-          className="bg-signal-cyan/20 absolute -top-28 right-[8%] -z-10 size-80 rounded-full blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="bg-primary/40 absolute -bottom-40 left-[18%] -z-10 size-96 rounded-full blur-3xl"
-          aria-hidden="true"
-        />
 
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,.92fr)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.95fr)]">
           <div>
-            <div className="border-signal-cyan/30 bg-signal-cyan/10 text-signal-cyan mb-6 inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold tracking-wide uppercase">
+            <div className="border-primary/15 text-primary mb-6 inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-xs font-bold tracking-wide uppercase shadow-sm">
               <GraduationCap className="size-4" aria-hidden="true" />
               Académie REZO360
             </div>
-            <h1 className="max-w-3xl text-4xl leading-[1.03] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="text-brand-night max-w-3xl text-4xl leading-[1.03] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
               Maîtrisez votre activité,
-              <span className="text-signal-lime block">un geste après l’autre.</span>
+              <span className="text-primary block">un geste après l’autre.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-blue-100/80 sm:text-lg">
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
               Des cours courts, concrets et guidés pour prendre REZO360 en main et rendre votre
               équipe autonome.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 to={ROUTES.tutorial('bien-demarrer')}
-                className="bg-signal-lime text-brand-night focus-visible:ring-signal-lime inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold shadow-lg shadow-black/20 transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A1B43] focus-visible:outline-none"
+                className="bg-primary focus-visible:ring-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold text-white shadow-lg shadow-blue-950/15 transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <PlayCircle className="size-5" aria-hidden="true" />
                 Commencer le parcours
@@ -127,81 +111,86 @@ export default function TutorialsPage() {
               {featured ? (
                 <Link
                   to={ROUTES.tutorial(featured.slug)}
-                  className="hover:border-signal-cyan/70 hover:bg-signal-cyan/10 focus-visible:ring-signal-cyan inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-5 text-sm font-bold text-white transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-brand-night hover:border-primary/40 hover:text-primary focus-visible:ring-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
                   Facturation électronique
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               ) : null}
             </div>
-            <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/15 pt-6">
+            <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-300 pt-6">
               <div>
-                <strong className="block text-2xl font-extrabold text-white">
+                <strong className="text-brand-night block text-2xl font-extrabold">
                   {TRAINING_COURSES.length}
                 </strong>
-                <span className="text-xs text-blue-100/65">cours pratiques</span>
+                <span className="text-xs text-slate-500">cours pratiques</span>
               </div>
               <div>
-                <strong className="block text-2xl font-extrabold text-white">{chapterCount}</strong>
-                <span className="text-xs text-blue-100/65">chapitres guidés</span>
+                <strong className="text-brand-night block text-2xl font-extrabold">
+                  {chapterCount}
+                </strong>
+                <span className="text-xs text-slate-500">chapitres guidés</span>
               </div>
               <div>
-                <strong className="block text-2xl font-extrabold text-white">100 %</strong>
-                <span className="text-xs text-blue-100/65">à votre rythme</span>
+                <strong className="text-brand-night block text-2xl font-extrabold">100 %</strong>
+                <span className="text-xs text-slate-500">à votre rythme</span>
               </div>
             </div>
           </div>
 
-          {featured ? (
-            <Link
-              to={ROUTES.tutorial(featured.slug)}
-              className="group relative mx-auto block w-full max-w-md focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none lg:rotate-2 lg:transition-transform lg:hover:rotate-0"
-            >
-              <div className="bg-signal-orange absolute -top-3 -right-3 z-10 rounded-full px-3 py-1.5 text-[11px] font-extrabold tracking-wide text-white uppercase shadow-lg">
-                À la une
+          <div className="relative mx-auto w-full max-w-xl">
+            <div
+              className="border-signal-cyan absolute -top-4 -right-4 h-28 w-28 rounded-tr-[36px] border-t-2 border-r-2"
+              aria-hidden="true"
+            />
+            <div className="relative min-h-[440px] overflow-hidden rounded-[34px] border border-white/20 bg-slate-800 shadow-2xl shadow-black/35 sm:min-h-[480px]">
+              <img
+                src="/images/training/electronic-invoicing-hero-v2.png"
+                alt="Dirigeante antillaise et responsable administratif validant une facture électronique"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                fetchPriority="high"
+              />
+              <div className="bg-brand-night/20 absolute inset-0" aria-hidden="true" />
+              <div className="absolute top-5 left-5 flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[11px] font-extrabold tracking-wide text-slate-900 uppercase shadow-lg">
+                <span className="bg-signal-lime size-2 rounded-full" />
+                Facturation électronique en situation réelle
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-white/20 bg-white text-left shadow-2xl shadow-black/35">
-                <div className="from-primary to-brand-night relative overflow-hidden bg-gradient-to-br via-blue-700 p-6 text-white">
-                  <div className="bg-signal-cyan/20 absolute -right-10 -bottom-14 size-40 rounded-full blur-2xl" />
-                  <div className="relative flex items-start justify-between gap-4">
-                    <span className="bg-signal-lime text-brand-night flex size-12 items-center justify-center rounded-2xl shadow-lg">
-                      <featured.icon className="size-6" aria-hidden="true" />
+
+              {featured ? (
+                <Link
+                  to={ROUTES.tutorial(featured.slug)}
+                  className="group absolute right-5 bottom-5 left-5 rounded-2xl border border-white/80 bg-white p-4 text-left text-slate-950 shadow-xl transition-transform hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="bg-signal-lime text-brand-night flex size-10 shrink-0 items-center justify-center rounded-xl">
+                      <featured.icon className="size-5" aria-hidden="true" />
                     </span>
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold">
-                      {featured.duration}
-                    </span>
-                  </div>
-                  <p className="text-signal-cyan relative mt-7 text-xs font-extrabold tracking-widest uppercase">
-                    Parcours essentiel
-                  </p>
-                  <h2 className="relative mt-2 text-2xl leading-tight font-extrabold text-white">
-                    {featured.title}
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <ol className="space-y-3">
-                    {featured.chapters.slice(0, 4).map((chapter, index) => (
-                      <li key={chapter.id} className="flex items-center gap-3 text-sm">
-                        <span className="bg-primary-subtle text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold">
-                          {index + 1}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-primary text-[10px] font-extrabold tracking-widest uppercase">
+                          Parcours du moment
+                        </p>
+                        <span className="text-muted-foreground shrink-0 text-xs font-bold">
+                          {featured.duration}
                         </span>
-                        <span className="text-foreground line-clamp-1 font-semibold">
-                          {chapter.title.replace(/^\d+\.\s*/, '')}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                  <div className="border-border text-primary mt-5 flex items-center justify-between border-t pt-4 text-sm font-extrabold">
-                    Voir les {featured.chapters.length} étapes
+                      </div>
+                      <h2 className="mt-1 text-base leading-tight font-extrabold sm:text-lg">
+                        {featured.title}
+                      </h2>
+                    </div>
                     <ArrowRight
-                      className="size-5 transition-transform group-hover:translate-x-1"
+                      className="text-primary mt-1 size-5 shrink-0 transition-transform group-hover:translate-x-1"
                       aria-hidden="true"
                     />
                   </div>
-                </div>
-              </div>
-            </Link>
-          ) : null}
+                </Link>
+              ) : null}
+            </div>
+            <div
+              className="bg-signal-orange absolute -bottom-3 -left-3 size-16 rounded-bl-[26px]"
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </section>
 
@@ -293,33 +282,32 @@ export default function TutorialsPage() {
                   key={course.slug}
                   className="border-border bg-surface shadow-raised group flex min-h-[410px] flex-col overflow-hidden rounded-3xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <div
-                    className={cn(
-                      'relative min-h-36 overflow-hidden bg-gradient-to-br p-5 text-white',
-                      style.gradient,
-                    )}
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(255,255,255,.26),transparent_30%)]" />
-                    <span
-                      className={cn(
-                        'absolute -right-1 -bottom-8 font-mono text-8xl leading-none font-black',
-                        style.number,
-                      )}
-                      aria-hidden="true"
-                    >
-                      {String(courseNumber).padStart(2, '0')}
-                    </span>
-                    <div className="relative flex items-start justify-between gap-3">
-                      <span className="flex size-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 backdrop-blur-sm">
+                  <div className="relative h-48 overflow-hidden bg-slate-800">
+                    <img
+                      src={course.image}
+                      alt={course.imageAlt}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="bg-brand-night/20 absolute inset-0" aria-hidden="true" />
+                    <span className={cn('absolute inset-x-0 bottom-0 h-1.5', style.marker)} />
+                    <div className="absolute top-4 right-4 left-4 flex items-start justify-between gap-3">
+                      <span
+                        className={cn(
+                          'flex size-11 items-center justify-center rounded-2xl border border-white/60 shadow-lg',
+                          style.icon,
+                        )}
+                      >
                         <Icon className="size-5" aria-hidden="true" />
                       </span>
                       {course.featured ? (
-                        <span className="bg-signal-lime text-brand-night rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase">
+                        <span className="bg-signal-lime text-brand-night rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase shadow-md">
                           Recommandé
                         </span>
                       ) : null}
                     </div>
-                    <p className="relative mt-6 text-[11px] font-bold tracking-[0.18em] text-white/70 uppercase">
+                    <p className="bg-brand-night absolute bottom-4 left-4 rounded-lg px-2.5 py-1.5 text-[10px] font-extrabold tracking-[0.16em] text-white uppercase shadow-lg">
                       Formation {String(courseNumber).padStart(2, '0')}
                     </p>
                   </div>
@@ -374,7 +362,7 @@ export default function TutorialsPage() {
         </section>
 
         <section className="bg-brand-night relative overflow-hidden rounded-3xl px-6 py-8 text-white shadow-xl sm:px-8">
-          <div className="bg-signal-lime/15 absolute -top-20 -right-12 size-64 rounded-full blur-3xl" />
+          <span className="bg-signal-lime absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
           <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex max-w-2xl gap-4">
               <span className="bg-signal-lime text-brand-night flex size-11 shrink-0 items-center justify-center rounded-2xl">

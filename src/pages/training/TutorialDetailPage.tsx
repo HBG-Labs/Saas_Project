@@ -24,33 +24,26 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 const PROGRESS_KEY = 'rezo360:tutorial-progress:v1';
 
-const THEME_ACCENTS: Record<
-  TrainingTheme,
-  { bar: string; soft: string; text: string; glow: string }
-> = {
+const THEME_ACCENTS: Record<TrainingTheme, { bar: string; soft: string; text: string }> = {
   Démarrage: {
     bar: 'bg-signal-cyan',
     soft: 'bg-cyan-50',
     text: 'text-cyan-800',
-    glow: 'bg-signal-cyan/25',
   },
   Pilotage: {
     bar: 'bg-emerald-400',
     soft: 'bg-emerald-50',
     text: 'text-emerald-800',
-    glow: 'bg-emerald-400/20',
   },
   Terrain: {
     bar: 'bg-signal-orange',
     soft: 'bg-orange-50',
     text: 'text-orange-800',
-    glow: 'bg-signal-orange/20',
   },
   Gestion: {
     bar: 'bg-violet-400',
     soft: 'bg-violet-50',
     text: 'text-violet-800',
-    glow: 'bg-violet-400/25',
   },
 };
 
@@ -133,19 +126,7 @@ export default function TutorialDetailPage() {
             backgroundImage:
               'linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px)',
             backgroundSize: '42px 42px',
-            maskImage: 'linear-gradient(to bottom, black, transparent 95%)',
           }}
-        />
-        <div
-          className={cn(
-            'absolute -top-28 right-[10%] -z-10 size-80 rounded-full blur-3xl',
-            accent.glow,
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className="bg-primary/35 absolute -bottom-44 left-[12%] -z-10 size-96 rounded-full blur-3xl"
-          aria-hidden="true"
         />
 
         <div className="mx-auto max-w-6xl">
@@ -157,7 +138,7 @@ export default function TutorialDetailPage() {
             Retour à l’académie
           </Link>
 
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.78fr)]">
             <div className="max-w-3xl">
               <div className="mb-6 flex flex-wrap items-center gap-3">
                 <span className="bg-signal-lime text-brand-night flex size-12 items-center justify-center rounded-2xl shadow-lg shadow-black/20">
@@ -195,50 +176,61 @@ export default function TutorialDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/20 bg-white/10 p-6 shadow-2xl shadow-black/20 backdrop-blur-sm">
-              <div className="flex items-center gap-5">
+            <div className="relative min-h-[430px] overflow-hidden rounded-[30px] border border-white/20 bg-slate-800 shadow-2xl shadow-black/30">
+              <img
+                src={course.image}
+                alt={course.imageAlt}
+                className="absolute inset-0 h-full w-full object-cover"
+                fetchPriority="high"
+              />
+              <div className="bg-brand-night/15 absolute inset-0" aria-hidden="true" />
+              <span className="absolute top-5 right-5 rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-slate-900 shadow-lg">
+                {course.duration}
+              </span>
+
+              <div className="absolute right-5 bottom-5 left-5 rounded-2xl bg-white p-5 text-slate-950 shadow-xl">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase">
+                      Votre progression
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {completedCount} chapitre{completedCount > 1 ? 's' : ''} sur{' '}
+                      {course.chapters.length}
+                    </p>
+                  </div>
+                  <strong className="text-primary text-3xl font-extrabold tabular-nums">
+                    {percent}%
+                  </strong>
+                </div>
                 <div
-                  className="relative flex size-28 shrink-0 items-center justify-center rounded-full p-2"
+                  className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"
                   role="progressbar"
                   aria-label="Progression dans le cours"
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={percent}
-                  style={{
-                    background: `conic-gradient(#b9f442 ${percent}%, rgba(255,255,255,.14) ${percent}% 100%)`,
-                  }}
                 >
-                  <div className="bg-brand-night flex size-full flex-col items-center justify-center rounded-full">
-                    <strong className="text-2xl font-extrabold text-white tabular-nums">
-                      {percent}%
-                    </strong>
-                    <span className="text-[10px] font-bold text-blue-100/60 uppercase">
-                      terminé
-                    </span>
+                  <div
+                    className="bg-signal-lime h-full rounded-full transition-all duration-300"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+                {nextChapter ? (
+                  <a
+                    href={`#${nextChapter.id}`}
+                    className="bg-brand-night mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold text-white transition-colors hover:bg-blue-900"
+                  >
+                    {completedCount === 0 ? 'Commencer le cours' : 'Continuer le cours'}
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <div className="bg-success-subtle text-success mt-5 flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-extrabold">
+                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                    Parcours terminé
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-white">Votre progression</p>
-                  <p className="mt-1 text-xs leading-relaxed text-blue-100/65">
-                    {completedCount} chapitre{completedCount > 1 ? 's' : ''} sur{' '}
-                    {course.chapters.length}
-                  </p>
-                </div>
+                )}
               </div>
-              {nextChapter ? (
-                <a
-                  href={`#${nextChapter.id}`}
-                  className="bg-signal-lime text-brand-night mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold transition-colors hover:bg-white"
-                >
-                  {completedCount === 0 ? 'Commencer le cours' : 'Continuer le cours'}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </a>
-              ) : (
-                <div className="text-signal-lime mt-6 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-lime-300/30 bg-lime-300/10 text-sm font-extrabold">
-                  <CheckCircle2 className="size-4" aria-hidden="true" />
-                  Parcours terminé
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -469,7 +461,7 @@ export default function TutorialDetailPage() {
           })}
 
           <div className="bg-brand-night relative overflow-hidden rounded-3xl p-7 text-white shadow-xl sm:p-9">
-            <div className="bg-signal-cyan/15 absolute -top-16 -right-10 size-56 rounded-full blur-3xl" />
+            <span className="bg-signal-cyan absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-signal-cyan text-xs font-extrabold tracking-widest uppercase">

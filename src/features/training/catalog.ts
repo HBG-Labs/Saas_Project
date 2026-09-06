@@ -40,6 +40,8 @@ export interface TrainingCourse {
   audience: string;
   theme: TrainingTheme;
   icon: LucideIcon;
+  image: string;
+  imageAlt: string;
   featured?: boolean;
   chapters: readonly TrainingChapter[];
 }
@@ -65,6 +67,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Toute l’équipe',
     theme: 'Démarrage',
     icon: MapPinned,
+    image: '/images/training/getting-started.png',
+    imageAlt: 'Cheffe d’entreprise antillaise préparant REZO360 sur une tablette dans son atelier',
     featured: true,
     chapters: [
       {
@@ -130,6 +134,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Direction et gestionnaires',
     theme: 'Pilotage',
     icon: Users,
+    image: '/images/training/clients-sites.png',
+    imageAlt: 'Technicien antillais présentant les informations d’un site à une cliente',
     chapters: [
       {
         id: 'creer-client',
@@ -192,6 +198,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Responsables et techniciens',
     theme: 'Pilotage',
     icon: ClipboardCheck,
+    image: '/images/training/missions-planning.png',
+    imageAlt: 'Équipe technique préparant les missions autour d’un plan et d’une tablette',
     chapters: [
       {
         id: 'creer-mission',
@@ -255,6 +263,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Techniciens et responsables',
     theme: 'Terrain',
     icon: FileCheck2,
+    image: '/images/training/reports.png',
+    imageAlt: 'Technicienne antillaise rédigeant un compte rendu dans un local technique',
     chapters: [
       {
         id: 'saisie',
@@ -316,6 +326,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Direction et gestionnaires',
     theme: 'Gestion',
     icon: ReceiptText,
+    image: '/images/training/quotes-invoices.png',
+    imageAlt: 'Chef d’entreprise antillais contrôlant un devis devant son ordinateur',
     chapters: [
       {
         id: 'devis',
@@ -380,6 +392,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Gestionnaires et équipes terrain',
     theme: 'Gestion',
     icon: Boxes,
+    image: '/images/training/stock-equipment.png',
+    imageAlt: 'Équipe antillaise réalisant l’inventaire d’un stock de matériel',
     chapters: [
       {
         id: 'articles',
@@ -442,6 +456,8 @@ export const TRAINING_COURSES: readonly TrainingCourse[] = [
     audience: 'Propriétaires et administrateurs',
     theme: 'Gestion',
     icon: Landmark,
+    image: '/images/training/einvoicing.png',
+    imageAlt: 'Responsables d’entreprise contrôlant ensemble une facture électronique',
     featured: true,
     chapters: [
       {
