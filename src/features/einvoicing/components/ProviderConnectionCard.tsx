@@ -153,18 +153,17 @@ export function ProviderConnectionCard({
               !awaitingConfiguration &&
               (status === 'disconnected' || status === 'action_required') &&
               !authorizationUrl && (
-                <Button
-                  variant="secondary"
-                  className="border border-violet-600 bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 dark:border-violet-500 dark:bg-violet-600 dark:text-white dark:hover:bg-violet-500"
-                  disabled={pending}
-                  onClick={() => start.mutate()}
-                >
+                <Button disabled={pending} onClick={() => start.mutate()}>
                   <ExternalLink className="size-4" aria-hidden="true" />
                   {start.isPending ? 'Préparation…' : 'Préparer la connexion'}
                 </Button>
               )}
             {(status === 'disconnected' || status === 'action_required') && authorizationUrl && (
-              <Button asChild>
+              <Button
+                asChild
+                variant="secondary"
+                className="border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 dark:border-emerald-500 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500"
+              >
                 <a href={authorizationUrl}>
                   <ExternalLink className="size-4" aria-hidden="true" />
                   Continuer sur SUPER PDP
