@@ -49,7 +49,13 @@ const transmission = (extra: Record<string, unknown> = {}) => ({
  * Banc isole : aucune permission n'est accordee a ces tests. Le transport
  * observe TOUT ce que l'ordonnanceur emet — et surtout ce qu'il n'emet pas.
  */
-function banc(options: { transmissions?: Record<string, unknown>[]; connectee?: boolean } = {}) {
+function banc(
+  options: {
+    transmissions?: Record<string, unknown>[];
+    connectee?: boolean;
+    fileIllisible?: boolean;
+  } = {},
+) {
   const vu: string[] = [];
   const battements: Record<string, unknown>[] = [];
 
@@ -67,6 +73,8 @@ function banc(options: { transmissions?: Record<string, unknown>[]; connectee?: 
     if (url.pathname === '/rest/v1/einvoicing_provider_connections')
       return json(options.connectee === false ? [] : [await connexion()]);
     if (url.pathname === '/rest/v1/invoice_transmissions') {
+      if (options.fileIllisible && req.method === 'GET')
+        return json({ message: 'colonne inconnue' }, 400);
       if (req.method !== 'GET') return json(transmission());
       // La file de synchronisation interroge `in.(submitted,delivered)`,
       // celle de reprise `eq.failed`. Seules les lignes correspondantes
@@ -225,4 +233,24 @@ Deno.test('un depot fait dans un autre environnement n’est plus interroge', as
     0,
     'Le partenaire ne doit pas etre interroge pour un depot d’un autre environnement',
   );
+});
+
+/*
+  Une file illisible ne doit PAS ressembler a une file vide.
+
+  Sans controle de l'erreur, une requete cassee — filtre mal forme, colonne
+  renommee — rendrait `data` nul, la boucle serait sautee, et le bilan
+  afficherait le meme zero que lorsqu'il n'y a rien a faire. Le battement de
+  coeur perdrait alors tout pouvoir d'alerte, ce qui est precisement ce qu'on
+  lui demande.
+*/
+Deno.test('une file illisible est signalee, pas confondue avec une file vide', async () => {
+  const { handler } = banc({ fileIllisible: true });
+  const bilan = (await (await handler(requete({ 'x-worker-secret': SECRET }))).json()) as Record<
+    string,
+    number
+  >;
+  assert.equal(bilan['organisations'], 1);
+  assert.equal(bilan['synchronisees'], 0);
+  assert.ok(bilan['echecs']! >= 1, 'Une file illisible doit compter comme un echec');
 });

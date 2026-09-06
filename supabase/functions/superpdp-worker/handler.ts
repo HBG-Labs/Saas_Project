@@ -121,7 +121,7 @@ export function createWorkerHandler(config: WorkerConfig) {
 
       // File de synchronisation : etats non terminaux deja deposes, dont le
       // sort se decide chez le partenaire.
-      const { data: aSynchroniser } = await admin
+      const { data: aSynchroniser, error: erreurSynchronisation } = await admin
         .from('invoice_transmissions')
         .select(COLONNES_TRANSMISSION)
         .eq('organization_id', organisation)
@@ -138,6 +138,18 @@ export function createWorkerHandler(config: WorkerConfig) {
         .order('updated_at', { ascending: true })
         .limit(LOT_SYNCHRONISATION);
 
+      // Une file illisible ne doit PAS ressembler a une file vide. Sans ce
+      // controle, `data` serait nul, la boucle serait sautee, et le bilan
+      // afficherait le meme zero que lorsqu'il n'y a rien a faire — ce qui
+      // priverait le battement de coeur de tout pouvoir d'alerte.
+      if (erreurSynchronisation) {
+        bilan.echecs += 1;
+        console.error(
+          'superpdp worker: file de synchronisation illisible',
+          erreurSynchronisation.message.slice(0, 200),
+        );
+      }
+
       for (const ligne of (aSynchroniser ?? []) as unknown as TransmissionRow[]) {
         if (!reste()) break;
         try {
@@ -153,7 +165,7 @@ export function createWorkerHandler(config: WorkerConfig) {
       // File de reprise : uniquement les echecs TECHNIQUES dont l'echeance est
       // echue. Un refus metier est terminal, et un echec anterieur a la
       // politique n'a pas d'echeance : ni l'un ni l'autre ne repartent ici.
-      const { data: aReprendre } = await admin
+      const { data: aReprendre, error: erreurReprise } = await admin
         .from('invoice_transmissions')
         .select(COLONNES_TRANSMISSION)
         .eq('organization_id', organisation)
@@ -163,6 +175,14 @@ export function createWorkerHandler(config: WorkerConfig) {
         .lte('next_attempt_at', maintenant().toISOString())
         .order('next_attempt_at', { ascending: true })
         .limit(LOT_REPRISE);
+
+      if (erreurReprise) {
+        bilan.echecs += 1;
+        console.error(
+          'superpdp worker: file de reprise illisible',
+          erreurReprise.message.slice(0, 200),
+        );
+      }
 
       for (const ligne of (aReprendre ?? []) as unknown as TransmissionRow[]) {
         if (!reste()) break;
