@@ -36,6 +36,26 @@ sera installée.
 > ⚠️ Ne jamais copier la clé `service_role` dans le projet frontend : elle
 > contourne entièrement la RLS.
 
+## Une migration commitée est immuable
+
+Une migration déjà commitée — a fortiori déjà appliquée — ne se modifie plus.
+Toute évolution du schéma passe par un **nouveau** fichier horodaté.
+
+La raison est mécanique : `supabase db push` tient un registre des versions déjà
+appliquées et ne rejoue jamais une version connue. Retoucher un fichier déjà
+passé ne change donc rien à la base. Le fichier et le schéma divergent en
+silence, et la divergence n'apparaît qu'au prochain environnement reconstruit de
+zéro — où le schéma obtenu n'est plus celui de la production.
+
+Le cas s'est produit sur `20260903080000_identites_legales.sql` : une colonne et
+une condition de trigger y ont été ajoutées après son commit. Le hasard a voulu
+que la migration n'ait pas encore été appliquée. Sans cela, la production et le
+dépôt auraient raconté deux histoires différentes, sans que rien ne le signale.
+
+Corollaire : ne pas retoucher d'anciennes migrations pour « nettoyer »
+l'historique, renommer un objet ou reformater du SQL. Ce répertoire est un
+journal, pas du code à entretenir.
+
 ## Vérifier l'installation
 
 La migration `20260808100900_grants.sql` se termine par un contrôle qui **échoue
