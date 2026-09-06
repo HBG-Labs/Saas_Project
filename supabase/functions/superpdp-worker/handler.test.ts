@@ -24,6 +24,7 @@ async function connexion() {
     organization_id: ORGANISATION,
     provider_code: 'superpdp',
     status: 'connected',
+    provider_environment: 'production',
     access_token_ciphertext: await encryptSecret('jeton-acces', CLE, contexte),
     refresh_token_ciphertext: await encryptSecret('jeton-renouvellement', CLE, contexte),
     // Loin devant : le renouvellement ne doit pas se declencher.
@@ -40,6 +41,7 @@ const transmission = (extra: Record<string, unknown> = {}) => ({
   status: 'submitted',
   provider_submission_id: '448618',
   attempt_count: 1,
+  provider_environment: 'production',
   ...extra,
 });
 
@@ -73,7 +75,20 @@ function banc(options: { transmissions?: Record<string, unknown>[]; connectee?: 
       const attendus = filtre.startsWith('in.')
         ? filtre.slice(4, -1).split(',')
         : [filtre.replace('eq.', '')];
-      return json(lignes.filter((l) => attendus.includes(String(l['status']))));
+      // Le filtre d'environnement arrive en clause `or` : on le reproduit, sans
+      // quoi le test ne prouverait rien de la selection reelle.
+      const clauseOu = url.searchParams.get('or') ?? '';
+      const environnementAttendu = /provider_environment\.eq\.(\w+)/.exec(clauseOu)?.[1];
+      return json(
+        lignes
+          .filter((l) => attendus.includes(String(l['status'])))
+          .filter(
+            (l) =>
+              !environnementAttendu ||
+              l['provider_environment'] == null ||
+              l['provider_environment'] === environnementAttendu,
+          ),
+      );
     }
     if (url.pathname === '/rest/v1/invoice_transmission_events') {
       // `syncEvents` relit les evenements deja connus pour reprendre le
@@ -183,4 +198,31 @@ Deno.test('sans organisation raccordee, rien n’est tente', async () => {
   >;
   assert.equal(bilan['organisations'], 0);
   assert.equal(battements.length, 1, 'Le battement de coeur doit avoir lieu meme sans travail');
+});
+
+/*
+  Le cas qui a coute une heure le 6 septembre. Le depot `449110`, attribue par
+  le bac a sable, restait interroge en production : 404 a chaque passage, et
+  rien pour l'expliquer. L'ordonnanceur doit desormais l'ignorer.
+*/
+Deno.test('un depot fait dans un autre environnement n’est plus interroge', async () => {
+  const { handler, vu, transport } = banc({
+    transmissions: [transmission({ provider_environment: 'sandbox' })],
+  });
+  const original = globalThis.fetch;
+  globalThis.fetch = transport;
+  let reponse: Response;
+  try {
+    reponse = await handler(requete({ 'x-worker-secret': SECRET }));
+  } finally {
+    globalThis.fetch = original;
+  }
+  const bilan = (await reponse.json()) as Record<string, number>;
+  assert.equal(bilan['synchronisees'], 0);
+  assert.equal(bilan['echecs'], 0, 'Un depot ignore n’est pas un echec');
+  assert.equal(
+    vu.filter((appel) => appel.startsWith('GET /v1.beta/invoices/')).length,
+    0,
+    'Le partenaire ne doit pas etre interroge pour un depot d’un autre environnement',
+  );
 });

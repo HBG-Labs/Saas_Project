@@ -6,6 +6,7 @@ import {
   type SuperPdpServerConfig,
 } from '../_shared/superpdp-connection.ts';
 import {
+  COLONNES_TRANSMISSION,
   deposerTransmission,
   errorMessage,
   marquerEchec,
@@ -39,10 +40,8 @@ const LOT_REPRISE = 10;
 /** Marge sous la limite d'execution : mieux vaut finir un lot au tour suivant. */
 const BUDGET_MS = 50_000;
 
-const COLONNES_TRANSMISSION =
-  'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count';
 const COLONNES_CONNEXION =
-  'organization_id,provider_code,status,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type';
+  'organization_id,provider_code,status,provider_environment,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type';
 
 export interface WorkerConfig {
   url: string;
@@ -128,6 +127,14 @@ export function createWorkerHandler(config: WorkerConfig) {
         .eq('organization_id', organisation)
         .in('status', ['submitted', 'delivered'])
         .not('provider_submission_id', 'is', null)
+        // Un identifiant de depot n'existe que dans l'environnement qui l'a
+        // attribue. Interroger le partenaire pour un depot fait ailleurs
+        // rapporte un 404 — indefiniment, puisque rien ne le resoudra. Les
+        // lignes anterieures au suivi de l'environnement gardent `null` et
+        // restent traitees comme avant.
+        .or(
+          `provider_environment.is.null,provider_environment.eq.${connexion.provider_environment ?? 'production'}`,
+        )
         .order('updated_at', { ascending: true })
         .limit(LOT_SYNCHRONISATION);
 
@@ -163,7 +170,13 @@ export function createWorkerHandler(config: WorkerConfig) {
         // Nulle si une autre execution, ou un utilisateur, l'a prise entre-temps.
         if (!reservee) continue;
         try {
-          await deposerTransmission(admin, reservee, reservee.invoice_id, accessToken);
+          await deposerTransmission(
+            admin,
+            reservee,
+            reservee.invoice_id,
+            accessToken,
+            connexion.provider_environment,
+          );
           bilan.reprises += 1;
         } catch (error) {
           await marquerEchec(admin, reservee, errorMessage(error), maintenant());

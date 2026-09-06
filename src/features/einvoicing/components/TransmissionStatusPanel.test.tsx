@@ -20,6 +20,7 @@ describe('suivi de transmission électronique', () => {
         status: 'failed',
         idempotency_key: 'idempotency-1',
         provider_submission_id: null,
+        provider_environment: null,
         attempt_count: 2,
         last_attempt_at: '2026-09-04T12:00:00.000Z',
         next_attempt_at: '2026-09-04T12:05:00.000Z',

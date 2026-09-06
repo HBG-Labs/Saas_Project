@@ -19,6 +19,7 @@ const transmission = (extra: Partial<TransmissionRow> = {}): TransmissionRow => 
   status: 'queued',
   provider_submission_id: null,
   attempt_count: 0,
+  provider_environment: 'production',
   ...extra,
 });
 
@@ -106,6 +107,7 @@ Deno.test('un depot deja enregistre chez le partenaire n’est jamais redepose',
       transmission({ status: 'submitting', attempt_count: 1 }),
       '00000000-0000-4000-8000-0000000000f1',
       'jeton-test',
+      'production',
     );
     assert.equal(resultat.provider_submission_id, '448618');
   } finally {
@@ -155,4 +157,24 @@ Deno.test('la reservation echoue quand la ligne n’est plus reservable', async 
     auth: { persistSession: false, autoRefreshToken: false },
   });
   assert.equal(await reserverTransmission(client, transmission()), null);
+});
+
+Deno.test('le depot enregistre l’environnement qui a attribue son identifiant', async () => {
+  const { admin, transport, etat } = banc({ depotExistant: true });
+  const original = globalThis.fetch;
+  globalThis.fetch = transport;
+  try {
+    await deposerTransmission(
+      admin,
+      transmission({ status: 'submitting', attempt_count: 1 }),
+      '00000000-0000-4000-8000-0000000000f1',
+      'jeton-test',
+      // Volontairement different de la valeur du fixture : c'est l'argument qui
+      // doit faire foi, pas l'etat anterieur de la ligne.
+      'sandbox',
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
+  assert.equal(etat().provider_environment, 'sandbox');
 });

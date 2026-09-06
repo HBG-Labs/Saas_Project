@@ -42,7 +42,13 @@ export interface TransmissionRow {
   status: TransmissionStatus;
   provider_submission_id: string | null;
   attempt_count: number;
+  /** Environnement du depot. `null` sur les lignes anterieures a son suivi. */
+  provider_environment: 'sandbox' | 'production' | null;
 }
+
+/** Les colonnes qui composent une `TransmissionRow`. Une seule source. */
+export const COLONNES_TRANSMISSION =
+  'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count,provider_environment';
 
 export interface SuperPdpInvoice {
   id: number;
@@ -206,9 +212,7 @@ export async function recordProviderEvent(
     })
     .eq('id', transmission.id)
     .eq('status', transmission.status)
-    .select(
-      'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-    )
+    .select(COLONNES_TRANSMISSION)
     .maybeSingle();
   if (updateError) throw updateError;
   return (updated as TransmissionRow | null) ?? transmission;
@@ -319,8 +323,6 @@ export async function prepareUblForTransmission(
   return { ubl: serializeUbl(invoiceWithRouting, { profileId: 'M1' }), addresses };
 }
 
-const COLONNES_TRANSMISSION =
-  'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count';
 
 /**
  * Reserve une transmission avant depot.
@@ -364,6 +366,7 @@ export async function deposerTransmission(
   transmission: TransmissionRow,
   invoiceId: string,
   accessToken: string,
+  environnement: 'sandbox' | 'production' | null,
 ): Promise<TransmissionRow> {
   let providerInvoice = await recoverSubmission(accessToken, invoiceId);
   if (!providerInvoice) {
@@ -386,6 +389,9 @@ export async function deposerTransmission(
     .update({
       status: 'submitted',
       provider_submission_id: String(providerInvoice.id),
+      // L'identifiant de depot n'a de sens que dans l'environnement qui l'a
+      // attribue : les deux sont poses ensemble, et le trigger les gele.
+      provider_environment: environnement,
       last_error_code: null,
       last_error_message: null,
     })

@@ -2477,6 +2477,8 @@ export interface Database {
           status: InvoiceTransmissionStatus;
           idempotency_key: string;
           provider_submission_id: string | null;
+          /** Environnement du dépôt : un identifiant n'existe que dans le sien. */
+          provider_environment: 'sandbox' | 'production' | null;
           attempt_count: number;
           last_attempt_at: string | null;
           next_attempt_at: string | null;
@@ -2496,6 +2498,7 @@ export interface Database {
           status?: InvoiceTransmissionStatus;
           idempotency_key?: string;
           provider_submission_id?: string | null;
+          provider_environment?: 'sandbox' | 'production' | null;
           attempt_count?: number;
           last_attempt_at?: string | null;
           next_attempt_at?: string | null;
@@ -2508,6 +2511,7 @@ export interface Database {
         Update: {
           status?: InvoiceTransmissionStatus;
           provider_submission_id?: string | null;
+          provider_environment?: 'sandbox' | 'production' | null;
           attempt_count?: number;
           last_attempt_at?: string | null;
           next_attempt_at?: string | null;

@@ -4,6 +4,7 @@ import {
   type SuperPdpConnectionRow,
 } from '../_shared/superpdp-connection.ts';
 import {
+  COLONNES_TRANSMISSION,
   deposerTransmission,
   errorMessage,
   marquerEchec,
@@ -81,7 +82,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const { data: connection } = await admin
       .from('einvoicing_provider_connections')
       .select(
-        'organization_id,provider_code,status,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type',
+        'organization_id,provider_code,status,provider_environment,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type',
       )
       .eq('organization_id', invoice.organization_id)
       .maybeSingle();
@@ -115,9 +116,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     const { data: existing, error: readError } = await admin
       .from('invoice_transmissions')
-      .select(
-        'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-      )
+      .select(COLONNES_TRANSMISSION)
       .eq('invoice_id', body.invoiceId)
       .maybeSingle();
     if (readError) throw readError;
@@ -138,16 +137,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
           provider_code: 'superpdp',
           status: 'queued',
         })
-        .select(
-          'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-        )
+        .select(COLONNES_TRANSMISSION)
         .single();
       if (error) {
         const { data: concurrent } = await admin
           .from('invoice_transmissions')
-          .select(
-            'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-          )
+          .select(COLONNES_TRANSMISSION)
           .eq('invoice_id', body.invoiceId)
           .maybeSingle();
         transmission = concurrent as TransmissionRow | null;
@@ -167,7 +162,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
     if (!claimed) return json({ error: 'Une transmission est deja en cours.' }, 409);
     transmission = claimed;
 
-    transmission = await deposerTransmission(admin, transmission, body.invoiceId, accessToken);
+    transmission = await deposerTransmission(
+      admin,
+      transmission,
+      body.invoiceId,
+      accessToken,
+      (connection as SuperPdpConnectionRow).provider_environment,
+    );
     return json({
       status: transmission.status,
       providerSubmissionId: transmission.provider_submission_id,

@@ -10,6 +10,7 @@ export interface SuperPdpConnectionRow {
   organization_id: string;
   provider_code: string;
   status: 'pending_verification' | 'connected' | 'action_required' | 'disconnected';
+  provider_environment: 'sandbox' | 'production' | null;
   access_token_ciphertext: string | null;
   refresh_token_ciphertext: string | null;
   access_token_expires_at: string | null;
