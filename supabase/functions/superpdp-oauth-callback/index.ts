@@ -49,8 +49,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (requestUrl.searchParams.has('error')) return redirect(state.return_url, 'annulee');
 
   const code = requestUrl.searchParams.get('code') ?? '';
-  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID') ?? '';
-  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET') ?? '';
+  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() ?? '';
+  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() ?? '';
   const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
   if (!code || !clientId || !clientSecret || !encryptionKey)
     return redirect(state.return_url, 'erreur');
@@ -81,7 +81,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       lastErrorMessage = 'SUPER PDP verifie encore le rattachement de l’entreprise.';
     }
     let status = connectionStatus(session);
-    const expectedMode = Deno.env.get('SUPERPDP_MODE') ?? 'sandbox';
+    const expectedMode = Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox';
     if (company && company.env !== expectedMode) {
       status = 'action_required';
       lastErrorCode = 'environment_mismatch';

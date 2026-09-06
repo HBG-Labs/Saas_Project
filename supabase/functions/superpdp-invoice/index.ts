@@ -163,8 +163,8 @@ async function resolveElectronicAddresses(
 }
 
 function serverConfig() {
-  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID') ?? '';
-  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET') ?? '';
+  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() ?? '';
+  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() ?? '';
   const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
   if (!clientId || !clientSecret || !encryptionKey)
     throw new Error('Le raccordement SUPER PDP attend encore ses identifiants de bac a sable.');

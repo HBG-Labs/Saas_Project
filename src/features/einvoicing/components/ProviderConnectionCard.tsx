@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ExternalLink, RefreshCw, ShieldCheck, Unplug } from 'lucide-react';
+import { useState } from 'react';
 
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +32,7 @@ export function ProviderConnectionCard({
   canManage: boolean;
 }) {
   const queryClient = useQueryClient();
+  const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
   const query = useQuery({
     queryKey: qk.einvoicing.connection(organizationId),
     queryFn: () => getEinvoicingProviderConnection(organizationId),
@@ -45,7 +47,7 @@ export function ProviderConnectionCard({
   };
   const start = useMutation({
     mutationFn: () => startSuperPdpConnection(organizationId),
-    onSuccess: (url) => window.location.assign(url),
+    onSuccess: setAuthorizationUrl,
   });
   const verify = useMutation({
     mutationFn: () => verifySuperPdpConnection(organizationId),
@@ -149,12 +151,21 @@ export function ProviderConnectionCard({
             {awaitingConfiguration && <Button disabled>Connexion bientôt disponible</Button>}
             {!readinessQuery.isPending &&
               !awaitingConfiguration &&
-              (status === 'disconnected' || status === 'action_required') && (
+              (status === 'disconnected' || status === 'action_required') &&
+              !authorizationUrl && (
                 <Button className="gap-2" disabled={pending} onClick={() => start.mutate()}>
                   <ExternalLink className="size-4" aria-hidden="true" />
                   {start.isPending ? 'Préparation…' : 'Connecter SUPER PDP'}
                 </Button>
               )}
+            {(status === 'disconnected' || status === 'action_required') && authorizationUrl && (
+              <Button asChild>
+                <a href={authorizationUrl}>
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                  Continuer sur SUPER PDP
+                </a>
+              </Button>
+            )}
             {status === 'pending_verification' && (
               <Button
                 variant="outline"

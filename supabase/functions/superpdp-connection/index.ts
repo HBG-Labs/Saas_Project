@@ -29,8 +29,8 @@ const json = (value: unknown, status = 200) =>
   });
 
 function serverConfig() {
-  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID') ?? '';
-  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET') ?? '';
+  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() ?? '';
+  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() ?? '';
   const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
   if (!clientId || !clientSecret || !encryptionKey)
     throw new Error('Le raccordement SUPER PDP attend encore ses identifiants de bac a sable.');
@@ -112,11 +112,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     if (body.action === 'readiness') {
       return json({
         configured: Boolean(
-          Deno.env.get('SUPERPDP_CLIENT_ID') &&
-          Deno.env.get('SUPERPDP_CLIENT_SECRET') &&
+          Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() &&
+          Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() &&
           Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY'),
         ),
-        environment: Deno.env.get('SUPERPDP_MODE') ?? 'sandbox',
+        environment: Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox',
       });
     }
     const config = serverConfig();
@@ -139,7 +139,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       if (insertError) throw insertError;
 
       let siren: string | undefined;
-      if ((Deno.env.get('SUPERPDP_MODE') ?? 'sandbox') === 'production') {
+      if ((Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox') === 'production') {
         const { data: organization } = await caller
           .from('organizations')
           .select('registration_number')
@@ -213,7 +213,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       .eq('id', body.organizationId)
       .maybeSingle();
     if (organizationError) throw organizationError;
-    const expectedMode = Deno.env.get('SUPERPDP_MODE') ?? 'sandbox';
+    const expectedMode = Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox';
     const modeMismatch = company !== null && company.env !== expectedMode;
     const expectedSiren = frenchSiren(organization?.registration_number);
     const connectedSiren = frenchSiren(company?.number);
