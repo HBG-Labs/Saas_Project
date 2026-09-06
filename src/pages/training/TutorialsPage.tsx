@@ -18,24 +18,24 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 const THEME_STYLES: Record<TrainingTheme, { badge: string; marker: string; icon: string }> = {
   Démarrage: {
-    badge: 'bg-cyan-50 text-cyan-800 border-cyan-200',
-    marker: 'bg-signal-cyan',
-    icon: 'bg-cyan-500 text-white',
+    badge: 'bg-blue-50 text-primary border-blue-200',
+    marker: 'bg-primary',
+    icon: 'bg-brand-night text-white',
   },
   Pilotage: {
-    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    marker: 'bg-emerald-500',
-    icon: 'bg-emerald-600 text-white',
+    badge: 'bg-blue-50 text-primary border-blue-200',
+    marker: 'bg-primary',
+    icon: 'bg-brand-night text-white',
   },
   Terrain: {
-    badge: 'bg-orange-50 text-orange-800 border-orange-200',
-    marker: 'bg-signal-orange',
-    icon: 'bg-orange-600 text-white',
+    badge: 'bg-blue-50 text-primary border-blue-200',
+    marker: 'bg-primary',
+    icon: 'bg-brand-night text-white',
   },
   Gestion: {
-    badge: 'bg-violet-50 text-violet-800 border-violet-200',
-    marker: 'bg-violet-500',
-    icon: 'bg-violet-600 text-white',
+    badge: 'bg-blue-50 text-primary border-blue-200',
+    marker: 'bg-primary',
+    icon: 'bg-brand-night text-white',
   },
 };
 
@@ -143,7 +143,7 @@ export default function TutorialsPage() {
               className="border-signal-cyan absolute -top-4 -right-4 h-28 w-28 rounded-tr-[36px] border-t-2 border-r-2"
               aria-hidden="true"
             />
-            <div className="relative min-h-[440px] overflow-hidden rounded-[34px] border border-white/20 bg-slate-800 shadow-2xl shadow-black/35 sm:min-h-[480px]">
+            <div className="relative min-h-[440px] overflow-hidden rounded-[34px] bg-slate-800 shadow-xl shadow-slate-300/60 sm:min-h-[480px]">
               <img
                 src="/images/training/electronic-invoicing-hero-v2.png"
                 alt="Dirigeante antillaise et responsable administratif validant une facture électronique"
@@ -270,19 +270,29 @@ export default function TutorialsPage() {
             </div>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {courses.map((course) => {
               const Icon = course.icon;
               const style = THEME_STYLES[course.theme];
               const courseNumber =
                 TRAINING_COURSES.findIndex((item) => item.slug === course.slug) + 1;
+              const isWide = course.featured && theme === 'Tous';
 
               return (
                 <article
                   key={course.slug}
-                  className="border-border bg-surface shadow-raised group flex min-h-[410px] flex-col overflow-hidden rounded-3xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className={cn(
+                    'border-border bg-surface shadow-raised group relative flex min-h-[460px] flex-col overflow-hidden rounded-[28px] border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
+                    isWide &&
+                      'xl:col-span-2 xl:grid xl:min-h-[430px] xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,.92fr)]',
+                  )}
                 >
-                  <div className="relative h-48 overflow-hidden bg-slate-800">
+                  <div
+                    className={cn(
+                      'relative h-52 overflow-hidden bg-slate-800',
+                      isWide && 'xl:h-full',
+                    )}
+                  >
                     <img
                       src={course.image}
                       alt={course.imageAlt}
@@ -290,8 +300,14 @@ export default function TutorialsPage() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <div className="bg-brand-night/20 absolute inset-0" aria-hidden="true" />
-                    <span className={cn('absolute inset-x-0 bottom-0 h-1.5', style.marker)} />
+                    <div className="bg-brand-night/15 absolute inset-0" aria-hidden="true" />
+                    <span
+                      className={cn(
+                        'absolute inset-x-0 bottom-0 h-1.5',
+                        style.marker,
+                        isWide && 'xl:inset-y-0 xl:right-0 xl:left-auto xl:h-auto xl:w-1.5',
+                      )}
+                    />
                     <div className="absolute top-4 right-4 left-4 flex items-start justify-between gap-3">
                       <span
                         className={cn(
@@ -312,17 +328,28 @@ export default function TutorialsPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                  <div className={cn('flex flex-1 flex-col p-6', isWide && 'xl:p-8')}>
                     <div>
-                      <span
+                      <div className="flex items-center justify-between gap-3">
+                        <span
+                          className={cn(
+                            'inline-flex rounded-full border px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase',
+                            style.badge,
+                          )}
+                        >
+                          {course.theme}
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-400">
+                          {String(courseNumber).padStart(2, '0')} /{' '}
+                          {String(TRAINING_COURSES.length).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <h3
                         className={cn(
-                          'inline-flex rounded-full border px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase',
-                          style.badge,
+                          'text-foreground mt-4 text-xl leading-tight font-extrabold',
+                          isWide && 'xl:text-3xl',
                         )}
                       >
-                        {course.theme}
-                      </span>
-                      <h3 className="text-foreground mt-4 text-xl leading-tight font-extrabold">
                         {course.title}
                       </h3>
                       <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
@@ -330,27 +357,30 @@ export default function TutorialsPage() {
                       </p>
                     </div>
 
-                    <div className="border-border text-muted-foreground mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-5 text-xs font-semibold">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Clock3 className="size-4" aria-hidden="true" />
+                    <div className="text-muted-foreground mt-auto flex flex-wrap gap-2 pt-6 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 px-2.5 py-2.5">
+                        <Clock3 className="text-primary size-4 shrink-0" aria-hidden="true" />
                         {course.duration}
                       </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <BookOpenCheck className="size-4" aria-hidden="true" />
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 px-2.5 py-2.5">
+                        <BookOpenCheck
+                          className="text-primary size-4 shrink-0"
+                          aria-hidden="true"
+                        />
                         {course.chapters.length} chapitres
                       </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Route className="size-4" aria-hidden="true" />
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 px-2.5 py-2.5">
+                        <Route className="text-primary size-4 shrink-0" aria-hidden="true" />
                         {course.level}
                       </span>
                     </div>
 
                     <Link
                       to={ROUTES.tutorial(course.slug)}
-                      className="text-primary focus-visible:ring-ring mt-4 inline-flex min-h-11 items-center justify-between rounded-xl text-sm font-extrabold focus-visible:ring-2 focus-visible:outline-none"
+                      className="bg-brand-night hover:bg-primary focus-visible:ring-ring mt-5 inline-flex min-h-12 items-center justify-between rounded-xl px-4 text-sm font-extrabold text-white transition-colors focus-visible:ring-2 focus-visible:outline-none"
                     >
                       Ouvrir le cours
-                      <span className="bg-primary-subtle flex size-9 items-center justify-center rounded-full transition-transform group-hover:translate-x-1">
+                      <span className="flex size-8 items-center justify-center rounded-full bg-white/10 transition-transform group-hover:translate-x-1">
                         <ArrowRight className="size-4" aria-hidden="true" />
                       </span>
                     </Link>
