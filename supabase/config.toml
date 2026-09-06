@@ -411,6 +411,12 @@ enabled = true
 
 [functions.generate-facturx]
 verify_jwt = false
+# Les polices sont lues a l'execution par `handler.ts`, via
+# `new URL('./assets/NotoSans-Regular.ttf', import.meta.url)`. Sans cette
+# declaration, un deploiement peut partir sans elles et le rendu Factur-X
+# echoue. Elles etaient rattachees a `superpdp-invoice`, qui ne genere aucun
+# PDF : son graphe de modules n'atteint ni `facturx-render` ni `assets/`.
+static_files = ["./functions/generate-facturx/assets/*.ttf", "./functions/generate-facturx/assets/LICENSE.txt"]
 
 [functions.superpdp-connection]
 verify_jwt = false
@@ -420,7 +426,6 @@ verify_jwt = false
 
 [functions.superpdp-invoice]
 verify_jwt = false
-static_files = ["./functions/generate-facturx/assets/*.ttf", "./functions/generate-facturx/assets/LICENSE.txt"]
 # Directory under `supabase/` where declarative files are written.
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
