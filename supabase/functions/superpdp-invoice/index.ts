@@ -1,18 +1,16 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.112.2';
-import { superPdpJson } from '../../../src/features/einvoicing/provider/superpdp-contract.ts';
-import { prochaineTentative } from '../../../src/features/einvoicing/transmission/retry-policy.ts';
 import {
   usableSuperPdpAccessToken,
   type SuperPdpConnectionRow,
 } from '../_shared/superpdp-connection.ts';
 import {
+  deposerTransmission,
   errorMessage,
+  marquerEchec,
   prepareUblForTransmission,
-  recordProviderEvent,
-  recoverSubmission,
+  reserverTransmission,
   serverConfig,
   syncEvents,
-  type SuperPdpInvoice,
   type TransmissionRow,
 } from '../_shared/superpdp-transmission.ts';
 
@@ -165,61 +163,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     if (transmission.status === 'submitting')
       return json({ error: 'Une transmission est deja en cours.' }, 409);
 
-    const { data: claimed, error: claimError } = await admin
-      .from('invoice_transmissions')
-      .update({
-        status: 'submitting',
-        attempt_count: transmission.attempt_count + 1,
-        last_attempt_at: new Date().toISOString(),
-        next_attempt_at: null,
-        last_error_code: null,
-        last_error_message: null,
-      })
-      .eq('id', transmission.id)
-      .in('status', ['queued', 'failed'])
-      .select(
-        'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-      )
-      .maybeSingle();
-    if (claimError) throw claimError;
+    const claimed = await reserverTransmission(admin, transmission);
     if (!claimed) return json({ error: 'Une transmission est deja en cours.' }, 409);
-    transmission = claimed as TransmissionRow;
+    transmission = claimed;
 
-    let providerInvoice = await recoverSubmission(accessToken, body.invoiceId);
-    if (!providerInvoice) {
-      // Le bac a sable SUPER PDP route Burger Queen vers Tricatel sur le
-      // document Peppol UBL. Le CII reste disponible au telechargement, mais
-      // certains destinataires n'annoncent pas ce type de document dans leur
-      // profil de reception.
-      const { ubl } = await prepareUblForTransmission(admin, body.invoiceId, accessToken);
-      const params = new URLSearchParams({ external_id: body.invoiceId, processing_rule: 'B2B' });
-      providerInvoice = await superPdpJson<SuperPdpInvoice>(
-        `/v1.beta/invoices?${params.toString()}`,
-        accessToken,
-        { method: 'POST', headers: { 'Content-Type': 'application/xml' }, body: ubl },
-      );
-    }
-    if (!Number.isSafeInteger(providerInvoice.id))
-      throw new Error('SUPER PDP n’a pas retourne d’identifiant de depot.');
-    const { data: submitted, error: submittedError } = await admin
-      .from('invoice_transmissions')
-      .update({
-        status: 'submitted',
-        provider_submission_id: String(providerInvoice.id),
-        last_error_code: null,
-        last_error_message: null,
-      })
-      .eq('id', transmission.id)
-      .eq('status', 'submitting')
-      .select(
-        'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count',
-      )
-      .single();
-    if (submittedError) throw submittedError;
-    transmission = submitted as TransmissionRow;
-    for (const event of providerInvoice.events ?? [])
-      transmission = await recordProviderEvent(admin, transmission, event);
-    transmission = await syncEvents(admin, transmission, accessToken);
+    transmission = await deposerTransmission(admin, transmission, body.invoiceId, accessToken);
     return json({
       status: transmission.status,
       providerSubmissionId: transmission.provider_submission_id,
@@ -227,32 +175,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   } catch (error) {
     const message = errorMessage(error);
     console.error('superpdp invoice failed', error instanceof Error ? error.name : 'unknown');
-    if (transmission?.status === 'submitting') {
-      await admin
-        .from('invoice_transmissions')
-        .update({
-          status: 'failed',
-          last_error_code: 'submission_failed',
-          last_error_message: message,
-          // Echeance de reprise. `attempt_count` a deja ete incremente lors de
-          // la reservation, il compte donc les tentatives consommees. `null`
-          // signifie que le plafond est atteint : la transmission reste en
-          // echec, visible, et attend un regard humain.
-          next_attempt_at: prochaineTentative(transmission.attempt_count, new Date()),
-        })
-        .eq('id', transmission.id)
-        .eq('status', 'submitting');
-      await admin.from('invoice_transmission_events').insert({
-        transmission_id: transmission.id,
-        invoice_id: transmission.invoice_id,
-        organization_id: transmission.organization_id,
-        source: 'application',
-        event_type: 'technical_failure',
-        normalized_status: 'failed',
-        message,
-        occurred_at: new Date().toISOString(),
-      });
-    }
+    if (transmission?.status === 'submitting') await marquerEchec(admin, transmission, message);
     return json({ error: message }, 502);
   }
 });

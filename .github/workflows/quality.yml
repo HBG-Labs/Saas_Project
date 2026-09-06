@@ -65,6 +65,14 @@ jobs:
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
 
+      # Ces tests tournent SANS aucune permission Deno : ni réseau, ni disque.
+      # C'est la garantie qu'ils n'atteignent jamais le partenaire ni la base,
+      # et qu'ils restent reproductibles partout. Ceux de `generate-facturx`
+      # restent hors CI : leurs fixtures viennent d'un script qui interroge le
+      # projet Supabase lié.
+      - name: Tester le cycle de transmission
+        run: deno test supabase/functions/_shared/superpdp-transmission.test.ts
+
       - name: Exécuter les tests
         run: npm run test
 

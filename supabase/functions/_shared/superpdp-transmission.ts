@@ -13,6 +13,7 @@ import {
 import { preparerExportUbl } from '../../../src/features/einvoicing/canonical/mapper.ts';
 import { serializeUbl } from '../../../src/features/einvoicing/serializers/ubl.ts';
 import type { InvoiceWithItems } from '../../../src/types/domain.ts';
+import { prochaineTentative } from '../../../src/features/einvoicing/transmission/retry-policy.ts';
 
 /**
  * Cycle de transmission SUPER PDP, sans dependance a HTTP.
@@ -316,4 +317,123 @@ export async function prepareUblForTransmission(
   // La facture UBL de référence générée par SUPER PDP utilise M1 pour le
   // parcours français B2B. Leur plateforme applique ensuite la CIUS adaptée.
   return { ubl: serializeUbl(invoiceWithRouting, { profileId: 'M1' }), addresses };
+}
+
+const COLONNES_TRANSMISSION =
+  'id,invoice_id,organization_id,provider_code,status,provider_submission_id,attempt_count';
+
+/**
+ * Reserve une transmission avant depot.
+ *
+ * Le verrou est optimiste : la mise a jour n'aboutit que si la ligne est encore
+ * `queued` ou `failed`. Deux appels concurrents ne peuvent donc pas deposer la
+ * meme facture, et l'appelant qui repart les mains vides doit renoncer.
+ */
+export async function reserverTransmission(
+  admin: SupabaseClient,
+  transmission: TransmissionRow,
+  maintenant: Date = new Date(),
+): Promise<TransmissionRow | null> {
+  const { data, error } = await admin
+    .from('invoice_transmissions')
+    .update({
+      status: 'submitting',
+      attempt_count: transmission.attempt_count + 1,
+      last_attempt_at: maintenant.toISOString(),
+      next_attempt_at: null,
+      last_error_code: null,
+      last_error_message: null,
+    })
+    .eq('id', transmission.id)
+    .in('status', ['queued', 'failed'])
+    .select(COLONNES_TRANSMISSION)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as TransmissionRow | null) ?? null;
+}
+
+/**
+ * Depose une transmission deja reservee, puis synchronise son etat.
+ *
+ * La recherche prealable par identifiant externe est ce qui rend la reprise
+ * sure : si une tentative precedente a bien depose le document mais que sa
+ * reponse s'est perdue, on retrouve le depot au lieu d'en creer un second.
+ */
+export async function deposerTransmission(
+  admin: SupabaseClient,
+  transmission: TransmissionRow,
+  invoiceId: string,
+  accessToken: string,
+): Promise<TransmissionRow> {
+  let providerInvoice = await recoverSubmission(accessToken, invoiceId);
+  if (!providerInvoice) {
+    // Le bac a sable SUPER PDP route Burger Queen vers Tricatel sur le
+    // document Peppol UBL. Le CII reste disponible au telechargement, mais
+    // certains destinataires n'annoncent pas ce type de document dans leur
+    // profil de reception.
+    const { ubl } = await prepareUblForTransmission(admin, invoiceId, accessToken);
+    const params = new URLSearchParams({ external_id: invoiceId, processing_rule: 'B2B' });
+    providerInvoice = await superPdpJson<SuperPdpInvoice>(
+      `/v1.beta/invoices?${params.toString()}`,
+      accessToken,
+      { method: 'POST', headers: { 'Content-Type': 'application/xml' }, body: ubl },
+    );
+  }
+  if (!Number.isSafeInteger(providerInvoice.id))
+    throw new Error('SUPER PDP n’a pas retourne d’identifiant de depot.');
+  const { data: submitted, error } = await admin
+    .from('invoice_transmissions')
+    .update({
+      status: 'submitted',
+      provider_submission_id: String(providerInvoice.id),
+      last_error_code: null,
+      last_error_message: null,
+    })
+    .eq('id', transmission.id)
+    .eq('status', 'submitting')
+    .select(COLONNES_TRANSMISSION)
+    .single();
+  if (error) throw error;
+  let courante = submitted as TransmissionRow;
+  for (const event of providerInvoice.events ?? [])
+    courante = await recordProviderEvent(admin, courante, event);
+  return await syncEvents(admin, courante, accessToken);
+}
+
+/**
+ * Consigne un echec technique et programme, s'il y a lieu, la reprise.
+ *
+ * La mise a jour reste conditionnee a l'etat `submitting` : si une autre
+ * requete a fait avancer la transmission entre-temps, on ne la ramene pas en
+ * arriere. L'evenement, lui, est toujours journalise.
+ */
+export async function marquerEchec(
+  admin: SupabaseClient,
+  transmission: TransmissionRow,
+  message: string,
+  maintenant: Date = new Date(),
+): Promise<void> {
+  await admin
+    .from('invoice_transmissions')
+    .update({
+      status: 'failed',
+      last_error_code: 'submission_failed',
+      last_error_message: message,
+      // `attempt_count` a deja ete incremente lors de la reservation : il
+      // compte les tentatives consommees. `null` signifie plafond atteint, donc
+      // plus aucune reprise automatique.
+      next_attempt_at: prochaineTentative(transmission.attempt_count, maintenant),
+    })
+    .eq('id', transmission.id)
+    .eq('status', 'submitting');
+  await admin.from('invoice_transmission_events').insert({
+    transmission_id: transmission.id,
+    invoice_id: transmission.invoice_id,
+    organization_id: transmission.organization_id,
+    source: 'application',
+    event_type: 'technical_failure',
+    normalized_status: 'failed',
+    message,
+    occurred_at: maintenant.toISOString(),
+  });
 }
