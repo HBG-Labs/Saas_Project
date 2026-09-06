@@ -122,7 +122,11 @@ export default function TutorialDetailPage() {
             Retour à l’académie
           </Link>
 
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.78fr)]">
+          <div className="relative grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.78fr)]">
+            <TrainingDoodle
+              variant="practice"
+              className="absolute -top-8 right-[calc(44%+2.5rem)] z-10 hidden h-24 w-44 -rotate-6 text-blue-200 opacity-90 xl:block"
+            />
             <div className="max-w-3xl">
               <div className="mb-6 flex flex-wrap items-center gap-3">
                 <span className="bg-signal-lime text-brand-night flex size-12 items-center justify-center rounded-2xl shadow-lg shadow-black/20">
@@ -168,10 +172,6 @@ export default function TutorialDetailPage() {
                 fetchPriority="high"
               />
               <div className="bg-brand-night/15 absolute inset-0" aria-hidden="true" />
-              <TrainingDoodle
-                variant="practice"
-                className="top-20 left-5 z-10 hidden h-24 w-44 -rotate-6 text-cyan-200 opacity-90 xl:block"
-              />
               <span className="absolute top-5 right-5 rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-slate-900 shadow-lg">
                 {course.duration}
               </span>
@@ -456,7 +456,7 @@ export default function TutorialDetailPage() {
             <span className="bg-primary absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <TrainingDoodle
               variant="checklist"
-              className="right-32 -bottom-7 hidden h-28 w-48 rotate-6 text-cyan-300 opacity-20 xl:block"
+              className="right-32 -bottom-7 hidden h-28 w-48 rotate-6 text-cyan-300 opacity-40 xl:block"
             />
             <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>

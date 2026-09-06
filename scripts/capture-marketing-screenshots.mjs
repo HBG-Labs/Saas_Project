@@ -33,7 +33,7 @@ if (!password) {
 
 mkdirSync(outputDirectory, { recursive: true });
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ channel: 'chrome' });
 const context = await browser.newContext({
   viewport: { width: 1440, height: 960 },
   deviceScaleFactor: 1,
@@ -203,10 +203,10 @@ await page.route(/\/rest\/v1\//, async (route) => {
           user_id: demoUserId,
           organization_id: demoOrganizationId,
           plan_code: 'business',
-          status: 'trialing',
+          status: 'active',
           current_period_start: now,
           current_period_end: null,
-          trial_ends_at: '2026-09-18T09:00:00.000Z',
+          trial_ends_at: null,
           canceled_at: null,
           cancel_at_period_end: false,
           provider: null,

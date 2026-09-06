@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import { TrainingDoodle } from '@/components/training/TrainingDoodle';
 import { ROUTES } from '@/config/routes';
 import { TRAINING_COURSES, TRAINING_THEMES, type TrainingTheme } from '@/features/training';
 import { cn } from '@/lib/cn';
@@ -86,7 +87,11 @@ export default function TutorialsPage() {
           }}
         />
 
-        <div className="mx-auto grid max-w-[1480px] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.95fr)]">
+        <div className="relative mx-auto grid max-w-[1480px] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.95fr)]">
+          <TrainingDoodle
+            variant="practice"
+            className="text-primary/55 absolute -top-10 right-[calc(49%+3rem)] z-10 hidden h-24 w-44 -rotate-6 xl:block"
+          />
           <div>
             <div className="border-primary/15 text-primary mb-6 inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-xs font-bold tracking-wide uppercase shadow-sm">
               <GraduationCap className="size-4" aria-hidden="true" />
@@ -195,7 +200,11 @@ export default function TutorialsPage() {
       </section>
 
       <div className="mx-auto max-w-6xl space-y-14 px-4 pt-12 sm:px-8 lg:px-12">
-        <section aria-labelledby="parcours-title">
+        <section aria-labelledby="parcours-title" className="relative">
+          <TrainingDoodle
+            variant="route"
+            className="top-0 right-0 hidden h-24 w-52 rotate-2 text-orange-500 opacity-65 xl:block"
+          />
           <div className="mb-6 max-w-2xl">
             <p className="text-primary text-xs font-extrabold tracking-widest uppercase">
               Votre feuille de route
@@ -393,7 +402,11 @@ export default function TutorialsPage() {
 
         <section className="bg-brand-night relative overflow-hidden rounded-3xl px-6 py-8 text-white shadow-xl sm:px-8">
           <span className="bg-signal-lime absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-          <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <TrainingDoodle
+            variant="checklist"
+            className="right-36 -bottom-7 hidden h-28 w-48 rotate-6 text-cyan-300 opacity-40 xl:block"
+          />
+          <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex max-w-2xl gap-4">
               <span className="bg-signal-lime text-brand-night flex size-11 shrink-0 items-center justify-center rounded-2xl">
                 <CheckCircle2 className="size-5" aria-hidden="true" />

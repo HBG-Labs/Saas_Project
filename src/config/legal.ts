@@ -156,7 +156,11 @@ export const DEPOTS_LOCAUX = [
     duree: 'Jusqu’à réinitialisation du navigateur',
   },
   {
-    nom: 'Avatar et intitulé de poste du profil',
+    // L'avatar n'est plus ici : il est écrit dans votre compte
+    // (`profiles.avatar_id`), pas dans le navigateur — corrigé lors du passage
+    // à la bibliothèque de 50 avatars, qui a aussi remplacé l'ancien réglage
+    // local par un enregistrement réel, visible par vos collègues.
+    nom: 'Intitulé de poste du profil',
     finalite: 'Personnaliser l’affichage de votre profil',
     duree: 'Jusqu’à modification',
   },

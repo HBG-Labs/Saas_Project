@@ -1,7 +1,6 @@
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 
 interface FaqItem {
@@ -15,7 +14,7 @@ const FAQS: FaqItem[] = [
     id: '1',
     question: "Qu'est-ce que REZO360 exactement ?",
     answer:
-      "REZO360 est la plateforme SaaS tout-en-un centralisant calculateurs normés, outils d’ingénierie certifiés et gestion technique de terrain pour les techniciens, ingénieurs et entreprises.",
+      'REZO360 est la plateforme SaaS tout-en-un centralisant calculateurs normés, outils d’ingénierie certifiés et gestion technique de terrain pour les techniciens, ingénieurs et entreprises.',
   },
   {
     id: '2',
@@ -63,13 +62,9 @@ export function Faq() {
   const [openId, setOpenId] = useState<string | null>('1');
 
   return (
-    <section className="py-16 sm:py-24">
+    <section className="bg-gradient-to-br from-blue-50/35 via-white to-violet-50/25 py-16 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
-          <Badge variant="primary" className="mb-4">
-            <Sparkles className="size-3.5" aria-hidden="true" />
-            Questions fréquentes
-          </Badge>
           <h2 className="text-foreground text-3xl font-bold tracking-tight text-balance sm:text-4xl">
             Tout ce que vous devez savoir sur REZO360
           </h2>
@@ -131,4 +126,3 @@ export function Faq() {
     </section>
   );
 }
-

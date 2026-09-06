@@ -6,13 +6,17 @@ import {
   ClipboardCheck,
   FileCheck2,
   Gauge,
+  Handshake,
+  LockKeyhole,
   MapPinned,
   PackageSearch,
   PenTool,
   Radio,
+  ShieldCheck,
   Smartphone,
   UsersRound,
   Wrench,
+  Zap,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -50,12 +54,215 @@ const FINAL_POINTS = [
   { label: 'Matériel relié', icon: PackageSearch },
 ] as const;
 
+const INFRASTRUCTURE_POINTS = [
+  {
+    title: 'Données protégées',
+    detail: 'Accès sécurisé et permissions contrôlées',
+    icon: ShieldCheck,
+    iconClassName: 'bg-blue-50 text-blue-600',
+  },
+  {
+    title: 'Infrastructure évolutive',
+    detail: 'Conçue pour accompagner votre croissance',
+    icon: Zap,
+    iconClassName: 'bg-emerald-50 text-emerald-600',
+  },
+  {
+    title: 'Paiements sécurisés',
+    detail: 'Transactions traitées par Stripe',
+    icon: LockKeyhole,
+    iconClassName: 'bg-violet-50 text-violet-600',
+  },
+  {
+    title: 'Services reconnus',
+    detail: 'Supabase, Vercel et Stripe',
+    icon: Handshake,
+    iconClassName: 'bg-orange-50 text-orange-600',
+  },
+] as const;
+
+type AnnotationTone = 'cyan' | 'orange' | 'violet' | 'lime';
+type AnnotationArrow = 'curve-left' | 'curve-right' | 'loop-left';
+type DoodleVariant = 'sparkles' | 'loop' | 'zigzag';
+type TechnicianSketchVariant = 'electrical' | 'network' | 'measurement';
+
+const ANNOTATION_TONES: Record<AnnotationTone, string> = {
+  cyan: 'text-cyan-300',
+  orange: 'text-orange-500',
+  violet: 'text-violet-500',
+  lime: 'text-emerald-600',
+};
+
+function DecorativeDoodle({ variant, className }: { variant: DoodleVariant; className: string }) {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      className={`pointer-events-none absolute ${className}`}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {variant === 'sparkles' ? (
+        <>
+          <path d="M28 8c1 13 6 19 18 21-12 2-17 8-18 22-2-14-7-20-19-22 12-2 17-8 19-21Z" />
+          <path d="M69 42c1 9 4 13 13 15-9 1-12 6-13 15-1-9-5-14-13-15 8-2 12-6 13-15Z" />
+          <path d="M44 66c1 6 3 9 9 10-6 1-8 4-9 11-1-7-4-10-10-11 6-1 9-4 10-10Z" />
+        </>
+      ) : null}
+      {variant === 'loop' ? (
+        <>
+          <path d="M82 39C73 12 25 8 11 34-3 60 28 84 61 75c30-8 38-34 20-48" />
+          <path d="m77 18 5 9-10 2" />
+          <circle cx="19" cy="76" r="3" fill="currentColor" stroke="none" />
+          <circle cx="87" cy="64" r="2" fill="currentColor" stroke="none" />
+        </>
+      ) : null}
+      {variant === 'zigzag' ? (
+        <>
+          <path d="m7 57 17-22 14 27 18-32 14 26 19-23" />
+          <path d="M13 73c20 7 47 7 70-1" />
+        </>
+      ) : null}
+    </svg>
+  );
+}
+
+function TechnicianSketch({
+  variant,
+  className,
+}: {
+  variant: TechnicianSketchVariant;
+  className: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 220 140"
+      className={`pointer-events-none absolute ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ fontFamily: '"Segoe Print", "Bradley Hand", "Comic Sans MS", cursive' }}
+    >
+      {variant === 'electrical' ? (
+        <>
+          <text x="16" y="22" fill="currentColor" stroke="none" fontSize="17">
+            U = R × I
+          </text>
+          <text x="126" y="126" fill="currentColor" stroke="none" fontSize="15">
+            P = U × I
+          </text>
+          <path d="M20 66h32l8-12 12 24 12-24 12 24 9-12h28" />
+          <path d="M133 66h19m28 0h20v42H20V66" />
+          <path d="M158 51v30m12-22v14" />
+          <circle cx="176" cy="30" r="14" />
+          <path d="m166 20 20 20m0-20-20 20M176 10V4m0 52v-6m20-20h6m-52 0h6" />
+        </>
+      ) : null}
+      {variant === 'network' ? (
+        <>
+          <rect x="18" y="50" width="52" height="34" rx="4" />
+          <rect x="150" y="50" width="52" height="34" rx="4" />
+          <circle cx="110" cy="68" r="18" />
+          <path d="M70 67h22m36 0h22" strokeDasharray="5 5" />
+          <path d="m84 61 8 6-8 6m52-12-8 6 8 6" />
+          <path d="M101 61c5-5 13-5 18 0m-14 5c3-3 7-3 10 0" />
+          <circle cx="110" cy="72" r="2" fill="currentColor" stroke="none" />
+          <text x="17" y="105" fill="currentColor" stroke="none" fontSize="14">
+            bureau
+          </text>
+          <text x="151" y="105" fill="currentColor" stroke="none" fontSize="14">
+            terrain
+          </text>
+          <path d="M28 39c8-12 22-17 34-12m130 12c-8-12-22-17-34-12" />
+        </>
+      ) : null}
+      {variant === 'measurement' ? (
+        <>
+          <path d="M35 104h132L167 28 35 104Z" />
+          <path d="M154 104v-13h13" />
+          <path d="M35 116h132m-126-6-6 6 6 6m120-12 6 6-6 6" />
+          <path d="M180 104V28m-6 7 6-7 6 7m-12 62 6 7 6-7" />
+          <text x="91" y="136" fill="currentColor" stroke="none" fontSize="14">
+            L
+          </text>
+          <text x="190" y="70" fill="currentColor" stroke="none" fontSize="14">
+            h
+          </text>
+          <text x="43" y="93" fill="currentColor" stroke="none" fontSize="14">
+            α
+          </text>
+          <text x="30" y="22" fill="currentColor" stroke="none" fontSize="17">
+            S = L × l
+          </text>
+        </>
+      ) : null}
+    </svg>
+  );
+}
+
+function HandwrittenAnnotation({
+  children,
+  className,
+  tone,
+  arrow,
+}: {
+  children: ReactNode;
+  className: string;
+  tone: AnnotationTone;
+  arrow: AnnotationArrow;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute z-20 hidden select-none ${ANNOTATION_TONES[tone]} ${className}`}
+      style={{ fontFamily: '"Segoe Print", "Bradley Hand", "Comic Sans MS", cursive' }}
+    >
+      <span className="block text-center text-[1.05rem] leading-snug font-semibold italic drop-shadow-sm">
+        {children}
+      </span>
+      <svg
+        viewBox="0 0 112 58"
+        className="mt-1 h-12 w-full overflow-visible"
+        fill="none"
+        aria-hidden="true"
+      >
+        {arrow === 'curve-left' ? (
+          <>
+            <path d="M101 5C69 5 29 16 13 49" stroke="currentColor" strokeWidth="2.4" />
+            <path d="M13 49 14 36M13 49l13-4" stroke="currentColor" strokeWidth="2.4" />
+          </>
+        ) : null}
+        {arrow === 'curve-right' ? (
+          <>
+            <path d="M10 5c33 1 72 15 91 44" stroke="currentColor" strokeWidth="2.4" />
+            <path d="m101 49-2-13m2 13-13-2" stroke="currentColor" strokeWidth="2.4" />
+          </>
+        ) : null}
+        {arrow === 'loop-left' ? (
+          <>
+            <path
+              d="M99 7C75-2 34 1 33 22c-1 17 29 21 42 7 8-9-1-19-14-13-17 8-31 23-45 37"
+              stroke="currentColor"
+              strokeWidth="2.4"
+            />
+            <path d="m16 53 3-13m-3 13 13-3" stroke="currentColor" strokeWidth="2.4" />
+          </>
+        ) : null}
+      </svg>
+    </div>
+  );
+}
+
 function ChapterLabel({ number, children }: { number: string; children: ReactNode }) {
   return (
     <div className="mb-5 flex items-center gap-3">
-      <span className="font-mono text-sm font-bold tracking-[0.18em] text-primary">{number}</span>
-      <span className="h-px w-10 bg-primary" aria-hidden="true" />
-      <span className="text-sm font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+      <span className="text-primary font-mono text-sm font-bold tracking-[0.18em]">{number}</span>
+      <span className="bg-primary h-px w-10" aria-hidden="true" />
+      <span className="text-muted-foreground text-sm font-semibold tracking-[0.12em] uppercase">
         {children}
       </span>
     </div>
@@ -75,7 +282,7 @@ function ProductCapture({
 }) {
   return (
     <figure
-      className={`overflow-hidden rounded-2xl border border-border bg-surface shadow-overlay ${className}`}
+      className={`border-border bg-surface shadow-overlay overflow-hidden border ${className}`}
     >
       <img
         src={src}
@@ -84,8 +291,147 @@ function ProductCapture({
         loading={eager ? 'eager' : 'lazy'}
         decoding="async"
       />
-      <figcaption className="sr-only">Écran réel de REZO360 avec données de démonstration.</figcaption>
+      <figcaption className="sr-only">
+        Écran réel de REZO360 avec données de démonstration.
+      </figcaption>
     </figure>
+  );
+}
+
+function InfrastructureSection() {
+  return (
+    <section
+      id="infrastructure"
+      aria-labelledby="infrastructure-title"
+      className="relative overflow-hidden border-y border-blue-100/70 bg-gradient-to-b from-white via-blue-50/45 to-white py-14 sm:py-20"
+    >
+      <div
+        className="absolute -top-32 -right-32 size-80 rounded-full bg-blue-100/45 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute top-24 -left-32 size-72 rounded-full bg-cyan-100/35 blur-3xl"
+        aria-hidden="true"
+      />
+      <TechnicianSketch
+        variant="network"
+        className="top-14 left-4 hidden h-28 w-44 -rotate-6 text-cyan-700 opacity-30 xl:block"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2
+            id="infrastructure-title"
+            className="text-brand-night text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl"
+          >
+            Une infrastructure{' '}
+            <span className="from-primary bg-gradient-to-r to-blue-500 bg-clip-text text-transparent">
+              moderne et fiable
+            </span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            REZO360 s’appuie sur des technologies reconnues pour offrir une expérience rapide,
+            sécurisée et disponible au quotidien.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-3 md:gap-6">
+          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
+            <div
+              className="text-brand-night flex items-center justify-start gap-3 md:justify-center"
+              aria-label="Supabase"
+            >
+              <svg
+                className="h-9 w-8 md:h-10 md:w-9"
+                viewBox="0 0 40 48"
+                role="img"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient
+                    id="supabase-mark-a"
+                    x1="7"
+                    y1="4"
+                    x2="28"
+                    y2="34"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="#3ECF8E" />
+                    <stop offset="1" stopColor="#1BAA73" />
+                  </linearGradient>
+                  <linearGradient
+                    id="supabase-mark-b"
+                    x1="18"
+                    y1="17"
+                    x2="35"
+                    y2="43"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="#7DE8BC" />
+                    <stop offset="1" stopColor="#3ECF8E" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M22.3 3.8c.9-2.1 4-1.5 4 .8v17.1H37c2.1 0 3.1 2.6 1.6 4.1L17.7 45.2c-1.5 1.4-3.9.3-3.6-1.8l2.3-17.1H3.1c-2.2 0-3.1-2.7-1.5-4.2L22.3 3.8Z"
+                  fill="url(#supabase-mark-a)"
+                />
+                <path
+                  d="M26.3 21.7H37c2.1 0 3.1 2.6 1.6 4.1L17.7 45.2c-1.5 1.4-3.9.3-3.6-1.8l12.2-21.7Z"
+                  fill="url(#supabase-mark-b)"
+                />
+              </svg>
+              <span className="text-xl font-bold tracking-tight md:text-3xl">supabase</span>
+            </div>
+            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
+              Base de données sécurisée et évolutive
+            </p>
+          </article>
+
+          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
+            <div
+              className="flex items-center justify-start gap-3 text-black md:justify-center"
+              aria-label="Vercel"
+            >
+              <svg className="size-8 md:size-9" viewBox="0 0 48 48" role="img" aria-hidden="true">
+                <path d="M24 7 45 43H3L24 7Z" fill="currentColor" />
+              </svg>
+              <span className="text-2xl font-bold tracking-tight md:text-3xl">Vercel</span>
+            </div>
+            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
+              Hébergement performant et fiable
+            </p>
+          </article>
+
+          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
+            <div
+              className="text-[2rem] leading-none font-bold tracking-[-0.06em] text-[#635BFF] md:text-[2.4rem]"
+              aria-label="Stripe"
+            >
+              stripe
+            </div>
+            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
+              Paiements traités de manière sécurisée
+            </p>
+          </article>
+        </div>
+
+        <div className="mt-8 grid gap-x-5 gap-y-6 border-t border-blue-100/80 pt-8 sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:divide-x lg:divide-blue-100/90">
+          {INFRASTRUCTURE_POINTS.map(({ title, detail, icon: Icon, iconClassName }) => (
+            <div key={title} className="flex items-center gap-4 lg:px-5 first:lg:pl-0 last:lg:pr-0">
+              <span
+                className={`flex size-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}
+              >
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-brand-night text-sm font-bold sm:text-base">{title}</h3>
+                <p className="mt-1 text-sm leading-snug text-slate-600">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -93,6 +439,10 @@ export default function LandingPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-white">
+        <DecorativeDoodle
+          variant="sparkles"
+          className="top-14 left-[45%] z-10 hidden size-14 rotate-6 stroke-orange-400 stroke-[2.2] opacity-75 xl:block"
+        />
         <div className="absolute top-0 right-0 hidden aspect-video w-[74.5%] overflow-hidden lg:block xl:w-[74vw] xl:max-w-[79.5rem]">
           <img
             src="/images/landing-hero-4k.jpg"
@@ -115,25 +465,21 @@ export default function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:min-h-[33.5rem] lg:px-8 xl:min-h-[clamp(33.5rem,41.625vw,44.71875rem)]">
-
           <div className="relative z-10 max-w-xl py-10 sm:py-12 lg:w-[43%] lg:pt-14 lg:pb-0">
-            <h1 className="max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance text-brand-night sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
+            <h1 className="text-brand-night max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
               Pilotez votre activité de terrain en toute simplicité
             </h1>
 
-            <p className="mt-4 max-w-xl text-base leading-[1.55] text-muted-foreground sm:text-lg">
+            <p className="text-muted-foreground mt-4 max-w-xl text-base leading-[1.55] sm:text-lg">
               REZO360 est la plateforme tout-en-un pour les entreprises, artisans et professionnels
               de terrain. De l’organisation des interventions à la facturation électronique,
               centralisez toute votre activité au même endroit.
             </p>
 
-            <ul className="mt-4 space-y-2.5 text-sm font-medium text-foreground sm:text-base">
-              {[
-                'Simple à prendre en main',
-                'Adapté à tous les métiers de terrain',
-              ].map((item) => (
+            <ul className="text-foreground mt-4 space-y-2.5 text-sm font-medium sm:text-base">
+              {['Simple à prendre en main', 'Adapté à tous les métiers de terrain'].map((item) => (
                 <li key={item} className="flex items-center gap-2.5">
-                  <CheckCircle2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                  <CheckCircle2 className="text-primary size-5 shrink-0" aria-hidden="true" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -151,8 +497,8 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <p className="mt-3 text-xs text-muted-foreground sm:text-sm">
-              Aucune carte bancaire requise · 14 jours · Accès complet
+            <p className="text-muted-foreground mt-3 text-xs sm:text-sm">
+              Formule gratuite sans carte · 14 jours d’essai sur les offres payantes
             </p>
           </div>
 
@@ -171,27 +517,31 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section aria-label="Engagements REZO360" className="border-y border-border bg-surface">
-        <div className="mx-auto grid max-w-7xl divide-y divide-border px-4 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-4 lg:px-8">
+      <section aria-label="Engagements REZO360" className="border-border bg-surface border-y">
+        <div className="divide-border mx-auto grid max-w-7xl divide-y px-4 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-4 lg:px-8">
           {REASSURANCES.map((item) => (
             <div key={item} className="flex min-h-16 items-center gap-3 px-3 py-4 lg:px-5">
-              <CheckCircle2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
-              <span className="text-sm font-medium text-foreground">{item}</span>
+              <CheckCircle2 className="text-primary size-5 shrink-0" aria-hidden="true" />
+              <span className="text-foreground text-sm font-medium">{item}</span>
             </div>
           ))}
         </div>
       </section>
 
       <ScrollRevealSection>
-        <section className="bg-brand-night py-16 text-white sm:py-24">
+        <section className="bg-brand-night relative overflow-hidden py-16 text-white sm:py-24">
+          <DecorativeDoodle
+            variant="zigzag"
+            className="top-20 left-[45%] hidden size-16 -rotate-6 stroke-lime-300 stroke-[2.5] opacity-70 xl:block"
+          />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
               <div className="lg:col-span-5">
                 <div className="mb-5 flex items-center gap-3">
-                  <span className="font-mono text-sm font-bold tracking-[0.18em] text-signal-lime">
+                  <span className="text-signal-lime font-mono text-sm font-bold tracking-[0.18em]">
                     01
                   </span>
-                  <span className="h-px w-10 bg-signal-lime" aria-hidden="true" />
+                  <span className="bg-signal-lime h-px w-10" aria-hidden="true" />
                   <span className="text-sm font-semibold tracking-[0.12em] text-cyan-100 uppercase">
                     Le cockpit
                   </span>
@@ -207,8 +557,11 @@ export default function LandingPage() {
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {COCKPIT_POINTS.map(({ label, icon: Icon }) => (
-                    <div key={label} className="flex items-center gap-2 text-sm font-medium text-white">
-                      <Icon className="size-4 text-signal-cyan" aria-hidden="true" />
+                    <div
+                      key={label}
+                      className="flex items-center gap-2 text-sm font-medium text-white"
+                    >
+                      <Icon className="text-signal-cyan size-4" aria-hidden="true" />
                       {label}
                     </div>
                   ))}
@@ -217,23 +570,30 @@ export default function LandingPage() {
             </div>
 
             <div className="relative mt-12 lg:mt-16">
+              <HandwrittenAnnotation
+                className="top-16 -right-28 w-32 rotate-3 min-[1400px]:block min-[1450px]:-right-40"
+                tone="cyan"
+                arrow="curve-left"
+              >
+                Vos priorités, d’un seul coup d’œil
+              </HandwrittenAnnotation>
               <ProductCapture
                 src="/images/product/dashboard.png"
                 alt="Tableau de bord REZO360 montrant les priorités, indicateurs et missions récentes"
                 eager
                 className="border-white/15 bg-white"
               />
-              <div className="mt-4 rounded-2xl border border-white/20 bg-white p-4 text-brand-night shadow-modal sm:absolute sm:-bottom-8 sm:right-6 sm:mt-0 sm:w-[22rem]">
+              <div className="text-brand-night shadow-modal mt-4 rounded-2xl border border-white/20 bg-white p-4 sm:absolute sm:right-6 sm:-bottom-8 sm:mt-0 sm:w-[22rem]">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-xs font-bold text-primary">2026-0142</span>
-                  <span className="rounded-full bg-signal-lime px-2.5 py-1 text-xs font-bold">
+                  <span className="text-primary font-mono text-xs font-bold">2026-0142</span>
+                  <span className="bg-signal-lime rounded-full px-2.5 py-1 text-xs font-bold">
                     En cours
                   </span>
                 </div>
-                <p className="mt-3 font-display text-lg font-bold">Maintenance préventive CVC</p>
+                <p className="font-display mt-3 text-lg font-bold">Maintenance préventive CVC</p>
                 <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
                   <span>Site Horizon · 08:30</span>
-                  <span className="font-medium text-primary">Mission active</span>
+                  <span className="text-primary font-medium">Mission active</span>
                 </div>
               </div>
             </div>
@@ -242,32 +602,46 @@ export default function LandingPage() {
       </ScrollRevealSection>
 
       <ScrollRevealSection>
-        <section className="py-16 sm:py-24">
+        <section className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/35 to-cyan-50/30 py-16 sm:py-24">
+          <DecorativeDoodle
+            variant="loop"
+            className="top-16 right-[7%] hidden size-16 rotate-6 stroke-blue-300 stroke-[2] opacity-60 xl:block"
+          />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
               <ChapterLabel number="02">Le parcours d’intervention</ChapterLabel>
-              <h2 className="text-4xl leading-tight font-bold text-balance text-foreground sm:text-5xl">
+              <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
                 Une intervention, du planning au rapport signé.
               </h2>
-              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+              <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
                 Chaque étape reprend la même information. La mission planifiée devient une
                 intervention suivie, puis un compte rendu contrôlé — sans rupture entre les écrans.
               </p>
             </div>
 
-            <div className="mt-14 space-y-16">
+            <div className="mt-10 space-y-10 sm:mt-14 sm:space-y-16">
               <div className="grid items-center gap-8 lg:grid-cols-12">
-                <ProductCapture
-                  src="/images/product/missions.png"
-                  alt="Liste réelle des missions REZO360 avec statuts, priorités et accès aux fiches"
-                  className="lg:col-span-8"
-                />
-                <div className="lg:col-span-4">
-                  <span className="font-mono text-xs font-bold tracking-widest text-signal-orange uppercase">
+                <div className="relative lg:col-span-8">
+                  <ProductCapture
+                    src="/images/product/missions.png"
+                    alt="Liste réelle des missions REZO360 avec statuts, priorités et accès aux fiches"
+                  />
+                </div>
+                <div className="relative lg:col-span-4">
+                  <HandwrittenAnnotation
+                    className="-top-64 left-0 w-52 -rotate-2 lg:block"
+                    tone="orange"
+                    arrow="loop-left"
+                  >
+                    Du bureau au terrain, sans ressaisie
+                  </HandwrittenAnnotation>
+                  <span className="text-signal-orange font-mono text-xs font-bold tracking-widest uppercase">
                     Planifier & affecter
                   </span>
-                  <h3 className="mt-3 text-2xl font-bold text-foreground">Le travail part avec un cadre clair.</h3>
-                  <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                  <h3 className="text-foreground mt-3 text-2xl font-bold">
+                    Le travail part avec un cadre clair.
+                  </h3>
+                  <p className="text-muted-foreground mt-4 text-base leading-relaxed">
                     Référence, priorité, horaire, site et intervenant restent visibles avant même
                     d’ouvrir la fiche. Le planning et la carte sont accessibles depuis le même flux.
                   </p>
@@ -275,72 +649,91 @@ export default function LandingPage() {
               </div>
 
               <div className="grid items-center gap-8 lg:grid-cols-12">
-                <div className="order-2 lg:order-1 lg:col-span-4">
-                  <span className="font-mono text-xs font-bold tracking-widest text-signal-orange uppercase">
+                <div className="lg:col-span-3">
+                  <span className="text-signal-orange font-mono text-xs font-bold tracking-widest uppercase">
                     Rendre compte
                   </span>
-                  <h3 className="mt-3 text-2xl font-bold text-foreground">Le terrain documente pendant que c’est frais.</h3>
-                  <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                  <h3 className="text-foreground mt-3 text-2xl font-bold">
+                    Le terrain documente pendant que c’est frais.
+                  </h3>
+                  <p className="text-muted-foreground mt-4 text-base leading-relaxed">
                     L’intervention ouverte mène au compte rendu complet, aux pièces jointes et aux
-                    signatures. Le responsable retrouve ensuite la soumission dans sa file de contrôle.
+                    signatures. Le responsable retrouve ensuite la soumission dans sa file de
+                    contrôle.
                   </p>
-                  <ul className="mt-5 space-y-3 text-sm text-foreground">
-                    {['Intervention en cours', 'Compte rendu structuré', 'Contrôle et validation'].map(
-                      (item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <Check className="size-4 text-primary" aria-hidden="true" />
-                          {item}
-                        </li>
-                      ),
-                    )}
+                  <ul className="text-foreground mt-5 space-y-3 text-sm">
+                    {[
+                      'Intervention en cours',
+                      'Compte rendu structuré',
+                      'Contrôle et validation',
+                    ].map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <Check className="text-primary size-4" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
-                <div className="order-1 grid gap-5 sm:grid-cols-2 lg:order-2 lg:col-span-8">
+                <div className="lg:col-span-9">
                   <ProductCapture
                     src="/images/product/reports.png"
                     alt="Écran réel REZO360 de sélection d’une intervention et de rédaction du compte rendu"
                   />
-                  <ProductCapture
-                    src="/images/product/review.png"
-                    alt="File réelle de contrôle et validation des comptes rendus dans REZO360"
-                  />
                 </div>
               </div>
+            </div>
+
+            <div className="mt-10 flex justify-center sm:mt-12">
+              <Button asChild size="lg" className="min-h-touch px-6">
+                <Link to={ROUTES.register}>
+                  Essayer REZO360 gratuitement
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
       </ScrollRevealSection>
 
       <ScrollRevealSection>
-        <section className="bg-surface-sunken py-16 sm:py-24">
-          <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
+        <section className="relative overflow-hidden bg-gradient-to-bl from-slate-50 via-blue-50/45 to-white py-16 sm:py-24">
+          <TechnicianSketch
+            variant="electrical"
+            className="bottom-9 left-[47%] hidden h-28 w-44 -rotate-3 text-blue-600 opacity-45 xl:block"
+          />
+          <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
             <div className="lg:col-span-7">
               <ChapterLabel number="03">La boîte à outils</ChapterLabel>
-              <h2 className="max-w-3xl text-4xl leading-tight font-bold text-balance text-foreground sm:text-5xl">
+              <h2 className="text-foreground max-w-3xl text-4xl leading-tight font-bold text-balance sm:text-5xl">
                 Les outils métier, comme une boîte à outils vivante.
               </h2>
-              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+              <p className="text-muted-foreground mt-5 max-w-2xl text-lg leading-relaxed">
                 Des outils rapides pour le chantier, regroupés avec les calculateurs, conversions et
                 notes que les techniciens utilisent au quotidien.
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {TOOL_GROUPS.map(({ name, detail, icon: Icon }) => (
-                  <div key={name} className="rounded-2xl border border-border bg-surface p-5 shadow-raised">
+                  <div
+                    key={name}
+                    className="border-border bg-surface shadow-raised rounded-2xl border p-5"
+                  >
                     <div className="flex items-start gap-4">
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary">
+                      <span className="bg-primary-subtle text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
                         <Icon className="size-5" aria-hidden="true" />
                       </span>
                       <div>
-                        <h3 className="text-base font-bold text-foreground">{name}</h3>
-                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+                        <h3 className="text-foreground text-base font-bold">{name}</h3>
+                        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                          {detail}
+                        </p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <Button asChild variant="outline" size="lg" className="mt-8 min-h-touch">
+              <Button asChild variant="outline" size="lg" className="min-h-touch mt-8">
                 <Link to={ROUTES.tools}>
                   Explorer le catalogue
                   <ArrowRight className="size-4" aria-hidden="true" />
@@ -348,7 +741,14 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <div className="mx-auto w-full max-w-sm lg:col-span-5 lg:justify-self-end">
+            <div className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:justify-self-end">
+              <HandwrittenAnnotation
+                className="-top-8 -left-36 w-40 -rotate-5 lg:block"
+                tone="violet"
+                arrow="curve-right"
+              >
+                Toute la boîte à outils dans la poche
+              </HandwrittenAnnotation>
               <ProductCapture
                 src="/images/product/tools-mobile.png"
                 alt="Catalogue mobile réel des outils et instruments de terrain REZO360"
@@ -359,9 +759,16 @@ export default function LandingPage() {
       </ScrollRevealSection>
 
       <ScrollRevealSection>
-        <section className="py-16 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative min-h-[32rem] overflow-hidden rounded-3xl bg-brand-night">
+        <section className="bg-gradient-to-b from-white via-slate-50/60 to-blue-50/35 py-16 sm:py-24">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <HandwrittenAnnotation
+              className="-top-20 right-16 w-48 rotate-3 lg:block"
+              tone="lime"
+              arrow="curve-left"
+            >
+              Le chantier reste connecté
+            </HandwrittenAnnotation>
+            <div className="bg-brand-night relative min-h-[32rem] overflow-hidden rounded-3xl">
               <img
                 src="/images/backgrounds/field-technician-industrial.png"
                 alt="Technicien de maintenance industrielle utilisant une tablette dans un local technique"
@@ -370,11 +777,11 @@ export default function LandingPage() {
                 decoding="async"
               />
               <div
-                className="absolute inset-0 bg-gradient-to-r from-brand-night via-brand-night/90 to-brand-night/15"
+                className="from-brand-night via-brand-night/90 to-brand-night/15 absolute inset-0 bg-gradient-to-r"
                 aria-hidden="true"
               />
               <div className="relative flex min-h-[32rem] max-w-2xl flex-col justify-end p-7 text-white sm:p-12 lg:p-16">
-                <span className="font-mono text-sm font-bold tracking-[0.16em] text-signal-cyan uppercase">
+                <span className="text-signal-cyan font-mono text-sm font-bold tracking-[0.16em] uppercase">
                   Sur le terrain
                 </span>
                 <h2 className="mt-4 text-4xl leading-tight font-bold text-balance sm:text-5xl">
@@ -391,6 +798,10 @@ export default function LandingPage() {
       </ScrollRevealSection>
 
       <ScrollRevealSection>
+        <InfrastructureSection />
+      </ScrollRevealSection>
+
+      <ScrollRevealSection>
         <Pricing />
       </ScrollRevealSection>
 
@@ -401,11 +812,21 @@ export default function LandingPage() {
       <ScrollRevealSection>
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden rounded-3xl bg-brand-night px-6 py-12 text-white shadow-modal sm:px-12 sm:py-16 lg:px-16">
-              <div className="absolute -right-16 -top-20 size-64 rounded-full border-[3rem] border-signal-cyan/20" aria-hidden="true" />
-              <div className="absolute -bottom-24 right-32 size-56 rounded-full border-[2.5rem] border-white/10" aria-hidden="true" />
+            <div className="bg-brand-night shadow-modal relative overflow-hidden rounded-3xl px-6 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
+              <div
+                className="border-signal-cyan/20 absolute -top-20 -right-16 size-64 rounded-full border-[3rem]"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute right-32 -bottom-24 size-56 rounded-full border-[2.5rem] border-white/10"
+                aria-hidden="true"
+              />
+              <TechnicianSketch
+                variant="measurement"
+                className="right-12 bottom-10 hidden h-36 w-52 rotate-3 text-cyan-300 opacity-40 xl:block"
+              />
               <div className="relative max-w-3xl">
-                <span className="font-mono text-sm font-bold tracking-[0.16em] text-signal-lime uppercase">
+                <span className="text-signal-lime font-mono text-sm font-bold tracking-[0.16em] uppercase">
                   Prêt pour le prochain départ
                 </span>
                 <h2 className="mt-4 text-4xl leading-tight font-bold text-balance sm:text-5xl">
@@ -419,7 +840,7 @@ export default function LandingPage() {
                   <Button
                     asChild
                     size="lg"
-                    className="min-h-touch border-signal-lime bg-signal-lime px-6 text-brand-night hover:border-white hover:bg-white"
+                    className="min-h-touch border-signal-lime bg-signal-lime text-brand-night px-6 hover:border-white hover:bg-white"
                   >
                     <Link to={ROUTES.register}>
                       Créer mon compte
@@ -438,7 +859,7 @@ export default function LandingPage() {
                 <ul className="mt-8 grid gap-3 border-t border-white/20 pt-6 text-sm text-blue-50 sm:grid-cols-3">
                   {FINAL_POINTS.map(({ label, icon: Icon }) => (
                     <li key={label} className="flex items-center gap-2">
-                      <Icon className="size-4 text-signal-lime" aria-hidden="true" />
+                      <Icon className="text-signal-lime size-4" aria-hidden="true" />
                       {label}
                     </li>
                   ))}

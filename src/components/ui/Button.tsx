@@ -49,7 +49,7 @@ export function Button({
     <button
       type={type}
       className={cn(buttonVariants({ variant, size }), className)}
-      disabled={disabled ?? isLoading}
+      disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
       {...props}
     >
