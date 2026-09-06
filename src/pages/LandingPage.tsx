@@ -117,7 +117,7 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:min-h-[33.5rem] lg:px-8 xl:min-h-[clamp(33.5rem,41.625vw,44.71875rem)]">
 
           <div className="relative z-10 max-w-xl py-10 sm:py-12 lg:w-[43%] lg:pt-14 lg:pb-0">
-            <h1 className="max-w-2xl text-center text-4xl leading-[1.08] font-bold tracking-tight text-balance text-brand-night sm:text-5xl lg:text-left lg:text-[3.25rem] lg:leading-[1.05]">
+            <h1 className="max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance text-brand-night sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
               Pilotez votre activité de terrain en toute simplicité
             </h1>
 

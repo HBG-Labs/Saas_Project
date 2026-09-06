@@ -85,7 +85,7 @@ export function PublicLayout() {
             : 'border-b border-transparent bg-white',
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
           <Logo className="min-h-touch shrink-0 text-base sm:text-lg" />
 
           <nav aria-label="Navigation du site" className="hidden lg:block">
