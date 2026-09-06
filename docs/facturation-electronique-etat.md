@@ -1,4 +1,39 @@
-# Facturation électronique — état au 4 septembre 2026 (UTC)
+# Facturation électronique — journal de mise en œuvre
+
+Les sections datées ci-dessous forment un journal : chacune décrit l'état **à sa
+date** et n'est pas corrigée après coup. En cas de divergence, le bloc « État
+courant » ci-dessous fait foi.
+
+## État courant — 6 septembre 2026 (UTC)
+
+**Le raccordement SUPER PDP n'est plus en bac à sable.** La connexion est en
+environnement `production`, statut `connected`, vérification d'entreprise
+`verified` — dernier contrôle le 6 septembre 2026 à 01:49 UTC. Le basculement
+s'est fait par les secrets du projet Supabase (`SUPERPDP_MODE`), donc hors du
+dépôt : aucun commit ne le trace.
+
+Les sections du 4 septembre qui décrivent un raccordement en bac à sable, et
+celle qui indique que la connexion est laissée volontairement en « Action
+requise » pour empêcher tout départ, décrivent un état révolu.
+
+Conséquence pratique : un dépôt lancé depuis une facture éligible part sur le
+réseau réel. Le parcours de dépôt n'a été répété qu'en bac à sable, avec les
+entreprises fictives Burger Queen et Tricatel. **Il n'a pas été rejoué dans la
+configuration de production.**
+
+Ce qui reste non implémenté, inchangé :
+
+- réception de factures ;
+- e-reporting ;
+- reprise automatique d'une transmission en échec ;
+- synchronisation automatique des statuts : un changement d'état chez le
+  partenaire n'apparaît que si quelqu'un ouvre la facture et demande
+  l'actualisation. Les colonnes `next_attempt_at` et l'index de reprise
+  existent, mais aucun ordonnanceur ne les exploite ;
+- factures d'acompte, clients particuliers, opérations internationales ;
+- certification et conformité réglementaire : les contrôles techniques passés
+  sur les cas testés ne valent ni validation par une plateforme agréée, ni
+  attestation de conformité française exhaustive.
 
 ## Parcours disponible
 
