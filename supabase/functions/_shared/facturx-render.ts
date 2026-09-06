@@ -321,7 +321,12 @@ export async function renderFacturX(
         .join('\n'),
     );
     if (invoice.deliveryAddress) section('Adresse de livraison', address(invoice.deliveryAddress));
-    section('Informations', invoice.note);
+    // Les mentions françaises obligatoires (frais de recouvrement, pénalités de
+    // retard, escompte, régime d'opération) sont portées par `documentNotes`
+    // depuis leur passage en notes structurées. Ce point de rendu lisait encore
+    // un champ `note` disparu : elles partaient dans le XML sans jamais
+    // apparaître sur la face lisible du PDF.
+    section('Informations', invoice.documentNotes.map((note) => note.content).join('\n'));
     section(
       isCreditNote ? 'Remboursement ou imputation' : 'Règlement',
       `Échéance : ${dateFr(invoice.dueDate)}\n${invoice.paymentTerms}`,

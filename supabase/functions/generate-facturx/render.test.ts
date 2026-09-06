@@ -40,7 +40,10 @@ Deno.test('Deno produit un PDF reproductible et refuse les caractères manquants
           createHash('sha256').update(repeated.pdf).digest('hex'),
           'Deux générations sur le serveur doivent être identiques',
         );
-        invoice.note += ' 🛠';
+        // Le glyphe manquant doit être injecté là où le rendu lit réellement le
+        // texte libre : les notes structurées. L'ancien champ `note` n'existait
+        // plus sur le modèle canonique, et ce test passait sur un champ fantôme.
+        invoice.documentNotes.push({ subjectCode: 'AAI', content: '🛠' });
         await assert.rejects(
           () => renderFacturX(PDFDocument, invoice, fonts, new Date()),
           /caractère/,

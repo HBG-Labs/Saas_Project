@@ -54,10 +54,6 @@ function safeReturnUrl(raw: unknown, origin: string | null): string | null {
   }
 }
 
-function fullConnectionSelect() {
-  return 'organization_id,provider_code,status,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type';
-}
-
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (request.method !== 'POST') return json({ error: 'Methode non autorisee.' }, 405);
@@ -161,7 +157,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     const { data: connection } = await admin
       .from('einvoicing_provider_connections')
-      .select(fullConnectionSelect())
+      // Chaîne littérale, et non le retour d'une fonction : supabase-js déduit
+      // le type des colonnes du littéral. Derrière un helper, il retombe sur
+      // `GenericStringError` et le typage de la connexion est perdu.
+      .select(
+        'organization_id,provider_code,status,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type',
+      )
       .eq('organization_id', body.organizationId)
       .maybeSingle();
     if (!connection) return json({ error: 'Aucune connexion SUPER PDP a gerer.' }, 404);

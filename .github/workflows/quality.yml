@@ -39,6 +39,32 @@ jobs:
       - name: Vérifier la qualité du code
         run: npm run lint
 
+      # Les fonctions Edge tournent sous Deno : elles sont hors du typecheck
+      # (`tsconfig.app.json` n'inclut que `src`) et hors d'ESLint (`supabase/**`
+      # est ignoré). Sans cette étape, le raccordement OAuth, le chiffrement des
+      # jetons et le générateur Factur-X ne sont vérifiés par personne.
+      - name: Installer Deno
+        uses: denoland/setup-deno@v2
+        with:
+          # `generate-facturx/deno.lock` est en version 5, produite par Deno 2.
+          # Validé localement avec 2.9.6.
+          deno-version: v2.x
+
+      # Périmètre volontairement limité aux fonctions de facturation
+      # électronique : les fonctions plus anciennes importent
+      # `jsr:@supabase/supabase-js@2`, qui ne résout pas quand `node_modules`
+      # est présent. Les aligner sur un specifier `npm:` épinglé permettra
+      # d'étendre cette vérification.
+      - name: Vérifier les types des fonctions Edge
+        run: |
+          deno check \
+            supabase/functions/superpdp-connection/index.ts \
+            supabase/functions/superpdp-oauth-callback/index.ts \
+            supabase/functions/superpdp-invoice/index.ts
+          deno check \
+            --config supabase/functions/generate-facturx/deno.json \
+            supabase/functions/generate-facturx/index.ts
+
       - name: Exécuter les tests
         run: npm run test
 
