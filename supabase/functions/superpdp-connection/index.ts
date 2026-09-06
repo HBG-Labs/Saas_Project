@@ -37,15 +37,25 @@ function serverConfig() {
   return { clientId, clientSecret, encryptionKey };
 }
 
-function safeReturnUrl(raw: unknown, origin: string | null): string | null {
+/**
+ * Adresse de retour autorisee apres le detour par SUPER PDP.
+ *
+ * L'en-tete `Origin` figurait auparavant parmi les origines acceptees. Or il
+ * est fourni par l'appelant : un membre authentifie pouvait donc faire
+ * enregistrer l'adresse de son choix, que le retour OAuth suivait ensuite en
+ * 303. La portee restait faible — sa propre session, un chemin impose, aucun
+ * jeton transporte — mais c'etait une redirection ouverte, et rien ne
+ * l'imposait : `APP_URL` suffit et n'est pas manipulable.
+ *
+ * Sans `APP_URL`, la fonction refuse plutot que de se rabattre sur autre chose.
+ */
+function safeReturnUrl(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
+  const appUrl = Deno.env.get('APP_URL');
+  if (!appUrl) return null;
   try {
     const url = new URL(raw);
-    const appUrl = Deno.env.get('APP_URL');
-    const allowedOrigins = new Set<string>();
-    if (origin) allowedOrigins.add(new URL(origin).origin);
-    if (appUrl) allowedOrigins.add(new URL(appUrl).origin);
-    if (!allowedOrigins.has(url.origin)) return null;
+    if (url.origin !== new URL(appUrl).origin) return null;
     if (url.pathname !== '/organisation/facturation-electronique') return null;
     url.hash = '';
     return url.toString();
@@ -117,7 +127,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
     const config = serverConfig();
     if (body.action === 'start') {
-      const returnUrl = safeReturnUrl(body.returnUrl, request.headers.get('origin'));
+      const returnUrl = safeReturnUrl(body.returnUrl);
       if (!returnUrl) return json({ error: 'Adresse de retour invalide.' }, 400);
       const state = randomOAuthState();
       const stateHash = await sha256Hex(state);
@@ -195,6 +205,24 @@ Deno.serve(async (request: Request): Promise<Response> => {
         })
         .eq('organization_id', body.organizationId);
       if (error) throw error;
+      // Deconnecter revoque les jetons et coupe la capacite a transmettre.
+      // Une action de cette portee ne doit pas etre invisible. L'echec de la
+      // trace ne doit pas pour autant annuler une deconnexion deja faite.
+      try {
+        const { error: erreurAudit } = await admin.from('audit_logs').insert({
+          organization_id: body.organizationId,
+          user_id: auth.user.id,
+          action: 'einvoicing.disconnected',
+          entity_type: 'einvoicing_provider_connection',
+          metadata: { provider: 'superpdp' },
+        });
+        if (erreurAudit) throw erreurAudit;
+      } catch (erreurAudit) {
+        console.error(
+          'superpdp connection: trace de deconnexion non ecrite',
+          erreurAudit instanceof Error ? erreurAudit.message.slice(0, 200) : 'inconnue',
+        );
+      }
       return json({ status: 'disconnected' });
     }
 
