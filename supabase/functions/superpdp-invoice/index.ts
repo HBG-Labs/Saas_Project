@@ -136,6 +136,7 @@ async function resolveElectronicAddresses(
     if (!endpoints || endpoints.length < 2)
       throw new Error('SUPER PDP n’a pas retourné les adresses électroniques de son bac à sable.');
     return {
+      environment: company.env,
       seller: electronicAddress(`${endpoints[0]!.scheme}:${endpoints[0]!.value}`),
       buyer: electronicAddress(`${endpoints[1]!.scheme}:${endpoints[1]!.value}`),
     };
@@ -157,6 +158,7 @@ async function resolveElectronicAddresses(
       `Aucune adresse électronique d’émission active n’a été trouvée pour l’entreprise ${sellerSiren}.`,
     );
   return {
+    environment: company.env,
     seller: electronicAddress(sellerIdentifier),
     buyer: electronicAddress(selectRecipientIdentifier(buyerDirectory.data, buyerSiren)),
   };
@@ -320,7 +322,7 @@ async function prepareUblForTransmission(
   };
   // La facture UBL de référence générée par SUPER PDP utilise M1 pour le
   // parcours français B2B. Leur plateforme applique ensuite la CIUS adaptée.
-  return serializeUbl(invoiceWithRouting, { profileId: 'M1' });
+  return { ubl: serializeUbl(invoiceWithRouting, { profileId: 'M1' }), addresses };
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -338,7 +340,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (
     typeof body.invoiceId !== 'string' ||
     !/^[0-9a-f-]{36}$/i.test(body.invoiceId) ||
-    !['submit', 'sync'].includes(String(body.action))
+    !['submit', 'sync', 'routing_check'].includes(String(body.action))
   )
     return json({ error: 'Facture ou action invalide.' }, 400);
 
@@ -389,6 +391,27 @@ Deno.serve(async (request: Request): Promise<Response> => {
       connection as SuperPdpConnectionRow,
       config,
     );
+    // Controle de routage, en lecture seule. Il ne fait que des GET vers
+    // l'annuaire du partenaire et rend la main AVANT toute lecture ou ecriture
+    // de `invoice_transmissions` : il ne peut donc ni creer une transmission,
+    // ni la faire avancer, ni consommer son verrou. Il existe pour prouver la
+    // branche production de `resolveElectronicAddresses`, qui n'a jamais ete
+    // executee : les depots connus ont tous eu lieu en bac a sable.
+    if (body.action === 'routing_check') {
+      const { ubl, addresses } = await prepareUblForTransmission(
+        admin,
+        body.invoiceId,
+        accessToken,
+      );
+      return json({
+        environment: addresses.environment,
+        seller: addresses.seller,
+        buyer: addresses.buyer,
+        ublBytes: ubl.length,
+        submitted: false,
+      });
+    }
+
     const { data: existing, error: readError } = await admin
       .from('invoice_transmissions')
       .select(
@@ -465,7 +488,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       // document Peppol UBL. Le CII reste disponible au telechargement, mais
       // certains destinataires n'annoncent pas ce type de document dans leur
       // profil de reception.
-      const ubl = await prepareUblForTransmission(admin, body.invoiceId, accessToken);
+      const { ubl } = await prepareUblForTransmission(admin, body.invoiceId, accessToken);
       const params = new URLSearchParams({ external_id: body.invoiceId, processing_rule: 'B2B' });
       providerInvoice = await superPdpJson<SuperPdpInvoice>(
         `/v1.beta/invoices?${params.toString()}`,
