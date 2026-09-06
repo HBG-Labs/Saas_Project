@@ -21,6 +21,17 @@ blob-report/
 # Plateformes d'hébergement — identifiants de projet, non versionnés.
 .vercel/
 
+# Outillage d'agents — configurations locales et pièces jointes déposées lors
+# des sessions. `.codex/config.toml` a contenu un jeton d'accès Supabase en
+# clair : ce répertoire ne doit jamais atteindre le dépôt. Motifs ANCRÉS à la
+# racine, pour la même raison qu'expliqué plus bas.
+/.codex/
+/.codex-remote-attachments/
+
+# Sorties d'outils : captures d'écran d'audit, exports, images générées.
+# Ancré afin de ne pas exclure un éventuel `src/**/output/` légitime.
+/output/
+
 # Caches outils
 .vite/
 *.tsbuildinfo
