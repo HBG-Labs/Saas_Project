@@ -207,9 +207,29 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node } },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
+      /*
+        CES DÉSACTIVATIONS SONT MESURÉES, PAS SUPPOSÉES.
+
+        Les réactiver toutes produit aujourd'hui 43 erreurs, réparties ainsi :
+        no-unsafe-assignment 14, no-explicit-any 9, unbound-method 6,
+        no-unsafe-return 5, no-unsafe-member-access 4, require-await 3,
+        no-unsafe-argument 2.
+
+        Elles ne sont pas corrigées pour l'instant, et c'est un choix. Le risque
+        n'est pas de casser un test — il tomberait — mais de l'AFFAIBLIR :
+        remplacer un `any` par un type approximatif peut rendre une assertion
+        vraie sans rien vérifier, et rien ne rattrape cela.
+
+        Elles ne sont pas non plus passées en `warn` : quarante-trois
+        avertissements que personne ne lit valent moins que zéro, comme l'a
+        montré le garde-fou du catalogue.
+
+        `no-unsafe-call` a été retirée de cette liste : elle ne relevait aucune
+        erreur, donc l'activer ne coûtait rien et ferme une porte pour de bon.
+        Refaire la mesure avant d'en retirer une autre.
+      */
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
