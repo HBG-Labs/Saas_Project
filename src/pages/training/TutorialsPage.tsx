@@ -408,7 +408,7 @@ export default function TutorialsPage() {
             </div>
             <Link
               to={ROUTES.tutorial('bien-demarrer')}
-              className="bg-signal-cyan text-brand-night inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold transition-colors hover:bg-white"
+              className="bg-primary focus-visible:ring-primary focus-visible:ring-offset-brand-night inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold text-white shadow-lg shadow-black/15 transition-colors hover:bg-blue-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Démarrer maintenant
               <ArrowRight className="size-4" aria-hidden="true" />
