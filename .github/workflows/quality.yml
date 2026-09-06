@@ -60,7 +60,8 @@ jobs:
           deno check \
             supabase/functions/superpdp-connection/index.ts \
             supabase/functions/superpdp-oauth-callback/index.ts \
-            supabase/functions/superpdp-invoice/index.ts
+            supabase/functions/superpdp-invoice/index.ts \
+            supabase/functions/superpdp-worker/index.ts
           deno check \
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
@@ -71,7 +72,10 @@ jobs:
       # restent hors CI : leurs fixtures viennent d'un script qui interroge le
       # projet Supabase lié.
       - name: Tester le cycle de transmission
-        run: deno test supabase/functions/_shared/superpdp-transmission.test.ts
+        run: |
+          deno test \
+            supabase/functions/_shared/superpdp-transmission.test.ts \
+            supabase/functions/superpdp-worker/handler.test.ts
 
       - name: Exécuter les tests
         run: npm run test

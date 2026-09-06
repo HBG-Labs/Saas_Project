@@ -426,6 +426,12 @@ verify_jwt = false
 
 [functions.superpdp-invoice]
 verify_jwt = false
+
+# L'ordonnanceur n'a pas d'utilisateur : il s'authentifie par secret partage,
+# compare a temps constant dans `handler.ts`. Sans secret configure, il refuse
+# de tourner.
+[functions.superpdp-worker]
+verify_jwt = false
 # Directory under `supabase/` where declarative files are written.
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
