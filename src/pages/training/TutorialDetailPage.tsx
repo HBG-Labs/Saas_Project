@@ -16,35 +16,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { TrainingDoodle } from '@/components/training/TrainingDoodle';
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
-import { getTrainingCourse, type TrainingTheme } from '@/features/training';
+import { getTrainingCourse } from '@/features/training';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const PROGRESS_KEY = 'rezo360:tutorial-progress:v1';
 
-const THEME_ACCENTS: Record<TrainingTheme, { bar: string; soft: string; text: string }> = {
-  Démarrage: {
-    bar: 'bg-signal-cyan',
-    soft: 'bg-cyan-50',
-    text: 'text-cyan-800',
-  },
-  Pilotage: {
-    bar: 'bg-emerald-400',
-    soft: 'bg-emerald-50',
-    text: 'text-emerald-800',
-  },
-  Terrain: {
-    bar: 'bg-signal-orange',
-    soft: 'bg-orange-50',
-    text: 'text-orange-800',
-  },
-  Gestion: {
-    bar: 'bg-violet-400',
-    soft: 'bg-violet-50',
-    text: 'text-violet-800',
-  },
+const COURSE_ACCENT = {
+  bar: 'bg-primary',
+  soft: 'bg-blue-50',
+  text: 'text-primary',
 };
 
 type StoredProgress = Record<string, string[]>;
@@ -103,7 +87,7 @@ export default function TutorialDetailPage() {
   }
 
   const Icon = course.icon;
-  const accent = THEME_ACCENTS[course.theme];
+  const accent = COURSE_ACCENT;
   const completedCount = validCompleted.length;
   const percent = Math.round((completedCount / course.chapters.length) * 100);
   const nextChapter = course.chapters.find((chapter) => !validCompleted.includes(chapter.id));
@@ -132,7 +116,7 @@ export default function TutorialDetailPage() {
         <div className="mx-auto max-w-6xl">
           <Link
             to={ROUTES.tutorials}
-            className="focus-visible:ring-signal-cyan mb-8 inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-bold text-blue-100/75 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-primary mb-8 inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-bold text-blue-100/75 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Retour à l’académie
@@ -151,7 +135,7 @@ export default function TutorialDetailPage() {
                   {course.level}
                 </span>
               </div>
-              <p className="text-signal-cyan text-xs font-extrabold tracking-[0.2em] uppercase">
+              <p className="text-xs font-extrabold tracking-[0.2em] text-blue-200 uppercase">
                 Cours guidé REZO360
               </p>
               <h1 className="mt-3 max-w-3xl text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-5xl">
@@ -162,15 +146,15 @@ export default function TutorialDetailPage() {
               </p>
               <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-blue-100/75">
                 <span className="inline-flex items-center gap-2">
-                  <Clock3 className="text-signal-cyan size-4" aria-hidden="true" />
+                  <Clock3 className="size-4 text-blue-200" aria-hidden="true" />
                   {course.duration}
                 </span>
                 <span className="inline-flex items-center gap-2">
-                  <UserRound className="text-signal-cyan size-4" aria-hidden="true" />
+                  <UserRound className="size-4 text-blue-200" aria-hidden="true" />
                   {course.audience}
                 </span>
                 <span className="inline-flex items-center gap-2">
-                  <PlayCircle className="text-signal-cyan size-4" aria-hidden="true" />
+                  <PlayCircle className="size-4 text-blue-200" aria-hidden="true" />
                   {course.chapters.length} chapitres
                 </span>
               </div>
@@ -184,6 +168,10 @@ export default function TutorialDetailPage() {
                 fetchPriority="high"
               />
               <div className="bg-brand-night/15 absolute inset-0" aria-hidden="true" />
+              <TrainingDoodle
+                variant="practice"
+                className="top-20 left-5 z-10 hidden h-24 w-44 -rotate-6 text-cyan-200 opacity-90 xl:block"
+              />
               <span className="absolute top-5 right-5 rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-slate-900 shadow-lg">
                 {course.duration}
               </span>
@@ -241,7 +229,7 @@ export default function TutorialDetailPage() {
           <div className="border-b border-white/10 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-signal-cyan text-[10px] font-extrabold tracking-widest uppercase">
+                <p className="text-[10px] font-extrabold tracking-widest text-blue-200 uppercase">
                   Sommaire
                 </p>
                 <h2 className="mt-1 text-lg font-extrabold text-white">Plan du cours</h2>
@@ -250,7 +238,7 @@ export default function TutorialDetailPage() {
                 <button
                   type="button"
                   onClick={() => setCompleted([])}
-                  className="focus-visible:ring-signal-cyan inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[11px] font-bold text-blue-100/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+                  className="focus-visible:ring-primary inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[11px] font-bold text-blue-100/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <RotateCcw className="size-3.5" aria-hidden="true" />
                   Refaire
@@ -266,7 +254,7 @@ export default function TutorialDetailPage() {
                 <li key={chapter.id}>
                   <a
                     href={`#${chapter.id}`}
-                    className="focus-visible:ring-signal-cyan group flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-none"
+                    className="focus-visible:ring-primary group flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-none"
                   >
                     <span
                       className={cn(
@@ -306,8 +294,12 @@ export default function TutorialDetailPage() {
           </div>
         </aside>
 
-        <section aria-label="Contenu du cours" className="space-y-6">
-          <div className="mb-2">
+        <section aria-label="Contenu du cours" className="relative space-y-6">
+          <TrainingDoodle
+            variant="route"
+            className="top-0 right-0 hidden h-20 w-48 rotate-2 text-orange-500 opacity-55 xl:block"
+          />
+          <div className="relative z-10 mb-2">
             <p className="text-primary flex items-center gap-2 text-xs font-extrabold tracking-widest uppercase">
               <Sparkles className="size-4" aria-hidden="true" />
               Votre parcours
@@ -461,10 +453,14 @@ export default function TutorialDetailPage() {
           })}
 
           <div className="bg-brand-night relative overflow-hidden rounded-3xl p-7 text-white shadow-xl sm:p-9">
-            <span className="bg-signal-cyan absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <span className="bg-primary absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+            <TrainingDoodle
+              variant="checklist"
+              className="right-32 -bottom-7 hidden h-28 w-48 rotate-6 text-cyan-300 opacity-20 xl:block"
+            />
+            <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-signal-cyan text-xs font-extrabold tracking-widest uppercase">
+                <p className="text-xs font-extrabold tracking-widest text-blue-200 uppercase">
                   Fin du parcours
                 </p>
                 <h2 className="mt-2 text-2xl font-extrabold text-white">
