@@ -28,6 +28,12 @@ blob-report/
 /.codex/
 /.codex-remote-attachments/
 
+# Réglages Claude Code propres à la machine : ils portent un bloc `env` qui
+# contient des jetons. Seul le gitignore GLOBAL de ce poste les excluait — un
+# clone ailleurs ne serait pas protégé. `.claude/settings.json`, lui, reste
+# versionnable : c'est la configuration partagée du projet.
+/.claude/settings.local.json
+
 # Sorties d'outils : captures d'écran d'audit, exports, images générées.
 # Ancré afin de ne pas exclure un éventuel `src/**/output/` légitime.
 /output/
