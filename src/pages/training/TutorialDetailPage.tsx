@@ -7,22 +7,52 @@ import {
   Clock3,
   ExternalLink,
   Lightbulb,
+  PlayCircle,
   RotateCcw,
+  Sparkles,
   UserRound,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
-import { getTrainingCourse } from '@/features/training';
+import { getTrainingCourse, type TrainingTheme } from '@/features/training';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 const PROGRESS_KEY = 'rezo360:tutorial-progress:v1';
+
+const THEME_ACCENTS: Record<
+  TrainingTheme,
+  { bar: string; soft: string; text: string; glow: string }
+> = {
+  Démarrage: {
+    bar: 'bg-signal-cyan',
+    soft: 'bg-cyan-50',
+    text: 'text-cyan-800',
+    glow: 'bg-signal-cyan/25',
+  },
+  Pilotage: {
+    bar: 'bg-emerald-400',
+    soft: 'bg-emerald-50',
+    text: 'text-emerald-800',
+    glow: 'bg-emerald-400/20',
+  },
+  Terrain: {
+    bar: 'bg-signal-orange',
+    soft: 'bg-orange-50',
+    text: 'text-orange-800',
+    glow: 'bg-signal-orange/20',
+  },
+  Gestion: {
+    bar: 'bg-violet-400',
+    soft: 'bg-violet-50',
+    text: 'text-violet-800',
+    glow: 'bg-violet-400/25',
+  },
+};
 
 type StoredProgress = Record<string, string[]>;
 
@@ -80,6 +110,7 @@ export default function TutorialDetailPage() {
   }
 
   const Icon = course.icon;
+  const accent = THEME_ACCENTS[course.theme];
   const completedCount = validCompleted.length;
   const percent = Math.round((completedCount / course.chapters.length) * 100);
   const nextChapter = course.chapters.find((chapter) => !validCompleted.includes(chapter.id));
@@ -93,105 +124,172 @@ export default function TutorialDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-14">
-      <Link
-        to={ROUTES.tutorials}
-        className="text-muted-foreground hover:text-foreground inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold transition-colors"
-      >
-        <ArrowLeft className="size-3.5" aria-hidden="true" />
-        Tous les tutoriels
-      </Link>
+    <div className="relative -mx-4 -mt-4 overflow-hidden pb-16 sm:-mx-6 lg:-mx-8">
+      <section className="bg-brand-night relative isolate overflow-hidden px-4 pt-7 pb-12 text-white sm:px-8 sm:pt-9 sm:pb-16 lg:px-12">
+        <div
+          className="absolute inset-0 -z-20 opacity-20"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px)',
+            backgroundSize: '42px 42px',
+            maskImage: 'linear-gradient(to bottom, black, transparent 95%)',
+          }}
+        />
+        <div
+          className={cn(
+            'absolute -top-28 right-[10%] -z-10 size-80 rounded-full blur-3xl',
+            accent.glow,
+          )}
+          aria-hidden="true"
+        />
+        <div
+          className="bg-primary/35 absolute -bottom-44 left-[12%] -z-10 size-96 rounded-full blur-3xl"
+          aria-hidden="true"
+        />
 
-      <section className="border-primary/20 bg-primary-subtle relative overflow-hidden rounded-3xl border p-6 sm:p-8">
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-2xl">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <Badge variant="primary">{course.theme}</Badge>
-              <Badge variant="neutral">{course.level}</Badge>
-            </div>
-            <PageHeader
-              className="mb-0 sm:mb-0"
-              title={course.title}
-              description={course.description}
-            />
-            <div className="text-muted-foreground mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium">
-              <span className="inline-flex items-center gap-1.5">
-                <Clock3 className="size-4" aria-hidden="true" />
-                {course.duration}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <UserRound className="size-4" aria-hidden="true" />
-                {course.audience}
-              </span>
-            </div>
-          </div>
+        <div className="mx-auto max-w-6xl">
+          <Link
+            to={ROUTES.tutorials}
+            className="focus-visible:ring-signal-cyan mb-8 inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-bold text-blue-100/75 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Retour à l’académie
+          </Link>
 
-          <div className="border-border bg-surface/90 w-full rounded-2xl border p-4 lg:max-w-xs">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-foreground font-semibold">Votre progression</span>
-              <span className="text-primary font-bold tabular-nums">{percent} %</span>
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="max-w-3xl">
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <span className="bg-signal-lime text-brand-night flex size-12 items-center justify-center rounded-2xl shadow-lg shadow-black/20">
+                  <Icon className="size-6" aria-hidden="true" />
+                </span>
+                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white">
+                  {course.theme}
+                </span>
+                <span className="rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-bold text-blue-100/75">
+                  {course.level}
+                </span>
+              </div>
+              <p className="text-signal-cyan text-xs font-extrabold tracking-[0.2em] uppercase">
+                Cours guidé REZO360
+              </p>
+              <h1 className="mt-3 max-w-3xl text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-5xl">
+                {course.title}
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-blue-100/75">
+                {course.description}
+              </p>
+              <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-blue-100/75">
+                <span className="inline-flex items-center gap-2">
+                  <Clock3 className="text-signal-cyan size-4" aria-hidden="true" />
+                  {course.duration}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <UserRound className="text-signal-cyan size-4" aria-hidden="true" />
+                  {course.audience}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <PlayCircle className="text-signal-cyan size-4" aria-hidden="true" />
+                  {course.chapters.length} chapitres
+                </span>
+              </div>
             </div>
-            <div
-              className="bg-surface-sunken mt-3 h-2 overflow-hidden rounded-full"
-              role="progressbar"
-              aria-label="Progression dans le cours"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={percent}
-            >
-              <div
-                className="bg-success h-full rounded-full transition-all duration-300"
-                style={{ width: `${percent}%` }}
-              />
+
+            <div className="rounded-3xl border border-white/20 bg-white/10 p-6 shadow-2xl shadow-black/20 backdrop-blur-sm">
+              <div className="flex items-center gap-5">
+                <div
+                  className="relative flex size-28 shrink-0 items-center justify-center rounded-full p-2"
+                  role="progressbar"
+                  aria-label="Progression dans le cours"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={percent}
+                  style={{
+                    background: `conic-gradient(#b9f442 ${percent}%, rgba(255,255,255,.14) ${percent}% 100%)`,
+                  }}
+                >
+                  <div className="bg-brand-night flex size-full flex-col items-center justify-center rounded-full">
+                    <strong className="text-2xl font-extrabold text-white tabular-nums">
+                      {percent}%
+                    </strong>
+                    <span className="text-[10px] font-bold text-blue-100/60 uppercase">
+                      terminé
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-white">Votre progression</p>
+                  <p className="mt-1 text-xs leading-relaxed text-blue-100/65">
+                    {completedCount} chapitre{completedCount > 1 ? 's' : ''} sur{' '}
+                    {course.chapters.length}
+                  </p>
+                </div>
+              </div>
+              {nextChapter ? (
+                <a
+                  href={`#${nextChapter.id}`}
+                  className="bg-signal-lime text-brand-night mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold transition-colors hover:bg-white"
+                >
+                  {completedCount === 0 ? 'Commencer le cours' : 'Continuer le cours'}
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </a>
+              ) : (
+                <div className="text-signal-lime mt-6 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-lime-300/30 bg-lime-300/10 text-sm font-extrabold">
+                  <CheckCircle2 className="size-4" aria-hidden="true" />
+                  Parcours terminé
+                </div>
+              )}
             </div>
-            <p className="text-muted-foreground text-2xs mt-2">
-              {completedCount} chapitre{completedCount > 1 ? 's' : ''} sur {course.chapters.length}
-            </p>
           </div>
         </div>
       </section>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="border-border bg-surface rounded-2xl border p-4 lg:sticky lg:top-20">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-foreground text-sm font-bold">Plan du cours</h2>
-            {completedCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => setCompleted([])}
-                className="text-muted-foreground hover:text-foreground text-2xs inline-flex min-h-8 cursor-pointer items-center gap-1 rounded-md px-1 font-semibold"
-              >
-                <RotateCcw className="size-3" aria-hidden="true" />
-                Recommencer
-              </button>
-            ) : null}
+      <div className="mx-auto grid max-w-6xl items-start gap-7 px-4 pt-10 sm:px-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-12">
+        <aside className="bg-brand-night overflow-hidden rounded-3xl text-white shadow-xl lg:sticky lg:top-20">
+          <div className="border-b border-white/10 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-signal-cyan text-[10px] font-extrabold tracking-widest uppercase">
+                  Sommaire
+                </p>
+                <h2 className="mt-1 text-lg font-extrabold text-white">Plan du cours</h2>
+              </div>
+              {completedCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setCompleted([])}
+                  className="focus-visible:ring-signal-cyan inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[11px] font-bold text-blue-100/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <RotateCcw className="size-3.5" aria-hidden="true" />
+                  Refaire
+                </button>
+              ) : null}
+            </div>
           </div>
-          <ol className="space-y-1.5">
+
+          <ol className="p-3">
             {course.chapters.map((chapter, index) => {
               const done = validCompleted.includes(chapter.id);
               return (
                 <li key={chapter.id}>
                   <a
                     href={`#${chapter.id}`}
-                    className="hover:bg-surface-hover focus-visible:ring-ring flex min-h-10 items-center gap-2 rounded-xl px-2 py-2 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                    className="focus-visible:ring-signal-cyan group flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-none"
                   >
                     <span
                       className={cn(
-                        'text-2xs flex size-6 shrink-0 items-center justify-center rounded-full border font-bold',
+                        'flex size-8 shrink-0 items-center justify-center rounded-xl border text-xs font-extrabold transition-colors',
                         done
-                          ? 'border-success bg-success text-white'
-                          : 'border-border bg-surface-sunken text-muted-foreground',
+                          ? 'text-signal-lime border-lime-300/30 bg-lime-300/15'
+                          : 'border-white/15 bg-white/5 text-blue-100/60 group-hover:text-white',
                       )}
                     >
-                      {done ? <Check className="size-3.5" aria-hidden="true" /> : index + 1}
+                      {done ? <Check className="size-4" aria-hidden="true" /> : index + 1}
                     </span>
                     <span
                       className={cn(
-                        'line-clamp-2',
-                        done ? 'text-muted-foreground' : 'text-foreground',
+                        'line-clamp-2 text-xs font-semibold',
+                        done ? 'text-blue-100/55' : 'text-white',
                       )}
                     >
                       {chapter.title.replace(/^\d+\.\s*/, '')}
@@ -201,97 +299,154 @@ export default function TutorialDetailPage() {
               );
             })}
           </ol>
-          {nextChapter ? (
-            <Button asChild className="mt-4 w-full">
-              <a href={`#${nextChapter.id}`}>
-                Continuer
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </a>
-            </Button>
-          ) : (
-            <div className="border-success-border bg-success-subtle text-success mt-4 flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold">
-              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
-              Cours terminé
+
+          <div className="border-t border-white/10 p-5">
+            <div className="mb-2 flex items-center justify-between text-[11px] font-bold">
+              <span className="text-blue-100/60">Progression</span>
+              <span className="text-signal-lime tabular-nums">{percent}%</span>
             </div>
-          )}
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="bg-signal-lime h-full rounded-full transition-all duration-300"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
         </aside>
 
-        <section aria-label="Contenu du cours" className="space-y-4">
+        <section aria-label="Contenu du cours" className="space-y-6">
+          <div className="mb-2">
+            <p className="text-primary flex items-center gap-2 text-xs font-extrabold tracking-widest uppercase">
+              <Sparkles className="size-4" aria-hidden="true" />
+              Votre parcours
+            </p>
+            <h2 className="text-foreground mt-2 text-2xl font-extrabold sm:text-3xl">
+              Suivez chaque étape
+            </h2>
+          </div>
+
           {course.chapters.map((chapter, index) => {
             const done = validCompleted.includes(chapter.id);
             return (
-              <Card
+              <article
                 key={chapter.id}
                 id={chapter.id}
-                className={cn('scroll-mt-20 overflow-hidden', done && 'border-success-border')}
+                className={cn(
+                  'border-border bg-surface shadow-raised relative scroll-mt-20 overflow-hidden rounded-3xl border transition-colors',
+                  done && 'border-success-border',
+                )}
               >
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex items-start gap-3">
+                <span
+                  className={cn(
+                    'absolute inset-y-0 left-0 w-1.5',
+                    done ? 'bg-success' : accent.bar,
+                  )}
+                  aria-hidden="true"
+                />
+
+                <div className="p-6 pl-7 sm:p-8 sm:pl-9">
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                     <span
                       className={cn(
-                        'flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold',
-                        done ? 'bg-success text-white' : 'bg-primary-subtle text-primary',
+                        'flex size-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold shadow-sm',
+                        done ? 'bg-success text-white' : cn(accent.soft, accent.text),
                       )}
                     >
-                      {done ? <Check className="size-4" aria-hidden="true" /> : index + 1}
+                      {done ? (
+                        <Check className="size-5" aria-hidden="true" />
+                      ) : (
+                        String(index + 1).padStart(2, '0')
+                      )}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <h2 className="text-foreground text-base font-bold sm:text-lg">
-                          {chapter.title}
-                        </h2>
-                        <span className="text-muted-foreground text-2xs inline-flex items-center gap-1 font-medium">
-                          <Clock3 className="size-3.5" aria-hidden="true" />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-muted-foreground text-[10px] font-extrabold tracking-[0.18em] uppercase">
+                          Chapitre {String(index + 1).padStart(2, '0')}
+                        </p>
+                        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold">
+                          <Clock3 className="size-4" aria-hidden="true" />
                           {chapter.duration}
                         </span>
                       </div>
-                      <p className="text-primary mt-1 text-xs font-semibold">
-                        Objectif : {chapter.objective}
-                      </p>
+                      <h2 className="text-foreground mt-2 text-xl leading-tight font-extrabold sm:text-2xl">
+                        {chapter.title.replace(/^\d+\.\s*/, '')}
+                      </h2>
+                      <div className={cn('mt-4 rounded-2xl px-4 py-3', accent.soft)}>
+                        <p className={cn('text-sm leading-relaxed font-semibold', accent.text)}>
+                          <span className="font-extrabold">Votre objectif :</span>{' '}
+                          {chapter.objective}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  <ol className="mt-5 space-y-3">
+                  <ol className="mt-7 space-y-0 sm:ml-4">
                     {chapter.steps.map((step, stepIndex) => (
-                      <li key={step} className="flex gap-3 text-sm leading-relaxed">
-                        <span className="border-border bg-surface-sunken text-muted-foreground text-2xs mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border font-bold">
+                      <li
+                        key={step}
+                        className="relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 pb-5 last:pb-0"
+                      >
+                        {stepIndex < chapter.steps.length - 1 ? (
+                          <span
+                            className="bg-border absolute top-8 bottom-0 left-[16px] w-px"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span className="border-border bg-surface-sunken text-foreground relative z-10 flex size-[34px] items-center justify-center rounded-full border text-xs font-extrabold">
                           {stepIndex + 1}
                         </span>
-                        <span className="text-foreground/90">{step}</span>
+                        <p className="text-foreground/90 pt-1.5 text-sm leading-relaxed sm:text-base">
+                          {step}
+                        </p>
                       </li>
                     ))}
                   </ol>
 
-                  {chapter.tip ? (
-                    <div className="border-info-border bg-info-subtle mt-5 flex gap-3 rounded-xl border p-3.5">
-                      <Lightbulb className="text-info mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                      <p className="text-foreground text-xs leading-relaxed">
-                        <strong>Conseil :</strong> {chapter.tip}
-                      </p>
+                  {chapter.tip || chapter.warning ? (
+                    <div className="mt-7 grid gap-3 xl:grid-cols-2">
+                      {chapter.tip ? (
+                        <div className="border-info-border bg-info-subtle flex gap-3 rounded-2xl border p-4">
+                          <span className="bg-info text-info-foreground flex size-8 shrink-0 items-center justify-center rounded-xl">
+                            <Lightbulb className="size-4" aria-hidden="true" />
+                          </span>
+                          <div>
+                            <p className="text-info text-xs font-extrabold tracking-wide uppercase">
+                              Conseil pratique
+                            </p>
+                            <p className="text-foreground mt-1 text-sm leading-relaxed">
+                              {chapter.tip}
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {chapter.warning ? (
+                        <div className="border-warning-border bg-warning-subtle flex gap-3 rounded-2xl border p-4">
+                          <span className="bg-warning text-warning-foreground flex size-8 shrink-0 items-center justify-center rounded-xl">
+                            <AlertTriangle className="size-4" aria-hidden="true" />
+                          </span>
+                          <div>
+                            <p className="text-warning text-xs font-extrabold tracking-wide uppercase">
+                              Point de vigilance
+                            </p>
+                            <p className="text-foreground mt-1 text-sm leading-relaxed">
+                              {chapter.warning}
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 
-                  {chapter.warning ? (
-                    <div className="border-warning-border bg-warning-subtle mt-5 flex gap-3 rounded-xl border p-3.5">
-                      <AlertTriangle
-                        className="text-warning mt-0.5 size-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <p className="text-foreground text-xs leading-relaxed">
-                        <strong>À vérifier :</strong> {chapter.warning}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="border-border mt-5 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="border-border mt-7 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                     <button
                       type="button"
                       onClick={() => toggleChapter(chapter.id)}
                       className={cn(
-                        'inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors',
+                        'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 text-sm font-extrabold transition-all',
                         done
                           ? 'border-success-border bg-success-subtle text-success'
-                          : 'border-border bg-surface hover:bg-surface-hover text-foreground',
+                          : 'border-border bg-surface hover:border-primary/40 hover:bg-primary-subtle text-foreground',
                       )}
                       aria-pressed={done}
                     >
@@ -300,18 +455,46 @@ export default function TutorialDetailPage() {
                     </button>
 
                     {chapter.action ? (
-                      <Button asChild variant="outline">
+                      <Button asChild variant="outline" className="min-h-11 rounded-xl">
                         <Link to={chapter.action.to}>
                           {chapter.action.label}
-                          <ExternalLink className="size-3.5" aria-hidden="true" />
+                          <ExternalLink className="size-4" aria-hidden="true" />
                         </Link>
                       </Button>
                     ) : null}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </article>
             );
           })}
+
+          <div className="bg-brand-night relative overflow-hidden rounded-3xl p-7 text-white shadow-xl sm:p-9">
+            <div className="bg-signal-cyan/15 absolute -top-16 -right-10 size-56 rounded-full blur-3xl" />
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-signal-cyan text-xs font-extrabold tracking-widest uppercase">
+                  Fin du parcours
+                </p>
+                <h2 className="mt-2 text-2xl font-extrabold text-white">
+                  {percent === 100
+                    ? 'Bravo, le cours est terminé !'
+                    : 'Vous avancez à votre rythme.'}
+                </h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100/70">
+                  {percent === 100
+                    ? 'Votre progression est enregistrée. Vous pouvez revoir une étape à tout moment.'
+                    : 'Cochez chaque chapitre après l’avoir appliqué. Votre progression est enregistrée automatiquement.'}
+                </p>
+              </div>
+              <Link
+                to={ROUTES.tutorials}
+                className="bg-signal-lime text-brand-night inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold transition-colors hover:bg-white"
+              >
+                Explorer les autres cours
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
         </section>
       </div>
     </div>

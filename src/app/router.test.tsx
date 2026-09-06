@@ -49,7 +49,11 @@ describe('routing', () => {
     // apostrophe typographique (« d’ingénierie ») qu'une comparaison stricte
     // rendrait fragile au moindre ajustement de copie.
     expect(
-      await screen.findByRole('heading', { name: /catalogue des outils/i, level: 1 }, { timeout: 5000 }),
+      await screen.findByRole(
+        'heading',
+        { name: /catalogue des outils/i, level: 1 },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
   });
 
@@ -57,10 +61,14 @@ describe('routing', () => {
     renderAt('/tutoriels');
 
     expect(
-      await screen.findByRole('heading', {
-        name: /apprenez à utiliser rezo360/i,
-        level: 1,
-      }),
+      await screen.findByRole(
+        'heading',
+        {
+          name: /maîtrisez votre activité/i,
+          level: 1,
+        },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
   });
 
@@ -68,10 +76,14 @@ describe('routing', () => {
     renderAt('/tutoriels/facturation-electronique');
 
     expect(
-      await screen.findByRole('heading', {
-        name: /utiliser la facturation électronique/i,
-        level: 1,
-      }),
+      await screen.findByRole(
+        'heading',
+        {
+          name: /utiliser la facturation électronique/i,
+          level: 1,
+        },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText(/l’émission est une étape engageante/i)).toBeInTheDocument();
   });
