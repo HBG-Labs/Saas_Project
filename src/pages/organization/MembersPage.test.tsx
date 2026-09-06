@@ -74,7 +74,7 @@ vi.mock('@/features/organizations', () => ({
   useRevokeInvitation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useResendInvitationEmail: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useOrganizationEntitlements: () => ({ planCode: 'pro' }),
-  sortMembersByRole: (m: any[]) => m,
+  sortMembersByRole: (m: unknown[]) => m,
   PERMISSIONS: {
     memberUpdateRole: 'member.update_role',
     memberRemove: 'member.remove',
@@ -83,7 +83,17 @@ vi.mock('@/features/organizations', () => ({
   },
   RoleBadge: ({ role }: { role: string }) => <span data-testid="role-badge">{role}</span>,
   MemberQuotaBar: () => <div data-testid="member-quota-bar">Quota: 2/5 sièges</div>,
-  MemberRow: ({ member }: { member: any }) => (
+  // Forme minimale réellement lue par cette doublure. La décrire plutôt que
+  // l'esquiver par `any` fait échouer le test si le contrat change.
+  MemberRow: ({
+    member,
+  }: {
+    member: {
+      id: string;
+      job_title: string | null;
+      profile: { display_name: string | null } | null;
+    };
+  }) => (
     <div data-testid={`member-row-${member.id}`}>
       <span>{member.profile?.display_name ?? member.job_title}</span>
       <span>{member.job_title}</span>

@@ -207,34 +207,27 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node } },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
-      /*
-        CES DÉSACTIVATIONS SONT MESURÉES, PAS SUPPOSÉES.
-
-        Les réactiver toutes produit aujourd'hui 43 erreurs, réparties ainsi :
-        no-unsafe-assignment 14, no-explicit-any 9, unbound-method 6,
-        no-unsafe-return 5, no-unsafe-member-access 4, require-await 3,
-        no-unsafe-argument 2.
-
-        Elles ne sont pas corrigées pour l'instant, et c'est un choix. Le risque
-        n'est pas de casser un test — il tomberait — mais de l'AFFAIBLIR :
-        remplacer un `any` par un type approximatif peut rendre une assertion
-        vraie sans rien vérifier, et rien ne rattrape cela.
-
-        Elles ne sont pas non plus passées en `warn` : quarante-trois
-        avertissements que personne ne lit valent moins que zéro, comme l'a
-        montré le garde-fou du catalogue.
-
-        `no-unsafe-call` a été retirée de cette liste : elle ne relevait aucune
-        erreur, donc l'activer ne coûtait rien et ferme une porte pour de bon.
-        Refaire la mesure avant d'en retirer une autre.
-      */
       '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/unbound-method': 'off',
+      /*
+        UNE SEULE RÈGLE RESTE DÉSACTIVÉE, ET POUR UNE RAISON PRÉCISE.
+
+        Les sept autres l'étaient aussi. Les réactiver relevait 43 erreurs, qui
+        ont toutes été corrigées : doublures réellement typées plutôt que
+        contournées par `any`, `async` retirés là où rien n'était attendu, et
+        méthodes tenues par le bout au lieu d'être détachées de leur objet.
+
+        `no-unsafe-assignment` est le cas à part. Les huit occurrences qui
+        subsistent portent toutes sur des matchers asymétriques —
+        `expect.objectContaining`, `stringContaining`, `stringMatching` — que
+        Vitest type `any` PAR CONCEPTION. Les faire taire imposerait un cast sur
+        chaque matcher imbriqué : du bruit, sans un gramme de sûreté en plus.
+        Ici la règle a tort, pas le code.
+
+        Elle n'est pas passée en `warn` : des avertissements que personne ne lit
+        valent moins que zéro, comme l'a montré le garde-fou du catalogue.
+
+        Refaire la mesure avant d'en changer.
+      */
       '@typescript-eslint/consistent-type-imports': 'off',
       'no-restricted-imports': 'off',
       '@typescript-eslint/no-restricted-imports': 'off',

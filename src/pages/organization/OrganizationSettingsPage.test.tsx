@@ -74,7 +74,7 @@ describe('OrganizationSettingsPage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('affiche le formulaire des paramètres avec les valeurs actuelles', async () => {
+  it('affiche le formulaire des paramètres avec les valeurs actuelles', () => {
     render(
       <MemoryRouter>
         <OrganizationSettingsPage />

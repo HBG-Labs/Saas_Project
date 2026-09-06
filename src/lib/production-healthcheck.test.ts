@@ -1,17 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runProductionHealthCheck } from './production-healthcheck';
-import { supabase } from '@/services/supabase';
+
+/*
+  Les doublures sont déclarées ICI plutôt que retrouvées par `vi.mocked()`.
+
+  Passer par `vi.mocked(supabase.from)` revient à référencer une méthode
+  détachée de son objet — ce que `unbound-method` signale à juste titre, même si
+  Vitest s'en accommode. Et comme le client réel est typé, chaque doublure
+  partielle réclamait un `as any` pour ressembler à un `PostgrestQueryBuilder`
+  complet.
+
+  En tenant les fonctions par le bout, on n'a ni l'un ni l'autre : ce sont de
+  simples fonctions, et elles acceptent la forme minimale dont le code a
+  réellement besoin.
+*/
+const mocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  getSession: vi.fn(),
+  listBuckets: vi.fn(),
+}));
 
 vi.mock('@/services/supabase', () => ({
   supabase: {
-    from: vi.fn(),
-    auth: {
-      getSession: vi.fn(),
-    },
-    storage: {
-      listBuckets: vi.fn(),
-    },
+    from: mocks.from,
+    auth: { getSession: mocks.getSession },
+    storage: { listBuckets: mocks.listBuckets },
   },
 }));
 
@@ -21,19 +35,19 @@ describe('runProductionHealthCheck', () => {
   });
 
   it('génère un rapport sain quand tous les services répondent', async () => {
-    vi.mocked(supabase.from).mockReturnValue({
+    mocks.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         limit: vi.fn().mockResolvedValue({ data: [{ code: 'pro', name: 'Pro' }], error: null }),
       }),
-    } as any);
+    });
 
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { email: 'admin@rezo360.com' } } as any },
+    mocks.getSession.mockResolvedValue({
+      data: { session: { user: { email: 'admin@rezo360.com' } } },
       error: null,
     });
 
-    vi.mocked(supabase.storage.listBuckets).mockResolvedValue({
-      data: [{ name: 'intervention-attachments' }] as any,
+    mocks.listBuckets.mockResolvedValue({
+      data: [{ name: 'intervention-attachments' }],
       error: null,
     });
 
@@ -46,18 +60,18 @@ describe('runProductionHealthCheck', () => {
   });
 
   it('remonte une alerte en cas d’erreur PostgREST', async () => {
-    vi.mocked(supabase.from).mockReturnValue({
+    mocks.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'Timeout' } }),
       }),
-    } as any);
+    });
 
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+    mocks.getSession.mockResolvedValue({
       data: { session: null },
       error: null,
     });
 
-    vi.mocked(supabase.storage.listBuckets).mockResolvedValue({
+    mocks.listBuckets.mockResolvedValue({
       data: [],
       error: null,
     });

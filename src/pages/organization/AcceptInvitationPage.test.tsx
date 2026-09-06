@@ -4,14 +4,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AcceptInvitationPage from './AcceptInvitationPage';
 
+/* Forme réellement lue par la page. La décrire fait échouer le test si le
+   contrat de l'aperçu d'invitation change, ce qu'un `any` laissait passer. */
+interface ApercuInvitation {
+  organizationName: string;
+  role: string;
+  invitedEmail: string;
+  expiresAt: string;
+}
+
 const mockPreview = vi.hoisted(() => ({
-  data: null as any,
+  data: null as ApercuInvitation | null,
   isPending: false,
   isError: false,
 }));
 
 const mockAuthUser = vi.hoisted(() => ({
-  current: null as any,
+  current: null as { id: string; email: string } | null,
 }));
 
 const mockAcceptInvitation = vi.hoisted(() => ({

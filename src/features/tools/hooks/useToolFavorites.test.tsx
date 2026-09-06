@@ -1,22 +1,36 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthContext } from '@/features/auth';
 import { useToolFavorites } from './useToolFavorites';
 
-const mockUseFavorites = vi.fn();
-const mockUseCatalogTools = vi.fn();
-const mockAddFavorite = vi.fn();
-const mockRemoveFavorite = vi.fn();
+/*
+  `vi.mock` est hissé au-dessus des `const` : c'est pourquoi les doublures
+  étaient enveloppées dans des flèches, qui ne servaient qu'à retarder l'accès.
+  Ces flèches renvoyaient un `any`. `vi.hoisted` remonte les fonctions avec le
+  mock, et permet de les référencer directement.
+*/
+const mocks = vi.hoisted(() => ({
+  useFavorites: vi.fn(),
+  useCatalogTools: vi.fn(),
+  addFavorite: vi.fn(),
+  removeFavorite: vi.fn(),
+}));
 
 vi.mock('@/features/catalog', () => ({
-  useFavorites: () => mockUseFavorites(),
-  useCatalogTools: () => mockUseCatalogTools(),
-  addFavorite: (...args: unknown[]) => mockAddFavorite(...args),
-  removeFavorite: (...args: unknown[]) => mockRemoveFavorite(...args),
+  useFavorites: mocks.useFavorites,
+  useCatalogTools: mocks.useCatalogTools,
+  addFavorite: mocks.addFavorite,
+  removeFavorite: mocks.removeFavorite,
 }));
+
+const mockUseFavorites = mocks.useFavorites;
+const mockUseCatalogTools = mocks.useCatalogTools;
+const mockAddFavorite = mocks.addFavorite;
+const mockRemoveFavorite = mocks.removeFavorite;
 
 function createWrapper(userId: string | null = null) {
   const queryClient = new QueryClient({
@@ -25,7 +39,7 @@ function createWrapper(userId: string | null = null) {
 
   const authValue = {
     status: userId ? ('authenticated' as const) : ('unauthenticated' as const),
-    user: userId ? ({ id: userId, email: 'test@example.com' } as any) : null,
+    user: userId ? ({ id: userId, email: 'test@example.com' } as unknown as User) : null,
     session: null,
     signIn: vi.fn(),
     signInWithGoogle: vi.fn(),
@@ -77,19 +91,19 @@ describe('useToolFavorites', () => {
     expect(result.current.favorites).not.toContain('ohm-law');
   });
 
-  it('synchronise avec le serveur lorsque l’utilisateur est connecté', async () => {
+  it('synchronise avec le serveur lorsque l’utilisateur est connecté', () => {
     const { result } = renderHook(() => useToolFavorites(), {
       wrapper: createWrapper('user-123'),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.toggleFavorite('ohm-law');
     });
 
     expect(result.current.isFavorite('ohm-law')).toBe(true);
     expect(mockAddFavorite).toHaveBeenCalledWith('user-123', 'tool-1');
 
-    await act(async () => {
+    act(() => {
       result.current.toggleFavorite('ohm-law');
     });
 
