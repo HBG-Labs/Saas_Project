@@ -12,10 +12,46 @@
 -- moins un piege — le jour ou quelqu'un la relit en croyant qu'elle fait foi,
 -- l'auto-attribution d'une formule payante devient reelle.
 --
--- Verifie avant retrait : aucun code applicatif n'ecrit cette colonne. Le seul
+-- Verifie avant fermeture : aucun code applicatif n'ecrit cette colonne. Le seul
 -- `plan_code` ecrit par l'application vise `subscriptions`, en role serveur.
+--
+-- POURQUOI UN TRIGGER ET NON UN RETRAIT DE DROIT
+--
+-- `authenticated` detient l'UPDATE au niveau TABLE (`arwd`). Un
+-- `revoke update (plan_code)` n'y change rien : PostgreSQL n'oublie pas un
+-- droit de table parce qu'on retire une colonne. Il faudrait retirer le droit
+-- de table puis le re-accorder colonne par colonne — trente colonnes
+-- aujourd'hui, et un piege inverse demain, puisque toute colonne ajoutee
+-- deviendrait silencieusement non modifiable.
+--
+-- Le trigger suit l'idiome deja employe ici pour les appartenances, les
+-- factures et les transmissions. Il laisse passer ce qui n'a pas de session
+-- utilisateur — migrations et webhook Stripe en role serveur — exactement
+-- comme `app.prevent_privilege_escalation`.
 
-revoke update (plan_code) on public.organizations from authenticated;
+create or replace function app.protect_organization_plan()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.plan_code is distinct from old.plan_code and (select auth.uid()) is not null then
+    raise exception 'La formule d''une organisation ne se modifie pas depuis l''application.'
+      using errcode = 'insufficient_privilege';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger organizations_protect_plan
+  before update on public.organizations
+  for each row execute function app.protect_organization_plan();
+
+revoke all on function app.protect_organization_plan() from public, anon, authenticated;
+
+comment on function app.protect_organization_plan() is
+  'Interdit la modification de la formule depuis une session utilisateur. Les droits reels derivent de `subscriptions`.';
 
 -- -----------------------------------------------------------------------------
 -- 2. La telemetrie ne doit pas pouvoir noyer la base
@@ -106,8 +142,11 @@ select cron.schedule(
 
 do $$
 begin
-  if has_column_privilege('authenticated', 'public.organizations', 'plan_code', 'UPDATE') then
-    raise exception 'La formule doit rester inscriptible uniquement par le role serveur.';
+  if not exists (
+    select 1 from pg_trigger t join pg_class c on c.oid = t.tgrelid
+    where c.relname = 'organizations' and t.tgname = 'organizations_protect_plan'
+  ) then
+    raise exception 'La garde sur la formule n''est pas installee.';
   end if;
 
   if not exists (
