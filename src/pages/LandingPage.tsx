@@ -20,7 +20,6 @@ import { Link } from 'react-router';
 import { Faq } from '@/components/marketing/Faq';
 import { Pricing } from '@/components/marketing/Pricing';
 import { ScrollRevealSection } from '@/components/marketing/ScrollRevealSection';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 
@@ -93,25 +92,54 @@ function ProductCapture({
 export default function LandingPage() {
   return (
     <>
-      <section className="trame-technique overflow-hidden pb-14 pt-12 sm:pb-20 sm:pt-16 lg:pb-24 lg:pt-20">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
-          <div className="lg:col-span-7">
-            <Badge variant="primary" className="mb-6 max-w-full whitespace-normal px-3 py-1">
-              <Radio className="size-3.5" aria-hidden="true" />
-              Le cockpit des équipes techniques
-            </Badge>
+      <section className="relative overflow-hidden bg-white">
+        <div className="absolute top-0 right-0 hidden aspect-video w-[74.5%] overflow-hidden lg:block xl:w-[74vw] xl:max-w-[79.5rem]">
+          <img
+            src="/images/landing-hero-4k.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full translate-x-3 object-cover"
+            width="3840"
+            height="2160"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(90deg, #fff 0%, #fff 7%, rgba(255,255,255,0.65) 12%, rgba(255,255,255,0) 20%)',
+            }}
+            aria-hidden="true"
+          />
+        </div>
 
-            <h1 className="max-w-4xl text-4xl leading-[1.02] font-bold tracking-tight text-balance text-foreground sm:text-6xl lg:text-7xl">
-              Pilotez votre activité technique,{' '}
-              <span className="text-primary">du devis au compte rendu signé.</span>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:min-h-[33.5rem] lg:px-8 xl:min-h-[clamp(33.5rem,41.625vw,44.71875rem)]">
+
+          <div className="relative z-10 max-w-xl py-10 sm:py-12 lg:w-[43%] lg:pt-14 lg:pb-0">
+            <h1 className="max-w-2xl text-center text-4xl leading-[1.08] font-bold tracking-tight text-balance text-brand-night sm:text-5xl lg:text-left lg:text-[3.25rem] lg:leading-[1.05]">
+              Pilotez votre activité de terrain en toute simplicité
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              Missions, équipes, comptes rendus, matériel et outils métier : une vue commune pour
-              décider vite, intervenir proprement et garder le fil jusqu’à la validation.
+            <p className="mt-4 max-w-xl text-base leading-[1.55] text-muted-foreground sm:text-lg">
+              REZO360 est la plateforme tout-en-un pour les entreprises, artisans et professionnels
+              de terrain. De l’organisation des interventions à la facturation électronique,
+              centralisez toute votre activité au même endroit.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <ul className="mt-4 space-y-2.5 text-sm font-medium text-foreground sm:text-base">
+              {[
+                'Simple à prendre en main',
+                'Adapté à tous les métiers de terrain',
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2.5">
+                  <CheckCircle2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="min-h-touch px-6">
                 <Link to={ROUTES.register}>
                   Commencer gratuitement
@@ -123,32 +151,22 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <p className="mt-5 text-sm text-muted-foreground">
-              Formule Free disponible sans carte bancaire.
+            <p className="mt-3 text-xs text-muted-foreground sm:text-sm">
+              Aucune carte bancaire requise · 14 jours · Accès complet
             </p>
           </div>
 
-          <div className="relative isolate mx-auto w-full max-w-xl lg:col-span-5 lg:justify-self-end">
-            <div
-              className="absolute -inset-6 -z-10 rounded-[2.75rem] bg-primary/10 blur-3xl"
-              aria-hidden="true"
+          <div className="relative -mx-4 aspect-video w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:hidden">
+            <img
+              src="/images/landing-hero-4k.jpg"
+              alt="REZO360 présenté sur un ordinateur et un téléphone dans un décor lumineux"
+              className="absolute inset-0 h-full w-full object-cover"
+              width="3840"
+              height="2160"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
             />
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-surface shadow-[0_1.75rem_4rem_rgb(10_27_67_/_0.16)]">
-              <img
-                src="/images/hero-technician-field.jpg"
-                alt="Technicien de terrain casqué consultant une intervention sur sa tablette devant des équipements CVC"
-                className="block aspect-[4/5] w-full object-cover object-[67%_center] sm:aspect-[5/4] sm:object-[64%_center] lg:aspect-[4/5] lg:object-[65%_center]"
-                width="1536"
-                height="1024"
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-tr from-brand-night/10 via-transparent to-white/10"
-                aria-hidden="true"
-              />
-            </div>
           </div>
         </div>
       </section>

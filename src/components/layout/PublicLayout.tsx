@@ -81,8 +81,8 @@ export function PublicLayout() {
         className={cn(
           'sticky top-0 z-50 transition-colors duration-200',
           isScrolled
-            ? 'border-border bg-surface/90 border-b backdrop-blur-md'
-            : 'border-b border-transparent bg-transparent',
+            ? 'border-border border-b bg-white/95 backdrop-blur-md'
+            : 'border-b border-transparent bg-white',
         )}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
@@ -172,6 +172,19 @@ export function PublicLayout() {
                         </Link>
                       </li>
                     ))}
+                    <li className="border-border mt-2 border-t pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setIsDownloadModalOpen(true);
+                        }}
+                        className="text-foreground hover:bg-surface-hover min-h-touch flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-medium"
+                      >
+                        <Smartphone className="size-4 shrink-0" aria-hidden="true" />
+                        Installer l’app
+                      </button>
+                    </li>
                   </ul>
                 </Dialog.Content>
               </Dialog.Portal>
