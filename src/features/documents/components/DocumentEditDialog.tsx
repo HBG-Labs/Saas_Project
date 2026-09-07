@@ -50,7 +50,6 @@ function Formulaire({
 
   const [nom, setNom] = useState(document.name);
   const [description, setDescription] = useState(document.description ?? '');
-  const [categorie, setCategorie] = useState(document.category ?? '');
   const [dossier, setDossier] = useState(document.folder_id ?? '');
 
   const nomInvalide = nom.trim() === '';
@@ -63,10 +62,13 @@ function Formulaire({
     try {
       await update.mutateAsync({
         documentId: document.id,
+        // `category` n'est plus modifiée ici, et n'est donc PAS envoyée :
+        // l'omettre laisse intactes les valeurs déjà saisies, que la recherche
+        // continue de couvrir. Envoyer `null` les effacerait au premier
+        // enregistrement, sans que personne l'ait demandé.
         patch: {
           name: nom,
           description: description.trim() === '' ? null : description,
-          category: categorie.trim() === '' ? null : categorie,
           folder_id: dossier === '' ? null : dossier,
         },
       });
@@ -107,28 +109,34 @@ function Formulaire({
           onChange={(event) => setDescription(event.target.value)}
           rows={2}
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Catégorie"
-            value={categorie}
-            onChange={(event) => setCategorie(event.target.value)}
-          />
-          {/*
-            Le chemin complet, pas le seul nom : deux dossiers « Plans » dans
-            deux branches différentes sont indiscernables autrement.
-          */}
-          <SelectField
-            label="Dossier"
-            value={dossier}
-            onChange={(event) => setDossier(event.target.value)}
-          >
-            {destinationsPossibles(folders).map((option) => (
-              <option key={option.id ?? 'racine'} value={option.id ?? ''}>
-                {option.chemin}
-              </option>
-            ))}
-          </SelectField>
-        </div>
+        {/*
+          Plus de « Catégorie ».
+
+          Le champ était saisissable, jamais affiché, et aucun filtre ne s'y
+          appuyait : son seul effet était de rendre le document trouvable en
+          tapant une valeur que rien ne montrait. Depuis que les dossiers
+          forment une vraie arborescence, il fait doublon —
+          `Clients / Orange / Notices` dit la même chose, en mieux, et se
+          navigue.
+
+          La colonne reste en base et la recherche continue de la couvrir :
+          ce qui a déjà été saisi reste trouvable.
+        */}
+        {/*
+          Le chemin complet, pas le seul nom : deux dossiers « Plans » dans
+          deux branches différentes sont indiscernables autrement.
+        */}
+        <SelectField
+          label="Dossier"
+          value={dossier}
+          onChange={(event) => setDossier(event.target.value)}
+        >
+          {destinationsPossibles(folders).map((option) => (
+            <option key={option.id ?? 'racine'} value={option.id ?? ''}>
+              {option.chemin}
+            </option>
+          ))}
+        </SelectField>
       </div>
     </Modal>
   );

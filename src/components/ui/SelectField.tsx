@@ -120,6 +120,27 @@ export function SelectField({
   'aria-describedby': ariaDescribedBy,
 }: SelectFieldProps) {
   const { options, groups } = collectOptions(children);
+
+  /*
+    `display: contents` DISSOUT LE CHAMP — ET C'EST PARFOIS CE QU'ON VEUT.
+
+    Les barres de filtres héritées posent leurs classes (`flex-1`, `h-9`,
+    bordures) sur ce qui était autrefois un `<select>` nu. Elles attendent donc
+    que le DÉCLENCHEUR soit lui-même l'élément flex du parent, sans conteneur
+    intermédiaire. `contents` le leur donne.
+
+    Mais un champ qui porte une ÉTIQUETTE VISIBLE ne peut pas se dissoudre :
+    l'étiquette et le déclencheur deviennent alors deux enfants directs du
+    parent. Dans une `grid-cols-2`, ils tombent dans deux cellules différentes
+    — l'étiquette « Dossier » en haut à droite, son menu à la ligne suivante,
+    sous le champ voisin. Le défaut ne se voyait pas jusqu'ici : les écrans
+    plus anciens enveloppent chaque champ dans leur propre `<div>`, qui absorbe
+    la dissolution.
+
+    D'où cette condition plutôt qu'un retrait pur et simple, qui aurait
+    déplacé les filtres de Stock et d'Achats.
+  */
+  const etiquetteVisible = label !== undefined && label !== '' && hideLabel !== true;
   const hasEmptyOption = options.some((option) => option.value === EMPTY_VALUE);
   const normalizedValue = value === undefined ? undefined : String(value) || EMPTY_VALUE;
   const normalizedDefault =
@@ -133,7 +154,7 @@ export function SelectField({
     <Select
       options={options}
       groups={groups}
-      className="contents"
+      className={etiquetteVisible ? undefined : 'contents'}
       value={normalizedValue}
       defaultValue={normalizedDefault}
       onValueChange={(nextValue) => {
