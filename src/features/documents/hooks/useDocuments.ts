@@ -7,9 +7,11 @@ import type { OrganizationDocument } from '@/types/domain';
 import {
   createFolder,
   deleteDocument as deleteDocumentApi,
+  deleteFolder as deleteFolderApi,
   listDocuments,
   listFolders,
   updateDocument as updateDocumentApi,
+  updateFolder as updateFolderApi,
   uploadDocument as uploadDocumentApi,
   type DocumentListInput,
   type UploadDocumentInput,
@@ -97,10 +99,27 @@ export function useDocumentMutations() {
   });
 
   const addFolder = useMutation({
-    mutationFn: (input: { organizationId: string; name: string; createdBy: string }) =>
-      createFolder(input),
+    mutationFn: (input: {
+      organizationId: string;
+      name: string;
+      createdBy: string;
+      parentFolderId?: string | null;
+    }) => createFolder(input),
     onSuccess: invalider,
   });
 
-  return { upload, update, remove, addFolder };
+  const updateFolder = useMutation({
+    mutationFn: (input: {
+      folderId: string;
+      patch: { name?: string; parent_folder_id?: string | null };
+    }) => updateFolderApi(input.folderId, input.patch),
+    onSuccess: invalider,
+  });
+
+  const removeFolder = useMutation({
+    mutationFn: (folderId: string) => deleteFolderApi(folderId),
+    onSuccess: invalider,
+  });
+
+  return { upload, update, remove, addFolder, updateFolder, removeFolder };
 }

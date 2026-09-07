@@ -112,6 +112,8 @@ export async function createFolder(input: {
   organizationId: string;
   name: string;
   createdBy: string;
+  /** `null` — ou absent — crée un dossier à la racine de la bibliothèque. */
+  parentFolderId?: string | null;
 }): Promise<DocumentFolder> {
   return unwrap(
     supabase
@@ -120,10 +122,78 @@ export async function createFolder(input: {
         organization_id: input.organizationId,
         name: input.name.trim(),
         created_by: input.createdBy,
+        parent_folder_id: input.parentFolderId ?? null,
       })
       .select('*')
       .single(),
   );
+}
+
+/**
+ * Renomme ou déplace un dossier.
+ *
+ * Déplacer un dossier déplace tout ce qu'il contient, sous-arbre compris, et
+ * cela ne coûte qu'une écriture : la hiérarchie vit dans `parent_folder_id`,
+ * jamais dans le chemin Storage. Aucun fichier n'est touché.
+ *
+ * Les combinaisons interdites — parent d'une autre organisation, cycle,
+ * profondeur excessive — sont refusées par `app.guard_document_folder()`. Le
+ * client ne les propose pas ; c'est la base qui les empêche.
+ */
+export async function updateFolder(
+  folderId: string,
+  patch: { name?: string; parent_folder_id?: string | null },
+): Promise<DocumentFolder> {
+  return unwrap(
+    supabase
+      .from('document_folders')
+      .update({
+        ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+        ...(patch.parent_folder_id !== undefined
+          ? { parent_folder_id: patch.parent_folder_id }
+          : {}),
+      })
+      .eq('id', folderId)
+      .select('*')
+      .single(),
+  );
+}
+
+export interface ContenuDossier {
+  sousDossiers: number;
+  documents: number;
+}
+
+/**
+ * Ce qu'un dossier contient DIRECTEMENT, pour l'annoncer avant de le supprimer.
+ *
+ * Supprimer un dossier ne détruit rien : les clés étrangères sont en
+ * `on delete set null`, ses sous-dossiers remontent d'un niveau et ses
+ * documents se retrouvent hors dossier. C'est récupérable — mais invisible si
+ * on ne le dit pas, et un utilisateur qui voit disparaître trente documents de
+ * son écran conclut à une perte.
+ */
+export async function compterContenuDossier(folderId: string): Promise<ContenuDossier> {
+  const [sousDossiers, documents] = await Promise.all([
+    supabase
+      .from('document_folders')
+      .select('id', { count: 'exact', head: true })
+      .eq('parent_folder_id', folderId),
+    supabase
+      .from('organization_documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('folder_id', folderId),
+  ]);
+
+  if (sousDossiers.error) throw sousDossiers.error;
+  if (documents.error) throw documents.error;
+
+  return { sousDossiers: sousDossiers.count ?? 0, documents: documents.count ?? 0 };
+}
+
+export async function deleteFolder(folderId: string): Promise<void> {
+  const { error } = await supabase.from('document_folders').delete().eq('id', folderId);
+  if (error) throw error;
 }
 
 /**

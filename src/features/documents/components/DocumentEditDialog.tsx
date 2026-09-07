@@ -5,6 +5,7 @@ import { Button, Input, Modal, Textarea } from '@/components/ui';
 import { SelectField } from '@/components/ui/SelectField';
 import type { DocumentFolder, OrganizationDocument } from '@/types/domain';
 
+import { destinationsPossibles } from '../folder-tree';
 import { useDocumentMutations } from '../hooks/useDocuments';
 
 export interface DocumentEditDialogProps {
@@ -112,15 +113,18 @@ function Formulaire({
             value={categorie}
             onChange={(event) => setCategorie(event.target.value)}
           />
+          {/*
+            Le chemin complet, pas le seul nom : deux dossiers « Plans » dans
+            deux branches différentes sont indiscernables autrement.
+          */}
           <SelectField
             label="Dossier"
             value={dossier}
             onChange={(event) => setDossier(event.target.value)}
           >
-            <option value="">Aucun dossier</option>
-            {folders.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
+            {destinationsPossibles(folders).map((option) => (
+              <option key={option.id ?? 'racine'} value={option.id ?? ''}>
+                {option.chemin}
               </option>
             ))}
           </SelectField>

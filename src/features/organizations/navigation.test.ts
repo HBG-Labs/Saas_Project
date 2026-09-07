@@ -5,14 +5,17 @@ import { FEATURES, type FeatureKey } from '@/features/billing';
 import {
   ACCOUNT_NAV,
   APP_NAV,
+  LIBRARY_NAV,
   MOBILE_NAV_CANDIDATES,
   MOBILE_NAV_SIZE,
   ORGANIZATION_NAV,
   SIDEBAR_GROUPS,
   type NavItem,
 } from '@/config/navigation';
+import { ROUTES } from '@/config/routes';
+import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 
-import { PERMISSIONS, type Permission } from './rbac';
+import { PERMISSIONS, ROLE_PERMISSIONS, type Permission } from './rbac';
 
 /**
  * `NavItem.permission` et `NavItem.feature` sont typés `string` : `config/` est
@@ -133,6 +136,38 @@ describe('sections de la barre latérale', () => {
     for (const item of ORGANIZATION_NAV) {
       expect(grouped, `« ${item.label} » n’appartient à aucune section`).toContain(item.to);
     }
+  });
+
+  it('mène à la bibliothèque depuis les DEUX barres latérales', () => {
+    /*
+      LE DÉFAUT QUE CE TEST INTERDIT
+
+      `AppLayout` sert `TECHNICIAN_SIDEBAR_GROUPS` aux techniciens et
+      `SIDEBAR_GROUPS` à tous les autres. La bibliothèque était déclarée dans
+      « Stock », absent de la première : un technicien portait bien
+      `document.view`, la RLS l'aurait laissé lire, et l'écran restait
+      inatteignable faute du moindre lien.
+
+      Aucun typage ne relie une permission accordée à un chemin d'accès, et
+      aucun test ne couvrait la seconde barre. La régression était donc muette :
+      la permission existait, la page existait, personne ne s'en servait.
+    */
+    const destinations = (groupes: readonly { items: readonly NavItem[] }[]) =>
+      new Set(groupes.flatMap((groupe) => groupe.items).map((item) => item.to));
+
+    expect(destinations(SIDEBAR_GROUPS)).toContain(ROUTES.documents);
+    expect(destinations(TECHNICIAN_SIDEBAR_GROUPS)).toContain(ROUTES.documents);
+  });
+
+  it('réserve la bibliothèque à sa permission, sans jamais regarder le rôle', () => {
+    // Un technicien y accède parce qu'il porte `document.view`, pas parce que
+    // son rôle a été nommé quelque part. C'est ce que garantit la déclaration :
+    // une permission et une formule, rien d'autre.
+    const bibliotheque = LIBRARY_NAV[0];
+
+    expect(bibliotheque?.permission).toBe(PERMISSIONS.documentView);
+    expect(bibliotheque?.feature).toBe(FEATURES.documents);
+    expect(ROLE_PERMISSIONS.technician).toContain(PERMISSIONS.documentView);
   });
 
   it('ne donne à aucune section le nom d’une de ses entrées', () => {

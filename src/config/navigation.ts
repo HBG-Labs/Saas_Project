@@ -111,7 +111,42 @@ export const METIERS_TOOLS_NAV: readonly NavItem[] = [
   { to: `${ROUTES.metiers}/reseaux`, label: 'Réseaux & Télécoms', icon: 'network' },
 ];
 
+/**
+ * La bibliothèque documentaire, déclarée à part.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ELLE APPARTIENT AUX DEUX NAVIGATIONS, ET C'EST TOUT L'ENJEU
+ *
+ * `AppLayout` sert une barre latérale différente aux techniciens
+ * (`TECHNICIAN_SIDEBAR_GROUPS`). La bibliothèque était rangée dans `STOCK_NAV`,
+ * absent de cette seconde liste : un technicien avait la permission
+ * `document.view`, la RLS l'aurait laissé lire, et l'écran restait
+ * INATTEIGNABLE — aucun lien n'y menait.
+ *
+ * Le défaut n'était pas dans le RBAC mais dans la navigation, et il était
+ * silencieux : rien ne relie une permission accordée à un chemin d'accès.
+ *
+ * D'où cette constante partagée, reprise par `RESOURCES_NAV` — la seule section
+ * commune aux deux barres. Consulter des procédures et des notices n'est pas un
+ * acte de gestion : cela n'a rien à faire derrière « Stock », encore moins
+ * derrière « Administration ».
+ *
+ * `navigation.test.ts` échoue si elle disparaît de l'une des deux.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const LIBRARY_NAV: readonly NavItem[] = [
+  {
+    to: ROUTES.documents,
+    label: 'Bibliothèque',
+    icon: 'folder',
+    feature: 'documents',
+    permission: 'document.view',
+    primary: true,
+  },
+];
+
 export const RESOURCES_NAV: readonly NavItem[] = [
+  ...LIBRARY_NAV,
   { to: ROUTES.tutorials, label: 'Tutoriels & Formation', icon: 'book', primary: true },
 ];
 
@@ -133,16 +168,6 @@ export const STOCK_NAV: readonly NavItem[] = [
   { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', feature: 'stock', primary: true },
   { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right', feature: 'stock' },
   { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench', feature: 'equipment' },
-  // La bibliothèque suit `documents`, clé posée sur les mêmes formules que
-  // `attachments`. Sans `permission`, l'entrée resterait visible pour un rôle
-  // qui se heurterait ensuite à la RLS — une impasse plutôt qu'une absence.
-  {
-    to: ROUTES.documents,
-    label: 'Bibliothèque',
-    icon: 'folder',
-    feature: 'documents',
-    permission: 'document.view',
-  },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [
@@ -228,7 +253,7 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
   { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
-  { id: 'resources', label: 'Aide & formation', icon: 'book', items: RESOURCES_NAV },
+  { id: 'resources', label: 'Documents & formation', icon: 'book', items: RESOURCES_NAV },
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
   { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
 ];
@@ -313,6 +338,8 @@ export const MOBILE_NAV_CANDIDATES: readonly NavItem[] = [
     feature: 'interventions',
   },
   { to: ROUTES.map, label: 'Carte', icon: 'map', feature: 'missions' },
+  // Une notice consultée sur le terrain se cherche au téléphone, pas au bureau.
+  ...LIBRARY_NAV,
   { to: ROUTES.metiers, label: 'Métiers', icon: 'briefcase' },
 ];
 

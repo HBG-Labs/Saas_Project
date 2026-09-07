@@ -1,21 +1,26 @@
-import { FolderOpen, Plus } from 'lucide-react';
+import { FolderOpen, FolderPlus, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { useToast } from '@/components/feedback/toast-context';
 import { Button, Input, ListSkeleton, Modal } from '@/components/ui';
-import { SelectField } from '@/components/ui/SelectField';
 import {
   DocumentEditDialog,
   DocumentList,
   DocumentPreviewDialog,
   DocumentUploadDialog,
   FILTRES_FAMILLE,
+  FolderBreadcrumb,
+  FolderDialog,
+  FolderGrid,
   getDocumentDownloadUrl,
   useDocumentFolders,
   useDocumentMutations,
   useDocuments,
   DOCUMENTS_PAR_PAGE,
+  cheminDe,
+  enfantsDe,
+  type DemandeDossier,
   type FiltreFamille,
 } from '@/features/documents';
 import { useAuth } from '@/features/auth';
@@ -25,10 +30,20 @@ import type { OrganizationDocument } from '@/types/domain';
 /**
  * Bibliothèque documentaire de l'organisation.
  *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DEUX MODES, ET UN SEUL ÉCRAN
+ *
+ * Sans recherche, on NAVIGUE : un dossier à la fois, ses sous-dossiers puis ses
+ * documents. Avec une recherche, on CHERCHE : le filtre de dossier est levé et
+ * toute la bibliothèque est fouillée. C'est ce qu'attend quelqu'un qui tape un
+ * nom — chercher « dans le dossier courant seulement » oblige à savoir où l'on
+ * a rangé, ce qui est précisément la question qu'on se pose.
+ *
  * Recherche, filtres et pagination sont résolus par la base : à plusieurs
  * milliers de documents, tout rapatrier pour en montrer vingt-quatre coûterait
  * à chaque ouverture. Aucune URL signée n'est produite ici — seulement à
  * l'ouverture d'un document.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 export default function DocumentLibraryPage() {
   const toast = useToast();
@@ -39,10 +54,11 @@ export default function DocumentLibraryPage() {
 
   const [search, setSearch] = useState('');
   const [famille, setFamille] = useState<FiltreFamille>('tous');
-  const [dossier, setDossier] = useState<string>('tous');
+  const [dossierCourant, setDossierCourant] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
   const [depotOuvert, setDepotOuvert] = useState(false);
+  const [demandeDossier, setDemandeDossier] = useState<DemandeDossier | null>(null);
   const [apercu, setApercu] = useState<OrganizationDocument | null>(null);
   const [edition, setEdition] = useState<OrganizationDocument | null>(null);
   const [suppression, setSuppression] = useState<OrganizationDocument | null>(null);
@@ -50,14 +66,18 @@ export default function DocumentLibraryPage() {
   const canManage = can(PERMISSIONS.documentManage);
   const canDelete = can(PERMISSIONS.documentDelete);
 
+  const recherche = search.trim();
+  const enRecherche = recherche !== '';
+
   const filtres = useMemo(
     () => ({
       search,
       famille,
-      folderId: dossier === 'tous' ? undefined : dossier === 'aucun' ? null : dossier,
+      // En recherche, le dossier courant ne filtre plus : on fouille tout.
+      folderId: enRecherche ? undefined : dossierCourant,
       page,
     }),
-    [search, famille, dossier, page],
+    [search, famille, dossierCourant, page, enRecherche],
   );
 
   const documentsQuery = useDocuments(organizationId, filtres);
@@ -68,11 +88,19 @@ export default function DocumentLibraryPage() {
   const total = documentsQuery.data?.total ?? 0;
   const folders = foldersQuery.data ?? [];
   const pages = Math.max(1, Math.ceil(total / DOCUMENTS_PAR_PAGE));
-  const filtreActif = search.trim() !== '' || famille !== 'tous' || dossier !== 'tous';
+  const filtreActif = enRecherche || famille !== 'tous';
+  const sousDossiers = enRecherche ? [] : enfantsDe(folders, dossierCourant);
 
   function changerFiltre(appliquer: () => void) {
     appliquer();
     setPage(0);
+  }
+
+  function ouvrirDossier(folderId: string | null) {
+    changerFiltre(() => {
+      setDossierCourant(folderId);
+      setSearch('');
+    });
   }
 
   async function telecharger(document: OrganizationDocument) {
@@ -95,6 +123,13 @@ export default function DocumentLibraryPage() {
     }
   }
 
+  /** Le dossier supprimé était peut-être celui qu'on regarde : on remonte. */
+  function apresSuppressionDossier(folderId: string) {
+    if (cheminDe(folders, dossierCourant).some((d) => d.id === folderId)) {
+      setDossierCourant(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -105,18 +140,36 @@ export default function DocumentLibraryPage() {
           </p>
         </div>
         {canManage && (
-          <Button onClick={() => setDepotOuvert(true)} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" aria-hidden />
-            Ajouter un document
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDemandeDossier({ mode: 'creer', parentFolderId: dossierCourant })
+              }
+              className="w-full sm:w-auto"
+            >
+              <FolderPlus className="mr-2 h-4 w-4" aria-hidden />
+              Nouveau dossier
+            </Button>
+            <Button onClick={() => setDepotOuvert(true)} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" aria-hidden />
+              Ajouter des documents
+            </Button>
+          </div>
         )}
       </header>
+
+      <FolderBreadcrumb
+        folders={folders}
+        currentFolderId={enRecherche ? null : dossierCourant}
+        onNavigate={ouvrirDossier}
+      />
 
       <div className="space-y-3">
         <Input
           label="Rechercher"
           hideLabel
-          placeholder="Rechercher un document..."
+          placeholder="Rechercher dans toute la bibliothèque…"
           value={search}
           onChange={(event) => changerFiltre(() => setSearch(event.target.value))}
         />
@@ -132,26 +185,25 @@ export default function DocumentLibraryPage() {
               {option.label}
             </Button>
           ))}
-
-          {folders.length > 0 && (
-            <SelectField
-              label="Dossier"
-              hideLabel
-              value={dossier}
-              onChange={(event) => changerFiltre(() => setDossier(event.target.value))}
-              className="ml-auto w-full sm:w-52"
-            >
-              <option value="tous">Tous les dossiers</option>
-              <option value="aucun">Sans dossier</option>
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </SelectField>
-          )}
         </div>
+
+        {enRecherche && (
+          <p className="text-muted-foreground text-xs">
+            La recherche porte sur toute la bibliothèque, tous dossiers confondus.
+          </p>
+        )}
       </div>
+
+      <FolderGrid
+        folders={folders}
+        currentFolderId={dossierCourant}
+        canManage={canManage}
+        canDelete={canDelete}
+        onOpen={ouvrirDossier}
+        onRename={(folder) => setDemandeDossier({ mode: 'renommer', folder })}
+        onMove={(folder) => setDemandeDossier({ mode: 'deplacer', folder })}
+        onDelete={(folder) => setDemandeDossier({ mode: 'supprimer', folder })}
+      />
 
       {documentsQuery.isPending ? (
         <ListSkeleton />
@@ -163,33 +215,37 @@ export default function DocumentLibraryPage() {
           action={<Button onClick={() => void documentsQuery.refetch()}>Réessayer</Button>}
         />
       ) : documents.length === 0 ? (
-        <EmptyState
-          icon={FolderOpen}
-          title={filtreActif ? 'Aucun document ne correspond' : 'Aucun document partagé'}
-          description={
-            filtreActif
-              ? 'Modifiez votre recherche ou vos filtres pour élargir les résultats.'
-              : 'Ajoutez des documents techniques, procédures, plans, notices ou autres fichiers utiles à votre équipe.'
-          }
-          action={
-            filtreActif ? (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  changerFiltre(() => {
-                    setSearch('');
-                    setFamille('tous');
-                    setDossier('tous');
-                  })
-                }
-              >
-                Réinitialiser les filtres
-              </Button>
-            ) : canManage ? (
-              <Button onClick={() => setDepotOuvert(true)}>Ajouter un document</Button>
-            ) : undefined
-          }
-        />
+        // Un dossier qui ne contient que des sous-dossiers n'est pas « vide » :
+        // le dire afficherait le contraire de ce que l'écran montre juste
+        // au-dessus.
+        sousDossiers.length > 0 ? null : (
+          <EmptyState
+            icon={FolderOpen}
+            title={filtreActif ? 'Aucun document ne correspond' : 'Aucun document ici'}
+            description={
+              filtreActif
+                ? 'Modifiez votre recherche ou vos filtres pour élargir les résultats.'
+                : 'Ajoutez des documents techniques, procédures, plans ou notices utiles à votre équipe.'
+            }
+            action={
+              filtreActif ? (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    changerFiltre(() => {
+                      setSearch('');
+                      setFamille('tous');
+                    })
+                  }
+                >
+                  Réinitialiser les filtres
+                </Button>
+              ) : canManage ? (
+                <Button onClick={() => setDepotOuvert(true)}>Ajouter des documents</Button>
+              ) : undefined
+            }
+          />
+        )
       ) : (
         <>
           <DocumentList
@@ -232,14 +288,25 @@ export default function DocumentLibraryPage() {
       )}
 
       {organizationId !== null && user !== null && (
-        <DocumentUploadDialog
-          open={depotOuvert}
-          onOpenChange={setDepotOuvert}
-          organizationId={organizationId}
-          uploadedBy={user.id}
-          folders={folders}
-          defaultFolderId={dossier === 'tous' || dossier === 'aucun' ? null : dossier}
-        />
+        <>
+          <DocumentUploadDialog
+            open={depotOuvert}
+            onOpenChange={setDepotOuvert}
+            organizationId={organizationId}
+            uploadedBy={user.id}
+            folders={folders}
+            defaultFolderId={dossierCourant}
+          />
+
+          <FolderDialog
+            demande={demandeDossier}
+            folders={folders}
+            organizationId={organizationId}
+            createdBy={user.id}
+            onOpenChange={() => setDemandeDossier(null)}
+            onDeleted={apresSuppressionDossier}
+          />
+        </>
       )}
 
       <DocumentPreviewDialog document={apercu} onOpenChange={() => setApercu(null)} />
