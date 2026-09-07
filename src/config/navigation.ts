@@ -133,6 +133,16 @@ export const STOCK_NAV: readonly NavItem[] = [
   { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', feature: 'stock', primary: true },
   { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right', feature: 'stock' },
   { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench', feature: 'equipment' },
+  // La bibliothèque suit `documents`, clé posée sur les mêmes formules que
+  // `attachments`. Sans `permission`, l'entrée resterait visible pour un rôle
+  // qui se heurterait ensuite à la RLS — une impasse plutôt qu'une absence.
+  {
+    to: ROUTES.documents,
+    label: 'Bibliothèque',
+    icon: 'folder',
+    feature: 'documents',
+    permission: 'document.view',
+  },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [

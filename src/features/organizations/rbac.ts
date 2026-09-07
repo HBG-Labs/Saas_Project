@@ -89,6 +89,10 @@ export const PERMISSIONS = {
 
   aiUse: 'ai.use',
   aiManageDocuments: 'ai.manage_documents',
+
+  documentView: 'document.view',
+  documentManage: 'document.manage',
+  documentDelete: 'document.delete',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -173,6 +177,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'statistics.view',
     'ai.use',
     'ai.manage_documents',
+    'document.view',
+    'document.manage',
+    'document.delete',
   ],
 
   admin: [
@@ -218,6 +225,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'audit.view',
     'statistics.view',
     'ai.manage_documents',
+    'document.view',
+    'document.manage',
+    'document.delete',
   ],
 
   manager: [
@@ -259,6 +269,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'planning.manage',
     'statistics.view',
     'ai.manage_documents',
+    'document.view',
+    'document.manage',
+    'document.delete',
   ],
 
   team_leader: [
@@ -291,6 +304,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.request',
     'planning.view',
     'statistics.view',
+    'document.view',
+    'document.manage',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -324,9 +339,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'purchase.view',
     'leave.request',
     'planning.view',
+    'document.view',
   ],
 
-  employee: ['organization.view', 'member.view', 'leave.request'],
+  employee: ['organization.view', 'member.view', 'leave.request', 'document.view'],
 };
 
 export function roleHasPermission(role: OrgRole | null, permission: Permission): boolean {

@@ -33,6 +33,10 @@ export const FEATURES = {
   auditLog: 'audit_log',
   statistics: 'statistics',
   attachments: 'attachments',
+  // Bibliothèque documentaire de l'organisation. Posée sur les mêmes formules
+  // que `attachments` : c'est la même capacité de stockage, déjà vendue.
+  // `limit_value` reste nul, prêt à porter un quota le jour voulu.
+  documents: 'documents',
   equipment: 'equipment',
   stock: 'stock',
   purchases: 'purchases',
@@ -108,6 +112,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     quotes: null,
     invoicing: null,
     attachments: null,
+    documents: null,
     ai_assistant: 100,
   },
 
@@ -128,6 +133,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     audit_log: null,
     statistics: null,
     attachments: null,
+    documents: null,
     equipment: null,
     stock: null,
     purchases: null,
@@ -154,6 +160,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     audit_log: null,
     statistics: null,
     attachments: null,
+    documents: null,
     equipment: null,
     stock: null,
     purchases: null,

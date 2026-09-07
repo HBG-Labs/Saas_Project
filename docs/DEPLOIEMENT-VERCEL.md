@@ -193,7 +193,7 @@ négociation qui échoue sans message clair.
 
 ### B. Resend — pour un expéditeur à votre nom d'entreprise
 
-À faire quand vous aurez un domaine (`rezo360.fr`, `hbzindustrie.fr`…).
+À faire quand vous aurez un domaine (`rezo360.com`, `hbzindustrie.fr`…).
 
 1. Compte sur [resend.com](https://resend.com), puis *Domains → Add Domain*.
 2. Ajoutez les trois enregistrements DNS proposés (SPF, DKIM, DMARC) chez votre

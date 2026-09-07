@@ -26,7 +26,7 @@ import QRCode from 'qrcode';
  * résolution équivalente.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-const INSTALL_URL = 'https://rezo360.vercel.app';
+const INSTALL_URL = 'https://rezo360.com';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

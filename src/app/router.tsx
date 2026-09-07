@@ -276,6 +276,23 @@ export const routes: RouteObject[] = [
                   },
 
                   {
+                    element: (
+                      <RequirePlan feature={FEATURES.documents} label="La bibliothèque documentaire" />
+                    ),
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.documentView} />,
+                        children: [
+                          {
+                            path: ROUTES.documents,
+                            lazy: lazyPage(() => import('@/pages/documents/DocumentLibraryPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
                     element: <RequirePlan feature={FEATURES.equipment} label="Le parc matériel" />,
                     children: [
                       {

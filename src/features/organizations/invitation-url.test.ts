@@ -28,18 +28,18 @@ describe('buildInvitationUrl', () => {
   });
 
   it('préfère l’adresse publique déclarée, pour un lien transmissible', async () => {
-    vi.stubEnv('VITE_PUBLIC_APP_URL', 'https://rezo360.vercel.app');
+    vi.stubEnv('VITE_PUBLIC_APP_URL', 'https://rezo360.com');
     vi.resetModules();
     const { buildInvitationUrl: recharge } = await import('./invitation-url');
 
-    expect(recharge('jeton-2')).toBe('https://rezo360.vercel.app/invitations/jeton-2');
+    expect(recharge('jeton-2')).toBe('https://rezo360.com/invitations/jeton-2');
   });
 
   it('ne double pas la barre oblique si l’adresse en porte une', async () => {
-    vi.stubEnv('VITE_PUBLIC_APP_URL', 'https://rezo360.vercel.app/');
+    vi.stubEnv('VITE_PUBLIC_APP_URL', 'https://rezo360.com/');
     vi.resetModules();
     const { buildInvitationUrl: recharge } = await import('./invitation-url');
 
-    expect(recharge('jeton-3')).toBe('https://rezo360.vercel.app/invitations/jeton-3');
+    expect(recharge('jeton-3')).toBe('https://rezo360.com/invitations/jeton-3');
   });
 });

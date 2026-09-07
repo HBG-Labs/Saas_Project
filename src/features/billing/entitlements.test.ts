@@ -240,6 +240,10 @@ describe('synchronisation avec le seed SQL', () => {
   // un artisan. Il ne touche à aucune paire déjà présente, sa position dans ce
   // tableau est donc indifférente — on le range à la suite, par ordre
   // chronologique.
+  //
+  // `organizationDocuments` ajoute la clé `documents` aux trois formules qui
+  // portent déjà `attachments`. Nouvelle paire elle aussi : sa position est
+  // sans effet.
   const tuples = extractInsertTuplesAcross(
     [
       MIGRATION_FILES.planMatrix,
@@ -248,6 +252,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.aiAssistantEnterpriseQuota,
       MIGRATION_FILES.aiAssistantProPlus,
       MIGRATION_FILES.invoices,
+      MIGRATION_FILES.organizationDocuments,
     ],
     'plan_features',
   );

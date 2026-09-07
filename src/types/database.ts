@@ -2754,6 +2754,85 @@ export interface Database {
       // =======================================================================
       // Audit
       // =======================================================================
+      document_folders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          parent_folder_id: string | null;
+          name: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          parent_folder_id?: string | null;
+          name: string;
+          created_by?: string | null;
+        };
+        Update: {
+          name?: string;
+          parent_folder_id?: string | null;
+        };
+        Relationships: [];
+      };
+      organization_documents: {
+        Row: {
+          id: string;
+          organization_id: string;
+          folder_id: string | null;
+          uploaded_by: string | null;
+          name: string;
+          original_filename: string | null;
+          storage_path: string;
+          mime_type: string | null;
+          file_size: number | null;
+          description: string | null;
+          category: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          folder_id?: string | null;
+          uploaded_by?: string | null;
+          name: string;
+          original_filename?: string | null;
+          storage_path: string;
+          mime_type?: string | null;
+          file_size?: number | null;
+          description?: string | null;
+          category?: string | null;
+        };
+        /** `organization_id` et `storage_path` sont gelés par trigger. */
+        Update: {
+          name?: string;
+          folder_id?: string | null;
+          description?: string | null;
+          category?: string | null;
+        };
+        Relationships: [];
+      };
+      document_storage_orphans: {
+        Row: {
+          id: string;
+          organization_id: string;
+          document_id: string | null;
+          storage_path: string;
+          error_message: string | null;
+          recorded_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          document_id?: string | null;
+          storage_path: string;
+          error_message?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;

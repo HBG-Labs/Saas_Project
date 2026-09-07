@@ -16,7 +16,7 @@ interface DownloadAppModalProps {
  * voir la constante `INSTALL_URL` de `scripts/generate-install-qr.mjs`, à
  * modifier en même temps que celle-ci si l'adresse change un jour.
  */
-const INSTALL_URL = 'rezo360.vercel.app';
+const INSTALL_URL = 'rezo360.com';
 
 /** Marches à suivre, par plateforme. Aucune n'exige de magasin d'applications. */
 const PARCOURS = [

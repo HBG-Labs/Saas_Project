@@ -252,6 +252,21 @@ export const qk = {
     list: (organizationId: string) => [...qk.aiDocuments.all, organizationId] as const,
   },
 
+  // ------------------------------------------------------------- bibliothèque
+  documents: {
+    all: ['documents'] as const,
+    /**
+     * Les filtres font partie de la clé : chaque combinaison recherche/famille/
+     * dossier/page a son entrée. Invalider `qk.documents.all` après un dépôt ou
+     * une suppression les purge toutes d'un coup, sans avoir à deviner laquelle
+     * est affichée.
+     */
+    list: (organizationId: string, filters?: unknown) =>
+      [...qk.documents.all, organizationId, 'list', filters ?? null] as const,
+    folders: (organizationId: string) =>
+      [...qk.documents.all, organizationId, 'folders'] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

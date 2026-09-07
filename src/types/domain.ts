@@ -124,6 +124,10 @@ export interface ReportForReview extends InterventionReport {
 
 // ----------------------------------------------------------------- audit & facturation
 export type AuditLog = Tables<'audit_logs'>;
+
+// ------------------------------------------------------------- bibliothèque
+export type OrganizationDocument = Tables<'organization_documents'>;
+export type DocumentFolder = Tables<'document_folders'>;
 export type Plan = Tables<'plans'>;
 export type PlanFeature = Tables<'plan_features'>;
 export type Subscription = Tables<'subscriptions'>;

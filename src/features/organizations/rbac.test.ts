@@ -72,11 +72,24 @@ describe('moindre privilège', () => {
     // elle ne porte que sur lui-même : le trigger `enforce_leave_decision`
     // refuse une demande déposée au nom d'un tiers sans `leave.approve`. Poser
     // un congé n'est pas un acte de gestion, c'est un droit du salarié.
+    //
+    // `document.view` s'ajoute à la consultation et n'entame pas ce principe :
+    // la bibliothèque porte les procédures et les consignes de sécurité, que
+    // l'employé doit pouvoir lire. Déposer et supprimer restent fermés —
+    // `document.manage` s'arrête au chef d'équipe, `document.delete` au manager.
     expect(ROLE_PERMISSIONS.employee).toEqual([
       'organization.view',
       'member.view',
       'leave.request',
+      'document.view',
     ]);
+
+    // Le principe, lui, ne dépend pas de l'ordre de cette liste : hors congé,
+    // l'employé ne peut qu'observer.
+    const ecritures = ROLE_PERMISSIONS.employee.filter(
+      (permission) => !permission.endsWith('.view'),
+    );
+    expect(ecritures).toEqual(['leave.request']);
   });
 
   it("réserve l'usage de l'Assistant IA au propriétaire", () => {
@@ -189,6 +202,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.aiAssistantDocuments,
       MIGRATION_FILES.aiAssistantConversations,
       MIGRATION_FILES.invoices,
+      MIGRATION_FILES.organizationDocuments,
     ],
     'role_permissions',
   );

@@ -22,7 +22,7 @@ export function exportEventsToICS(events: PlanningCalendarEvent[]): void {
   events.forEach((evt) => {
     const formattedDate = evt.date.replace(/-/g, '');
     lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${evt.id}@rezo360.fr`);
+    lines.push(`UID:${evt.id}@rezo360.com`);
     lines.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
     lines.push(`DTSTART;VALUE=DATE:${formattedDate}`);
     lines.push(`SUMMARY:${evt.title}`);
@@ -30,7 +30,7 @@ export function exportEventsToICS(events: PlanningCalendarEvent[]): void {
       lines.push(`DESCRIPTION:${evt.details}`);
     }
     if (evt.technicianName) {
-      lines.push(`ATTENDEE;CN=${evt.technicianName}:mailto:dispatch@rezo360.fr`);
+      lines.push(`ATTENDEE;CN=${evt.technicianName}:mailto:dispatch@rezo360.com`);
     }
     lines.push('STATUS:CONFIRMED');
     lines.push('END:VEVENT');

@@ -85,6 +85,7 @@ export const ROUTES = {
   quoteDetail: (quoteId: string) => `/devis/${quoteId}`,
   invoices: '/factures',
   invoiceDetail: (invoiceId: string) => `/factures/${invoiceId}`,
+  documents: '/bibliotheque',
   notes: '/bloc-notes',
   reports: '/comptes-rendus',
   profile: '/profile',
