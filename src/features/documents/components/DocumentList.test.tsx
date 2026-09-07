@@ -59,6 +59,7 @@ function afficher(props: Partial<Parameters<typeof DocumentList>[0]> = {}) {
       folders={[DOSSIER]}
       canManage
       canDelete
+      showFolderColumn
       {...handlers}
       {...props}
     />,
@@ -135,6 +136,26 @@ describe('DocumentList', () => {
   it('affiche un tiret quand la taille est inconnue', () => {
     afficher({ documents: [document({ file_size: null })] });
     expect(screen.getAllByText(/—/).length).toBeGreaterThan(0);
+  });
+
+  it('retire la colonne « Dossier » quand elle ne distingue rien', () => {
+    // Hors recherche, elle répète le dossier courant sur chaque ligne, ou
+    // affiche « — » partout à la racine. Une colonne qui ne distingue rien
+    // occupe la place de celles qui distinguent.
+    afficher({ showFolderColumn: false });
+
+    expect(screen.queryByRole('columnheader', { name: 'Dossier' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Taille' })).toBeInTheDocument();
+  });
+
+  it('distingue les familles par la couleur, pas seulement par le mot', () => {
+    // Sur quarante lignes, retrouver le PDF ne doit pas demander de lire
+    // quarante libellés.
+    afficher({ documents: [document({ mime_type: 'application/pdf' })] });
+    expect(screen.getByText('PDF').className).toContain('error');
+
+    afficher({ documents: [document({ id: 'd2', mime_type: 'text/csv' })] });
+    expect(screen.getByText('Tableur').className).toContain('success');
   });
 
   it('choisit le libellé de type sur le MIME, pas sur l’extension', () => {

@@ -253,6 +253,11 @@ export default function DocumentLibraryPage() {
             folders={folders}
             canManage={canManage}
             canDelete={canDelete}
+            // Hors recherche, la colonne « Dossier » répète le dossier courant
+            // sur chaque ligne, ou affiche « — » partout à la racine. En
+            // recherche, elle devient la seule indication d'OÙ se trouve le
+            // résultat — c'est là, et seulement là, qu'elle vaut sa place.
+            showFolderColumn={enRecherche}
             onOpen={setApercu}
             onDownload={(document) => void telecharger(document)}
             onEdit={setEdition}

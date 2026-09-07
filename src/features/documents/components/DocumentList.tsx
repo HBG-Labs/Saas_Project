@@ -1,5 +1,6 @@
 import {
   Download,
+  File,
   FileImage,
   FileSpreadsheet,
   FileText,
@@ -10,24 +11,46 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 import { Badge, Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui';
+import type { BadgeProps } from '@/components/ui/Badge';
 import type { DocumentFolder, OrganizationDocument } from '@/types/domain';
 
 import { familleDeDocument, formaterTaille, type FamilleDocument } from '../constants';
 
-const ICONES: Record<FamilleDocument, LucideIcon> = {
-  pdf: FileText,
-  image: FileImage,
-  document: FileText,
-  tableur: FileSpreadsheet,
-  autre: FileText,
-};
+/**
+ * Apparence d'une famille de documents.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DE LA COULEUR QUI RENSEIGNE, PAS QUI DÉCORE
+ *
+ * Les cinq familles partageaient une icône grise et un badge neutre : sur
+ * quarante lignes, retrouver le PDF demandait de LIRE chaque libellé. Le rouge
+ * du PDF et le vert du tableur ne sont pas un choix esthétique, ce sont les
+ * conventions d'Explorer et de Drive — le lecteur les connaît déjà.
+ *
+ * Même forme que `ATTACHMENT_KINDS` dans `AttachmentGallery` — icône, couleur
+ * et variante de badge au même endroit — et mêmes jetons sémantiques que le
+ * reste du produit. La bibliothèque était le dernier écran de liste à les
+ * ignorer.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+interface ApparenceFamille {
+  icone: LucideIcon;
+  couleur: string;
+  badge: BadgeProps['variant'];
+  libelle: string;
+}
 
-const LIBELLES: Record<FamilleDocument, string> = {
-  pdf: 'PDF',
-  image: 'Image',
-  document: 'Document',
-  tableur: 'Tableur',
-  autre: 'Fichier',
+const APPARENCE: Record<FamilleDocument, ApparenceFamille> = {
+  pdf: { icone: FileText, couleur: 'text-error', badge: 'error', libelle: 'PDF' },
+  image: { icone: FileImage, couleur: 'text-accent', badge: 'accent', libelle: 'Image' },
+  document: { icone: FileText, couleur: 'text-info', badge: 'info', libelle: 'Document' },
+  tableur: {
+    icone: FileSpreadsheet,
+    couleur: 'text-success',
+    badge: 'success',
+    libelle: 'Tableur',
+  },
+  autre: { icone: File, couleur: 'text-muted-foreground', badge: 'neutral', libelle: 'Fichier' },
 };
 
 export interface DocumentListProps {
@@ -35,6 +58,14 @@ export interface DocumentListProps {
   folders: DocumentFolder[];
   canManage: boolean;
   canDelete: boolean;
+  /**
+   * N'a de sens qu'en recherche.
+   *
+   * Dans un dossier, la colonne répète son nom sur chaque ligne ; à la racine,
+   * elle affiche « — » partout. Une colonne qui ne distingue rien occupe la
+   * place de celles qui distinguent.
+   */
+  showFolderColumn: boolean;
   onOpen: (document: OrganizationDocument) => void;
   onDownload: (document: OrganizationDocument) => void;
   onEdit: (document: OrganizationDocument) => void;
@@ -62,6 +93,7 @@ export function DocumentList({
   folders,
   canManage,
   canDelete,
+  showFolderColumn,
   onOpen,
   onDownload,
   onEdit,
@@ -116,15 +148,15 @@ export function DocumentList({
       {/* Téléphone : cartes compactes. */}
       <ul className="space-y-2 md:hidden">
         {documents.map((document) => {
-          const famille = familleDeDocument(document.mime_type);
-          const Icone = ICONES[famille];
+          const apparence = APPARENCE[familleDeDocument(document.mime_type)];
+          const Icone = apparence.icone;
           const dossier = nomDossier(document.folder_id);
           return (
             <li
               key={document.id}
               className="border-border bg-card flex items-center gap-3 rounded-lg border p-3"
             >
-              <Icone className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
+              <Icone className={`h-5 w-5 shrink-0 ${apparence.couleur}`} aria-hidden />
               <button
                 type="button"
                 onClick={() => onOpen(document)}
@@ -132,7 +164,7 @@ export function DocumentList({
               >
                 <p className="text-foreground truncate text-sm font-medium">{document.name}</p>
                 <p className="text-muted-foreground truncate text-xs">
-                  {LIBELLES[famille]} · {formaterTaille(document.file_size)}
+                  {apparence.libelle} · {formaterTaille(document.file_size)}
                   {dossier !== null && ` · ${dossier}`}
                 </p>
               </button>
@@ -150,7 +182,7 @@ export function DocumentList({
               <th className="px-4 py-3 text-left font-medium">Nom</th>
               <th className="px-4 py-3 text-left font-medium">Type</th>
               <th className="px-4 py-3 text-left font-medium">Taille</th>
-              <th className="px-4 py-3 text-left font-medium">Dossier</th>
+              {showFolderColumn && <th className="px-4 py-3 text-left font-medium">Dossier</th>}
               <th className="px-4 py-3 text-left font-medium">Ajouté le</th>
               <th className="px-4 py-3 text-right font-medium">
                 <span className="sr-only">Actions</span>
@@ -159,8 +191,8 @@ export function DocumentList({
           </thead>
           <tbody className="divide-border divide-y">
             {documents.map((document) => {
-              const famille = familleDeDocument(document.mime_type);
-              const Icone = ICONES[famille];
+              const apparence = APPARENCE[familleDeDocument(document.mime_type)];
+              const Icone = apparence.icone;
               const dossier = nomDossier(document.folder_id);
               return (
                 <tr key={document.id} className="hover:bg-muted/30 transition-colors">
@@ -170,7 +202,7 @@ export function DocumentList({
                       onClick={() => onOpen(document)}
                       className="flex items-center gap-2 text-left"
                     >
-                      <Icone className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden />
+                      <Icone className={`h-4 w-4 shrink-0 ${apparence.couleur}`} aria-hidden />
                       <span className="text-foreground font-medium">{document.name}</span>
                     </button>
                     {document.description !== null && (
@@ -180,14 +212,16 @@ export function DocumentList({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="neutral">{LIBELLES[famille]}</Badge>
+                    <Badge variant={apparence.badge}>{apparence.libelle}</Badge>
                   </td>
                   <td className="text-muted-foreground px-4 py-3">
                     {formaterTaille(document.file_size)}
                   </td>
-                  <td className="text-muted-foreground px-4 py-3">
-                    {dossier ?? <span className="opacity-60">—</span>}
-                  </td>
+                  {showFolderColumn && (
+                    <td className="text-muted-foreground px-4 py-3">
+                      {dossier ?? <span className="opacity-60">—</span>}
+                    </td>
+                  )}
                   <td className="text-muted-foreground px-4 py-3">
                     {dateCourte(document.created_at)}
                   </td>
