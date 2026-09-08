@@ -4,12 +4,23 @@
 
 .DESCRIPTION
     ─────────────────────────────────────────────────────────────────────────────
-    POURQUOI CE SCRIPT EXISTE
+    POURQUOI CE SCRIPT EXISTE ENCORE
 
-    Le plan Supabase Free ne fournit AUCUNE sauvegarde automatique, et un projet
-    Free est mis en pause après une période d'inactivité. Tant que
-    l'organisation n'est pas passée en Pro, ce script est la seule protection
-    contre une perte de données définitive.
+    Il a été écrit quand le projet était en Free, plan qui ne fournit AUCUNE
+    sauvegarde automatique : il en était alors la seule protection. Depuis le
+    07/09/2026 le projet est en Pro, et Supabase sauvegarde quotidiennement.
+    Ce script n'est donc plus un filet de survie — il reste utile pour trois
+    choses que la sauvegarde automatique ne couvre pas :
+
+      - une copie SOUS VOTRE CONTRÔLE, sur votre disque, indépendante du
+        fournisseur et de l'état de votre abonnement ;
+      - un instantané AVANT une opération risquée — une migration lourde, une
+        correction de données en masse — sans attendre le cycle quotidien ;
+      - un fichier lisible et rejouable table par table, là où la restauration
+        Supabase ramène tout ou rien.
+
+    À l'inverse, il ne remplace pas la sauvegarde automatique : personne ne
+    pense à le lancer tous les jours.
 
     CE QU'IL SAUVEGARDE, ET CE QU'IL NE SAUVEGARDE PAS
 
