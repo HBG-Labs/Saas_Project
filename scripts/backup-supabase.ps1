@@ -74,14 +74,53 @@ $DbName     = 'postgres'
 # Prérequis
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# Localiser pg_dump
+# -----------------------------------------------------------------------------
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# LE PATH NE SUFFIT PAS, ET LE DIRE NE SUFFIT PAS NON PLUS
+#
+# La version précédente s'arrêtait sur « pg_dump est introuvable » dès que
+# `Get-Command` échouait, et conseillait d'installer PostgreSQL — alors qu'il
+# était déjà installé. Deux raisons, toutes deux hors de portée de
+# l'utilisateur :
+#
+#   1. l'installateur PostgreSQL de Windows n'ajoute JAMAIS son dossier `bin`
+#      au PATH ;
+#   2. un terminal intégré d'IDE hérite de l'environnement figé au lancement de
+#      l'IDE : ajouter le dossier au PATH utilisateur ne l'y fait pas
+#      apparaître, et rouvrir un onglet n'y change rien.
+#
+# Un script qui envoie réinstaller ce qui est déjà installé fait perdre plus de
+# temps qu'il n'en fait gagner. On cherche donc là où l'installateur dépose
+# réellement les binaires avant de déclarer forfait.
+# ─────────────────────────────────────────────────────────────────────────────
+
 $pgDump = Get-Command pg_dump -ErrorAction SilentlyContinue
+
 if (-not $pgDump) {
-    Write-Host "pg_dump est introuvable." -ForegroundColor Red
+    # Version la plus élevée d'abord : `pg_dump` refuse un serveur plus récent
+    # que lui, jamais l'inverse.
+    $candidat = Get-ChildItem -Path 'C:\Program Files\PostgreSQL', 'C:\Program Files (x86)\PostgreSQL' `
+                    -Filter 'pg_dump.exe' -Recurse -ErrorAction SilentlyContinue |
+                Sort-Object { [int]($_.FullName -replace '.*PostgreSQL\\(\d+)\\.*', '$1') } -Descending |
+                Select-Object -First 1
+
+    if ($candidat) {
+        $pgDump = Get-Command $candidat.FullName
+        Write-Host "pg_dump trouve hors PATH : $($candidat.FullName)" -ForegroundColor DarkGray
+        Write-Host "  (pour l'avoir partout, fermez puis rouvrez votre IDE)" -ForegroundColor DarkGray
+    }
+}
+
+if (-not $pgDump) {
+    Write-Host "pg_dump est introuvable, et PostgreSQL n'est pas installe." -ForegroundColor Red
     Write-Host ""
     Write-Host "Installez les outils clients PostgreSQL (une seule fois) :"
     Write-Host "    winget install -e --id PostgreSQL.PostgreSQL.17" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Puis rouvrez le terminal pour que le PATH soit rechargé."
+    Write-Host "Ce script le retrouvera ensuite tout seul, sans manipulation du PATH."
     exit 1
 }
 
