@@ -59,10 +59,10 @@
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
-      "name": "Pointage des Heures",
-      "short_name": "Pointage",
-      "description": "Saisir les heures de travail",
-      "url": "/pointage",
+      "name": "Calculateur de Temps",
+      "short_name": "Temps",
+      "description": "Durées de travail, intervalles horaires et heures décimales",
+      "url": "/tools/time-calculator",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]
