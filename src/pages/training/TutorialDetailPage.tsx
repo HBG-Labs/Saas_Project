@@ -12,7 +12,7 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,8 +22,7 @@ import { ROUTES } from '@/config/routes';
 import { getTrainingCourse } from '@/features/training';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
-
-const PROGRESS_KEY = 'rezo360:tutorial-progress:v1';
+import { useTrainingProgress } from '@/features/training/hooks/useTrainingProgress';
 
 const COURSE_ACCENT = {
   bar: 'bg-primary',
@@ -31,33 +30,11 @@ const COURSE_ACCENT = {
   text: 'text-primary',
 };
 
-type StoredProgress = Record<string, string[]>;
-
-function readProgress(slug: string): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(PROGRESS_KEY) ?? '{}') as StoredProgress;
-    return Array.isArray(parsed[slug]) ? parsed[slug] : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveProgress(slug: string, chapterIds: string[]) {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(PROGRESS_KEY) ?? '{}') as StoredProgress;
-    window.localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...parsed, [slug]: chapterIds }));
-  } catch {
-    // La formation reste utilisable si le stockage du navigateur est indisponible.
-  }
-}
-
 export default function TutorialDetailPage() {
   const { tutorialSlug } = useParams<{ tutorialSlug: string }>();
   const course = getTrainingCourse(tutorialSlug);
-  const [completed, setCompleted] = useState<string[]>(() =>
-    tutorialSlug ? readProgress(tutorialSlug) : [],
-  );
+  const { completed, definir: definirProgression, surLeServeur, enEchec } =
+    useTrainingProgress(tutorialSlug);
 
   useDocumentTitle(course ? course.shortTitle : 'Cours introuvable');
 
@@ -65,10 +42,6 @@ export default function TutorialDetailPage() {
     () => completed.filter((id) => course?.chapters.some((chapter) => chapter.id === id)),
     [completed, course],
   );
-
-  useEffect(() => {
-    if (course) saveProgress(course.slug, validCompleted);
-  }, [course, validCompleted]);
 
   if (!course) {
     return (
@@ -93,10 +66,10 @@ export default function TutorialDetailPage() {
   const nextChapter = course.chapters.find((chapter) => !validCompleted.includes(chapter.id));
 
   const toggleChapter = (chapterId: string) => {
-    setCompleted((current) =>
-      current.includes(chapterId)
-        ? current.filter((id) => id !== chapterId)
-        : [...current, chapterId],
+    definirProgression(
+      validCompleted.includes(chapterId)
+        ? validCompleted.filter((id) => id !== chapterId)
+        : [...validCompleted, chapterId],
     );
   };
 
@@ -237,7 +210,7 @@ export default function TutorialDetailPage() {
               {completedCount > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setCompleted([])}
+                  onClick={() => definirProgression([])}
                   className="focus-visible:ring-primary inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[11px] font-bold text-blue-100/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <RotateCcw className="size-3.5" aria-hidden="true" />
@@ -468,11 +441,29 @@ export default function TutorialDetailPage() {
                     ? 'Bravo, le cours est terminé !'
                     : 'Vous avancez à votre rythme.'}
                 </h2>
+                {/*
+                  DIRE OU LA PROGRESSION EST ENREGISTREE, PAS SEULEMENT QU'ELLE L'EST.
+
+                  Le message precedent affirmait « votre progression est
+                  enregistree automatiquement » dans tous les cas. C'etait vrai
+                  et trompeur : sans compte, elle ne quitte pas ce navigateur.
+                  Quelqu'un qui suit un parcours sur le poste du depot et le
+                  reprend sur son telephone repartait de zero sans avoir ete
+                  prevenu.
+                */}
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100/70">
-                  {percent === 100
-                    ? 'Votre progression est enregistrée. Vous pouvez revoir une étape à tout moment.'
-                    : 'Cochez chaque chapitre après l’avoir appliqué. Votre progression est enregistrée automatiquement.'}
+                  {surLeServeur
+                    ? percent === 100
+                      ? 'Votre progression est enregistrée sur votre compte. Vous pouvez revoir une étape à tout moment.'
+                      : 'Cochez chaque chapitre après l’avoir appliqué. Votre progression suit votre compte, d’un appareil à l’autre.'
+                    : 'Cochez chaque chapitre après l’avoir appliqué. Votre progression est conservée sur cet appareil seulement — connectez-vous pour la retrouver partout.'}
                 </p>
+                {enEchec ? (
+                  <p role="alert" className="mt-2 text-sm font-semibold text-orange-200">
+                    Votre dernière coche n’a pas pu être enregistrée. Vérifiez votre connexion :
+                    elle ne survivra pas au rechargement.
+                  </p>
+                ) : null}
               </div>
               <Link
                 to={ROUTES.tutorials}

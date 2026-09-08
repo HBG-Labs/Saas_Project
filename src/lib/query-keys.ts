@@ -270,6 +270,18 @@ export const qk = {
       [...qk.documents.all, 'folder-content', folderId] as const,
   },
 
+  /**
+   * Progression dans les parcours de l'academie.
+   *
+   * La cle porte l'identifiant de la personne : changer de compte sur le meme
+   * navigateur ne doit pas afficher la progression du precedent le temps d'un
+   * rafraichissement.
+   */
+  training: {
+    all: ['training'] as const,
+    progress: (userId: string) => [...qk.training.all, userId, 'progress'] as const,
+  },
+
   // -------------------------------------------------------------------- audit
   audit: {
     all: ['audit'] as const,

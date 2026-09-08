@@ -2712,6 +2712,25 @@ export interface Database {
         Relationships: [];
       };
 
+      training_progress: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_slug: string;
+          completed_chapters: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        /** `user_id` est pose par trigger : le client ne l'envoie jamais. */
+        Insert: {
+          course_slug: string;
+          completed_chapters?: string[];
+        };
+        Update: {
+          completed_chapters?: string[];
+        };
+        Relationships: [];
+      };
       notes: {
         Row: {
           id: string;
