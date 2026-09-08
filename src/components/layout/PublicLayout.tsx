@@ -114,9 +114,21 @@ export function PublicLayout() {
       <header
         className={cn(
           'sticky top-0 z-50 transition-colors duration-200',
+          /*
+            `bg-surface` ET NON `bg-white`.
+
+            La barre etait blanche en dur. Sur les pages publiques qui suivent
+            le theme — tarifs, fonctionnalites, FAQ, mentions legales — elle
+            restait donc blanche au-dessus d'un contenu sombre. Le jeton suit
+            le theme : blanc en clair, marine en sombre.
+
+            Les pages verrouillees en clair ne changent pas d'aspect : leur
+            `--surface` vaut blanc, puisque `theme-jour-verrouille` redeclare
+            la palette claire.
+          */
           isScrolled
-            ? 'border-border border-b bg-white/95 backdrop-blur-md'
-            : 'border-b border-transparent bg-white',
+            ? 'border-border bg-surface/95 border-b backdrop-blur-md'
+            : 'bg-surface border-b border-transparent',
         )}
       >
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">

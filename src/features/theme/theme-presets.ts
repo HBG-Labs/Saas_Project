@@ -70,7 +70,26 @@ export const DEFAULT_THEME_PRESET: ThemePreset = {
   },
 };
 
-/** Contrepartie sombre du thème signature — valeurs identiques au bloc `.dark`. */
+/**
+ * Contrepartie sombre du thème signature.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CES VALEURS DOIVENT RESTER IDENTIQUES AU BLOC `.dark` DE `index.css`
+ *
+ * Ce n'est pas une préférence de style : le préréglage pose ces variables EN
+ * LIGNE sur `<html>`, et une variable inline l'emporte sur toute feuille de
+ * style. Quand les deux divergent, c'est CELLE-CI qui s'applique et le bloc
+ * `.dark` ne sert plus à rien.
+ *
+ * C'est arrivé le 07/09/2026 : la palette sombre est passée de l'ardoise au
+ * marine dans `index.css`, ici non. Résultat, la barre supérieure restait
+ * anthracite (`#121b23`) au-dessus d'un contenu marine — deux couleurs qui ne
+ * se répondaient pas, et une repalette sans effet visible.
+ *
+ * Modifier l'une sans l'autre ne casse rien et ne signale rien. Modifier les
+ * deux, ou aucune.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export const ATELIER_NUIT_PRESET: ThemePreset = {
   id: 'atelier-nuit',
   label: 'Atelier Nuit',
@@ -78,26 +97,26 @@ export const ATELIER_NUIT_PRESET: ThemePreset = {
   baseMode: 'dark',
   preview: {
     primary: '#7fa0ff',
-    surface: '#121b23',
-    background: '#0b1117',
+    surface: '#162040',
+    background: '#0e1b36',
   },
   variables: {
-    '--background': '#0b1117',
-    '--surface': '#121b23',
-    '--surface-raised': '#18242e',
-    '--surface-sunken': '#070c11',
-    '--surface-subtle': '#0f171f',
-    '--surface-hover': '#1c2a35',
-    '--border': '#22303a',
-    '--border-strong': '#33444f',
-    '--foreground': '#e8eff4',
-    '--muted-foreground': '#9baab6',
-    '--subtle-foreground': '#6b7c87',
+    '--background': '#0e1b36',
+    '--surface': '#162040',
+    '--surface-raised': '#1c2a52',
+    '--surface-sunken': '#0a1228',
+    '--surface-subtle': '#121a34',
+    '--surface-hover': '#1f2f5e',
+    '--border': '#243566',
+    '--border-strong': '#324880',
+    '--foreground': '#f0f4ff',
+    '--muted-foreground': '#8fa3c8',
+    '--subtle-foreground': '#5d7499',
     '--primary': '#7fa0ff',
     '--primary-hover': '#9db6ff',
     '--primary-active': '#6288f5',
-    '--primary-foreground': '#0b1117',
-    '--primary-subtle': '#1a2540',
+    '--primary-foreground': '#0e1b36',
+    '--primary-subtle': '#1a2d58',
     '--ring': '#7fa0ff',
   },
 };
