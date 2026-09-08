@@ -444,6 +444,16 @@ export default function LandingPage() {
           className="top-14 left-[45%] z-10 hidden size-14 rotate-6 stroke-orange-400 stroke-[2.2] opacity-75 xl:block"
         />
         <div className="absolute top-0 right-0 hidden aspect-video w-[74.5%] overflow-hidden lg:block xl:w-[74vw] xl:max-w-[79.5rem]">
+          {/*
+            DEUX PHOTOS, ET CE N'EST PAS UN OUBLI.
+
+            Sur grand écran, le titre est du VRAI texte posé à gauche, sur un
+            dégradé : la photo ne doit donc porter aucun mot, sinon ils se
+            répondent en double. C'est le rôle de celle-ci.
+
+            La version mobile, plus bas, porte au contraire le logo et
+            l'accroche gravés — voir le commentaire qui l'accompagne.
+          */}
           <img
             src="/images/landing-hero-4k.jpg"
             alt=""
@@ -503,12 +513,23 @@ export default function LandingPage() {
           </div>
 
           <div className="relative -mx-4 aspect-video w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:hidden">
+            {/*
+              La version mobile porte le logo et l'accroche GRAVÉS dans
+              l'image. Assumé : sur téléphone, la photo passe sous le bloc de
+              texte, elle ne lui fait donc pas concurrence — elle prolonge le
+              message au lieu de le doubler.
+
+              Conséquence à connaître : ces mots-là ne sont ni traduisibles,
+              ni lus par un lecteur d'écran, ni agrandis par les réglages
+              d'accessibilité. D'où un `alt` qui les reprend intégralement —
+              c'est le seul endroit où ils existent en texte.
+            */}
             <img
-              src="/images/landing-hero-4k.jpg"
-              alt="REZO360 présenté sur un ordinateur et un téléphone dans un décor lumineux"
+              src="/images/landing-hero-v2.jpg"
+              alt="REZO360 — Votre activité en mieux. Tout simplement. Un technicien devant son véhicule présente l’application sur son téléphone."
               className="absolute inset-0 h-full w-full object-cover"
-              width="3840"
-              height="2160"
+              width="1672"
+              height="941"
               loading="eager"
               fetchPriority="high"
               decoding="async"

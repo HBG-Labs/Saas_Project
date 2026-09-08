@@ -29,6 +29,12 @@ export const TECHNICIAN_SIDEBAR_GROUPS: readonly NavGroup[] = [
   // rendrait l'écran inatteignable pour lui sans qu'aucune permission ne
   // change — `navigation.test.ts` refuse cette régression.
   { id: 'resources', label: 'Documents & formation', icon: 'book', items: RESOURCES_NAV },
-  { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TECHNICIAN_TOOLS_NAV },
-  { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
+  // Un seul volet d'outils, comme dans la barre principale : deux en-têtes
+  // commençant par « Outils » obligeaient à deviner lequel contenait quoi.
+  {
+    id: 'outils',
+    label: 'Boîte à outils',
+    icon: 'wrench',
+    items: [...TECHNICIAN_TOOLS_NAV, ...METIERS_TOOLS_NAV],
+  },
 ];

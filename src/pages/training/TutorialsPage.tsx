@@ -76,13 +76,32 @@ export default function TutorialsPage() {
 
   return (
     <div className="relative -mx-4 -mt-4 overflow-hidden pb-16 sm:-mx-6 lg:-mx-8">
-      <section className="text-brand-night relative isolate overflow-hidden border-y border-slate-200 bg-white px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
+      {/*
+        En clair, le héros est blanc. En sombre, il devient marine — le même
+        `bg-brand-night` que le héros d'un cours (`TutorialDetailPage`), pour
+        que l'académie et ses cours ne se contredisent pas d'un écran à l'autre.
+      */}
+      <section className="text-brand-night dark:bg-brand-night relative isolate overflow-hidden border-y border-slate-200 bg-white px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 dark:border-white/10 dark:text-white">
+        {/*
+          Deux trames plutôt qu'une seule dont on inverserait la couleur : la
+          teinte vit dans un `style` inline, hors de portée des variantes
+          Tailwind. Des lignes sombres sur fond marine seraient invisibles.
+        */}
         <div
-          className="absolute inset-0 -z-10 opacity-45"
+          className="absolute inset-0 -z-10 opacity-45 dark:hidden"
           aria-hidden="true"
           style={{
             backgroundImage:
               'linear-gradient(rgba(15,35,75,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(15,35,75,.055) 1px, transparent 1px)',
+            backgroundSize: '42px 42px',
+          }}
+        />
+        <div
+          className="absolute inset-0 -z-10 hidden opacity-20 dark:block"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px)',
             backgroundSize: '42px 42px',
           }}
         />
@@ -93,22 +112,28 @@ export default function TutorialsPage() {
             className="text-primary/55 absolute -top-10 right-[calc(49%+3rem)] z-10 hidden h-24 w-44 -rotate-6 xl:block"
           />
           <div>
-            <div className="border-primary/15 text-primary mb-6 inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-xs font-bold tracking-wide uppercase shadow-sm">
+            <div className="border-primary/15 text-primary mb-6 inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-xs font-bold tracking-wide uppercase shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-white">
               <GraduationCap className="size-4" aria-hidden="true" />
               Académie REZO360
             </div>
-            <h1 className="text-brand-night max-w-3xl text-4xl leading-[1.03] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-brand-night max-w-3xl text-4xl leading-[1.03] font-extrabold tracking-tight sm:text-5xl lg:text-6xl dark:text-white">
               Maîtrisez votre activité,
               <span className="text-primary block">un geste après l’autre.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg dark:text-blue-100/80">
               Des cours courts, concrets et guidés pour prendre REZO360 en main et rendre votre
               équipe autonome.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              {/*
+                En sombre, `--primary` s'éclaircit : du texte blanc dessus
+                tomberait sous le seuil WCAG. `--primary-foreground` est le
+                jeton prévu pour ce qui se pose SUR le primaire — il vaut
+                marine en sombre. Le survol suit le même raisonnement.
+              */}
               <Link
                 to={ROUTES.tutorial('bien-demarrer')}
-                className="bg-primary focus-visible:ring-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold text-white shadow-lg shadow-blue-950/15 transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="bg-primary focus-visible:ring-primary dark:hover:bg-[var(--primary-hover)] inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold text-white shadow-lg shadow-blue-950/15 transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none dark:text-[var(--primary-foreground)]"
               >
                 <PlayCircle className="size-5" aria-hidden="true" />
                 Commencer le parcours
@@ -116,29 +141,33 @@ export default function TutorialsPage() {
               {featured ? (
                 <Link
                   to={ROUTES.tutorial(featured.slug)}
-                  className="text-brand-night hover:border-primary/40 hover:text-primary focus-visible:ring-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-brand-night hover:border-primary/40 hover:text-primary focus-visible:ring-primary dark:hover:text-primary inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none dark:border-white/25 dark:bg-white/5 dark:text-white"
                 >
                   Facturation électronique
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               ) : null}
             </div>
-            <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-300 pt-6">
+            <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-300 pt-6 dark:border-white/15">
               <div>
-                <strong className="text-brand-night block text-2xl font-extrabold">
+                <strong className="text-brand-night block text-2xl font-extrabold dark:text-white">
                   {TRAINING_COURSES.length}
                 </strong>
-                <span className="text-xs text-slate-500">cours pratiques</span>
+                <span className="text-xs text-slate-500 dark:text-blue-100/70">cours pratiques</span>
               </div>
               <div>
-                <strong className="text-brand-night block text-2xl font-extrabold">
+                <strong className="text-brand-night block text-2xl font-extrabold dark:text-white">
                   {chapterCount}
                 </strong>
-                <span className="text-xs text-slate-500">chapitres guidés</span>
+                <span className="text-xs text-slate-500 dark:text-blue-100/70">
+                  chapitres guidés
+                </span>
               </div>
               <div>
-                <strong className="text-brand-night block text-2xl font-extrabold">100 %</strong>
-                <span className="text-xs text-slate-500">à votre rythme</span>
+                <strong className="text-brand-night block text-2xl font-extrabold dark:text-white">
+                  100 %
+                </strong>
+                <span className="text-xs text-slate-500 dark:text-blue-100/70">à votre rythme</span>
               </div>
             </div>
           </div>
@@ -148,7 +177,13 @@ export default function TutorialsPage() {
               className="border-signal-cyan absolute -top-4 -right-4 h-28 w-28 rounded-tr-[36px] border-t-2 border-r-2"
               aria-hidden="true"
             />
-            <div className="relative min-h-[440px] overflow-hidden rounded-[34px] bg-slate-800 shadow-xl shadow-slate-300/60 sm:min-h-[480px]">
+            {/*
+              L'ombre est CLAIRE en mode jour — une ombre grise sur fond blanc
+              se lit comme un relief. Posée telle quelle sur le marine, elle
+              devient un halo blanc autour du bloc : l'inverse d'une ombre. En
+              sombre, elle passe donc au noir.
+            */}
+            <div className="relative min-h-[440px] overflow-hidden rounded-[34px] bg-slate-800 shadow-xl shadow-slate-300/60 sm:min-h-[480px] dark:shadow-black/50">
               <img
                 src="/images/training/electronic-invoicing-hero-v2.png"
                 alt="Dirigeante antillaise et responsable administratif validant une facture électronique"

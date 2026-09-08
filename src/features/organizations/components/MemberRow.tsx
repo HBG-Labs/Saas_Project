@@ -116,7 +116,15 @@ export function MemberRow({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 shrink-0">
+      {/*
+        `flex-wrap` plutôt que `shrink-0`.
+
+        `shrink-0` empêchait ce groupe de se réduire, et rien ne l'autorisait à
+        se replier : sur iPhone SE il dépassait sa rangée de 13 px, mesuré. Les
+        boutons passent maintenant à la ligne quand la place manque, ce qui est
+        le comportement attendu d'une barre d'actions étroite.
+      */}
+      <div className="flex flex-wrap items-start gap-2">
         {canUpdateRole && (
           <>
             <Tooltip content="Modifier le nom ou la spécialité / fonction">

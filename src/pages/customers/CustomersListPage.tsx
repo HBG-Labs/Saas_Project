@@ -169,7 +169,24 @@ export default function CustomersListPage() {
             <Link
               key={customer.id}
               to={ROUTES.customer(customer.id)}
-              className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              /*
+                `min-w-0` N'EST PAS DÉCORATIF ICI.
+
+                Un élément de grille a `min-width: auto` : il REFUSE de se
+                réduire sous la largeur minimale de son contenu. Le nom du
+                client est en `nowrap` (il est tronqué) et le badge de
+                référence est `shrink-0` : la largeur minimale dépasse donc la
+                colonne, et c'est la COLONNE qui cède.
+
+                Mesuré sur iPhone SE avec « Tricatel — FICTIF SUPER PDP » : la
+                carte allait de 16 à 381 px pour un écran de 375, quand sa
+                grille s'arrêtait à 359. Elle débordait par la droite.
+
+                Le `min-w-0` posé plus bas sur la rangée interne ne suffit pas —
+                vérifié : il ne change rien. C'est ici, sur l'élément de grille
+                lui-même, que la contrainte doit être levée.
+              */
+              className="group block min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Card className="h-full cursor-pointer transition-all duration-150 group-hover:border-primary/50 group-hover:shadow-md hover:border-primary/50 hover:shadow-md">
                 <CardContent className="p-5 space-y-3">

@@ -248,14 +248,31 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
   },
 ];
 
+/**
+ * Un seul volet d'outils, universels puis par métier.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI DEUX VOLETS NE MARCHAIENT PAS
+ *
+ * La barre en portait deux : « Boîte à outils » et « Outils Métiers ». Aucun
+ * doublon technique — les destinations diffèrent, et un test l'impose — mais
+ * deux en-têtes commençant par le même mot. Pour trouver un calculateur, il
+ * fallait deviner lequel des deux « Outils » le contenait, puis se souvenir
+ * du bon la fois suivante.
+ *
+ * L'ordre porte la distinction que les titres portaient mal : ce qui sert à
+ * tout le monde d'abord, les métiers ensuite.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const ALL_TOOLS_NAV: readonly NavItem[] = [...TOOLS_NAV, ...METIERS_TOOLS_NAV];
+
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'interventions', label: 'Interventions', icon: 'clipboard', items: INTERVENTIONS_NAV },
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
   { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
   { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
   { id: 'resources', label: 'Documents & formation', icon: 'book', items: RESOURCES_NAV },
-  { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: TOOLS_NAV },
-  { id: 'outils-metiers', label: 'Outils Métiers', icon: 'briefcase', items: METIERS_TOOLS_NAV },
+  { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: ALL_TOOLS_NAV },
 ];
 
 export const PRINCIPAL_NAV: readonly NavItem[] = [

@@ -11,7 +11,22 @@
    DESIGN SYSTEM COCKPIT PREMIUM — REZO360
    ============================================================================= */
 @layer base {
-  :root {
+  /*
+     `.theme-jour-verrouille` REND LE MÊME JEU DE JETONS QUE `:root`.
+
+     La page d'accueil garde son apparence claire quel que soit le thème du
+     visiteur. La verrouiller en manipulant la classe `dark` sur `<html>` ne
+     suffirait pas : les thèmes posent aussi leur palette en variables INLINE
+     sur `<html>`, qui survivraient au retrait de la classe. Et le
+     `ThemeProvider` vit au-dessus du routeur — il ignore la route.
+
+     Redéclarer ces variables sur un conteneur de la page suffit, parce
+     qu'elles sont héritées : ce que l'élément déclare lui-même l'emporte sur
+     ce qu'il hérite de `<html>`. D'où ce sélecteur ajouté ici plutôt qu'un
+     second bloc recopié — une palette dupliquée finit toujours par diverger.
+  */
+  :root,
+  .theme-jour-verrouille {
     /* --- ATELIER JOUR ----------------------------------------------------
        Fond papier légèrement bleuté, encre ardoise, bleu de tracé technique.
        Le fond clair n'est pas une préférence esthétique : l'application se lit

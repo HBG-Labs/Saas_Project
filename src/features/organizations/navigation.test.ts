@@ -170,6 +170,36 @@ describe('sections de la barre latérale', () => {
     expect(ROLE_PERMISSIONS.technician).toContain(PERMISSIONS.documentView);
   });
 
+  it('ne propose qu’une seule section d’outils, dans les deux barres', () => {
+    /*
+      La barre en portait deux : « Boîte à outils » et « Outils Métiers ».
+      Aucun doublon technique — les destinations diffèrent — mais deux
+      en-têtes commençant par le même mot, donc un choix à deviner puis à
+      retenir avant chaque recherche d'outil.
+
+      Ce test échoue si un second volet « outils » réapparaît d'un côté ou de
+      l'autre : c'est le genre de scission qui revient sans qu'on y pense, en
+      ajoutant une famille d'outils.
+    */
+    const sectionsOutils = (groupes: readonly { label: string }[]) =>
+      groupes.filter((groupe) => groupe.label.toLowerCase().includes('outil'));
+
+    expect(sectionsOutils(SIDEBAR_GROUPS)).toHaveLength(1);
+    expect(sectionsOutils(TECHNICIAN_SIDEBAR_GROUPS)).toHaveLength(1);
+  });
+
+  it('garde les outils métiers accessibles depuis la section fusionnée', () => {
+    // La fusion ne doit pas faire disparaître de destination : c'est le risque
+    // d'un regroupement fait à la main.
+    const destinations = new Set(
+      SIDEBAR_GROUPS.flatMap((groupe) => groupe.items).map((item) => item.to),
+    );
+
+    expect(destinations).toContain(ROUTES.metiers);
+    expect(destinations).toContain(ROUTES.tools);
+    expect(destinations).toContain(`${ROUTES.metiers}/fibre-optique`);
+  });
+
   it('ne donne à aucune section le nom d’une de ses entrées', () => {
     // Le défaut corrigé ici : la section « Entreprise » contenait une entrée
     // « Entreprise ». Rien ne permettait de deviner que la seconde menait à la

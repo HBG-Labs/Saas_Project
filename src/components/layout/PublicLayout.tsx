@@ -1,7 +1,7 @@
 import { Menu, Smartphone, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { Suspense, useEffect, useState } from 'react';
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +56,22 @@ export function PublicLayout() {
   const { status } = useAuth();
   const isAuthenticated = status === 'authenticated';
 
+  /*
+    L'ACCUEIL GARDE SON APPARENCE CLAIRE, ET LA BASCULE Y DISPARAÎT.
+
+    C'est une vitrine : elle doit se présenter de la même façon à tout le
+    monde. La bascule est retirée là parce qu'elle n'y ferait plus rien —
+    laisser un bouton qui ne change rien apprend à se méfier des autres.
+
+    Attention en relisant l'en-tête de ce fichier : une version antérieure
+    verrouillait l'accueil en SOMBRE et masquait la bascule pour dissimuler le
+    verrou. Ce n'est pas ce qui est fait ici — le verrou est assumé et porte
+    sur le clair, et la bascule reste visible sur toutes les autres pages
+    publiques, où le thème s'applique normalement.
+  */
+  const { pathname } = useLocation();
+  const surAccueil = pathname === ROUTES.home;
+
   // La bordure de l'en-tête n'apparaît qu'une fois le contenu passé dessous :
   // posée d'emblée, elle coupe la page en deux au premier coup d'œil.
   useEffect(() => {
@@ -69,7 +85,12 @@ export function PublicLayout() {
   }, []);
 
   return (
-    <div className="bg-background text-foreground flex min-h-dvh flex-col">
+    <div
+      className={cn(
+        'bg-background text-foreground flex min-h-dvh flex-col',
+        surAccueil && 'theme-jour-verrouille',
+      )}
+    >
       <a
         href="#contenu-principal"
         className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
@@ -117,7 +138,7 @@ export function PublicLayout() {
               <span>Installer l’app</span>
             </Button>
 
-            <ThemeToggle />
+            {!surAccueil && <ThemeToggle />}
 
             {isAuthenticated ? (
               <Button asChild size="sm">
