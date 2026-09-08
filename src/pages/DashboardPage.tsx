@@ -1,7 +1,7 @@
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { ManagerDashboard } from '@/components/dashboard/ManagerDashboard';
 import { OwnerDashboard } from '@/components/dashboard/OwnerDashboard';
 import { TechnicianDashboard } from '@/components/dashboard/TechnicianDashboard';
-import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { usePermission, useCurrentOrganization } from '@/features/organizations';
 
 /**
@@ -29,7 +29,10 @@ export default function DashboardPage() {
   const { role } = usePermission();
 
   if (status === 'loading') {
-    return <LoadingScreen label="Ouverture de votre espace…" />;
+    // Un squelette plutot qu'un spinner : la mise en page est deja a sa place,
+    // donc rien ne saute quand le vrai contenu arrive. Voir `DashboardSkeleton`
+    // pour ce qu'il peut dessiner — et ce qu'il ne peut pas.
+    return <DashboardSkeleton />;
   }
 
   if (role === 'owner' || role === 'admin') {
