@@ -1,7 +1,16 @@
 import { COMPACT_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
 
 /** Fonds des deux thèmes signature — doivent suivre `--background` d'`index.css`. */
-export const BROWSER_BAR_COLOR = { light: '#eef2f5', dark: '#0b1117' } as const;
+/*
+  CES DEUX VALEURS SONT LES FONDS `--background` DES BLOCS `:root` ET `.dark`.
+
+  Le sombre valait encore `#0b1117`, l'ancienne ardoise, alors que la palette
+  est passee au marine le 07/09 : la barre du navigateur mobile restait donc
+  d'une teinte que le produit n'utilise plus nulle part.
+
+  `theme-presets.test.ts` compare desormais ces deux valeurs aux blocs CSS.
+*/
+export const BROWSER_BAR_COLOR = { light: '#eef2f5', dark: '#0e1b36' } as const;
 
 /**
  * Teinte la barre du navigateur mobile d'après le thème RÉELLEMENT appliqué.

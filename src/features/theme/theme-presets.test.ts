@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { ATELIER_NUIT_PRESET, DEFAULT_THEME_PRESET, THEME_PRESETS } from './theme-presets';
+import { BROWSER_BAR_COLOR } from './theme-script';
 
 /**
  * Les préréglages signature doivent refléter les blocs CSS, à la valeur près.
@@ -112,6 +113,22 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
         (variables['--surface'] ?? '').toLowerCase(),
       );
     }
+  });
+
+  it('teinte la barre du navigateur avec le fond réellement utilisé', () => {
+    /*
+      `BROWSER_BAR_COLOR` alimente `<meta name="theme-color">`, la teinte que
+      les navigateurs mobiles donnent à leur propre barre. Elle doit valoir le
+      fond de page, sinon la barre annonce une couleur que l'application
+      n'emploie plus.
+
+      C'est arrivé : le sombre y est resté à `#0b1117`, l'ancienne ardoise,
+      pendant que la palette passait au marine. Rien ne le signalait — la barre
+      appartient au navigateur, aucune capture d'écran de l'application ne la
+      montre.
+    */
+    expect(BROWSER_BAR_COLOR.light.toLowerCase()).toBe(clair['--background']?.toLowerCase());
+    expect(BROWSER_BAR_COLOR.dark.toLowerCase()).toBe(sombre['--background']?.toLowerCase());
   });
 
   it('donne un identifiant distinct à chaque préréglage', () => {
