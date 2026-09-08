@@ -13,6 +13,14 @@ import { cn } from '@/lib/cn';
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
 
+/** Vitrine et tunnel d'inscription : voir le commentaire dans `PublicLayout`. */
+const PAGES_EN_CLAIR: readonly string[] = [
+  ROUTES.home,
+  ROUTES.login,
+  ROUTES.register,
+  ROUTES.forgotPassword,
+];
+
 const MARKETING_LINKS = [
   { to: ROUTES.features, label: 'Fonctionnalités' },
   { to: ROUTES.tools, label: 'Outils' },
@@ -57,20 +65,24 @@ export function PublicLayout() {
   const isAuthenticated = status === 'authenticated';
 
   /*
-    L'ACCUEIL GARDE SON APPARENCE CLAIRE, ET LA BASCULE Y DISPARAÎT.
+    LA VITRINE ET LE TUNNEL D'INSCRIPTION RESTENT EN CLAIR.
 
-    C'est une vitrine : elle doit se présenter de la même façon à tout le
-    monde. La bascule est retirée là parce qu'elle n'y ferait plus rien —
-    laisser un bouton qui ne change rien apprend à se méfier des autres.
+    Ces quatre pages s'adressent à des gens qui ne connaissent pas encore le
+    produit : elles doivent se présenter de la même façon à tout le monde. La
+    bascule y disparaît parce qu'elle n'y ferait plus rien — laisser un bouton
+    qui ne change rien apprend à se méfier des autres.
+
+    Le reste des pages publiques — tarifs, fonctionnalités, tutoriels, mentions
+    légales — suit le thème choisi, bascule comprise.
 
     Attention en relisant l'en-tête de ce fichier : une version antérieure
     verrouillait l'accueil en SOMBRE et masquait la bascule pour dissimuler le
-    verrou. Ce n'est pas ce qui est fait ici — le verrou est assumé et porte
-    sur le clair, et la bascule reste visible sur toutes les autres pages
-    publiques, où le thème s'applique normalement.
+    verrou. Ce n'est pas ce qui est fait ici — le verrou est assumé, il porte
+    sur le clair, et il est annoncé par l'absence de bouton plutôt que caché
+    derrière lui.
   */
   const { pathname } = useLocation();
-  const surAccueil = pathname === ROUTES.home;
+  const pageEnClair = PAGES_EN_CLAIR.includes(pathname);
 
   // La bordure de l'en-tête n'apparaît qu'une fois le contenu passé dessous :
   // posée d'emblée, elle coupe la page en deux au premier coup d'œil.
@@ -88,7 +100,7 @@ export function PublicLayout() {
     <div
       className={cn(
         'bg-background text-foreground flex min-h-dvh flex-col',
-        surAccueil && 'theme-jour-verrouille',
+        pageEnClair && 'theme-jour-verrouille',
       )}
     >
       <a
@@ -138,7 +150,7 @@ export function PublicLayout() {
               <span>Installer l’app</span>
             </Button>
 
-            {!surAccueil && <ThemeToggle />}
+            {!pageEnClair && <ThemeToggle />}
 
             {isAuthenticated ? (
               <Button asChild size="sm">

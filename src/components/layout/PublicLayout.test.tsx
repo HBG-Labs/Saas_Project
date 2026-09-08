@@ -36,8 +36,13 @@ vi.mock('@/features/theme', () => ({
  * ─────────────────────────────────────────────────────────────────────────────
  */
 describe('PublicLayout', () => {
-  it('verrouille l’accueil en clair et y masque la bascule', () => {
-    const { container } = renderWithProviders(<PublicLayout />, { route: ROUTES.home });
+  it.each([
+    ['l’accueil', ROUTES.home],
+    ['la connexion', ROUTES.login],
+    ['l’inscription', ROUTES.register],
+    ['le mot de passe oublié', ROUTES.forgotPassword],
+  ])('verrouille %s en clair et y masque la bascule', (_nom, route) => {
+    const { container } = renderWithProviders(<PublicLayout />, { route });
 
     expect(container.querySelector('.theme-jour-verrouille')).not.toBeNull();
     expect(screen.queryByLabelText('Changer de thème')).not.toBeInTheDocument();
