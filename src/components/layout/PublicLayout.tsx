@@ -84,8 +84,9 @@ export function PublicLayout() {
   const { pathname } = useLocation();
   const pageEnClair = PAGES_EN_CLAIR.includes(pathname);
 
-  // La bordure de l'en-tête n'apparaît qu'une fois le contenu passé dessous :
-  // posée d'emblée, elle coupe la page en deux au premier coup d'œil.
+  // Le défilement ne pilote plus l'apparition de la bordure — voir le
+  // commentaire de l'en-tête — mais l'opacité et le flou de fond : la barre
+  // devient translucide dès que du contenu passe dessous.
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -126,9 +127,25 @@ export function PublicLayout() {
             `--surface` vaut blanc, puisque `theme-jour-verrouille` redeclare
             la palette claire.
           */
-          isScrolled
-            ? 'border-border bg-surface/95 border-b backdrop-blur-md'
-            : 'bg-surface border-b border-transparent',
+          'border-border border-b',
+          /*
+            LA BORDURE EST PERMANENTE, ET C'EST UN CHANGEMENT ASSUME.
+
+            Elle n'apparaissait qu'au defilement. La raison consignee tenait :
+            « posee d'emblee, elle coupe la page en deux au premier coup
+            d'oeil » — vrai quand la barre etait BLANCHE sur une page presque
+            blanche, ou un trait etait la seule chose a voir.
+
+            Ce n'est plus le cas. La barre porte maintenant `--surface`, une
+            teinte distincte du fond de page. Le bloc existe deja a l'oeil ;
+            en sombre, l'ecart entre `#162040` et `#0e1b36` est si faible que
+            la barre flottait sans limite basse. La bordure ne coupe plus
+            rien, elle termine ce qui commencait deja.
+
+            L'en-tete applicatif (`AppLayout`) porte la sienne en permanence
+            depuis toujours : les deux barres se comportent enfin pareil.
+          */
+          isScrolled ? 'bg-surface/95 backdrop-blur-md' : 'bg-surface',
         )}
       >
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
