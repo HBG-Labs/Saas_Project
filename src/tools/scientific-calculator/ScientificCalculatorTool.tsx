@@ -182,7 +182,17 @@ export default function ScientificCalculatorTool() {
   return (
     <div className="grid gap-6 lg:grid-cols-3 max-w-full">
       {/* Panneau Principal de la Calculatrice */}
-      <Card className="lg:col-span-2 shadow-modal border-border/80 overflow-hidden flex flex-col">
+      {/*
+        PAS D'`overflow-hidden` SUR CETTE CARTE.
+
+        Il servait a rogner les coins arrondis. Mais un ancetre qui coupe le
+        debordement devient le conteneur de defilement de tout ce qu'il
+        contient : l'ecran `sticky` juste en dessous ne collait donc a rien et
+        sortait par le haut des qu'on descendait vers le pave — mesure a
+        -260 px. Les enfants portent deja leurs propres arrondis, il n'y avait
+        rien a rogner.
+      */}
+      <Card className="lg:col-span-2 shadow-modal border-border/80 flex flex-col">
         <CardHeader className="pb-3 border-b border-border/40 px-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2 min-w-0">
@@ -235,8 +245,20 @@ export default function ScientificCalculatorTool() {
         </CardHeader>
 
         <CardContent className="p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 flex-1">
-          {/* Écran Cockpit Haute Précision */}
-          <div className="bg-surface-sunken/90 dark:bg-surface-sunken rounded-2xl border border-border/80 p-3.5 sm:p-4 shadow-inner">
+          {/*
+            L'ECRAN SUIT LE DEFILEMENT.
+
+            Sur un telephone, l'affichage et le pave numerique ne tiennent pas
+            ensemble a l'ecran : descendre jusqu'aux touches faisait sortir le
+            resultat par le haut, et l'on tapait a l'aveugle. C'est le defaut
+            le plus grave possible pour une calculatrice — elle n'a qu'un seul
+            travail, montrer ce qu'elle calcule.
+
+            `sticky top-14` le colle juste sous l'en-tete applicatif, qui est
+            `fixed` et haut de 3.5rem. Le fond passe en opacite pleine : a 90 %,
+            le contenu qui defile dessous restait lisible au travers.
+          */}
+          <div className="bg-surface-sunken sticky top-14 z-10 rounded-2xl border border-border/80 p-3.5 shadow-inner sm:p-4">
             {/* Ligne expression supérieure avec scroll doux */}
             <div className="flex items-center justify-between gap-2 text-subtle-foreground font-mono text-xs min-h-[1.5rem]">
               <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground/90 shrink-0">
