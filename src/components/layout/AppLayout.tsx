@@ -51,7 +51,22 @@ export function AppLayout() {
   const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
   useMigrateLegacyAvatar();
   const { isInstallable, installPwa } = usePwaInstall();
+  /*
+    TROIS ETATS, PAS DEUX.
+
+    `status` vaut `loading` le temps que la session soit restauree. Traiter cet
+    etat comme « non connecte » faisait afficher la branche VISITEUR — bouton
+    « S'inscrire » compris — a quelqu'un qui est deja membre. Mesure au
+    demarrage a froid : cet ecran reste 1,1 seconde avant de basculer.
+
+    Ce n'est pas qu'inesthetique : la premiere chose que voit l'utilisateur en
+    ouvrant son application, c'est une invitation a creer un compte. Il en
+    conclut qu'il a ete deconnecte.
+
+    Tant que la session est inconnue, on n'affiche NI l'un NI l'autre.
+  */
   const isAuthenticated = status === 'authenticated';
+  const sessionInconnue = status === 'loading';
   const displayName = displayNameOf(user);
 
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
@@ -280,6 +295,13 @@ export function AppLayout() {
                   Se déconnecter
                 </DropdownItem>
               </Dropdown>
+            ) : sessionInconnue ? (
+              // Une pastille neutre, le temps de savoir. Elle occupe la place
+              // de l'avatar pour que rien ne se deplace ensuite.
+              <div
+                className="bg-surface-hover size-9 shrink-0 animate-pulse rounded-full"
+                aria-hidden="true"
+              />
             ) : (
               <div className="flex items-center gap-2">
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
