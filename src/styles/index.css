@@ -87,31 +87,29 @@
   }
 
   .dark {
-    /* --- ATELIER NUIT ----------------------------------------------------
-       Pour le local technique et la camionnette de nuit — pas l'apparence par
-       défaut. Ce n'est pas une inversion automatique du mode clair : en fond
-       sombre l'élévation passe par la clarté de surface, et le bleu de tracé
-       est éclairci pour rester lisible en texte comme en aplat.
+    /* --- ATELIER NUIT — Style cockpit REZO360 -------------------------
+       Fond bleu nuit profond, surfaces en marine élevé, accents lime.
+       Inspiré de la section Tarifs en mode sombre.
        -------------------------------------------------------------------- */
-    --background: #0b1117;
-    --surface: #121b23;
-    --surface-raised: #18242e;
-    --surface-sunken: #070c11;
-    --surface-subtle: #0f171f;
-    --surface-hover: #1c2a35;
+    --background: #0e1b36;
+    --surface: #162040;
+    --surface-raised: #1c2a52;
+    --surface-sunken: #0a1228;
+    --surface-subtle: #121a34;
+    --surface-hover: #1f2f5e;
 
-    --border: #22303a;
-    --border-strong: #33444f;
+    --border: #243566;
+    --border-strong: #324880;
 
-    --foreground: #e8eff4;
-    --muted-foreground: #9baab6;
-    --subtle-foreground: #6b7c87;
+    --foreground: #f0f4ff;
+    --muted-foreground: #8fa3c8;
+    --subtle-foreground: #5d7499;
 
     --primary: #7fa0ff;
     --primary-hover: #9db6ff;
     --primary-active: #6288f5;
-    --primary-foreground: #0b1117;
-    --primary-subtle: #1a2540;
+    --primary-foreground: #0e1b36;
+    --primary-subtle: #1a2d58;
 
     --brand-night: #0a1b43;
     --brand-blue: #1b44c8;
@@ -120,14 +118,13 @@
     --signal-lime: #b9f442;
 
     --accent: #6fb0f0;
-    --accent-foreground: #0b1117;
-    --accent-subtle: #14293d;
+    --accent-foreground: #0e1b36;
+    --accent-subtle: #162d4a;
 
     /*
        En sombre, les couleurs sémantiques sont volontairement claires pour
-       rester lisibles en TEXTE sur le fond ardoise. Conséquence : ce qui est
-       posé DESSUS, en aplat, doit être sombre. Un `text-white` sur ces fonds
-       tombait à 2,1:1 — mesuré, et sous le minimum WCAG.
+       rester lisibles en TEXTE sur le fond marine. Conséquence : ce qui est
+       posé DESSUS, en aplat, doit être sombre.
     */
     --success: #3fc792;
     --success-subtle: #0f2a21;
@@ -145,14 +142,14 @@
     --error-foreground: #250c07;
 
     --info: #7fa0ff;
-    --info-subtle: #1a2540;
+    --info-subtle: #1a2d58;
     --info-border: #33477a;
 
     --ring: #7fa0ff;
 
-    --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 8px -2px rgb(0 0 0 / 0.35);
-    --shadow-overlay: 0 8px 20px -4px rgb(0 0 0 / 0.5);
-    --shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.6);
+    --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 2px 8px -2px rgb(0 0 0 / 0.4);
+    --shadow-overlay: 0 8px 20px -4px rgb(0 0 0 / 0.55);
+    --shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.65);
 
     color-scheme: dark;
   }
