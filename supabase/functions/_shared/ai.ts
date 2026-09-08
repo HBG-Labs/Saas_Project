@@ -25,7 +25,30 @@ export const AI_MODEL = 'gpt-5.6-luna';
 export const AI_EMBEDDING_MODEL = 'text-embedding-3-small';
 export const AI_EMBEDDING_DIMENSIONS = 1536;
 export const AI_TOP_K = 8;
-export const AI_SIMILARITY_THRESHOLD = 0.70;
+/*
+  SEUIL DE SIMILARITE — MESURE, PAS INTUITION.
+
+  Il valait 0.70, et rien ne remontait jamais : l'assistant repondait « aucun
+  document indexe n'est disponible » alors que les documents etaient bien
+  indexes, fragments et vecteurs compris.
+
+  La mesure qui tranche : les DEUX FRAGMENTS D'UNE MEME FACTURE — meme
+  document, meme vocabulaire, meme mise en page — obtiennent entre eux une
+  similarite de 0.7146. A peine au-dessus du seuil.
+
+  Une question d'utilisateur est formulee tout autrement que le texte qu'elle
+  cherche : « combien ai-je paye ? » face a « INVOICE / Supabase Pte. Ltd. ».
+  Si deux moities du meme document se qualifient de justesse, une question ne
+  se qualifie jamais. Le seuil ne filtrait pas le bruit, il coupait tout.
+
+  0.30 laisse passer ce qui est reellement proche sans ouvrir la porte au
+  hors-sujet : le classement par distance et `AI_TOP_K` font le tri, le seuil
+  ne sert qu'a ne rien injecter quand rien ne correspond.
+
+  Avant de le relever, refaire la mesure ci-dessus. Un seuil trop haut ne
+  produit aucune erreur : il rend seulement l'assistant amnesique.
+*/
+export const AI_SIMILARITY_THRESHOLD = 0.3;
 export const AI_MAX_OUTPUT_TOKENS = 1200;
 
 /** Tarif `gpt-5.6-luna`, en dollars par million de tokens. */

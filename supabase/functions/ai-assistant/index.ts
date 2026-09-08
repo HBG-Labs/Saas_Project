@@ -102,6 +102,7 @@ Deno.serve(async (req: Request) => {
       quotesRes,
       customersRes,
       leavesRes,
+      notesRes,
       orgRes,
     ] = await Promise.all([
       admin
@@ -162,6 +163,27 @@ Deno.serve(async (req: Request) => {
         .eq('organization_id', organizationId)
         .eq('status', 'approved')
         .limit(30),
+      /*
+        LE BLOC-NOTES EST PERSONNEL, PAS COLLECTIF.
+
+        La policy de `notes` est `user_id = auth.uid()` : ces notes ne sont
+        partagees avec personne, pas meme avec le reste de l'organisation.
+        Cette fonction interroge la base avec la cle de SERVICE, qui ignore la
+        RLS — le filtre par utilisateur doit donc etre pose ici, a la main.
+        L'oublier ferait remonter les notes privees d'un collegue dans les
+        reponses d'un autre, sans qu'aucune erreur ne le signale.
+
+        Le filtre d'organisation s'y ajoute : une note ecrite chez un autre
+        employeur n'a rien a faire dans ce contexte-ci.
+      */
+      admin
+        .from('notes')
+        .select('id, title, content, category, is_pinned, updated_at')
+        .eq('user_id', userId)
+        .eq('organization_id', organizationId)
+        .order('is_pinned', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(25),
       admin
         .from('organizations')
         .select('id, name, slug, max_members, industry')
@@ -180,6 +202,7 @@ Deno.serve(async (req: Request) => {
     const quotes = quotesRes.data ?? [];
     const customers = customersRes.data ?? [];
     const leaves = leavesRes.data ?? [];
+    const notes = notesRes.data ?? [];
     const organization = orgRes.data ?? null;
 
     // Analyse approfondie des entités
@@ -284,6 +307,21 @@ Données en direct de l'organisation "${organization?.name || 'REZO360'}" :
   * Liste : ${customers.slice(0, 8).map((c: any) => `${c.name} (${c.city || 'N/C'})`).join(', ') || 'Aucun client'}
 
 - Planning & Congés (${leaves.length} congés approuvés).
+
+- Bloc-notes personnel de l'utilisateur (${notes.length} note(s)) :
+${
+  notes.length === 0
+    ? "  * Aucune note. Ne pas inventer de contenu : dire que le bloc-notes est vide."
+    : notes
+        .map(
+          (n: any) =>
+            `  * [${n.is_pinned ? 'épinglée' : 'note'}${n.category ? ' · ' + n.category : ''}] ${n.title}\n    ${String(n.content ?? '').replace(/\s+/g, ' ').slice(0, 700)}`,
+        )
+        .join('\n')
+}
+  Ces notes appartiennent à l'utilisateur qui pose la question, à lui seul.
+  Tu peux les résumer, en tirer un compte rendu, les réorganiser ou en extraire
+  des actions. Cite le titre de la note dont provient chaque élément.
 `;
 
     // 4. Détection intelligente des intentions et actions associées
