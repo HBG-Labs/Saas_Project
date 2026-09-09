@@ -90,30 +90,61 @@ const FINAL_POINTS = [
   { label: 'Matériel relié', icon: PackageSearch },
 ] as const;
 
+/**
+ * Quatre faits vérifiables, à la place de quatre adjectifs.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE QUI MANQUE ICI, ET POURQUOI ON NE L'INVENTE PAS
+ *
+ * La confiance se gagne normalement par des témoignages, des logos clients et
+ * des compteurs d'usage. REZO360 se lance : il n'en a aucun de vrai, et en
+ * fabriquer serait mentir à des artisans à qui l'on demande ensuite leur carte
+ * bancaire.
+ *
+ * Reste ce qui est VÉRIFIABLE par le visiteur lui-même. « Infrastructure
+ * évolutive » et « services reconnus » ne l'étaient pas : ce sont des
+ * adjectifs, et n'importe quel site peut les écrire. Un SIRET se recherche sur
+ * l'annuaire des entreprises en dix secondes ; c'est ce qui distingue un
+ * éditeur réel d'une page montée en un week-end.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LA LOCALISATION DES DONNÉES EST EXACTE, PAS FLATTEUSE
+ *
+ * « Hébergement européen » aurait mieux sonné. C'est faux : le projet tourne en
+ * `ca-central-1`, à Montréal — vérifié auprès de l'API Supabase, et consigné
+ * dans `config/legal.ts` → `SOUS_TRAITANTS`.
+ *
+ * Le Canada bénéficie d'une décision d'adéquation de la Commission européenne,
+ * ce qui rend le transfert licite. Le dire ainsi est à la fois honnête et
+ * rassurant ; l'annoncer « européen » serait une erreur de fait sur un point
+ * que l'article 13 du RGPD rend opposable — un client professionnel recopie
+ * cette ligne dans son propre registre de traitements.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 const INFRASTRUCTURE_POINTS = [
   {
-    title: 'Données protégées',
-    detail: 'Accès sécurisé et permissions contrôlées',
+    title: 'Éditeur identifié',
+    detail: 'HBG Labs, entreprise française — SIRET 109 198 440 00017',
+    icon: Handshake,
+    iconClassName: 'bg-orange-50 text-orange-600',
+  },
+  {
+    title: 'Vos données au Canada',
+    detail: 'Sous décision d’adéquation de la Commission européenne',
     icon: ShieldCheck,
     iconClassName: 'bg-blue-50 text-blue-600',
   },
   {
-    title: 'Infrastructure évolutive',
-    detail: 'Conçue pour accompagner votre croissance',
-    icon: Zap,
-    iconClassName: 'bg-emerald-50 text-emerald-600',
-  },
-  {
     title: 'Paiements sécurisés',
-    detail: 'Transactions traitées par Stripe',
+    detail: 'Transactions traitées par Stripe, jamais par nous',
     icon: LockKeyhole,
     iconClassName: 'bg-violet-50 text-violet-600',
   },
   {
-    title: 'Services reconnus',
-    detail: 'Supabase, Vercel et Stripe',
-    icon: Handshake,
-    iconClassName: 'bg-orange-50 text-orange-600',
+    title: 'Sans engagement',
+    detail: 'Résiliable en deux clics depuis votre espace',
+    icon: Zap,
+    iconClassName: 'bg-emerald-50 text-emerald-600',
   },
 ] as const;
 
@@ -334,6 +365,120 @@ function ProductCapture({
   );
 }
 
+/**
+ * Cinq scènes du quotidien, et ce qu'elles deviennent.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * L'OBJECTION QUI N'ÉTAIT TRAITÉE NULLE PART
+ *
+ * La page expliquait très bien ce que fait REZO360. Elle ne répondait jamais à
+ * la question que se pose vraiment un artisan devant un logiciel de gestion :
+ * « pourquoi changer, puisque je m'en sors ? »
+ *
+ * C'est l'objection numéro un, et elle précède toutes les autres. Tant qu'elle
+ * tient, aucune fonctionnalité ne convainc — elles ressemblent à des solutions
+ * pour un problème qu'on n'a pas.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * NE PAS MOQUER LA MÉTHODE ACTUELLE
+ *
+ * Le carnet, le tableur et WhatsApp ne sont pas des erreurs : ce sont des
+ * outils qui MARCHENT, et qui ont porté l'entreprise jusqu'ici. Une page qui
+ * les tourne en ridicule vexe exactement la personne qu'elle veut convaincre —
+ * elle lui dit qu'elle travaille mal.
+ *
+ * La colonne de gauche décrit donc des situations, sans jugement. Ce qui les
+ * disqualifie n'est pas leur bêtise, c'est leur coût : la même information
+ * ressaisie trois fois, et la paperasse repoussée au dimanche.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DES SCÈNES, PAS DES FONCTIONNALITÉS
+ *
+ * « Gestion centralisée des documents » ne reconnaît personne. « Les photos du
+ * chantier dorment dans une conversation WhatsApp » fait dire « c'est
+ * exactement ça ». C'est cette reconnaissance qui fait lire la suite.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const SCENES_QUOTIDIEN = [
+  {
+    avant: 'L’intervention est notée sur un carnet, retapée dans un tableur, puis ressaisie une troisième fois pour la facture.',
+    apres: 'Elle est saisie une fois sur le terrain, et suit d’elle-même jusqu’à la facture.',
+  },
+  {
+    avant: 'Les photos du chantier dorment dans une conversation WhatsApp, introuvables six mois plus tard.',
+    apres: 'Elles restent attachées à l’intervention, avec le compte rendu et la signature du client.',
+  },
+  {
+    avant: '« Vous passez quand ? » — il faut appeler le technicien pour savoir où il en est.',
+    apres: 'Le planning montre l’état de chaque mission, sans déranger personne.',
+  },
+  {
+    avant: 'Le devis se refait de mémoire, et les prix varient d’un chantier à l’autre.',
+    apres: 'Il reprend vos prestations déjà chiffrées, au même tarif qu’en janvier.',
+  },
+  {
+    avant: 'Le dimanche soir passe dans la paperasse en retard.',
+    apres: 'Le compte rendu part du chantier, avant même de remonter dans le camion.',
+  },
+] as const;
+
+function MethodeActuelleSection() {
+  return (
+    <section className="bg-surface border-border border-y py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <ChapterLabel number="00">Avant de changer d’outil</ChapterLabel>
+          <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
+            Votre méthode actuelle fonctionne. C’est ce qu’elle vous coûte qui pose problème.
+          </h2>
+          <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
+            Le carnet, le tableur et les photos dans WhatsApp ont porté votre entreprise jusqu’ici.
+            Ils ne tiennent plus dès que l’activité grossit — parce qu’ils font ressaisir la même
+            information plusieurs fois, et repoussent le reste à plus tard.
+          </p>
+        </div>
+
+        <div className="border-border mt-10 overflow-hidden rounded-2xl border sm:mt-14">
+          {/* En-têtes de colonnes, sur écran large seulement : sur téléphone,
+              chaque paire se lit de haut en bas et les intitulés répétés
+              alourdiraient sans rien clarifier. */}
+          <div className="border-border bg-surface-sunken hidden border-b sm:grid sm:grid-cols-2">
+            <div className="text-muted-foreground px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase">
+              Aujourd’hui
+            </div>
+            <div className="border-border text-primary border-l px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase">
+              Avec REZO360
+            </div>
+          </div>
+
+          <ul className="divide-border divide-y">
+            {SCENES_QUOTIDIEN.map((scene) => (
+              <li key={scene.avant} className="grid sm:grid-cols-2">
+                <div className="text-muted-foreground flex gap-3 px-5 py-4 text-sm leading-relaxed">
+                  <span
+                    className="bg-muted-foreground/30 mt-2 size-1.5 shrink-0 rounded-full"
+                    aria-hidden="true"
+                  />
+                  {scene.avant}
+                </div>
+                <div className="border-border text-foreground bg-primary/[0.04] flex gap-3 border-t px-5 py-4 text-sm leading-relaxed font-medium sm:border-t-0 sm:border-l">
+                  <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  {scene.apres}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-muted-foreground mt-6 text-sm">
+          Rien à réinstaller, rien à migrer le premier jour : vous commencez par une intervention, et
+          vous voyez.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function InfrastructureSection() {
   return (
     <section
@@ -360,14 +505,14 @@ function InfrastructureSection() {
             id="infrastructure-title"
             className="text-brand-night text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl"
           >
-            Une infrastructure{' '}
+            Qui est{' '}
             <span className="from-primary bg-gradient-to-r to-blue-500 bg-clip-text text-transparent">
-              moderne et fiable
+              derrière REZO360
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            REZO360 s’appuie sur des technologies reconnues pour offrir une expérience rapide,
-            sécurisée et disponible au quotidien.
+            Une entreprise identifiée, des données localisées, des paiements confiés à Stripe. Rien
+            de tout cela n’est à nous croire sur parole : chacun de ces points se vérifie.
           </p>
         </div>
 
@@ -515,7 +660,29 @@ export default function LandingPage() {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:min-h-[33.5rem] lg:px-8 xl:min-h-[clamp(33.5rem,41.625vw,44.71875rem)]">
           <div className="relative z-10 max-w-xl py-10 sm:py-12 lg:w-[43%] lg:pt-14 lg:pb-0">
-            <h1 className="text-brand-night max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
+            {/*
+              LA DOULEUR AVANT LA PROMESSE.
+
+              La page ouvrait directement sur la solution. Le visiteur venu
+              d'une publicité qui lui parlait de son problème — la ressaisie,
+              les photos perdues, la paperasse du dimanche soir — devait faire
+              lui-même le raccord entre ce qu'il venait de lire et ce qu'il
+              découvrait. Beaucoup ne le font pas : ils repartent.
+
+              Une seule phrase, interrogative, et volontairement CONCRÈTE. « Vos
+              process sont-ils optimaux ? » ne reconnaît personne ; un carnet,
+              WhatsApp et un dimanche soir, si. C'est la scène qu'il faut, pas
+              le concept.
+
+              Placée en amorce plutôt qu'en paragraphe : elle tient sur une
+              ligne, ne repousse donc presque pas l'appel à l'action, et le
+              titre juste en dessous y répond immédiatement.
+            */}
+            <p className="text-primary text-center text-sm font-semibold tracking-tight text-balance sm:text-base lg:text-left">
+              Le devis sur un carnet, les photos dans WhatsApp, la facture le dimanche soir ?
+            </p>
+
+            <h1 className="text-brand-night mt-2 max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
               Pilotez votre activité de terrain en toute simplicité
             </h1>
 
@@ -590,6 +757,10 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      <ScrollRevealSection>
+        <MethodeActuelleSection />
+      </ScrollRevealSection>
 
       <ScrollRevealSection>
         <section className="bg-brand-night relative overflow-hidden py-16 text-white sm:py-24">

@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Eye, EyeOff, Sparkles, Users } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { type PlanId, PRICING_PLANS } from '@/config/pricing';
@@ -22,7 +21,7 @@ export default function RegisterPage() {
   const planParam = searchParams.get('plan') as PlanId | null;
 
   const initialPlan = PRICING_PLANS.find((p) => p.id === planParam)?.id ?? 'free';
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>(initialPlan);
+  const planVise: PlanId = initialPlan;
 
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -30,7 +29,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
-  const activePlanInfo = PRICING_PLANS.find((p) => p.id === selectedPlan) ?? PRICING_PLANS[0]!;
+  const activePlanInfo = PRICING_PLANS.find((p) => p.id === planVise) ?? PRICING_PLANS[0]!;
+  const viseUnePayante = activePlanInfo.priceMonthly > 0;
 
   const {
     register,
@@ -128,97 +128,45 @@ export default function RegisterPage() {
       }
     >
       <div className="space-y-4">
-        {/* Sélecteur de formule */}
-        <div className="space-y-2">
-          {/* Intitulé de GROUPE, pas d'un contrôle : le choix se fait sur des
-              cartes cliquables, et il contient lui-même un lien. Un `<label>`
-              promettrait une association qui n'existe pas — et rendrait le lien
-              inatteignable au clavier dans certains lecteurs d'écran. */}
-          <div className="text-foreground flex items-center justify-between text-xs font-semibold">
-            <span>Choisissez votre formule :</span>
+        {/*
+          LE CHOIX DE FORMULE A QUITTÉ CE FORMULAIRE.
+
+          Il ne décidait rien. `selectedPlan` n'était jamais transmis à
+          `signUp` : quelle que soit la carte cliquée, le compte créé était
+          exactement le même. Le visiteur arbitrait donc entre cinq offres au
+          moment le plus coûteux du tunnel — juste avant de valider — pour un
+          choix qui ne tenait pas au-delà de l'écran.
+
+          Ce qui subsiste est un RAPPEL, pas une décision : la formule visée
+          quand on arrive depuis la page des tarifs (`?plan=`), et le fait que
+          l'inscription elle-même ne coûte rien. Le vrai choix se fait dans le
+          produit, une fois qu'on a vu à quoi il ressemble — c'est-à-dire au
+          moment où l'on peut le faire en connaissance de cause.
+        */}
+        <div className="border-border/80 bg-surface/60 space-y-1.5 rounded-xl border p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-foreground flex items-center gap-1.5 text-xs font-bold">
+              <Sparkles className="text-primary size-3.5" aria-hidden="true" />
+              Inscription gratuite
+            </span>
             <Link to={ROUTES.pricing} className="text-primary text-3xs font-normal hover:underline">
-              Voir le comparatif ↗
+              Voir les formules ↗
             </Link>
           </div>
-
-          {/* L'essai était accordé par `app.start_organization_trial` sans que
-              rien ne l'annonce. Un avantage que le visiteur ignore ne le
-              décide pas — et il découvrait une échéance dont on ne lui avait
-              jamais parlé. */}
-          {/* Message explicatif dynamique selon la formule sélectionnée */}
-          {activePlanInfo.priceMonthly === 0 ? (
-            <p className="text-2xs text-muted-foreground">
-              La formule <strong className="text-foreground">Free</strong> est 100% gratuite à vie,
-              sans carte bancaire. Vous accédez immédiatement aux calculateurs et outils techniques.
-            </p>
-          ) : (
-            <p className="text-2xs text-muted-foreground">
-              <strong className="text-foreground">14 jours d’essai offerts</strong> sur la formule{' '}
-              {activePlanInfo.name} (0 € débité aujourd’hui, carte bancaire requise pour valider
-              l’accès). Annulable à tout moment.
-            </p>
-          )}
-
-          <div className="bg-surface-sunken border-border/80 grid grid-cols-2 gap-1.5 rounded-xl border p-1 sm:grid-cols-5">
-            {PRICING_PLANS.map((plan) => {
-              const isSelected = selectedPlan === plan.id;
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  onClick={() => setSelectedPlan(plan.id)}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1.5 py-2 text-center transition-all ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
-                      : 'bg-surface/50 border-border/40 text-muted-foreground hover:text-foreground hover:bg-surface'
-                  }`}
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="text-2xs font-semibold">{plan.name}</span>
-                    {plan.popular ? (
-                      <span className="text-3xs text-warning font-black">★</span>
-                    ) : null}
-                  </div>
-                  <span
-                    className={`font-mono text-xs font-extrabold tracking-tight tabular-nums ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}
-                  >
-                    {plan.priceMonthly === 0 ? 'Gratuit' : `${plan.priceMonthly}€/m`}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Récapitulatif dynamique de la formule choisie */}
-          <div className="border-border/80 bg-surface/60 text-2xs space-y-1 rounded-xl border p-2.5">
-            <div className="flex items-center justify-between">
-              <div className="text-foreground flex items-center gap-1.5 font-bold">
-                <Sparkles className="text-primary size-3" />
-                <span>Formule {activePlanInfo.name}</span>
-                {activePlanInfo.popular ? (
-                  <Badge variant="primary" className="text-3xs px-1 py-0">
-                    Recommandé
-                  </Badge>
-                ) : null}
-              </div>
-              <span className="text-foreground font-mono font-bold">
-                {activePlanInfo.priceMonthly === 0
-                  ? '0 €'
-                  : `${activePlanInfo.priceMonthly} € / mois`}
-              </span>
-            </div>
-            <p className="text-muted-foreground flex items-center gap-1 leading-relaxed">
-              <Users className="text-muted-foreground size-3 shrink-0" />
-              <span>
-                {activePlanInfo.includedUsers} utilisateur
-                {activePlanInfo.includedUsers > 1 ? 's inclus' : ' inclus'}
-                {activePlanInfo.additionalUserPriceMonthly > 0
-                  ? ' (+5 €/user supp.)'
-                  : ' (monocompte strict)'}
-                .
-              </span>
-            </p>
-          </div>
+          <p className="text-2xs text-muted-foreground leading-relaxed">
+            {viseUnePayante ? (
+              <>
+                Vous pourrez activer la formule{' '}
+                <strong className="text-foreground">{activePlanInfo.name}</strong> et ses 14 jours
+                d’essai depuis votre espace. Aucun paiement à cette étape.
+              </>
+            ) : (
+              <>
+                Aucune carte bancaire demandée. Vous entrez immédiatement dans votre espace, et
+                choisirez une formule plus tard si vous en avez besoin.
+              </>
+            )}
+          </p>
         </div>
 
         <FormError error={submitError} />
@@ -317,15 +265,27 @@ export default function RegisterPage() {
             isLoading={isSubmitting}
             disabled={isGoogleSubmitting}
           >
-            {activePlanInfo.priceMonthly === 0
-              ? 'Créer mon compte gratuit'
-              : `Démarrer mon essai ${activePlanInfo.name} (0 €)`}
+            {/*
+              UN SEUL LIBELLE, PARCE QU'IL N'Y A QU'UNE SEULE ACTION.
+
+              Le bouton annoncait « Démarrer mon essai Pro (0 €) » quand une
+              formule payante etait selectionnee. C'etait faux a deux titres :
+              aucun essai ne demarrait a cet instant, et la formule choisie
+              n'etait meme pas transmise. Promettre un acte que le clic
+              n'accomplit pas est le plus sur moyen de perdre la confiance
+              gagnee sur la page precedente.
+            */}
+            Créer mon compte gratuit
           </Button>
 
           <p className="text-3xs text-muted-foreground text-center">
-            {activePlanInfo.priceMonthly === 0
-              ? 'Compte gratuit sans carte bancaire. Vos outils et calculs sont accessibles immédiatement.'
-              : `14 jours d’essai offerts sur la formule ${activePlanInfo.name}. Vous validerez votre empreinte bancaire sans débit après confirmation de votre e-mail.`}
+            {/*
+              La mention « après confirmation de votre e-mail » decrivait un
+              parcours qui n'existe plus : l'acces est desormais immediat, et
+              la confirmation n'est exigee qu'avant d'inviter un collegue ou
+              de souscrire. Voir `features/auth/email-confirmation.ts`.
+            */}
+            Sans carte bancaire. Vous entrez dans votre espace immédiatement.
           </p>
         </form>
       </div>

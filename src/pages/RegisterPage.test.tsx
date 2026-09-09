@@ -64,33 +64,41 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     expect(screen.getByLabelText(/Adresse e-mail/i)).toBeInTheDocument();
   });
 
-  it('pré-sélectionne le plan spécifié dans l’URL (?plan=pro)', () => {
+  it('rappelle la formule visée quand on arrive depuis les tarifs', () => {
     renderWithProviders(<RegisterPage />, { route: '/register?plan=pro' });
 
-    expect(screen.getAllByText(/Formule Pro/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer mon essai Pro/i })).toBeInTheDocument();
-    expect(screen.getByText(/39 € \/ mois/i)).toBeInTheDocument();
+    // L'intention portée par l'URL est conservée et affichée…
+    expect(screen.getByText(/Vous pourrez activer la formule/i)).toBeInTheDocument();
+    expect(screen.getByText(/Aucun paiement à cette étape/i)).toBeInTheDocument();
+    // …mais elle n'est plus une décision à prendre ici.
+    expect(screen.queryByRole('button', { name: /Démarrer mon essai/i })).not.toBeInTheDocument();
   });
 
-  it('permet de basculer dynamiquement entre les différentes formules', async () => {
-    const user = userEvent.setup();
+  it('ne fait plus arbitrer entre cinq formules avant de s’inscrire', () => {
+    /*
+      LE DÉFAUT QUE CE TEST EXISTE POUR EMPÊCHER.
+
+      Le formulaire présentait cinq formules cliquables juste avant le bouton
+      de validation. Deux problèmes, dont le second est le pire :
+
+        • une décision commerciale imposée au moment le plus coûteux du
+          tunnel, alors que le visiteur n'a encore rien vu du produit ;
+        • `selectedPlan` n'était JAMAIS transmis à `signUp`. Quelle que soit
+          la carte cliquée, le compte créé était identique — on faisait
+          arbitrer sur un choix qui ne tenait pas au-delà de l'écran.
+
+      Le bouton annonçait même « Démarrer mon essai Pro (0 €) » sans qu'aucun
+      essai ne démarre. Promettre un acte que le clic n'accomplit pas est le
+      plus sûr moyen de perdre la confiance gagnée sur la page précédente.
+    */
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
-    // Clic sur Starter (19€/m)
-    const starterBtn = screen.getByRole('button', { name: /Starter/i });
-    await user.click(starterBtn);
+    for (const formule of ['Starter', 'Business', 'Enterprise']) {
+      expect(screen.queryByRole('button', { name: new RegExp(formule, 'i') })).not.toBeInTheDocument();
+    }
 
-    expect(screen.getAllByText(/Formule Starter/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Démarrer mon essai Starter/i })).toBeInTheDocument();
-
-    // Clic sur Business (69€/m)
-    const businessBtn = screen.getByRole('button', { name: /Business/i });
-    await user.click(businessBtn);
-
-    expect(screen.getAllByText(/Formule Business/i).length).toBeGreaterThanOrEqual(1);
-    expect(
-      screen.getByRole('button', { name: /Démarrer mon essai Business/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Créer mon compte gratuit/i })).toBeInTheDocument();
+    expect(screen.getByText(/Sans carte bancaire/i)).toBeInTheDocument();
   });
 
   it('bloque la soumission et affiche les erreurs de validation si les champs sont vides', async () => {
