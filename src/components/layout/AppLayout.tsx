@@ -16,7 +16,7 @@ import { Kbd } from '@/components/ui/Kbd';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ROUTES } from '@/config/routes';
 import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
-import { useAuth } from '@/features/auth';
+import { EmailConfirmationBanner, useAuth } from '@/features/auth';
 import { TrialBanner } from '@/features/billing';
 import { NotificationBell } from '@/features/notifications';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
@@ -344,6 +344,16 @@ export function AppLayout() {
         }`}
       >
         <div className={cn('mx-auto space-y-4', isTrainingPage ? 'max-w-none' : 'max-w-7xl')}>
+          {/*
+            Au-dessus du contenu, sur tous les ecrans de l'application.
+
+            Il explique pourquoi « Inviter » et « Souscrire » refuseront de
+            fonctionner tant que l'adresse n'est pas confirmee. Le placer sur
+            les seuls ecrans concernes le ferait decouvrir au moment du refus,
+            c'est-a-dire trop tard. Il ne s'affiche pas pour un compte deja
+            confirme.
+          */}
+          <EmailConfirmationBanner />
           {!isOnline && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 text-warning border border-warning/30 text-xs font-semibold animate-in fade-in">
               <WifiOff className="size-4 shrink-0 text-warning" />

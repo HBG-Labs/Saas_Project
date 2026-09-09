@@ -60,12 +60,34 @@ export async function signInWithGoogle(): Promise<void> {
   if (error) throw mapAuthError(error);
 }
 
+/**
+ * Crée le compte, et dit si une session s'est ouverte dans la foulée.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE BOOLÉEN N'EST PAS UN DÉTAIL D'IMPLÉMENTATION
+ *
+ * Supabase décide seul, d'après le réglage « Confirm email » du projet :
+ *   • confirmation exigée → `data.session` vaut `null`, le compte existe mais
+ *     personne n'est connecté ;
+ *   • confirmation non exigée → une session est ouverte immédiatement.
+ *
+ * Cette fonction renvoyait `void` : l'appelant ne pouvait donc pas distinguer
+ * les deux cas, et l'écran d'inscription affichait « Vérifiez votre boîte
+ * mail » dans tous les cas — y compris quand l'utilisateur était déjà connecté
+ * et n'avait plus rien à vérifier.
+ *
+ * Le renvoyer permet à l'écran de s'adapter au réglage réel du projet, sans
+ * qu'aucun code n'ait à le supposer. Les deux configurations restent
+ * fonctionnelles, ce qui compte : le réglage se change dans un tableau de bord,
+ * pas dans ce dépôt, et il peut être modifié sans redéploiement.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export async function signUpWithPassword(
   email: string,
   password: string,
   options?: { displayName?: string },
-): Promise<void> {
-  const { error } = await supabase.auth.signUp({
+): Promise<{ sessionOuverte: boolean }> {
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -80,6 +102,24 @@ export async function signUpWithPassword(
           }
         : {}),
     },
+  });
+  if (error) throw mapAuthError(error);
+
+  return { sessionOuverte: data.session !== null };
+}
+
+/**
+ * Renvoie l'e-mail de confirmation à l'adresse du compte courant.
+ *
+ * Utilisé par le bandeau de rappel : l'adresse n'est pas demandée à nouveau,
+ * elle vient de la session. Un utilisateur qui a perdu le premier message n'a
+ * donc rien à ressaisir, et ne peut pas se tromper de destinataire.
+ */
+export async function resendConfirmationEmail(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
   });
   if (error) throw mapAuthError(error);
 }

@@ -1,6 +1,11 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 import {
+  emailAppelantConfirme,
+  MESSAGE_CONFIRMATION_REQUISE,
+} from '../_shared/email-confirme.ts';
+
+import {
   dateLisible,
   escapeHtml,
   readTransport,
@@ -134,6 +139,26 @@ Deno.serve(async (request) => {
     Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     { global: { headers: { Authorization: authorization } } },
   );
+
+  /*
+    UNE ADRESSE PROUVEE AVANT D'ECRIRE A UN TIERS.
+
+    L'inscription laisse desormais entrer sans confirmer — le mur de la boite
+    mail coutait trop d'inscriptions en trafic publicitaire. La confirmation
+    est reportee ici, ou elle protege quelqu'un d'autre que soi.
+
+    Sans elle, REZO360 devient un relais d'envoi gratuit : on cree un compte
+    avec une adresse jetable, et on expedie ce qu'on veut a qui on veut, avec
+    notre nom de domaine en garantie. La sanction ne serait pas technique mais
+    commerciale — notre reputation d'expediteur s'effondre, et les invitations
+    legitimes finissent en indesirables.
+
+    Placee AVANT la lecture de l'invitation : inutile de reveler qu'une
+    invitation existe a qui n'a pas le droit de l'envoyer.
+  */
+  if (!(await emailAppelantConfirme(supabase))) {
+    return json({ error: MESSAGE_CONFIRMATION_REQUISE }, 403);
+  }
 
   // Lecture sous les droits de l'appelant : c'est la RLS qui autorise ou refuse.
   const { data: invitation, error: readError } = await supabase

@@ -149,9 +149,11 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
     expect(confirmation).toHaveAttribute('type', 'text');
   });
 
-  it('soumet les informations valides et affiche la page de confirmation mail', async () => {
+  it('renvoie vers la boite mail quand la confirmation est exigee', async () => {
     const user = userEvent.setup();
-    mockSignUp.mockResolvedValueOnce(undefined);
+    // Reglage « Confirm email » actif cote Supabase : aucune session n'est
+    // ouverte, il y a donc bien un message a aller chercher.
+    mockSignUp.mockResolvedValueOnce({ sessionOuverte: false });
 
     renderWithProviders(<RegisterPage />, { route: '/register' });
 
@@ -175,6 +177,39 @@ describe('RegisterPage (Tunnel d’inscription)', () => {
       expect(screen.getByText(/Un lien de confirmation vous a été envoyé/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Aller à la connexion/i })).toBeInTheDocument();
     });
+  });
+
+  it('n’annonce aucun e-mail quand la session s’ouvre immediatement', async () => {
+    /*
+      LE DEFAUT QUE CE TEST EXISTE POUR EMPECHER.
+
+      Le mur de la boite mail etait le plus gros point de perte du tunnel
+      publicitaire : le visiteur arrive du navigateur integre a Facebook, et le
+      lien de confirmation s'ouvre dans un AUTRE navigateur — session perdue,
+      attribution perdue.
+
+      Quand le projet n'exige plus la confirmation, `signUp` ouvre une session
+      sur-le-champ et `PublicOnlyRoute` conduit au tableau de bord. Afficher
+      malgre tout « Verifiez votre boite mail » renverrait chercher un message
+      inutile quelqu'un qui est deja entre — le mur qu'on vient de retirer,
+      reconstruit par inadvertance.
+    */
+    const user = userEvent.setup();
+    mockSignUp.mockResolvedValueOnce({ sessionOuverte: true });
+
+    renderWithProviders(<RegisterPage />, { route: '/register' });
+
+    await user.type(screen.getByLabelText(/Nom affiché/i), 'Alexandre Martin');
+    await user.type(screen.getByLabelText(/Adresse e-mail/i), 'alex.martin@example.com');
+    await user.type(screen.getByLabelText(/^Mot de passe/i), 'SuperMotDePasse123!');
+    await user.type(screen.getByLabelText(/Confirmer le mot de passe/i), 'SuperMotDePasse123!');
+    await user.click(screen.getByRole('button', { name: /Créer mon compte gratuit/i }));
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalled();
+    });
+
+    expect(screen.queryByText(/Vérifiez votre boîte mail/i)).not.toBeInTheDocument();
   });
 
   it('affiche un message d’erreur en cas d’échec du service d’authentification', async () => {

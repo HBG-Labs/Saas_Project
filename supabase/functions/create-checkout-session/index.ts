@@ -8,6 +8,10 @@ import {
   resolveTrialEnd,
   stripeRequest,
 } from '../_shared/billing.ts';
+import {
+  emailAppelantConfirme,
+  MESSAGE_CONFIRMATION_REQUISE,
+} from '../_shared/email-confirme.ts';
 import { assainirIdentifiantMeta } from '../_shared/meta-capi.ts';
 
 interface Body {
@@ -46,6 +50,23 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   const caller = callerClient(authorization);
+
+  /*
+    UNE ADRESSE PROUVEE AVANT D'ENGAGER UNE RELATION COMMERCIALE.
+
+    L'inscription laisse entrer sans confirmer — le mur de la boite mail
+    coutait trop d'inscriptions en trafic publicitaire. La confirmation est
+    reportee ici, ou elle protege reellement : une adresse non verifiee, c'est
+    une facture non delivrable et un client injoignable au premier incident de
+    paiement.
+
+    Cote serveur et pas seulement dans l'interface : cette fonction est
+    appelable directement avec un jeton de session, un bouton grise n'arrete
+    personne.
+  */
+  if (!(await emailAppelantConfirme(caller))) {
+    return json({ error: MESSAGE_CONFIRMATION_REQUISE }, 403);
+  }
 
   // Droit de facturer + situation réelle de l'organisation.
   const access = await requireBillingAccess(caller, organizationId, authorization);

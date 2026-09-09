@@ -44,7 +44,7 @@ export default function RegisterPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await signUp(values.email, values.password, values.displayName);
+      const { sessionOuverte } = await signUp(values.email, values.password, values.displayName);
       /*
         Dans le gestionnaire, pas dans un effet.
 
@@ -55,7 +55,22 @@ export default function RegisterPage() {
         sur cette ligne.
       */
       trackInscription();
-      setEmailSent(true);
+
+      /*
+        ON N'ANNONCE UN E-MAIL QUE S'IL EST RÉELLEMENT ATTENDU.
+
+        Quand le projet Supabase n'exige pas la confirmation, `signUp` ouvre
+        une session sur-le-champ. Il n'y a alors rien à aller vérifier, et
+        `PublicOnlyRoute` renvoie déjà l'utilisateur connecté vers son tableau
+        de bord — aucune navigation à écrire ici.
+
+        Afficher malgré tout « Vérifiez votre boîte mail » enverrait la
+        personne chercher un message dont elle n'a pas besoin, alors qu'elle
+        est déjà entrée. C'est exactement le mur qu'on vient de retirer.
+      */
+      if (!sessionOuverte) {
+        setEmailSent(true);
+      }
     } catch (error) {
       setSubmitError(error);
     }

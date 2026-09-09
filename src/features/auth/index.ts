@@ -2,6 +2,8 @@ export { AuthProvider } from './context/AuthProvider';
 export { ProtectedRoute } from './components/ProtectedRoute';
 export { PublicOnlyRoute } from './components/PublicOnlyRoute';
 export { useAuth } from './hooks/useAuth';
+export { EmailConfirmationBanner } from './components/EmailConfirmationBanner';
+export { emailEstConfirme, MESSAGE_CONFIRMATION_REQUISE } from './email-confirmation';
 export {
   updatePassword,
   requestPasswordReset,

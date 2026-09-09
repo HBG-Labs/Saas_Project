@@ -16,7 +16,15 @@ export interface AuthContextValue {
   user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  /**
+   * `sessionOuverte` dit si le compte est immediatement connecte. Depend du
+   * reglage « Confirm email » du projet Supabase, pas du code.
+   */
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => Promise<{ sessionOuverte: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }

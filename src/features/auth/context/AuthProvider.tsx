@@ -87,7 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
-    await signUpWithPassword(email, password, displayName ? { displayName } : undefined);
+    // Le resultat est PROPAGE, pas absorbe : l'ecran d'inscription doit savoir
+    // si une session s'est ouverte pour choisir entre entrer dans le produit et
+    // renvoyer vers la boite mail. Voir `signUpWithPassword`.
+    return signUpWithPassword(email, password, displayName ? { displayName } : undefined);
   }, []);
 
   const signOut = useCallback(async () => {
