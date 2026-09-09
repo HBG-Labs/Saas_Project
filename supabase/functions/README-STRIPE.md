@@ -63,6 +63,33 @@ npx supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
+### Mesure publicitaire — facultatif
+
+Le webhook déclare à Meta les deux conversions que le navigateur ne peut pas
+voir : le début d'essai et l'abonnement. Ces deux secrets sont **facultatifs** —
+absents, rien n'est envoyé et le webhook fonctionne exactement comme avant.
+
+```bash
+npx supabase secrets set META_PIXEL_ID=...            # le même que VITE_META_PIXEL_ID
+npx supabase secrets set META_CAPI_ACCESS_TOKEN=...   # Gestionnaire d'événements > Paramètres
+```
+
+`META_PIXEL_ID` doit être **identique** à `VITE_META_PIXEL_ID` côté frontend :
+c'est ce qui permet à Meta de rapprocher les événements du navigateur et ceux du
+serveur pour le même visiteur.
+
+Pour vérifier l'intégration sans polluer les statistiques réelles, ajoutez
+temporairement le code fourni par l'onglet « Événements de test » du
+gestionnaire Meta — les envois y apparaissent en direct :
+
+```bash
+npx supabase secrets set META_CAPI_TEST_EVENT_CODE=TEST12345
+npx supabase secrets unset META_CAPI_TEST_EVENT_CODE   # à retirer ensuite
+```
+
+Le jeton d'accès est une clé serveur : il ne doit jamais recevoir de préfixe
+`VITE_`, sans quoi Vite l'exposerait dans le bundle du navigateur.
+
 ## 5. Déployer et déclarer le webhook
 
 ```bash

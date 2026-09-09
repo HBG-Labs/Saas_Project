@@ -65,6 +65,10 @@ jobs:
           deno check \
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
+          # `meta-capi.ts` n'importe rien : il échappe donc au blocage
+          # `jsr:@supabase/supabase-js@2` qui tient les fonctions plus
+          # anciennes hors de cette vérification.
+          deno check supabase/functions/_shared/meta-capi.ts
 
       # Ces tests tournent SANS aucune permission Deno : ni réseau, ni disque.
       # C'est la garantie qu'ils n'atteignent jamais le partenaire ni la base,
@@ -75,6 +79,7 @@ jobs:
         run: |
           deno test \
             supabase/functions/_shared/superpdp-transmission.test.ts \
+            supabase/functions/_shared/meta-capi.test.ts \
             supabase/functions/superpdp-worker/handler.test.ts
 
       - name: Exécuter les tests

@@ -1,5 +1,6 @@
 import { ROUTES } from '@/config/routes';
 import { AppError, mapPostgrestError } from '@/lib/errors';
+import { identifiantsAttributionMeta } from '@/lib/meta-pixel';
 import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { Plan, PlanFeature, PlanWithFeatures, Subscription } from '@/types/domain';
 
@@ -326,6 +327,18 @@ export async function createCheckoutSession(params: {
         planCode: params.planCode,
         successUrl: `${base}${ROUTES.organizationBilling}?paiement=ok`,
         cancelUrl: `${base}${ROUTES.organizationBilling}?paiement=annule`,
+        /*
+          Dernier instant où le navigateur est encore de la partie.
+
+          La page de paiement est hébergée par Stripe, et le webhook qui
+          confirmera l'abonnement est appelé par Stripe : ni l'un ni l'autre
+          n'aura accès aux cookies de ce navigateur. Les capturer ici est le
+          seul moyen de rattacher l'abonnement à la publicité qui l'a produit.
+
+          Vide si le visiteur a refusé les cookies marketing — la conversion
+          partira alors sans eux. Voir `identifiantsAttributionMeta`.
+        */
+        ...identifiantsAttributionMeta(),
       },
     });
 

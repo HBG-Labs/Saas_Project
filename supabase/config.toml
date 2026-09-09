@@ -409,6 +409,27 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [experimental.pgdelta]
 enabled = true
 
+# Stripe n'envoie aucun jeton Supabase : il signe ses appels en HMAC-SHA256,
+# verifie dans `index.ts` a temps constant et avec fenetre anti-rejeu.
+#
+# CE BLOC MANQUAIT, ET C'ETAIT UN PIEGE ARME.
+#
+# La fonction tourne bien en `verify_jwt: false` en production — elle y a ete
+# deployee a la main avec `--no-verify-jwt`, comme l'indique README-STRIPE.md.
+# Mais sans declaration ici, le defaut du CLI est `true` : un
+# `supabase functions deploy stripe-webhook` sans le drapeau, ou un deploiement
+# groupe, la repassait a `true`.
+#
+# Stripe aurait alors recu des 401 sur chaque evenement. Aucune erreur de notre
+# cote, aucune alerte : simplement des abonnements qui cessent de se
+# synchroniser, et des paiements encaisses sans droits accordes — le defaut le
+# plus couteux du systeme, deja vecu une fois ici.
+#
+# La configuration declaree rejoint donc l'etat deploye. Le drapeau en ligne de
+# commande devient superflu.
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.generate-facturx]
 verify_jwt = false
 # Les polices sont lues a l'execution par `handler.ts`, via

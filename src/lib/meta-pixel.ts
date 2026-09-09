@@ -197,6 +197,51 @@ export function trackInscription() {
 }
 
 /**
+ * Les deux cookies d'attribution posés par le pixel, s'ils existent.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI LES LIRE ICI PLUTÔT QUE LES LAISSER AU PIXEL
+ *
+ * L'abonnement n'est pas confirmé dans le navigateur : Stripe le confirme par
+ * webhook, sur un serveur qui n'a ni les cookies du client, ni son adresse IP,
+ * ni son agent utilisateur. Une conversion envoyée depuis ce serveur sans
+ * signal d'appariement arriverait chez Meta rattachable à personne — donc à
+ * aucune publicité, ce qui la rend inutile.
+ *
+ * `_fbp` identifie le navigateur ; `_fbc` porte l'identifiant du clic
+ * publicitaire lui-même, et n'existe que si le visiteur est arrivé depuis une
+ * annonce. Ce sont les deux meilleurs signaux disponibles.
+ *
+ * On les capture donc AU MOMENT du départ vers la page de paiement, dernier
+ * instant où le navigateur est encore de la partie, pour les confier aux
+ * métadonnées de l'abonnement Stripe. Voir `_shared/meta-capi.ts`.
+ *
+ * Absents si le consentement marketing n'a pas été donné : le pixel n'a alors
+ * jamais été chargé, et ces cookies n'existent pas. La conversion partira sans
+ * eux, avec le seul e-mail haché — ce qui est la conséquence normale d'un
+ * refus, pas une anomalie.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export function identifiantsAttributionMeta(): { fbp?: string; fbc?: string } {
+  if (typeof document === 'undefined') return {};
+
+  const lire = (nom: string): string | undefined => {
+    // Le nom est encadré pour ne pas confondre `_fbc` avec un cookie dont le
+    // nom se terminerait par `_fbc`.
+    const trouve = new RegExp(`(?:^|;\\s*)${nom}=([^;]*)`).exec(document.cookie);
+    return trouve?.[1] === undefined ? undefined : decodeURIComponent(trouve[1]);
+  };
+
+  const fbp = lire('_fbp');
+  const fbc = lire('_fbc');
+
+  return {
+    ...(fbp === undefined ? {} : { fbp }),
+    ...(fbc === undefined ? {} : { fbc }),
+  };
+}
+
+/**
  * Fenêtre au-delà de laquelle un compte n'est plus considéré comme neuf.
  *
  * Généreuse à dessein : elle doit couvrir l'aller-retour complet vers Google,

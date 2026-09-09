@@ -8,12 +8,16 @@ import {
   resolveTrialEnd,
   stripeRequest,
 } from '../_shared/billing.ts';
+import { assainirIdentifiantMeta } from '../_shared/meta-capi.ts';
 
 interface Body {
   organizationId?: string;
   planCode?: string;
   successUrl?: string;
   cancelUrl?: string;
+  /** Cookies d'attribution du pixel Meta — voir `assainirIdentifiantMeta`. */
+  fbp?: string;
+  fbc?: string;
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -137,6 +141,23 @@ Deno.serve(async (request: Request): Promise<Response> => {
     // implicite qui décide d'un prélèvement peut changer sans nous.
     payment_method_collection: 'always',
   };
+
+  /*
+    Posés sur l'ABONNEMENT, pas sur la session.
+
+    Le webhook ne relit jamais la session de paiement pour les abonnements : il
+    relit l'abonnement lui-même, et c'est délibéré (voir
+    `RELECTURE_INDEPENDANTE_DE_LA_VERSION`). Des métadonnées portées par la
+    seule session seraient donc invisibles au moment exact où l'on en a besoin.
+
+    Ils suivent ainsi l'abonnement toute sa vie, ce qui permet d'attribuer la
+    conversion payante quatorze jours plus tard, à la fin de l'essai — l'instant
+    qui compte vraiment pour juger une campagne.
+  */
+  const fbp = assainirIdentifiantMeta(body.fbp);
+  const fbc = assainirIdentifiantMeta(body.fbc);
+  if (fbp !== null) params['subscription_data[metadata][fbp]'] = fbp;
+  if (fbc !== null) params['subscription_data[metadata][fbc]'] = fbc;
 
   let effectiveTrialEnd = finEssai;
 

@@ -20,6 +20,7 @@ vi.mock('@/config/env', () => ({
 
 const {
   __resetMetaPixelPourTests,
+  identifiantsAttributionMeta,
   initMetaPixel,
   metaPixelEstActif,
   trackInscription,
@@ -180,6 +181,58 @@ describe('pixel Meta — chargement après consentement', () => {
     expect(evenementsDeType('PageView')).toHaveLength(avant);
     expect(evenementsDeType('Lead')).toHaveLength(0);
     expect(metaPixelEstActif()).toBe(false);
+  });
+});
+
+describe('identifiants d’attribution transmis au paiement', () => {
+  /*
+    Ces deux cookies sont le seul lien entre la publicité cliquée et
+    l'abonnement confirmé quatorze jours plus tard par un webhook Stripe, sur
+    un serveur qui n'a ni le navigateur du client ni ses cookies. Les lire mal,
+    c'est perdre l'attribution de toutes les ventes.
+  */
+  function poser(cookies: string) {
+    Object.defineProperty(document, 'cookie', {
+      value: cookies,
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  it('lit les deux cookies quand ils sont là', () => {
+    poser('_fbp=fb.1.1700000000000.AbCd; _fbc=fb.1.1700000000000.IwAR123');
+    expect(identifiantsAttributionMeta()).toEqual({
+      fbp: 'fb.1.1700000000000.AbCd',
+      fbc: 'fb.1.1700000000000.IwAR123',
+    });
+  });
+
+  it('n’invente rien quand ils sont absents', () => {
+    // Cas du visiteur ayant refusé les cookies marketing : le pixel n'a jamais
+    // été chargé, ces cookies n'existent pas. L'objet doit être vide, et non
+    // porter des clés à `undefined` qui partiraient telles quelles dans le
+    // corps de la requête.
+    poser('rezo360_cookie_consent=%7B%7D; autre=valeur');
+    expect(identifiantsAttributionMeta()).toEqual({});
+  });
+
+  it('ne confond pas un cookie dont le nom se termine par _fbp', () => {
+    /*
+      Sans encadrement du nom, une expression régulière naïve sur `_fbp=`
+      capturerait `faux_fbp=`. On enverrait alors à Meta un identifiant
+      d'attribution appartenant à un autre outil — silencieusement, et sans
+      qu'aucune vente ne s'apparie jamais.
+    */
+    poser('faux_fbp=piege; _fbp=fb.1.170.vrai');
+    expect(identifiantsAttributionMeta().fbp).toBe('fb.1.170.vrai');
+  });
+
+  it('trouve le cookie quel que soit son rang dans la liste', () => {
+    poser('_fbp=fb.1.170.premier');
+    expect(identifiantsAttributionMeta().fbp).toBe('fb.1.170.premier');
+
+    poser('a=1; b=2; _fbp=fb.1.170.dernier');
+    expect(identifiantsAttributionMeta().fbp).toBe('fb.1.170.dernier');
   });
 });
 

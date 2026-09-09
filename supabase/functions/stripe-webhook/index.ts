@@ -1,4 +1,5 @@
 import { adminClient, env, json, stripeRequest } from '../_shared/billing.ts';
+import { conversionADeclarer, envoyerConversionMeta } from '../_shared/meta-capi.ts';
 
 /**
  * Réception des événements Stripe.
@@ -141,7 +142,17 @@ interface StripeSubscription {
   trial_end?: number | null;
   canceled_at?: number | null;
   cancel_at_period_end?: boolean;
-  metadata?: { organization_id?: string; plan_code?: string };
+  /*
+    `fbp` et `fbc` sont les cookies d'attribution du pixel Meta, capturés dans
+    le navigateur puis posés ici par `create-checkout-session`.
+
+    Ils transitent par les métadonnées de l'abonnement parce qu'il n'existe
+    aucun autre chemin : la page de paiement est hébergée par Stripe, et le
+    webhook est appelé par Stripe, jamais par le navigateur du client. Sans ce
+    relais, la conversion arriverait chez Meta sans pouvoir être rattachée à la
+    publicité qui l'a produite.
+  */
+  metadata?: { organization_id?: string; plan_code?: string; fbp?: string; fbc?: string };
   items?: { data?: StripeSubscriptionItem[] };
   /** Chaîne sans `expand`, objet complet avec — d'où le type union. */
   default_payment_method?: string | StripePaymentMethod | null;
@@ -468,6 +479,27 @@ async function applySubscription(
     throw new Error(`Abonnement ${subRecu.id} sans organisation connue ni en métadonnées.`);
   }
 
+  /*
+    L'ÉTAT D'AVANT, LU AVANT TOUTE ÉCRITURE.
+
+    Il sert uniquement à la mesure publicitaire, plus bas. `applySubscription`
+    est appelée à CHAQUE événement d'abonnement — création, renouvellement,
+    changement de moyen de paiement, résiliation programmée. Déclencher un
+    `StartTrial` ou un `Purchase` à chaque passage enverrait le même
+    abonnement des dizaines de fois.
+
+    Ce qui distingue une conversion d'une simple mise à jour, c'est la
+    TRANSITION. On retient donc l'état antérieur ici, avant que quoi que ce
+    soit ne l'écrase, pour le comparer à l'état final après l'écriture.
+  */
+  const { data: etatAnterieur } = await admin
+    .from('subscriptions')
+    .select('status')
+    .eq('provider_subscription_id', subRecu.id)
+    .maybeSingle();
+
+  const statutAvant = etatAnterieur?.status ?? null;
+
   // UN ESSAI PAR CARTE. Peut couper l'essai en cours chez Stripe et renvoyer
   // l'abonnement mis à jour — tout ce qui suit doit donc lire `sub`, l'état
   // effectif, et non `subRecu`, l'état reçu.
@@ -567,6 +599,101 @@ async function applySubscription(
   }
 
   await admin.from('stripe_events').update({ organization_id: organizationId }).eq('id', eventId);
+
+  // APRÈS l'écriture, et seulement si elle a réussi : ce qui n'est pas acquis
+  // en base ne doit pas être annoncé à Meta comme une conversion.
+  await signalerConversionMeta(admin, sub, planCode, statutAvant, status);
+}
+
+/**
+ * Déclare à Meta les deux transitions qui comptent — et rien d'autre.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DEUX BARRIÈRES INDÉPENDANTES CONTRE LE DOUBLE COMPTAGE
+ *
+ * La première est ici : on ne déclare QUE lorsque le statut change réellement
+ * vers l'état cible. Un abonnement déjà `active` qui reçoit une mise à jour
+ * quelconque ne déclenche rien, puisque son état d'avant valait déjà `active`.
+ * Cette barrière est naturellement idempotente : après le premier passage, la
+ * base porte l'état final, et un rejeu ne trouve plus de transition.
+ *
+ * La seconde vit chez Meta : `envoyerConversionMeta` construit un `event_id`
+ * déterministe à partir de l'abonnement, que Meta déduplique de son côté.
+ *
+ * Elles sont indépendantes à dessein. La première peut céder — une écriture
+ * concurrente, une base restaurée, un abonnement recréé sous le même
+ * identifiant. La seconde tient alors quand même.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI `past_due` NE ROMPT PAS LA MESURE
+ *
+ * Un abonnement qui passe `active` → `past_due` → `active` franchirait deux
+ * fois la transition vers `active`, et compterait deux achats pour un seul
+ * client. C'est pourquoi seul le passage depuis un état NON PAYANT compte :
+ * `trialing`, `incomplete`, ou l'absence d'abonnement antérieur. Un retour de
+ * `past_due` est un incident de paiement résolu, pas une nouvelle vente.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+async function signalerConversionMeta(
+  admin: ReturnType<typeof adminClient>,
+  sub: StripeSubscription,
+  planCode: string,
+  statutAvant: string | null,
+  statutApres: string,
+): Promise<void> {
+  const conversion = conversionADeclarer(statutAvant, statutApres);
+  if (conversion === null) return;
+
+  try {
+    /*
+      L'adresse de facturation vient de Stripe, pas de notre base : c'est celle
+      que le client a réellement saisie au paiement, donc celle qui a le plus de
+      chances de correspondre à son compte Meta.
+
+      Cet appel supplémentaire ne pèse rien : on n'arrive ici qu'aux deux
+      instants de la vie d'un abonnement, pas à chaque événement.
+    */
+    const client = (await stripeRequest(`/v1/customers/${sub.customer}`, {}, 'GET')) as {
+      email?: string | null;
+    };
+
+    /*
+      Le montant sert au calcul du retour sur investissement publicitaire.
+
+      Il reprend le prix catalogue de la formule, sans les sièges
+      supplémentaires : Meta s'en sert pour comparer des campagnes entre elles,
+      pas pour tenir une comptabilité. Un écart de quelques euros ne change
+      aucune décision d'arbitrage — la source comptable reste Stripe.
+    */
+    let montantCents: number | null = null;
+    if (conversion === 'Purchase') {
+      const { data: plan } = await admin
+        .from('plans')
+        .select('price_monthly_cents')
+        .eq('code', planCode)
+        .maybeSingle();
+      montantCents = plan?.price_monthly_cents ?? null;
+    }
+
+    await envoyerConversionMeta({
+      evenement: conversion,
+      referenceStripe: sub.id,
+      montantCents,
+      devise: 'EUR',
+      email: client.email ?? null,
+      fbp: sub.metadata?.fbp ?? null,
+      fbc: sub.metadata?.fbc ?? null,
+      urlSource: Deno.env.get('APP_URL')?.trim() ?? null,
+    });
+  } catch (erreur) {
+    // Même règle que dans `_shared/meta-capi.ts` : la facturation prime sur la
+    // statistique. Une mesure manquée est un désagrément, un webhook en échec
+    // est un abonnement payé sans droits accordés.
+    console.error(
+      `[meta-capi] conversion non signalée pour ${sub.id} :`,
+      erreur instanceof Error ? erreur.message : String(erreur),
+    );
+  }
 }
 
 /**
