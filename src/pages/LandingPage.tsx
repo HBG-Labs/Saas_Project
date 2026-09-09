@@ -216,7 +216,7 @@ function TechnicianSketch({
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      style={{ fontFamily: '"Segoe Print", "Bradley Hand", "Comic Sans MS", cursive' }}
+      style={{ fontFamily: 'var(--font-hand)' }}
     >
       {variant === 'electrical' ? (
         <>
@@ -290,7 +290,7 @@ function HandwrittenAnnotation({
     <div
       aria-hidden="true"
       className={`pointer-events-none absolute z-20 hidden select-none ${ANNOTATION_TONES[tone]} ${className}`}
-      style={{ fontFamily: '"Segoe Print", "Bradley Hand", "Comic Sans MS", cursive' }}
+      style={{ fontFamily: 'var(--font-hand)' }}
     >
       <span className="block text-center text-[1.05rem] leading-snug font-semibold italic drop-shadow-sm">
         {children}
@@ -933,9 +933,24 @@ export default function LandingPage() {
               Placée en amorce plutôt qu'en paragraphe : elle tient sur une
               ligne, ne repousse donc presque pas l'appel à l'action, et le
               titre juste en dessous y répond immédiatement.
+
+              MANUSCRITE, ET LA POLICE EST AUTO-HÉBERGÉE.
+
+              L'écriture à la main convient à cette phrase : c'est la voix du
+              lecteur qu'on lui prête, pas celle du produit. Mais elle n'y
+              convient QU'À UNE CONDITION — que tout le monde la voie.
+
+              La pile système employée ailleurs sur la page (« Segoe Print »,
+              « Bradley Hand », « Comic Sans MS ») n'existe sous Android sous
+              aucune de ces trois formes : l'effet y disparaissait, sur le
+              trafic mobile qu'on achète précisément en publicité. Caveat est
+              servie avec la page, donc identique partout.
+
+              Taille relevée à `text-xl` : une écriture manuscrite à la taille
+              d'un texte courant devient illisible à bout de bras.
             */}
-            <p className="text-primary text-center text-sm font-semibold tracking-tight text-balance sm:text-base lg:text-left">
-              Le devis sur un carnet, les photos dans WhatsApp, la facture le dimanche soir ?
+            <p className="text-primary font-hand text-center text-xl leading-tight font-bold text-balance sm:text-2xl lg:text-left">
+              Le devis sur un carnet, les photos dans WhatsApp, la facture le dimanche soir&nbsp;?
             </p>
 
             <h1 className="text-brand-night mt-2 max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
