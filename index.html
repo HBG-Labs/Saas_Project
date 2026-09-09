@@ -72,25 +72,81 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="REZO360" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <!--
+      CE TEXTE DÉCRIT LE PRODUIT, PAS SON ORIGINE.
+
+      Il annonçait « boîte à outils technique pour les professionnels de la
+      fibre, des réseaux et de l'électricité » — ce qu'était REZO360 à ses
+      débuts, et ce que la page d'accueil ne dit plus depuis longtemps : elle
+      s'adresse aux « entreprises, artisans et professionnels de terrain », tous
+      métiers confondus.
+
+      L'écart n'était pas cosmétique. Cette phrase est ce que voit un artisan
+      chauffagiste ou paysagiste dans un résultat de recherche et dans l'aperçu
+      d'un lien partagé — donc AVANT d'arriver sur la page. Il y lisait une
+      promesse qui ne le concernait pas, et n'avait aucune raison de cliquer.
+    -->
     <meta
       name="description"
-      content="REZO360 — boîte à outils technique pour les professionnels de la fibre, des réseaux et de l'électricité."
+      content="Clients, interventions, planning, comptes rendus et facturation au même endroit. REZO360 est la plateforme tout-en-un des entreprises, artisans et professionnels de terrain."
     />
     <!-- Polices auto-hébergées : voir les imports @fontsource de src/styles/index.css. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
 
+    <!--
+      L'APERÇU DE PARTAGE, QUI EST AUSSI CE QUE VOIT LE TRAFIC PUBLICITAIRE.
+
+      Ces balises décident de ce qu'affichent Facebook, Instagram, Messenger,
+      LinkedIn et WhatsApp quand un lien vers REZO360 est partagé — y compris
+      les partages organiques que produisent les campagnes.
+
+      `og:image` MANQUAIT. Un lien sans visuel s'affiche sur ces plateformes
+      comme une ligne de texte grise : c'est un lien qu'on ne clique pas. Le
+      format 1200 × 630 n'est pas indicatif, c'est le ratio 1.91:1 attendu ;
+      toute autre proportion est recadrée, souvent au pire endroit. L'image est
+      reconstruite par `scripts/generate-og-image.mjs`, à partir des couleurs,
+      polices et visuels réels du produit.
+
+      `twitter:card` valait `summary`, qui affiche une vignette carrée en marge
+      du texte. `summary_large_image` donne le grand visuel.
+
+      Les URL doivent être ABSOLUES : les plateformes ne résolvent pas les
+      chemins relatifs, et un `/og-image.jpg` seul ne donne aucune image.
+    -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="REZO360" />
-    <meta property="og:title" content="REZO360 — le cockpit des équipes terrain" />
+    <meta property="og:url" content="https://rezo360.fr/" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="Pilotez votre activité de terrain en toute simplicité" />
     <meta
       property="og:description"
-      content="Missions, interventions, comptes rendus, devis et parc matériel pour les professionnels de la fibre, des réseaux et de l'électricité."
+      content="Clients, interventions, planning, comptes rendus et facturation au même endroit — pour les entreprises, artisans et professionnels de terrain."
     />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://rezo360.fr/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="REZO360 affiché sur un ordinateur portable et un téléphone : tableau de bord des missions et des interventions."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pilotez votre activité de terrain en toute simplicité" />
+    <meta
+      name="twitter:description"
+      content="Clients, interventions, planning, comptes rendus et facturation au même endroit."
+    />
+    <meta name="twitter:image" content="https://rezo360.fr/og-image.jpg" />
 
-    <title>REZO360</title>
+    <!--
+      Le titre porte la promesse, pas seulement la marque.
+
+      « REZO360 » seul est ce que lit un visiteur dans son onglet, dans ses
+      favoris et dans un résultat de recherche. Un nom de marque inconnu n'y
+      dit rien de ce que fait le produit ni à qui il s'adresse.
+    -->
+    <title>REZO360 — Pilotez votre activité de terrain</title>
   </head>
   <body>
     <div id="root"></div>
