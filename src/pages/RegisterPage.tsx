@@ -14,6 +14,7 @@ import { useAuth } from '@/features/auth';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { GoogleAuthButton } from '@/features/auth/components/GoogleAuthButton';
 import { registerSchema, type RegisterValues } from '@/features/auth/schemas/auth.schema';
+import { trackInscription } from '@/lib/meta-pixel';
 
 export default function RegisterPage() {
   const { signInWithGoogle, signUp } = useAuth();
@@ -44,6 +45,16 @@ export default function RegisterPage() {
     setSubmitError(null);
     try {
       await signUp(values.email, values.password, values.displayName);
+      /*
+        Dans le gestionnaire, pas dans un effet.
+
+        Un effet déclenché sur `emailSent` compterait deux inscriptions pour
+        une seule sous `StrictMode`, et une de plus à chaque remontage du
+        composant. Ici, le code ne s'exécute qu'une fois par soumission
+        réussie — et jamais si `signUp` a levé, puisque nous ne serions pas
+        sur cette ligne.
+      */
+      trackInscription();
       setEmailSent(true);
     } catch (error) {
       setSubmitError(error);

@@ -24,6 +24,31 @@ const envSchema = z.object({
   VITE_PUBLIC_APP_URL: z.url().optional(),
   /** Identifiant du déploiement affiché dans les journaux d'erreurs. */
   VITE_APP_VERSION: z.string().min(1).max(120).optional(),
+  /**
+   * Identifiant du pixel Meta. FACULTATIF, et c'est essentiel : sans lui,
+   * `src/lib/meta-pixel.ts` est entièrement inerte. Le développement, les
+   * tests et les prévisualisations n'ont donc rien à configurer, et ne
+   * risquent pas d'envoyer des événements dans les statistiques réelles.
+   *
+   * La chaîne vide vaut absence : un hébergeur qui déclare la variable sans
+   * la remplir ne doit pas faire échouer le démarrage de l'application.
+   *
+   * Le format est vérifié parce que l'erreur classique est de coller ici
+   * autre chose que l'identifiant — l'URL du gestionnaire d'événements, ou un
+   * jeton d'accès. Un identifiant Meta est purement numérique.
+   */
+  VITE_META_PIXEL_ID: z.preprocess(
+    (valeur) => (typeof valeur === 'string' && valeur.trim() === '' ? undefined : valeur),
+    z
+      .string()
+      .trim()
+      .regex(
+        /^\d{10,20}$/,
+        'VITE_META_PIXEL_ID doit être l’identifiant numérique du pixel (10 à 20 chiffres), ' +
+          'et non une URL ni un jeton d’accès',
+      )
+      .optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

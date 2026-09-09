@@ -189,6 +189,34 @@ export const DEPOTS_LOCAUX = [
   },
 ] as const;
 
+/**
+ * Traceurs tiers — déposés UNIQUEMENT après acceptation de la catégorie
+ * « marketing » dans le bandeau de consentement.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CETTE LISTE EST UNE OBLIGATION, PAS UNE COURTOISIE
+ *
+ * L'article 82 de la loi Informatique et Libertés impose d'informer
+ * PRÉALABLEMENT et précisément : quel traceur, pour quelle finalité, pendant
+ * combien de temps, et au bénéfice de qui. Un consentement recueilli sans
+ * cette information n'est pas un consentement éclairé.
+ *
+ * Conséquence pratique pour la suite : tout traceur ajouté au produit doit
+ * apparaître ici AVANT d'être branché. La page /cookies lit cette liste — la
+ * compléter et brancher l'outil sont un seul et même geste, jamais deux.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const TRACEURS_TIERS = [
+  {
+    nom: 'Pixel Meta (_fbp, _fbc)',
+    finalite:
+      'Mesurer les inscriptions issues de nos publicités Facebook et Instagram, et éviter de vous montrer une publicité pour un service auquel vous êtes déjà inscrit',
+    duree: '3 mois',
+    destinataire: 'Meta Platforms Ireland Limited',
+    categorie: 'marketing',
+  },
+] as const;
+
 /** Un champ non renseigné se voit, plutôt que de passer pour une omission. */
 export function estRenseigne(valeur: string): boolean {
   return valeur.trim() !== '';

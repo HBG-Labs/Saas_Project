@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/Button';
-import { DEPOTS_LOCAUX, EDITEUR } from '@/config/legal';
+import { DEPOTS_LOCAUX, EDITEUR, TRACEURS_TIERS } from '@/config/legal';
 import { requestCookiePreferences } from '@/lib/cookie-consent';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
@@ -40,12 +40,45 @@ export default function CookiePolicyPage() {
         vraiment.
       </p>
 
-      <Section titre="Ce site ne dépose aucun cookie de mesure ou publicitaire">
+      <Section titre="Un traceur publicitaire, et seulement si vous l’acceptez">
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Ni cookie de mesure d’audience, ni traceur publicitaire, ni pixel tiers : rien de tout
-          cela n’est présent dans le code du site à ce jour. Ce que votre navigateur conserve
-          relève exclusivement du fonctionnement du service — vous garder connecté, retenir vos
-          préférences — et non d’un suivi de votre navigation.
+          Nous utilisons le pixel Meta pour savoir lesquelles de nos publicités amènent réellement
+          des inscriptions. C’est le seul traceur tiers du site, et il n’est{' '}
+          <strong className="text-foreground">pas chargé du tout</strong> tant que vous n’avez pas
+          accepté la catégorie « marketing ». Le refuser ne dégrade rien : le site fonctionne à
+          l’identique.
+        </p>
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          Aucun cookie de mesure d’audience n’est déposé par ailleurs.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[38rem] text-left text-sm">
+            <thead>
+              <tr className="text-subtle-foreground text-xs">
+                <th className="py-2 pr-3 font-medium">Traceur</th>
+                <th className="py-2 pr-3 font-medium">Finalité</th>
+                <th className="py-2 pr-3 font-medium">Destinataire</th>
+                <th className="py-2 font-medium">Durée</th>
+              </tr>
+            </thead>
+            <tbody>
+              {TRACEURS_TIERS.map((t) => (
+                <tr key={t.nom} className="border-border border-t align-top">
+                  <td className="text-foreground py-2 pr-3 font-medium">{t.nom}</td>
+                  <td className="text-muted-foreground py-2 pr-3">{t.finalite}</td>
+                  <td className="text-muted-foreground py-2 pr-3">{t.destinataire}</td>
+                  <td className="text-muted-foreground py-2 text-xs whitespace-nowrap">
+                    {t.duree}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          Meta est établie en Irlande et traite ces données aux États-Unis. Ce transfert s’appuie
+          sur la décision d’adéquation « EU-US Data Privacy Framework » adoptée par la Commission
+          européenne le 10 juillet 2023.
         </p>
       </Section>
 
@@ -77,23 +110,28 @@ export default function CookiePolicyPage() {
         </div>
       </Section>
 
-      <Section titre="Un bandeau de consentement, par précaution">
+      <Section titre="Pourquoi ce bandeau vous est présenté">
         <p className="text-muted-foreground text-sm leading-relaxed">
           La réglementation (article 82 de la loi Informatique et Libertés, recommandation « Cookies
-          et autres traceurs » de la CNIL) n’impose un recueil du consentement que pour les cookies
-          non strictement nécessaires au service — mesure d’audience non exemptée, publicité,
-          partage sur les réseaux sociaux. Ce site n’en dépose aucun aujourd’hui : chaque dépôt
-          local listé ci-dessus est strictement nécessaire au fonctionnement du site ou relève
-          d’une préférence que vous avez vous-même choisie.
+          et autres traceurs » de la CNIL) impose de recueillir votre consentement pour les cookies
+          qui ne sont pas strictement nécessaires au service — publicité, mesure d’audience non
+          exemptée, partage sur les réseaux sociaux. Le pixel Meta décrit plus haut entre dans ce
+          cadre : d’où le bandeau.
         </p>
         <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-          Un bandeau vous est malgré tout proposé lors de votre première visite, avec trois choix
-          aussi simples les uns que les autres — <strong className="text-foreground">tout
-          accepter</strong>, <strong className="text-foreground">tout refuser</strong>, ou{' '}
-          <strong className="text-foreground">personnaliser</strong>. Concrètement, tant qu’aucun
-          outil de mesure ou publicitaire n’est branché, votre choix ne change rien à votre
-          expérience du site — mais il est enregistré, prêt à s’appliquer sans nouvelle question
-          le jour où l’un de ces outils serait ajouté.
+          Trois choix vous sont offerts, aussi simples les uns que les autres —{' '}
+          <strong className="text-foreground">tout accepter</strong>,{' '}
+          <strong className="text-foreground">tout refuser</strong>, ou{' '}
+          <strong className="text-foreground">personnaliser</strong>. Refuser est un clic, comme
+          accepter. Tant que vous n’avez pas accepté la catégorie « marketing », le script de Meta
+          n’est pas téléchargé : il ne s’agit pas de le charger puis de le laisser inactif, mais de
+          ne pas l’appeler du tout — car un script chargé dépose ses cookies avant même d’avoir
+          servi.
+        </p>
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          Les dépôts locaux listés plus haut, eux, ne demandent pas votre accord : ils sont
+          strictement nécessaires au fonctionnement du site ou relèvent d’une préférence que vous
+          avez vous-même choisie.
         </p>
       </Section>
 

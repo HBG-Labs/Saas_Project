@@ -1,12 +1,29 @@
 /**
  * Consentement aux cookies — stockage et notifications.
  *
- * AUCUN OUTIL DE MESURE OU PUBLICITAIRE N'EXISTE AUJOURD'HUI (voir
- * `config/legal.ts` → `DEPOTS_LOCAUX` et la page /cookies) : ce module ne
- * conditionne rien de réel pour l'instant. Il existe par anticipation, pour
- * que le consentement déjà donné par un visiteur ne soit pas reperdu le jour
- * où un outil d'analytics est ajouté — brancher son chargement sur
- * `hasAnalyticsConsent()` suffira alors.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CE MODULE CONDITIONNE DÉSORMAIS QUELQUE CHOSE DE RÉEL
+ *
+ * Il a longtemps existé par anticipation, sans rien gouverner. Ce n'est plus le
+ * cas depuis l'ajout du pixel Meta : `hasMarketingConsent()` décide maintenant
+ * si `src/lib/meta-pixel.ts` charge — ou non — un script tiers.
+ *
+ * Deux conséquences pour qui modifie ce fichier :
+ *
+ *   • `subscribeCookieConsent` n'est plus décoratif. Le pixel s'y abonne pour
+ *     partir dès l'acceptation, sans attendre la navigation suivante. Cesser
+ *     de notifier les abonnés ferait silencieusement perdre les visiteurs qui
+ *     acceptent la bannière après leur arrivée.
+ *
+ *   • `hasMarketingConsent()` doit rester FERMÉ PAR DÉFAUT. Il répond `false`
+ *     quand rien n'est stocké, quand le stockage est inaccessible, et quand le
+ *     contenu est illisible. Un défaut ouvert déposerait un traceur sans
+ *     consentement — exactement ce que l'article 82 interdit.
+ *
+ * La mesure d'audience, elle, reste sans outil branché : `hasAnalyticsConsent()`
+ * ne gouverne encore rien. Voir `config/legal.ts` → `TRACEURS_TIERS`, qui est
+ * la déclaration faisant foi, et la page /cookies qui la publie.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
 export interface CookieConsent {
@@ -70,7 +87,13 @@ export function hasAnalyticsConsent(): boolean {
   return getCookieConsent()?.analytics ?? false;
 }
 
-/** Prêt pour le jour où un pixel publicitaire ou un partage réseau social est ajouté. */
+/**
+ * Gouverne le chargement du pixel Meta. Fermé par défaut — voir l'en-tête.
+ *
+ * `?? false` n'est pas une commodité d'écriture : c'est la garantie qu'un
+ * stockage vide, inaccessible ou corrompu se traduit par un refus, jamais par
+ * une acceptation implicite.
+ */
 export function hasMarketingConsent(): boolean {
   return getCookieConsent()?.marketing ?? false;
 }

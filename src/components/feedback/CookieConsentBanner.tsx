@@ -16,12 +16,24 @@ import {
 /**
  * Bandeau de consentement cookies.
  *
- * Aucun outil de mesure d'audience ni publicitaire n'est branché aujourd'hui
- * — les deux interrupteurs ci-dessous ne conditionnent donc rien de réel pour
- * l'instant. Ils sont prêts pour le jour où un outil d'analytics est ajouté :
- * son chargement se branchera alors sur `hasAnalyticsConsent()`
- * (`@/lib/cookie-consent`), sans redemander le consentement de ceux qui
- * l'ont déjà donné.
+ * ─────────────────────────────────────────────────────────────────────────────
+ * « PUBLICITÉ » GOUVERNE MAINTENANT UN VRAI TRACEUR
+ *
+ * L'interrupteur « Publicité et réseaux sociaux » décide du chargement du pixel
+ * Meta (`@/lib/meta-pixel`). Tant qu'il est fermé, `fbevents.js` n'est PAS
+ * téléchargé — ce qui est différent de le charger puis de le laisser inactif,
+ * un script chargé déposant ses cookies avant tout événement.
+ *
+ * « Mesure d'audience » ne gouverne encore rien : aucun outil d'analytics n'est
+ * branché. L'interrupteur reste en place pour que le choix déjà exprimé ne soit
+ * pas reperdu le jour où l'un est ajouté — son chargement se branchera alors
+ * sur `hasAnalyticsConsent()`.
+ *
+ * Les libellés doivent rester exacts. Ils constituent l'information préalable
+ * exigée par l'article 82 : décrire un traceur absent, ou taire un traceur
+ * présent, vicie le consentement recueilli. La liste faisant foi est
+ * `config/legal.ts` → `TRACEURS_TIERS`, publiée sur /cookies.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 export function CookieConsentBanner() {
   const [consent, setConsent] = useState(() => getCookieConsent());
@@ -63,8 +75,9 @@ export function CookieConsentBanner() {
         >
           <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground text-xs leading-relaxed sm:max-w-xl">
-              Nous utilisons des cookies pour mesurer l’audience du site. Vous pouvez tout
-              accepter, tout refuser, ou choisir précisément. Détails dans notre{' '}
+              Nous utilisons un traceur publicitaire pour savoir quelles annonces amènent des
+              inscriptions. Vous pouvez tout accepter, tout refuser, ou choisir précisément — le
+              site fonctionne à l’identique dans tous les cas. Détails dans notre{' '}
               <a href={ROUTES.cookies} className="text-primary hover:underline">
                 politique de cookies
               </a>
@@ -111,7 +124,7 @@ export function CookieConsentBanner() {
           />
           <Switch
             label="Publicité et réseaux sociaux"
-            description="Aucun outil de ce type n’est actif aujourd’hui sur REZO360."
+            description="Pixel Meta (Facebook, Instagram) — nous permet de savoir quelles publicités amènent des inscriptions. Conservation 3 mois. Désactivé, il n’est pas chargé du tout."
             checked={draftMarketing}
             onCheckedChange={setDraftMarketing}
           />

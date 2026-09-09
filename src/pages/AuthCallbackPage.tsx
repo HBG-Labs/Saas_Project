@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { Link, Navigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { AuthCard } from '@/features/auth/components/AuthCard';
+import { trackInscriptionSiCompteNeuf } from '@/lib/meta-pixel';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 /**
@@ -29,7 +31,24 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 export default function AuthCallbackPage() {
   useDocumentTitle('Validation');
 
-  const { status } = useAuth();
+  const { status, user } = useAuth();
+
+  /*
+    L'inscription par Google se termine ici, pas sur `/register`.
+
+    Le formulaire par e-mail déclare son `Lead` lui-même, dans son gestionnaire
+    de soumission. Le parcours Google, lui, quitte l'application par
+    redirection : il n'y a aucun instant, côté `/register`, où l'on sache que
+    le compte a été créé. Ce retour est le premier.
+
+    `trackInscriptionSiCompteNeuf` distingue l'inscription de la reconnexion,
+    qui empruntent toutes deux cet écran — voir son commentaire.
+  */
+  useEffect(() => {
+    if (status === 'authenticated') {
+      trackInscriptionSiCompteNeuf(user);
+    }
+  }, [status, user]);
 
   /**
    * Les liens par e-mail renvoient encore certaines erreurs dans le fragment,
