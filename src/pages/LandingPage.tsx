@@ -27,6 +27,42 @@ import { ScrollRevealSection } from '@/components/marketing/ScrollRevealSection'
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 
+/**
+ * Repli d'un pixel transparent, pour les deux `<picture>` du hero.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * `display:none` N'EMPÊCHE PAS UN TÉLÉCHARGEMENT
+ *
+ * Les deux photos du hero vivaient chacune dans un conteneur masqué à l'autre
+ * palier — `hidden lg:block` pour celle d'ordinateur, `lg:hidden` pour celle de
+ * téléphone. On pouvait croire l'affaire réglée : ce qui n'est pas affiché
+ * n'est pas chargé.
+ *
+ * C'est faux. Le navigateur récupère les images d'un conteneur en
+ * `display:none`. Mesuré sur un iPhone SE simulé, avant ce changement :
+ *
+ *     786 Ko  /images/landing-hero-4k.jpg   ← JAMAIS AFFICHÉE À CETTE LARGEUR
+ *     226 Ko  /images/landing-hero-v2.jpg   ← la seule réellement visible
+ *
+ * Pire que le gaspillage : la photo invisible portait `fetchPriority="high"`.
+ * Elle entrait donc en concurrence avec celle qu'on cherchait à afficher vite,
+ * et retardait le plus grand rendu de contenu sur les seuls appareils dont la
+ * bande passante est comptée — c'est-à-dire sur le trafic acheté en publicité.
+ *
+ * `<picture>` règle cela à la racine : le navigateur évalue les `media` À
+ * L'ANALYSE, avant toute requête, et ne télécharge QUE la source retenue.
+ * L'`<img>` sert de repli obligatoire ; il pointe donc sur ce pixel, qui ne
+ * coûte rien puisqu'il est en ligne dans le document.
+ *
+ * Deux `<picture>` distincts, et non une seule : les deux photos ne sont pas
+ * deux tailles d'un même visuel. Celle de téléphone porte le logo et l'accroche
+ * gravés, l'autre est volontairement muette — elles occupent des places
+ * différentes dans la page et ne se remplacent pas l'une l'autre.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const PIXEL_VIDE =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 const REASSURANCES = [
   '14 jours d’essai sur les formules payantes',
   'Aucun débit aujourd’hui',
@@ -454,16 +490,19 @@ export default function LandingPage() {
             La version mobile, plus bas, porte au contraire le logo et
             l'accroche gravés — voir le commentaire qui l'accompagne.
           */}
-          <img
-            src="/images/landing-hero-4k.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full translate-x-3 object-cover"
-            width="3840"
-            height="2160"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-          />
+          <picture>
+            <source media="(min-width: 1024px)" srcSet="/images/landing-hero-4k.jpg" />
+            <img
+              src={PIXEL_VIDE}
+              alt=""
+              className="absolute inset-0 h-full w-full translate-x-3 object-cover"
+              width="3840"
+              height="2160"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </picture>
           <div
             className="absolute inset-0"
             style={{
@@ -524,16 +563,19 @@ export default function LandingPage() {
               d'accessibilité. D'où un `alt` qui les reprend intégralement —
               c'est le seul endroit où ils existent en texte.
             */}
-            <img
-              src="/images/landing-hero-v2.jpg"
-              alt="REZO360 — Votre activité en mieux. Tout simplement. Un technicien devant son véhicule présente l’application sur son téléphone."
-              className="absolute inset-0 h-full w-full object-cover"
-              width="1672"
-              height="941"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
+            <picture>
+              <source media="(max-width: 1023.98px)" srcSet="/images/landing-hero-v2.jpg" />
+              <img
+                src={PIXEL_VIDE}
+                alt="REZO360 — Votre activité en mieux. Tout simplement. Un technicien devant son véhicule présente l’application sur son téléphone."
+                className="absolute inset-0 h-full w-full object-cover"
+                width="1672"
+                height="941"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </picture>
           </div>
         </div>
       </section>
@@ -790,8 +832,20 @@ export default function LandingPage() {
               Le chantier reste connecté
             </HandwrittenAnnotation>
             <div className="bg-brand-night relative min-h-[32rem] overflow-hidden rounded-3xl">
+              {/*
+                WebP et non PNG : la même image passe de 1 930 Ko à 97 Ko, soit
+                95 % de moins, sans différence visible.
+
+                Le PNG était le pire choix possible ici. Ce format est sans
+                perte — pensé pour des aplats et des captures d'écran, pas pour
+                une photographie de 1945 pixels de large, recouverte aux trois
+                quarts par un dégradé sombre.
+
+                Le PNG d'origine reste dans `public/images/backgrounds/` : plus
+                aucun code ne le référence.
+              */}
               <img
-                src="/images/backgrounds/field-technician-industrial.png"
+                src="/images/backgrounds/field-technician-industrial.webp"
                 alt="Technicien de maintenance industrielle utilisant une tablette dans un local technique"
                 className="absolute inset-0 h-full w-full object-cover object-[70%_center] sm:object-center"
                 loading="lazy"
