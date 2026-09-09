@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CalendarClock,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -9,9 +10,13 @@ import {
   Handshake,
   LockKeyhole,
   MapPinned,
+  MessageSquareText,
+  NotebookPen,
   PackageSearch,
   PenTool,
+  PhoneCall,
   Radio,
+  Repeat2,
   ShieldCheck,
   Smartphone,
   UsersRound,
@@ -399,74 +404,230 @@ function ProductCapture({
  * exactement ça ». C'est cette reconnaissance qui fait lire la suite.
  * ─────────────────────────────────────────────────────────────────────────────
  */
+/**
+ * Cinq scènes du quotidien, chacune avec sa teinte.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LA COULEUR RELIE LE PROBLÈME À SA RÉSOLUTION
+ *
+ * Chaque paire porte une teinte unique, qui traverse les trois éléments de la
+ * ligne : l'icône de l'outil à gauche, la flèche au milieu, la validation à
+ * droite. L'œil suit la couleur d'un bout à l'autre et rattache les deux
+ * cartes sans avoir à les lire.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * SATURÉE À DROITE, SOURDE À GAUCHE — ET PAS L'INVERSE
+ *
+ * La tentation serait de colorer la colonne « aujourd'hui », qui est la plus
+ * pittoresque : le carnet, WhatsApp, le dimanche soir. Ce serait une faute de
+ * hiérarchie — on rendrait le problème plus séduisant que sa solution.
+ *
+ * La couleur ne s'allume donc qu'en passant à droite. La gauche garde des tons
+ * éteints sur une bordure en pointillés ; c'est le monde qu'on quitte.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 const SCENES_QUOTIDIEN = [
   {
-    avant: 'L’intervention est notée sur un carnet, retapée dans un tableur, puis ressaisie une troisième fois pour la facture.',
+    icon: NotebookPen,
+    outil: 'Le carnet',
+    avant:
+      'L’intervention est notée sur un carnet, retapée dans un tableur, puis ressaisie une troisième fois pour la facture.',
     apres: 'Elle est saisie une fois sur le terrain, et suit d’elle-même jusqu’à la facture.',
+    // Ambre : la couleur du papier et du crayon.
+    iconTon: 'bg-amber-100/70 text-amber-700/70',
+    flecheTon: 'bg-amber-500 text-white',
+    barreTon: 'bg-amber-500',
+    checkTon: 'text-amber-600',
   },
   {
-    avant: 'Les photos du chantier dorment dans une conversation WhatsApp, introuvables six mois plus tard.',
+    icon: MessageSquareText,
+    outil: 'WhatsApp',
+    avant: 'Les photos du chantier dorment dans une conversation, introuvables six mois plus tard.',
     apres: 'Elles restent attachées à l’intervention, avec le compte rendu et la signature du client.',
+    // Vert : celui de la messagerie dont on parle, reconnaissable au premier
+    // coup d'œil sans avoir à écrire son nom.
+    iconTon: 'bg-emerald-100/70 text-emerald-700/70',
+    flecheTon: 'bg-emerald-500 text-white',
+    barreTon: 'bg-emerald-500',
+    checkTon: 'text-emerald-600',
   },
   {
+    icon: PhoneCall,
+    outil: 'Le téléphone',
     avant: '« Vous passez quand ? » — il faut appeler le technicien pour savoir où il en est.',
     apres: 'Le planning montre l’état de chaque mission, sans déranger personne.',
+    // Orange : la couleur de l'interruption.
+    iconTon: 'bg-orange-100/70 text-orange-700/70',
+    flecheTon: 'bg-orange-500 text-white',
+    barreTon: 'bg-orange-500',
+    checkTon: 'text-orange-600',
   },
   {
-    avant: 'Le devis se refait de mémoire, et les prix varient d’un chantier à l’autre.',
+    icon: Repeat2,
+    outil: 'La mémoire',
+    avant: 'Le devis se refait de tête, et les prix varient d’un chantier à l’autre.',
     apres: 'Il reprend vos prestations déjà chiffrées, au même tarif qu’en janvier.',
+    iconTon: 'bg-violet-100/70 text-violet-700/70',
+    flecheTon: 'bg-violet-500 text-white',
+    barreTon: 'bg-violet-500',
+    checkTon: 'text-violet-600',
   },
   {
-    avant: 'Le dimanche soir passe dans la paperasse en retard.',
+    icon: CalendarClock,
+    outil: 'Le dimanche',
+    avant: 'La soirée passe dans la paperasse en retard.',
     apres: 'Le compte rendu part du chantier, avant même de remonter dans le camion.',
+    // Cyan, la teinte de signature du produit : la dernière ligne est celle
+    // qu'on retient, elle revient donc à la marque.
+    iconTon: 'bg-cyan-100/70 text-cyan-700/70',
+    flecheTon: 'bg-cyan-500 text-white',
+    barreTon: 'bg-cyan-500',
+    checkTon: 'text-cyan-600',
   },
 ] as const;
 
 function MethodeActuelleSection() {
   return (
-    <section className="bg-surface border-border border-y py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl">
-          <ChapterLabel number="00">Avant de changer d’outil</ChapterLabel>
-          <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
-            Votre méthode actuelle fonctionne. C’est ce qu’elle vous coûte qui pose problème.
-          </h2>
-          <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
-            Le carnet, le tableur et les photos dans WhatsApp ont porté votre entreprise jusqu’ici.
-            Ils ne tiennent plus dès que l’activité grossit — parce qu’ils font ressaisir la même
-            information plusieurs fois, et repoussent le reste à plus tard.
-          </p>
+    /*
+      LE FOND ENCODE LE PROPOS.
+
+      Un dégradé HORIZONTAL, de l'ardoise tiède à gauche vers le bleu du
+      produit à droite. Il ne décore pas : il suit exactement le sens de
+      lecture des paires ci-dessous, et fait ressentir le passage avant qu'on
+      ait lu la première ligne.
+    */
+    <section className="border-border border-y bg-gradient-to-r from-slate-100 via-white to-blue-50/70 py-16 sm:py-24">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/*
+          Même rythme d'en-tête que la section « Le cockpit » : le titre à
+          gauche, le développement à droite. Reprendre la grille existante
+          plutôt qu'en inventer une évite que cette section, ajoutée après
+          coup, se voie comme une pièce rapportée.
+        */}
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-6">
+            {/*
+              LE LIBELLÉ NOMME UN SUJET, IL NE DONNE PAS D'INSTRUCTION.
+
+              Il disait « Avant de changer d'outil ». Trois défauts pour trois
+              mots : il nommait l'EFFORT — migration, réapprentissage — au lieu
+              du bénéfice ; il présupposait une décision que le visiteur n'a pas
+              prise ; et il contredisait la dernière ligne de la section, qui
+              promet précisément qu'il n'y a rien à migrer.
+
+              « Le point de départ » situe le lecteur là où il est, sans rien
+              exiger de lui — et s'accorde au registre des autres chapitres,
+              qui nomment un sujet plutôt qu'une consigne.
+
+              Le numéro 00 reste : cette section précède les trois autres, et le
+              zéro le dit mieux qu'un mot.
+            */}
+            <ChapterLabel number="00">Le point de départ</ChapterLabel>
+            <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
+              Votre méthode actuelle fonctionne. C’est ce qu’elle vous coûte qui pose problème.
+            </h2>
+          </div>
+          <div className="lg:col-span-5 lg:col-start-8">
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              Le carnet, le tableur et les photos dans WhatsApp ont porté votre entreprise jusqu’ici.
+              Ils ne tiennent plus dès que l’activité grossit — parce qu’ils font ressaisir la même
+              information plusieurs fois, et repoussent le reste à plus tard.
+            </p>
+          </div>
         </div>
 
-        <div className="border-border mt-10 overflow-hidden rounded-2xl border sm:mt-14">
-          {/* En-têtes de colonnes, sur écran large seulement : sur téléphone,
-              chaque paire se lit de haut en bas et les intitulés répétés
-              alourdiraient sans rien clarifier. */}
-          <div className="border-border bg-surface-sunken hidden border-b sm:grid sm:grid-cols-2">
-            <div className="text-muted-foreground px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase">
+        {/*
+          L'écriture à la main EST la méthode actuelle : ici, elle n'est pas un
+          ornement, elle appartient au sujet. Placée du côté « aujourd'hui »,
+          et seulement sur grand écran, comme les autres annotations de la page.
+        */}
+        <HandwrittenAnnotation
+          className="top-2 right-0 w-44 rotate-3 xl:block"
+          tone="orange"
+          arrow="curve-right"
+        >
+          On connaît tous ça
+        </HandwrittenAnnotation>
+
+        <div className="mt-10 sm:mt-14">
+          {/* Intitulés de colonnes, calés sur la même grille que les paires.
+              Masqués sur téléphone, où chaque paire se lit de haut en bas et
+              où les répéter n'apprendrait rien. */}
+          <div className="mb-3 hidden items-center gap-5 sm:grid sm:grid-cols-[1fr_2rem_1fr]">
+            <span className="text-muted-foreground/80 font-mono text-xs font-bold tracking-widest uppercase">
               Aujourd’hui
-            </div>
-            <div className="border-border text-primary border-l px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase">
+            </span>
+            <span aria-hidden="true" />
+            <span className="text-primary font-mono text-xs font-bold tracking-widest uppercase">
               Avec REZO360
-            </div>
+            </span>
           </div>
 
-          <ul className="divide-border divide-y">
-            {SCENES_QUOTIDIEN.map((scene) => (
-              <li key={scene.avant} className="grid sm:grid-cols-2">
-                <div className="text-muted-foreground flex gap-3 px-5 py-4 text-sm leading-relaxed">
+          <ul className="space-y-3">
+            {SCENES_QUOTIDIEN.map((scene) => {
+              const Icon = scene.icon;
+              return (
+                <li
+                  key={scene.outil}
+                  className="grid items-stretch gap-2 sm:grid-cols-[1fr_2.25rem_1fr] sm:items-center sm:gap-4"
+                >
+                  {/*
+                    BORDURE EN POINTILLÉS, TONS ÉTEINTS.
+
+                    Ce n'est pas un effet : le pointillé dit « provisoire, tenu
+                    par habitude », et la teinte sourde dit que ce monde-là est
+                    déjà derrière. La différence se lit avant le texte.
+                  */}
+                  <div className="border-border/70 bg-surface/60 flex items-start gap-3 rounded-xl border border-dashed p-4">
+                    <span
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${scene.iconTon}`}
+                    >
+                      <Icon className="size-4.5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <span className="text-muted-foreground/70 text-2xs block font-bold tracking-wide uppercase">
+                        {scene.outil}
+                      </span>
+                      <p className="text-muted-foreground mt-0.5 text-sm leading-relaxed">
+                        {scene.avant}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Le passage. Vers la droite en vis-à-vis, vers le bas quand
+                      les deux cartes s'empilent. C'est le seul élément
+                      pleinement saturé de la ligne : il porte le mouvement. */}
                   <span
-                    className="bg-muted-foreground/30 mt-2 size-1.5 shrink-0 rounded-full"
                     aria-hidden="true"
-                  />
-                  {scene.avant}
-                </div>
-                <div className="border-border text-foreground bg-primary/[0.04] flex gap-3 border-t px-5 py-4 text-sm leading-relaxed font-medium sm:border-t-0 sm:border-l">
-                  <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  {scene.apres}
-                </div>
-              </li>
-            ))}
+                    className={`mx-auto flex size-8 shrink-0 items-center justify-center rounded-full shadow-sm ${scene.flecheTon}`}
+                  >
+                    <ArrowRight className="size-4 rotate-90 sm:rotate-0" />
+                  </span>
+
+                  {/*
+                    RELEVÉE, PLEINE, ET BARRÉE DE SA COULEUR.
+
+                    Fond opaque et ombre portée là où la gauche était plate et
+                    translucide : la carte de droite avance vers le lecteur.
+                    La barre latérale reprend la teinte de la ligne et referme
+                    le trajet commencé par l'icône.
+                  */}
+                  <div className="border-border/60 bg-surface shadow-raised relative flex items-start gap-3 overflow-hidden rounded-xl border py-4 pr-4 pl-5">
+                    <span
+                      aria-hidden="true"
+                      className={`absolute inset-y-0 left-0 w-1 ${scene.barreTon}`}
+                    />
+                    <CheckCircle2
+                      className={`mt-0.5 size-4.5 shrink-0 ${scene.checkTon}`}
+                      aria-hidden="true"
+                    />
+                    <p className="text-foreground text-sm leading-relaxed font-medium">
+                      {scene.apres}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
 

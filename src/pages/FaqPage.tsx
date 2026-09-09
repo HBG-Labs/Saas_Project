@@ -3,58 +3,122 @@ import { Accordion } from 'radix-ui';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { PRICING_PLANS } from '@/config/pricing';
 import { useDocumentTitle } from '@/lib/use-document-title';
+
+/**
+ * La phrase des tarifs, CONSTRUITE À PARTIR DE LA SOURCE UNIQUE.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CETTE PAGE ANNONÇAIT DES PRIX FAUX
+ *
+ * Elle promettait « la formule Pro (14,99 €/mois ou 149 €/an) » et « une
+ * formule Équipe (39,99 €/mois/utilisateur) ». Pro coûte 39 €, et aucune
+ * formule Équipe n'existe. Une page publique qui affiche un tarif engage
+ * commercialement : un visiteur peut la capturer et s'en prévaloir.
+ *
+ * La cause n'est pas l'inattention, c'est la RECOPIE. Un prix écrit à la main
+ * dans un texte ne suit pas la grille tarifaire quand elle bouge, et rien ne
+ * signale l'écart — ni test, ni compilation, ni relecture.
+ *
+ * D'où cette fonction plutôt qu'une phrase figée : les montants viennent de
+ * `PRICING_PLANS`, qui alimente déjà la page des tarifs et l'inscription.
+ * Changer un prix à un seul endroit met désormais cette réponse à jour aussi.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function phraseDesFormules(): string {
+  const gratuite = PRICING_PLANS.find((plan) => plan.priceMonthly === 0);
+  const payantes = PRICING_PLANS.filter((plan) => plan.priceMonthly > 0);
+
+  const detail = payantes
+    .map(
+      (plan) =>
+        `${plan.name} à ${String(plan.priceMonthly)} €/mois (${String(plan.includedUsers)} utilisateurs inclus)`,
+    )
+    .join(', ');
+
+  const supplement = payantes.find((plan) => plan.additionalUserPriceMonthly > 0);
+  const phraseSupplement =
+    supplement === undefined
+      ? ''
+      : ` Au-delà des utilisateurs inclus, chaque siège supplémentaire coûte ${String(supplement.additionalUserPriceMonthly)} €/mois.`;
+
+  return (
+    `La formule ${gratuite?.name ?? 'Gratuite'} est sans carte bancaire et sans limite de durée. ` +
+    `Les formules payantes sont : ${detail}.${phraseSupplement} ` +
+    'Toutes sont sans engagement et résiliables en deux clics depuis votre espace.'
+  );
+}
 
 const FAQ_ITEMS = [
   {
-    id: 'what-is-rezo360',
-    question: 'Qu’est-ce que REZO360 ?',
+    id: 'ce-que-ca-simplifie',
+    question: 'Qu’est-ce que REZO360 peut réellement simplifier dans mon entreprise ?',
     answer:
-      'REZO360 est une plateforme SaaS de gestion d’interventions et d’outils techniques destinée aux techniciens, artisans, chefs d’équipe et entreprises multi-métiers (CVC/climatisation, électricité, fibre & télécoms, paysage, plomberie, maintenance). Elle centralise vos missions, vos rapports terrain et vos calculatrices d’ingénierie dans un espace numérique unique.',
+      'REZO360 centralise votre activité au même endroit : clients, équipes, interventions, rapports, documents, outils métier et facturation. Moins d’outils dispersés, moins de tâches administratives, et plus de temps pour votre activité.',
   },
   {
-    id: 'who-is-it-for',
-    question: 'À qui s’adresse REZO360 ?',
+    id: 'pour-qui',
+    question: 'REZO360 est-il adapté à mon métier et à la taille de mon entreprise ?',
     answer:
-      'L’application est conçue pour les professionnels et entreprises techniques : entreprises du bâtiment, installateurs de climatisation/CVC, électriciens, techniciens télécoms, paysagistes, plombiers, et équipes de maintenance multi-sites.',
+      'Oui. REZO360 est conçu pour les indépendants, les TPE et les entreprises avec des équipes terrain, dans de nombreux métiers : BTP, électricité, plomberie, climatisation, réseaux, télécoms, espaces verts et bien d’autres.',
   },
   {
-    id: 'available-tools',
-    question: 'Quels types d’outils et fonctionnalités sont disponibles ?',
+    id: 'mobile',
+    question: 'Puis-je gérer mon activité directement depuis mon téléphone ?',
     answer:
-      'La plateforme intègre la gestion complète des interventions, le suivi de temps terrain, les formulaires et checklists adaptatifs par métier, les devis rapides, ainsi qu’un catalogue d’outils d’ingénierie (bilans optiques, calculs électriques NF C 15-100, sous-réseautage, conversions d’unités et calculatrices de dimensionnement).',
+      'Oui. REZO360 s’utilise sur ordinateur, tablette et smartphone, et s’installe sur votre écran d’accueil en un geste — sans passer par un magasin d’applications. Au bureau comme sur le terrain, vos équipes retrouvent les mêmes informations.',
   },
   {
-    id: 'is-it-free',
+    id: 'demarrage',
+    question: 'Est-ce compliqué de commencer avec REZO360 ?',
+    answer:
+      'Non. Créez votre espace, ajoutez vos collaborateurs et vos clients, puis organisez votre première intervention. Rien à installer, rien à migrer le premier jour : vous commencez par une intervention, et vous voyez.',
+  },
+  {
+    id: 'formules',
     question: 'Quelles sont les différentes formules et est-ce gratuit ?',
-    answer:
-      'REZO360 propose une formule 100 % Gratuite sans limitation de durée vous donnant accès à tout le catalogue d’outils. La formule Pro (14,99 €/mois ou 149 €/an) ajoute l’historique illimité, l’export PDF/CSV et les favoris illimités. Une formule Équipe (39,99 €/mois/utilisateur) permet la gestion centralisée d’entreprise.',
+    answer: phraseDesFormules(),
   },
   {
-    id: 'reliability',
-    question: 'Les calculs sont-ils fiables et conformes aux normes ?',
+    id: 'essai',
+    question: 'Puis-je essayer REZO360 avant de m’engager ?',
     answer:
-      'Absolument. Chaque outil s’appuie sur des algorithmes stricts validés selon les standards internationaux et français (normes ITU-T, IEEE, UTE C 15-105). Les résultats sont présentés avec des chiffres tabulaires pour éviter toute erreur de lecture.',
+      // « Gratuit sans engagement » seul serait vrai mais incomplet, et
+      // l'omission se paie à l'écran suivant : l'essai des formules payantes
+      // réclame une carte. La carte n'est pas là par gourmandise — sans elle,
+      // il suffit de changer d'adresse e-mail pour renouveler indéfiniment.
+      'Oui, de deux façons. La formule Gratuite ne demande aucune carte bancaire et n’expire jamais. Les formules payantes ouvrent 14 jours d’essai : une carte est demandée pour vérification, rien n’est débité avant la fin de l’essai, et vous pouvez résilier à tout moment.',
   },
   {
-    id: 'mobile-use',
-    question: 'Peut-on utiliser REZO360 sur mobile sur le terrain ?',
+    id: 'fonctionnalites',
+    question: 'Quelles fonctionnalités sont disponibles ?',
     answer:
-      'Oui, l’application est entièrement optimisée pour le terrain. L’interface s’adapte automatiquement aux écrans de smartphones (iOS et Android) avec des boutons faciles à toucher à une main.',
+      'La gestion complète des interventions, le planning et l’affectation des équipes, le suivi du temps passé, les formulaires et checklists adaptés à chaque métier, les comptes rendus signés par le client, les devis et la facturation électronique, la gestion du stock, du matériel et des véhicules — ainsi qu’un catalogue d’outils techniques.',
   },
   {
-    id: 'saving-tools',
-    question: 'Peut-on sauvegarder ses outils préférés ?',
+    id: 'fiabilite-calculs',
+    question: 'Les calculs des outils techniques sont-ils fiables ?',
     answer:
-      'Oui, en cliquant sur l’étoile présente sur chaque carte d’outil, vous l’ajoutez à vos favoris. Ils apparaissent directement sur votre tableau de bord dès votre connexion.',
+      'Oui. Chaque outil s’appuie sur les formules et normes officielles (NF C 15-100, UTE C 15-105, ITU-T, IEEE), et affiche la formule employée à côté du résultat pour que vous puissiez la vérifier. Les valeurs sont présentées en chiffres tabulaires, afin d’éviter toute erreur de lecture.',
   },
   {
-    id: 'history-feature',
-    question: 'Comment fonctionne l’historique des calculs ?',
+    id: 'donnees',
+    question: 'Comment mes données d’entreprise sont-elles protégées ?',
     answer:
-      'Chaque calcul réalisé lorsque vous êtes connecté est conservé dans votre historique personnel. Vous pouvez retrouver la date, l’outil utilisé, les valeurs d’entrée et le résultat pour vos PV de recette ou vos comptes-rendus.',
+      // Deux formulations à ne pas laisser revenir : « en Europe » (la base
+      // tourne à Montréal) et « chiffré de bout en bout » (Supabase chiffre en
+      // transit et au repos, mais peut lire la donnée). Voir le même
+      // commentaire dans `components/marketing/Faq.tsx`.
+      'Vos données sont hébergées au Canada, pays reconnu par la Commission européenne comme offrant un niveau de protection adéquat. Elles sont chiffrées en transit (TLS) et au repos (AES-256), et l’accès est strictement cloisonné par organisation au niveau de la base (PostgreSQL Row Level Security).',
   },
-] as const;
+  {
+    id: 'favoris-historique',
+    question: 'Puis-je retrouver mes outils favoris et mes calculs précédents ?',
+    answer:
+      'Oui. L’étoile présente sur chaque outil l’ajoute à vos favoris, qui apparaissent sur votre tableau de bord. Et chaque calcul effectué en étant connecté est conservé avec sa date, ses valeurs d’entrée et son résultat — utile pour un procès-verbal de recette ou un compte rendu.',
+  },
+];
 
 export default function FaqPage() {
   useDocumentTitle('FAQ');
@@ -63,11 +127,11 @@ export default function FaqPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <PageHeader
         title="Foire aux questions & Réponses"
-        description="Retrouvez ici toutes les explications sur le fonctionnement de REZO360, la précision des calculs et la gestion de vos outils."
+        description="Ce que la plateforme change concrètement, à qui elle s’adresse, ce qu’elle coûte, et ce qu’il advient de vos données."
       />
 
       <div className="bg-surface/90 border-border/80 shadow-raised rounded-2xl border p-6 sm:p-8 backdrop-blur-md">
-        <Accordion.Root type="single" defaultValue="what-is-rezo360" collapsible className="space-y-4">
+        <Accordion.Root type="single" defaultValue="ce-que-ca-simplifie" collapsible className="space-y-4">
           {FAQ_ITEMS.map((item) => (
             <Accordion.Item
               key={item.id}
@@ -101,7 +165,7 @@ export default function FaqPage() {
           <div>
             <h3 className="text-foreground font-semibold text-sm">Vous avez une question spécifique ?</h3>
             <p className="text-muted-foreground text-xs">
-              Notre équipe d&apos;ingénierie est à votre disposition pour vous répondre.
+              Écrivez-nous : vous aurez une réponse d&apos;une personne qui connaît le produit.
             </p>
           </div>
         </div>
