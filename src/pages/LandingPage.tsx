@@ -65,8 +65,7 @@ import { ROUTES } from '@/config/routes';
  * différentes dans la page et ne se remplacent pas l'une l'autre.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-const PIXEL_VIDE =
-  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const PIXEL_VIDE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 const REASSURANCES = [
   '14 jours d’essai sur les formules payantes',
@@ -430,9 +429,8 @@ const SCENES_QUOTIDIEN = [
   {
     icon: NotebookPen,
     outil: 'Le carnet',
-    avant:
-      'L’intervention est notée sur un carnet, retapée dans un tableur, puis ressaisie une troisième fois pour la facture.',
-    apres: 'Elle est saisie une fois sur le terrain, et suit d’elle-même jusqu’à la facture.',
+    avant: 'Notée sur un carnet, retapée dans un tableur, ressaisie pour la facture.',
+    apres: 'Saisie une fois sur le terrain, elle suit d’elle-même jusqu’à la facture.',
     // Ambre : la couleur du papier et du crayon.
     iconTon: 'bg-amber-100/70 text-amber-700/70',
     flecheTon: 'bg-amber-500 text-white',
@@ -442,8 +440,8 @@ const SCENES_QUOTIDIEN = [
   {
     icon: MessageSquareText,
     outil: 'WhatsApp',
-    avant: 'Les photos du chantier dorment dans une conversation, introuvables six mois plus tard.',
-    apres: 'Elles restent attachées à l’intervention, avec le compte rendu et la signature du client.',
+    avant: 'Les photos dorment dans une conversation, introuvables six mois plus tard.',
+    apres: 'Attachées à l’intervention, avec le compte rendu et la signature du client.',
     // Vert : celui de la messagerie dont on parle, reconnaissable au premier
     // coup d'œil sans avoir à écrire son nom.
     iconTon: 'bg-emerald-100/70 text-emerald-700/70',
@@ -454,8 +452,8 @@ const SCENES_QUOTIDIEN = [
   {
     icon: PhoneCall,
     outil: 'Le téléphone',
-    avant: '« Vous passez quand ? » — il faut appeler le technicien pour savoir où il en est.',
-    apres: 'Le planning montre l’état de chaque mission, sans déranger personne.',
+    avant: '« Vous passez quand ? » — il faut appeler le technicien pour le savoir.',
+    apres: 'Le planning montre où en est chaque mission, sans déranger personne.',
     // Orange : la couleur de l'interruption.
     iconTon: 'bg-orange-100/70 text-orange-700/70',
     flecheTon: 'bg-orange-500 text-white',
@@ -476,7 +474,7 @@ const SCENES_QUOTIDIEN = [
     icon: CalendarClock,
     outil: 'Le dimanche',
     avant: 'La soirée passe dans la paperasse en retard.',
-    apres: 'Le compte rendu part du chantier, avant même de remonter dans le camion.',
+    apres: 'Le compte rendu part du chantier, avant de remonter dans le camion.',
     // Cyan, la teinte de signature du produit : la dernière ligne est celle
     // qu'on retient, elle revient donc à la marque.
     iconTon: 'bg-cyan-100/70 text-cyan-700/70',
@@ -485,6 +483,72 @@ const SCENES_QUOTIDIEN = [
     checkTon: 'text-cyan-600',
   },
 ] as const;
+
+/**
+ * Le carnet, et la boucle qui en sort pour y revenir.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI UN DESSIN DE PLUS, ET PAS UN DES TROIS EXISTANTS
+ *
+ * `TechnicianSketch` dessine un circuit électrique, un schéma réseau et une
+ * figure de géométrie. Ce sont les croquis du CATALOGUE D'OUTILS : ils
+ * accompagnent bien les sections qui en parlent, et n'ont rien à dire ici.
+ *
+ * Cette section-ci parle du carnet, du tableur et de l'information ressaisie
+ * trois fois. Son illustration devait donc montrer cela, sinon elle ne serait
+ * qu'un remplissage de marge — exactement ce qu'on vient de retirer avec
+ * l'annotation mal placée.
+ *
+ * La boucle qui quitte le carnet et y revient EST l'argument de la section,
+ * dessiné : ce qu'on note ici, on le renote ailleurs, puis encore ailleurs.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * TRACÉ À MAIN LEVÉE, VOLONTAIREMENT
+ *
+ * Les côtés du carnet ne sont pas droits et les lignes n'ont pas la même
+ * longueur. Un rectangle parfait avec quatre traits réguliers aurait l'air d'un
+ * pictogramme d'interface, pas d'un dessin — et la page emploie déjà le
+ * registre manuscrit ailleurs.
+ *
+ * Réservé aux très grands écrans : en dessous de 1700 px, la marge n'existe
+ * pas, et le croquis chevaucherait le contenu.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function CarnetSketch({ className }: { className: string }) {
+  return (
+    <svg
+      viewBox="0 0 190 215"
+      className={`pointer-events-none absolute ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* Le corps du carnet. */}
+      <path d="M26 44c-2 42-3 84-1 130 1 9 3 12 11 12 24 1 57 1 84-1 8 0 10-3 10-11 1-45 1-87-1-130" />
+      <path d="M26 44c29-3 60-3 103-1" />
+
+      {/* La reliure. */}
+      <path d="M40 28c-6 6-6 15 0 21M61 26c-6 6-6 15 0 21M82 27c-6 6-6 15 0 21M103 26c-6 6-6 15 0 21" />
+
+      {/* Ce qu'on y écrit — des lignes inégales, comme une écriture réelle. */}
+      <path d="M42 80c17-2 38-3 59-1" />
+      <path d="M42 99c25-2 38-2 48-1" />
+      <path d="M42 118c13-1 33-2 55-1" />
+      <path d="M42 137c21-1 30-1 38 0" />
+
+      {/* La boucle : ce qui sort du carnet y revient. */}
+      <path d="M143 86c26 10 30 42 8 57-19 13-45 3-46-15" />
+      <path d="m106 125 6-12m-6 12 13 3" />
+
+      {/* Deux points de ponctuation, pour l'aspect croquis. */}
+      <circle cx="160" cy="70" r="2.4" fill="currentColor" stroke="none" />
+      <circle cx="20" cy="176" r="2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 function MethodeActuelleSection() {
   return (
@@ -496,8 +560,15 @@ function MethodeActuelleSection() {
       lecture des paires ci-dessous, et fait ressentir le passage avant qu'on
       ait lu la première ligne.
     */
-    <section className="border-border border-y bg-gradient-to-r from-slate-100 via-white to-blue-50/70 py-16 sm:py-24">
+    <section className="border-border border-y bg-gradient-to-r from-slate-100 via-white to-blue-50/70 py-12 sm:py-24">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/*
+          Dans la MARGE, pas dans le contenu : `-left-56` le pousse hors du
+          conteneur, là où il n'y a rien. Il n'apparaît qu'au-delà de 1700 px,
+          largeur en deçà de laquelle cette marge n'existe pas.
+        */}
+        <CarnetSketch className="top-44 -left-56 hidden h-52 w-44 -rotate-6 text-amber-600 opacity-25 min-[1700px]:block" />
+
         {/*
           Même rythme d'en-tête que la section « Le cockpit » : le titre à
           gauche, le développement à droite. Reprendre la grille existante
@@ -529,27 +600,37 @@ function MethodeActuelleSection() {
           </div>
           <div className="lg:col-span-5 lg:col-start-8">
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Le carnet, le tableur et les photos dans WhatsApp ont porté votre entreprise jusqu’ici.
-              Ils ne tiennent plus dès que l’activité grossit — parce qu’ils font ressaisir la même
-              information plusieurs fois, et repoussent le reste à plus tard.
+              Le carnet, le tableur et WhatsApp ont porté votre entreprise jusqu’ici. Ils ne
+              tiennent plus dès qu’elle grossit : la même information est ressaisie trois fois, et
+              le reste attend.
             </p>
           </div>
         </div>
 
         {/*
-          L'écriture à la main EST la méthode actuelle : ici, elle n'est pas un
-          ornement, elle appartient au sujet. Placée du côté « aujourd'hui »,
-          et seulement sur grand écran, comme les autres annotations de la page.
+          ELLE POINTE VERS LE CONTENU, PAS VERS LA MARGE.
+
+          La première version employait `curve-right`, dont la flèche descend
+          vers la DROITE. Posée au coin haut-droit de la section, elle désignait
+          donc le vide au-delà du cadre — et le texte, privé de référent, ne
+          commentait plus personne.
+
+          `curve-left` descend vers la gauche : depuis ce même coin, elle ramène
+          l'œil sur le paragraphe qui vient d'énoncer la thèse.
+
+          Le texte AJOUTE quelque chose au lieu de répéter. Le titre dit ce que
+          la méthode actuelle coûte ; l'annotation nomme la raison pour laquelle
+          ce coût reste invisible — il n'apparaît sur aucune facture.
         */}
         <HandwrittenAnnotation
-          className="top-2 right-0 w-44 rotate-3 xl:block"
+          className="top-1 right-2 w-48 -rotate-2 xl:block"
           tone="orange"
-          arrow="curve-right"
+          arrow="curve-left"
         >
-          On connaît tous ça
+          Et personne ne compte ces heures-là
         </HandwrittenAnnotation>
 
-        <div className="mt-10 sm:mt-14">
+        <div className="mt-8 sm:mt-14">
           {/* Intitulés de colonnes, calés sur la même grille que les paires.
               Masqués sur téléphone, où chaque paire se lit de haut en bas et
               où les répéter n'apprendrait rien. */}
@@ -569,20 +650,31 @@ function MethodeActuelleSection() {
               return (
                 <li
                   key={scene.outil}
-                  className="grid items-stretch gap-2 sm:grid-cols-[1fr_2.25rem_1fr] sm:items-center sm:gap-4"
+                  /*
+                    UNE SEULE CARTE SUR TÉLÉPHONE, DEUX EN VIS-À-VIS AU-DELÀ.
+
+                    Empilées, les deux cartes coûtaient deux bordures, deux
+                    rembourrages et une pastille sur sa propre ligne : 252 px
+                    par paire, mesurés, soit près de deux mille pixels pour la
+                    seule section.
+
+                    Le vis-à-vis n'a de sens qu'en vis-à-vis. Sur une colonne
+                    unique, la même idée se dit mieux en un seul bloc coupé par
+                    un filet : ce qui est au-dessus du filet, c'est aujourd'hui ;
+                    ce qui est en dessous, c'est après.
+                  */
+                  className="border-border/70 bg-surface/60 overflow-hidden rounded-xl border sm:grid sm:grid-cols-[1fr_2.25rem_1fr] sm:items-center sm:gap-4 sm:rounded-none sm:border-0 sm:bg-transparent"
                 >
                   {/*
-                    BORDURE EN POINTILLÉS, TONS ÉTEINTS.
-
-                    Ce n'est pas un effet : le pointillé dit « provisoire, tenu
-                    par habitude », et la teinte sourde dit que ce monde-là est
-                    déjà derrière. La différence se lit avant le texte.
+                    Le pointillé ne subsiste qu'en vis-à-vis : sur téléphone, la
+                    carte est commune aux deux moitiés, une bordure intérieure
+                    en pointillés ne délimiterait plus rien.
                   */}
-                  <div className="border-border/70 bg-surface/60 flex items-start gap-3 rounded-xl border border-dashed p-4">
+                  <div className="sm:border-border/70 sm:bg-surface/60 flex items-start gap-3 p-3.5 sm:rounded-xl sm:border sm:border-dashed sm:p-4">
                     <span
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${scene.iconTon}`}
+                      className={`flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9 ${scene.iconTon}`}
                     >
-                      <Icon className="size-4.5" aria-hidden="true" />
+                      <Icon className="size-4 sm:size-4.5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
                       <span className="text-muted-foreground/70 text-2xs block font-bold tracking-wide uppercase">
@@ -594,31 +686,34 @@ function MethodeActuelleSection() {
                     </div>
                   </div>
 
-                  {/* Le passage. Vers la droite en vis-à-vis, vers le bas quand
-                      les deux cartes s'empilent. C'est le seul élément
-                      pleinement saturé de la ligne : il porte le mouvement. */}
-                  <span
-                    aria-hidden="true"
-                    className={`mx-auto flex size-8 shrink-0 items-center justify-center rounded-full shadow-sm ${scene.flecheTon}`}
-                  >
-                    <ArrowRight className="size-4 rotate-90 sm:rotate-0" />
-                  </span>
+                  {/*
+                    Le passage. Filet traversant sur téléphone — il sépare les
+                    deux moitiés d'une même carte ; pastille centrée au-delà, où
+                    il relie deux cartes distinctes.
+                  */}
+                  <div className="flex items-center gap-2 px-3.5 sm:block sm:px-0">
+                    <span className="bg-border/70 h-px flex-1 sm:hidden" aria-hidden="true" />
+                    <span
+                      aria-hidden="true"
+                      className={`flex size-6 shrink-0 items-center justify-center rounded-full shadow-sm sm:mx-auto sm:size-8 ${scene.flecheTon}`}
+                    >
+                      <ArrowRight className="size-3 rotate-90 sm:size-4 sm:rotate-0" />
+                    </span>
+                    <span className="bg-border/70 h-px flex-1 sm:hidden" aria-hidden="true" />
+                  </div>
 
                   {/*
-                    RELEVÉE, PLEINE, ET BARRÉE DE SA COULEUR.
-
-                    Fond opaque et ombre portée là où la gauche était plate et
-                    translucide : la carte de droite avance vers le lecteur.
-                    La barre latérale reprend la teinte de la ligne et referme
+                    La barre de couleur borde la moitié basse sur téléphone, et
+                    la carte entière en vis-à-vis. Dans les deux cas elle referme
                     le trajet commencé par l'icône.
                   */}
-                  <div className="border-border/60 bg-surface shadow-raised relative flex items-start gap-3 overflow-hidden rounded-xl border py-4 pr-4 pl-5">
+                  <div className="border-border/60 sm:bg-surface sm:shadow-raised relative flex items-start gap-3 py-3.5 pr-3.5 pl-5 sm:overflow-hidden sm:rounded-xl sm:border sm:py-4 sm:pr-4">
                     <span
                       aria-hidden="true"
                       className={`absolute inset-y-0 left-0 w-1 ${scene.barreTon}`}
                     />
                     <CheckCircle2
-                      className={`mt-0.5 size-4.5 shrink-0 ${scene.checkTon}`}
+                      className={`mt-0.5 size-4 shrink-0 sm:size-4.5 ${scene.checkTon}`}
                       aria-hidden="true"
                     />
                     <p className="text-foreground text-sm leading-relaxed font-medium">
@@ -632,8 +727,8 @@ function MethodeActuelleSection() {
         </div>
 
         <p className="text-muted-foreground mt-6 text-sm">
-          Rien à réinstaller, rien à migrer le premier jour : vous commencez par une intervention, et
-          vous voyez.
+          Rien à réinstaller, rien à migrer le premier jour : vous commencez par une intervention,
+          et vous voyez.
         </p>
       </div>
     </section>
