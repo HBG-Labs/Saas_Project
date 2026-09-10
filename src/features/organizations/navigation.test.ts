@@ -65,6 +65,13 @@ describe('configuration de navigation', () => {
     }
   });
 
+  it('aligne la navigation Statistiques sur la formule et la permission du backend', () => {
+    const statistics = ORGANIZATION_NAV.find((item) => item.to === ROUTES.analytics);
+
+    expect(statistics?.feature).toBe(FEATURES.statistics);
+    expect(statistics?.permission).toBe(PERMISSIONS.statisticsView);
+  });
+
   it("n'exige que des métiers existants", () => {
     // Même piège que ci-dessus, et plus discret encore : un métier mal
     // orthographié ne correspondrait à aucune organisation, et l'entrée
@@ -77,10 +84,9 @@ describe('configuration de navigation', () => {
       const codes = Array.isArray(item.industry) ? item.industry : [item.industry];
 
       for (const code of codes) {
-        expect(
-          isIndustryCode(code),
-          `« ${item.label} » exige le métier inconnu « ${code} »`,
-        ).toBe(true);
+        expect(isIndustryCode(code), `« ${item.label} » exige le métier inconnu « ${code} »`).toBe(
+          true,
+        );
       }
     }
   });
@@ -207,10 +213,9 @@ describe('sections de la barre latérale', () => {
     for (const group of SIDEBAR_GROUPS) {
       const labels = group.items.map((item) => item.label);
 
-      expect(
-        labels,
-        `la section « ${group.label} » contient une entrée du même nom`,
-      ).not.toContain(group.label);
+      expect(labels, `la section « ${group.label} » contient une entrée du même nom`).not.toContain(
+        group.label,
+      );
     }
   });
 });

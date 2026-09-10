@@ -25,10 +25,9 @@
 -- donc une coquille vide : l'état réel d'un compte Gratuit, c'est un utilisateur
 -- seul devant les calculateurs. C'est celui-là qu'on reproduit.
 --
--- Corollaire à connaître avant de s'en étonner : créer une entreprise depuis
--- l'un de ces comptes déclenche `app.start_organization_trial`, donc un essai
--- Business de quatorze jours. On ne « reste » pas Gratuit en créant une
--- entreprise ; on y retombe quand l'essai expire.
+-- Corollaire à connaître avant de s'en étonner : une entreprise neuve reste en
+-- Gratuit tant qu'aucun abonnement n'est écrit. Le seed pose donc explicitement
+-- la formule de démonstration avant d'ajouter le second membre.
 --
 -- POURQUOI ON ÉCRIT DANS `auth.users` PLUTÔT QUE DE S'INSCRIRE
 --
@@ -45,11 +44,10 @@
 --
 -- POURQUOI L'ABONNEMENT EST CORRIGÉ APRÈS COUP, ET NON POSÉ DIRECTEMENT
 --
--- `organizations_start_trial` insère un essai Business à chaque création
--- d'entreprise, et son garde-fou refuse d'écrire si une ligne existe déjà. On ne
--- peut donc pas devancer le trigger : on le laisse écrire, puis on remplace la
--- formule et le statut. `subscriptions_sync_org_plan` recopie ensuite le code de
--- formule sur `organizations.plan_code`, sans qu'on ait à y toucher.
+-- D'anciennes bases peuvent encore avoir une ligne créée automatiquement alors
+-- que les bases actuelles n'en créent plus. Le seed met à jour cette ligne si
+-- elle existe, sinon il insère l'abonnement voulu. Il reste ainsi reproductible
+-- sur les deux états sans contourner le quota Gratuit.
 --
 -- IDEMPOTENT, ET STRICTEMENT BORNÉ
 --
@@ -152,8 +150,7 @@ begin
     v_owner := pg_temp.seed_demo_user(v_people[i][1] || '@rezo360.test', v_people[i][2], v_password);
     v_mate  := pg_temp.seed_demo_user(v_people[i][3] || '@rezo360.test', v_people[i][4], v_password);
 
-    -- `created_by` déclenche `handle_new_organization` (membre propriétaire)
-    -- puis `start_organization_trial` (essai Business de quatorze jours).
+    -- `created_by` déclenche `handle_new_organization` et crée le propriétaire.
     insert into public.organizations (slug, name, industry, created_by, email, country)
     values (
       v_orgs[i][1], v_orgs[i][2], v_orgs[i][3], v_owner,
@@ -161,10 +158,9 @@ begin
     )
     returning id into v_org;
 
-    -- L'essai posé par le trigger devient l'abonnement voulu. Un an de période
-    -- courante : `app.org_plan_code` écarte tout abonnement dont
-    -- `current_period_end` est dépassé, et un essai de quatorze jours ferait
-    -- retomber la démonstration en Gratuit sans prévenir.
+    -- Un an de période courante : `app.org_plan_code` écarte tout abonnement
+    -- dont `current_period_end` est dépassé, ce qui ferait retomber la
+    -- démonstration en Gratuit sans prévenir.
     update public.subscriptions
     set plan_code            = v_orgs[i][4],
         status               = 'active',
@@ -173,6 +169,17 @@ begin
         trial_ends_at        = null,
         cancel_at_period_end = false
     where organization_id = v_org;
+
+    if not found then
+      insert into public.subscriptions (
+        organization_id, plan_code, status, current_period_start,
+        current_period_end, trial_ends_at, cancel_at_period_end
+      )
+      values (
+        v_org, v_orgs[i][4], 'active', now(),
+        now() + interval '1 year', null, false
+      );
+    end if;
 
     -- Le second compte. `app.prevent_privilege_escalation` ne s'applique pas
     -- ici : sans session, `auth.uid()` est NULL et la règle s'efface — c'est le

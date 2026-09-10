@@ -33,7 +33,10 @@ function readEnv() {
   return env;
 }
 
-const env = readEnv();
+// Les variables explicites du processus priment sur le fichier local. Cela
+// permet d'exécuter le banc contre staging sans modifier `.env.local` ni risquer
+// qu'un secret ou une URL de production soit enregistré dans le dépôt.
+const env = { ...readEnv(), ...process.env };
 
 // Les drapeaux ne sont pas des identifiants : sans ce filtre, `--writes` en
 // première position était pris pour une adresse e-mail.
@@ -50,11 +53,16 @@ const results = [];
 /** Préfixe réservé aux organisations jetables créées par ce script. */
 const TEST_ORG_PREFIX = 'banc-essai-';
 
-async function check(label, run) {
+async function check(label, run, allowedErrorCodes = []) {
   try {
     const { error } = await run();
     if (error) {
-      results.push({ label, ok: false, code: error.code ?? '—', message: error.message });
+      const code = error.code ?? '—';
+      if (allowedErrorCodes.includes(code)) {
+        results.push({ label, ok: true, expectedRefusal: true, code, message: error.message });
+      } else {
+        results.push({ label, ok: false, code, message: error.message });
+      }
     } else {
       results.push({ label, ok: true });
     }
@@ -80,7 +88,10 @@ console.log(`Connecté : ${email}\n`);
 // Reliquats d'une exécution `--writes` interrompue : une organisation jetable
 // survivante fausserait tout, en se plaçant en tête de l'ordre alphabétique et
 // en devenant le contexte des lectures — vide, donc silencieusement inutile.
-const { data: allOrgs } = await supabase.from('organizations').select('id, name, slug').order('name');
+const { data: allOrgs } = await supabase
+  .from('organizations')
+  .select('id, name, slug')
+  .order('name');
 
 for (const candidate of allOrgs ?? []) {
   if (candidate.slug.startsWith(TEST_ORG_PREFIX)) {
@@ -158,7 +169,7 @@ await check('organizations · getMyMembership', () =>
 await check('organizations · listMembers (+profil)', () =>
   supabase
     .from('organization_members')
-    .select('*, profile:profiles(id, display_name, avatar_url)')
+    .select('*, profile:profiles(id, display_name, avatar_id)')
     .eq('organization_id', org.id)
     .in('status', ['active', 'invited'])
     .order('role', { ascending: true }),
@@ -197,7 +208,7 @@ const MISSION_SELECT = `
   category:categories(id, slug, name),
   assigned_team:teams(id, name, color),
   assigned_member:organization_members(
-    *, profile:profiles(id, display_name, avatar_url)
+    *, profile:profiles(id, display_name, avatar_id)
   ),
   customer:customers(id, reference, name),
   site:sites(id, name, city, access_notes)
@@ -264,7 +275,7 @@ await check('interventions · listReportsPendingReview', () =>
          id,
          mission:missions(id, reference, title),
          technician:organization_members(
-           *, profile:profiles(id, display_name, avatar_url)
+           *, profile:profiles(id, display_name, avatar_id)
          )
        )`,
     )
@@ -335,7 +346,7 @@ if (teamId) {
       .select(
         `*, members:team_members(
            *, member:organization_members(
-             *, profile:profiles(id, display_name, avatar_url)
+             *, profile:profiles(id, display_name, avatar_id)
            )
          )`,
       )
@@ -387,7 +398,9 @@ await check('profil · getMyProfile', () =>
 await check('équipements · listEquipment', () =>
   supabase
     .from('equipment')
-    .select('*, assigned_member:organization_members(*, profile:profiles(id, display_name, avatar_url))')
+    .select(
+      '*, assigned_member:organization_members(*, profile:profiles(id, display_name, avatar_id))',
+    )
     .eq('organization_id', org.id)
     .order('name', { ascending: true }),
 );
@@ -427,12 +440,15 @@ await check('bloc-notes · listNotes', () =>
     .order('updated_at', { ascending: false }),
 );
 
-await check('analytics · organization_activity_stats (RPC)', () =>
-  supabase.rpc('organization_activity_stats', {
-    p_organization_id: org.id,
-    p_from: null,
-    p_to: null,
-  }),
+await check(
+  'analytics · organization_activity_stats (RPC)',
+  () =>
+    supabase.rpc('organization_activity_stats', {
+      p_organization_id: org.id,
+      p_from: null,
+      p_to: null,
+    }),
+  ['42501'],
 );
 
 // ---------------------------------------------------------------- ecritures
@@ -689,7 +705,8 @@ await supabase.auth.signOut();
 const failures = results.filter((r) => !r.ok);
 
 for (const r of results) {
-  console.log(`${r.ok ? '  ok ' : 'ÉCHEC'}  ${r.label}`);
+  const statut = r.expectedRefusal ? '  ok (refus attendu)' : r.ok ? '  ok ' : 'ÉCHEC';
+  console.log(`${statut}  ${r.label}`);
   if (!r.ok) console.log(`        [${r.code}] ${r.message}`);
 }
 

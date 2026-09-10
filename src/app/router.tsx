@@ -127,14 +127,6 @@ export const routes: RouteObject[] = [
               // d'entreprise, que la RLS refuserait à une session absente. Les
               // laisser publics ne montrerait qu'une coquille vide.
               { path: ROUTES.dashboard, Component: DashboardPage },
-              {
-                path: ROUTES.analytics,
-                lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
-              },
-              {
-                path: '/statistiques',
-                lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
-              },
               { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
               { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
@@ -151,6 +143,24 @@ export const routes: RouteObject[] = [
               {
                 element: <RequireOrganization />,
                 children: [
+                  {
+                    element: <RequirePlan feature={FEATURES.statistics} label="Les statistiques" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.statisticsView} />,
+                        children: [
+                          {
+                            path: ROUTES.analytics,
+                            lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
+                          },
+                          {
+                            path: '/statistiques',
+                            lazy: lazyPage(() => import('@/pages/analytics/AnalyticsPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
                   {
                     element: <RequirePlan feature={FEATURES.aiAssistant} label="L’Assistant IA" />,
                     children: [

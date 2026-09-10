@@ -90,8 +90,19 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
     primary: true,
   },
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
-  { to: ROUTES.analytics, label: 'Statistiques', icon: 'chart', feature: 'missions' },
-  { to: ROUTES.review, label: 'Rapports & Contrôle', icon: 'clipboard-check', feature: 'interventions' },
+  {
+    to: ROUTES.analytics,
+    label: 'Statistiques',
+    icon: 'chart',
+    feature: 'statistics',
+    permission: 'statistics.view',
+  },
+  {
+    to: ROUTES.review,
+    label: 'Rapports & Contrôle',
+    icon: 'clipboard-check',
+    feature: 'interventions',
+  },
   { to: ROUTES.archives, label: 'Archives', icon: 'archive', feature: 'missions' },
 ];
 
@@ -165,13 +176,25 @@ export const RESOURCES_NAV: readonly NavItem[] = [
   découpe — les trois écrans partageaient auparavant un garde `equipment` unique.
 */
 export const STOCK_NAV: readonly NavItem[] = [
-  { to: ROUTES.stock, label: 'Articles & Fournitures', icon: 'package', feature: 'stock', primary: true },
+  {
+    to: ROUTES.stock,
+    label: 'Articles & Fournitures',
+    icon: 'package',
+    feature: 'stock',
+    primary: true,
+  },
   { to: ROUTES.stockMovements, label: 'Mouvements', icon: 'arrow-left-right', feature: 'stock' },
   { to: ROUTES.equipment, label: 'Matériel & Flotte', icon: 'wrench', feature: 'equipment' },
 ];
 
 export const ACHATS_NAV: readonly NavItem[] = [
-  { to: ROUTES.purchaseOrders, label: 'Commandes', icon: 'shopping-cart', feature: 'purchases', primary: true },
+  {
+    to: ROUTES.purchaseOrders,
+    label: 'Commandes',
+    icon: 'shopping-cart',
+    feature: 'purchases',
+    primary: true,
+  },
   { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store', feature: 'purchases' },
   { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator', feature: 'quotes' },
   /*
@@ -282,10 +305,7 @@ export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...METIERS_TOOLS_NAV,
 ];
 
-export const GESTION_NAV: readonly NavItem[] = [
-  ...STOCK_NAV,
-  ...ACHATS_NAV,
-];
+export const GESTION_NAV: readonly NavItem[] = [...STOCK_NAV, ...ACHATS_NAV];
 
 export const TOOLS_CATEGORIES_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Boîte à outils universelle', icon: 'wrench', primary: true },
