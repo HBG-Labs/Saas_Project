@@ -60,7 +60,7 @@ insert into t_ids (k, v) values
 -- Superflu dans le SQL Editor, qui exécute l'ensemble sous `postgres`. Requis
 -- dès que l'exécution passe par un rôle de connexion restreint — c'est le cas
 -- de `supabase db query`, qui provisionne un rôle dédié.
-grant select on t_ids to authenticated;
+grant select on t_ids to authenticated, service_role;
 
 create function pg_temp.uid(p_key text) returns uuid
 language sql stable as $$ select v from pg_temp.t_ids where k = p_key $$;
