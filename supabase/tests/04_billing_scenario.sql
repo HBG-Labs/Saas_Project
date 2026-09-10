@@ -921,6 +921,62 @@ end
 $$;
 
 -- =============================================================================
+do $$ begin raise notice ''; raise notice '=== PARTIE 11 — Reprise durable des sièges Stripe ==='; end $$;
+-- =============================================================================
+
+do $$
+declare
+  v_org uuid;
+  v_revision uuid;
+begin
+  select id into v_org from public.organizations where slug = 'essai-factu';
+
+  perform pg_temp.ok(
+    (select count(*) from public.subscription_seat_sync_jobs
+      where organization_id = v_org) = 1,
+    'Une seule tâche existe par organisation malgré plusieurs changements'
+  );
+  perform pg_temp.ok(
+    (select desired_extra_seats from public.subscription_seat_sync_jobs
+      where organization_id = v_org) = app.org_extra_seats(v_org),
+    'La tâche porte toujours le dernier effectif calculé par la base'
+  );
+
+  select revision into v_revision
+  from public.subscription_seat_sync_jobs
+  where organization_id = v_org;
+
+  update public.organization_members
+     set status = 'removed'
+   where organization_id = v_org
+     and user_id = (
+       select user_id from public.organization_members
+       where organization_id = v_org and role = 'technician' and status = 'active'
+       order by joined_at nulls last
+       limit 1
+     );
+
+  perform pg_temp.ok(
+    (select revision from public.subscription_seat_sync_jobs
+      where organization_id = v_org) <> v_revision,
+    'Un nouvel effectif remplace la révision en attente au lieu de la dupliquer'
+  );
+end
+$$;
+
+select pg_temp.login('patron_a');
+set local role authenticated;
+select pg_temp.refuses(
+  $sql$ select count(*) from public.subscription_seat_sync_jobs $sql$,
+  'La file de synchronisation reste inaccessible au navigateur'
+);
+select pg_temp.refuses(
+  $sql$ select * from public.claim_subscription_seat_sync_jobs(1) $sql$,
+  'Un client ne peut pas réserver les tâches du worker'
+);
+reset role;
+
+-- =============================================================================
 do $$
 begin
   raise notice '';

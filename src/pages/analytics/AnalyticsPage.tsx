@@ -29,6 +29,8 @@ import { useTeams } from '@/features/teams';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import { useEphemeralValue } from '@/lib/use-ephemeral-flag';
 
+import { escapeAnalyticsHtml } from './analytics-export';
+
 type ViewMode = 'month' | 'quarter' | 'year';
 type QuarterCode = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 type YearCode = 2026 | 2025 | 2024;
@@ -121,7 +123,9 @@ export default function AnalyticsPage() {
       const previousYear = quarterIndex === 0 ? selectedYear - 1 : selectedYear;
       return {
         from: new Date(Date.UTC(previousYear, previousQuarterIndex * 3, 1)).toISOString(),
-        to: new Date(Date.UTC(previousYear, previousQuarterIndex * 3 + 3, 0, 23, 59, 59)).toISOString(),
+        to: new Date(
+          Date.UTC(previousYear, previousQuarterIndex * 3 + 3, 0, 23, 59, 59),
+        ).toISOString(),
       };
     }
 
@@ -146,7 +150,8 @@ export default function AnalyticsPage() {
   const totalQuotesCount = quotes.length;
   const acceptedQuotes = quotes.filter((q) => q.status === 'accepted');
   const pendingQuotes = quotes.filter((q) => q.status === 'sent' || q.status === 'draft');
-  const conversionRate = totalQuotesCount > 0 ? (acceptedQuotes.length / totalQuotesCount) * 100 : 0;
+  const conversionRate =
+    totalQuotesCount > 0 ? (acceptedQuotes.length / totalQuotesCount) * 100 : 0;
 
   const STATUS_LABELS_SHORT: Record<string, string> = {
     draft: 'Brouillon',
@@ -270,13 +275,26 @@ export default function AnalyticsPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+    const safe = {
+      orgName: escapeAnalyticsHtml(orgName),
+      exportDate: escapeAnalyticsHtml(exportDate),
+      periodLabel: escapeAnalyticsHtml(currentData.periodLabel),
+      volume: escapeAnalyticsHtml(currentData.volume),
+      conformity: escapeAnalyticsHtml(currentData.conformity),
+      avgDuration: escapeAnalyticsHtml(currentData.avgDuration),
+      sla: escapeAnalyticsHtml(currentData.sla),
+      conformityDiff: escapeAnalyticsHtml(currentData.conformityDiff),
+      volumeDiff: escapeAnalyticsHtml(currentData.volumeDiff),
+      durationDiff: escapeAnalyticsHtml(currentData.durationDiff),
+      slaLabel: escapeAnalyticsHtml(currentData.slaLabel),
+    };
 
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="fr">
       <head>
         <meta charset="utf-8" />
-        <title>Rapport de Performance Opérationnelle - ${orgName}</title>
+        <title>Rapport de Performance Opérationnelle - ${safe.orgName}</title>
         <style>
           @page { size: A4 portrait; margin: 12mm; }
           body {
@@ -501,40 +519,40 @@ export default function AnalyticsPage() {
           <div class="brand">REZO360 — Operational Intelligence</div>
           <div class="doc-title">
             <strong>Réf: REF-ANALYTICS-2026-08</strong><br />
-            Édité le : ${exportDate}
+            Édité le : ${safe.exportDate}
           </div>
         </div>
 
         <div class="main-title">RAPPORT DE PERFORMANCE & QUALITÉ OPÉRATIONNELLE</div>
-        <div class="sub-title">Entreprise : <strong>${orgName}</strong> — Période : <strong>${currentData.periodLabel}</strong></div>
+        <div class="sub-title">Entreprise : <strong>${safe.orgName}</strong> — Période : <strong>${safe.periodLabel}</strong></div>
 
         <div class="summary-box">
           <h3>Résumé Exécutif de la Période</h3>
           <p>
-            Sur la période analysée (<strong>${currentData.periodLabel}</strong>), l’entreprise a réalisé un total de <strong>${currentData.volume} interventions</strong> avec un taux exceptionnel de conformité du 1er coup de <strong>${currentData.conformity}</strong>. Le temps moyen d’exécution sur le terrain s’établit à <strong>${currentData.avgDuration}</strong>, garantissant un respect optimal des SLA clients à <strong>${currentData.sla}</strong>.
+            Sur la période analysée (<strong>${safe.periodLabel}</strong>), l’entreprise a réalisé un total de <strong>${safe.volume} interventions</strong> avec un taux exceptionnel de conformité du 1er coup de <strong>${safe.conformity}</strong>. Le temps moyen d’exécution sur le terrain s’établit à <strong>${safe.avgDuration}</strong>, garantissant un respect optimal des SLA clients à <strong>${safe.sla}</strong>.
           </p>
         </div>
 
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-label">Conformité 1er Coup</div>
-            <div class="kpi-value">${currentData.conformity}</div>
-            <div class="kpi-sub">${currentData.conformityDiff}</div>
+            <div class="kpi-value">${safe.conformity}</div>
+            <div class="kpi-sub">${safe.conformityDiff}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Volume Interventions</div>
-            <div class="kpi-value">${currentData.volume}</div>
-            <div class="kpi-sub">${currentData.volumeDiff} d'activité</div>
+            <div class="kpi-value">${safe.volume}</div>
+            <div class="kpi-sub">${safe.volumeDiff} d'activité</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Durée Moy. Terrain</div>
-            <div class="kpi-value">${currentData.avgDuration}</div>
-            <div class="kpi-sub">${currentData.durationDiff} gain d'efficacité</div>
+            <div class="kpi-value">${safe.avgDuration}</div>
+            <div class="kpi-sub">${safe.durationDiff} gain d'efficacité</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Satisfaction SLA</div>
-            <div class="kpi-value">${currentData.sla}</div>
-            <div class="kpi-sub">Statut : ${currentData.slaLabel}</div>
+            <div class="kpi-value">${safe.sla}</div>
+            <div class="kpi-sub">Statut : ${safe.slaLabel}</div>
           </div>
         </div>
 
@@ -547,7 +565,7 @@ export default function AnalyticsPage() {
                   const w = Math.round((d.count / maxChartCount) * 100);
                   return `
                     <div class="chart-row">
-                      <div class="chart-row-label">${d.label}</div>
+                      <div class="chart-row-label">${escapeAnalyticsHtml(d.label)}</div>
                       <div class="chart-row-track">
                         <div class="chart-row-fill" style="width: ${w}%;"></div>
                       </div>
@@ -567,7 +585,7 @@ export default function AnalyticsPage() {
                   (c) => `
                 <div class="client-item">
                   <div style="display:flex; justify-content:space-between; font-weight:700;">
-                    <span>${c.name}</span>
+                    <span>${escapeAnalyticsHtml(c.name)}</span>
                     <span>${c.percentage}%</span>
                   </div>
                   <div class="client-bar">
@@ -575,7 +593,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div style="font-size:9px; color:#64748b; margin-top:2px;">${c.count} missions terminées</div>
                 </div>
-              `
+              `,
                 )
                 .join('')}
             </div>
@@ -599,11 +617,11 @@ export default function AnalyticsPage() {
                     .map(
                       (t) => `
               <tr>
-                <td><strong>${t.name}</strong></td>
-                <td>${t.description ?? '—'}</td>
+                <td><strong>${escapeAnalyticsHtml(t.name)}</strong></td>
+                <td>${escapeAnalyticsHtml(t.description ?? '—')}</td>
                 <td style="text-align:right;"><span class="badge-score">${t.status === 'active' ? 'Active' : 'Archivée'}</span></td>
               </tr>
-            `
+            `,
                     )
                     .join('')
             }
@@ -626,17 +644,17 @@ export default function AnalyticsPage() {
           <div>Confidentiel & Usage Interne uniquement</div>
         </div>
 
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 300);
-          };
-        </script>
       </body>
       </html>
     `;
 
+    printWindow.addEventListener(
+      'load',
+      () => {
+        window.setTimeout(() => printWindow.print(), 300);
+      },
+      { once: true },
+    );
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
@@ -655,7 +673,7 @@ export default function AnalyticsPage() {
         actions={
           <div className="flex flex-wrap items-center gap-3">
             {/* BARRE DE CONTRÔLE ET SÉLECTEURS DE PÉRIODE PARFAITEMENT ALIGNÉS */}
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-1.5 shadow-xs">
+            <div className="border-border bg-surface flex flex-wrap items-center gap-2 rounded-xl border p-1.5 shadow-xs">
               {/* Sélecteur de mode de vue */}
               <div className="flex items-center gap-1">
                 <button
@@ -705,7 +723,7 @@ export default function AnalyticsPage() {
                 </button>
               </div>
 
-              <div className="h-4 w-px bg-border my-auto mx-1" />
+              <div className="bg-border mx-1 my-auto h-4 w-px" />
 
               {/* MENU TRIMESTRE (Affiché uniquement en Vue Trimestrielle) */}
               {viewMode === 'quarter' ? (
@@ -716,15 +734,15 @@ export default function AnalyticsPage() {
                       setIsQuarterMenuOpen((prev) => !prev);
                       setIsYearMenuOpen(false);
                     }}
-                    className="min-h-touch sm:min-h-0 flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
+                    className="min-h-touch border-border bg-surface-hover/80 text-foreground hover:bg-surface flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors sm:min-h-0"
                   >
                     <span>Trimestre : {selectedQuarter}</span>
-                    <ChevronDown className="size-3.5 text-primary" />
+                    <ChevronDown className="text-primary size-3.5" />
                   </button>
 
                   {/* Popover du Menu Trimestre */}
                   {isQuarterMenuOpen ? (
-                    <div className="absolute left-0 top-full mt-1.5 z-50 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="border-border bg-surface animate-in fade-in zoom-in-95 absolute top-full left-0 z-50 mt-1.5 w-52 rounded-xl border p-1.5 shadow-xl duration-150">
                       {(['Q1', 'Q2', 'Q3', 'Q4'] as QuarterCode[]).map((qCode) => (
                         <button
                           key={qCode}
@@ -734,14 +752,16 @@ export default function AnalyticsPage() {
                             setViewMode('quarter');
                             setIsQuarterMenuOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                             selectedQuarter === qCode
                               ? 'bg-primary/10 text-primary font-bold'
                               : 'text-foreground hover:bg-surface-hover'
                           }`}
                         >
                           <span>{quarterLabels[qCode]}</span>
-                          {selectedQuarter === qCode ? <Check className="size-4 text-primary" /> : null}
+                          {selectedQuarter === qCode ? (
+                            <Check className="text-primary size-4" />
+                          ) : null}
                         </button>
                       ))}
                     </div>
@@ -757,15 +777,15 @@ export default function AnalyticsPage() {
                     setIsYearMenuOpen((prev) => !prev);
                     setIsQuarterMenuOpen(false);
                   }}
-                  className="min-h-touch sm:min-h-0 flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover/80 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-surface transition-colors cursor-pointer"
+                  className="min-h-touch border-border bg-surface-hover/80 text-foreground hover:bg-surface flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors sm:min-h-0"
                 >
                   <span>Année : {selectedYear}</span>
-                  <ChevronDown className="size-3.5 text-muted-foreground" />
+                  <ChevronDown className="text-muted-foreground size-3.5" />
                 </button>
 
                 {/* Popover du Menu Année */}
                 {isYearMenuOpen ? (
-                  <div className="absolute right-0 top-full mt-1.5 z-50 w-36 rounded-xl border border-border bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                  <div className="border-border bg-surface animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-1.5 w-36 rounded-xl border p-1.5 shadow-xl duration-150">
                     {([2026, 2025, 2024] as YearCode[]).map((yCode) => (
                       <button
                         key={yCode}
@@ -774,14 +794,14 @@ export default function AnalyticsPage() {
                           setSelectedYear(yCode);
                           setIsYearMenuOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                           selectedYear === yCode
                             ? 'bg-primary/10 text-primary font-bold'
                             : 'text-foreground hover:bg-surface-hover'
                         }`}
                       >
                         <span>Année {yCode}</span>
-                        {selectedYear === yCode ? <Check className="size-4 text-primary" /> : null}
+                        {selectedYear === yCode ? <Check className="text-primary size-4" /> : null}
                       </button>
                     ))}
                   </div>
@@ -795,7 +815,7 @@ export default function AnalyticsPage() {
               size="sm"
               onClick={handleExportPDF}
               disabled={isExporting}
-              className="gap-2 shadow-sm h-9"
+              className="h-9 gap-2 shadow-sm"
             >
               {isExporting ? (
                 <>
@@ -815,7 +835,7 @@ export default function AnalyticsPage() {
 
       {/* Message de Succès d'Exportation PDF */}
       {exportSuccessMessage ? (
-        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-success text-xs font-semibold flex items-center justify-between shadow-xs animate-in fade-in duration-300">
+        <div className="border-success/30 bg-success/10 text-success animate-in fade-in flex items-center justify-between rounded-xl border p-4 text-xs font-semibold shadow-xs duration-300">
           <span className="flex items-center gap-2">
             <FileCheck className="size-4 shrink-0" />
             {exportSuccessMessage}
@@ -831,11 +851,11 @@ export default function AnalyticsPage() {
       ) : null}
 
       {/* En-tête de synthèse de la période sélectionnée */}
-      <div className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 shadow-xs">
+      <div className="border-border bg-surface flex items-center justify-between rounded-xl border p-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <Calendar className="size-5 text-primary shrink-0" />
+          <Calendar className="text-primary size-5 shrink-0" />
           <div>
-            <p className="text-foreground font-bold text-sm">
+            <p className="text-foreground text-sm font-bold">
               Analyse de Performance : {currentData.periodLabel}
             </p>
             <p className="text-subtle-foreground text-xs">
@@ -850,17 +870,17 @@ export default function AnalyticsPage() {
 
       {/* 1. Grille des 4 Métriques Clés Analytics Réactives */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-success/10 text-success border border-success/20">
+            <div className="bg-success/10 text-success border-success/20 flex size-10 items-center justify-center rounded-xl border">
               <CheckCircle2 className="size-5" />
             </div>
             <Badge variant="success" className="text-2xs font-semibold">
               {currentData.conformityDiff}
             </Badge>
           </div>
-          <div className="mt-auto pt-3 space-y-1">
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <div className="mt-auto space-y-1 pt-3">
+            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Conformité du 1er Coup
             </p>
             <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
@@ -870,17 +890,17 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <div className="bg-primary/10 text-primary border-primary/20 flex size-10 items-center justify-center rounded-xl border">
               <TrendingUp className="size-5" />
             </div>
             <Badge variant="primary" className="text-2xs font-semibold">
               {currentData.volumeDiff}
             </Badge>
           </div>
-          <div className="mt-auto pt-3 space-y-1">
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <div className="mt-auto space-y-1 pt-3">
+            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Volume Interventions
             </p>
             <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
@@ -890,17 +910,17 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-warning/10 text-warning border border-warning/20">
+            <div className="bg-warning/10 text-warning border-warning/20 flex size-10 items-center justify-center rounded-xl border">
               <Clock className="size-5" />
             </div>
             <Badge variant="warning" className="text-2xs font-semibold">
               {currentData.durationDiff}
             </Badge>
           </div>
-          <div className="mt-auto pt-3 space-y-1">
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <div className="mt-auto space-y-1 pt-3">
+            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Durée Moyenne Terrain
             </p>
             <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
@@ -910,17 +930,20 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-border-strong hover:shadow-md min-h-[152px]">
+        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent border border-accent/20">
+            <div className="bg-accent/10 text-accent border-accent/20 flex size-10 items-center justify-center rounded-xl border">
               <Award className="size-5" />
             </div>
-            <Badge variant="outline" className="text-2xs font-semibold border-accent/30 text-accent">
+            <Badge
+              variant="outline"
+              className="text-2xs border-accent/30 text-accent font-semibold"
+            >
               {currentData.slaLabel}
             </Badge>
           </div>
-          <div className="mt-auto pt-3 space-y-1">
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <div className="mt-auto space-y-1 pt-3">
+            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Satisfaction Client SLA
             </p>
             <p className="text-foreground text-3xl font-extrabold tracking-tight tabular-nums">
@@ -938,7 +961,7 @@ export default function AnalyticsPage() {
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-foreground flex items-center justify-between text-sm font-semibold">
               <span className="flex items-center gap-2">
-                <BarChart3 className="size-4.5 text-primary" />
+                <BarChart3 className="text-primary size-4.5" />
                 Répartition des missions par statut ({currentData.periodLabel})
               </span>
               <span className="text-muted-foreground font-mono text-xs">
@@ -956,34 +979,37 @@ export default function AnalyticsPage() {
                 exige une échelle lisible, pas un tassement.
               */}
               <div className="scroll-x -mx-1 px-1">
-              <div
-                className={`border-border grid h-56 items-end gap-3 border-b px-2 pt-6 pb-2 ${
-                  currentData.chartData.length === 3
-                    ? 'min-w-0 grid-cols-3'
-                    : 'min-w-[34rem] grid-cols-8'
-                }`}
-              >
-                {currentData.chartData.map((item) => {
-                  const heightPercent = Math.round((item.count / maxChartCount) * 100);
+                <div
+                  className={`border-border grid h-56 items-end gap-3 border-b px-2 pt-6 pb-2 ${
+                    currentData.chartData.length === 3
+                      ? 'min-w-0 grid-cols-3'
+                      : 'min-w-[34rem] grid-cols-8'
+                  }`}
+                >
+                  {currentData.chartData.map((item) => {
+                    const heightPercent = Math.round((item.count / maxChartCount) * 100);
 
-                  return (
-                    <div key={item.label} className="flex flex-col items-center gap-2 group h-full justify-end">
-                      <span className="text-3xs font-mono font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        {item.count}
-                      </span>
-                      <div className="w-full bg-surface-subtle rounded-t-md overflow-hidden flex items-end h-full">
-                        <div
-                          className="w-full bg-gradient-to-t from-primary/80 to-primary group-hover:from-primary group-hover:to-primary transition-all rounded-t-md"
-                          style={{ height: `${heightPercent}%` }}
-                        />
+                    return (
+                      <div
+                        key={item.label}
+                        className="group flex h-full flex-col items-center justify-end gap-2"
+                      >
+                        <span className="text-3xs text-primary font-mono font-bold opacity-0 transition-opacity group-hover:opacity-100">
+                          {item.count}
+                        </span>
+                        <div className="bg-surface-subtle flex h-full w-full items-end overflow-hidden rounded-t-md">
+                          <div
+                            className="from-primary/80 to-primary group-hover:from-primary group-hover:to-primary w-full rounded-t-md bg-gradient-to-t transition-all"
+                            style={{ height: `${heightPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-muted-foreground group-hover:text-foreground text-xs font-semibold transition-colors">
+                          {item.label}
+                        </span>
                       </div>
-                      <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-                        {item.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="text-muted-foreground flex flex-col gap-2 pt-2 text-xs sm:flex-row sm:items-center sm:justify-between">
@@ -1001,30 +1027,30 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <PieChart className="size-4.5 text-primary" />
+              <PieChart className="text-primary size-4.5" />
               Répartition par Client
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-5">
+          <CardContent className="space-y-5 pt-6">
             <div className="space-y-4">
               {currentData.clientBreakdown.map((client) => (
                 <div key={client.name} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-medium">
-                    <span className="flex items-center gap-2 text-foreground truncate">
+                    <span className="text-foreground flex items-center gap-2 truncate">
                       <span
-                        className="size-2.5 rounded-full shrink-0"
+                        className="size-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: client.color }}
                       />
                       <span className="truncate">{client.name}</span>
                     </span>
-                    <span className="font-mono text-muted-foreground shrink-0">
+                    <span className="text-muted-foreground shrink-0 font-mono">
                       {client.percentage}% ({client.count})
                     </span>
                   </div>
 
-                  <div className="w-full bg-surface-subtle rounded-full h-2 overflow-hidden">
+                  <div className="bg-surface-subtle h-2 w-full overflow-hidden rounded-full">
                     <div
-                      className="h-full transition-all duration-500 rounded-full"
+                      className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${client.percentage}%`,
                         backgroundColor: client.color,
@@ -1036,14 +1062,18 @@ export default function AnalyticsPage() {
             </div>
 
             {currentData.clientBreakdown.length > 0 && currentData.clientBreakdown[0] ? (
-              <div className="rounded-xl border border-border bg-surface-subtle/50 p-3.5 text-xs space-y-1">
-                <p className="font-semibold text-foreground">Top Donneur d'Ordre : {currentData.clientBreakdown[0].name}</p>
+              <div className="border-border bg-surface-subtle/50 space-y-1 rounded-xl border p-3.5 text-xs">
+                <p className="text-foreground font-semibold">
+                  Top Donneur d'Ordre : {currentData.clientBreakdown[0].name}
+                </p>
                 <p className="text-muted-foreground text-2xs">
-                  Représente {currentData.clientBreakdown[0].percentage}% de votre volume d'interventions sur cette période ({currentData.clientBreakdown[0].count} missions).
+                  Représente {currentData.clientBreakdown[0].percentage}% de votre volume
+                  d'interventions sur cette période ({currentData.clientBreakdown[0].count}{' '}
+                  missions).
                 </p>
               </div>
             ) : (
-              <div className="rounded-xl border border-border bg-surface-subtle/50 p-3.5 text-xs text-center text-muted-foreground">
+              <div className="border-border bg-surface-subtle/50 text-muted-foreground rounded-xl border p-3.5 text-center text-xs">
                 Aucun client actif sur cette période.
               </div>
             )}
@@ -1053,9 +1083,9 @@ export default function AnalyticsPage() {
 
       {/* 3. Tableau de Performance des Équipes Terrain */}
       <Card>
-        <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
           <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-            <UsersRound className="size-4.5 text-success" />
+            <UsersRound className="text-success size-4.5" />
             Performance & Activité par Équipe
           </CardTitle>
           <Badge variant="outline" className="font-mono text-xs">
@@ -1066,26 +1096,31 @@ export default function AnalyticsPage() {
           <div className="scroll-x">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-border text-muted-foreground font-semibold uppercase tracking-wider">
+                <tr className="border-border text-muted-foreground border-b font-semibold tracking-wider uppercase">
                   <th className="pb-3 pl-2">Équipe Terrain</th>
                   <th className="pb-3">Description / Spécialité</th>
-                  <th className="pb-3 text-right pr-2">Statut</th>
+                  <th className="pr-2 pb-3 text-right">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/60">
+              <tbody className="divide-border/60 divide-y">
                 {teams.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-8 text-center text-muted-foreground text-xs">
+                    <td colSpan={3} className="text-muted-foreground py-8 text-center text-xs">
                       Aucune équipe enregistrée pour le moment.
                     </td>
                   </tr>
                 ) : (
                   teams.map((team) => (
                     <tr key={team.id} className="hover:bg-surface-hover/50 transition-colors">
-                      <td className="py-3.5 pl-2 font-semibold text-foreground">{team.name}</td>
-                      <td className="py-3.5 text-muted-foreground font-medium">{team.description ?? '—'}</td>
-                      <td className="py-3.5 text-right pr-2">
-                        <Badge variant={team.status === 'active' ? 'outline' : 'neutral'} className="font-mono text-2xs">
+                      <td className="text-foreground py-3.5 pl-2 font-semibold">{team.name}</td>
+                      <td className="text-muted-foreground py-3.5 font-medium">
+                        {team.description ?? '—'}
+                      </td>
+                      <td className="py-3.5 pr-2 text-right">
+                        <Badge
+                          variant={team.status === 'active' ? 'outline' : 'neutral'}
+                          className="text-2xs font-mono"
+                        >
                           {team.status === 'active' ? 'Active' : 'Archivée'}
                         </Badge>
                       </td>
@@ -1104,41 +1139,51 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-1">
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Receipt className="size-4.5 text-warning" />
+              <Receipt className="text-warning size-4.5" />
               Transformation des Devis
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-5 space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-surface-subtle border border-border">
+          <CardContent className="space-y-4 pt-5">
+            <div className="bg-surface-subtle border-border flex items-center justify-between rounded-xl border p-3.5">
               <div className="space-y-0.5">
-                <p className="text-3xs font-semibold text-muted-foreground uppercase">Taux de Conversion</p>
-                <p className="text-2xl font-bold font-mono text-success">
+                <p className="text-3xs text-muted-foreground font-semibold uppercase">
+                  Taux de Conversion
+                </p>
+                <p className="text-success font-mono text-2xl font-bold">
                   {totalQuotesCount > 0 ? `${conversionRate.toFixed(1)}%` : '—'}
                 </p>
                 <p className="text-3xs text-muted-foreground">Devis validés et lancés</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-success/10 text-success">
+              <div className="bg-success/10 text-success rounded-xl p-2.5">
                 <CircleDollarSign className="size-5" />
               </div>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-border/50">
+              <div className="border-border/50 flex justify-between border-b py-1.5">
                 <span className="text-muted-foreground">Devis émis</span>
-                <span className="font-mono font-bold text-foreground">{totalQuotesCount} devis</span>
+                <span className="text-foreground font-mono font-bold">
+                  {totalQuotesCount} devis
+                </span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-border/50">
+              <div className="border-border/50 flex justify-between border-b py-1.5">
                 <span className="text-muted-foreground">Devis signés / acceptés</span>
-                <span className="font-mono font-bold text-success">{acceptedQuotes.length} devis</span>
+                <span className="text-success font-mono font-bold">
+                  {acceptedQuotes.length} devis
+                </span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-border/50">
+              <div className="border-border/50 flex justify-between border-b py-1.5">
                 <span className="text-muted-foreground">En attente signature</span>
-                <span className="font-mono font-bold text-warning">{pendingQuotes.length} devis</span>
+                <span className="text-warning font-mono font-bold">
+                  {pendingQuotes.length} devis
+                </span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-muted-foreground">Taux en cours</span>
-                <span className="font-mono font-bold text-foreground">
-                  {totalQuotesCount > 0 ? `${((pendingQuotes.length / totalQuotesCount) * 100).toFixed(1)}%` : '—'}
+                <span className="text-foreground font-mono font-bold">
+                  {totalQuotesCount > 0
+                    ? `${((pendingQuotes.length / totalQuotesCount) * 100).toFixed(1)}%`
+                    : '—'}
                 </span>
               </div>
             </div>
@@ -1147,27 +1192,32 @@ export default function AnalyticsPage() {
 
         {/* Répartition de l'Activité Métier */}
         <Card className="lg:col-span-2">
-          <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
             <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Layers className="size-4.5 text-primary" />
+              <Layers className="text-primary size-4.5" />
               Activité & Volume par Statut d'Intervention
             </CardTitle>
             <Badge variant="primary" className="text-2xs font-mono">
               {currentData.chartData.length} statuts
             </Badge>
           </CardHeader>
-          <CardContent className="pt-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <CardContent className="space-y-4 pt-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {currentData.chartData.map((item) => (
-                <div key={item.label} className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-1.5">
+                <div
+                  key={item.label}
+                  className="bg-surface-subtle border-border space-y-1.5 rounded-xl border p-3.5"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                      <span className="size-2.5 rounded-full bg-primary" />
+                    <span className="text-foreground flex items-center gap-1.5 text-xs font-bold">
+                      <span className="bg-primary size-2.5 rounded-full" />
                       {item.label}
                     </span>
-                    <span className="font-mono font-bold text-xs text-foreground">{item.count} missions</span>
+                    <span className="text-foreground font-mono text-xs font-bold">
+                      {item.count} missions
+                    </span>
                   </div>
-                  <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-border h-1.5 w-full overflow-hidden rounded-full">
                     <div
                       className="bg-primary h-full rounded-full"
                       style={{

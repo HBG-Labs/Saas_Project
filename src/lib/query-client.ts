@@ -37,3 +37,20 @@ export function createQueryClient(): QueryClient {
     },
   });
 }
+
+/**
+ * Retire les données privées lors d'un changement d'organisation.
+ *
+ * La liste des organisations de l'utilisateur reste en cache pour que le
+ * provider puisse déterminer la nouvelle organisation sans boucle de
+ * chargement. Le catalogue est public et identique pour tous les tenants.
+ * Tout le reste est rechargé sous le contexte de la nouvelle organisation.
+ */
+export function clearTenantQueryCache(queryClient: QueryClient): void {
+  queryClient.removeQueries({
+    predicate: ({ queryKey }) => {
+      if (queryKey[0] === 'catalog') return false;
+      return !(queryKey[0] === 'organizations' && queryKey[1] === 'mine');
+    },
+  });
+}

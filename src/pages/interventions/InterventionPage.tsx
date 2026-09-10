@@ -113,7 +113,6 @@ export default function InterventionPage() {
         <CardContent className="pt-6">
           <InterventionTimer
             interventionId={interventionId}
-            organizationId={organization?.id ?? ''}
             entries={timeEntries.data ?? []}
             workedSeconds={workedSeconds.data ?? 0}
             canTrack={canTrack}
@@ -151,7 +150,7 @@ export default function InterventionPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsPdfModalOpen(true)}
-                className="text-xs gap-1.5"
+                className="gap-1.5 text-xs"
                 title="Prévisualiser le PV et imprimer en PDF"
               >
                 <Printer className="size-3.5" />
@@ -216,13 +215,16 @@ export default function InterventionPage() {
             ) : null}
 
             {mission.data.latitude != null && mission.data.longitude != null && (
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-subtle border border-border/80 text-3xs font-mono text-muted-foreground">
-                <MapPin className="size-3 text-primary shrink-0" />
-                <span>GPS : {Number(mission.data.latitude).toFixed(6)}, {Number(mission.data.longitude).toFixed(6)}</span>
+              <div className="bg-surface-subtle border-border/80 text-3xs text-muted-foreground flex items-center gap-1.5 rounded-lg border p-2 font-mono">
+                <MapPin className="text-primary size-3 shrink-0" />
+                <span>
+                  GPS : {Number(mission.data.latitude).toFixed(6)},{' '}
+                  {Number(mission.data.longitude).toFixed(6)}
+                </span>
               </div>
             )}
 
-            <div className="pt-2 space-y-2 border-t border-border">
+            <div className="border-border space-y-2 border-t pt-2">
               <NavigationButton
                 destination={{
                   latitude: mission.data.latitude,
@@ -241,7 +243,7 @@ export default function InterventionPage() {
                 label="🧭 Itinéraire vers le site"
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <LocateMissionButton
                   missionId={mission.data.id}
                   currentLatitude={mission.data.latitude}
@@ -272,10 +274,10 @@ export default function InterventionPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="w-full justify-center text-xs gap-1.5"
+                      className="w-full justify-center gap-1.5 text-xs"
                       title="Choisir ou ajuster le repère en cliquant sur la carte"
                     >
-                      <MapPin className="size-3.5 text-primary" />
+                      <MapPin className="text-primary size-3.5" />
                       <span>Pointer sur la carte</span>
                     </Button>
                   }

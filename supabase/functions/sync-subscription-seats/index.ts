@@ -1,12 +1,17 @@
 import {
+  adminClient,
   CORS_HEADERS,
   callerClient,
   json,
-  requireBillingAccess,
-  resolveStripePrices,
-  stripeDelete,
-  stripeRequest,
+  requireOrganizationMembership,
 } from '../_shared/billing.ts';
+import {
+  completeSubscriptionSeatSyncJob,
+  deferSubscriptionSeatSyncJob,
+  getSubscriptionSeatSyncJob,
+  synchronizeSubscriptionSeatJob,
+  type SubscriptionSeatSyncJob,
+} from '../_shared/subscription-seats.ts';
 
 /**
  * Aligne la quantité de sièges facturés sur l'effectif réel.
@@ -33,20 +38,15 @@ import {
  * Une organisation dont la synchronisation aurait échoué se recale au prochain
  * changement, ou à l'ouverture du portail de facturation.
  *
- * Reste un trou assumé : un ajout suivi d'aucun autre événement laisse Stripe
- * en retard jusqu'au mois suivant. Le combler demanderait une tâche
- * périodique — donc un planificateur, qui n'existe pas encore dans ce projet.
+ * La base écrit désormais une tâche durable à chaque changement d'effectif et
+ * l'ordonnanceur `subscription-seat-sync-worker` la reprend périodiquement.
+ * Cette route utilisateur ne remplace pas la file : elle permet seulement de
+ * la réveiller immédiatement après une action visible dans l'interface.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 interface Body {
   organizationId?: string;
-}
-
-interface StripeItem {
-  id: string;
-  quantity?: number;
-  price?: { id?: string };
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -68,102 +68,31 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   const caller = callerClient(authorization);
 
-  const access = await requireBillingAccess(caller, organizationId, authorization);
+  // Déclencher cette remise en cohérence ne permet pas de choisir une quantité
+  // ni un tarif : le serveur traite uniquement la tâche écrite par le trigger.
+  // Tout membre actif peut donc la réveiller, y compris l'invité qui vient
+  // d'accepter son invitation.
+  const access = await requireOrganizationMembership(caller, organizationId, authorization);
   if ('error' in access) return access.error;
 
-  const { context } = access;
-
-  const { data: subscription } = await caller
-    .from('subscriptions')
-    .select('provider_subscription_id, status')
-    .eq('organization_id', organizationId)
-    .not('provider_subscription_id', 'is', null)
-    .maybeSingle();
-
-  // Pas d'abonnement Stripe : essai en cours, ou formule Gratuite. Rien à
-  // synchroniser, et ce n'est pas une erreur.
-  if (!subscription?.provider_subscription_id) {
-    return json({ synced: false, reason: 'Aucun abonnement Stripe pour cette organisation.' });
-  }
+  const admin = adminClient();
+  let job: SubscriptionSeatSyncJob | null = null;
 
   try {
-    const remote = (await stripeRequest(
-      `/v1/subscriptions/${subscription.provider_subscription_id}`,
-      {},
-      'GET',
-    )) as { items?: { data?: StripeItem[] } };
+    job = await getSubscriptionSeatSyncJob(admin, organizationId);
+    if (!job) return json({ synced: true, reason: 'Aucune synchronisation en attente.' });
 
-    const items = remote.items?.data ?? [];
-
-    const prices = await resolveStripePrices(caller, context.planCode);
-    if ('error' in prices) return json({ error: prices.error }, 503);
-
-    const seatItem = items.find((item) => item.price?.id === prices.extraSeatPriceId);
-
-    // AUCUN PRÉLÈVEMENT ICI, ET C'EST EXPLICITE.
-    //
-    // `create_prorations` inscrit l'écart au prorata sur la PROCHAINE facture
-    // mensuelle : ni carte demandée, ni paiement déclenché au moment où le
-    // dirigeant ajoute un collaborateur. Un ajout en milieu de mois est facturé
-    // pour les jours restants, un retrait produit un avoir de la même façon.
-    //
-    // C'est déjà le comportement par défaut de Stripe — raison de plus pour
-    // l'écrire. Un défaut implicite qui décide d'un prélèvement est un défaut
-    // qui peut changer sans nous, et le jour où il changerait, une carte serait
-    // débitée sans que personne ici ait rien demandé. Le poser coûte un
-    // paramètre ; ne pas le poser coûte une confiance.
-    const auProchainRelevé = { proration_behavior: 'create_prorations' };
-
-    // Trois situations, et chacune demande une instruction Stripe différente.
-    if (context.extraSeats > 0 && seatItem) {
-      await stripeRequest(`/v1/subscription_items/${seatItem.id}`, {
-        quantity: String(context.extraSeats),
-        ...auProchainRelevé,
-      });
-    } else if (context.extraSeats > 0) {
-      await stripeRequest('/v1/subscription_items', {
-        subscription: subscription.provider_subscription_id,
-        price: prices.extraSeatPriceId,
-        quantity: String(context.extraSeats),
-        ...auProchainRelevé,
-      });
-    } else if (seatItem) {
-      // Retour sous le seuil : on SUPPRIME la ligne au lieu de la mettre à
-      // zéro. Une ligne « 0 × siège supplémentaire » figure sur la facture et
-      // fait douter le client de ce qu'il paie.
-      await stripeDelete(`/v1/subscription_items/${seatItem.id}`, auProchainRelevé);
-    }
-
-    // RELECTURE. Jusqu'ici cette fonction rendait compte de son INTENTION : elle
-    // renvoyait le nombre de sièges qu'elle venait de demander, sans jamais
-    // vérifier que Stripe l'avait retenu. Une réponse « synced: true » ne
-    // prouvait donc rien — et c'est exactement l'angle mort qui avait laissé le
-    // webhook journaliser des événements sans rien écrire.
-    //
-    // On relit l'abonnement et on renvoie ce que Stripe DÉTIENT. Un écart entre
-    // `extraSeats` et `stripeQuantity` devient alors visible au lieu d'être
-    // silencieux.
-    const apres = (await stripeRequest(
-      `/v1/subscriptions/${subscription.provider_subscription_id}`,
-      {},
-      'GET',
-    )) as { items?: { data?: StripeItem[] } };
-
-    const ligneSiege = (apres.items?.data ?? []).find(
-      (item) => item.price?.id === prices.extraSeatPriceId,
-    );
-    const quantiteChezStripe = ligneSiege?.quantity ?? 0;
-
-    return json({
-      synced: quantiteChezStripe === context.extraSeats,
-      activeSeats: context.activeSeats,
-      includedSeats: context.includedSeats,
-      extraSeats: context.extraSeats,
-      /** Ce que Stripe facture réellement, relu après écriture. */
-      stripeQuantity: quantiteChezStripe,
-      totalCents: context.totalCents,
-    });
+    const result = await synchronizeSubscriptionSeatJob(admin, job);
+    await completeSubscriptionSeatSyncJob(admin, job);
+    return json(result);
   } catch (error) {
+    if (job) {
+      try {
+        await deferSubscriptionSeatSyncJob(admin, job, error);
+      } catch (deferError) {
+        console.error('sync-subscription-seats: reprise non planifiée', deferError);
+      }
+    }
     return json({ error: error instanceof Error ? error.message : 'Échec Stripe.' }, 502);
   }
 });

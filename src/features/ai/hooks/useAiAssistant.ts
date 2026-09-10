@@ -68,7 +68,6 @@ export function useAiAssistant() {
         const response = await sendAiQuery({
           organizationId,
           query: trimmed,
-          history: [...messages, userMsg],
           ...(conversationId ? { conversationId } : {}),
         });
 
@@ -86,12 +85,14 @@ export function useAiAssistant() {
         setIsQuotaExceeded(response.quotaExceeded === true);
         if (response.conversationId) setConversationId(response.conversationId);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du traitement.');
+        setError(
+          err instanceof Error ? err.message : 'Une erreur est survenue lors du traitement.',
+        );
       } finally {
         setIsGenerating(false);
       }
     },
-    [addSearchEntry, conversationId, isGenerating, isQuotaExceeded, messages, organizationId],
+    [addSearchEntry, conversationId, isGenerating, isQuotaExceeded, organizationId],
   );
 
   const executeAction = useCallback(

@@ -58,6 +58,17 @@ export const registerSchema = z
 
 export const forgotPasswordSchema = z.object({ email });
 
+export const resetPasswordSchema = z
+  .object({
+    password,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: 'Les mots de passe ne correspondent pas.',
+    path: ['confirmPassword'],
+  });
+
 export type LoginValues = z.infer<typeof loginSchema>;
 export type RegisterValues = z.infer<typeof registerSchema>;
 export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

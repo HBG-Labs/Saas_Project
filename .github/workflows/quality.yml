@@ -18,6 +18,7 @@ jobs:
       VITE_SUPABASE_URL: https://test-project.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_only
       VITE_APP_ENV: production
+      VITE_PUBLIC_APP_URL: https://app.rezo360.com
       VITE_APP_VERSION: ${{ github.sha }}
 
     steps:
@@ -50,18 +51,19 @@ jobs:
           # Validé localement avec 2.9.6.
           deno-version: v2.x
 
-      # Périmètre volontairement limité aux fonctions de facturation
-      # électronique : les fonctions plus anciennes importent
-      # `jsr:@supabase/supabase-js@2`, qui ne résout pas quand `node_modules`
-      # est présent. Les aligner sur un specifier `npm:` épinglé permettra
-      # d'étendre cette vérification.
+      # Les parcours critiques sont vérifiés avec le runtime qui les exécute en
+      # production. Les imports Supabase partagés sont épinglés sur la même
+      # version que le frontend.
       - name: Vérifier les types des fonctions Edge
         run: |
           deno check \
             supabase/functions/superpdp-connection/index.ts \
             supabase/functions/superpdp-oauth-callback/index.ts \
             supabase/functions/superpdp-invoice/index.ts \
-            supabase/functions/superpdp-worker/index.ts
+            supabase/functions/superpdp-worker/index.ts \
+            supabase/functions/ai-assistant/index.ts \
+            supabase/functions/sync-subscription-seats/index.ts \
+            supabase/functions/subscription-seat-sync-worker/index.ts
           deno check \
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
@@ -70,6 +72,9 @@ jobs:
           # anciennes hors de cette vérification.
           deno check supabase/functions/_shared/meta-capi.ts
           deno check supabase/functions/_shared/email-confirme.ts
+          # `unpdf` est une dépendance npm propre au runtime Edge, pas au
+          # bundle React. Deno l'installe dans son espace isolé pour ce check.
+          deno check --node-modules-dir=auto supabase/functions/index-ai-document/index.ts
 
       # Ces tests tournent SANS aucune permission Deno : ni réseau, ni disque.
       # C'est la garantie qu'ils n'atteignent jamais le partenaire ni la base,
@@ -82,7 +87,11 @@ jobs:
             supabase/functions/_shared/superpdp-transmission.test.ts \
             supabase/functions/_shared/meta-capi.test.ts \
             supabase/functions/_shared/email-confirme.test.ts \
-            supabase/functions/superpdp-worker/handler.test.ts
+            supabase/functions/_shared/ai-request.test.ts \
+            supabase/functions/_shared/return-url.test.ts \
+            supabase/functions/superpdp-worker/handler.test.ts \
+            supabase/functions/_shared/subscription-seats.test.ts \
+            supabase/functions/subscription-seat-sync-worker/handler.test.ts
 
       - name: Exécuter les tests
         run: npm run test

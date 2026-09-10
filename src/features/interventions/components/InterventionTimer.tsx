@@ -11,7 +11,6 @@ import { useCompleteIntervention, useSwitchTimeEntry } from '../hooks/useInterve
 
 export interface InterventionTimerProps {
   interventionId: string;
-  organizationId: string;
   entries: readonly InterventionTimeEntry[];
   /** Temps net des segments CLOS, calculé par PostgreSQL. */
   workedSeconds: number;
@@ -38,7 +37,6 @@ export interface InterventionTimerProps {
  */
 export function InterventionTimer({
   interventionId,
-  organizationId,
   entries,
   workedSeconds,
   canTrack,
@@ -78,7 +76,7 @@ export function InterventionTimer({
   const act = (to: 'work' | 'pause') => {
     setError(null);
     switchEntry.mutate(
-      { organizationId, openEntryId: openEntry?.id ?? null, to },
+      { to },
       {
         onError: (mutationError) => {
           setError(mutationError);

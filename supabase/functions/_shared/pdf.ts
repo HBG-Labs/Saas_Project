@@ -28,6 +28,10 @@ import { extractText, getDocumentProxy } from 'npm:unpdf@^0.11.0';
 const TARGET_CHUNK_CHARS = 1000;
 /** Au-delà, une phrase entière ne rejoint plus le fragment courant. */
 const MAX_CHUNK_CHARS = 2000;
+const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const MAX_PDF_PAGES = 500;
+const MAX_EXTRACTED_CHARS = 1_500_000;
+const MAX_DOCUMENT_CHUNKS = 1_500;
 
 export interface ExtractedChunk {
   content: string;
@@ -46,6 +50,17 @@ function splitLongParagraph(paragraph: string): string[] {
   let buffer = '';
 
   for (const sentence of sentences) {
+    if (sentence.length > MAX_CHUNK_CHARS) {
+      if (buffer.length > 0) {
+        pieces.push(buffer);
+        buffer = '';
+      }
+      for (let offset = 0; offset < sentence.length; offset += MAX_CHUNK_CHARS) {
+        pieces.push(sentence.slice(offset, offset + MAX_CHUNK_CHARS));
+      }
+      continue;
+    }
+
     const candidate = buffer.length === 0 ? sentence : `${buffer} ${sentence}`;
     if (candidate.length <= MAX_CHUNK_CHARS || buffer.length === 0) {
       buffer = candidate;
@@ -105,14 +120,41 @@ function chunkPageText(pageText: string, pageNumber: number, startIndex: number)
  * fonction : elle ne connaît pas la table.
  */
 export async function extractPdfChunks(fileBytes: Uint8Array): Promise<ExtractedChunk[]> {
+  if (fileBytes.byteLength === 0 || fileBytes.byteLength > MAX_PDF_BYTES) {
+    throw new Error('Le PDF est vide ou dépasse la taille maximale de 25 Mo.');
+  }
+  if (
+    fileBytes[0] !== 0x25 ||
+    fileBytes[1] !== 0x50 ||
+    fileBytes[2] !== 0x44 ||
+    fileBytes[3] !== 0x46 ||
+    fileBytes[4] !== 0x2d
+  ) {
+    throw new Error('Le contenu déposé n’est pas un fichier PDF valide.');
+  }
+
   const pdf = await getDocumentProxy(fileBytes);
   const { text } = await extractText(pdf, { mergePages: false });
   const pages = Array.isArray(text) ? text : [text];
 
+  if (pages.length > MAX_PDF_PAGES) {
+    throw new Error(`Le PDF dépasse la limite de ${MAX_PDF_PAGES} pages indexables.`);
+  }
+
   const chunks: ExtractedChunk[] = [];
+  let extractedChars = 0;
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
-    const pageChunks = chunkPageText(pages[pageIndex] ?? '', pageIndex + 1, chunks.length);
+    const pageText = pages[pageIndex] ?? '';
+    extractedChars += pageText.length;
+    if (extractedChars > MAX_EXTRACTED_CHARS) {
+      throw new Error('Le PDF contient trop de texte pour être indexé en une seule fois.');
+    }
+
+    const pageChunks = chunkPageText(pageText, pageIndex + 1, chunks.length);
     chunks.push(...pageChunks);
+    if (chunks.length > MAX_DOCUMENT_CHUNKS) {
+      throw new Error('Le PDF produit trop de fragments pour une indexation sûre.');
+    }
   }
 
   if (chunks.length === 0) {

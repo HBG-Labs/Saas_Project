@@ -93,10 +93,7 @@ export type InvoiceTransmissionStatus =
   | 'cancelled';
 
 export type EinvoicingConnectionStatus =
-  | 'pending_verification'
-  | 'connected'
-  | 'action_required'
-  | 'disconnected';
+  'pending_verification' | 'connected' | 'action_required' | 'disconnected';
 
 /**
  * Nature du destinataire. `null` en base signifie « non renseigne » : la
@@ -1344,6 +1341,8 @@ export interface Database {
           id: string;
           intervention_id: string;
           organization_id: string;
+          technician_id: string;
+          technician_user_id: string;
           kind: TimeEntryKind;
           started_at: string;
           ended_at: string | null;
@@ -1355,6 +1354,9 @@ export interface Database {
           intervention_id: string;
           /** Écrasé par trigger depuis l'intervention parente. */
           organization_id: string;
+          /** Dérivés de l'affectation par trigger. */
+          technician_id?: string;
+          technician_user_id?: string;
           kind?: TimeEntryKind;
           reason?: string | null;
         };
@@ -1365,6 +1367,12 @@ export interface Database {
             foreignKeyName: 'intervention_time_entries_intervention_id_fkey';
             columns: ['intervention_id'];
             referencedRelation: 'interventions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intervention_time_entries_technician_id_fkey';
+            columns: ['technician_id'];
+            referencedRelation: 'organization_members';
             referencedColumns: ['id'];
           },
         ];
@@ -2364,11 +2372,7 @@ export interface Database {
           provider_environment: 'sandbox' | 'production' | null;
           company_verification_status: 'verified' | 'needs_review' | 'failed' | null;
           user_identity_verification_status:
-            | 'verified'
-            | 'needs_review'
-            | 'failed'
-            | 'not_verified'
-            | null;
+            'verified' | 'needs_review' | 'failed' | 'not_verified' | null;
           access_token_ciphertext: string | null;
           refresh_token_ciphertext: string | null;
           access_token_expires_at: string | null;
@@ -2389,11 +2393,7 @@ export interface Database {
           provider_environment?: 'sandbox' | 'production' | null;
           company_verification_status?: 'verified' | 'needs_review' | 'failed' | null;
           user_identity_verification_status?:
-            | 'verified'
-            | 'needs_review'
-            | 'failed'
-            | 'not_verified'
-            | null;
+            'verified' | 'needs_review' | 'failed' | 'not_verified' | null;
           access_token_ciphertext?: string | null;
           refresh_token_ciphertext?: string | null;
           access_token_expires_at?: string | null;
@@ -2410,11 +2410,7 @@ export interface Database {
           provider_environment?: 'sandbox' | 'production' | null;
           company_verification_status?: 'verified' | 'needs_review' | 'failed' | null;
           user_identity_verification_status?:
-            | 'verified'
-            | 'needs_review'
-            | 'failed'
-            | 'not_verified'
-            | null;
+            'verified' | 'needs_review' | 'failed' | 'not_verified' | null;
           access_token_ciphertext?: string | null;
           refresh_token_ciphertext?: string | null;
           access_token_expires_at?: string | null;
@@ -3508,6 +3504,16 @@ export interface Database {
       intervention_worked_seconds: {
         Args: { p_intervention_id: string };
         Returns: number;
+      };
+
+      /** Ferme puis ouvre le chronomètre du compte dans une transaction. */
+      switch_intervention_time_entry: {
+        Args: {
+          p_intervention_id: string;
+          p_to: TimeEntryKind;
+          p_reason?: string | null;
+        };
+        Returns: Database['public']['Tables']['intervention_time_entries']['Row'];
       };
 
       /**

@@ -12,14 +12,23 @@ async function expectNoHorizontalOverflow(page: Page) {
 test.describe('Parcours de base & navigation marketing', () => {
   test("L'accueil s'affiche et contient le branding REZO360", async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /rezo360/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: 'Pilotez votre activité de terrain en toute simplicité',
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /commencer/i }).first()).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
-  test('La page Fonctionnalités (/features) est accessible et affiche le titre', async ({ page }) => {
+  test('La page Fonctionnalités (/features) est accessible et affiche le titre', async ({
+    page,
+  }) => {
     await page.goto('/features');
-    await expect(page.getByRole('heading', { name: /fonctionnalités/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Tout ce que REZO360 gère pour vous', exact: true }),
+    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
@@ -36,7 +45,9 @@ test.describe('Parcours de base & navigation marketing', () => {
     await expect(page.getByRole('heading', { name: /foire aux questions/i })).toBeVisible();
     const firstQuestion = page.getByRole('button', { name: /Qu’est-ce que REZO360/i });
     await expect(firstQuestion).toBeVisible();
-    await expect(page.getByText(/plateforme SaaS de gestion d’interventions/i)).toBeVisible();
+    await expect(
+      page.getByText(/plateforme tout-en-un conçue pour les professionnels/i),
+    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
@@ -71,16 +82,24 @@ test.describe('Parcours de base & navigation marketing', () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test('La Calculatrice Scientifique d’ingénierie (/tools/scientific-calculator) est fonctionnelle', async ({ page }) => {
+  test('La Calculatrice Scientifique d’ingénierie (/tools/scientific-calculator) est fonctionnelle', async ({
+    page,
+  }) => {
     await page.goto('/tools/scientific-calculator');
-    await expect(page.getByRole('heading', { name: 'Calculatrice Scientifique', exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Calculatrice Scientifique', exact: true }).first(),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'sin', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
-  test('L’outil de Codes Couleurs Fibre Optique (/tools/fiber-color-code) est fonctionnel', async ({ page }) => {
+  test('L’outil de Codes Couleurs Fibre Optique (/tools/fiber-color-code) est fonctionnel', async ({
+    page,
+  }) => {
     await page.goto('/tools/fiber-color-code');
-    await expect(page.getByRole('heading', { name: /Codes Couleurs de Fibre Optique/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Codes Couleurs de Fibre Optique/i }),
+    ).toBeVisible();
     await expect(page.getByText(/Fiche d'Intervention/i)).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });

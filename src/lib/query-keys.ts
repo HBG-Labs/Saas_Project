@@ -47,7 +47,7 @@ export const qk = {
   // ------------------------------------------------------------ organisations
   organizations: {
     all: ['organizations'] as const,
-    mine: () => [...qk.organizations.all, 'mine'] as const,
+    mine: (userId: string) => [...qk.organizations.all, 'mine', userId] as const,
     detail: (organizationId: string) =>
       [...qk.organizations.all, 'detail', organizationId] as const,
     members: (organizationId: string) =>
@@ -263,11 +263,9 @@ export const qk = {
      */
     list: (organizationId: string, filters?: unknown) =>
       [...qk.documents.all, organizationId, 'list', filters ?? null] as const,
-    folders: (organizationId: string) =>
-      [...qk.documents.all, organizationId, 'folders'] as const,
+    folders: (organizationId: string) => [...qk.documents.all, organizationId, 'folders'] as const,
     /** Ce qu'un dossier contient, lu au moment d'annoncer sa suppression. */
-    folderContent: (folderId: string) =>
-      [...qk.documents.all, 'folder-content', folderId] as const,
+    folderContent: (folderId: string) => [...qk.documents.all, 'folder-content', folderId] as const,
   },
 
   /**

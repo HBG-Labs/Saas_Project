@@ -1,7 +1,12 @@
 import type { Session, Subscription } from '@supabase/supabase-js';
 
+import { env } from '@/config/env';
 import { mapAuthError } from '@/lib/errors';
 import { supabase } from '@/services/supabase';
+
+function publicAppOrigin(): string {
+  return (env.VITE_PUBLIC_APP_URL ?? window.location.origin).replace(/\/$/, '');
+}
 
 /**
  * Couche d'accès à l'authentification.
@@ -51,7 +56,7 @@ export async function signInWithPassword(email: string, password: string): Promi
  * `detectSessionInUrl`.
  */
 export async function signInWithGoogle(): Promise<void> {
-  const redirectTo = new URL('/auth/callback', window.location.origin).toString();
+  const redirectTo = new URL('/auth/callback', `${publicAppOrigin()}/`).toString();
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo },
@@ -91,7 +96,7 @@ export async function signUpWithPassword(
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: `${publicAppOrigin()}/auth/callback`,
       ...(options?.displayName
         ? {
             data: {
@@ -119,7 +124,7 @@ export async function resendConfirmationEmail(email: string): Promise<void> {
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email,
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    options: { emailRedirectTo: `${publicAppOrigin()}/auth/callback` },
   });
   if (error) throw mapAuthError(error);
 }
@@ -156,7 +161,10 @@ export async function signOutOtherDevices(): Promise<void> {
 
 export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/callback`,
+    // Le lien de récupération ouvre temporairement une session. Il doit donc
+    // aboutir sur le formulaire de choix du nouveau mot de passe, pas sur le
+    // callback générique qui redirige toute session vers le tableau de bord.
+    redirectTo: `${publicAppOrigin()}/reset-password`,
   });
   if (error) throw mapAuthError(error);
 }

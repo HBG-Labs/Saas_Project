@@ -1,13 +1,14 @@
 import { supabase } from '@/services/supabase';
 
-import type { AiMessage, AiProposedAction, AiSuggestion } from '../types/ai.types';
+import type { AiProposedAction, AiSuggestion } from '../types/ai.types';
 
 export const DEFAULT_AI_SUGGESTIONS: readonly AiSuggestion[] = [
   {
     id: 'sug-late',
     label: 'Quelles interventions sont en retard ?',
     category: 'interventions',
-    prompt: 'Quelles interventions sont actuellement en retard ou nécessitent une attention urgente ?',
+    prompt:
+      'Quelles interventions sont actuellement en retard ou nécessitent une attention urgente ?',
   },
   {
     id: 'sug-stock',
@@ -19,7 +20,8 @@ export const DEFAULT_AI_SUGGESTIONS: readonly AiSuggestion[] = [
     id: 'sug-summary',
     label: 'Résume les interventions de cette semaine',
     category: 'planning',
-    prompt: 'Fais-moi un résumé synthétique des interventions et missions planifiées cette semaine.',
+    prompt:
+      'Fais-moi un résumé synthétique des interventions et missions planifiées cette semaine.',
   },
   {
     id: 'sug-report',
@@ -64,7 +66,6 @@ export interface AiQueryResult {
 export async function sendAiQuery(params: {
   organizationId: string;
   query: string;
-  history: AiMessage[];
   /** Reprend une conversation déjà commencée — absent au premier message. */
   conversationId?: string;
 }): Promise<AiQueryResult> {
@@ -86,7 +87,9 @@ export async function sendAiQuery(params: {
       body: {
         organizationId: params.organizationId,
         query: params.query,
-        history: params.history.map((m) => ({ role: m.role, content: m.content })),
+        // L'historique est relu par la fonction depuis la conversation validée.
+        // Le transmettre depuis le navigateur permettrait de forger de faux
+        // messages assistant et gonflerait chaque requête au fil du chat.
         ...(params.conversationId ? { conversationId: params.conversationId } : {}),
       },
     });

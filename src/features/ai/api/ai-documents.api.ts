@@ -1,6 +1,7 @@
 import { supabase, unwrap } from '@/services/supabase';
 import type { TablesUpdate } from '@/types/database';
 import type { AiDocument } from '@/types/domain';
+import { assertFileSignature } from '@/lib/file-signature';
 
 /**
  * Bibliothèque documentaire de l'Assistant IA (RAG).
@@ -31,9 +32,9 @@ export async function listAiDocuments(organizationId: string): Promise<AiDocumen
 }
 
 /**
- * Chemin de stockage : organisation en premier segment, seul segment que les
- * policies `storage.objects` inspectent (voir
- * `20260902150000_ai_assistant_documents.sql`).
+ * Chemin de stockage : organisation en premier segment pour l'écriture. La
+ * lecture exige aussi une ligne `ai_documents` visible qui référence exactement
+ * cet objet (voir `20260910015337_harden_storage_object_access.sql`).
  */
 function buildAiDocumentPath(organizationId: string, fileName: string): string {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
@@ -48,6 +49,14 @@ export interface UploadAiDocumentInput {
 }
 
 export async function uploadAiDocument(input: UploadAiDocumentInput): Promise<AiDocument> {
+  if (input.file.type !== 'application/pdf') {
+    throw new Error('Seuls les fichiers PDF sont acceptés.');
+  }
+  if (input.file.size > 25 * 1024 * 1024) {
+    throw new Error('Le fichier dépasse la taille maximale de 25 Mo.');
+  }
+  await assertFileSignature(input.file);
+
   const path = buildAiDocumentPath(input.organizationId, input.file.name);
 
   const { error: uploadError } = await supabase.storage
@@ -113,7 +122,9 @@ export async function updateAiDocument(
 }
 
 /** Retire le document ET son fichier — la ligne seule laisserait un objet orphelin dans le bucket. */
-export async function deleteAiDocument(document: Pick<AiDocument, 'id' | 'storage_path'>): Promise<void> {
+export async function deleteAiDocument(
+  document: Pick<AiDocument, 'id' | 'storage_path'>,
+): Promise<void> {
   const { error } = await supabase.from('ai_documents').delete().eq('id', document.id);
   if (error) throw error;
 

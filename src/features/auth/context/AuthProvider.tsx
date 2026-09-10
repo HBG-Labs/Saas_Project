@@ -1,5 +1,8 @@
 import type { Session } from '@supabase/supabase-js';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+import { clearPrivateSessionStorage } from '@/lib/private-session-storage';
 
 import {
   getCurrentSession,
@@ -36,7 +39,28 @@ function reduceSession(previous: AuthState, session: Session | null): AuthState 
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>(INITIAL_STATE);
+  const previousUserIdRef = useRef<string | null | undefined>(undefined);
+
+  const applySession = useCallback(
+    (session: Session | null) => {
+      const nextUserId = session?.user.id ?? null;
+      const previousUserId = previousUserIdRef.current;
+
+      // Un cache ne traverse jamais une frontière d'identité. `clear()`
+      // annule également les requêtes actives avant que le nouvel utilisateur
+      // puisse monter ses écrans.
+      if (previousUserId !== undefined && previousUserId !== nextUserId) {
+        queryClient.clear();
+        clearPrivateSessionStorage();
+      }
+
+      previousUserIdRef.current = nextUserId;
+      setState((previous) => reduceSession(previous, session));
+    },
+    [queryClient],
+  );
 
   useEffect(() => {
     // `active` neutralise toute mise à jour arrivant après le démontage
@@ -48,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // résolution de `getCurrentSession()` serait autrement perdu.
     const subscription = subscribeToAuthChanges((session) => {
       if (!active) return;
-      setState((previous) => reduceSession(previous, session));
+      applySession(session);
     });
 
     void getCurrentSession()
@@ -57,24 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Garde anti-course : si l'abonnement a déjà livré un état, il est plus
         // récent que cette lecture. On ne l'écrase pas avec une valeur périmée.
-        setState((previous) =>
-          previous.status === 'loading' ? reduceSession(previous, session) : previous,
-        );
+        setState((previous) => {
+          if (previous.status !== 'loading') return previous;
+          previousUserIdRef.current = session?.user.id ?? null;
+          return reduceSession(previous, session);
+        });
       })
       .catch(() => {
         if (!active) return;
         // Session illisible (stockage corrompu, jeton révoqué) : on considère
         // l'utilisateur déconnecté plutôt que de rester bloqué en `loading`.
-        setState((previous) =>
-          previous.status === 'loading' ? reduceSession(previous, null) : previous,
-        );
+        setState((previous) => {
+          if (previous.status !== 'loading') return previous;
+          previousUserIdRef.current = null;
+          return reduceSession(previous, null);
+        });
       });
 
     return () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [applySession]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     // Pas de setState ici : l'abonnement reçoit SIGNED_IN et met à jour l'état.

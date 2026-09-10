@@ -1,10 +1,15 @@
 import { ROUTES } from '@/config/routes';
+import { env } from '@/config/env';
 import { AppError, mapPostgrestError } from '@/lib/errors';
 import { identifiantsAttributionMeta } from '@/lib/meta-pixel';
 import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { Plan, PlanFeature, PlanWithFeatures, Subscription } from '@/types/domain';
 
 import { DEFAULT_PLAN, PLAN_CODES, type FeatureKey, type PlanCode } from '../entitlements';
+
+function publicAppOrigin(): string {
+  return (env.VITE_PUBLIC_APP_URL ?? window.location.origin).replace(/\/$/, '');
+}
 
 /**
  * Lecture des plans et abonnements.
@@ -167,7 +172,9 @@ export interface BillingSummary {
 
 export async function getBillingSummary(organizationId: string): Promise<BillingSummary | null> {
   const row = await unwrapMaybe(
-    supabase.rpc('organization_billing_summary', { p_organization_id: organizationId }).maybeSingle(),
+    supabase
+      .rpc('organization_billing_summary', { p_organization_id: organizationId })
+      .maybeSingle(),
   );
 
   if (row === null) return null;
@@ -250,7 +257,7 @@ export async function updateSubscriptionPlan(params: {
   organizationId: string;
   planCode: PlanCode;
 }): Promise<{ updatedInPlace: boolean; url?: string; planCode: string }> {
-  const base = window.location.origin;
+  const base = publicAppOrigin();
 
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData?.session) {
@@ -309,7 +316,7 @@ export async function createCheckoutSession(params: {
   organizationId: string;
   planCode: PlanCode;
 }): Promise<string> {
-  const base = window.location.origin;
+  const base = publicAppOrigin();
 
   // Garantir que le jeton de session est valide et actif
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -378,7 +385,7 @@ export async function createBillingPortalSession(organizationId: string): Promis
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`,
         },
-        body: { organizationId, returnUrl: `${window.location.origin}${ROUTES.organizationBilling}` },
+        body: { organizationId, returnUrl: `${publicAppOrigin()}${ROUTES.organizationBilling}` },
       },
     );
 
@@ -466,4 +473,3 @@ export async function resumeSubscription(organizationId: string): Promise<void> 
     throw new AppError('unknown', error.message);
   }
 }
-

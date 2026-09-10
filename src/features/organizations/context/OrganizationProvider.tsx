@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth';
+import { clearTenantQueryCache } from '@/lib/query-client';
 import { qk } from '@/lib/query-keys';
 
 import { getMyMembership, listMyOrganizations } from '../api/organizations.api';
 
 import { OrganizationContext, type OrganizationContextValue } from './organization-context';
 
-const STORAGE_KEY = 'rezo360_current_organization';
+const STORAGE_KEY_PREFIX = 'rezo360_current_organization';
 
 /**
  * Lecture du dernier choix d'organisation.
@@ -18,22 +20,36 @@ const STORAGE_KEY = 'rezo360_current_organization';
  * il ne figurera pas dans `listMyOrganizations`, dont le contenu est déjà filtré
  * par la policy `organizations_select_member`, et sera donc ignoré ci-dessous.
  */
-function readStoredOrganizationId(): string | null {
+function organizationStorageKey(userId: string): string {
+  return `${STORAGE_KEY_PREFIX}:${userId}`;
+}
+
+function readStoredOrganizationId(userId: string): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(organizationStorageKey(userId));
   } catch {
     return null;
   }
 }
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const { user, status: authStatus } = useAuth();
   const userId = user?.id ?? null;
 
-  const [selectedId, setSelectedId] = useState<string | null>(readStoredOrganizationId);
+  const [selection, setSelection] = useState<{
+    userId: string | null;
+    organizationId: string | null;
+  }>({ userId: null, organizationId: null });
+  const previousOrganizationIdRef = useRef<string | null | undefined>(undefined);
+  const storedSelectedId = useMemo(
+    () => (userId === null ? null : readStoredOrganizationId(userId)),
+    [userId],
+  );
+  const selectedId = selection.userId === userId ? selection.organizationId : storedSelectedId;
 
   const { data: organizations, isPending: organizationsPending } = useQuery({
-    queryKey: qk.organizations.mine(),
+    queryKey: qk.organizations.mine(userId ?? 'anonymous'),
     queryFn: listMyOrganizations,
     enabled: userId !== null,
   });
@@ -62,15 +78,36 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     enabled: organization !== null && userId !== null,
   });
 
-  const select = useCallback((organizationId: string) => {
-    setSelectedId(organizationId);
-    try {
-      localStorage.setItem(STORAGE_KEY, organizationId);
-    } catch {
-      // Navigation privée ou quota saturé : le choix ne survivra pas au
-      // rechargement, ce qui est une gêne, pas une panne.
+  useEffect(() => {
+    const nextOrganizationId = organization?.id ?? null;
+    const previousOrganizationId = previousOrganizationIdRef.current;
+
+    if (
+      previousOrganizationId !== undefined &&
+      previousOrganizationId !== nextOrganizationId &&
+      nextOrganizationId !== null
+    ) {
+      clearTenantQueryCache(queryClient);
     }
-  }, []);
+
+    previousOrganizationIdRef.current = nextOrganizationId;
+  }, [organization?.id, queryClient]);
+
+  const select = useCallback(
+    (organizationId: string) => {
+      if (organization?.id !== organizationId) clearTenantQueryCache(queryClient);
+      setSelection({ userId, organizationId });
+      try {
+        if (userId !== null) {
+          localStorage.setItem(organizationStorageKey(userId), organizationId);
+        }
+      } catch {
+        // Navigation privée ou quota saturé : le choix ne survivra pas au
+        // rechargement, ce qui est une gêne, pas une panne.
+      }
+    },
+    [organization?.id, queryClient, userId],
+  );
 
   const value = useMemo<OrganizationContextValue>(() => {
     const status: OrganizationContextValue['status'] =

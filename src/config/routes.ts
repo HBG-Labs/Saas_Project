@@ -14,6 +14,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   /** Retour des liens e-mail : confirmation d'inscription, réinitialisation. */
   authCallback: '/auth/callback',
 

@@ -116,12 +116,8 @@ export function useSwitchTimeEntry(interventionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: {
-      organizationId: string;
-      openEntryId: string | null;
-      to: TimeEntryKind;
-      reason?: string;
-    }) => switchTimeEntry({ interventionId, ...input }),
+    mutationFn: (input: { to: TimeEntryKind; reason?: string }) =>
+      switchTimeEntry({ interventionId, ...input }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: qk.interventions.timeEntries(interventionId),

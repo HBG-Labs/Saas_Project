@@ -19,6 +19,7 @@ const PAGES_EN_CLAIR: readonly string[] = [
   ROUTES.login,
   ROUTES.register,
   ROUTES.forgotPassword,
+  ROUTES.resetPassword,
 ];
 
 const MARKETING_LINKS = [
@@ -205,7 +206,7 @@ export function PublicLayout() {
             {/* Burger mobile */}
             <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
               <Dialog.Trigger
-                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mr-1 flex size-touch cursor-pointer items-center justify-center rounded-lg sm:size-9 lg:hidden"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch -mr-1 flex cursor-pointer items-center justify-center rounded-lg sm:size-9 lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
@@ -217,7 +218,7 @@ export function PublicLayout() {
                   <div className="border-border mb-2 flex items-center justify-between border-b pb-3">
                     <Logo className="text-base" />
                     <Dialog.Close
-                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-touch cursor-pointer items-center justify-center rounded-lg sm:size-9"
+                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch flex cursor-pointer items-center justify-center rounded-lg sm:size-9"
                       aria-label="Fermer le menu"
                     >
                       <X className="size-5" />
@@ -388,7 +389,7 @@ function PublicFooter() {
 
         <div className="border-border text-muted-foreground mt-8 flex flex-col items-center justify-between gap-1 border-t pt-4 text-xs sm:flex-row">
           <span>© {new Date().getFullYear()} REZO360. Tous droits réservés.</span>
-          <span className="hidden xs:inline">Conçu pour les professionnels du terrain</span>
+          <span className="xs:inline hidden">Conçu pour les professionnels du terrain</span>
         </div>
       </div>
     </footer>

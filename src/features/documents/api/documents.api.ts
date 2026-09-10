@@ -1,5 +1,6 @@
 import { supabase, unwrap } from '@/services/supabase';
 import type { DocumentFolder, OrganizationDocument } from '@/types/domain';
+import { assertFileSignature } from '@/lib/file-signature';
 
 import { DOCUMENTS_PAR_PAGE, type FiltreFamille } from '../constants';
 
@@ -29,9 +30,10 @@ const MIMES_PAR_FAMILLE: Record<Exclude<FiltreFamille, 'tous'>, string[]> = {
 /**
  * Chemin de stockage : `{organization_id}/{uuid}-{nom assaini}`.
  *
- * Le premier segment porte l'organisation — les policies Storage ne regardent
- * que lui. Le `uuid` garantit l'unicité : deux « plan.pdf » déposés le même jour
- * ne se recouvrent pas, et le nom d'origine ne sert jamais d'identifiant.
+ * Le premier segment porte l'organisation et la policy d'écriture le contrôle.
+ * La lecture exige en plus une ligne métier visible qui référence exactement
+ * le chemin. Le `uuid` garantit l'unicité : deux « plan.pdf » déposés le même
+ * jour ne se recouvrent pas, et le nom d'origine ne sert jamais d'identifiant.
  *
  * L'assainissement écarte tout ce qui n'est pas alphanumérique, point, tiret ou
  * souligné. C'est ce qui rend une traversée de répertoire impossible : ni `/`
@@ -77,7 +79,8 @@ export async function listDocuments(input: DocumentListInput): Promise<DocumentL
     .eq('organization_id', input.organizationId);
 
   if (input.folderId !== undefined) {
-    query = input.folderId === null ? query.is('folder_id', null) : query.eq('folder_id', input.folderId);
+    query =
+      input.folderId === null ? query.is('folder_id', null) : query.eq('folder_id', input.folderId);
   }
 
   if (input.famille && input.famille !== 'tous') {
@@ -203,7 +206,10 @@ export async function deleteFolder(folderId: string): Promise<void> {
  * couvre largement une consultation, et reste trop court pour qu'un lien
  * circule durablement hors de l'organisation.
  */
-export async function getDocumentUrl(storagePath: string, expiresInSeconds = 3600): Promise<string> {
+export async function getDocumentUrl(
+  storagePath: string,
+  expiresInSeconds = 3600,
+): Promise<string> {
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(storagePath, expiresInSeconds);
@@ -244,6 +250,8 @@ export interface UploadDocumentInput {
  * bucket accumulerait des objets invisibles et impossibles à retrouver.
  */
 export async function uploadDocument(input: UploadDocumentInput): Promise<OrganizationDocument> {
+  await assertFileSignature(input.file);
+
   const path = buildDocumentPath({
     organizationId: input.organizationId,
     fileName: input.file.name,
@@ -282,7 +290,12 @@ export async function uploadDocument(input: UploadDocumentInput): Promise<Organi
 
 export async function updateDocument(
   documentId: string,
-  patch: { name?: string; description?: string | null; category?: string | null; folder_id?: string | null },
+  patch: {
+    name?: string;
+    description?: string | null;
+    category?: string | null;
+    folder_id?: string | null;
+  },
 ): Promise<OrganizationDocument> {
   return unwrap(
     supabase
@@ -321,10 +334,7 @@ export async function updateDocument(
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export async function deleteDocument(document: OrganizationDocument): Promise<void> {
-  const { error } = await supabase
-    .from('organization_documents')
-    .delete()
-    .eq('id', document.id);
+  const { error } = await supabase.from('organization_documents').delete().eq('id', document.id);
 
   if (error) throw error;
 

@@ -20,7 +20,7 @@ Chaque étape dépend de la précédente. Prises dans le désordre, certaines
 | 3 | Déployer une **prévisualisation** | Fournit l'URL, sans engager la production. |
 | 4 | Renseigner les 3 variables (§2) | Sans elles, le site se charge et n'affiche qu'un panneau d'erreur. |
 | 5 | Supabase → URL Configuration (§3) | Il faut connaître l'URL de l'étape 3 pour la déclarer. |
-| 6 | Secrets courriel, dont `APP_URL` (§3 bis) | Même raison : `APP_URL` est cette URL. |
+| 6 | Secrets courriel, dont `APP_URL=https://app.rezo360.com` (§3 bis) | Les retours Stripe et les courriels refusent une origine non configurée. |
 | 7 | Vérifier la preview (§6) | Dernier moment où une erreur ne coûte rien. |
 | 8 | Promouvoir en production | |
 
@@ -47,7 +47,7 @@ Vercel et dans le tableau de bord Supabase.
 
 ## 2. Variables d'environnement
 
-Trois variables, à déclarer dans **Vercel → Settings → Environment Variables**.
+Quatre variables obligatoires, à déclarer dans **Vercel → Settings → Environment Variables**.
 
 > **Le build ne les vérifie pas.** Vite remplace les `import.meta.env.VITE_*`
 > par leur valeur au moment de la compilation : une variable absente devient
@@ -67,6 +67,7 @@ Trois variables, à déclarer dans **Vercel → Settings → Environment Variabl
 | `VITE_SUPABASE_URL` | `https://wtsiaisfwtthmcxygeei.supabase.co` | Production, Preview, Development |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Clé publiable — Dashboard Supabase → Project Settings → API | Production, Preview, Development |
 | `VITE_APP_ENV` | `production` en Production, `staging` en Preview | selon l'environnement |
+| `VITE_PUBLIC_APP_URL` | `https://app.rezo360.com` | Production |
 | `VITE_APP_VERSION` | SHA du commit déployé, facultatif | Production, Preview |
 
 > **La clé publiable est faite pour le navigateur.** Elle finit dans le bundle,
@@ -94,12 +95,12 @@ origines.
 
 **Dashboard Supabase → Authentication → URL Configuration :**
 
-1. **Site URL** → `https://<votre-domaine>.vercel.app` (ou le domaine
-   personnalisé, une fois branché).
+1. **Site URL** → `https://app.rezo360.com`.
 2. **Redirect URLs** → ajouter :
    ```
-   https://<votre-domaine>.vercel.app/auth/callback
-   https://<votre-domaine>.vercel.app/**
+   https://app.rezo360.com/auth/callback
+   https://app.rezo360.com/reset-password
+   https://app.rezo360.com/invitations/**
    https://<projet>-*.vercel.app/**      ← pour les déploiements de preview
    http://localhost:5173/**              ← pour le développement local
    ```
@@ -167,7 +168,7 @@ npx supabase secrets set SMTP_PORT=465
 npx supabase secrets set SMTP_USER=votre.adresse@gmail.com
 npx supabase secrets set SMTP_PASSWORD=abcdefghijklmnop
 npx supabase secrets set INVITATION_FROM_EMAIL="REZO360 <votre.adresse@gmail.com>"
-npx supabase secrets set APP_URL=https://votre-domaine.vercel.app
+npx supabase secrets set APP_URL=https://app.rezo360.com
 ```
 
 `INVITATION_FROM_EMAIL` **doit** reprendre l'adresse de `SMTP_USER` : Gmail

@@ -13,7 +13,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useAuth } from '@/features/auth';
+import { useCurrentOrganization } from '@/features/organizations';
 import { cn } from '@/lib/cn';
+import {
+  removeLegacyPrivateLocalStorage,
+  voiceRecordingSessionKey,
+} from '@/lib/private-session-storage';
 
 interface AudioRecording {
   id: string;
@@ -22,8 +28,6 @@ interface AudioRecording {
   duration: number; // en secondes
   createdAt: string;
 }
-
-const STORAGE_KEY = 'rezo360_field_voice_recordings';
 
 interface WebkitAudioWindow extends Window {
   webkitAudioContext?: typeof AudioContext;
@@ -41,9 +45,10 @@ function isAudioRecording(value: unknown): value is AudioRecording {
   );
 }
 
-function readStoredRecordings(): AudioRecording[] {
+function readStoredRecordings(storageKey: string | null): AudioRecording[] {
+  if (storageKey === null) return [];
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(storageKey);
     if (!saved) return [];
     const parsed: unknown = JSON.parse(saved);
     return Array.isArray(parsed) ? parsed.filter(isAudioRecording) : [];
@@ -58,11 +63,13 @@ function formatDuration(sec: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function VoiceRecorderTool() {
+function VoiceRecorderSession({ storageKey }: { storageKey: string | null }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
-  const [recordings, setRecordings] = useState<AudioRecording[]>(readStoredRecordings);
+  const [recordings, setRecordings] = useState<AudioRecording[]>(() =>
+    readStoredRecordings(storageKey),
+  );
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // Lecteur Audio
@@ -83,12 +90,17 @@ export default function VoiceRecorderTool() {
 
   const saveRecordings = (updated: AudioRecording[]) => {
     setRecordings(updated);
+    if (storageKey === null) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      sessionStorage.setItem(storageKey, JSON.stringify(updated));
     } catch (e) {
-      console.warn('Erreur stockage local mémo vocal:', e);
+      console.warn('Erreur stockage de session du mémo vocal:', e);
     }
   };
+
+  useEffect(() => {
+    removeLegacyPrivateLocalStorage();
+  }, []);
 
   // Visualiseur Canvas d'onde sonore en direct
   const drawWaveform = useCallback(() => {
@@ -152,9 +164,20 @@ export default function VoiceRecorderTool() {
   const startRecording = async () => {
     setPermissionError(null);
 
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (storageKey === null) {
       setPermissionError(
-        'L’API audio/microphone n’est pas disponible dans ce navigateur ou requiert une connexion sécurisée (HTTPS).'
+        'Une session et une entreprise actives sont nécessaires pour enregistrer un mémo.',
+      );
+      return;
+    }
+
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      setPermissionError(
+        'L’API audio/microphone n’est pas disponible dans ce navigateur ou requiert une connexion sécurisée (HTTPS).',
       );
       return;
     }
@@ -189,7 +212,10 @@ export default function VoiceRecorderTool() {
       let recorderOptions: MediaRecorderOptions | undefined = undefined;
       let selectedMime = 'audio/webm';
 
-      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+      if (
+        typeof MediaRecorder !== 'undefined' &&
+        typeof MediaRecorder.isTypeSupported === 'function'
+      ) {
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
           selectedMime = 'audio/webm;codecs=opus';
           recorderOptions = { mimeType: selectedMime };
@@ -232,7 +258,15 @@ export default function VoiceRecorderTool() {
             duration: recordDuration,
             createdAt: new Date().toISOString(),
           };
-          saveRecordings([newRecording, ...recordings]);
+          setRecordings((current) => {
+            const updated = [newRecording, ...current];
+            try {
+              sessionStorage.setItem(storageKey, JSON.stringify(updated));
+            } catch (error) {
+              console.warn('Erreur stockage de session du mémo vocal:', error);
+            }
+            return updated;
+          });
         };
       };
 
@@ -252,7 +286,7 @@ export default function VoiceRecorderTool() {
       const errorName = err instanceof Error ? err.name : '';
       if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
         setPermissionError(
-          'Autorisation refusée par votre navigateur. Vous devez autoriser le microphone dans les paramètres de votre navigateur pour enregistrer des mémos vocaux.'
+          'Autorisation refusée par votre navigateur. Vous devez autoriser le microphone dans les paramètres de votre navigateur pour enregistrer des mémos vocaux.',
         );
       } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
         setPermissionError('Aucun microphone physique détecté sur cet appareil.');
@@ -387,64 +421,77 @@ export default function VoiceRecorderTool() {
   }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
-      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
-        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
-            <div className="flex items-center gap-2.5 min-w-0">
+    <div className="mx-auto max-w-4xl min-w-0 space-y-4 sm:space-y-6">
+      <Card className="border-border bg-surface min-w-0 overflow-hidden shadow-2xs">
+        <CardHeader className="border-border/70 border-b p-3.5 pb-3.5 sm:p-4">
+          <div className="flex min-w-0 flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-center gap-2.5">
               <div
                 className={cn(
                   'flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300',
                   isRecording
-                    ? 'bg-error text-white animate-pulse shadow-md ring-2 ring-error/20'
+                    ? 'bg-error ring-error/20 animate-pulse text-white shadow-md ring-2'
                     : 'bg-primary/10 text-primary',
                 )}
               >
                 <Mic className="size-5" />
               </div>
               <div className="min-w-0">
-                <CardTitle className="text-sm sm:text-base font-bold truncate">Dictaphone & Mémos Vocaux</CardTitle>
-                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
-                  Enregistrement audio rapide pour rapports de visite, constats et notes de chantier.
+                <CardTitle className="truncate text-sm font-bold sm:text-base">
+                  Dictaphone & Mémos Vocaux
+                </CardTitle>
+                <p className="text-3xs text-muted-foreground line-clamp-1 sm:text-xs">
+                  Enregistrement audio rapide pour rapports de visite, constats et notes de
+                  chantier.
                 </p>
               </div>
             </div>
 
             {recordings.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-3xs font-bold uppercase tracking-wider bg-surface-raised border border-border text-foreground self-start sm:self-auto shrink-0">
+              <span className="text-3xs bg-surface-raised border-border text-foreground inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border px-2.5 py-1 font-bold tracking-wider uppercase sm:self-auto">
                 {recordings.length} mémo{recordings.length > 1 ? 's' : ''}
               </span>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
+        <CardContent className="min-w-0 space-y-4 overflow-x-hidden p-3 sm:space-y-6 sm:p-6">
           {permissionError && (
-            <div className="p-4 rounded-xl bg-error/10 border border-error/30 text-xs text-foreground space-y-3">
+            <div className="bg-error/10 border-error/30 text-foreground space-y-3 rounded-xl border p-4 text-xs">
               <div className="flex items-start gap-2.5">
-                <AlertCircle className="size-5 text-error shrink-0 mt-0.5" />
+                <AlertCircle className="text-error mt-0.5 size-5 shrink-0" />
                 <div className="space-y-1">
-                  <p className="font-bold text-error text-sm">
-                    Accès au microphone requis
-                  </p>
-                  <p className="text-xs text-muted-foreground">{permissionError}</p>
+                  <p className="text-error text-sm font-bold">Accès au microphone requis</p>
+                  <p className="text-muted-foreground text-xs">{permissionError}</p>
                 </div>
               </div>
 
-              <div className="bg-surface-raised/90 rounded-lg p-3 border border-border space-y-2 text-2xs">
-                <p className="font-semibold text-foreground flex items-center gap-1.5">
-                  <Info className="size-3.5 text-primary" />
+              <div className="bg-surface-raised/90 border-border text-2xs space-y-2 rounded-lg border p-3">
+                <p className="text-foreground flex items-center gap-1.5 font-semibold">
+                  <Info className="text-primary size-3.5" />
                   Comment réactiver le micro sur votre téléphone :
                 </p>
-                <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground">
+                <ul className="text-muted-foreground list-disc space-y-1.5 pl-4">
                   <li>
-                    <strong className="text-foreground">Sur Android (Chrome / Navigateur) :</strong> Touchez l'icône du cadenas <span className="font-mono bg-surface-subtle px-1 rounded">🔒</span> ou réglages tout en haut à gauche dans la barre d'adresse &gt; <strong className="text-foreground">Autorisations</strong> &gt; Activez <strong className="text-foreground">Microphone</strong> &gt; Rafraîchissez la page.
+                    <strong className="text-foreground">Sur Android (Chrome / Navigateur) :</strong>{' '}
+                    Touchez l'icône du cadenas{' '}
+                    <span className="bg-surface-subtle rounded px-1 font-mono">🔒</span> ou réglages
+                    tout en haut à gauche dans la barre d'adresse &gt;{' '}
+                    <strong className="text-foreground">Autorisations</strong> &gt; Activez{' '}
+                    <strong className="text-foreground">Microphone</strong> &gt; Rafraîchissez la
+                    page.
                   </li>
                   <li>
-                    <strong className="text-foreground">Sur iPhone (Safari / Chrome) :</strong> Touchez <strong className="text-foreground">aA</strong> dans la barre d'adresse &gt; <strong className="text-foreground">Réglages du site</strong> &gt; <strong className="text-foreground">Microphone</strong> &gt; <strong className="text-foreground">Autoriser</strong>.
+                    <strong className="text-foreground">Sur iPhone (Safari / Chrome) :</strong>{' '}
+                    Touchez <strong className="text-foreground">aA</strong> dans la barre d'adresse
+                    &gt; <strong className="text-foreground">Réglages du site</strong> &gt;{' '}
+                    <strong className="text-foreground">Microphone</strong> &gt;{' '}
+                    <strong className="text-foreground">Autoriser</strong>.
                   </li>
                   <li>
-                    <strong className="text-foreground">Paramètres système Android :</strong> Ouvrez <em>Paramètres &gt; Applications &gt; Chrome &gt; Autorisations</em> et autorisez le <strong>Microphone</strong>.
+                    <strong className="text-foreground">Paramètres système Android :</strong> Ouvrez{' '}
+                    <em>Paramètres &gt; Applications &gt; Chrome &gt; Autorisations</em> et
+                    autorisez le <strong>Microphone</strong>.
                   </li>
                 </ul>
               </div>
@@ -455,7 +502,7 @@ export default function VoiceRecorderTool() {
                   size="sm"
                   variant="primary"
                   onClick={startRecording}
-                  className="text-xs gap-1.5 cursor-pointer bg-error hover:bg-error text-white shadow-sm"
+                  className="bg-error hover:bg-error cursor-pointer gap-1.5 text-xs text-white shadow-sm"
                 >
                   <RotateCcw className="size-3.5" />
                   <span>Réessayer l'autorisation</span>
@@ -465,7 +512,7 @@ export default function VoiceRecorderTool() {
                   size="sm"
                   variant="outline"
                   onClick={() => setPermissionError(null)}
-                  className="text-xs cursor-pointer"
+                  className="cursor-pointer text-xs"
                 >
                   Fermer
                 </Button>
@@ -474,17 +521,17 @@ export default function VoiceRecorderTool() {
           )}
 
           {/* Zone d'Enregistrement & Visualiseur d'Onde */}
-          <div className="flex flex-col items-center justify-center p-6 bg-surface-sunken rounded-2xl border border-border space-y-4 shadow-inner">
+          <div className="bg-surface-sunken border-border flex flex-col items-center justify-center space-y-4 rounded-2xl border p-6 shadow-inner">
             {/* Visualiseur Canvas */}
             <canvas
               ref={canvasRef}
               width={600}
               height={100}
-              className="w-full h-24 rounded-xl border border-border bg-surface-sunken/60"
+              className="border-border bg-surface-sunken/60 h-24 w-full rounded-xl border"
             />
 
             {/* Durée de l'enregistrement */}
-            <div className="font-mono text-4xl sm:text-5xl font-black text-white tracking-tight">
+            <div className="font-mono text-4xl font-black tracking-tight text-white sm:text-5xl">
               {formatDuration(recordDuration)}
             </div>
 
@@ -496,7 +543,7 @@ export default function VoiceRecorderTool() {
                   size="lg"
                   variant="primary"
                   onClick={startRecording}
-                  className="h-12 px-6 text-sm font-bold gap-2 bg-error hover:bg-error text-white shadow-lg shadow-error/30 cursor-pointer"
+                  className="bg-error hover:bg-error shadow-error/30 h-12 cursor-pointer gap-2 px-6 text-sm font-bold text-white shadow-lg"
                 >
                   <Mic className="size-5" />
                   <span>Démarrer l’enregistrement</span>
@@ -508,9 +555,13 @@ export default function VoiceRecorderTool() {
                     size="lg"
                     variant="outline"
                     onClick={togglePause}
-                    className="h-12 px-5 text-xs font-semibold gap-1.5 bg-surface-sunken text-white border-border hover:bg-surface-sunken cursor-pointer"
+                    className="bg-surface-sunken border-border hover:bg-surface-sunken h-12 cursor-pointer gap-1.5 px-5 text-xs font-semibold text-white"
                   >
-                    {isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4" />}
+                    {isPaused ? (
+                      <Play className="size-4 fill-current" />
+                    ) : (
+                      <Pause className="size-4" />
+                    )}
                     <span>{isPaused ? 'Reprendre' : 'Pause'}</span>
                   </Button>
 
@@ -519,7 +570,7 @@ export default function VoiceRecorderTool() {
                     size="lg"
                     variant="primary"
                     onClick={stopRecording}
-                    className="h-12 px-6 text-sm font-bold gap-2 bg-success hover:bg-success text-white shadow-md cursor-pointer"
+                    className="bg-success hover:bg-success h-12 cursor-pointer gap-2 px-6 text-sm font-bold text-white shadow-md"
                   >
                     <Square className="size-4 fill-current" />
                     <span>Sauvegarder le mémo</span>
@@ -532,14 +583,14 @@ export default function VoiceRecorderTool() {
           {/* Liste des Mémos Vocaux Enregistrés */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+              <span className="text-foreground text-xs font-bold tracking-wider uppercase">
                 Mémos vocaux enregistrés ({recordings.length})
               </span>
               {recordings.length > 0 && (
                 <button
                   type="button"
                   onClick={cyclePlaybackSpeed}
-                  className="text-xs font-mono font-bold text-primary hover:underline cursor-pointer"
+                  className="text-primary cursor-pointer font-mono text-xs font-bold hover:underline"
                 >
                   Vitesse : {playbackSpeed}x
                 </button>
@@ -547,40 +598,45 @@ export default function VoiceRecorderTool() {
             </div>
 
             {recordings.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6 border border-dashed border-border rounded-xl">
-                Aucun mémo vocal enregistré. Cliquez sur « Démarrer l’enregistrement » pour créer votre première note audio.
+              <p className="text-muted-foreground border-border rounded-xl border border-dashed py-6 text-center text-xs">
+                Aucun mémo vocal enregistré. Cliquez sur « Démarrer l’enregistrement » pour créer
+                votre première note audio.
               </p>
             ) : (
-              <div className="divide-y divide-border border border-border rounded-xl bg-surface-raised overflow-hidden max-h-80 overflow-y-auto">
+              <div className="divide-border border-border bg-surface-raised max-h-80 divide-y overflow-hidden overflow-y-auto rounded-xl border">
                 {recordings.map((rec) => {
                   const isPlaying = activePlayingId === rec.id;
                   return (
                     <div
                       key={rec.id}
                       className={cn(
-                        'flex flex-col sm:flex-row sm:items-center justify-between p-3.5 gap-3 transition-colors',
+                        'flex flex-col justify-between gap-3 p-3.5 transition-colors sm:flex-row sm:items-center',
                         isPlaying && 'bg-primary/5',
                       )}
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <button
                           type="button"
                           onClick={() => playRecording(rec)}
                           className={cn(
-                            'size-10 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-xs',
+                            'flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full shadow-xs transition-all',
                             isPlaying
-                              ? 'bg-primary text-primary-foreground scale-105 ring-4 ring-primary/20'
-                              : 'bg-surface border border-border text-foreground hover:border-primary',
+                              ? 'bg-primary text-primary-foreground ring-primary/20 scale-105 ring-4'
+                              : 'bg-surface border-border text-foreground hover:border-primary border',
                           )}
                           title={isPlaying ? 'Pause' : 'Écouter'}
                         >
-                          {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 fill-current ml-0.5" />}
+                          {isPlaying ? (
+                            <Pause className="size-4" />
+                          ) : (
+                            <Play className="ml-0.5 size-4 fill-current" />
+                          )}
                         </button>
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-foreground truncate">{rec.name}</p>
-                          <div className="flex items-center gap-3 text-3xs text-muted-foreground mt-0.5">
-                            <span className="font-mono font-semibold text-primary">
+                          <p className="text-foreground truncate text-xs font-bold">{rec.name}</p>
+                          <div className="text-3xs text-muted-foreground mt-0.5 flex items-center gap-3">
+                            <span className="text-primary font-mono font-semibold">
                               {formatDuration(rec.duration)}
                             </span>
                             <span>•</span>
@@ -589,13 +645,13 @@ export default function VoiceRecorderTool() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => downloadAudio(rec)}
-                          className="h-8 px-2.5 text-3xs gap-1"
+                          className="text-3xs h-8 gap-1 px-2.5"
                           title="Télécharger l'enregistrement audio"
                         >
                           <Download className="size-3" />
@@ -605,7 +661,7 @@ export default function VoiceRecorderTool() {
                         <button
                           type="button"
                           onClick={() => deleteRecording(rec.id)}
-                          className="p-2 rounded-lg text-muted-foreground hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
+                          className="text-muted-foreground hover:text-error hover:bg-error/10 cursor-pointer rounded-lg p-2 transition-colors"
                           title="Supprimer"
                         >
                           <Trash2 className="size-4" />
@@ -621,4 +677,15 @@ export default function VoiceRecorderTool() {
       </Card>
     </div>
   );
+}
+
+export default function VoiceRecorderTool() {
+  const { user } = useAuth();
+  const { organization } = useCurrentOrganization();
+  const storageKey =
+    user && organization ? voiceRecordingSessionKey(user.id, organization.id) : null;
+
+  // Une frontière de session/tenant remonte un composant neuf : aucun état
+  // audio, lecteur ou mémo de l'identité précédente ne peut survivre.
+  return <VoiceRecorderSession key={storageKey ?? 'no-session'} storageKey={storageKey} />;
 }

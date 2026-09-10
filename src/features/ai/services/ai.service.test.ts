@@ -33,7 +33,7 @@ const reponses = new Map<string, AiQueryResult>();
 
 beforeAll(async () => {
   const resultats = await Promise.all(
-    REQUETES.map((query) => sendAiQuery({ organizationId: 'org-test', query, history: [] })),
+    REQUETES.map((query) => sendAiQuery({ organizationId: 'org-test', query })),
   );
   REQUETES.forEach((query, i) => {
     reponses.set(query, resultats[i]!);

@@ -28,6 +28,9 @@ interface RequestBody {
   documentId: string;
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_REQUEST_BYTES = 4096;
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
@@ -35,6 +38,11 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== 'POST') {
     return json({ error: 'Méthode non autorisée' }, 405);
+  }
+
+  const declaredLength = Number(req.headers.get('content-length') ?? '0');
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
+    return json({ error: 'Corps de requête trop volumineux.' }, 413);
   }
 
   const authHeader = req.headers.get('Authorization');
@@ -49,10 +57,14 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Corps de requête invalide.' }, 400);
   }
 
-  const { documentId } = body;
-  if (!documentId) {
-    return json({ error: 'documentId est requis' }, 400);
+  if (
+    Object.keys(body).some((key) => key !== 'documentId') ||
+    typeof body.documentId !== 'string' ||
+    !UUID_PATTERN.test(body.documentId)
+  ) {
+    return json({ error: 'documentId est invalide.' }, 400);
   }
+  const { documentId } = body;
 
   const admin = adminClient();
   const jwt = extractJwt(authHeader);
@@ -91,7 +103,24 @@ Deno.serve(async (req: Request) => {
     return json({ error: message }, 422);
   }
 
-  await admin.from('ai_documents').update({ status: 'processing', error_message: null }).eq('id', documentId);
+  // Une seule indexation peut revendiquer un document. Deux appels simultanés
+  // ne doivent ni payer deux lots d'embeddings, ni supprimer/réinsérer les
+  // mêmes fragments en concurrence.
+  const { data: claimed, error: claimError } = await admin
+    .from('ai_documents')
+    .update({ status: 'processing', error_message: null })
+    .eq('id', documentId)
+    .in('status', ['pending', 'error'])
+    .select('id')
+    .maybeSingle();
+
+  if (claimError) {
+    console.error('Prise en charge du document échouée:', documentId, claimError);
+    return json({ error: 'Impossible de démarrer l’indexation.' }, 500);
+  }
+  if (!claimed) {
+    return json({ error: 'Ce document est déjà en cours de traitement ou déjà indexé.' }, 409);
+  }
 
   try {
     // Lu À L'INTÉRIEUR du bloc `try` : une variable d'environnement absente

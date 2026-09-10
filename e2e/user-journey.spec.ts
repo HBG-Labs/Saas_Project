@@ -65,7 +65,12 @@ test.describe('Parcours utilisateur complet', () => {
   }) => {
     // ------------------------------------------------------------- 1. Arrivée (Landing Page)
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /rezo360/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: 'Pilotez votre activité de terrain en toute simplicité',
+        exact: true,
+      }),
+    ).toBeVisible();
 
     // Clic vers la page d'inscription depuis l'en-tête ou le CTA Hero
     const registerLink = page.getByRole('link', { name: /créer un compte|commencer/i }).first();

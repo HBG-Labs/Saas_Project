@@ -4,8 +4,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * POURQUOI UN SCRIPT PLUTÔT QUE L'INTERFACE
  *
- * Neuf saisies à la main — trois variables × trois environnements — dont deux
- * clés de quarante caractères à recopier sans faute. Une coquille produit
+ * Douze saisies à la main — quatre variables × trois environnements — dont une
+ * clé longue à recopier sans faute. Une coquille produit
  * exactement le même écran qu'une variable absente, et on cherche alors du
  * mauvais côté.
  *
@@ -42,7 +42,12 @@ const APP_ENV_BY_TARGET = {
 };
 
 const TARGETS = Object.keys(APP_ENV_BY_TARGET);
-const REQUIRED = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_APP_ENV'];
+const REQUIRED = [
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_PUBLISHABLE_KEY',
+  'VITE_APP_ENV',
+  'VITE_PUBLIC_APP_URL',
+];
 
 function fail(message) {
   console.error(`\n${message}\n`);

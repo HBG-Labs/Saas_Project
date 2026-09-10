@@ -1,18 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockSignInWithOAuth } = vi.hoisted(() => ({
+import { env } from '@/config/env';
+
+const { mockResetPasswordForEmail, mockSignInWithOAuth } = vi.hoisted(() => ({
+  mockResetPasswordForEmail: vi.fn(),
   mockSignInWithOAuth: vi.fn(),
 }));
 
 vi.mock('@/services/supabase', () => ({
   supabase: {
     auth: {
+      resetPasswordForEmail: mockResetPasswordForEmail,
       signInWithOAuth: mockSignInWithOAuth,
     },
   },
 }));
 
-import { signInWithGoogle } from './auth.api';
+import { requestPasswordReset, signInWithGoogle } from './auth.api';
+
+const appOrigin = (env.VITE_PUBLIC_APP_URL ?? window.location.origin).replace(/\/$/, '');
 
 describe('signInWithGoogle', () => {
   beforeEach(() => {
@@ -27,7 +33,7 @@ describe('signInWithGoogle', () => {
     expect(mockSignInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${appOrigin}/auth/callback`,
       },
     });
   });
@@ -45,6 +51,22 @@ describe('signInWithGoogle', () => {
     await expect(signInWithGoogle()).rejects.toMatchObject({
       code: 'validation',
       message: expect.stringContaining('Google'),
+    });
+  });
+});
+
+describe('requestPasswordReset', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('redirige le lien vers le formulaire de nouveau mot de passe', async () => {
+    mockResetPasswordForEmail.mockResolvedValueOnce({ error: null });
+
+    await requestPasswordReset('jean@exemple.fr');
+
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith('jean@exemple.fr', {
+      redirectTo: `${appOrigin}/reset-password`,
     });
   });
 });

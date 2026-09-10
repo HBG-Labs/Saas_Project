@@ -28,4 +28,25 @@ describe('parseEnv', () => {
     const { VITE_SUPABASE_PUBLISHABLE_KEY: _ignored, ...withoutKey } = VALID;
     expect(() => parseEnv(withoutKey)).toThrow(/VITE_SUPABASE_PUBLISHABLE_KEY/);
   });
+
+  it('exige l’adresse canonique de l’application en production', () => {
+    expect(() => parseEnv({ ...VALID, VITE_APP_ENV: 'production' })).toThrow(/VITE_PUBLIC_APP_URL/);
+    expect(
+      parseEnv({
+        ...VALID,
+        VITE_APP_ENV: 'production',
+        VITE_PUBLIC_APP_URL: 'https://app.rezo360.com',
+      }).VITE_PUBLIC_APP_URL,
+    ).toBe('https://app.rezo360.com');
+  });
+
+  it('refuse HTTP pour l’application de production', () => {
+    expect(() =>
+      parseEnv({
+        ...VALID,
+        VITE_APP_ENV: 'production',
+        VITE_PUBLIC_APP_URL: 'http://app.rezo360.com',
+      }),
+    ).toThrow(/HTTPS/);
+  });
 });

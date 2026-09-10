@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuth } from '@/features/auth';
 import { qk } from '@/lib/query-keys';
 import type { TablesUpdate } from '@/types/database';
 
@@ -20,9 +21,11 @@ import { useCurrentOrganization } from './useCurrentOrganization';
  * un état, pas comme une panne.
  */
 export function useMyOrganizations() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: qk.organizations.mine(),
+    queryKey: qk.organizations.mine(user?.id ?? 'anonymous'),
     queryFn: listMyOrganizations,
+    enabled: user !== null,
   });
 }
 
@@ -52,7 +55,7 @@ export function useCreateOrganization() {
       // `await` : sans lui, la redirection qui suit afficherait la nouvelle
       // organisation avant que sa liste ne soit rechargée — donc un écran
       // « aucune entreprise » pendant un instant.
-      await queryClient.invalidateQueries({ queryKey: qk.organizations.mine() });
+      await queryClient.invalidateQueries({ queryKey: qk.organizations.all });
     },
   });
 }
@@ -67,7 +70,7 @@ export function useUpdateOrganization(organizationId: string) {
       // être invalidées, sans quoi l'en-tête garderait l'ancien nom.
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.organizations.detail(organizationId) }),
-        queryClient.invalidateQueries({ queryKey: qk.organizations.mine() }),
+        queryClient.invalidateQueries({ queryKey: qk.organizations.all }),
       ]);
     },
   });

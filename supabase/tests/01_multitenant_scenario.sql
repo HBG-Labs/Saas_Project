@@ -1668,7 +1668,74 @@ end
 $$;
 
 -- -----------------------------------------------------------------------------
--- 7.6 — L'intervention ne se déplace pas, et son heure ne se réécrit pas
+-- 7.6 — Un seul chrono par compte, même entre deux interventions
+-- -----------------------------------------------------------------------------
+do $$
+declare
+  v_org uuid; v_tech uuid; v_first uuid; v_second uuid;
+  v_first_entry uuid; v_second_entry uuid; v_raised boolean;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+  select id into v_tech from public.organization_members
+  where organization_id = v_org and user_id = pg_temp.uid('a_tech1');
+
+  perform pg_temp.login('a_manager');
+  set local role authenticated;
+
+  insert into public.interventions (mission_id, organization_id, technician_id, status)
+  values (pg_temp.mission_a(), v_org, v_tech, 'in_progress')
+  returning id into v_first;
+
+  insert into public.interventions (mission_id, organization_id, technician_id, status)
+  values (pg_temp.mission_a(), v_org, v_tech, 'in_progress')
+  returning id into v_second;
+
+  reset role;
+
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+
+  select id into v_first_entry
+  from public.switch_intervention_time_entry(v_first, 'work', null);
+
+  -- Simule le deuxième appareil : il ne connaît pas l'identifiant du segment
+  -- ouvert sur le premier. La RPC doit néanmoins fermer le bon segment.
+  select id into v_second_entry
+  from public.switch_intervention_time_entry(v_second, 'work', null);
+
+  reset role;
+
+  perform pg_temp.ok(
+    (select ended_at from public.intervention_time_entries where id = v_first_entry) is not null,
+    'Changer d''intervention ferme atomiquement l''ancien chrono');
+  perform pg_temp.ok(
+    (select ended_at from public.intervention_time_entries where id = v_second_entry) is null,
+    'Le nouveau chrono reste ouvert');
+  perform pg_temp.ok(
+    (select count(*) from public.intervention_time_entries
+     where technician_user_id = pg_temp.uid('a_tech1') and ended_at is null) = 1,
+    'Un compte ne possede jamais deux chronos ouverts');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('b_owner');
+    set local role authenticated;
+    perform public.switch_intervention_time_entry(v_first, 'work', null);
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+
+  perform pg_temp.ok(v_raised,
+    'Une autre organisation ne peut pas actionner le chrono de A');
+
+  perform pg_temp.login('a_tech1');
+  set local role authenticated;
+  update public.intervention_time_entries set ended_at = now() where id = v_second_entry;
+  reset role;
+end
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 7.7 — L'intervention ne se déplace pas, et son heure ne se réécrit pas
 -- -----------------------------------------------------------------------------
 do $$
 declare v_interv uuid; v_autre_mission uuid; v_raised boolean; v_avant timestamptz;
@@ -1837,6 +1904,55 @@ begin
   perform pg_temp.ok(
     (select reviewed_by from public.intervention_reports where id = v_report) is not null,
     'Le controleur est enregistre par le serveur');
+end
+$$;
+
+-- =============================================================================
+-- PARTIE 9 — Quota IA réservé atomiquement
+-- =============================================================================
+do $$
+declare
+  v_org uuid; v_first uuid; v_second uuid; v_raised boolean;
+begin
+  select id into v_org from public.organizations where slug = 'fibre-atlantique';
+
+  delete from public.ai_usage where organization_id = v_org;
+  update public.plan_features
+  set limit_value = 1
+  where plan_code = 'business' and feature_key = 'ai_assistant';
+
+  set local role service_role;
+  select reservation_id into v_first
+  from public.reserve_ai_usage(v_org, pg_temp.uid('a_owner'));
+  select reservation_id into v_second
+  from public.reserve_ai_usage(v_org, pg_temp.uid('a_owner'));
+  reset role;
+
+  perform pg_temp.ok(v_first is not null,
+    'La derniere place du quota IA peut etre reservee');
+  perform pg_temp.ok(v_second is null,
+    'Une seconde requete ne depasse pas le quota deja reserve');
+  perform pg_temp.ok(
+    (select count(*) from public.ai_usage
+     where organization_id = v_org and request_type = 'chat_reserved') = 1,
+    'La reservation compte immediatement dans le quota');
+
+  set local role service_role;
+  select reservation_id into v_second
+  from public.reserve_ai_usage(v_org, pg_temp.uid('b_owner'));
+  reset role;
+  perform pg_temp.ok(v_second is null,
+    'Le role de service ne reserve rien pour un non-membre');
+
+  v_raised := false;
+  begin
+    perform pg_temp.login('a_owner');
+    set local role authenticated;
+    perform public.reserve_ai_usage(v_org, pg_temp.uid('a_owner'));
+    reset role;
+  exception when others then v_raised := true; reset role; end;
+  perform pg_temp.ok(v_raised,
+    'Le navigateur ne peut jamais appeler la reservation de quota');
 end
 $$;
 

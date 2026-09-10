@@ -49,6 +49,13 @@ export const routes: RouteObject[] = [
           },
 
           { path: ROUTES.authCallback, lazy: lazyPage(() => import('@/pages/AuthCallbackPage')) },
+          // Un lien de récupération ouvre une session Supabase. Cette route ne
+          // doit donc pas être sous PublicOnlyRoute, qui la renverrait au
+          // tableau de bord avant même la saisie du nouveau mot de passe.
+          {
+            path: ROUTES.resetPassword,
+            lazy: lazyPage(() => import('@/pages/ResetPasswordPage')),
+          },
         ],
       },
 
@@ -277,7 +284,10 @@ export const routes: RouteObject[] = [
 
                   {
                     element: (
-                      <RequirePlan feature={FEATURES.documents} label="La bibliothèque documentaire" />
+                      <RequirePlan
+                        feature={FEATURES.documents}
+                        label="La bibliothèque documentaire"
+                      />
                     ),
                     children: [
                       {

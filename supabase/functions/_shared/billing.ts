@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
+import { trustedReturnUrl } from './return-url.ts';
 
 /**
  * Socle commun aux fonctions de facturation.
@@ -69,6 +70,74 @@ export interface BillingContext {
   totalCents: number;
 }
 
+interface BillingSummaryRow {
+  plan_code: string;
+  plan_name: string;
+  included_seats: number;
+  active_seats: number;
+  extra_seats: number;
+  total_cents: number;
+}
+
+export interface OrganizationMemberAccess {
+  userId: string;
+  role: string;
+}
+
+/**
+ * Vérifie uniquement l'appartenance active à l'organisation.
+ *
+ * Certaines opérations idempotentes (demander une remise en cohérence des
+ * sièges, par exemple) ne donnent aucun pouvoir de facturation : le serveur
+ * recalcule la quantité et ignore toute valeur proposée par le client. Elles
+ * peuvent donc être déclenchées par n'importe quel membre actif.
+ */
+export async function requireOrganizationMembership(
+  caller: SupabaseClient,
+  organizationId: string,
+  authorization?: string,
+): Promise<{ access: OrganizationMemberAccess } | { error: Response }> {
+  const jwt = authorization ? extractJwt(authorization) : undefined;
+  const admin = adminClient();
+
+  let user: { id: string } | null = null;
+  if (jwt) {
+    const { data: adminAuth, error: adminAuthError } = await admin.auth.getUser(jwt);
+    if (adminAuthError) {
+      console.warn('requireOrganizationMembership admin getUser error:', adminAuthError);
+    }
+    user = adminAuth?.user ?? null;
+  }
+
+  if (!user) {
+    const { data: callerAuth, error: callerAuthError } = await caller.auth.getUser();
+    if (callerAuthError) {
+      console.warn('requireOrganizationMembership caller getUser error:', callerAuthError);
+    }
+    user = callerAuth?.user ?? null;
+  }
+
+  if (!user) return { error: json({ error: 'Session invalide.' }, 401) };
+
+  const { data: membership, error: membershipError } = await admin
+    .from('organization_members')
+    .select('role, status')
+    .eq('organization_id', organizationId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (membershipError) {
+    console.error('requireOrganizationMembership membership error:', membershipError);
+    return { error: json({ error: "Appartenance à l'organisation illisible." }, 503) };
+  }
+
+  if (!membership || membership.status !== 'active') {
+    return { error: json({ error: "Vous n'appartenez pas à cette organisation." }, 403) };
+  }
+
+  return { access: { userId: user.id, role: membership.role } };
+}
+
 /**
  * Vérifie le droit de facturer, puis lit la situation réelle.
  *
@@ -82,45 +151,18 @@ export async function requireBillingAccess(
   organizationId: string,
   authorization?: string,
 ): Promise<{ context: BillingContext } | { error: Response }> {
-  const jwt = authorization ? extractJwt(authorization) : undefined;
   const admin = adminClient();
-
-  let user: { id: string } | null = null;
-  if (jwt) {
-    const { data: adminAuth, error: adminAuthError } = await admin.auth.getUser(jwt);
-    if (adminAuthError) {
-      console.warn('requireBillingAccess admin getUser error:', adminAuthError);
-    }
-    user = adminAuth?.user ?? null;
-  }
-
-  if (!user) {
-    const { data: callerAuth, error: callerAuthError } = await caller.auth.getUser();
-    if (callerAuthError) {
-      console.warn('requireBillingAccess caller getUser error:', callerAuthError);
-    }
-    user = callerAuth?.user ?? null;
-  }
-
-  if (!user) {
-    return { error: json({ error: 'Session invalide.' }, 401) };
-  }
-
-  const { data: membership } = await admin
-    .from('organization_members')
-    .select('role, status')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (!membership || membership.status !== 'active') {
-    return { error: json({ error: "Vous n'appartenez pas à cette organisation." }, 403) };
-  }
+  const membershipAccess = await requireOrganizationMembership(
+    caller,
+    organizationId,
+    authorization,
+  );
+  if ('error' in membershipAccess) return membershipAccess;
 
   const { data: permission } = await admin
     .from('role_permissions')
     .select('permission')
-    .eq('role', membership.role)
+    .eq('role', membershipAccess.access.role)
     .eq('permission', 'billing.manage')
     .maybeSingle();
 
@@ -136,18 +178,19 @@ export async function requireBillingAccess(
     .maybeSingle();
 
   if (error || !summary) {
-    return { error: json({ error: "Facturation illisible pour cette organisation." }, 400) };
+    return { error: json({ error: 'Facturation illisible pour cette organisation.' }, 400) };
   }
+  const row = summary as BillingSummaryRow;
 
   return {
     context: {
       organizationId,
-      planCode: summary.plan_code,
-      planName: summary.plan_name,
-      includedSeats: summary.included_seats,
-      activeSeats: summary.active_seats,
-      extraSeats: summary.extra_seats,
-      totalCents: summary.total_cents,
+      planCode: row.plan_code,
+      planName: row.plan_name,
+      includedSeats: row.included_seats,
+      activeSeats: row.active_seats,
+      extraSeats: row.extra_seats,
+      totalCents: row.total_cents,
     },
   };
 }
@@ -177,18 +220,12 @@ export function resolveReturnUrl(
   origin: string | null,
   chemin: string,
 ): string | null {
-  const candidat =
-    explicite ?? (origin !== null && origin !== '' ? `${origin}${chemin}` : undefined) ??
-    (Deno.env.get('APP_URL') !== undefined ? `${Deno.env.get('APP_URL') ?? ''}${chemin}` : undefined);
-
-  if (candidat === undefined) return null;
-
-  try {
-    const url = new URL(candidat);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
-  } catch {
-    return null;
-  }
+  return trustedReturnUrl({
+    configuredAppUrl: Deno.env.get('APP_URL'),
+    explicitUrl: explicite,
+    requestOrigin: origin,
+    path: chemin,
+  });
 }
 
 export interface StripePrices {
@@ -254,7 +291,11 @@ export const MINIMUM_ESSAI_MS = 48 * 60 * 60 * 1000;
  * L'échéance d'essai à reprendre dans l'abonnement Stripe, en secondes (Unix timestamp).
  */
 export function resolveTrialEnd(
-  essai: { status?: string | null; trial_ends_at?: string | null; current_period_end?: string | null } | null,
+  essai: {
+    status?: string | null;
+    trial_ends_at?: string | null;
+    current_period_end?: string | null;
+  } | null,
 ): number | null {
   if (!essai || essai.status !== 'trialing') return null;
 
@@ -280,14 +321,19 @@ export async function stripeRequest(
   path: string,
   params: Record<string, string>,
   method: 'POST' | 'GET' = 'POST',
+  requestFetch: typeof fetch = fetch,
+  secretKey: string = env('STRIPE_SECRET_KEY'),
 ): Promise<Record<string, unknown>> {
   const body = new URLSearchParams(params);
-  const url = method === 'GET' ? `https://api.stripe.com${path}?${body.toString()}` : `https://api.stripe.com${path}`;
+  const url =
+    method === 'GET'
+      ? `https://api.stripe.com${path}?${body.toString()}`
+      : `https://api.stripe.com${path}`;
 
-  const response = await fetch(url, {
+  const response = await requestFetch(url, {
     method,
     headers: {
-      Authorization: `Bearer ${env('STRIPE_SECRET_KEY')}`,
+      Authorization: `Bearer ${secretKey}`,
       'Content-Type': 'application/x-www-form-urlencoded',
       // Version épinglée : une évolution de l'API Stripe ne doit pas changer le
       // comportement de cette fonction sans qu'on l'ait décidé.
@@ -315,20 +361,24 @@ export async function stripeRequest(
 export async function stripeDelete(
   path: string,
   params: Record<string, string> = {},
+  requestFetch: typeof fetch = fetch,
+  secretKey: string = env('STRIPE_SECRET_KEY'),
 ): Promise<void> {
   const query = new URLSearchParams(params).toString();
   const url = `https://api.stripe.com${path}${query === '' ? '' : `?${query}`}`;
 
-  const response = await fetch(url, {
+  const response = await requestFetch(url, {
     method: 'DELETE',
     headers: {
-      Authorization: `Bearer ${env('STRIPE_SECRET_KEY')}`,
+      Authorization: `Bearer ${secretKey}`,
       'Stripe-Version': '2024-06-20',
     },
   });
 
   if (!response.ok) {
     const payload = (await response.json()) as { error?: { message?: string } };
-    throw new Error(`Stripe a refusé la suppression ${path} : ${payload.error?.message ?? 'inconnue'}`);
+    throw new Error(
+      `Stripe a refusé la suppression ${path} : ${payload.error?.message ?? 'inconnue'}`,
+    );
   }
 }

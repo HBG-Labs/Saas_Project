@@ -221,7 +221,7 @@ describe('listDocuments', () => {
 });
 
 describe('uploadDocument', () => {
-  const fichier = new File(['x'], 'notice.pdf', { type: 'application/pdf' });
+  const fichier = new File(['%PDF-1.7\ncontenu'], 'notice.pdf', { type: 'application/pdf' });
 
   it('retire le fichier déposé si l’enregistrement échoue', async () => {
     fromMock.mockReturnValue(requete({ data: null, error: { message: 'refusé' } }));

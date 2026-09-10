@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { forgotPasswordSchema, loginSchema, registerSchema } from './auth.schema';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from './auth.schema';
 
 /**
  * La validation se teste sans monter le moindre formulaire : c'est tout
@@ -57,5 +62,28 @@ describe('registerSchema', () => {
 describe('forgotPasswordSchema', () => {
   it('n’exige que l’adresse e-mail', () => {
     expect(forgotPasswordSchema.safeParse({ email: 'jean@exemple.fr' }).success).toBe(true);
+  });
+});
+
+describe('resetPasswordSchema', () => {
+  it('accepte deux mots de passe identiques et suffisamment longs', () => {
+    expect(
+      resetPasswordSchema.safeParse({
+        password: 'nouveau-mot-de-passe',
+        confirmPassword: 'nouveau-mot-de-passe',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejette une confirmation différente', () => {
+    const result = resetPasswordSchema.safeParse({
+      password: 'nouveau-mot-de-passe',
+      confirmPassword: 'autre-mot-de-passe',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path[0] === 'confirmPassword')).toBe(true);
+    }
   });
 });

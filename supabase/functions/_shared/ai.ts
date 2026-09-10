@@ -1,4 +1,4 @@
-import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
 import { json } from './billing.ts';
 
@@ -108,7 +108,9 @@ export async function createEmbeddings(texts: string[], apiKey: string): Promise
       throw new Error(`OpenAI embeddings a refusé la requête (${response.status}) : ${detail}`);
     }
 
-    const payload = (await response.json()) as { data?: Array<{ index: number; embedding: number[] }> };
+    const payload = (await response.json()) as {
+      data?: Array<{ index: number; embedding: number[] }>;
+    };
     const rows = payload.data ?? [];
 
     if (rows.length !== batch.length) {
@@ -184,13 +186,15 @@ export async function searchDocumentChunks(params: {
     return [];
   }
 
-  return ((data ?? []) as Array<{
-    id: string;
-    document_id: string;
-    content: string;
-    metadata: Record<string, unknown> | null;
-    similarity: number;
-  }>).map((row) => ({
+  return (
+    (data ?? []) as Array<{
+      id: string;
+      document_id: string;
+      content: string;
+      metadata: Record<string, unknown> | null;
+      similarity: number;
+    }>
+  ).map((row) => ({
     id: row.id,
     documentId: row.document_id,
     content: row.content,
@@ -204,6 +208,100 @@ export interface AiQuotaStatus {
   limit: number | null;
   remaining: number | null;
   unlimited: boolean;
+}
+
+export interface AiQuotaReservation {
+  id: string;
+  usedBefore: number;
+  limit: number | null;
+  remainingAfter: number | null;
+  unlimited: boolean;
+}
+
+/**
+ * Réserve atomiquement une place du quota avant l'appel payant.
+ *
+ * `null` signifie soit quota épuisé, soit accès/plan refusé. L'appelant a déjà
+ * produit les messages précis d'autorisation ; ici on ne rouvre aucune porte.
+ */
+export async function reserveAiUsage(
+  admin: SupabaseClient,
+  organizationId: string,
+  userId: string,
+): Promise<AiQuotaReservation | null> {
+  const { data, error } = await admin
+    .rpc('reserve_ai_usage', {
+      p_organization_id: organizationId,
+      p_user_id: userId,
+    })
+    .maybeSingle();
+
+  if (error) {
+    console.error('Réservation du quota IA impossible:', error);
+    throw new Error('Quota IA momentanément indisponible.');
+  }
+  if (!data) return null;
+
+  const row = data as {
+    reservation_id: string;
+    used_before: number;
+    quota_limit: number | null;
+    remaining_after: number | null;
+    unlimited: boolean;
+  };
+
+  return {
+    id: row.reservation_id,
+    usedBefore: row.used_before,
+    limit: row.quota_limit,
+    remainingAfter: row.remaining_after,
+    unlimited: row.unlimited,
+  };
+}
+
+/** Rend une réservation si aucun appel payant n'a finalement eu lieu. */
+export async function releaseAiUsage(
+  admin: SupabaseClient,
+  reservationId: string,
+  organizationId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin
+    .from('ai_usage')
+    .delete()
+    .eq('id', reservationId)
+    .eq('organization_id', organizationId)
+    .eq('user_id', userId)
+    .eq('request_type', 'chat_reserved');
+
+  if (error) console.error('Libération de la réservation IA échouée:', error);
+}
+
+/** Convertit la réservation en consommation réelle après la réponse OpenAI. */
+export async function finalizeAiUsage(params: {
+  admin: SupabaseClient;
+  reservationId: string;
+  organizationId: string;
+  userId: string;
+  inputTokens: number;
+  outputTokens: number;
+}): Promise<void> {
+  const { error } = await params.admin
+    .from('ai_usage')
+    .update({
+      request_type: 'chat',
+      input_tokens: params.inputTokens,
+      output_tokens: params.outputTokens,
+      estimated_cost: estimateCompletionCost(params.inputTokens, params.outputTokens),
+    })
+    .eq('id', params.reservationId)
+    .eq('organization_id', params.organizationId)
+    .eq('user_id', params.userId)
+    .eq('request_type', 'chat_reserved');
+
+  // On ne supprime surtout pas la réservation en cas d'échec de finalisation :
+  // l'appel a déjà coûté de l'argent et doit continuer de compter dans le quota.
+  if (error) console.error('Finalisation de la consommation IA échouée:', error);
 }
 
 /**
@@ -228,7 +326,12 @@ export async function getAiQuotaStatus(
     return null;
   }
 
-  const row = data as { used: number; quota_limit: number | null; remaining: number | null; unlimited: boolean };
+  const row = data as {
+    used: number;
+    quota_limit: number | null;
+    remaining: number | null;
+    unlimited: boolean;
+  };
 
   return {
     used: row.used,
@@ -355,7 +458,7 @@ export async function requireAiAccess(params: {
     .select('role, status')
     .eq('organization_id', params.organizationId)
     .eq('user_id', userId)
-    .in('status', ['active', 'invited'])
+    .eq('status', 'active')
     .maybeSingle();
 
   if (!membership) {
@@ -370,7 +473,9 @@ export async function requireAiAccess(params: {
     .maybeSingle();
 
   if (!permissionRow) {
-    return { error: json({ error: "Vous n'avez pas la permission nécessaire pour cette action." }, 403) };
+    return {
+      error: json({ error: "Vous n'avez pas la permission nécessaire pour cette action." }, 403),
+    };
   }
 
   return {
@@ -415,7 +520,10 @@ export async function requireAiFeature(
   if (!included) {
     return {
       error: json(
-        { error: 'AI_FEATURE_NOT_INCLUDED', message: "Cette formule ne comprend pas l'Assistant IA." },
+        {
+          error: 'AI_FEATURE_NOT_INCLUDED',
+          message: "Cette formule ne comprend pas l'Assistant IA.",
+        },
         403,
       ),
     };
