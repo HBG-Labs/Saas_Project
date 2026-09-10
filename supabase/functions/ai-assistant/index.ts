@@ -9,6 +9,16 @@ import {
   searchDocumentChunks,
   type DocumentChunkMatch,
 } from '../_shared/ai.ts';
+import {
+  answerDocumentCatalogQuestion,
+  findMentionedDocument,
+  type AiDocumentCatalogItem,
+} from '../_shared/ai-document-catalog.ts';
+import {
+  answerFirstCustomerQuestion,
+  sortCustomersByCreation,
+  type AiCustomer,
+} from '../_shared/ai-customers.ts';
 import { AI_REQUEST_MAX_BYTES, validateAiRequest } from '../_shared/ai-request.ts';
 
 /**
@@ -146,6 +156,7 @@ Deno.serve(async (req: Request) => {
       customersRes,
       leavesRes,
       notesRes,
+      aiDocumentsRes,
       orgRes,
     ] = await Promise.all([
       admin
@@ -198,8 +209,10 @@ Deno.serve(async (req: Request) => {
         .limit(30),
       admin
         .from('customers')
-        .select('id, name, reference, city, status')
+        .select('id, name, reference, city, status, created_at')
         .eq('organization_id', organizationId)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
         .limit(40),
       admin
         .from('leave_requests')
@@ -229,6 +242,12 @@ Deno.serve(async (req: Request) => {
         .order('updated_at', { ascending: false })
         .limit(25),
       admin
+        .from('ai_documents')
+        .select('id, title, filename, category, status, created_at')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      admin
         .from('organizations')
         .select('id, name, slug, max_members, industry')
         .eq('id', organizationId)
@@ -244,9 +263,32 @@ Deno.serve(async (req: Request) => {
     const suppliers = suppliersRes.data ?? [];
     const purchases = purchasesRes.data ?? [];
     const quotes = quotesRes.data ?? [];
-    const customers = customersRes.data ?? [];
+    const customers = sortCustomersByCreation((customersRes.data ?? []) as AiCustomer[]);
     const leaves = leavesRes.data ?? [];
     const notes = notesRes.data ?? [];
+    const aiDocuments = (aiDocumentsRes.data ?? []) as AiDocumentCatalogItem[];
+    const readyAiDocuments = aiDocuments.filter((document) => document.status === 'ready');
+    const aiDocumentCatalogContext =
+      "\n- Bibliothèque documentaire de l'Assistant IA (" +
+      aiDocuments.length +
+      ' document(s), ' +
+      readyAiDocuments.length +
+      ' prêt(s)) :\n' +
+      (aiDocuments.length === 0
+        ? '  * Aucun document enregistré.'
+        : aiDocuments
+            .map(
+              (document) =>
+                '  * ' +
+                document.title +
+                ' [' +
+                document.status +
+                '] — fichier ' +
+                document.filename +
+                (document.category ? ' — catégorie ' + document.category : ''),
+            )
+            .join('\n')) +
+      '\n  Le statut « ready » signifie que le document est indexé et consultable.\n';
     const organization = orgRes.data ?? null;
 
     // Analyse approfondie des entités
@@ -379,11 +421,14 @@ Données en direct de l'organisation "${organization?.name || 'REZO360'}" :
       .join(' ; ') || 'Aucun devis'
   }
 
-- Clients (${customers.length} clients répertoriés) :
-  * Liste : ${
+- Clients (${customers.length} clients répertoriés, classés du plus ancien au plus récent) :
+  * Liste chronologique (n° 1 = premier client enregistré) : ${
     customers
       .slice(0, 8)
-      .map((c: any) => `${c.name} (${c.city || 'N/C'})`)
+      .map(
+        (c: AiCustomer, index: number) =>
+          `${index + 1}. ${c.name} [${c.reference || 'N/C'}] (${c.city || 'N/C'}, créé le ${c.created_at || 'date inconnue'})`,
+      )
       .join(', ') || 'Aucun client'
   }
 
@@ -677,8 +722,34 @@ ${
     // données métier ci-dessus. Un incident sur la recherche vectorielle ne
     // doit pas priver l'utilisateur de la partie qui fonctionne.
     let documentChunks: DocumentChunkMatch[] = [];
+    const documentCatalogAnswer = answerDocumentCatalogQuestion(query, aiDocuments);
+    const mentionedDocument = findMentionedDocument(query, readyAiDocuments);
     const openaiApiKeyForSearch = Deno.env.get('OPENAI_API_KEY');
-    if (openaiApiKeyForSearch) {
+    if (!documentCatalogAnswer && mentionedDocument) {
+      // Un titre cité est une clé de recherche plus précise qu'une similarité
+      // sémantique. Les deux identifiants sont filtrés après contrôle d'accès.
+      const { data: namedChunks, error: namedChunksError } = await admin
+        .from('ai_document_chunks')
+        .select('id, document_id, content, metadata, chunk_index')
+        .eq('organization_id', organizationId)
+        .eq('document_id', mentionedDocument.id)
+        .order('chunk_index', { ascending: true })
+        .limit(12);
+
+      if (namedChunksError) {
+        console.error('Lecture du document nommé indisponible:', namedChunksError);
+      } else {
+        documentChunks = (namedChunks ?? []).map((chunk) => ({
+          id: chunk.id,
+          documentId: chunk.document_id,
+          content: chunk.content,
+          metadata: (chunk.metadata as Record<string, unknown> | null) ?? {
+            document_title: mentionedDocument.title,
+          },
+          similarity: 1,
+        }));
+      }
+    } else if (!documentCatalogAnswer && openaiApiKeyForSearch) {
       try {
         documentChunks = await searchDocumentChunks({
           admin,
@@ -689,6 +760,10 @@ ${
       } catch (ragError) {
         console.error('Recherche documentaire indisponible:', ragError);
       }
+    }
+
+    if (documentCatalogAnswer) {
+      sources.push('Bibliothèque documentaire REZO360');
     }
 
     const docContext =
@@ -719,20 +794,28 @@ Règles de réponse, dans cet ordre de priorité :
 3. Distingue explicitement, quand la nuance importe : ce qui vient des documents de l'entreprise, ce qui relève d'une connaissance générale du métier, et ce qui est une hypothèse de ta part.
 4. Quand tu t'appuies sur un extrait documentaire, cite sa source (nom du document, page si connue).
 5. Si la question porte sur un chiffre issu des données de l'organisation (combien de techniciens, de missions, de véhicules, d'articles en alerte...), donne le chiffre exact puis les éléments clés pertinents.
-6. Réponds en français professionnel, clair, concis et pratique — adapté à un technicien qui te lit depuis un smartphone sur le terrain. Évite les réponses longues sans valeur ajoutée.
+6. Pour les questions d'ancienneté ou d'ordre d'enregistrement, respecte exclusivement l'ordre chronologique explicitement fourni. Le client n° 1 est le premier client enregistré.
+7. La bibliothèque documentaire indique tous les documents enregistrés. Le statut « ready » confirme qu'un document est indexé et consultable, même si aucun extrait vectoriel n'est pertinent pour la question actuelle.
+8. Réponds en français professionnel, clair, concis et pratique — adapté à un technicien qui te lit depuis un smartphone sur le terrain. Évite les réponses longues sans valeur ajoutée.
 
 <ORGANIZATION_DATA_UNTRUSTED>
-${orgContext}
+${orgContext + aiDocumentCatalogContext}
 </ORGANIZATION_DATA_UNTRUSTED>
 <DOCUMENT_EXCERPTS_UNTRUSTED>
 ${docContext}
 </DOCUMENT_EXCERPTS_UNTRUSTED>`;
 
-    let aiContent = '';
+    const directCustomerAnswer = answerFirstCustomerQuestion(query, customers);
+    const directAnswer = directCustomerAnswer ?? documentCatalogAnswer;
+    let aiContent = directAnswer ?? '';
     let tokenUsage: { inputTokens: number; outputTokens: number } | null = null;
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (openaiApiKey) {
+    if (directAnswer) {
+      // Cette réponse vient directement des données vérifiées de la base :
+      // aucun appel payant n'est nécessaire et le quota est rendu.
+      await releaseAiUsage(admin, reservation.id, organizationId, userId);
+    } else if (openaiApiKey) {
       try {
         const completion = await createChatCompletion({
           apiKey: openaiApiKey,
@@ -916,12 +999,12 @@ ${docContext}
         aiContent =
           `### Répertoire Clients (${customers.length} clients)\n\n` +
           (customers.length > 0
-            ? `**Clients récents :**\n` +
+            ? `**Clients par ordre d'enregistrement (du plus ancien au plus récent) :**\n` +
               customers
                 .slice(0, 8)
                 .map(
-                  (c: any) =>
-                    `* **${c.name}** (Réf: \`${c.reference || 'N/C'}\`) — ${c.city || 'Ville non renseignée'}`,
+                  (c: AiCustomer, index: number) =>
+                    `${index + 1}. **${c.name}** (Réf: \`${c.reference || 'N/C'}\`) — ${c.city || 'Ville non renseignée'}`,
                 )
                 .join('\n')
             : `Aucun client n'est encore répertorié dans votre base.`);
