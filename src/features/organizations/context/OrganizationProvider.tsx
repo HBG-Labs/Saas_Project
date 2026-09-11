@@ -78,12 +78,25 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     enabled: organization !== null && userId !== null,
   });
 
+  /**
+   * Purge du cache quand l'organisation change SANS passer par `select` : on a
+   * pu être retiré de l'entreprise courante, et le repli sur `list[0]` change
+   * alors de tenant sans aucun geste de l'utilisateur.
+   *
+   * La garde porte sur `null`, pas seulement sur `undefined`. L'ARRIVÉE de la
+   * première organisation n'est pas un changement d'organisation : au premier
+   * rendu la liste n'est pas encore chargée, `organization` vaut `null`, et
+   * c'est ce passage-là qui consommait la garde `undefined`. La transition
+   * `null → organisation` était donc traitée comme un changement de tenant et
+   * purgeait le cache juste après que l'appartenance ci-dessus a été lancée.
+   */
   useEffect(() => {
     const nextOrganizationId = organization?.id ?? null;
     const previousOrganizationId = previousOrganizationIdRef.current;
 
     if (
       previousOrganizationId !== undefined &&
+      previousOrganizationId !== null &&
       previousOrganizationId !== nextOrganizationId &&
       nextOrganizationId !== null
     ) {

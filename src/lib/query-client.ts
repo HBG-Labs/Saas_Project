@@ -45,9 +45,29 @@ export function createQueryClient(): QueryClient {
  * provider puisse déterminer la nouvelle organisation sans boucle de
  * chargement. Le catalogue est public et identique pour tous les tenants.
  * Tout le reste est rechargé sous le contexte de la nouvelle organisation.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI `type: 'inactive'`, ET CE QUE COÛTE SON OUBLI
+ *
+ * `removeQueries` sans filtre retire AUSSI les requêtes encore montées. Une
+ * requête retirée du cache pendant que sa promesse est en vol n'a plus où
+ * écrire son résultat : son observateur reste orphelin, `isPending` ne redevient
+ * jamais `false`, et l'écran ne quitte plus son squelette. Ce n'est pas une
+ * lenteur — c'est un blocage définitif, mesuré sur le tableau de bord, où
+ * l'appartenance de l'utilisateur était lancée au rendu précis que la purge
+ * suivait.
+ *
+ * Se limiter à l'inactif suffit, parce que l'isolation ne repose pas sur cette
+ * purge : l'identifiant d'organisation fait déjà partie de chaque clé (voir
+ * `query-keys.ts`). Changer d'organisation change donc les clés — les requêtes
+ * montées observent d'office une nouvelle entrée et rechargent, tandis que
+ * celles du tenant quitté deviennent inactives. Cette fonction ne fait que
+ * libérer leur mémoire sans attendre le `gcTime`.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 export function clearTenantQueryCache(queryClient: QueryClient): void {
   queryClient.removeQueries({
+    type: 'inactive',
     predicate: ({ queryKey }) => {
       if (queryKey[0] === 'catalog') return false;
       return !(queryKey[0] === 'organizations' && queryKey[1] === 'mine');
