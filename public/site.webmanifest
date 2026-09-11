@@ -24,15 +24,15 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
@@ -42,28 +42,28 @@
       "short_name": "Intervention",
       "description": "Créer une nouvelle mission technique",
       "url": "/missions/nouvelle",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Devis Express",
       "short_name": "Devis",
       "description": "Créer un chiffrage ou un devis rapide",
       "url": "/devis",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Planning & Tournée",
       "short_name": "Planning",
       "description": "Consulter le calendrier des interventions",
       "url": "/planning",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Calculateur de Temps",
       "short_name": "Temps",
       "description": "Durées de travail, intervalles horaires et heures décimales",
       "url": "/tools/time-calculator",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

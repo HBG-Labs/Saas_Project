@@ -30,7 +30,7 @@ export function Logo({
     >
       {showIcon && (
         <img
-          src="/favicon.svg"
+          src="/icon-192.png"
           alt="REZO360"
           className="size-6 sm:size-7 shrink-0 rounded-lg shadow-2xs"
           width="28"

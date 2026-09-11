@@ -6,11 +6,12 @@
 // déjà mis en cache l'ancienne bibliothèque aurait continué de la servir
 // indéfiniment. `activate` supprime tout compartiment dont le nom ne
 // correspond pas à celui-ci.
-const CACHE_NAME = 'rezo360-pwa-v2';
+const CACHE_NAME = 'rezo360-pwa-v3';
 
 const STATIC_ASSETS = [
   '/',
-  '/favicon.svg',
+  '/favicon-32.png',
+  '/icon-192.png',
   '/site.webmanifest'
 ];
 
