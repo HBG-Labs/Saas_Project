@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Building2, CircleCheck } from 'lucide-react';
+import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 
@@ -12,7 +12,11 @@ import { Select } from '@/components/ui/Select';
 import { ROUTES } from '@/config/routes';
 import { FormError } from '@/components/feedback/FormError';
 import { useIndustries } from '@/features/industries';
-import { useCreateOrganization } from '@/features/organizations';
+import {
+  CompanyLookupInput,
+  useCreateOrganization,
+  type FrenchCompanyCandidate,
+} from '@/features/organizations';
 import { isAppError } from '@/lib/errors';
 import {
   createOrganizationSchema,
@@ -34,8 +38,18 @@ export default function CreateOrganizationPage() {
    * saisie à chaque frappe dans le nom — un défaut classique de ce motif.
    */
   const [slugEdited, setSlugEdited] = useState(false);
+  /**
+   * Nom de l'entreprise retenue dans l'annuaire, pour le confirmer à l'écran.
+   *
+   * Sans ce retour, la recherche remplit quatre champs d'un coup sans que rien
+   * ne dise d'où ils viennent : on ne sait plus si on a saisi le SIRET ou s'il
+   * a été trouvé. Remis à `null` dès qu'un des deux champs est retouché à la
+   * main — la confirmation ne doit jamais survivre à ce qu'elle confirme.
+   */
+  const [verifiedCompany, setVerifiedCompany] = useState<string | null>(null);
 
   const {
+    control,
     register,
     handleSubmit,
     setValue,
@@ -43,8 +57,42 @@ export default function CreateOrganizationPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateOrganizationValues>({
     resolver: zodResolver(createOrganizationSchema),
-    defaultValues: { name: '', slug: '', city: '', industry: '' },
+    defaultValues: {
+      name: '',
+      slug: '',
+      city: '',
+      industry: '',
+      legalName: '',
+      registrationNumber: '',
+      postalCode: '',
+    },
   });
+
+  /**
+   * Reprend une fiche de l'annuaire officiel.
+   *
+   * Le nom commercial prime sur la dénomination légale : c'est celui sous lequel
+   * l'entreprise est connue de ses clients, donc celui qui doit s'afficher. La
+   * raison sociale est conservée à côté — elle est obligatoire sur les factures.
+   *
+   * L'identifiant n'est réécrit que si l'utilisateur n'y a pas touché, pour la
+   * même raison qu'à la frappe du nom.
+   */
+  function applyOfficialCompany(company: FrenchCompanyCandidate) {
+    const displayName = company.commercialName ?? company.name;
+    const fill = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
+
+    setValue('name', displayName, fill);
+    setValue('legalName', company.legalName, fill);
+    setValue('registrationNumber', company.siret, fill);
+    if (company.city !== undefined) setValue('city', company.city, fill);
+    if (company.postalCode !== undefined) setValue('postalCode', company.postalCode, fill);
+    if (!slugEdited) {
+      setValue('slug', slugifyOrganizationName(displayName), { shouldValidate: false });
+    }
+
+    setVerifiedCompany(displayName);
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
@@ -55,6 +103,15 @@ export default function CreateOrganizationPage() {
         ...(values.city !== undefined && values.city !== '' ? { city: values.city } : {}),
         ...(values.industry !== undefined && values.industry !== ''
           ? { industry: values.industry }
+          : {}),
+        ...(values.legalName !== undefined && values.legalName !== ''
+          ? { legalName: values.legalName }
+          : {}),
+        ...(values.registrationNumber !== undefined && values.registrationNumber !== ''
+          ? { registrationNumber: values.registrationNumber }
+          : {}),
+        ...(values.postalCode !== undefined && values.postalCode !== ''
+          ? { postalCode: values.postalCode }
           : {}),
       });
       await navigate(ROUTES.organization);
@@ -89,22 +146,79 @@ export default function CreateOrganizationPage() {
           <FormError error={submitError} />
 
           <form onSubmit={onSubmit} noValidate className="space-y-4">
-            <Input
-              label="Nom de l’entreprise"
-              placeholder="REZO360 Services & Travaux"
-              autoComplete="organization"
-              required
-              {...(errors.name?.message ? { error: errors.name.message } : {})}
-              {...register('name', {
-                onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-                  if (!slugEdited) {
-                    setValue('slug', slugifyOrganizationName(event.target.value), {
-                      shouldValidate: false,
-                    });
-                  }
-                },
-              })}
+            {/*
+              LA RECHERCHE DANS L'ANNUAIRE, ICI PLUTÔT QU'EN RÉGLAGES SEULEMENT.
+
+              Le même composant sert déjà dans les paramètres de l'entreprise.
+              L'y réserver obligeait à ressaisir à la main, à la création, ce que
+              l'annuaire sait déjà — puis à y revenir pour compléter le SIRET
+              avant la première facture, où il est obligatoire.
+
+              Trois caractères suffisent à chercher par nom ; un SIREN (9
+              chiffres) ou un SIRET (14) déclenche la recherche par identifiant.
+              La saisie manuelle reste entière : si l'annuaire ne répond pas, ou
+              si l'entreprise n'y figure pas encore, les champs se remplissent
+              normalement.
+            */}
+            <Controller
+              control={control}
+              name="name"
+              render={({ field }) => (
+                <CompanyLookupInput
+                  mode="name"
+                  label="Nom de l’entreprise"
+                  placeholder="REZO360 Services & Travaux"
+                  hint="Tapez les premières lettres : l’annuaire officiel remplit la raison sociale, le SIRET et la ville."
+                  required
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onBlur={field.onBlur}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setVerifiedCompany(null);
+                    if (!slugEdited) {
+                      setValue('slug', slugifyOrganizationName(value), { shouldValidate: false });
+                    }
+                  }}
+                  onCompanySelect={applyOfficialCompany}
+                  {...(errors.name?.message ? { error: errors.name.message } : {})}
+                />
+              )}
             />
+
+            <Controller
+              control={control}
+              name="registrationNumber"
+              render={({ field }) => (
+                <CompanyLookupInput
+                  mode="siret"
+                  label="SIRET"
+                  placeholder="109 198 440 000 17"
+                  hint="Facultatif ici, obligatoire sur vos factures. Saisissez-le pour retrouver l’entreprise."
+                  inputMode="numeric"
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onBlur={field.onBlur}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setVerifiedCompany(null);
+                  }}
+                  onCompanySelect={applyOfficialCompany}
+                  {...(errors.registrationNumber?.message
+                    ? { error: errors.registrationNumber.message }
+                    : {})}
+                />
+              )}
+            />
+
+            {verifiedCompany !== null ? (
+              <p className="text-success flex items-center gap-1.5 text-sm" role="status">
+                <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">
+                  Identité reprise de l’annuaire officiel : {verifiedCompany}
+                </span>
+              </p>
+            ) : null}
 
             <Input
               label="Identifiant"

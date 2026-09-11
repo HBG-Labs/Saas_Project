@@ -85,6 +85,8 @@ export async function createOrganization(input: {
   city?: string;
   postalCode?: string;
   country?: string;
+  /** SIRET, tel que l'annuaire officiel le renvoie. */
+  registrationNumber?: string;
   /** Metier exerce. Omis = coeur sans specialisation. */
   industry?: string;
 }): Promise<Organization> {
@@ -105,6 +107,9 @@ export async function createOrganization(input: {
     ...(input.city !== undefined ? { city: input.city } : {}),
     ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
     ...(input.country !== undefined ? { country: input.country } : {}),
+    ...(input.registrationNumber !== undefined
+      ? { registration_number: input.registrationNumber }
+      : {}),
     ...(input.industry !== undefined ? { industry: input.industry } : {}),
   };
 

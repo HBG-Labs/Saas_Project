@@ -55,6 +55,17 @@ export const createOrganizationSchema = z.object({
    * regle a deux endroits, c'est se donner deux occasions de la voir diverger.
    */
   industry: z.string().trim().min(1).optional().or(z.literal('')),
+  /*
+    Renseignés par la recherche dans l'annuaire officiel, jamais exigés.
+
+    Mêmes bornes que `organizationSettingsSchema` plus bas : ce sont les mêmes
+    colonnes. Deux jeux de bornes pour une seule contrainte SQL finiraient par
+    diverger, et c'est le formulaire le plus permissif qui ferait échouer
+    l'insertion avec une erreur technique.
+  */
+  legalName: z.string().trim().max(150).optional().or(z.literal('')),
+  registrationNumber: z.string().trim().max(50).optional().or(z.literal('')),
+  postalCode: z.string().trim().max(20).optional().or(z.literal('')),
 });
 
 export const organizationSettingsSchema = z.object({
