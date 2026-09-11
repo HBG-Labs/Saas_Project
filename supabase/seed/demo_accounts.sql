@@ -61,6 +61,55 @@
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
+-- REFUS EN PRODUCTION
+-- -----------------------------------------------------------------------------
+-- Le 11/09/2026, ces comptes de démonstration ont été retirés de la base de
+-- production avant l'ouverture aux vrais clients. Rien n'empêchait alors de les
+-- y réinjecter : la commande de relance est écrite en toutes lettres dans
+-- l'en-tête ci-dessus, et rien ne distinguait une base de développement d'une
+-- base servant de vrais clients.
+--
+-- Le signal retenu est celui qui ne trompe pas : la présence d'une organisation
+-- comptant au moins un membre HORS du domaine `@rezo360.test`. Une base de
+-- développement n'en a aucune ; une base de production en a forcément.
+--
+-- Pour passer outre DÉLIBÉRÉMENT — une démonstration préparée sur un projet
+-- réel, par exemple — décommenter la ligne qui suit. Elle ne peut pas être
+-- franchie par accident.
+--
+--     set rezo360.seed_demo_autorise = 'oui';
+--
+do $$
+declare
+  v_reelles integer;
+begin
+  if coalesce(current_setting('rezo360.seed_demo_autorise', true), '') = 'oui' then
+    raise notice 'Garde-fou levé explicitement : le seed de démonstration va s''exécuter.';
+    return;
+  end if;
+
+  select count(*) into v_reelles
+  from public.organizations o
+  where exists (
+    select 1
+    from public.organization_members m
+    join auth.users u on u.id = m.user_id
+    where m.organization_id = o.id
+      and u.email not like '%@rezo360.test'
+  );
+
+  if v_reelles > 0 then
+    raise exception
+      'REFUS : cette base porte % organisation(s) avec des comptes réels. '
+      'Le seed de démonstration est réservé au développement. '
+      'Voir l''en-tête du fichier pour lever ce garde-fou volontairement.',
+      v_reelles
+      using errcode = 'insufficient_privilege';
+  end if;
+end
+$$;
+
+-- -----------------------------------------------------------------------------
 -- Fabrique d'un compte connectable
 -- -----------------------------------------------------------------------------
 -- `pg_temp` plutôt que le schéma `app` : cette fonction n'est utile qu'au temps
