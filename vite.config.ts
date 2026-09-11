@@ -23,9 +23,44 @@ export default defineConfig({
   },
   build: {
     // Le découpage vient du lazy loading par route (src/app/router.tsx).
-    // Pas de manualChunks ici : ce serait une optimisation prématurée (§13).
     sourcemap: false,
     target: 'es2022',
+    rollupOptions: {
+      output: {
+        /*
+          UNE EXCEPTION AU « PAS DE manualChunks », ET POURQUOI.
+
+          Ce fichier affirmait qu'ajouter manualChunks serait une optimisation
+          prématurée. Mesuré sur le build réel, ça ne l'était plus : 281
+          fichiers .js, dont 129 de moins d'1 Ko, et 95 d'entre eux réduits à
+          une seule icône Lucide (124 à 300 octets chacun — voir
+          `check-*.js` : `import{t as e}from"./createLucideIcon-*.js";var
+          t=e('check',[['path',{d:'M20 6 9 17l-5-5'}]])`).
+
+          Le fautif n'est pas la façon dont le code importe ces icônes
+          (imports nommés, tree-shakables) : c'est l'algorithme par défaut de
+          Rollup, qui extrait tout module partagé par 2+ chunks asynchrones
+          dans son propre fichier — pour ne pas le dupliquer. Comme chaque
+          icône Lucide est déjà son propre module source, et que des dizaines
+          de pages chargées en différé en partagent, chaque icône commune
+          devient son propre chunk.
+
+          Mesuré en conditions réelles sur le site en production (compte de
+          démonstration, connexion normale) : ces micro-fichiers prenaient
+          chacun 200 à 400 ms, et un cinquième d'entre eux n'avaient toujours
+          pas fini de charger trois secondes après l'arrivée sur le tableau
+          de bord. Le poids total ne change presque pas — ce n'est pas un
+          problème d'octets, c'est un problème de NOMBRE de requêtes.
+
+          Regrouper `lucide-react` en un seul chunk collapse ~95 requêtes de
+          quelques centaines d'octets en une seule, mise en cache une fois
+          pour toute la session : 281 fichiers → 175, pour 20,9 Ko gzippés.
+        */
+        manualChunks(id) {
+          if (id.includes('node_modules/lucide-react')) return 'icons';
+        },
+      },
+    },
   },
   test: {
     globals: true,
