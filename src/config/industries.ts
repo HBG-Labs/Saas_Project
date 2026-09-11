@@ -25,6 +25,8 @@ export const INDUSTRY_CODES = [
   'electrical',
   'plumbing',
   'heating',
+  'mechanics',
+  'transport',
   'pest_control',
   'cleaning',
   'home_care',

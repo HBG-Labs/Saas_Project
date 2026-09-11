@@ -24,6 +24,7 @@ import aiAssistantProPlusSql from '../../supabase/migrations/20260902190000_ai_a
 import aiAssistantOwnerOnlySql from '../../supabase/migrations/20260902200000_ai_assistant_owner_only.sql?raw';
 import invoicesSql from '../../supabase/migrations/20260903070000_invoices.sql?raw';
 import organizationDocumentsSql from '../../supabase/migrations/20260906212227_organization_documents.sql?raw';
+import industriesMechanicsTransportSql from '../../supabase/migrations/20260911180635_metiers_mecanique_transport.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -77,6 +78,7 @@ const MIGRATIONS: Record<string, string> = {
   aiAssistantOwnerOnly: aiAssistantOwnerOnlySql,
   invoices: invoicesSql,
   organizationDocuments: organizationDocumentsSql,
+  industriesMechanicsTransport: industriesMechanicsTransportSql,
 };
 
 export const MIGRATION_FILES = {
@@ -106,6 +108,7 @@ export const MIGRATION_FILES = {
   aiAssistantOwnerOnly: 'aiAssistantOwnerOnly',
   invoices: 'invoices',
   organizationDocuments: 'organizationDocuments',
+  industriesMechanicsTransport: 'industriesMechanicsTransport',
 } as const;
 
 /**

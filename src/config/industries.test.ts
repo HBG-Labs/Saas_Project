@@ -20,12 +20,58 @@ import { DEFAULT_INDUSTRY, formatNewNoun, formatNoneNoun, INDUSTRY_CODES, isFemi
  * Même dispositif que `rbac.test.ts` et `entitlements.test.ts` : on lit la
  * migration et on compare, plutôt que de compter sur la vigilance.
  */
+/**
+ * Le référentiel n'est plus peuplé d'un seul tenant : Mécanique et Transport
+ * sont arrivés dans leur propre migration. Les cumuler ici est le motif déjà
+ * suivi pour les permissions « customer.* » et la transition de clôture — un
+ * test qui ne lirait que le semis d'origine déclarerait le miroir faux alors
+ * que c'est SA vision du SQL qui serait incomplète.
+ */
+const MIGRATIONS_METIERS = [
+  MIGRATION_FILES.industries,
+  MIGRATION_FILES.industriesMechanicsTransport,
+] as const;
+
 describe('référentiel des métiers', () => {
-  const tuples = extractInsertTuplesAcross([MIGRATION_FILES.industries], 'industries');
+  const tuples = extractInsertTuplesAcross(MIGRATIONS_METIERS, 'industries');
   const seededCodes = tuples.map((tuple) => stripCast(tuple[0] ?? ''));
 
   it('sème au moins les onze métiers annoncés', () => {
     expect(seededCodes.length).toBeGreaterThanOrEqual(11);
+  });
+
+  it('sème Mécanique et Transport, semis d’origine conservé intact', () => {
+    // Les deux ajouts ne doivent rien retirer : c'est la liste COMPLÈTE qui est
+    // vérifiée, pas seulement la présence des nouveaux venus.
+    expect(seededCodes).toContain('mechanics');
+    expect(seededCodes).toContain('transport');
+    expect(seededCodes).toHaveLength(13);
+    for (const ancien of [
+      'fiber_telecom', 'hvac', 'landscaping', 'electrical', 'plumbing', 'heating',
+      'pest_control', 'cleaning', 'home_care', 'it_networks', 'general',
+    ]) {
+      expect(seededCodes).toContain(ancien);
+    }
+  });
+
+  it('affiche les métiers dans l’ordre attendu', () => {
+    // L'ordre est une décision produit, pas un hasard de rangs : Mécanique et
+    // Transport s'intercalent entre Chauffage et Dératisation. Un semis futur
+    // qui réutiliserait un rang déjà pris déplacerait la liste en silence.
+    const rangs = new Map(
+      tuples.map((tuple) => [stripCast(tuple[0] ?? ''), Number(stripCast(tuple[4] ?? '0'))]),
+    );
+    const attendu = [
+      'fiber_telecom', 'hvac', 'landscaping', 'electrical', 'plumbing', 'heating',
+      'mechanics', 'transport', 'pest_control', 'cleaning', 'home_care', 'it_networks',
+      'general',
+    ];
+
+    const obtenu = [...rangs.entries()]
+      .sort(([, a], [, b]) => a - b)
+      .map(([code]) => code);
+
+    expect(obtenu).toEqual(attendu);
   });
 
   it('déclare exactement les codes semés en base', () => {
