@@ -52,18 +52,24 @@ function statusLabel(status: AiDocumentCatalogItem['status']): string {
 export function answerDocumentCatalogQuestion(
   query: string,
   documents: AiDocumentCatalogItem[],
+  options?: { totalCount?: number; complete?: boolean },
 ): string | null {
   if (!asksForDocumentCatalog(query)) return null;
 
-  if (documents.length === 0) {
+  const totalCount = options?.totalCount ?? documents.length;
+  const complete = options?.complete ?? totalCount <= documents.length;
+
+  if (totalCount === 0) {
     return "Aucun document n'est enregistré dans votre bibliothèque documentaire.";
   }
 
   const readyCount = documents.filter((document) => document.status === 'ready').length;
   const readySentence =
-    readyCount === documents.length
-      ? `Les **${documents.length}** sont indexés et prêts à être consultés.`
-      : `**${readyCount}** sur **${documents.length}** sont indexés et prêts à être consultés.`;
+    complete && readyCount === totalCount
+      ? `Les **${totalCount}** sont indexés et prêts à être consultés.`
+      : complete
+        ? `**${readyCount}** sur **${totalCount}** sont indexés et prêts à être consultés.`
+        : `Le détail couvre ${documents.length} document(s) sur ${totalCount} ; le nombre total de documents prêts n'est pas calculé à partir de cette page.`;
   const list = documents
     .map(
       (document) =>
@@ -71,7 +77,7 @@ export function answerDocumentCatalogQuestion(
     )
     .join('\n');
 
-  return `Oui, je vois **${documents.length} document${documents.length > 1 ? 's' : ''}** dans votre bibliothèque. ${readySentence}\n\n${list}`;
+  return `Oui, je vois **${totalCount} document${totalCount > 1 ? 's' : ''}** dans votre bibliothèque. ${readySentence}\n\n${list}`;
 }
 
 const TITLE_STOP_WORDS = new Set([
