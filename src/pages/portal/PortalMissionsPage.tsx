@@ -36,8 +36,11 @@ export default function PortalMissionsPage() {
               <li key={m.id}>
                 <Link
                   to={ROUTES.portalMission(m.id)}
-                  className="border-border bg-surface hover:border-primary/50 flex items-center gap-3 rounded-xl border p-3 transition-colors sm:p-4"
+                  className="border-border bg-surface hover:border-primary/40 flex items-center gap-3 rounded-2xl border p-3 shadow-xs transition-all hover:shadow-md sm:p-4"
                 >
+                  <span className="bg-primary-subtle text-primary hidden size-10 shrink-0 items-center justify-center rounded-xl sm:inline-flex">
+                    <Wrench className="size-5" aria-hidden="true" />
+                  </span>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-foreground truncate text-sm font-semibold">{m.title}</p>

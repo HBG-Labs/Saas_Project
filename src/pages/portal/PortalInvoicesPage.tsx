@@ -44,9 +44,16 @@ export default function PortalInvoicesPage() {
       ) : (
         <ul className="space-y-2">
           {list.map((i) => (
-            <li key={i.id} className="border-border bg-surface rounded-xl border p-3 sm:p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 space-y-1">
+            <li key={i.id} className="border-border bg-surface rounded-2xl border p-3 shadow-xs sm:p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <span
+                  className={`hidden size-10 shrink-0 items-center justify-center rounded-xl sm:inline-flex ${
+                    invoiceIsDue(i.status) ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'
+                  }`}
+                >
+                  <Receipt className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-foreground text-sm font-semibold">
                       {i.document_type === 'credit_note' ? 'Avoir' : 'Facture'} {i.reference}

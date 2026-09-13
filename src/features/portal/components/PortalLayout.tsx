@@ -36,6 +36,13 @@ const NAV: NavItem[] = [
   { to: ROUTES.portalMessages, label: 'Messages', icon: MessageSquare },
 ];
 
+/** Deux lettres pour l'avatar de l'entreprise : « Plomberie Dupont » → « PD ». */
+function initiales(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const lettres = parts.length >= 2 ? `${parts[0]![0]}${parts[1]![0]}` : name.slice(0, 2);
+  return lettres.toUpperCase();
+}
+
 /**
  * Ossature du portail : en-tête, navigation basse sur téléphone, latérale sur
  * écran large. Volontairement indépendante de `AppLayout` — rien de l'espace
@@ -75,24 +82,47 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             variant === 'bottom'
               ? 'min-h-touch relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium'
               : 'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-            isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-            variant === 'side' && isActive && 'bg-primary-subtle',
+            variant === 'side' && 'transition-colors',
+            isActive
+              ? variant === 'side'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-primary'
+              : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
           )
         }
       >
-        <Icon className={variant === 'bottom' ? 'size-5' : 'size-4'} aria-hidden="true" />
-        <span className={variant === 'bottom' ? 'truncate' : undefined}>{item.label}</span>
+        {({ isActive }) => (
+          <>
+            {variant === 'bottom' ? (
+              <span
+                className={cn(
+                  'flex h-7 w-11 items-center justify-center rounded-full transition-colors',
+                  isActive && 'bg-primary-subtle',
+                )}
+              >
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+            ) : (
+              <Icon className="size-4" aria-hidden="true" />
+            )}
+            <span className={variant === 'bottom' ? 'truncate' : undefined}>{item.label}</span>
         {badge !== null ? (
           <span
             className={cn(
-              'bg-primary text-primary-foreground rounded-full px-1.5 text-[10px] font-bold leading-4',
-              variant === 'bottom' ? 'absolute top-1 right-1/4' : 'ml-auto',
+              'rounded-full px-1.5 text-[10px] font-bold leading-4',
+              variant === 'bottom'
+                ? 'bg-accent text-accent-foreground absolute top-1 right-1/4'
+                : isActive
+                  ? 'bg-primary-foreground/20 text-primary-foreground ml-auto'
+                  : 'bg-primary text-primary-foreground ml-auto',
             )}
             aria-label={`${badge} message(s) non lu(s)`}
           >
             {badge}
           </span>
         ) : null}
+          </>
+        )}
       </NavLink>
     );
   };
@@ -106,19 +136,31 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         Aller au contenu principal
       </a>
 
-      <header className="border-border bg-surface sticky top-0 z-40 border-b">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4">
-          <Link to={ROUTES.portal} className="min-w-0">
-            <p className="text-foreground truncate text-sm font-bold">{context.organization_name}</p>
-            <p className="text-muted-foreground truncate text-[11px]">Espace client · {context.customer_name}</p>
+      {/*
+        En-tête aux couleurs de la marque : dégradé de `primary`, texte en
+        `primary-foreground` — identique en thème clair et sombre, et
+        immédiatement distinct de l'espace entreprise.
+      */}
+      <header className="from-primary via-primary text-primary-foreground sticky top-0 z-40 bg-gradient-to-r to-blue-500 shadow-md">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4">
+          <Link to={ROUTES.portal} className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm font-bold uppercase shadow-inner ring-1 ring-white/30"
+            >
+              {initiales(context.organization_name)}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold">{context.organization_name}</span>
+              <span className="block truncate text-[11px] text-white/80">Espace client · {context.customer_name}</span>
+            </span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground hidden max-w-[16rem] truncate text-xs sm:inline">
-              {context.contact_email}
-            </span>
+            <span className="hidden max-w-[16rem] truncate text-xs text-white/80 sm:inline">{context.contact_email}</span>
             <Button
               variant="ghost"
               size="sm"
+              className="text-primary-foreground hover:text-primary-foreground hover:bg-white/15"
               onClick={() => {
                 void handleSignOut();
               }}
@@ -131,10 +173,25 @@ export function PortalLayout({ context }: { context: PortalContext }) {
       </header>
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-4 py-4 pb-24 md:pb-8">
-        <aside className="hidden w-56 shrink-0 md:block">
-          <nav aria-label="Navigation du portail" className="sticky top-20 space-y-1">
-            {items.map((item) => renderLink(item, 'side'))}
-          </nav>
+        <aside className="hidden w-60 shrink-0 md:block">
+          <div className="sticky top-24 space-y-3">
+            <nav
+              aria-label="Navigation du portail"
+              className="border-border bg-surface space-y-1 rounded-2xl border p-2 shadow-xs"
+            >
+              {items.map((item) => renderLink(item, 'side'))}
+            </nav>
+            <div className="border-border bg-surface-subtle rounded-2xl border p-3">
+              <p className="text-foreground text-xs font-semibold">Une question ?</p>
+              <p className="text-muted-foreground mt-1 text-[11px]">
+                Écrivez à {context.organization_name} depuis la messagerie, ou répondez simplement à l’un de
+                ses e-mails : votre réponse arrive ici.
+              </p>
+            </div>
+            <p className="text-muted-foreground px-2 text-center text-[11px]">
+              Propulsé par <span className="text-foreground font-semibold">REZO360</span>
+            </p>
+          </div>
         </aside>
 
         <main id="contenu-principal" className="min-w-0 flex-1">
@@ -144,7 +201,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
 
       <nav
         aria-label="Navigation du portail"
-        className="border-border bg-surface safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t md:hidden"
+        className="border-border bg-surface/95 safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm md:hidden"
       >
         {items.map((item) => renderLink(item, 'bottom'))}
       </nav>

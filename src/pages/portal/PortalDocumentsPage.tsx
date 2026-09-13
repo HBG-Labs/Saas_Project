@@ -1,4 +1,4 @@
-import { FolderOpen } from 'lucide-react';
+import { FileText, FolderOpen } from 'lucide-react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -37,9 +37,12 @@ export default function PortalDocumentsPage() {
           {(documents.data ?? []).map((d) => (
             <li
               key={d.id}
-              className="border-border bg-surface flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"
+              className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 shadow-xs"
             >
-              <div className="min-w-0">
+              <span className="bg-accent-subtle text-accent inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
+                <FileText className="size-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
                 <p className="text-foreground truncate text-sm font-medium">{d.name}</p>
                 <p className="text-muted-foreground flex flex-wrap items-center gap-1 text-xs">
                   {formatDateFr(d.created_at)}

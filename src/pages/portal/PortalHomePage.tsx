@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, FolderOpen, MessageSquare, Receipt, Wrench } from 'lucide-react';
+import { ChevronRight, FileText, FolderOpen, MessageSquare, Receipt, Sparkles, Wrench } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -9,7 +9,6 @@ import {
   formatDateFr,
   formatEuros,
   invoiceIsDue,
-  PortalPageHeader,
   StatusBadge,
   usePortalConversations,
   usePortalDocuments,
@@ -42,29 +41,41 @@ export default function PortalHomePage() {
   const nonLus = (conversations.data ?? []).reduce((sum, c) => sum + c.unread_count, 0);
 
   return (
-    <div className="space-y-6">
-      <PortalPageHeader
-        title={`Bonjour${context.contact_first_name ? ` ${context.contact_first_name}` : ''}`}
-        description={`Votre espace client chez ${context.organization_name}.`}
-      />
+    <div className="space-y-4">
+      {/* Bandeau d'accueil : la touche de couleur de la page, tout le reste est calme. */}
+      <section className="from-primary via-primary text-primary-foreground relative overflow-hidden rounded-2xl bg-gradient-to-br to-blue-500 p-4 shadow-md sm:p-5">
+        <div className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/3 size-48 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ring-1 ring-white/25">
+          <Sparkles className="size-3" aria-hidden="true" />
+          Espace client
+        </p>
+        <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+          Bonjour{context.contact_first_name ? ` ${context.contact_first_name}` : ''} 👋
+        </h1>
+        <p className="mt-1 max-w-xl text-sm text-white/85">
+          Retrouvez ici tout ce que {context.organization_name} partage avec vous : interventions, devis,
+          factures, documents et échanges — au même endroit, à jour.
+        </p>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {context.features.missions ? (
           <>
-            <Kpi label="Interventions en cours" value={missions.isPending ? null : String(enCours)} icon={Wrench} to={ROUTES.portalMissions} />
-            <Kpi label="Interventions réalisées" value={missions.isPending ? null : String(realisees)} icon={Wrench} to={ROUTES.portalMissions} />
+            <Kpi label="Interventions en cours" value={missions.isPending ? null : String(enCours)} icon={Wrench} tone="primary" to={ROUTES.portalMissions} />
+            <Kpi label="Interventions réalisées" value={missions.isPending ? null : String(realisees)} icon={Wrench} tone="success" to={ROUTES.portalMissions} />
           </>
         ) : null}
         {context.features.invoicing ? (
           <>
-            <Kpi label="Factures à régler" value={invoices.isPending ? null : String(dues.length)} icon={Receipt} to={ROUTES.portalInvoices} />
-            <Kpi label="Montant dû" value={invoices.isPending ? null : formatEuros(montantDu)} icon={Receipt} to={ROUTES.portalInvoices} />
+            <Kpi label="Factures à régler" value={invoices.isPending ? null : String(dues.length)} icon={Receipt} tone={dues.length > 0 ? 'warning' : 'success'} to={ROUTES.portalInvoices} />
+            <Kpi label="Montant dû" value={invoices.isPending ? null : formatEuros(montantDu)} icon={Receipt} tone={montantDu > 0 ? 'warning' : 'success'} to={ROUTES.portalInvoices} />
           </>
         ) : null}
-        <Kpi label="Messages non lus" value={conversations.isPending ? null : String(nonLus)} icon={MessageSquare} to={ROUTES.portalMessages} />
+        <Kpi label="Messages non lus" value={conversations.isPending ? null : String(nonLus)} icon={MessageSquare} tone={nonLus > 0 ? 'accent' : 'info'} to={ROUTES.portalMessages} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {context.features.missions ? (
           <Section title="Dernières interventions" to={ROUTES.portalMissions} icon={Wrench} query={missions}>
             {missionList.slice(0, 4).map((m) => (
@@ -109,18 +120,33 @@ export default function PortalHomePage() {
   );
 }
 
-function Kpi({ label, value, icon: Icon, to }: { label: string; value: string | null; icon: typeof Wrench; to: string }) {
+type KpiTone = 'primary' | 'success' | 'warning' | 'info' | 'accent';
+
+const KPI_TONES: Record<KpiTone, string> = {
+  primary: 'bg-primary-subtle text-primary',
+  success: 'bg-success-subtle text-success',
+  warning: 'bg-warning-subtle text-warning',
+  info: 'bg-info-subtle text-info',
+  accent: 'bg-accent-subtle text-accent',
+};
+
+function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: string | null; icon: typeof Wrench; tone: KpiTone; to: string }) {
   return (
-    <Link to={to} className="border-border bg-surface hover:border-primary/50 block rounded-xl border p-3 transition-colors sm:p-4">
-      <div className="text-muted-foreground flex items-start gap-1.5 text-xs leading-tight">
-        <Icon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-        <span>{label}</span>
-      </div>
-      {value === null ? (
-        <Skeleton className="mt-2 h-7 w-16" />
-      ) : (
-        <p className="text-foreground mt-1 text-2xl font-bold tracking-tight">{value}</p>
-      )}
+    <Link
+      to={to}
+      className="border-border bg-surface hover:border-primary/40 flex items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-all hover:shadow-md"
+    >
+      <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}>
+        <Icon className="size-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        {value === null ? (
+          <Skeleton className="h-5 w-12" />
+        ) : (
+          <span className="text-foreground block truncate text-lg leading-tight font-bold tracking-tight">{value}</span>
+        )}
+        <span className="text-muted-foreground block text-[11px] leading-tight">{label}</span>
+      </span>
     </Link>
   );
 }
@@ -140,8 +166,8 @@ function Section({
 }) {
   const empty = !query.isPending && !query.isError && (query.data?.length ?? 0) === 0;
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <Card className="rounded-xl shadow-xs">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pt-3 pb-1">
         <CardTitle className="flex items-center gap-2 text-sm">
           <Icon className="text-primary size-4" aria-hidden="true" />
           {title}
@@ -151,11 +177,11 @@ function Section({
           <ChevronRight className="size-3.5" aria-hidden="true" />
         </Link>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="px-4 pt-0 pb-3">
         {query.isPending ? (
           <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
           </div>
         ) : query.isError ? (
           <ErrorState
@@ -165,7 +191,9 @@ function Section({
             }}
           />
         ) : empty ? (
-          <p className="text-muted-foreground py-3 text-xs">Rien pour le moment.</p>
+          <p className="text-muted-foreground border-border/70 rounded-lg border border-dashed px-3 py-2.5 text-center text-xs">
+            Rien pour le moment.
+          </p>
         ) : (
           <ul className="divide-border divide-y">{children}</ul>
         )}
@@ -177,7 +205,7 @@ function Section({
 function Row({ to, title, subtitle, children }: { to: string; title: string; subtitle: string; children?: React.ReactNode }) {
   return (
     <li>
-      <Link to={to} className="hover:bg-surface-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5">
+      <Link to={to} className="hover:bg-surface-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-2">
         <div className="min-w-0 flex-1">
           <p className="text-foreground truncate text-sm font-medium">{title}</p>
           <p className="text-muted-foreground truncate text-xs">{subtitle}</p>

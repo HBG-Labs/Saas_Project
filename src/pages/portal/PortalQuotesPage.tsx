@@ -29,9 +29,12 @@ export default function PortalQuotesPage() {
       ) : (
         <ul className="space-y-2">
           {(quotes.data ?? []).map((q) => (
-            <li key={q.id} className="border-border bg-surface rounded-xl border p-3 sm:p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 space-y-1">
+            <li key={q.id} className="border-border bg-surface rounded-2xl border p-3 shadow-xs sm:p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <span className="bg-info-subtle text-info hidden size-10 shrink-0 items-center justify-center rounded-xl sm:inline-flex">
+                  <FileText className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-foreground text-sm font-semibold">{q.title ?? 'Devis'}</p>
                     <Badge variant="outline" className="font-mono">
