@@ -45,6 +45,31 @@ export interface Message {
    * adresse à la main — le genre de friction qui fait qu'on répond plus tard.
    */
   replyTo?: string;
+  /**
+   * En-têtes supplémentaires : `In-Reply-To`, `References`, `Message-ID`.
+   *
+   * C'est ce qui fait qu'une réponse retrouve son fil. Sans `References`, les
+   * clients mail ouvrent chaque échange comme un message isolé, et le webhook
+   * entrant n'a plus que l'adresse de réponse pour rattacher — un seul indice
+   * là où il en faut deux.
+   */
+  headers?: Record<string, string>;
+  /** Pièces jointes, contenu en base64. Transport Resend uniquement. */
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  /** Contenu encodé en base64. */
+  content: string;
+  contentType?: string;
+}
+
+/** Ce que l'envoi a produit, et qu'il faut conserver pour le suivi. */
+export interface SendResult {
+  transport: 'smtp' | 'resend';
+  /** Identifiant du fournisseur — `id` de Resend. Absent en SMTP. */
+  providerId: string | null;
 }
 
 /** Ce que la configuration permet aujourd'hui, ou ce qui lui manque. */
@@ -53,6 +78,55 @@ export interface TransportState {
   from: string | undefined;
   /** Noms des variables absentes, pour un message qui désigne le manque. */
   missing: string[];
+  /**
+   * Clé Resend, lue une fois ici plutôt qu'au moment d'envoyer : l'envoi ne
+   * touche plus à l'environnement, ce qui le rend testable sans permission —
+   * exactement comme la CI exécute les tests Deno.
+   */
+  resendApiKey?: string;
+}
+
+export interface TransportInputs {
+  smtpHost: string | undefined;
+  resendKey: string | undefined;
+  from: string | undefined;
+  fromVariable: string;
+  require?: 'resend';
+}
+
+/**
+ * Le choix du transport, sans lecture d'environnement : c'est ce que les
+ * tests éprouvent. `readTransport` ne fait que lui fournir les valeurs.
+ */
+export function resolveTransport(inputs: TransportInputs): TransportState {
+  const { smtpHost, resendKey, from, fromVariable } = inputs;
+  const transport: TransportState['transport'] =
+    inputs.require === 'resend'
+      ? resendKey
+        ? 'resend'
+        : null
+      : smtpHost
+        ? 'smtp'
+        : resendKey
+          ? 'resend'
+          : null;
+  const missing: string[] = [];
+
+  if (!from) missing.push(fromVariable);
+  if (transport === null) {
+    missing.push(
+      inputs.require === 'resend'
+        ? 'RESEND_API_KEY'
+        : 'SMTP_HOST (+ SMTP_USER, SMTP_PASSWORD) ou RESEND_API_KEY',
+    );
+  }
+
+  return {
+    transport,
+    from,
+    missing,
+    ...(transport === 'resend' && resendKey ? { resendApiKey: resendKey } : {}),
+  };
 }
 
 /**
@@ -62,20 +136,29 @@ export interface TransportState {
  * mauvais côté dès que la configuration est presque complète — on relit cinq
  * valeurs correctes sans voir la sixième absente. Constaté sur ce déploiement.
  */
-export function readTransport(fromVariable: string): TransportState {
-  const smtpHost = Deno.env.get('SMTP_HOST');
-  const resendKey = Deno.env.get('RESEND_API_KEY');
-  const from = Deno.env.get(fromVariable);
-
-  const transport = smtpHost ? 'smtp' : resendKey ? 'resend' : null;
-  const missing: string[] = [];
-
-  if (!from) missing.push(fromVariable);
-  if (transport === null) {
-    missing.push('SMTP_HOST (+ SMTP_USER, SMTP_PASSWORD) ou RESEND_API_KEY');
-  }
-
-  return { transport, from, missing };
+export function readTransport(
+  fromVariable: string,
+  options: {
+    /**
+     * Impose Resend, même si `SMTP_HOST` est défini.
+     *
+     * La règle « SMTP l'emporte » reste la bonne pour les courriels ordinaires.
+     * Elle ne l'est plus pour la messagerie du portail client : les réponses
+     * n'y reviennent que par Resend Inbound, et un message parti par SMTP
+     * n'aurait ni identifiant fournisseur, ni suivi de distribution. Le
+     * portail exige donc Resend — et se déclare non configuré s'il manque,
+     * plutôt que de partir en silence par le mauvais canal.
+     */
+    require?: 'resend';
+  } = {},
+): TransportState {
+  return resolveTransport({
+    smtpHost: Deno.env.get('SMTP_HOST'),
+    resendKey: Deno.env.get('RESEND_API_KEY'),
+    from: Deno.env.get(fromVariable),
+    fromVariable,
+    ...(options.require === undefined ? {} : { require: options.require }),
+  });
 }
 
 /**
@@ -130,7 +213,7 @@ function enBase64(mimeType: string, contenu: string) {
  * numéro de port qui détermine le mode, pas un réglage séparé — s'y tromper
  * produit une négociation qui échoue sans message clair.
  */
-async function sendViaSmtp(message: Message, from: string): Promise<void> {
+async function sendViaSmtp(message: Message, from: string): Promise<SendResult> {
   const hostname = Deno.env.get('SMTP_HOST') ?? '';
   const port = Number(Deno.env.get('SMTP_PORT') ?? '465');
   const username = Deno.env.get('SMTP_USER') ?? '';
@@ -151,32 +234,64 @@ async function sendViaSmtp(message: Message, from: string): Promise<void> {
         enBase64('text/html; charset="utf-8"', message.html),
       ],
       ...(message.replyTo === undefined ? {} : { replyTo: message.replyTo }),
+      // Les en-têtes de fil et les pièces jointes ne sont pas portés par ce
+      // transport : ils n'ont de sens que pour la messagerie, qui exige Resend.
     });
   } finally {
     // Fermeture systématique : une connexion laissée ouverte épuise le quota de
     // sessions simultanées du fournisseur, et les envois suivants échouent.
     await client.close();
   }
+  return { transport: 'smtp', providerId: null };
 }
 
-/** Envoi par l'API HTTP de Resend. */
-async function sendViaResend(message: Message, from: string, apiKey: string): Promise<void> {
-  const response = await fetch('https://api.resend.com/emails', {
+/** Charge utile telle que l'API de Resend l'attend. Exportée pour les tests. */
+export function buildResendPayload(message: Message, from: string): Record<string, unknown> {
+  return {
+    from,
+    to: [message.to],
+    subject: message.subject,
+    html: message.html,
+    text: message.text,
+    ...(message.replyTo === undefined ? {} : { reply_to: [message.replyTo] }),
+    ...(message.headers === undefined || Object.keys(message.headers).length === 0
+      ? {}
+      : { headers: message.headers }),
+    ...(message.attachments === undefined || message.attachments.length === 0
+      ? {}
+      : {
+          attachments: message.attachments.map((piece) => ({
+            filename: piece.filename,
+            content: piece.content,
+            ...(piece.contentType === undefined ? {} : { content_type: piece.contentType }),
+          })),
+        }),
+  };
+}
+
+/** Envoi par l'API HTTP de Resend. Renvoie l'identifiant attribué. */
+async function sendViaResend(
+  message: Message,
+  from: string,
+  apiKey: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<SendResult> {
+  const response = await fetchImpl('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from,
-      to: [message.to],
-      subject: message.subject,
-      html: message.html,
-      text: message.text,
-      ...(message.replyTo === undefined ? {} : { reply_to: [message.replyTo] }),
-    }),
+    body: JSON.stringify(buildResendPayload(message, from)),
   });
 
   if (!response.ok) {
     throw new Error(`Resend ${response.status} : ${await response.text()}`);
   }
+
+  // `id` est ce qui relie ensuite les webhooks de distribution au message.
+  // Une réponse 200 sans identifiant serait une anomalie du fournisseur, pas
+  // une raison de faire échouer un envoi qui a eu lieu.
+  const body = (await response.json().catch(() => null)) as { id?: unknown } | null;
+  const providerId = typeof body?.id === 'string' && body.id !== '' ? body.id : null;
+  return { transport: 'resend', providerId };
 }
 
 /**
@@ -195,7 +310,11 @@ async function sendViaResend(message: Message, from: string, apiKey: string): Pr
 const DELAI_ENVOI_MS = 15_000;
 
 /** Achemine par le transport configuré. Lève si l'envoi échoue ou s'éternise. */
-export async function sendMessage(message: Message, state: TransportState): Promise<void> {
+export async function sendMessage(
+  message: Message,
+  state: TransportState,
+  fetchImpl: typeof fetch = fetch,
+): Promise<SendResult> {
   if (state.transport === null || state.from === undefined) {
     throw new Error(`Envoi non configuré : ${state.missing.join(', ')}.`);
   }
@@ -203,9 +322,9 @@ export async function sendMessage(message: Message, state: TransportState): Prom
   const envoi =
     state.transport === 'smtp'
       ? sendViaSmtp(message, state.from)
-      : sendViaResend(message, state.from, Deno.env.get('RESEND_API_KEY') ?? '');
+      : sendViaResend(message, state.from, state.resendApiKey ?? '', fetchImpl);
 
-  let minuterie: number | undefined;
+  let minuterie: ReturnType<typeof setTimeout> | undefined;
   const expiration = new Promise<never>((_, rejeter) => {
     minuterie = setTimeout(() => {
       rejeter(
@@ -217,7 +336,7 @@ export async function sendMessage(message: Message, state: TransportState): Prom
   });
 
   try {
-    await Promise.race([envoi, expiration]);
+    return await Promise.race([envoi, expiration]);
   } finally {
     if (minuterie !== undefined) clearTimeout(minuterie);
     // L'envoi continue peut-être en arrière-plan ; on ne le laisse pas faire
