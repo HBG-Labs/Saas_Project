@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Ban, CheckCircle2, Download, ReceiptText, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, Download, Globe, ReceiptText, Send, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
+import { SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
 import { useCreateInvoiceFromQuote } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import {
@@ -47,6 +48,8 @@ export default function QuoteDetailPage() {
   const deleteQuote = useDeleteQuote();
   const createInvoice = useCreateInvoiceFromQuote();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const portal = useClientPortalAccess();
+  const [notifyOpen, setNotifyOpen] = useState(false);
 
   useDocumentTitle(quote ? `Devis ${quote.reference}` : 'Devis');
 
@@ -168,6 +171,77 @@ export default function QuoteDetailPage() {
                 <Ban className="size-3.5" aria-hidden="true" />
                 Marquer comme refusé
               </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/*
+        ESPACE CLIENT.
+
+        Un devis n'est visible par le client qu'à deux conditions, toutes deux
+        tenues par la base (`portal_list_quotes`) : rattaché à une fiche client,
+        et sorti du brouillon. Ce bloc dit laquelle manque, et propose de
+        prévenir le client — l'e-mail et la conversation partent par
+        `portal-message-send`, jamais depuis le navigateur.
+      */}
+      {portal.canView && (
+        <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+          <div className="flex items-start gap-2">
+            <Globe className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="text-xs">
+              <p className="text-foreground font-semibold">Espace client</p>
+              <p className="text-muted-foreground">
+                {quote.customer_id === null
+                  ? 'Ce devis n’est rattaché à aucune fiche client : il ne peut pas apparaître dans un espace client.'
+                  : quote.status === 'draft'
+                    ? 'Encore en brouillon : invisible pour le client. « Envoyer au client » le marque envoyé et prévient votre interlocuteur.'
+                    : `Visible dans l’espace client de ${quote.customer_name ?? 'ce client'}.`}
+              </p>
+            </div>
+          </div>
+          {quote.customer_id !== null && portal.canSend && (
+            <>
+              <Button
+                variant={quote.status === 'draft' ? 'primary' : 'outline'}
+                size="sm"
+                className="gap-1.5 text-xs"
+                disabled={updateQuote.isPending}
+                onClick={() => {
+                  if (quote.status === 'draft') {
+                    updateQuote.mutate(
+                      { status: 'sent' },
+                      {
+                        onSuccess: () => {
+                          setNotifyOpen(true);
+                        },
+                      },
+                    );
+                  } else {
+                    setNotifyOpen(true);
+                  }
+                }}
+              >
+                <Send className="size-3.5" aria-hidden="true" />
+                {quote.status === 'draft' ? 'Envoyer au client' : 'Prévenir le client'}
+              </Button>
+              <SendToClientDialog
+                customerId={quote.customer_id}
+                open={notifyOpen}
+                onOpenChange={setNotifyOpen}
+                title={`Devis ${quote.reference} — prévenir le client`}
+                defaultSubject={`Votre devis ${quote.reference}`}
+                defaultBody={[
+                  'Bonjour,',
+                  '',
+                  `votre devis ${quote.reference} est disponible dans votre espace client, rubrique « Mes devis ».`,
+                  '',
+                  'N’hésitez pas à nous répondre pour toute question.',
+                  '',
+                  organization?.name ?? '',
+                ].join('\n')}
+                link={{ quoteId: quote.id }}
+              />
             </>
           )}
         </div>

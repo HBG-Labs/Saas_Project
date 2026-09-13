@@ -17,12 +17,8 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { SelectField } from '@/components/ui/SelectField';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
-import { useCustomerContacts } from '@/features/customers';
 import { cn } from '@/lib/cn';
 import type { ClientMessageStatus } from '@/types/database';
 
@@ -39,6 +35,7 @@ import {
   useMarkConversationRead,
   useSendClientMessage,
 } from '../hooks/useClientPortal';
+import { SendToClientDialog, WriteToClientButton } from './SendToClientDialog';
 
 export interface CustomerMessagingPanelProps {
   organizationId: string;
@@ -102,7 +99,9 @@ export function CustomerMessagingPanel({ organizationId, customerId }: CustomerM
 
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-foreground text-sm font-semibold">Conversations</h3>
-        {access.canSend ? <NewConversationDialog customerId={customerId} onCreated={setSelectedId} /> : null}
+        {access.canSend ? (
+          <SendToClientDialog customerId={customerId} trigger={<WriteToClientButton />} onSent={setSelectedId} />
+        ) : null}
       </div>
 
       {list.length === 0 ? (
@@ -365,146 +364,5 @@ function AttachmentLink({ piece, light }: { piece: ClientMessageAttachment; ligh
         {piece.file_name}
       </button>
     </li>
-  );
-}
-
-function NewConversationDialog({
-  customerId,
-  onCreated,
-}: {
-  customerId: string;
-  onCreated: (conversationId: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const contacts = useCustomerContacts(customerId);
-  const send = useSendClientMessage();
-  const [contactId, setContactId] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
-  const [error, setError] = useState<unknown>(null);
-  const [failed, setFailed] = useState<string | null>(null);
-
-  const eligible = (contacts.data ?? []).filter((c) => c.portal_enabled && c.email !== null && c.email !== '');
-
-  const reset = () => {
-    setContactId('');
-    setSubject('');
-    setBody('');
-    setError(null);
-    setFailed(null);
-  };
-
-  return (
-    <Modal
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) reset();
-      }}
-      title="Nouvelle conversation"
-      trigger={
-        <Button variant="outline" size="sm">
-          <MessageSquare className="size-4" />
-          Écrire au client
-        </Button>
-      }
-    >
-      {contacts.isPending ? (
-        <ListSkeleton />
-      ) : eligible.length === 0 ? (
-        <EmptyState
-          icon={Mail}
-          title="Aucun interlocuteur avec accès au portail"
-          description="Ouvrez l’accès à un contact (onglet Contacts) avant de lui écrire : c’est ce qui lui permet de lire et de répondre en ligne."
-        />
-      ) : (
-        <form
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setError(null);
-            setFailed(null);
-            send.mutate(
-              { contactId, subject: subject.trim(), body: body.trim() },
-              {
-                onSuccess: (result) => {
-                  if (result.status === 'failed') {
-                    setFailed(result.error ?? 'L’e-mail n’a pas pu être envoyé.');
-                    onCreated(result.conversationId);
-                    return;
-                  }
-                  setOpen(false);
-                  reset();
-                  onCreated(result.conversationId);
-                },
-                onError: (e) => {
-                  setError(e);
-                },
-              },
-            );
-          }}
-        >
-          <FormError error={error} />
-          {failed !== null ? (
-            <p className="text-error text-xs" role="alert">
-              Conversation créée, mais l’e-mail n’est pas parti : {failed}
-            </p>
-          ) : null}
-          <SelectField
-            label="Interlocuteur"
-            required
-            value={contactId}
-            onChange={(event) => {
-              setContactId(event.target.value);
-            }}
-          >
-            <option value="">Choisir…</option>
-            {eligible.map((c) => (
-              <option key={c.id} value={c.id}>
-                {[c.first_name, c.last_name].filter(Boolean).join(' ')} — {c.email ?? ''}
-              </option>
-            ))}
-          </SelectField>
-          <Input
-            label="Objet"
-            required
-            maxLength={200}
-            value={subject}
-            onChange={(event) => {
-              setSubject(event.target.value);
-            }}
-          />
-          <Textarea
-            label="Message"
-            required
-            rows={5}
-            maxLength={20000}
-            value={body}
-            onChange={(event) => {
-              setBody(event.target.value);
-            }}
-          />
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setOpen(false);
-                reset();
-              }}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              disabled={send.isPending || contactId === '' || subject.trim() === '' || body.trim() === ''}
-            >
-              <Send className="size-4" />
-              {send.isPending ? 'Envoi…' : 'Envoyer'}
-            </Button>
-          </div>
-        </form>
-      )}
-    </Modal>
   );
 }

@@ -10,6 +10,7 @@ export type {
 export { ContactPortalSwitch } from './components/ContactPortalSwitch';
 export { CustomerMessagingPanel } from './components/CustomerMessagingPanel';
 export { PortalSettingsCard } from './components/PortalSettingsCard';
+export { SendToClientDialog, WriteToClientButton } from './components/SendToClientDialog';
 export {
   useClientConversations,
   useClientMessages,
