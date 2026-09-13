@@ -63,7 +63,11 @@ jobs:
             supabase/functions/superpdp-worker/index.ts \
             supabase/functions/ai-assistant/index.ts \
             supabase/functions/sync-subscription-seats/index.ts \
-            supabase/functions/subscription-seat-sync-worker/index.ts
+            supabase/functions/subscription-seat-sync-worker/index.ts \
+            supabase/functions/resend-webhook/index.ts \
+            supabase/functions/portal-message-send/index.ts \
+            supabase/functions/portal-request-access/index.ts \
+            supabase/functions/portal-file-url/index.ts
           deno check \
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
@@ -73,6 +77,7 @@ jobs:
           deno check supabase/functions/_shared/meta-capi.ts
           deno check supabase/functions/_shared/email-confirme.ts
           deno check supabase/functions/_shared/email.ts
+          deno check supabase/functions/_shared/portal-mail.ts
           # `unpdf` est une dépendance npm propre au runtime Edge, pas au
           # bundle React. Deno l'installe dans son espace isolé pour ce check.
           deno check --node-modules-dir=auto supabase/functions/index-ai-document/index.ts
@@ -95,7 +100,12 @@ jobs:
             supabase/functions/_shared/return-url.test.ts \
             supabase/functions/superpdp-worker/handler.test.ts \
             supabase/functions/_shared/subscription-seats.test.ts \
-            supabase/functions/subscription-seat-sync-worker/handler.test.ts
+            supabase/functions/subscription-seat-sync-worker/handler.test.ts \
+            supabase/functions/_shared/portal-mail.test.ts \
+            supabase/functions/resend-webhook/handler.test.ts \
+            supabase/functions/portal-message-send/handler.test.ts \
+            supabase/functions/portal-request-access/handler.test.ts \
+            supabase/functions/portal-file-url/handler.test.ts
 
       - name: Exécuter les tests
         run: npm run test

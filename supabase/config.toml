@@ -458,6 +458,21 @@ verify_jwt = false
 # tout appel quand le secret n'est pas configuré.
 [functions.subscription-seat-sync-worker]
 verify_jwt = false
+
+# Portail client ---------------------------------------------------------------
+# Resend n'a pas de jeton Supabase : c'est la signature Svix, verifiee dans
+# `handler.ts`, qui authentifie chaque livraison.
+[functions.resend-webhook]
+verify_jwt = false
+
+# La personne qui demande un code n'est pas encore connectee. La fonction ne
+# revele rien : meme reponse pour toute adresse, code envoye seulement a un
+# contact autorise (`portal_gate_for_email`).
+[functions.portal-request-access]
+verify_jwt = false
+
+# `portal-message-send` et `portal-file-url` gardent la verification par
+# defaut : l'appelant insere et lit sous ses propres droits, la RLS decide.
 # Directory under `supabase/` where declarative files are written.
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
