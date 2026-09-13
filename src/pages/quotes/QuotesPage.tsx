@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ROUTES } from '@/config/routes';
+import { CustomerPicker, SitePicker, useCustomers, useCustomerSites } from '@/features/customers';
 import { useCurrentOrganization } from '@/features/organizations';
 import {
   DEFAULT_QUOTE_PAYMENT_METHOD,
@@ -66,8 +67,17 @@ export default function QuotesPage() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
 
+  // Un client de la base d'abord ; la saisie libre reste possible pour un
+  // chiffrage avant fiche. Un devis rattaché à une fiche apparaît dans le
+  // portail de ce client une fois envoyé — un devis en texte libre, jamais.
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const [clientName, setClientName] = useState('');
   const [siteName, setSiteName] = useState('');
+  const customersQuery = useCustomers(organizationId);
+  const sitesQuery = useCustomerSites(customerId ?? undefined);
+  const selectedCustomer = (customersQuery.data ?? []).find((c) => c.id === customerId) ?? null;
+  const selectedSite = (sitesQuery.data ?? []).find((site) => site.id === siteId) ?? null;
   const [vatInput, setVatInput] = useState<string>(() =>
     organization?.default_vat_rate != null ? String(organization.default_vat_rate) : '20',
   );
@@ -205,8 +215,10 @@ export default function QuotesPage() {
     createQuote.mutate(
       {
         vatRate,
-        customerName: clientName.trim(),
-        siteName: siteName.trim(),
+        customerId,
+        siteId: customerId === null ? null : siteId,
+        customerName: selectedCustomer?.name ?? clientName.trim(),
+        siteName: selectedSite?.name ?? siteName.trim(),
         items: items.map((item) => ({
           description: item.description,
           unit: item.unit,
@@ -268,17 +280,33 @@ export default function QuotesPage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-5">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label="Nom du Client"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
+                <CustomerPicker
+                  organizationId={organizationId}
+                  value={customerId}
+                  onChange={(id) => {
+                    setCustomerId(id);
+                    setSiteId(null);
+                  }}
+                  label="Client de la base"
                 />
+                {customerId === null ? (
+                  <Input
+                    label="Ou nom du client (hors base)"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    hint="Sans fiche, le devis n’apparaîtra pas dans un espace client."
+                  />
+                ) : (
+                  <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
+                )}
+              </div>
+              {customerId === null ? (
                 <Input
                   label="Site ou Référence Intervention"
                   value={siteName}
                   onChange={(e) => setSiteName(e.target.value)}
                 />
-              </div>
+              ) : null}
             </CardContent>
           </Card>
 

@@ -98,6 +98,8 @@ export function useCreateQuote(organizationId: string) {
   return useMutation({
     mutationFn: (input: {
       title?: string;
+      customerId?: string | null;
+      siteId?: string | null;
       customerName?: string;
       siteName?: string;
       vatRate: number;
