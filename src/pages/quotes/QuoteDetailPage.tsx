@@ -196,7 +196,9 @@ export default function QuoteDetailPage() {
                   ? 'Ce devis n’est rattaché à aucune fiche client : il ne peut pas apparaître dans un espace client.'
                   : quote.status === 'draft'
                     ? 'Encore en brouillon : invisible pour le client. « Envoyer au client » le marque envoyé et prévient votre interlocuteur.'
-                    : `Visible dans l’espace client de ${quote.customer_name ?? 'ce client'}.`}
+                    : quote.client_responded_at !== null
+                      ? `${quote.status === 'accepted' ? 'Accepté' : 'Refusé'} par le client depuis son espace le ${formatDate(quote.client_responded_at)}.`
+                      : `Visible dans l’espace client de ${quote.customer_name ?? 'ce client'}.`}
               </p>
             </div>
           </div>

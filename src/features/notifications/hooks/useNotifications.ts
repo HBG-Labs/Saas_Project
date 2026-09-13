@@ -14,6 +14,7 @@ import {
   usePermission,
 } from '@/features/organizations';
 import { useLeaveRequests } from '@/features/planning';
+import { useQuotes } from '@/features/quotes';
 import { useUserPreferences } from '@/features/settings';
 import { useStock } from '@/features/stock';
 
@@ -102,6 +103,9 @@ export function useNotifications() {
   // permission le permettent — sinon elle ne renverrait rien de toute façon.
   const portal = useClientPortalAccess();
   const conversationsQuery = useClientConversations(organizationId, undefined, portal.canView);
+  // Réponses aux devis depuis le portail : la date `client_responded_at` n'est
+  // posée que par `portal_respond_quote`, jamais par l'entreprise.
+  const quotesQuery = useQuotes(portal.canView && can(PERMISSIONS.quoteView) ? organizationId : null);
 
   // Génération des notifications d'activité
   const notifications = useMemo(() => {
@@ -255,6 +259,26 @@ export function useNotifications() {
       });
     }
 
+    // 7. Devis acceptés ou refusés par le client depuis le portail. Pas de
+    // fenêtre temporelle : une réponse se lit puis s'écarte, comme les autres.
+    for (const quote of quotesQuery.data ?? []) {
+      if (quote.client_responded_at === null) continue;
+      if (quote.status !== 'accepted' && quote.status !== 'refused') continue;
+      const id = `quote_response_${quote.id}_${quote.client_responded_at}`;
+      const accepte = quote.status === 'accepted';
+      list.push({
+        id,
+        type: 'client_message',
+        category: 'client',
+        severity: accepte ? 'success' : 'warning',
+        title: accepte ? 'Devis accepté par le client' : 'Devis refusé par le client',
+        description: `${quote.customer_name ?? 'Le client'} a ${accepte ? 'accepté' : 'refusé'} le devis ${quote.reference} depuis son espace client.`,
+        timestamp: quote.client_responded_at,
+        read: readIds.has(id),
+        link: ROUTES.quoteDetail(quote.id),
+      });
+    }
+
     // Filtrer les notifications supprimées / masquées
     const filtered = list.filter((n) => !dismissedIds.has(n.id));
 
@@ -269,6 +293,7 @@ export function useNotifications() {
     missionsQuery.data,
     equipmentQuery.data,
     conversationsQuery.data,
+    quotesQuery.data,
     userId,
     currentMember,
     isManagerOrOwner,

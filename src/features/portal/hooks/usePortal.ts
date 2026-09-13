@@ -7,6 +7,7 @@ import {
   getPortalContext,
   getPortalFileUrl,
   getPortalMission,
+  getPortalQuote,
   listPortalConversations,
   listPortalDocuments,
   listPortalInvoices,
@@ -14,6 +15,7 @@ import {
   listPortalMissions,
   listPortalQuotes,
   markConversationReadByClient,
+  respondPortalQuote,
   sendPortalMessage,
   touchLastSeen,
   type PortalBucket,
@@ -29,6 +31,7 @@ export const portalKeys = {
   missions: () => [...ROOT, 'missions'] as const,
   mission: (id: string) => [...ROOT, 'mission', id] as const,
   quotes: () => [...ROOT, 'quotes'] as const,
+  quote: (id: string) => [...ROOT, 'quote', id] as const,
   invoices: () => [...ROOT, 'invoices'] as const,
   documents: () => [...ROOT, 'documents'] as const,
   conversations: () => [...ROOT, 'conversations'] as const,
@@ -66,6 +69,25 @@ export function usePortalMission(missionId: string | undefined) {
 
 export function usePortalQuotes() {
   return useQuery({ queryKey: portalKeys.quotes(), queryFn: listPortalQuotes });
+}
+
+export function usePortalQuote(quoteId: string | undefined) {
+  return useQuery({
+    queryKey: portalKeys.quote(quoteId ?? 'none'),
+    queryFn: () => (quoteId === undefined ? null : getPortalQuote(quoteId)),
+    enabled: quoteId !== undefined,
+  });
+}
+
+export function useRespondPortalQuote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ quoteId, decision }: { quoteId: string; decision: 'accepted' | 'refused' }) =>
+      respondPortalQuote(quoteId, decision),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: portalKeys.all });
+    },
+  });
 }
 
 export function usePortalInvoices() {

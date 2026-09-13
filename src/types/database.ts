@@ -248,6 +248,32 @@ export interface PortalQuote {
   total_cents: number;
 }
 
+/** Document JSON de `portal_quote_detail(uuid)` ; `null` si invisible. */
+export interface PortalQuoteDetail {
+  id: string;
+  organization_id: string;
+  reference: string;
+  title: string | null;
+  status: string;
+  notes: string | null;
+  valid_until: string | null;
+  vat_rate: number;
+  created_at: string;
+  client_responded_at: string | null;
+  site_name: string | null;
+  subtotal_cents: number;
+  vat_cents: number;
+  total_cents: number;
+  items: Array<{
+    id: string;
+    description: string;
+    unit: string;
+    quantity: number;
+    unit_price_cents: number;
+    line_total_cents: number;
+  }>;
+}
+
 /** Ligne de `portal_list_invoices()` — jamais un brouillon. */
 export interface PortalInvoice {
   id: string;
@@ -2243,6 +2269,8 @@ export interface Database {
           notes: string | null;
           valid_until: string | null;
           created_by: string | null;
+          /** Réponse donnée depuis le portail client ; NULL si décidée par l'entreprise. */
+          client_responded_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3631,6 +3659,14 @@ export interface Database {
       portal_list_quotes: {
         Args: Record<string, never>;
         Returns: PortalQuote[];
+      };
+      portal_quote_detail: {
+        Args: { p_quote_id: string };
+        Returns: Json;
+      };
+      portal_respond_quote: {
+        Args: { p_quote_id: string; p_decision: 'accepted' | 'refused' };
+        Returns: Json;
       };
       portal_list_invoices: {
         Args: Record<string, never>;

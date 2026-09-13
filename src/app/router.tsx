@@ -82,6 +82,10 @@ export const routes: RouteObject[] = [
           },
           { path: ROUTES.portalQuotes, lazy: lazyPage(() => import('@/pages/portal/PortalQuotesPage')) },
           {
+            path: ROUTE_PATTERNS.portalQuote,
+            lazy: lazyPage(() => import('@/pages/portal/PortalQuoteDetailPage')),
+          },
+          {
             path: ROUTES.portalInvoices,
             lazy: lazyPage(() => import('@/pages/portal/PortalInvoicesPage')),
           },

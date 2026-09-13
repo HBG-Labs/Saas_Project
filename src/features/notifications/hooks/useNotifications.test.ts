@@ -53,6 +53,10 @@ vi.mock('@/features/client-portal', () => ({
   useClientConversations: () => ({ data: portail.conversations }),
 }));
 
+vi.mock('@/features/quotes', () => ({
+  useQuotes: () => ({ data: [] }),
+}));
+
 vi.mock('@/features/interventions', () => ({
   useReportsPendingReview: () => ({
     data: [

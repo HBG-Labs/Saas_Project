@@ -143,6 +143,8 @@ begin
   insert into public.quotes (organization_id, customer_id, title, status) values (v_org, v_c1, 'Devis chaudière', 'sent') returning id into v_q1;
   insert into public.quotes (organization_id, customer_id, title, status) values (v_org, v_c1, 'Devis en préparation', 'draft') returning id into v_q2;
   insert into public.quotes (organization_id, customer_id, title, status) values (v_org, v_c2, 'Devis du client A2', 'sent') returning id into v_q3;
+  insert into public.quote_items (quote_id, organization_id, description, unit, quantity, unit_price_cents)
+  values (v_q1, v_org, 'Vanne thermostatique', 'Unité', 2, 4500);
 
   -- Factures : F1 émise (A1), F2 brouillon (A1)
   insert into public.invoices (organization_id, customer_id, title) values (v_org, v_c1, 'Facture chaudière') returning id into v_f1;
@@ -168,7 +170,7 @@ begin
          (v_org, 'Conditions générales', 'd3-cgv.pdf', v_d3, 'application/pdf', 500, 'cgv', false);
 
   insert into pg_temp.t_ref values ('org', v_org::text), ('m1', v_m1::text), ('m2', v_m2::text), ('m3', v_m3::text), ('m4', v_m4::text),
-    ('q2', v_q2::text), ('q3', v_q3::text), ('f2', v_f2::text), ('p1', v_p1), ('p2', v_p2), ('d1', v_d1), ('d2', v_d2), ('d3', v_d3);
+    ('q1', v_q1::text), ('q2', v_q2::text), ('q3', v_q3::text), ('f2', v_f2::text), ('p1', v_p1), ('p2', v_p2), ('d1', v_d1), ('d2', v_d2), ('d3', v_d3);
 end $$;
 
 -- Rien n'a été partagé par la fixture (les photos naissent privées).
@@ -233,8 +235,43 @@ begin
   perform pg_temp.ok(not public.portal_can_read_file('organization-documents', pg_temp.ref('d2')), 'AC19 — refusé pour le document interne');
   perform pg_temp.ok(not public.portal_can_read_file('intervention-attachments', pg_temp.ref('p1')), 'AC14 — refusé pour une photo non partagée');
   perform pg_temp.ok(not public.portal_can_read_file('bucket-inconnu', pg_temp.ref('d1')), 'AC19 — un bucket sans règle vaut refus');
+
+  -- Détail d'un devis et réponse du client
+  perform pg_temp.ok(
+    (public.portal_quote_detail(pg_temp.ref('q1')::uuid) -> 'items' -> 0 ->> 'description') = 'Vanne thermostatique',
+    'AC11 — le détail du devis envoyé expose ses lignes');
+  perform pg_temp.ok(
+    (public.portal_quote_detail(pg_temp.ref('q1')::uuid) ->> 'subtotal_cents')::bigint = 9000,
+    'AC11 — et ses totaux');
+  perform pg_temp.ok(public.portal_quote_detail(pg_temp.ref('q2')::uuid) is null, 'AC10 — le brouillon n''a pas de détail, même avec l''UUID');
+  perform pg_temp.ok(public.portal_quote_detail(pg_temp.ref('q3')::uuid) is null, 'AC03 — ni le devis du client A2');
+  perform pg_temp.refuses(
+    format('select public.portal_respond_quote(%L, ''accepted'')', pg_temp.ref('q3')),
+    'AC03 — A1 ne répond pas au devis du client A2');
+  perform pg_temp.refuses(
+    format('select public.portal_respond_quote(%L, ''accepted'')', pg_temp.ref('q2')),
+    'AC10 — A1 ne répond pas à un brouillon');
+  perform pg_temp.refuses(
+    format('select public.portal_respond_quote(%L, ''peut-etre'')', pg_temp.ref('q1')),
+    'AC11 — une décision inconnue est refusée');
+  perform pg_temp.ok(
+    (public.portal_respond_quote(pg_temp.ref('q1')::uuid, 'accepted') ->> 'status') = 'accepted',
+    'AC11 — le client accepte le devis envoyé');
+  perform pg_temp.refuses(
+    format('select public.portal_respond_quote(%L, ''refused'')', pg_temp.ref('q1')),
+    'AC11 — un devis déjà accepté ne se rejoue pas');
 end $$;
 reset role;
+
+do $$ begin
+  perform pg_temp.ok(
+    (select status::text from public.quotes where id = pg_temp.ref('q1')::uuid) = 'accepted'
+    and (select client_responded_at from public.quotes where id = pg_temp.ref('q1')::uuid) is not null,
+    'AC11 — la réponse est datée côté entreprise');
+  perform pg_temp.ok(
+    exists (select 1 from public.audit_logs where action = 'portal.quote_accepted' and entity_id = pg_temp.ref('q1')::uuid),
+    'AC35 — l''acceptation est journalisée');
+end $$;
 
 -- -----------------------------------------------------------------------------
 -- Partage des photos

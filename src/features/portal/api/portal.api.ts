@@ -7,6 +7,7 @@ import type {
   PortalMission,
   PortalMissionDetail,
   PortalQuote,
+  PortalQuoteDetail,
   Tables,
 } from '@/types/database';
 
@@ -74,6 +75,17 @@ export async function getPortalMission(missionId: string): Promise<PortalMission
 
 export async function listPortalQuotes(): Promise<PortalQuote[]> {
   return unwrap(supabase.rpc('portal_list_quotes'));
+}
+
+export async function getPortalQuote(quoteId: string): Promise<PortalQuoteDetail | null> {
+  const data = await unwrap(supabase.rpc('portal_quote_detail', { p_quote_id: quoteId }));
+  return data === null ? null : (data as unknown as PortalQuoteDetail);
+}
+
+/** Accepte ou refuse un devis « envoyé » — la base vérifie tout et journalise. */
+export async function respondPortalQuote(quoteId: string, decision: 'accepted' | 'refused'): Promise<PortalQuoteDetail> {
+  const data = await unwrap(supabase.rpc('portal_respond_quote', { p_quote_id: quoteId, p_decision: decision }));
+  return data as unknown as PortalQuoteDetail;
 }
 
 export async function listPortalInvoices(): Promise<PortalInvoice[]> {
