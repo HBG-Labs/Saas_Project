@@ -72,6 +72,7 @@ jobs:
           # anciennes hors de cette vérification.
           deno check supabase/functions/_shared/meta-capi.ts
           deno check supabase/functions/_shared/email-confirme.ts
+          deno check supabase/functions/_shared/email.ts
           # `unpdf` est une dépendance npm propre au runtime Edge, pas au
           # bundle React. Deno l'installe dans son espace isolé pour ce check.
           deno check --node-modules-dir=auto supabase/functions/index-ai-document/index.ts
