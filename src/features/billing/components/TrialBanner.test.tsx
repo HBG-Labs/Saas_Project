@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FEATURES, PLAN_FEATURES } from '../entitlements';
 import { TrialBanner } from './TrialBanner';
 
 const abonnement = vi.hoisted(() => ({
@@ -65,5 +66,49 @@ describe('TrialBanner', () => {
     afficher(true);
 
     expect(screen.getByRole('alert')).toHaveTextContent('Votre période d’essai a pris fin');
+  });
+
+  /*
+    Ces deux cas protègent d'une phrase fausse, pas d'une phrase absente.
+
+    La version précédente annonçait « Missions, Clients, Équipes et Interventions
+    suspendus » alors que la formule Gratuite gardait ces modules avec un
+    plafond. Le texte était en dur : la grille a changé, lui non, et rien ne
+    l'a signalé. Les chiffres attendus sont donc LUS dans le miroir — le même
+    que celui d'où le composant les tire, et qu'un autre test compare à la
+    migration. Écrire « 5 missions » ici recréerait exactement la dérive.
+  */
+  it('annonce les plafonds de la formule Gratuite, lus dans le miroir', () => {
+    abonnement.current = { ...abonnement.current, trial_ends_at: '2026-09-04T12:00:00Z' };
+    afficher();
+
+    const texte = screen.getByRole('alert').textContent ?? '';
+    const gratuit = PLAN_FEATURES.free;
+    for (const [cle, mot] of [
+      [FEATURES.customers, 'client'],
+      [FEATURES.missions, 'mission'],
+      [FEATURES.interventions, 'intervention'],
+    ] as const) {
+      const plafond = gratuit[cle];
+      expect(typeof plafond).toBe('number');
+      expect(texte).toContain(`${String(plafond)} ${mot}`);
+    }
+  });
+
+  it('ne prétend plus que les missions ou les clients sont suspendus', () => {
+    abonnement.current = { ...abonnement.current, trial_ends_at: '2026-09-04T12:00:00Z' };
+    afficher();
+
+    const texte = screen.getByRole('alert').textContent ?? '';
+    expect(texte).not.toMatch(/Missions, Clients, Équipes et Interventions sont suspendus/);
+    expect(texte).toContain('Vous êtes en formule Gratuite');
+  });
+
+  it('prévient, avant l’échéance, du retour en Gratuit plutôt que d’une coupure totale', () => {
+    afficher();
+
+    const texte = screen.getByRole('status').textContent ?? '';
+    expect(texte).toContain('vous repasserez en formule Gratuite');
+    expect(texte).not.toContain('les modules professionnels sont suspendus');
   });
 });

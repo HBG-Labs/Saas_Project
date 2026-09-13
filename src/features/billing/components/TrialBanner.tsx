@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
+import { FEATURES, planFeatureLimit } from '../entitlements';
 import { useOrganizationSubscription } from '../hooks/useEntitlements';
 
 /**
@@ -12,18 +13,26 @@ import { useOrganizationSubscription } from '../hooks/useEntitlements';
  * ─────────────────────────────────────────────────────────────────────────────
  * POURQUOI CE BANDEAU EXISTE
  *
- * Une organisation naît avec un essai `business`. Quand il expire,
- * `app.org_plan_code()` cesse de renvoyer un plan, `can_use_pro_module()`
- * renvoie `false`, et TOUTES les policies du module professionnel se mettent à
- * renvoyer des ensembles vides : missions, clients, équipes, interventions,
- * audit. En une nuit, sans aucune erreur ni message.
+ * Quand l'essai expire, `app.org_plan_code()` cesse de renvoyer un plan et
+ * l'organisation retombe sur la formule Gratuite. Rien n'annonce ce passage :
+ * la date existait en base depuis le premier jour — `trial_ends_at`, posée par
+ * le trigger — mais aucun écran ne la montrait. Le bandeau la rend lisible, et
+ * de plus en plus insistante à mesure qu'elle approche.
  *
- * Techniquement, c'est correct. Vu du patron, son logiciel s'est vidé.
+ * CE QUE « GRATUIT » VEUT DIRE, ET POURQUOI LE TEXTE NE L'ÉCRIT PAS EN DUR
  *
- * La date existait pourtant en base depuis le premier jour — `trial_ends_at`,
- * posée par le trigger — mais aucun écran ne la montrait. Le bandeau ne fait
- * que la rendre lisible, et de plus en plus insistante à mesure qu'elle
- * approche.
+ * Depuis `20260902100000_realigne_la_matrice_des_formules`, la formule
+ * Gratuite n'est plus une coquille vide : elle garde un aperçu plafonné du
+ * terrain — quelques clients, missions et interventions. Les policies de ces
+ * modules continuent donc de répondre, et c'est `app.enforce_plan_row_quota`
+ * qui refuse la ligne de trop. Seuls les modules absents de la formule —
+ * équipes, planning, stock… — se vident réellement.
+ *
+ * La version précédente de ce bandeau annonçait « Missions, Clients, Équipes et
+ * Interventions suspendus » : vrai avant cette migration, faux après, et
+ * personne ne l'a vu parce que la phrase était écrite en dur. Les plafonds
+ * viennent désormais de `PLAN_FEATURES`, dont un test compare chaque valeur à
+ * la migration : la grille ne peut plus bouger sans que ce texte suive.
  *
  * QUI LE VOIT
  *
@@ -77,6 +86,18 @@ export function TrialBanner({
   const expired = remaining <= 0;
   const urgent = remaining <= 7;
 
+  // Les plafonds de la formule Gratuite, lus dans le miroir plutôt qu'écrits
+  // ici : voir l'en-tête. Une valeur absente signifierait que la grille a
+  // retiré le module — le texte le dit alors sans inventer de chiffre.
+  const plafonds = [
+    [planFeatureLimit('free', FEATURES.customers), 'client', 'clients'],
+    [planFeatureLimit('free', FEATURES.missions), 'mission', 'missions'],
+    [planFeatureLimit('free', FEATURES.interventions), 'intervention', 'interventions'],
+  ] as const;
+  const apercuGratuit = plafonds
+    .flatMap(([n, un, plusieurs]) => (n === null ? [] : [`${String(n)} ${n > 1 ? plusieurs : un}`]))
+    .join(', ');
+
   const formattedDate = new Date(endsAt).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -108,8 +129,10 @@ export function TrialBanner({
         {expired ? (
           <>
             <strong className="font-semibold">Votre période d’essai a pris fin</strong> le{' '}
-            {formattedDate}. Les modules Missions, Clients, Équipes et Interventions sont
-            suspendus — vos données sont intactes et réapparaîtront dès la souscription.
+            {formattedDate}. Vous êtes en formule Gratuite
+            {apercuGratuit !== '' ? ` : ${apercuGratuit} au maximum` : ''}. Les autres modules
+            professionnels sont suspendus — vos données sont intactes et réapparaîtront dès la
+            souscription.
           </>
         ) : (
           <>
@@ -119,7 +142,7 @@ export function TrialBanner({
             — jusqu’au {formattedDate}.{' '}
             {avecCarte
               ? 'Votre abonnement démarrera automatiquement à cette date. Vous pouvez y renoncer d’ici là depuis le portail de facturation.'
-              : 'Passé cette date, les modules professionnels sont suspendus jusqu’à la souscription.'}
+              : `Passé cette date, vous repasserez en formule Gratuite${apercuGratuit !== '' ? ` (${apercuGratuit} au maximum)` : ''} ; les autres modules professionnels seront suspendus jusqu’à la souscription.`}
           </>
         )}
       </p>
