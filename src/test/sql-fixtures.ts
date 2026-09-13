@@ -25,6 +25,7 @@ import aiAssistantOwnerOnlySql from '../../supabase/migrations/20260902200000_ai
 import invoicesSql from '../../supabase/migrations/20260903070000_invoices.sql?raw';
 import organizationDocumentsSql from '../../supabase/migrations/20260906212227_organization_documents.sql?raw';
 import industriesMechanicsTransportSql from '../../supabase/migrations/20260911180635_metiers_mecanique_transport.sql?raw';
+import clientPortalSocleSql from '../../supabase/migrations/20260913054246_portail_client_socle.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -79,6 +80,7 @@ const MIGRATIONS: Record<string, string> = {
   invoices: invoicesSql,
   organizationDocuments: organizationDocumentsSql,
   industriesMechanicsTransport: industriesMechanicsTransportSql,
+  clientPortalSocle: clientPortalSocleSql,
 };
 
 export const MIGRATION_FILES = {
@@ -109,6 +111,7 @@ export const MIGRATION_FILES = {
   invoices: 'invoices',
   organizationDocuments: 'organizationDocuments',
   industriesMechanicsTransport: 'industriesMechanicsTransport',
+  clientPortalSocle: 'clientPortalSocle',
 } as const;
 
 /**

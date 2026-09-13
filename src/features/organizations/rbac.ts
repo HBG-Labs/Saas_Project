@@ -93,6 +93,12 @@ export const PERMISSIONS = {
   documentView: 'document.view',
   documentManage: 'document.manage',
   documentDelete: 'document.delete',
+
+  // Portail client — supabase/migrations/20260913054246_portail_client_socle.sql
+  clientPortalView: 'client_portal.view',
+  clientMessageSend: 'client_message.send',
+  clientContentShare: 'client_content.share',
+  clientPortalManage: 'client_portal.manage',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -180,6 +186,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'document.view',
     'document.manage',
     'document.delete',
+    'client_portal.view',
+    'client_message.send',
+    'client_content.share',
+    'client_portal.manage',
   ],
 
   admin: [
@@ -228,6 +238,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'document.view',
     'document.manage',
     'document.delete',
+    'client_portal.view',
+    'client_message.send',
+    'client_content.share',
+    'client_portal.manage',
   ],
 
   manager: [
@@ -272,6 +286,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'document.view',
     'document.manage',
     'document.delete',
+    'client_portal.view',
+    'client_message.send',
+    'client_content.share',
+    'client_portal.manage',
   ],
 
   team_leader: [
@@ -306,6 +324,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'statistics.view',
     'document.view',
     'document.manage',
+    'client_portal.view',
+    'client_message.send',
+    'client_content.share',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -340,6 +361,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'leave.request',
     'planning.view',
     'document.view',
+    'client_portal.view',
+    'client_content.share',
   ],
 
   employee: ['organization.view', 'member.view', 'leave.request', 'document.view'],

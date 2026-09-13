@@ -203,6 +203,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.aiAssistantConversations,
       MIGRATION_FILES.invoices,
       MIGRATION_FILES.organizationDocuments,
+      MIGRATION_FILES.clientPortalSocle,
     ],
     'role_permissions',
   );

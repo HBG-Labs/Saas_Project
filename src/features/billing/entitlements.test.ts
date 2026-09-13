@@ -253,6 +253,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.aiAssistantProPlus,
       MIGRATION_FILES.invoices,
       MIGRATION_FILES.organizationDocuments,
+      MIGRATION_FILES.clientPortalSocle,
     ],
     'plan_features',
   );

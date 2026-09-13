@@ -37,6 +37,8 @@ export const FEATURES = {
   // que `attachments` : c'est la même capacité de stockage, déjà vendue.
   // `limit_value` reste nul, prêt à porter un quota le jour voulu.
   documents: 'documents',
+  /** Portail client — supabase/migrations/20260913054246_portail_client_socle.sql */
+  clientPortal: 'client_portal',
   equipment: 'equipment',
   stock: 'stock',
   purchases: 'purchases',
@@ -113,6 +115,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     invoicing: null,
     attachments: null,
     documents: null,
+    client_portal: null,
     ai_assistant: 100,
   },
 
@@ -134,6 +137,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     statistics: null,
     attachments: null,
     documents: null,
+    client_portal: null,
     equipment: null,
     stock: null,
     purchases: null,
@@ -161,6 +165,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     statistics: null,
     attachments: null,
     documents: null,
+    client_portal: null,
     equipment: null,
     stock: null,
     purchases: null,
