@@ -18,6 +18,17 @@ export const ROUTES = {
   /** Retour des liens e-mail : confirmation d'inscription, réinitialisation. */
   authCallback: '/auth/callback',
 
+  // Portail client — branche à part : ni la navigation ni les gardes de
+  // l'espace entreprise ne s'y appliquent.
+  portal: '/portail',
+  portalLogin: '/portail/connexion',
+  portalMissions: '/portail/interventions',
+  portalMission: (missionId: string) => `/portail/interventions/${missionId}`,
+  portalQuotes: '/portail/devis',
+  portalInvoices: '/portail/factures',
+  portalDocuments: '/portail/documents',
+  portalMessages: '/portail/messages',
+
   features: '/features',
   pricing: '/pricing',
   faq: '/faq',
@@ -115,6 +126,7 @@ export const ROUTE_PATTERNS = {
   category: '/categories/:categorySlug',
   metierTrade: '/metiers/:tradeSlug',
   metierTool: '/metiers/:tradeSlug/:toolSlug',
+  portalMission: '/portail/interventions/:missionId',
   invitation: '/invitations/:token',
   customer: '/clients/:customerId',
   team: '/equipes/:teamId',

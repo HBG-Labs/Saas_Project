@@ -9,6 +9,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
+import { RequirePortalSession } from '@/features/portal';
 import { FEATURES } from '@/features/billing';
 import { PERMISSIONS } from '@/features/organizations';
 import DashboardPage from '@/pages/DashboardPage';
@@ -55,6 +56,42 @@ export const routes: RouteObject[] = [
           {
             path: ROUTES.resetPassword,
             lazy: lazyPage(() => import('@/pages/ResetPasswordPage')),
+          },
+        ],
+      },
+
+      // ------------------------------------------------------ portail client
+      // Branche à part : ni `AppLayout` (navigation entreprise, organisation
+      // courante) ni `PublicLayout` (vitrine). Le client n'est membre d'aucune
+      // organisation ; tout ce qu'il voit passe par les fonctions `portal_*`.
+      {
+        path: ROUTES.portalLogin,
+        lazy: lazyPage(() => import('@/pages/portal/PortalLoginPage')),
+      },
+      {
+        element: <RequirePortalSession />,
+        children: [
+          { path: ROUTES.portal, lazy: lazyPage(() => import('@/pages/portal/PortalHomePage')) },
+          {
+            path: ROUTES.portalMissions,
+            lazy: lazyPage(() => import('@/pages/portal/PortalMissionsPage')),
+          },
+          {
+            path: ROUTE_PATTERNS.portalMission,
+            lazy: lazyPage(() => import('@/pages/portal/PortalMissionDetailPage')),
+          },
+          { path: ROUTES.portalQuotes, lazy: lazyPage(() => import('@/pages/portal/PortalQuotesPage')) },
+          {
+            path: ROUTES.portalInvoices,
+            lazy: lazyPage(() => import('@/pages/portal/PortalInvoicesPage')),
+          },
+          {
+            path: ROUTES.portalDocuments,
+            lazy: lazyPage(() => import('@/pages/portal/PortalDocumentsPage')),
+          },
+          {
+            path: ROUTES.portalMessages,
+            lazy: lazyPage(() => import('@/pages/portal/PortalMessagesPage')),
           },
         ],
       },

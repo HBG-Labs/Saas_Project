@@ -2,7 +2,9 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { ROUTES } from '@/config/routes';
+import { useAuth } from '@/features/auth';
 import { useCurrentOrganization } from '@/features/organizations';
+import { estUtilisateurPortail } from '@/features/portal';
 
 /**
  * Réserve une branche de routes aux membres d'une organisation.
@@ -23,6 +25,7 @@ import { useCurrentOrganization } from '@/features/organizations';
  */
 export function RequireOrganization() {
   const { status } = useCurrentOrganization();
+  const { user } = useAuth();
   const location = useLocation();
 
   if (status === 'loading') {
@@ -30,6 +33,11 @@ export function RequireOrganization() {
   }
 
   if (status === 'none') {
+    // Un client du portail n'a pas d'entreprise à créer : son espace est
+    // ailleurs. Sans ce détour, il atterrissait sur « Créer votre entreprise ».
+    if (estUtilisateurPortail(user)) {
+      return <Navigate to={ROUTES.portal} replace />;
+    }
     // L'origine est conservée pour revenir là où l'utilisateur allait une fois
     // l'entreprise créée — même convention que `ProtectedRoute`.
     return (
