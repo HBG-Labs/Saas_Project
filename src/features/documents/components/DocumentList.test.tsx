@@ -39,6 +39,7 @@ function document(patch: Partial<OrganizationDocument> = {}): OrganizationDocume
     file_size: 2048,
     description: null,
     category: null,
+    shared_with_client: false,
     created_at: '2026-09-02T08:30:00Z',
     updated_at: '2026-09-02T08:30:00Z',
     ...patch,

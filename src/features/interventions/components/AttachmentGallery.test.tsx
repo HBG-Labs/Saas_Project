@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +19,11 @@ import { AttachmentGallery } from './AttachmentGallery';
  */
 
 const permission = vi.hoisted(() => ({ peutFacturer: true }));
+const partage = vi.hoisted(() => ({ mutate: vi.fn() }));
+
+vi.mock('@/features/client-portal', () => ({
+  useShareAttachments: () => ({ mutate: partage.mutate, isPending: false }),
+}));
 
 vi.mock('../hooks/useReports', () => ({
   useUploadAttachment: () => ({ mutate: vi.fn(), isPending: false }),
@@ -52,6 +57,74 @@ function afficher(hasAttachmentsFeature: boolean, canEdit: boolean) {
 
 beforeEach(() => {
   permission.peutFacturer = true;
+  partage.mutate.mockReset();
+});
+
+const PHOTO = {
+  intervention_id: 'int-1',
+  organization_id: 'org-1',
+  kind: 'after' as const,
+  mime_type: 'image/jpeg',
+  size_bytes: 1000,
+  caption: null,
+  uploaded_by: 'user-1',
+  shared_at: null,
+  shared_by: null,
+  created_at: '2026-09-01T10:00:00Z',
+};
+
+describe('AttachmentGallery — partage avec le client', () => {
+  const photos = [
+    { ...PHOTO, id: 'a', storage_path: 'org-1/a.jpg', file_name: 'a.jpg', shared_with_client: false },
+    { ...PHOTO, id: 'b', storage_path: 'org-1/b.jpg', file_name: 'b.jpg', shared_with_client: false },
+    { ...PHOTO, id: 'c', storage_path: 'org-1/c.jpg', file_name: 'c.jpg', shared_with_client: true },
+  ];
+
+  function afficherPartage(canShareWithClient: boolean) {
+    return render(
+      <MemoryRouter>
+        <AttachmentGallery
+          {...PROPS_BASE}
+          attachments={photos}
+          canEdit={false}
+          hasAttachmentsFeature
+          canShareWithClient={canShareWithClient}
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  it('AC13 — sans le droit de partager, aucune commande de partage ; l’état visible est quand même dit', () => {
+    afficherPartage(false);
+
+    expect(screen.queryByRole('button', { name: /choisir les photos à partager/i })).not.toBeInTheDocument();
+    // La photo déjà partagée porte son badge : deux états, jamais d'ambiguïté.
+    expect(screen.getAllByText('Client')).toHaveLength(1);
+  });
+
+  it('AC14 — plusieurs photos sélectionnées sont partagées en UNE opération', () => {
+    afficherPartage(true);
+
+    expect(screen.getByText(/1 sur 3 visible par le client/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /choisir les photos à partager/i }));
+    const cases = screen.getAllByRole('button', { name: /ajouter à la sélection/i });
+    fireEvent.click(cases[0]!);
+    fireEvent.click(cases[1]!);
+    fireEvent.click(screen.getByRole('button', { name: /rendre visible \(2\)/i }));
+
+    expect(partage.mutate).toHaveBeenCalledTimes(1);
+    expect(partage.mutate.mock.calls[0]?.[0]).toEqual({ ids: ['a', 'b'], shared: true });
+  });
+
+  it('AC15 — une photo partagée peut être rendue privée à nouveau', () => {
+    afficherPartage(true);
+
+    fireEvent.click(screen.getByRole('button', { name: /choisir les photos à partager/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /ajouter à la sélection/i })[2]!);
+    fireEvent.click(screen.getByRole('button', { name: /rendre privé \(1\)/i }));
+
+    expect(partage.mutate.mock.calls[0]?.[0]).toEqual({ ids: ['c'], shared: false });
+  });
 });
 
 describe('AttachmentGallery — formule Business/Enterprise requise', () => {

@@ -21,6 +21,7 @@ import {
   useSubmitReport,
 } from '@/features/interventions';
 import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
+import { useClientPortalAccess } from '@/features/client-portal';
 import { useMissions } from '@/features/missions';
 import { useNotes } from '@/features/notes';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -48,6 +49,7 @@ export default function ReportsHubPage() {
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
   const { has } = useOrganizationEntitlements(organizationId);
+  const portal = useClientPortalAccess();
 
   const missionsQuery = useMissions(organizationId);
   const interventionsQuery = useOrganizationInterventions(organizationId);
@@ -336,6 +338,7 @@ export default function ReportsHubPage() {
                   attachments={attachments.data ?? []}
                   canEdit={isEditable}
                   hasAttachmentsFeature={has(FEATURES.attachments)}
+                  canShareWithClient={portal.canShare}
                 />
               </CardContent>
             </Card>

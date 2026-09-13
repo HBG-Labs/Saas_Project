@@ -24,6 +24,7 @@ import {
   useWorkedSeconds,
 } from '@/features/interventions';
 import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
+import { useClientPortalAccess } from '@/features/client-portal';
 import { useMission, useUpdateMission } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -41,6 +42,7 @@ export default function InterventionPage() {
   const { user } = useAuth();
   const { organization, membership } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
+  const portal = useClientPortalAccess();
 
   const intervention = useIntervention(interventionId);
   const timeEntries = useTimeEntries(interventionId);
@@ -315,6 +317,7 @@ export default function InterventionPage() {
             attachments={attachments.data ?? []}
             canEdit={canTrack && data.status !== 'completed'}
             hasAttachmentsFeature={has(FEATURES.attachments)}
+            canShareWithClient={portal.canShare}
           />
         </CardContent>
       </Card>

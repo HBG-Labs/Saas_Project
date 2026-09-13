@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -70,6 +71,12 @@ export interface DocumentListProps {
   onDownload: (document: OrganizationDocument) => void;
   onEdit: (document: OrganizationDocument) => void;
   onDelete: (document: OrganizationDocument) => void;
+  /**
+   * Partage avec le portail client. Absent : la formule ou la permission ne le
+   * permettent pas, et le menu n'en parle pas. Le trigger
+   * `guard_document_share_update` rejuge `client_content.share`.
+   */
+  onToggleShare?: ((document: OrganizationDocument) => void) | undefined;
 }
 
 function dateCourte(iso: string): string {
@@ -98,6 +105,7 @@ export function DocumentList({
   onDownload,
   onEdit,
   onDelete,
+  onToggleShare,
 }: DocumentListProps) {
   const nomDossier = (id: string | null) =>
     id === null ? null : (folders.find((f) => f.id === id)?.name ?? null);
@@ -127,6 +135,15 @@ export function DocumentList({
             <DropdownItem onSelect={() => onEdit(document)}>
               <Pencil className="mr-2 h-4 w-4" aria-hidden />
               Renommer, déplacer…
+            </DropdownItem>
+          </>
+        )}
+        {onToggleShare !== undefined && (
+          <>
+            <DropdownSeparator />
+            <DropdownItem onSelect={() => onToggleShare(document)}>
+              <Users className="mr-2 h-4 w-4" aria-hidden />
+              {document.shared_with_client ? 'Retirer du portail client' : 'Partager avec le client'}
             </DropdownItem>
           </>
         )}
@@ -166,6 +183,7 @@ export function DocumentList({
                 <p className="text-muted-foreground truncate text-xs">
                   {apparence.libelle} · {formaterTaille(document.file_size)}
                   {dossier !== null && ` · ${dossier}`}
+                  {document.shared_with_client && ' · Visible par le client'}
                 </p>
               </button>
               {menu(document)}
@@ -212,7 +230,15 @@ export function DocumentList({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={apparence.badge}>{apparence.libelle}</Badge>
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      <Badge variant={apparence.badge}>{apparence.libelle}</Badge>
+                      {document.shared_with_client && (
+                        <Badge variant="info">
+                          <Users className="mr-1 h-3 w-3" aria-hidden />
+                          Client
+                        </Badge>
+                      )}
+                    </span>
                   </td>
                   <td className="text-muted-foreground px-4 py-3">
                     {formaterTaille(document.file_size)}

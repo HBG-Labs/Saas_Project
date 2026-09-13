@@ -1,14 +1,18 @@
 import {
   Camera,
+  CheckSquare,
   Download,
   Eye,
+  EyeOff,
   FileText,
   Hammer,
   Image as ImageIcon,
   ImageOff,
   Sparkles,
+  Square,
   Trash2,
   Upload,
+  Users,
   Wrench,
   ZoomIn,
 } from 'lucide-react';
@@ -21,6 +25,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FEATURES, getMinimumRequiredPlan } from '@/features/billing';
+import { useShareAttachments } from '@/features/client-portal';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
@@ -62,6 +67,15 @@ export interface AttachmentGalleryProps {
    * ─────────────────────────────────────────────────────────────────────────
    */
   hasAttachmentsFeature: boolean;
+  /**
+   * La personne peut-elle partager des photos avec le client (portail) ?
+   *
+   * Indépendant de `canEdit` : une intervention terminée n'accepte plus de
+   * photo, mais c'est précisément à ce moment qu'on en partage. Le trigger
+   * `guard_attachment_share_update` rejuge `client_content.share` et n'admet
+   * que la colonne de partage — rien d'autre ne change par ce chemin.
+   */
+  canShareWithClient?: boolean;
 }
 
 export type PhotoCategory = 'all' | 'before' | 'during' | 'after' | 'proof' | 'document';
@@ -135,10 +149,15 @@ export function AttachmentGallery({
   attachments,
   canEdit,
   hasAttachmentsFeature,
+  canShareWithClient = false,
 }: AttachmentGalleryProps) {
   const upload = useUploadAttachment(interventionId);
   const remove = useDeleteAttachment(interventionId);
+  const share = useShareAttachments(interventionId);
   const [error, setError] = useState<unknown>(null);
+  // Mode sélection : on choisit plusieurs photos, puis un seul partage.
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [activeFilter, setActiveFilter] = useState<PhotoCategory>('all');
   const [previewAttachment, setPreviewAttachment] = useState<InterventionAttachment | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -207,6 +226,30 @@ export function AttachmentGallery({
     after: attachments.filter((a) => a.kind === 'after').length,
     proof: attachments.filter((a) => a.kind === 'proof').length,
     document: attachments.filter((a) => a.kind === 'document').length,
+  };
+  const sharedCount = attachments.filter((a) => a.shared_with_client).length;
+
+  const applyShare = (shared: boolean, ids: readonly string[] = Array.from(selectedIds)) => {
+    setError(null);
+    share.mutate(
+      { ids: Array.from(ids), shared },
+      {
+        onSuccess: () => {
+          setSelecting(false);
+          setSelectedIds(new Set());
+        },
+        onError: (mutationError) => {
+          setError(mutationError);
+        },
+      },
+    );
+  };
+
+  const toggleSelected = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
   };
 
   return (
@@ -415,6 +458,84 @@ export function AttachmentGallery({
         </div>
       )}
 
+      {/* PARTAGE AVEC LE CLIENT — sélection multiple, une seule opération */}
+      {canShareWithClient && attachments.length > 0 && (
+        <div className="border-border bg-surface-subtle/40 flex flex-wrap items-center justify-between gap-2 rounded-xl border p-2.5">
+          <div className="flex items-center gap-2 text-xs">
+            <Users className="text-primary size-4 shrink-0" aria-hidden="true" />
+            <span className="text-foreground font-medium">
+              {sharedCount === 0
+                ? 'Aucune photo visible par le client'
+                : `${sharedCount} sur ${attachments.length} visible${sharedCount > 1 ? 's' : ''} par le client`}
+            </span>
+          </div>
+          {selecting ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setSelectedIds(
+                    selectedIds.size === filteredAttachments.length
+                      ? new Set()
+                      : new Set(filteredAttachments.map((a) => a.id)),
+                  );
+                }}
+              >
+                {selectedIds.size === filteredAttachments.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="text-xs"
+                disabled={selectedIds.size === 0 || share.isPending}
+                onClick={() => applyShare(true)}
+              >
+                <Eye className="size-3.5" />
+                Rendre visible ({selectedIds.size})
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                disabled={selectedIds.size === 0 || share.isPending}
+                onClick={() => applyShare(false)}
+              >
+                <EyeOff className="size-3.5" />
+                Rendre privé ({selectedIds.size})
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setSelecting(false);
+                  setSelectedIds(new Set());
+                }}
+              >
+                Annuler
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setSelecting(true)}
+            >
+              <CheckSquare className="size-3.5" />
+              Choisir les photos à partager
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* FILTRES D'AFFICHAGE DE LA GALERIE */}
       {attachments.length > 0 && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs border-b border-border/70 scrollbar-none">
@@ -505,6 +626,9 @@ export function AttachmentGallery({
               key={attachment.id}
               attachment={attachment}
               canEdit={canEdit}
+              selectable={selecting}
+              selected={selectedIds.has(attachment.id)}
+              onToggleSelect={() => toggleSelected(attachment.id)}
               onPreview={() => setPreviewAttachment(attachment)}
               onDelete={() => {
                 remove.mutate(attachment);
@@ -530,6 +654,15 @@ export function AttachmentGallery({
                 }
               : undefined
           }
+          onToggleShare={
+            canShareWithClient
+              ? () => {
+                  applyShare(!previewAttachment.shared_with_client, [previewAttachment.id]);
+                  setPreviewAttachment(null);
+                }
+              : undefined
+          }
+          sharePending={share.isPending}
         />
       )}
     </div>
@@ -539,11 +672,17 @@ export function AttachmentGallery({
 function AttachmentTile({
   attachment,
   canEdit,
+  selectable,
+  selected,
+  onToggleSelect,
   onPreview,
   onDelete,
 }: {
   attachment: InterventionAttachment;
   canEdit: boolean;
+  selectable: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
   onPreview: () => void;
   onDelete: () => void;
 }) {
@@ -560,11 +699,17 @@ function AttachmentTile({
           : CATEGORIES.during;
 
   return (
-    <li className="border-border group relative overflow-hidden rounded-xl border bg-surface shadow-xs transition-all hover:shadow-md hover:border-primary/50">
+    <li
+      className={cn(
+        'border-border group relative overflow-hidden rounded-xl border bg-surface shadow-xs transition-all hover:shadow-md hover:border-primary/50',
+        selected && 'ring-primary ring-2',
+      )}
+    >
       <button
         type="button"
-        onClick={onPreview}
-        aria-label="Agrandir la pièce jointe"
+        onClick={selectable ? onToggleSelect : onPreview}
+        aria-label={selectable ? (selected ? 'Retirer de la sélection' : 'Ajouter à la sélection') : 'Agrandir la pièce jointe'}
+        aria-pressed={selectable ? selected : undefined}
         className="bg-surface-sunken relative flex aspect-square w-full items-center justify-center cursor-pointer overflow-hidden"
       >
         {url.isPending ? (
@@ -595,6 +740,22 @@ function AttachmentTile({
             {config.shortLabel}
           </Badge>
         </div>
+
+        {/* Visible par le client : deux états seulement, l'un des deux est dit. */}
+        {attachment.shared_with_client && (
+          <div className="absolute right-1.5 bottom-1.5">
+            <Badge variant="info" className="px-1.5 py-0.5 shadow-sm">
+              <Users className="mr-1 size-3" aria-hidden="true" />
+              Client
+            </Badge>
+          </div>
+        )}
+
+        {selectable && (
+          <div className="absolute top-1.5 right-1.5 rounded-md bg-white/90 p-0.5 text-primary shadow-sm">
+            {selected ? <CheckSquare className="size-5" aria-hidden="true" /> : <Square className="size-5" aria-hidden="true" />}
+          </div>
+        )}
       </button>
 
       {/* Barre d'action inférieure */}
@@ -642,11 +803,15 @@ function AttachmentPreviewModal({
   open,
   onOpenChange,
   onDelete,
+  onToggleShare,
+  sharePending = false,
 }: {
   attachment: InterventionAttachment;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: (() => void) | undefined;
+  onToggleShare?: (() => void) | undefined;
+  sharePending?: boolean;
 }) {
   const url = useAttachmentUrl(attachment.storage_path);
   const isImage = attachment.mime_type?.startsWith('image/') ?? false;
@@ -698,8 +863,11 @@ function AttachmentPreviewModal({
 
         {/* Détails et actions */}
         <div className="flex items-center justify-between border-t border-border pt-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant={config.badgeVariant}>{config.label}</Badge>
+            <Badge variant={attachment.shared_with_client ? 'info' : 'outline'}>
+              {attachment.shared_with_client ? 'Visible par le client' : 'Interne'}
+            </Badge>
             {attachment.created_at && (
               <span className="text-3xs text-muted-foreground font-mono">
                 {new Date(attachment.created_at).toLocaleString('fr-FR')}
@@ -707,7 +875,25 @@ function AttachmentPreviewModal({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onToggleShare && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onToggleShare}
+                disabled={sharePending}
+                className="text-xs"
+              >
+                {attachment.shared_with_client ? (
+                  <EyeOff className="size-3.5 mr-1" />
+                ) : (
+                  <Eye className="size-3.5 mr-1" />
+                )}
+                {attachment.shared_with_client ? 'Rendre privé' : 'Partager avec le client'}
+              </Button>
+            )}
+
             {url.data && isImage && (
               <Button asChild variant="outline" size="sm" className="text-xs">
                 <a href={url.data} target="_blank" rel="noreferrer" download={attachment.file_name}>

@@ -137,6 +137,145 @@ export type TechnicianPresence = 'on_road' | 'on_site' | 'available' | 'offline'
 export type FormFieldType =
   'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'multiselect' | 'date';
 
+// -----------------------------------------------------------------------------
+// Portail client
+// -----------------------------------------------------------------------------
+export type ClientConversationStatus = 'open' | 'closed';
+export type ClientConversationInitiator = 'organization' | 'client';
+export type ClientMessageDirection = 'outbound' | 'inbound';
+export type ClientMessageChannel = 'portal' | 'email';
+export type ClientMessageStatus =
+  | 'queued'
+  | 'sent'
+  | 'delivered'
+  | 'failed'
+  | 'bounced'
+  | 'complained'
+  | 'received';
+
+/** Résultat de `portal_my_context()`. */
+export interface PortalContext {
+  organization_id: string;
+  organization_name: string;
+  contact_id: string;
+  contact_first_name: string | null;
+  contact_last_name: string;
+  contact_email: string;
+  customer_id: string;
+  customer_name: string;
+  allow_client_initiated: boolean;
+  features: {
+    missions: boolean;
+    interventions: boolean;
+    quotes: boolean;
+    invoicing: boolean;
+    documents: boolean;
+  };
+}
+
+/** Ligne de `portal_list_missions()`. */
+export interface PortalMission {
+  id: string;
+  organization_id: string;
+  reference: string;
+  title: string;
+  status: string;
+  priority: string;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  location_label: string | null;
+  address_line1: string | null;
+  postal_code: string | null;
+  city: string | null;
+  site_name: string | null;
+  has_approved_report: boolean;
+  shared_attachments_count: number;
+}
+
+/** Document JSON de `portal_mission_detail(uuid)` ; `null` si invisible. */
+export interface PortalMissionDetail {
+  id: string;
+  organization_id: string;
+  reference: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  location_label: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  postal_code: string | null;
+  city: string | null;
+  site_name: string | null;
+  interventions: Array<{ id: string; status: string; start_time: string | null; end_time: string | null }>;
+  /** Uniquement un rapport approuvé, sans observations internes. */
+  report: {
+    work_description: string | null;
+    materials_used: string | null;
+    submitted_at: string | null;
+    customer_signature_name: string | null;
+  } | null;
+  /** Uniquement les pièces jointes partagées. */
+  attachments: Array<{
+    id: string;
+    kind: string;
+    file_name: string;
+    mime_type: string | null;
+    size_bytes: number | null;
+    caption: string | null;
+    storage_path: string;
+    created_at: string;
+  }>;
+}
+
+/** Ligne de `portal_list_quotes()` — jamais un brouillon. */
+export interface PortalQuote {
+  id: string;
+  organization_id: string;
+  reference: string;
+  title: string | null;
+  status: string;
+  valid_until: string | null;
+  created_at: string;
+  subtotal_cents: number;
+  vat_cents: number;
+  total_cents: number;
+}
+
+/** Ligne de `portal_list_invoices()` — jamais un brouillon. */
+export interface PortalInvoice {
+  id: string;
+  organization_id: string;
+  reference: string;
+  document_type: string;
+  title: string | null;
+  status: string;
+  issued_at: string | null;
+  due_date: string | null;
+  subtotal_cents: number;
+  vat_cents: number;
+  total_cents: number;
+  pdf_path: string | null;
+}
+
+/** Ligne de `portal_list_documents()`. */
+export interface PortalDocument {
+  id: string;
+  organization_id: string;
+  name: string;
+  category: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  storage_path: string;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -1031,6 +1170,9 @@ export interface Database {
           phone: string | null;
           is_primary: boolean;
           notes: string | null;
+          /** Accès au portail client. Modifiable seulement avec `client_portal.manage` (trigger). */
+          portal_enabled: boolean;
+          portal_last_seen_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1046,6 +1188,7 @@ export interface Database {
           phone?: string | null;
           is_primary?: boolean;
           notes?: string | null;
+          portal_enabled?: boolean;
         };
         Update: Partial<
           Omit<
@@ -1498,6 +1641,10 @@ export interface Database {
           size_bytes: number | null;
           caption: string | null;
           uploaded_by: string | null;
+          /** Privé par défaut ; visible par le client seulement après partage explicite. */
+          shared_with_client: boolean;
+          shared_at: string | null;
+          shared_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -1513,7 +1660,8 @@ export interface Database {
           caption?: string | null;
           uploaded_by: string;
         };
-        Update: { caption?: string | null; kind?: AttachmentKind };
+        /** `shared_with_client` seul : le trigger refuse toute autre colonne dans la même écriture. */
+        Update: { caption?: string | null; kind?: AttachmentKind; shared_with_client?: boolean };
         Relationships: [
           {
             foreignKeyName: 'intervention_attachments_intervention_id_fkey';
@@ -2805,6 +2953,8 @@ export interface Database {
           file_size: number | null;
           description: string | null;
           category: string | null;
+          /** Privé par défaut ; visible par le client après partage explicite ou par catégorie. */
+          shared_with_client: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -2827,6 +2977,8 @@ export interface Database {
           folder_id?: string | null;
           description?: string | null;
           category?: string | null;
+          /** Partage avec le portail client — exige `client_content.share` (trigger). */
+          shared_with_client?: boolean;
         };
         Relationships: [];
       };
@@ -3240,6 +3392,170 @@ export interface Database {
           },
         ];
       };
+      // -----------------------------------------------------------------------
+      // Portail client
+      // -----------------------------------------------------------------------
+      client_portal_settings: {
+        Row: {
+          organization_id: string;
+          enabled: boolean;
+          allow_client_initiated: boolean;
+          display_name: string | null;
+          visible_document_categories: string[];
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          enabled?: boolean;
+          allow_client_initiated?: boolean;
+          display_name?: string | null;
+          visible_document_categories?: string[];
+        };
+        Update: Partial<Omit<Database['public']['Tables']['client_portal_settings']['Insert'], 'organization_id'>>;
+        Relationships: [
+          {
+            foreignKeyName: 'client_portal_settings_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      client_conversations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          customer_id: string;
+          contact_id: string;
+          subject: string;
+          status: ClientConversationStatus;
+          initiated_by: ClientConversationInitiator;
+          mission_id: string | null;
+          quote_id: string | null;
+          invoice_id: string | null;
+          last_message_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          customer_id: string;
+          contact_id: string;
+          subject: string;
+          status?: ClientConversationStatus;
+          initiated_by: ClientConversationInitiator;
+          mission_id?: string | null;
+          quote_id?: string | null;
+          invoice_id?: string | null;
+        };
+        /** Les parties (organisation, client, contact, initiateur) sont immuables. */
+        Update: { subject?: string; status?: ClientConversationStatus };
+        Relationships: [
+          {
+            foreignKeyName: 'client_conversations_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'client_conversations_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'client_conversations_contact_id_fkey';
+            columns: ['contact_id'];
+            referencedRelation: 'customer_contacts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      client_messages: {
+        Row: {
+          id: string;
+          organization_id: string;
+          conversation_id: string;
+          direction: ClientMessageDirection;
+          channel: ClientMessageChannel;
+          author_user_id: string | null;
+          sender_email: string | null;
+          recipient_email: string | null;
+          subject: string | null;
+          body_text: string;
+          body_html: string | null;
+          resend_email_id: string | null;
+          internet_message_id: string | null;
+          in_reply_to: string | null;
+          references_header: string | null;
+          status: ClientMessageStatus;
+          error: string | null;
+          sent_at: string | null;
+          delivered_at: string | null;
+          received_at: string | null;
+          read_by_client_at: string | null;
+          read_by_staff_at: string | null;
+          created_at: string;
+        };
+        /**
+         * Depuis le navigateur : direction, canal, statut et champs fournisseur
+         * sont réécrits par trigger. L'envoi réel passe par `portal-message-send`.
+         */
+        Insert: {
+          id?: string;
+          organization_id: string;
+          conversation_id: string;
+          direction: ClientMessageDirection;
+          subject?: string | null;
+          body_text: string;
+        };
+        /** Depuis le navigateur, seule la date de lecture de SON côté peut changer. */
+        Update: { read_by_client_at?: string | null; read_by_staff_at?: string | null };
+        Relationships: [
+          {
+            foreignKeyName: 'client_messages_conversation_id_fkey';
+            columns: ['conversation_id'];
+            referencedRelation: 'client_conversations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      client_message_attachments: {
+        Row: {
+          id: string;
+          organization_id: string;
+          message_id: string;
+          file_name: string;
+          storage_path: string;
+          mime_type: string;
+          file_size: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          message_id: string;
+          file_name: string;
+          storage_path: string;
+          mime_type: string;
+          file_size: number;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'client_message_attachments_message_id_fkey';
+            columns: ['message_id'];
+            referencedRelation: 'client_messages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      // `resend_events` est délibérément absente : aucun droit pour `authenticated`,
+      // seule la fonction Edge `resend-webhook` y écrit.
     };
 
     Views: {
@@ -3292,6 +3608,42 @@ export interface Database {
     };
 
     Functions: {
+      // -----------------------------------------------------------------------
+      // Portail client — lectures explicites, réservées aux contacts du portail.
+      // Chaque fonction renvoie zéro ligne (ou NULL) hors session portail.
+      // -----------------------------------------------------------------------
+      portal_my_context: {
+        Args: Record<string, never>;
+        Returns: PortalContext[];
+      };
+      portal_touch_last_seen: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+      portal_list_missions: {
+        Args: Record<string, never>;
+        Returns: PortalMission[];
+      };
+      portal_mission_detail: {
+        Args: { p_mission_id: string };
+        Returns: Json;
+      };
+      portal_list_quotes: {
+        Args: Record<string, never>;
+        Returns: PortalQuote[];
+      };
+      portal_list_invoices: {
+        Args: Record<string, never>;
+        Returns: PortalInvoice[];
+      };
+      portal_list_documents: {
+        Args: Record<string, never>;
+        Returns: PortalDocument[];
+      };
+      portal_can_read_file: {
+        Args: { p_bucket: string; p_path: string };
+        Returns: boolean;
+      };
       can_manage_einvoicing_connection: {
         Args: { p_organization_id: string };
         Returns: boolean;

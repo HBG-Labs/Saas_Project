@@ -5,9 +5,10 @@ export type NotificationType =
   | 'report_review'
   | 'stock_alert'
   | 'equipment_alert'
-  | 'vehicle_alert';
+  | 'vehicle_alert'
+  | 'client_message';
 
-export type NotificationCategory = 'hr' | 'mission' | 'stock' | 'equipment';
+export type NotificationCategory = 'hr' | 'mission' | 'stock' | 'equipment' | 'client';
 
 export type NotificationSeverity = 'info' | 'warning' | 'success' | 'urgent';
 

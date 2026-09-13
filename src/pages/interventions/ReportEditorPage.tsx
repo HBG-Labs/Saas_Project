@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
 import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
+import { useClientPortalAccess } from '@/features/client-portal';
 import { ChecklistCard, InterventionFormCard } from '@/features/industries';
 import { useChangeMissionStatus, useMission } from '@/features/missions';
 import { useAuth } from '@/features/auth';
@@ -48,6 +49,7 @@ export default function ReportEditorPage() {
   const { user } = useAuth();
   const { organization, membership } = useCurrentOrganization();
   const { has } = useOrganizationEntitlements(organization?.id ?? null);
+  const portal = useClientPortalAccess();
 
   const intervention = useIntervention(interventionId);
   const workedSecondsQuery = useWorkedSeconds(interventionId);
@@ -386,6 +388,7 @@ export default function ReportEditorPage() {
                 attachments={attachments.data ?? []}
                 canEdit={isEditable}
                 hasAttachmentsFeature={has(FEATURES.attachments)}
+                canShareWithClient={portal.canShare}
               />
             </CardContent>
           </Card>

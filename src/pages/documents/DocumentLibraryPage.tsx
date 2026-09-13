@@ -24,6 +24,7 @@ import {
   type FiltreFamille,
 } from '@/features/documents';
 import { useAuth } from '@/features/auth';
+import { useClientPortalAccess, useShareDocument } from '@/features/client-portal';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import type { OrganizationDocument } from '@/types/domain';
 
@@ -83,6 +84,8 @@ export default function DocumentLibraryPage() {
   const documentsQuery = useDocuments(organizationId, filtres);
   const foldersQuery = useDocumentFolders(organizationId);
   const { remove } = useDocumentMutations();
+  const portal = useClientPortalAccess();
+  const shareDocument = useShareDocument();
 
   const documents = documentsQuery.data?.documents ?? [];
   const total = documentsQuery.data?.total ?? 0;
@@ -262,6 +265,27 @@ export default function DocumentLibraryPage() {
             onDownload={(document) => void telecharger(document)}
             onEdit={setEdition}
             onDelete={setSuppression}
+            onToggleShare={
+              portal.canShare
+                ? (document) => {
+                    shareDocument.mutate(
+                      { documentId: document.id, shared: !document.shared_with_client },
+                      {
+                        onSuccess: () => {
+                          toast.succes(
+                            document.shared_with_client
+                              ? 'Document retiré du portail client'
+                              : 'Document visible par le client',
+                          );
+                        },
+                        onError: () => {
+                          toast.erreur('Partage impossible', 'Vérifiez vos droits, puis réessayez.');
+                        },
+                      },
+                    );
+                  }
+                : undefined
+            }
           />
 
           {pages > 1 && (

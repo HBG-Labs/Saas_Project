@@ -288,4 +288,14 @@ export const qk = {
     entityTrail: (entityType: string, entityId: string) =>
       [...qk.audit.all, 'entity', entityType, entityId] as const,
   },
+
+  // ---------------------------------------------------------- portail client
+  clientPortal: {
+    all: ['client-portal'] as const,
+    settings: (organizationId: string) => [...qk.clientPortal.all, organizationId, 'settings'] as const,
+    conversations: (organizationId: string, customerId?: string) =>
+      [...qk.clientPortal.all, organizationId, 'conversations', customerId ?? 'all'] as const,
+    messages: (conversationId: string) => [...qk.clientPortal.all, 'messages', conversationId] as const,
+    unread: (organizationId: string) => [...qk.clientPortal.all, organizationId, 'unread'] as const,
+  },
 } as const;

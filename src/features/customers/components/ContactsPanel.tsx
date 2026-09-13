@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ContactPortalSwitch } from '@/features/client-portal';
 
 import type { CustomerContact } from '@/types/domain';
 
@@ -85,6 +86,11 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
                   {contact.role_label !== null && contact.role_label !== '' ? (
                     <p className="text-muted-foreground text-xs">{contact.role_label}</p>
                   ) : null}
+                  {contact.portal_enabled ? (
+                    <Badge variant="info" className="mt-1">
+                      Portail client
+                    </Badge>
+                  ) : null}
                 </div>
 
                 <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
@@ -144,6 +150,11 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
                     </Button>
                   </div>
                 ) : null}
+
+                {/* Accès au portail : masqué sans la formule ou la permission. */}
+                <div className="basis-full">
+                  <ContactPortalSwitch contact={contact} />
+                </div>
               </li>
             );
           })}

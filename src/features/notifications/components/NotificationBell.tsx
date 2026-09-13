@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ClipboardList,
   ExternalLink,
+  MessageSquare,
   Package,
   Palmtree,
   Trash2,
@@ -56,6 +57,8 @@ function getNotificationIcon(notification: AppNotification) {
       return <Package className="size-4 text-error" />;
     case 'equipment':
       return <Wrench className="size-4 text-accent" />;
+    case 'client':
+      return <MessageSquare className="size-4 text-info" />;
     case 'mission':
     default:
       return <ClipboardList className="size-4 text-primary" />;
@@ -244,6 +247,7 @@ export function NotificationBell() {
                       n.category === 'stock' && 'bg-error/10 border-error/20',
                       n.category === 'equipment' && 'bg-accent/10 border-accent/20',
                       n.category === 'mission' && 'bg-primary/10 border-primary/20',
+                      n.category === 'client' && 'bg-info/10 border-info/20',
                     )}
                   >
                     {getNotificationIcon(n)}

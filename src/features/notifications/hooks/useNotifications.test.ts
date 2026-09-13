@@ -44,6 +44,15 @@ vi.mock('@/features/planning', () => ({
   }),
 }));
 
+const portail = vi.hoisted(() => ({
+  conversations: [] as Array<Record<string, unknown>>,
+}));
+
+vi.mock('@/features/client-portal', () => ({
+  useClientPortalAccess: () => ({ canView: true }),
+  useClientConversations: () => ({ data: portail.conversations }),
+}));
+
 vi.mock('@/features/interventions', () => ({
   useReportsPendingReview: () => ({
     data: [
@@ -113,6 +122,31 @@ vi.mock('@/features/missions', () => ({
 describe('useNotifications', () => {
   beforeEach(() => {
     localStorage.clear();
+    portail.conversations = [];
+  });
+
+  it('AC22 — une réponse client non lue devient une notification qui mène à la fiche client', () => {
+    portail.conversations = [
+      {
+        id: 'conv_1',
+        customer_id: 'cust_1',
+        subject: 'Devis chaudière',
+        unread_count: 2,
+        last_message_at: '2026-09-13T07:47:11Z',
+        created_at: '2026-09-13T07:40:00Z',
+        contact: { id: 'c1', first_name: 'Jean', last_name: 'Client', email: 'jean@example.com' },
+        customer: { id: 'cust_1', name: 'TRICATEL' },
+      },
+      { id: 'conv_2', customer_id: 'cust_1', subject: 'Lu', unread_count: 0, last_message_at: null, created_at: '2026-09-01T00:00:00Z', contact: null, customer: null },
+    ];
+    const { result } = renderHook(() => useNotifications());
+
+    const clientNotifs = result.current.notifications.filter((n) => n.type === 'client_message');
+    expect(clientNotifs).toHaveLength(1);
+    expect(clientNotifs[0]?.title).toBe('2 nouveaux messages client');
+    expect(clientNotifs[0]?.description).toContain('Jean Client (TRICATEL)');
+    expect(clientNotifs[0]?.link).toBe('/clients/cust_1');
+    expect(clientNotifs[0]?.read).toBe(false);
   });
 
   it('agrège correctement les notifications pour un Dirigeant/Manager', () => {

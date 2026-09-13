@@ -22,6 +22,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { ROUTES } from '@/config/routes';
+import { CustomerMessagingPanel, useClientPortalAccess } from '@/features/client-portal';
 import { validerDestinataire } from '@/features/einvoicing';
 import {
   ContactsPanel,
@@ -42,6 +43,7 @@ export default function CustomerDetailPage() {
   const navigate = useNavigate();
   const { organization } = useCurrentOrganization();
   const { can } = usePermission();
+  const portal = useClientPortalAccess();
 
   const customer = useCustomer(customerId);
   const archiveCustomer = useArchiveCustomer();
@@ -282,6 +284,7 @@ export default function CustomerDetailPage() {
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="sites">Sites d'intervention</TabsTrigger>
           <TabsTrigger value="historique">Historique des missions</TabsTrigger>
+          {portal.canView ? <TabsTrigger value="messagerie">Messagerie</TabsTrigger> : null}
         </TabsList>
 
         <TabsContent value="fiche" className="space-y-4">
@@ -361,6 +364,16 @@ export default function CustomerDetailPage() {
             <SitesPanel customerId={customerId} organizationId={organizationId} canEdit={canEdit} />
           ) : null}
         </TabsContent>
+
+        {portal.canView && organizationId !== null ? (
+          <TabsContent value="messagerie">
+            <Card>
+              <CardContent className="pt-6">
+                <CustomerMessagingPanel organizationId={organizationId} customerId={customerId} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ) : null}
 
         <TabsContent value="historique">
           <CustomerHistory customerId={customerId} />

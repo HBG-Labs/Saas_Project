@@ -33,6 +33,7 @@ export const ROUTES = {
   organizationMembers: '/organisation/membres',
   organizationBilling: '/organisation/facturation',
   organizationEinvoicing: '/organisation/facturation-electronique',
+  organizationClientPortal: '/organisation/portail-client',
   /** Flotte & Véhicules d'intervention. */
   vehicles: '/vehicules',
   /** Journal d'audit — réservé à `audit.view`. */

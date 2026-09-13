@@ -1,4 +1,4 @@
-import { Building, CreditCard, FileCheck2, Scroll } from 'lucide-react';
+import { Building, CreditCard, FileCheck2, Globe, Scroll } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
@@ -17,6 +17,12 @@ export function OrganizationNavTabs() {
       label: 'Facturation électronique',
       shortLabel: 'E-facturation',
       icon: FileCheck2,
+    },
+    {
+      to: ROUTES.organizationClientPortal,
+      label: 'Portail client',
+      shortLabel: 'Portail',
+      icon: Globe,
     },
     {
       to: ROUTES.organizationBilling,

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
+import { useClientConversations, useClientPortalAccess } from '@/features/client-portal';
 import { calibrationState, useEquipmentList } from '@/features/equipment';
 import { useReportsPendingReview } from '@/features/interventions';
 import { useMissions } from '@/features/missions';
@@ -97,6 +98,10 @@ export function useNotifications() {
   const equipmentQuery = useEquipmentList(
     can(PERMISSIONS.equipmentView) ? organizationId : null,
   );
+  // Messages clients non lus : la requête ne part que si la formule et la
+  // permission le permettent — sinon elle ne renverrait rien de toute façon.
+  const portal = useClientPortalAccess();
+  const conversationsQuery = useClientConversations(organizationId, undefined, portal.canView);
 
   // Génération des notifications d'activité
   const notifications = useMemo(() => {
@@ -225,6 +230,31 @@ export function useNotifications() {
       }
     }
 
+    // 6. Réponses de clients non lues (portail client)
+    for (const conversation of conversationsQuery.data ?? []) {
+      if (conversation.unread_count === 0) continue;
+      const id = `client_message_${conversation.id}_${conversation.last_message_at ?? ''}`;
+      const contact = conversation.contact;
+      const contactName =
+        contact === null
+          ? 'Un client'
+          : [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.email || 'Un client';
+      list.push({
+        id,
+        type: 'client_message',
+        category: 'client',
+        severity: 'info',
+        title:
+          conversation.unread_count === 1
+            ? 'Nouveau message client'
+            : `${conversation.unread_count} nouveaux messages client`,
+        description: `${contactName}${conversation.customer ? ` (${conversation.customer.name})` : ''} a répondu dans « ${conversation.subject} ».`,
+        timestamp: conversation.last_message_at ?? conversation.created_at,
+        read: readIds.has(id),
+        link: ROUTES.customer(conversation.customer_id),
+      });
+    }
+
     // Filtrer les notifications supprimées / masquées
     const filtered = list.filter((n) => !dismissedIds.has(n.id));
 
@@ -238,6 +268,7 @@ export function useNotifications() {
     lowStockArticles,
     missionsQuery.data,
     equipmentQuery.data,
+    conversationsQuery.data,
     userId,
     currentMember,
     isManagerOrOwner,

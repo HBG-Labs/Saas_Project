@@ -454,6 +454,20 @@ export const routes: RouteObject[] = [
                     lazy: lazyPage(() => import('@/pages/organization/EinvoicingSettingsPage')),
                   },
                   {
+                    element: <RequirePlan feature={FEATURES.clientPortal} label="Le portail client" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.clientPortalManage} />,
+                        children: [
+                          {
+                            path: ROUTES.organizationClientPortal,
+                            lazy: lazyPage(() => import('@/pages/organization/ClientPortalSettingsPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     element: <RequirePermission permission={PERMISSIONS.memberView} />,
                     children: [
                       {
