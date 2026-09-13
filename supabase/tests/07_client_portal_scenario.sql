@@ -258,7 +258,7 @@ update public.customer_contacts set portal_enabled = true where email = 'cb1@tes
 reset role;
 
 do $$ begin
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.access_granted') = 3,
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.access_granted' and organization_id in (select id from public.organizations where slug in ('portail-a', 'portail-b', 'portail-s'))) = 3,
     'AC35 — chaque accès accordé est journalisé');
 end $$;
 
@@ -403,8 +403,8 @@ select pg_temp.refuses(
 reset role;
 -- Le journal se lit hors RLS : sa policy dépend de la formule, pas du sujet testé.
 do $$ begin
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.message_sent') = 1, 'AC35 — envoi journalisé');
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.message_received') = 1, 'AC35 — réception journalisée');
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.message_sent' and organization_id in (select id from public.organizations where slug in ('portail-a', 'portail-b', 'portail-s'))) = 1, 'AC35 — envoi journalisé');
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.message_received' and organization_id in (select id from public.organizations where slug in ('portail-a', 'portail-b', 'portail-s'))) = 1, 'AC35 — réception journalisée');
   perform pg_temp.ok(
     not exists (select 1 from public.audit_logs where action like 'portal.message%' and metadata::text like '%Bonjour%'),
     'AC35 — le journal ne contient pas le contenu des messages');
@@ -541,7 +541,7 @@ end $$;
 reset role;
 
 do $$ begin
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.access_revoked') = 1, 'AC35 — révocation journalisée');
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.access_revoked' and organization_id in (select id from public.organizations where slug in ('portail-a', 'portail-b', 'portail-s'))) = 1, 'AC35 — révocation journalisée');
 end $$;
 
 do $$ begin raise notice '=== TOUS LES TESTS PASSENT ==='; end $$;

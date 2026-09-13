@@ -296,8 +296,8 @@ reset role;
 
 -- Journal : partages et retraits, sans contenu.
 do $$ begin
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.attachment_shared') = 2, 'AC35 — deux partages journalisés (le lot ne recompte pas la photo déjà partagée)');
-  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.attachment_unshared') = 1, 'AC35 — un retrait journalisé');
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.attachment_shared' and organization_id = (select id from public.organizations where slug = 'lecture-a')) = 2, 'AC35 — deux partages journalisés (le lot ne recompte pas la photo déjà partagée)');
+  perform pg_temp.ok((select count(*) from public.audit_logs where action = 'portal.attachment_unshared' and organization_id = (select id from public.organizations where slug = 'lecture-a')) = 1, 'AC35 — un retrait journalisé');
 end $$;
 
 -- L'employé (sans client_content.share) ne partage rien. Un UPDATE filtré par
