@@ -94,7 +94,7 @@ describe('AttachmentGallery — partage avec le client', () => {
     );
   }
 
-  it('AC13 — sans le droit de partager, aucune commande de partage ; l’état visible est quand même dit', () => {
+  it('AC14/AC15 — sans le droit de partager, aucune commande de partage ; l’état visible est quand même dit', () => {
     afficherPartage(false);
 
     expect(screen.queryByRole('button', { name: /choisir les photos à partager/i })).not.toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('AttachmentGallery — partage avec le client', () => {
     expect(screen.getAllByText('Client')).toHaveLength(1);
   });
 
-  it('AC14 — plusieurs photos sélectionnées sont partagées en UNE opération', () => {
+  it('AC16 — plusieurs photos sélectionnées sont partagées en UNE opération', () => {
     afficherPartage(true);
 
     expect(screen.getByText(/1 sur 3 visible par le client/i)).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe('AttachmentGallery — partage avec le client', () => {
     expect(partage.mutate.mock.calls[0]?.[0]).toEqual({ ids: ['a', 'b'], shared: true });
   });
 
-  it('AC15 — une photo partagée peut être rendue privée à nouveau', () => {
+  it('AC17 — une photo partagée peut être rendue privée à nouveau', () => {
     afficherPartage(true);
 
     fireEvent.click(screen.getByRole('button', { name: /choisir les photos à partager/i }));

@@ -125,7 +125,7 @@ describe('useNotifications', () => {
     portail.conversations = [];
   });
 
-  it('AC22 — une réponse client non lue devient une notification qui mène à la fiche client', () => {
+  it('AC25 — une réponse client non lue devient une notification qui mène à la fiche client', () => {
     portail.conversations = [
       {
         id: 'conv_1',

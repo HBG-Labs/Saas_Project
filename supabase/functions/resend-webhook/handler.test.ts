@@ -159,7 +159,7 @@ Deno.test('un statut pour un identifiant inconnu est ignoré sans erreur', async
   assertEquals(journal.events.get('evt_x')?.outcome, 'ignored');
 });
 
-Deno.test('AC24 — une réponse par adresse HMAC est rattachée et nettoyée', async () => {
+Deno.test('AC22 — une réponse par adresse HMAC est rattachée et nettoyée', async () => {
   const { store, journal } = makeStore();
   const address = await buildReplyAddress(CONV.id, REPLY_SECRET, DOMAIN);
   const mail = receivedMail([address], { headers: { 'Message-ID': '<abc@example.com>' } });
@@ -178,7 +178,7 @@ Deno.test('AC24 — une réponse par adresse HMAC est rattachée et nettoyée', 
   assertEquals(journal.events.get('evt_in')?.outcome, 'processed');
 });
 
-Deno.test('AC24 — à défaut d’adresse, In-Reply-To sur notre Message-ID suffit', async () => {
+Deno.test('AC22 — à défaut d’adresse, In-Reply-To sur notre Message-ID suffit', async () => {
   const { store, journal } = makeStore();
   const h = handler(store, makeResend(receivedMail(['contact@rezo360.fr'])));
   const res = await h(await signedRequest('evt_in2', { type: 'email.received', data: { email_id: 're_in_2' } }));

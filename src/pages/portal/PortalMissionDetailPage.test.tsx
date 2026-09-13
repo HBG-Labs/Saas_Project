@@ -40,7 +40,7 @@ const BASE: PortalMissionDetail = {
 };
 
 describe('PortalMissionDetailPage — ce que le client voit', () => {
-  it('AC07/AC08 — sans rapport approuvé, aucune section « Compte rendu » ; avec, ses seuls champs autorisés', () => {
+  it('AC08/AC09 — sans rapport approuvé, aucune section « Compte rendu » ; avec, ses seuls champs autorisés', () => {
     state.mission = BASE;
     const { unmount } = renderWithProviders(<PortalMissionDetailPage />, { route: '/portail/interventions/m1' });
     expect(screen.queryByText(/compte rendu/i)).not.toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('PortalMissionDetailPage — ce que le client voit', () => {
     expect(screen.getByText(/signé par J\. Client/i)).toBeInTheDocument();
   });
 
-  it('AC13 — seules les photos reçues (donc partagées) sont listées, avec un bouton d’ouverture', () => {
+  it('AC15 — seules les photos reçues (donc partagées) sont listées, avec un bouton d’ouverture', () => {
     state.mission = {
       ...BASE,
       attachments: [

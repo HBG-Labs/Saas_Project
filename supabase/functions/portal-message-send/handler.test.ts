@@ -83,7 +83,7 @@ const post = (body: unknown) =>
     body: JSON.stringify(body),
   });
 
-Deno.test('AC23 — un message de l’entreprise part par Resend et garde l’identifiant fournisseur', async () => {
+Deno.test('AC21 — un message de l’entreprise part par Resend et garde l’identifiant fournisseur', async () => {
   const { handler, journal } = setup();
   const res = await handler(post({ conversationId: CONV, body: 'Bonjour,\n\nnous passons à 14 h.' }));
   assertEquals(res.status, 200);
@@ -116,7 +116,7 @@ Deno.test('une réponse dans un fil porte In-Reply-To, References et « Re: »',
   assertEquals(mail.headers?.['References'], `${ours} ${previous}`);
 });
 
-Deno.test('AC25 — un message du client depuis le portail est enregistré, sans courriel', async () => {
+Deno.test('AC23 — un message du client depuis le portail est enregistré, sans courriel', async () => {
   const { handler, journal } = setup({ direction: 'inbound' });
   const res = await handler(post({ conversationId: CONV, body: 'Merci !' }));
   assertEquals(await res.json(), { messageId: MSG, conversationId: CONV, status: 'received' });
@@ -135,7 +135,7 @@ Deno.test('AC30 — un refus de Resend laisse le message en échec avec le motif
   assertEquals(journal.sent, []);
 });
 
-Deno.test('AC26 — le refus de la base (RLS, trigger) est renvoyé sans envoi', async () => {
+Deno.test('AC24 — le refus de la base (RLS, trigger) est renvoyé sans envoi', async () => {
   const { handler, journal } = setup({ insertError: 'Vous ne pouvez pas écrire dans cette conversation.' });
   const res = await handler(post({ conversationId: CONV, body: 'Bonjour' }));
   assertEquals(res.status, 403);
