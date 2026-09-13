@@ -112,9 +112,9 @@ export default function PortalHomePage() {
 function Kpi({ label, value, icon: Icon, to }: { label: string; value: string | null; icon: typeof Wrench; to: string }) {
   return (
     <Link to={to} className="border-border bg-surface hover:border-primary/50 block rounded-xl border p-3 transition-colors sm:p-4">
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <Icon className="size-3.5" aria-hidden="true" />
-        <span className="truncate">{label}</span>
+      <div className="text-muted-foreground flex items-start gap-1.5 text-xs leading-tight">
+        <Icon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        <span>{label}</span>
       </div>
       {value === null ? (
         <Skeleton className="mt-2 h-7 w-16" />
