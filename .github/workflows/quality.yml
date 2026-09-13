@@ -88,6 +88,7 @@ jobs:
             supabase/functions/_shared/superpdp-transmission.test.ts \
             supabase/functions/_shared/meta-capi.test.ts \
             supabase/functions/_shared/email-confirme.test.ts \
+            supabase/functions/_shared/email.test.ts \
             supabase/functions/_shared/ai-document-catalog.test.ts \
             supabase/functions/_shared/ai-customers.test.ts \
             supabase/functions/_shared/ai-request.test.ts \
