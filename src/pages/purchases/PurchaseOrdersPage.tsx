@@ -2,8 +2,10 @@ import { Download, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useStock, type StockConsumable } from '@/features/stock';
 import { exportToCsv } from '@/lib/csv-export';
@@ -38,6 +40,9 @@ export default function PurchaseOrdersPage() {
     updateOrder,
     deleteOrder,
     receiveOrder,
+    isLoading,
+    error,
+    refreshPurchases,
   } = usePurchases(organizationId);
 
   const { consumables } = useStock(organizationId);
@@ -164,37 +169,48 @@ export default function PurchaseOrdersPage() {
     );
   };
 
+  if (isLoading) return <ListSkeleton />;
+
+  if (error !== null && suppliers.length === 0 && orders.length === 0) {
+    return (
+      <ErrorState
+        error={error}
+        title="Commandes fournisseurs indisponibles"
+        onRetry={() => void refreshPurchases()}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Commandes Fournisseurs & Approvisionnement"
-          description="Émission de bons de commande (PO), suivi des livraisons et pointage avec mise à jour automatique du stock."
-        />
+      <PageHeader
+        title="Commandes fournisseurs"
+        description="Préparez vos bons de commande, suivez les livraisons et réceptionnez les articles en stock."
+        actions={
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="min-h-touch flex-1 gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+              aria-label="Exporter les commandes fournisseurs au format CSV"
+            >
+              <Download className="size-3.5" />
+              <span>Export CSV</span>
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Download className="size-3.5" />
-            <span>Export CSV</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleOpenCreateModal}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Plus className="size-3.5" />
-            <span>Nouvelle Commande</span>
-          </Button>
-        </div>
-      </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenCreateModal}
+              className="min-h-touch flex-[1.35] gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+            >
+              <Plus className="size-3.5" />
+              <span>Nouvelle commande</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Onglets de navigation Achats */}
       <PurchasesNavTabs pendingDeliveryCount={metrics.ordersPendingDelivery} />

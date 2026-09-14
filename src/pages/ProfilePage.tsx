@@ -47,7 +47,6 @@ import {
 import { formatDate } from '@/lib/format';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
-
 export interface EquipmentItem {
   id: string;
   name: string;
@@ -195,8 +194,7 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordSuccess, signalerPasswordSuccess, effacerPasswordSuccess] =
-    useEphemeralFlag(5000);
+  const [passwordSuccess, signalerPasswordSuccess, effacerPasswordSuccess] = useEphemeralFlag(5000);
   const [passwordError, setPasswordError] = useState<unknown>(null);
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -376,92 +374,88 @@ export default function ProfilePage() {
         description="Gérez vos données professionnelles, vos habilitations techniques, votre matériel attribué et vos préférences d'intervention."
       />
 
-      {/*
-        Bandeau d'identité, sans dégradé.
-
-        Il en portait deux : un fondu vers `slate-800` et un voile bleu sur le
-        tiers droit. Écrits pour un fond sombre, ils produisaient en thème clair
-        un coin bleu nuit qui avalait le bouton « Sauvegarder » — un aplat suffit.
-      */}
-      <Card className="border-border bg-surface text-foreground shadow-raised relative overflow-hidden p-4 sm:p-6">
+      <Card className="border-primary/20 bg-surface-raised text-foreground shadow-raised relative overflow-hidden p-4 sm:p-6">
+        <div className="bg-primary/5 pointer-events-none absolute -top-16 -right-12 size-44 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div className="flex items-center gap-5">
-            <div className="relative group">
+          <div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5 md:w-auto">
+            <div className="group relative">
               <button
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
-                className="relative block rounded-full focus:outline-none focus:ring-4 focus:ring-primary/40 cursor-pointer"
+                className="focus-visible:ring-primary/30 relative block cursor-pointer rounded-full focus-visible:ring-4 focus-visible:outline-none"
                 title="Changer de photo de profil"
               >
                 <UserAvatar
                   avatarId={avatarId}
                   name={profile.displayName}
                   size="lg"
-                  className="size-20 text-xl font-bold ring-4 ring-primary/40 shadow-lg transition-transform group-hover:scale-105"
+                  className="ring-primary/20 size-20 text-xl font-bold shadow-lg ring-4 transition-transform group-hover:scale-105"
                 />
-                <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
                   <Camera className="size-5" />
-                  <span className="text-[9px] font-bold mt-0.5">Modifier</span>
+                  <span className="mt-0.5 text-[9px] font-bold">Modifier</span>
                 </div>
               </button>
               <span
-                className="ring-surface absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-success text-3xs text-white ring-2 pointer-events-none shadow-xs"
+                className="bg-success text-3xs ring-surface pointer-events-none absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full text-white shadow-xs ring-2"
                 title="Disponible pour intervention"
               >
                 ✓
               </span>
             </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">{profile.displayName}</h2>
-                <button
-                  type="button"
-                  onClick={() => setIsAvatarModalOpen(true)}
-                  className="flex items-center gap-1 text-3xs font-bold text-primary hover:underline cursor-pointer bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md transition-colors"
-                  title="Choisir un avatar parmi les 50 disponibles"
-                >
-                  <Sparkles className="size-3 text-warning" />
-                  <span>Changer d'avatar</span>
-                </button>
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-foreground text-xl font-bold tracking-tight sm:text-2xl">
+                  {profile.displayName}
+                </h2>
                 <Badge
                   variant="outline"
-                  className="border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                  className="border-primary/40 bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-semibold"
                 >
                   {role ? ROLE_LABELS[role] : 'Compte Professionnel'}
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="border-success/40 bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success"
+                  className="border-success/40 bg-success/10 text-success px-2.5 py-0.5 text-xs font-semibold"
                 >
                   🟢 En service
                 </Badge>
               </div>
-              <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Briefcase className="size-3.5 text-primary" />
+              <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+                <Briefcase className="text-primary size-3.5" />
                 {profile.jobTitle}
               </p>
-              <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground grid gap-1.5 pt-1 text-xs sm:flex sm:items-center sm:gap-4">
                 <span className="flex items-center gap-1">
-                  <MapPin className="size-3 text-muted-foreground" />
+                  <MapPin className="text-muted-foreground size-3" />
                   {profile.zone}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock className="size-3 text-muted-foreground" />
+                  <Clock className="text-muted-foreground size-3" />
                   Membre depuis : {user?.created_at ? formatDate(user.created_at) : 'Compte actif'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex w-full flex-col items-stretch gap-2 border-t border-border-strong pt-4 md:w-auto md:items-end md:border-t-0 md:pt-0">
+          <div className="border-border flex w-full flex-col items-stretch gap-2 border-t pt-4 sm:flex-row md:w-auto md:flex-col md:items-stretch md:border-t-0 md:pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsAvatarModalOpen(true)}
+              leadingIcon={<Sparkles />}
+              className="md:min-w-48"
+            >
+              Changer d'avatar
+            </Button>
             <Button
               variant="primary"
               onClick={() => handleSaveProfile(profile)}
-              disabled={updateProfile.isPending}
-              className="cursor-pointer gap-2 bg-primary font-medium text-white shadow-md hover:bg-primary"
+              isLoading={updateProfile.isPending}
+              loadingLabel="Enregistrement du profil"
+              leadingIcon={<Save />}
+              className="md:min-w-48"
             >
-              <Save className="size-4" />
               {updateProfile.isPending
                 ? 'Enregistrement…'
                 : savedSuccess
@@ -476,15 +470,20 @@ export default function ProfilePage() {
       {/* Sections du Profil (Empilées harmonieusement) */}
       <div className="space-y-6">
         {/* Card 1 : Coordonnées Professionnelles */}
-        <Card>
-          <CardHeader className="border-b pb-4">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <User className="size-4 text-primary" />
-              Informations & Coordonnées
-            </CardTitle>
-            <CardDescription>
-              Identité et informations de contact utilisées sur vos PV d'intervention et fiches de mission.
-            </CardDescription>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 border-b">
+            <div className="flex items-start gap-3">
+              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <User className="size-4" />
+              </span>
+              <div className="min-w-0 space-y-1">
+                <CardTitle>Informations & Coordonnées</CardTitle>
+                <CardDescription>
+                  Identité et informations de contact utilisées sur vos PV d'intervention et fiches
+                  de mission.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -508,20 +507,23 @@ export default function ProfilePage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="profile-email-readonly" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor="profile-email-readonly"
+                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                >
                   Adresse e-mail (Compte)
                 </label>
                 <div className="relative flex items-center">
-                  <Mail className="absolute left-3 size-4 text-muted-foreground" />
+                  <Mail className="text-muted-foreground absolute left-3 size-4" />
                   <input
                     id="profile-email-readonly"
                     type="email"
                     value={user?.email ?? ''}
                     readOnly
                     disabled
-                    className="w-full rounded-md border border-border-strong bg-surface py-2 pr-24 pl-9 text-sm text-muted-foreground opacity-80 cursor-not-allowed"
+                    className="h-touch border-border-strong bg-surface text-muted-foreground w-full cursor-not-allowed rounded-md border pr-24 pl-9 text-sm opacity-80 sm:h-9"
                   />
-                  <span className="absolute right-2 rounded border border-success/20 bg-success/10 px-2 py-0.5 text-2xs font-semibold text-success">
+                  <span className="border-success/20 bg-success/10 text-2xs text-success absolute right-2 rounded border px-2 py-0.5 font-semibold">
                     ✓ Vérifiée
                   </span>
                 </div>
@@ -551,25 +553,28 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card 2 : Habilitations, Sécurité & Matériel de Mesure */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <HardHat className="size-4 text-warning" />
-                Habilitations & Matériel Attribué
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Accréditations électriques, diplômes de sécurité et outillage de mesure enregistrés sur votre profil.
-              </CardDescription>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-4 border-b sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3">
+              <span className="bg-warning/10 text-warning flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <HardHat className="size-4" />
+              </span>
+              <div className="min-w-0 space-y-1">
+                <CardTitle>Habilitations & Matériel Attribué</CardTitle>
+                <CardDescription>
+                  Accréditations électriques, diplômes de sécurité et outillage de mesure
+                  enregistrés sur votre profil.
+                </CardDescription>
+              </div>
             </div>
 
             <Button
               variant="outline"
               size="sm"
               onClick={handleOpenModal}
-              className="cursor-pointer shrink-0 gap-1.5 text-xs"
+              leadingIcon={<Pencil />}
+              className="shrink-0"
             >
-              <Pencil className="size-3.5" />
               Modifier
             </Button>
           </CardHeader>
@@ -577,9 +582,10 @@ export default function ProfilePage() {
           <CardContent className="space-y-6 pt-5">
             {/* Habilitations */}
             <div>
-              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <ShieldCheck className="size-3.5 text-success" />
-                Habilitations & Certifications Sécurité ({profile.certifications.filter((c) => c.name.trim() !== '').length})
+              <h4 className="text-muted-foreground mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                <ShieldCheck className="text-success size-3.5" />
+                Habilitations & Certifications Sécurité (
+                {profile.certifications.filter((c) => c.name.trim() !== '').length})
               </h4>
               <div className="grid gap-3 sm:grid-cols-2">
                 {profile.certifications
@@ -599,24 +605,24 @@ export default function ProfilePage() {
                     return (
                       <div
                         key={cert.id}
-                        className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-primary/40"
+                        className="border-border bg-surface-raised hover:border-primary/40 flex items-start gap-3 rounded-lg border p-3 transition-[border-color,box-shadow] hover:shadow-xs"
                       >
                         {isElec ? (
-                          <Zap className="mt-0.5 size-5 shrink-0 text-warning" />
+                          <Zap className="text-warning mt-0.5 size-5 shrink-0" />
                         ) : isCaces ? (
-                          <Award className="mt-0.5 size-5 shrink-0 text-primary" />
+                          <Award className="text-primary mt-0.5 size-5 shrink-0" />
                         ) : (
-                          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-success" />
+                          <ShieldCheck className="text-success mt-0.5 size-5 shrink-0" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-foreground truncate">
+                          <p className="text-foreground truncate text-xs font-semibold">
                             {cert.name}
                           </p>
-                          <p className="mt-0.5 text-2xs font-medium text-muted-foreground">
+                          <p className="text-2xs text-muted-foreground mt-0.5 font-medium">
                             {cert.validity || 'Validité permanente'}
                           </p>
                           {cert.detail.trim() !== '' && (
-                            <p className="mt-1 text-3xs text-subtle-foreground line-clamp-1">
+                            <p className="text-3xs text-subtle-foreground mt-1 line-clamp-1">
                               {cert.detail}
                             </p>
                           )}
@@ -626,20 +632,21 @@ export default function ProfilePage() {
                   })}
 
                 {profile.certifications.filter((c) => c.name.trim() !== '').length === 0 && (
-                  <p className="col-span-2 text-xs italic text-subtle-foreground">
-                    Aucune habilitation enregistrée. Cliquez sur "Modifier" pour en ajouter (H0V/B2V, CACES, SST, AIPR...).
+                  <p className="text-subtle-foreground col-span-2 text-xs italic">
+                    Aucune habilitation enregistrée. Cliquez sur "Modifier" pour en ajouter
+                    (H0V/B2V, CACES, SST, AIPR...).
                   </p>
                 )}
               </div>
             </div>
 
             {/* Équipements attribués */}
-            <div className="border-t border-border pt-4">
-              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <Wrench className="size-3.5 text-primary" />
+            <div className="border-border border-t pt-4">
+              <h4 className="text-muted-foreground mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                <Wrench className="text-primary size-3.5" />
                 Équipements & Instruments de Mesure Détenus
               </h4>
-              
+
               {profile.equipments.filter((eq) => eq.name.trim() !== '').length > 0 ? (
                 <div className="space-y-2.5">
                   {profile.equipments
@@ -655,14 +662,14 @@ export default function ProfilePage() {
                       return (
                         <div
                           key={eq.id}
-                          className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-xs"
+                          className="border-border bg-surface-raised flex flex-col items-start justify-between gap-2 rounded-lg border px-3 py-2.5 text-xs sm:flex-row sm:items-center"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className={`size-2 rounded-full ${dotColor}`} />
-                            <span className="font-medium text-foreground">{eq.name}</span>
+                            <span className="text-foreground font-medium">{eq.name}</span>
                           </div>
                           {eq.serial.trim() !== '' ? (
-                            <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-2xs text-muted-foreground">
+                            <span className="bg-surface-raised text-2xs text-muted-foreground rounded px-2 py-0.5 font-mono">
                               S/N: {eq.serial}
                             </span>
                           ) : null}
@@ -671,7 +678,7 @@ export default function ProfilePage() {
                     })}
                 </div>
               ) : (
-                <p className="text-xs italic text-subtle-foreground">
+                <p className="text-subtle-foreground text-xs italic">
                   Aucun équipement de mesure enregistré. Cliquez sur "Modifier" pour en déclarer.
                 </p>
               )}
@@ -680,16 +687,18 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card 3 : Sécurité du Compte & Mot de Passe */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Lock className="size-4 text-primary" />
-                Sécurité du Compte & Mot de Passe
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Protégez l'accès à votre espace REZO360 avec un mot de passe robuste.
-              </CardDescription>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-4 border-b sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3">
+              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <Lock className="size-4" />
+              </span>
+              <div className="min-w-0 space-y-1">
+                <CardTitle>Sécurité du Compte & Mot de Passe</CardTitle>
+                <CardDescription>
+                  Protégez l'accès à votre espace REZO360 avec un mot de passe robuste.
+                </CardDescription>
+              </div>
             </div>
 
             <Button
@@ -699,26 +708,29 @@ export default function ProfilePage() {
                 setPasswordError(null);
                 setIsPasswordModalOpen(true);
               }}
-              className="cursor-pointer shrink-0 gap-1.5 text-xs"
+              leadingIcon={<KeyRound />}
+              className="shrink-0"
             >
-              <KeyRound className="size-3.5" />
               Modifier le mot de passe
             </Button>
           </CardHeader>
 
           <CardContent className="pt-5">
             {passwordSuccess ? (
-              <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-xs text-success animate-in fade-in">
+              <div
+                className="border-success/30 bg-success/10 text-success animate-in fade-in flex items-center gap-2 rounded-lg border p-3 text-xs"
+                role="status"
+              >
                 <CheckCircle2 className="size-4 shrink-0" />
                 <span>Votre mot de passe a été mis à jour avec succès.</span>
               </div>
             ) : (
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex flex-col gap-3 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-success" />
+                  <div className="bg-success size-2 rounded-full" />
                   <span>Authentification sécurisée active (Supabase Auth)</span>
                 </div>
-                <span className="font-mono text-2xs text-subtle-foreground">••••••••••••</span>
+                <span className="text-2xs text-subtle-foreground font-mono">••••••••••••</span>
               </div>
             )}
           </CardContent>
@@ -736,9 +748,9 @@ export default function ProfilePage() {
         <form onSubmit={handleModalSubmit} className="space-y-5 pt-2">
           {/* Section Équipements */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <Wrench className="size-3.5 text-primary" />
+            <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
+              <h4 className="text-muted-foreground flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                <Wrench className="text-primary size-3.5" />
                 Équipements & Instruments de Mesure
               </h4>
               <Button
@@ -746,21 +758,25 @@ export default function ProfilePage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleAddEquipment}
-                className="cursor-pointer gap-1 text-xs text-primary hover:text-primary-hover"
+                leadingIcon={<Plus />}
+                className="text-primary hover:text-primary-hover"
               >
-                <Plus className="size-3.5" /> Ajouter un matériel
+                Ajouter un matériel
               </Button>
             </div>
 
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+            <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
               {draftProfile.equipments.length === 0 ? (
-                <p className="text-xs italic text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                <p className="text-muted-foreground border-border rounded-lg border border-dashed py-4 text-center text-xs italic">
                   Aucun équipement renseigné. Cliquez sur « Ajouter un matériel » ci-dessus.
                 </p>
               ) : (
                 draftProfile.equipments.map((eq) => (
-                  <div key={eq.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface p-2.5">
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    key={eq.id}
+                    className="border-border bg-surface-raised flex items-start gap-2 rounded-lg border p-2.5"
+                  >
+                    <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
                       <Input
                         placeholder="Nom de l'équipement (ex: Réflectomètre, Soudeuse...)"
                         value={eq.name}
@@ -777,7 +793,8 @@ export default function ProfilePage() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleRemoveEquipment(eq.id)}
-                      className="cursor-pointer text-muted-foreground hover:text-error shrink-0"
+                      className="text-muted-foreground hover:text-error shrink-0"
+                      aria-label={`Supprimer l'équipement ${eq.name || 'sans nom'}`}
                       title="Supprimer cet équipement"
                     >
                       <Trash2 className="size-4" />
@@ -789,10 +806,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Section Habilitations & Certifications */}
-          <div className="space-y-3 border-t border-border pt-4">
-            <div className="flex items-center justify-between">
-              <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                <ShieldCheck className="size-3.5 text-success" />
+          <div className="border-border space-y-3 border-t pt-4">
+            <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
+              <h4 className="text-muted-foreground flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                <ShieldCheck className="text-success size-3.5" />
                 Habilitations Électriques & Sécurité
               </h4>
               <Button
@@ -800,25 +817,27 @@ export default function ProfilePage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleAddCertification}
-                className="cursor-pointer gap-1 text-xs text-primary hover:text-primary-hover"
+                leadingIcon={<Plus />}
+                className="text-primary hover:text-primary-hover"
               >
-                <Plus className="size-3.5" /> Ajouter une habilitation
+                Ajouter une habilitation
               </Button>
             </div>
 
-            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+            <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
               {draftProfile.certifications.length === 0 ? (
-                <p className="text-xs italic text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
-                  Aucune habilitation enregistrée. Cliquez sur « Ajouter une habilitation » ci-dessus.
+                <p className="text-muted-foreground border-border rounded-lg border border-dashed py-4 text-center text-xs italic">
+                  Aucune habilitation enregistrée. Cliquez sur « Ajouter une habilitation »
+                  ci-dessus.
                 </p>
               ) : (
                 draftProfile.certifications.map((cert, index) => (
                   <div
                     key={cert.id}
-                    className="rounded-lg border border-border bg-surface p-3 space-y-2.5"
+                    className="border-border bg-surface-raised space-y-2.5 rounded-lg border p-3"
                   >
-                    <div className="flex items-center justify-between pb-1 border-b border-border/50">
-                      <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <div className="border-border/50 flex items-center justify-between border-b pb-1">
+                      <span className="text-2xs text-muted-foreground font-bold tracking-wider uppercase">
                         Habilitation #{index + 1}
                       </span>
                       <Button
@@ -826,21 +845,20 @@ export default function ProfilePage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleRemoveCertification(cert.id)}
-                        className="cursor-pointer text-muted-foreground hover:text-error shrink-0 size-6"
+                        className="text-muted-foreground hover:text-error shrink-0"
+                        aria-label={`Supprimer l'habilitation ${cert.name || String(index + 1)}`}
                         title="Supprimer cette habilitation"
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       <Input
                         label="Habilitation (Nom / Niveau)"
                         placeholder="ex: H0V / B2V, CACES R486, SST, AIPR..."
                         value={cert.name}
-                        onChange={(e) =>
-                          handleUpdateCertification(cert.id, 'name', e.target.value)
-                        }
+                        onChange={(e) => handleUpdateCertification(cert.id, 'name', e.target.value)}
                       />
                       <Input
                         label="Date / Validité"
@@ -855,9 +873,7 @@ export default function ProfilePage() {
                       label="Détail ou organisme"
                       placeholder="ex: Intervention Pylônes & Nacelles, Bureau Veritas, SST..."
                       value={cert.detail}
-                      onChange={(e) =>
-                        handleUpdateCertification(cert.id, 'detail', e.target.value)
-                      }
+                      onChange={(e) => handleUpdateCertification(cert.id, 'detail', e.target.value)}
                     />
                   </div>
                 ))
@@ -866,17 +882,21 @@ export default function ProfilePage() {
           </div>
 
           {/* Boutons d'action de la modale */}
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="cursor-pointer"
+              className="w-full sm:w-auto"
             >
               Annuler
             </Button>
-            <Button type="submit" variant="primary" className="cursor-pointer gap-2 bg-primary hover:bg-primary text-white font-semibold">
-              <Check className="size-4" />
+            <Button
+              type="submit"
+              variant="primary"
+              leadingIcon={<Check />}
+              className="w-full font-semibold sm:w-auto"
+            >
               Enregistrer
             </Button>
           </div>
@@ -897,7 +917,7 @@ export default function ProfilePage() {
           <div>
             <label
               htmlFor="modal-new-password"
-              className="mb-1.5 block text-xs font-medium text-muted-foreground"
+              className="text-muted-foreground mb-1.5 block text-xs font-medium"
             >
               Nouveau mot de passe
             </label>
@@ -911,12 +931,17 @@ export default function ProfilePage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 pr-10 text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="h-touch border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-2.5 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                className="size-touch text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-visible:ring-primary absolute right-0 flex cursor-pointer items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none sm:size-9"
+                aria-label={
+                  showNewPassword
+                    ? 'Masquer le nouveau mot de passe'
+                    : 'Afficher le nouveau mot de passe'
+                }
                 title={showNewPassword ? 'Masquer' : 'Afficher'}
               >
                 {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -927,7 +952,7 @@ export default function ProfilePage() {
           <div>
             <label
               htmlFor="modal-confirm-password"
-              className="mb-1.5 block text-xs font-medium text-muted-foreground"
+              className="text-muted-foreground mb-1.5 block text-xs font-medium"
             >
               Confirmer le nouveau mot de passe
             </label>
@@ -941,12 +966,17 @@ export default function ProfilePage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 pr-10 text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="h-touch border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2.5 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                className="size-touch text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-visible:ring-primary absolute right-0 flex cursor-pointer items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none sm:size-9"
+                aria-label={
+                  showConfirmPassword
+                    ? 'Masquer la confirmation du mot de passe'
+                    : 'Afficher la confirmation du mot de passe'
+                }
                 title={showConfirmPassword ? 'Masquer' : 'Afficher'}
               >
                 {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -954,22 +984,24 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsPasswordModalOpen(false)}
-              className="cursor-pointer"
+              className="w-full sm:w-auto"
             >
               Annuler
             </Button>
             <Button
               type="submit"
               variant="primary"
-              disabled={isChangingPassword || newPassword.trim() === ''}
-              className="cursor-pointer gap-2 bg-primary hover:bg-primary text-white font-semibold"
+              disabled={newPassword.trim() === ''}
+              isLoading={isChangingPassword}
+              loadingLabel="Enregistrement du mot de passe"
+              leadingIcon={<KeyRound />}
+              className="w-full font-semibold sm:w-auto"
             >
-              <KeyRound className="size-3.5" />
               {isChangingPassword ? 'Enregistrement…' : 'Enregistrer le mot de passe'}
             </Button>
           </div>
@@ -977,10 +1009,7 @@ export default function ProfilePage() {
       </Modal>
 
       {/* Sélection d'avatar */}
-      <AvatarPicker
-        open={isAvatarModalOpen}
-        onOpenChange={setIsAvatarModalOpen}
-      />
+      <AvatarPicker open={isAvatarModalOpen} onOpenChange={setIsAvatarModalOpen} />
     </div>
   );
 }

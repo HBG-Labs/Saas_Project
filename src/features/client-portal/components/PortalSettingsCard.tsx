@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -52,21 +53,31 @@ export function PortalSettingsCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="text-primary size-4" aria-hidden="true" />
-          Portail client
-        </CardTitle>
-        <CardDescription>
-          Un espace sécurisé où vos clients consultent leurs interventions, devis, factures et documents
-          partagés, et échangent avec vous par messagerie. Tout reste privé tant que vous ne le partagez pas.
-        </CardDescription>
+    <Card className="overflow-hidden">
+      <CardHeader className="border-border bg-surface-sunken/35 border-b">
+        <div className="flex items-start gap-3">
+          <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <Globe className="size-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>Configuration du portail</CardTitle>
+              <Badge variant={enabled ? 'success' : 'neutral'}>
+                {enabled ? 'Actif' : 'Désactivé'}
+              </Badge>
+            </div>
+            <CardDescription>
+              Vos clients consultent leurs interventions, devis, factures et documents partagés dans
+              un espace sécurisé.
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4 pt-4 sm:pt-5">
         <FormError error={error} />
 
         <Switch
+          className="border-border bg-surface-raised flex-row-reverse items-center justify-between rounded-xl border p-3"
           checked={enabled}
           disabled={!access.canManage || update.isPending}
           onCheckedChange={(checked) => {
@@ -77,6 +88,7 @@ export function PortalSettingsCard() {
         />
 
         <Switch
+          className="border-border bg-surface-raised flex-row-reverse items-center justify-between rounded-xl border p-3"
           checked={allowClientInitiated}
           disabled={!access.canManage || !enabled || update.isPending}
           onCheckedChange={(checked) => {
@@ -87,31 +99,42 @@ export function PortalSettingsCard() {
         />
 
         <form
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="border-border bg-surface-raised rounded-xl border p-3"
           onSubmit={(event) => {
             event.preventDefault();
             save({ display_name: currentName.trim() || null });
           }}
         >
-          <Input
-            label="Nom affiché sur le portail et dans les e-mails"
-            placeholder="Nom de votre entreprise"
-            hint="Vide : le nom de l'entreprise est utilisé."
-            value={currentName}
-            maxLength={120}
-            disabled={!access.canManage}
-            onChange={(event) => {
-              setDisplayName(event.target.value);
-            }}
-          />
-          <Button type="submit" variant="outline" size="sm" disabled={!access.canManage || update.isPending}>
-            {update.isPending ? 'Enregistrement…' : 'Enregistrer'}
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Input
+              label="Nom affiché sur le portail et dans les e-mails"
+              placeholder="Nom de votre entreprise"
+              hint="Vide : le nom de l'entreprise est utilisé."
+              value={currentName}
+              maxLength={120}
+              disabled={!access.canManage}
+              onChange={(event) => {
+                setDisplayName(event.target.value);
+              }}
+            />
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              disabled={!access.canManage}
+              isLoading={update.isPending}
+              loadingLabel="Enregistrement du nom du portail"
+              className="w-full sm:w-auto"
+            >
+              {update.isPending ? 'Enregistrement…' : 'Enregistrer'}
+            </Button>
+          </div>
         </form>
 
-        <p className="text-muted-foreground text-xs">
-          Pour donner accès à un client : ouvrez sa fiche, onglet <strong>Contacts</strong>, et activez
-          « Accès au portail » sur l'interlocuteur concerné. Il recevra un code de connexion à chaque visite.
+        <p className="border-primary/20 bg-primary/[0.04] text-muted-foreground rounded-lg border p-3 text-xs leading-relaxed">
+          Pour donner accès à un client : ouvrez sa fiche, onglet <strong>Contacts</strong>, et
+          activez « Accès au portail » sur l'interlocuteur concerné. Il recevra un code de connexion
+          à chaque visite.
         </p>
       </CardContent>
     </Card>

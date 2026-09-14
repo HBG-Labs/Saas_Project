@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowDownLeft,
   ArrowUpRight,
+  Boxes,
   Edit2,
   Minus,
   Plus,
@@ -78,16 +79,18 @@ export function ConsumablesTable({
               placeholder="Rechercher par référence, désignation, emplacement, fournisseur…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary h-9 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-1 focus:outline-none"
+              aria-label="Rechercher un article en stock"
+              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
             />
           </div>
 
           {/* Filtres déroulants */}
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <SelectField
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary h-9 rounded-xl border px-2.5 py-1 text-xs focus:ring-1 focus:outline-none"
+              aria-label="Filtrer par catégorie"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9"
             >
               <option value="all">Toutes catégories</option>
               {uniqueCategories.map((cat) => (
@@ -100,7 +103,8 @@ export function ConsumablesTable({
             <SelectField
               value={stockStatusFilter}
               onChange={(e) => setStockStatusFilter(e.target.value as 'all' | 'low' | 'ok')}
-              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary h-9 rounded-xl border px-2.5 py-1 text-xs focus:ring-1 focus:outline-none"
+              aria-label="Filtrer par niveau de stock"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9"
             >
               <option value="all">Tous niveaux</option>
               <option value="low">⚠️ Stock faible</option>
@@ -108,10 +112,164 @@ export function ConsumablesTable({
             </SelectField>
           </div>
         </div>
+        <p className="text-muted-foreground text-3xs" aria-live="polite">
+          {filteredItems.length} article{filteredItems.length !== 1 ? 's' : ''} affiché
+          {filteredItems.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
-      {/* Tableau compact sans scroll horizontal */}
-      <table className="w-full border-collapse text-left text-xs">
+      {filteredItems.length === 0 ? (
+        <div className="text-muted-foreground px-4 py-12 text-center md:hidden">
+          <div className="bg-surface-sunken mx-auto flex size-11 items-center justify-center rounded-2xl">
+            <Boxes className="size-5" aria-hidden="true" />
+          </div>
+          <p className="text-foreground mt-3 text-sm font-semibold">Aucun article trouvé</p>
+          <p className="text-subtle-foreground mx-auto mt-1 max-w-sm text-xs">
+            Modifiez vos filtres ou créez un nouvel article.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-border divide-y md:hidden">
+          {filteredItems.map((item) => {
+            const isLow = item.quantityInStock <= item.minThreshold;
+            const totalItemValue = item.quantityInStock * (item.unitPriceEur ?? 0);
+
+            return (
+              <article key={item.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="bg-surface-sunken border-border text-foreground text-3xs rounded-md border px-1.5 py-0.5 font-mono font-bold">
+                        {item.reference}
+                      </span>
+                      <Badge variant="outline" className="text-3xs px-1.5 py-0">
+                        {item.category}
+                      </Badge>
+                    </div>
+                    <h3 className="text-foreground mt-1.5 text-sm font-bold">{item.name}</h3>
+                    <p className="text-muted-foreground text-3xs mt-0.5">
+                      {item.location}
+                      {item.supplier ? ` · ${item.supplier}` : ''}
+                    </p>
+                  </div>
+                  <div
+                    className={`shrink-0 rounded-xl border px-3 py-2 text-right ${
+                      isLow
+                        ? 'border-warning/30 bg-warning/10 text-warning'
+                        : 'border-success/20 bg-success/10 text-success'
+                    }`}
+                  >
+                    <p className="font-mono text-lg leading-none font-extrabold">
+                      {item.quantityInStock}
+                    </p>
+                    <p className="text-3xs mt-1 font-semibold">{item.unit}</p>
+                  </div>
+                </div>
+
+                <div className="bg-surface-sunken/45 border-border/70 grid grid-cols-2 gap-3 rounded-xl border p-3">
+                  <div>
+                    <p className="text-muted-foreground text-3xs">Seuil d’alerte</p>
+                    <p className="text-foreground mt-0.5 text-xs font-semibold">
+                      {item.minThreshold} {item.unit}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-3xs">Valeur HT</p>
+                    <p className="text-foreground mt-0.5 text-xs font-semibold">
+                      {item.unitPriceEur !== undefined ? `${totalItemValue.toFixed(2)} €` : '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="bg-surface-raised border-border inline-flex items-center rounded-xl border p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => onQuickAdjust(item.id, -1)}
+                      disabled={item.quantityInStock <= 0}
+                      aria-label={`Retirer une unité de ${item.name}`}
+                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground min-h-touch min-w-touch flex items-center justify-center rounded-lg disabled:opacity-30"
+                    >
+                      <Minus className="size-3.5" aria-hidden="true" />
+                    </button>
+                    <span className="text-foreground min-w-8 text-center font-mono text-xs font-bold">
+                      {item.quantityInStock}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onQuickAdjust(item.id, 1)}
+                      aria-label={`Ajouter une unité à ${item.name}`}
+                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground min-h-touch min-w-touch flex items-center justify-center rounded-lg"
+                    >
+                      <Plus className="size-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onRecordMovement(item, 'in')}
+                      aria-label={`Déclarer une entrée pour ${item.name}`}
+                      className="text-success min-h-touch min-w-touch p-0"
+                    >
+                      <ArrowDownLeft className="size-4" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onRecordMovement(item, 'out')}
+                      aria-label={`Déclarer une sortie pour ${item.name}`}
+                      className="text-error min-h-touch min-w-touch p-0"
+                    >
+                      <ArrowUpRight className="size-4" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onEdit(item)}
+                      aria-label={`Modifier ${item.name}`}
+                      className="min-h-touch min-w-touch p-0"
+                    >
+                      <Edit2 className="size-4" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (
+                          confirm(`Êtes-vous sûr de vouloir supprimer l'article « ${item.name} » ?`)
+                        ) {
+                          onDelete(item.id);
+                        }
+                      }}
+                      aria-label={`Supprimer ${item.name}`}
+                      className="text-muted-foreground hover:text-error min-h-touch min-w-touch p-0"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+
+                {onOrder ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onOrder(item)}
+                    className="min-h-touch border-warning/30 text-warning hover:bg-warning/10 w-full gap-2"
+                  >
+                    <ShoppingCart className="size-3.5" aria-hidden="true" />
+                    Commander auprès du fournisseur
+                  </Button>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tableau desktop */}
+      <table className="hidden w-full border-collapse text-left text-xs md:table">
         <thead>
           <tr className="border-border bg-surface-raised/50 text-muted-foreground text-3xs border-b font-bold tracking-wider uppercase">
             <th className="px-3 py-2.5 sm:px-4">Article &amp; Réf.</th>
@@ -263,6 +421,7 @@ export function ConsumablesTable({
                         variant="ghost"
                         onClick={() => onEdit(item)}
                         title="Modifier l'article"
+                        aria-label={`Modifier ${item.name}`}
                         className="text-muted-foreground hover:text-foreground size-10 cursor-pointer p-0 sm:size-8"
                       >
                         <Edit2 className="size-3.5" />
@@ -281,6 +440,7 @@ export function ConsumablesTable({
                           }
                         }}
                         title="Supprimer l'article"
+                        aria-label={`Supprimer ${item.name}`}
                         className="text-muted-foreground hover:text-error size-10 cursor-pointer p-0 sm:size-8"
                       >
                         <Trash2 className="size-3.5" />

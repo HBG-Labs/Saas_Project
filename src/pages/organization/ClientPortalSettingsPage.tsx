@@ -12,10 +12,10 @@ export default function ClientPortalSettingsPage() {
   useDocumentTitle('Portail client');
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-4xl space-y-6 pb-10">
       <PageHeader
         title="Portail client"
-        description="Ce que vos clients voient, et comment ils vous écrivent."
+        description="Contrôlez l'accès, l'identité affichée et les échanges proposés à vos clients."
       />
       <OrganizationNavTabs />
       <PortalSettingsCard />

@@ -1,29 +1,12 @@
 import { Input } from '@/components/ui/Input';
-import {
-  AlertTriangle,
-  ArrowLeftRight,
-  Boxes,
-  Calendar,
-  ChevronDown,
-  Euro,
-} from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, Boxes, Calendar, ChevronDown, Euro } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Card } from '@/components/ui/Card';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownLabel,
-  DropdownSeparator,
-} from '@/components/ui/Dropdown';
+import { Dropdown, DropdownItem, DropdownLabel, DropdownSeparator } from '@/components/ui/Dropdown';
 import type { StockMetrics, StockMovement } from '../types/stock.types';
 
-export type StockPeriod =
-  | 'current_month'
-  | 'last_month'
-  | 'custom_month'
-  | 'current_year'
-  | 'all';
+export type StockPeriod = 'current_month' | 'last_month' | 'custom_month' | 'current_year' | 'all';
 
 interface StockKpiCardsProps {
   metrics: StockMetrics;
@@ -56,10 +39,7 @@ export function StockKpiCards({
   // Mois actuel et précédent pour affichage dynamique
   const now = useMemo(() => new Date(), []);
   const currentMonthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-  const prevMonthDate = useMemo(
-    () => new Date(now.getFullYear(), now.getMonth() - 1, 1),
-    [now],
-  );
+  const prevMonthDate = useMemo(() => new Date(now.getFullYear(), now.getMonth() - 1, 1), [now]);
   const prevMonthName = prevMonthDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
   const currentYear = now.getFullYear();
 
@@ -134,10 +114,10 @@ export function StockKpiCards({
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {/* 1. Total Articles */}
-      <Card className="border-primary/20 p-3 sm:p-4">
+      <Card className="before:bg-primary/70 hover:border-primary/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
               Articles Référencés
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
@@ -147,7 +127,7 @@ export function StockKpiCards({
               {metrics.totalQuantity} unités en stock
             </p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-primary/10 text-primary border border-primary/20">
+          <div className="bg-primary/10 text-primary border-primary/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
             <Boxes className="size-5" />
           </div>
         </div>
@@ -155,7 +135,7 @@ export function StockKpiCards({
 
       {/* 2. Alertes Stock Faible */}
       <Card
-        className={`p-3 sm:p-4 transition-colors ${
+        className={`before:bg-warning/70 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4 ${
           metrics.lowStockCount > 0
             ? 'border-warning/30 bg-warning/5 dark:bg-warning/10'
             : 'border-border'
@@ -164,7 +144,7 @@ export function StockKpiCards({
         <div className="flex items-center justify-between">
           <div>
             <p
-              className={`text-2xs font-semibold uppercase tracking-wider ${
+              className={`text-2xs font-semibold tracking-wider uppercase ${
                 metrics.lowStockCount > 0 ? 'text-warning' : 'text-muted-foreground'
               }`}
             >
@@ -182,8 +162,8 @@ export function StockKpiCards({
           <div
             className={`hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex ${
               metrics.lowStockCount > 0
-                ? 'bg-warning/15 text-warning border border-warning/30'
-                : 'bg-surface-raised text-muted-foreground border border-border'
+                ? 'bg-warning/15 text-warning border-warning/30 border'
+                : 'bg-surface-raised text-muted-foreground border-border border'
             }`}
           >
             <AlertTriangle className="size-5" />
@@ -192,10 +172,10 @@ export function StockKpiCards({
       </Card>
 
       {/* 3. Valeur Totale du Stock */}
-      <Card className="border-success/20 p-3 sm:p-4">
+      <Card className="before:bg-success/70 hover:border-success/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xs font-semibold uppercase tracking-wider text-success">
+            <p className="text-2xs text-success font-semibold tracking-wider uppercase">
               Valeur Totale du Stock
             </p>
             <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
@@ -207,20 +187,20 @@ export function StockKpiCards({
             </p>
             <p className="text-2xs text-muted-foreground mt-0.5">Prix d’achat total HT</p>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-success/10 text-success border border-success/20">
+          <div className="bg-success/10 text-success border-success/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
             <Euro className="size-5" />
           </div>
         </div>
       </Card>
 
       {/* 4. Mouvements avec menu calendrier sans chevauchement */}
-      <Card className="border-accent/20 p-3 sm:p-4">
+      <Card className="before:bg-accent/70 hover:border-accent/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-2xs font-semibold uppercase leading-snug tracking-wider text-accent">
+            <p className="text-2xs text-accent leading-snug font-semibold tracking-wider uppercase">
               Mouvements Stock
             </p>
-            <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl font-mono">
+            <p className="text-foreground mt-1 font-mono text-xl font-bold sm:text-2xl">
               {periodData.count}
             </p>
 
@@ -231,12 +211,12 @@ export function StockKpiCards({
                 trigger={
                   <button
                     type="button"
-                    className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-surface-raised px-2 py-0.5 text-3xs font-semibold text-foreground border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer max-w-full truncate"
+                    className="min-h-touch bg-surface-raised text-3xs text-foreground border-border hover:border-accent/50 hover:bg-accent/10 inline-flex max-w-full cursor-pointer items-center gap-1 truncate rounded-lg border px-2 py-0.5 font-semibold transition-colors sm:min-h-0"
                     title="Cliquer pour changer le mois ou la période"
                   >
-                    <Calendar className="size-3 text-accent shrink-0" />
+                    <Calendar className="text-accent size-3 shrink-0" />
                     <span className="truncate">{periodData.badgeText}</span>
-                    <ChevronDown className="size-2.5 opacity-60 shrink-0" />
+                    <ChevronDown className="size-2.5 shrink-0 opacity-60" />
                   </button>
                 }
               >
@@ -256,11 +236,15 @@ export function StockKpiCards({
 
                 <DropdownSeparator />
 
-                <div className="p-2 space-y-1.5">
-                  <label htmlFor="stockkpicards-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
+                <div className="space-y-1.5 p-2">
+                  <label
+                    htmlFor="stockkpicards-choisir-un-mois-precis"
+                    className="text-3xs text-muted-foreground block font-bold tracking-wider uppercase"
+                  >
                     Choisir un mois précis :
                   </label>
-                  <Input id="stockkpicards-choisir-un-mois-precis"
+                  <Input
+                    id="stockkpicards-choisir-un-mois-precis"
                     type="month"
                     value={customMonth}
                     onChange={(e) => {
@@ -269,13 +253,13 @@ export function StockKpiCards({
                         setSelectedPeriod('custom_month');
                       }
                     }}
-                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                    className="border-border bg-surface text-foreground focus:border-accent focus:ring-accent h-8 w-full rounded-lg border px-2 text-xs focus:ring-1 focus:outline-none"
                   />
                 </div>
               </Dropdown>
             </div>
           </div>
-          <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-accent/10 text-accent border border-accent/20">
+          <div className="bg-accent/10 text-accent border-accent/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
             <ArrowLeftRight className="size-5" />
           </div>
         </div>

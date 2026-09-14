@@ -2,7 +2,6 @@ import { Receipt } from 'lucide-react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { Badge } from '@/components/ui/Badge';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import {
   FileOpenButton,
@@ -19,14 +18,38 @@ export default function PortalInvoicesPage() {
   useDocumentTitle('Mes factures — Espace client');
   const invoices = usePortalInvoices();
   const list = invoices.data ?? [];
-  const montantDu = list.filter((i) => invoiceIsDue(i.status)).reduce((sum, i) => sum + i.total_cents, 0);
+  const montantDu = list
+    .filter((i) => invoiceIsDue(i.status))
+    .reduce((sum, i) => sum + i.total_cents, 0);
 
   return (
     <div>
       <PortalPageHeader
         title="Mes factures"
-        description={
-          invoices.isSuccess && montantDu > 0 ? `Montant restant dû : ${formatEuros(montantDu)}` : 'Vos factures et avoirs.'
+        description="Consultez vos factures, avoirs et échéances transmis par votre prestataire."
+        icon={Receipt}
+        tone={montantDu > 0 ? 'warning' : 'success'}
+        summary={
+          invoices.isSuccess ? (
+            <div
+              className={`rounded-xl border px-3 py-2 sm:text-right ${
+                montantDu > 0
+                  ? 'border-warning-border bg-warning-subtle'
+                  : 'border-success-border bg-success-subtle'
+              }`}
+            >
+              <p className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
+                {montantDu > 0 ? 'Reste à régler' : 'Situation'}
+              </p>
+              <p
+                className={`mt-0.5 text-base font-bold tabular-nums ${
+                  montantDu > 0 ? 'text-warning' : 'text-success'
+                }`}
+              >
+                {montantDu > 0 ? formatEuros(montantDu) : 'À jour'}
+              </p>
+            </div>
+          ) : null
         }
       />
 
@@ -40,39 +63,57 @@ export default function PortalInvoicesPage() {
           }}
         />
       ) : list.length === 0 ? (
-        <EmptyState icon={Receipt} title="Aucune facture" description="Vos factures apparaîtront ici dès leur émission." />
+        <EmptyState
+          icon={Receipt}
+          title="Aucune facture"
+          description="Vos factures apparaîtront ici dès leur émission."
+        />
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {list.map((i) => (
-            <li key={i.id} className="border-border bg-surface rounded-2xl border p-3 shadow-xs sm:p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+            <li
+              key={i.id}
+              className="border-border bg-surface hover:border-primary/30 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
                 <span
-                  className={`hidden size-10 shrink-0 items-center justify-center rounded-xl sm:inline-flex ${
-                    invoiceIsDue(i.status) ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'
+                  className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${
+                    invoiceIsDue(i.status)
+                      ? 'bg-warning-subtle text-warning'
+                      : 'bg-success-subtle text-success'
                   }`}
                 >
                   <Receipt className="size-5" aria-hidden="true" />
                 </span>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <p className="text-foreground text-sm font-semibold">
                       {i.document_type === 'credit_note' ? 'Avoir' : 'Facture'} {i.reference}
                     </p>
-                    {i.title ? <Badge variant="outline">{i.title}</Badge> : null}
+                    <StatusBadge status={i.status} kind="invoice" />
                   </div>
+                  {i.title ? <p className="text-foreground/80 mt-1 text-sm">{i.title}</p> : null}
                   <p className="text-muted-foreground text-xs">
                     Émise le {formatDateFr(i.issued_at)}
-                    {i.due_date && invoiceIsDue(i.status) ? ` · échéance ${formatDateFr(i.due_date)}` : ''}
+                    {i.due_date && invoiceIsDue(i.status)
+                      ? ` · échéance ${formatDateFr(i.due_date)}`
+                      : ''}
                   </p>
-                  <StatusBadge status={i.status} kind="invoice" />
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <p className="text-foreground text-lg font-bold">{formatEuros(i.total_cents)}</p>
-                  {i.pdf_path ? (
-                    <FileOpenButton bucket="invoice-electronic-documents" path={i.pdf_path} label="PDF" />
-                  ) : null}
-                </div>
+                <p className="text-foreground shrink-0 text-lg font-bold tabular-nums">
+                  {formatEuros(i.total_cents)}
+                </p>
               </div>
+              {i.pdf_path ? (
+                <div className="border-border mt-3 flex border-t pt-3 sm:justify-end">
+                  <FileOpenButton
+                    bucket="invoice-electronic-documents"
+                    path={i.pdf_path}
+                    label="Ouvrir le PDF"
+                    className="w-full sm:w-auto"
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

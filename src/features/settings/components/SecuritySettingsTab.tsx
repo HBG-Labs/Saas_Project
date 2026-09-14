@@ -36,49 +36,59 @@ export function SecuritySettingsTab({ onSaved }: { onSaved?: () => void }) {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in">
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <Shield className="size-3.5 text-primary" />
-            <span>Sécurité & Sessions Actives</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Gérez vos accès de connexion et la sécurité de votre compte utilisateur.
-          </CardDescription>
+    <div className="animate-in fade-in space-y-4">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Shield className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Sécurité & sessions actives</CardTitle>
+              <CardDescription>
+                Gérez vos accès de connexion et la sécurité de votre compte utilisateur.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0 space-y-4">
-          <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-surface border border-border">
-            <div className="space-y-0.5">
+        <CardContent className="space-y-4 pt-4 sm:pt-5">
+          <div className="border-border bg-surface-raised flex items-start gap-3 rounded-xl border p-3">
+            <span className="bg-success/10 text-success flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Lock className="size-4" />
+            </span>
+            <div className="min-w-0 space-y-0.5">
               <div className="flex items-center gap-1.5">
-                <Lock className="size-3.5 text-primary" />
-                <h4 className="text-xs font-semibold text-foreground">Session actuelle</h4>
+                <h4 className="text-foreground text-sm font-semibold">Session actuelle</h4>
               </div>
-              <p className="text-3xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs break-all">
                 Connecté avec : <strong className="text-foreground">{user?.email}</strong>
               </p>
               {lastSignInLabel && (
-                <p className="text-3xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Dernière connexion : <span className="font-mono">{lastSignInLabel}</span>
                 </p>
               )}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-surface border border-border space-y-3">
+          <div className="border-border bg-surface-raised space-y-3 rounded-xl border p-3">
             <div>
-              <h4 className="text-xs font-semibold text-foreground">
+              <h4 className="text-foreground text-sm font-semibold">
                 Déconnecter les autres appareils
               </h4>
-              <p className="text-3xs text-muted-foreground">
-                Si vous avez utilisé un terminal partagé sur chantier ou un ordinateur tiers, révoquez immédiatement toutes les autres sessions ouvertes.
+              <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                Si vous avez utilisé un terminal partagé sur chantier ou un ordinateur tiers,
+                révoquez immédiatement toutes les autres sessions ouvertes.
               </p>
             </div>
 
             <FormError error={signOutError} />
 
             {othersSignedOut && (
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-success/10 text-success border border-success/20 text-2xs font-semibold animate-in fade-in">
+              <div
+                className="animate-in fade-in border-success/20 bg-success/10 text-success flex items-center gap-1.5 rounded-lg border p-2 text-xs font-semibold"
+                role="status"
+              >
                 <Check className="size-3.5" />
                 <span>Toutes les autres sessions ont été révoquées avec succès.</span>
               </div>
@@ -86,14 +96,19 @@ export function SecuritySettingsTab({ onSaved }: { onSaved?: () => void }) {
 
             <Button
               type="button"
-              variant="outline"
+              variant="danger-outline"
               size="sm"
-              disabled={isSigningOutOthers}
+              isLoading={isSigningOutOthers}
+              loadingLabel="Déconnexion des autres appareils"
               onClick={handleSignOutOthers}
-              className="text-xs gap-1.5 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger/60 cursor-pointer"
+              leadingIcon={<LogOut />}
+              className="w-full sm:w-auto"
             >
-              <LogOut className="size-3.5" />
-              <span>{isSigningOutOthers ? 'Révocation en cours…' : 'Déconnecter tous les autres appareils'}</span>
+              <span>
+                {isSigningOutOthers
+                  ? 'Révocation en cours…'
+                  : 'Déconnecter tous les autres appareils'}
+              </span>
             </Button>
           </div>
         </CardContent>

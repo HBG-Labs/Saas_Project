@@ -1,4 +1,14 @@
-import { AlertCircle, ArrowDownRight, ArrowUpRight, CheckCircle2, ExternalLink } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  ExternalLink,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
@@ -7,7 +17,7 @@ import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { computeSubscriptionPrice, PRICING_PLANS } from '@/config/pricing';
@@ -136,7 +146,8 @@ export default function BillingPage() {
   // côté d'un badge « Période d'essai » laisse croire à un prélèvement en cours.
   const enEssai = subscription.data?.status === 'trialing';
 
-  const finDEssai = subscription.data?.trial_ends_at ?? subscription.data?.current_period_end ?? null;
+  const finDEssai =
+    subscription.data?.trial_ends_at ?? subscription.data?.current_period_end ?? null;
   const joursDEssaiRestants = joursRestants(finDEssai);
 
   // Trois situations, et une seule sortie par situation. Le portail Stripe ne
@@ -147,7 +158,7 @@ export default function BillingPage() {
   const resiliationProgrammee = subscription.data?.cancel_at_period_end === true;
 
   const targetDowngradeTier = planToDowngrade
-    ? PAYABLE_PLANS.find((t) => t.id === planToDowngrade) ?? null
+    ? (PAYABLE_PLANS.find((t) => t.id === planToDowngrade) ?? null)
     : null;
 
   if (subscription.isError) {
@@ -164,7 +175,7 @@ export default function BillingPage() {
   const data = subscription.data ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 pb-10">
       <PageHeader
         title="Facturation"
         description="Formule de l’entreprise et consommation associée."
@@ -173,15 +184,18 @@ export default function BillingPage() {
       <OrganizationNavTabs />
 
       {planSuccessMessage ? (
-        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-sm text-success flex items-start gap-3">
-          <CheckCircle2 className="size-5 shrink-0 text-success mt-0.5" />
+        <div
+          className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-xl border p-4 text-sm"
+          role="status"
+        >
+          <CheckCircle2 className="text-success mt-0.5 size-5 shrink-0" />
           <div className="flex-1">
             <p className="font-semibold">{planSuccessMessage}</p>
           </div>
           <button
             type="button"
             onClick={() => setPlanSuccessMessage(null)}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:bg-success/10 hover:text-foreground focus-visible:ring-primary -m-2 flex min-h-11 items-center rounded-md p-2 text-xs focus-visible:ring-2 focus-visible:outline-none sm:min-h-0"
           >
             Fermer
           </button>
@@ -189,60 +203,89 @@ export default function BillingPage() {
       ) : null}
 
       {paymentStatus === 'ok' ? (
-        <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-sm text-success flex items-start gap-3">
-          <CheckCircle2 className="size-5 shrink-0 text-success mt-0.5" />
+        <div
+          className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-xl border p-4 text-sm"
+          role="status"
+        >
+          <CheckCircle2 className="text-success mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-semibold">Paiement validé avec succès !</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Votre abonnement a été pris en compte. Vos nouvelles fonctionnalités et vos quotas sont immédiatement actifs.
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Votre abonnement a été pris en compte. Vos nouvelles fonctionnalités et vos quotas
+              sont immédiatement actifs.
             </p>
           </div>
         </div>
       ) : paymentStatus === 'annule' ? (
-        <div className="rounded-xl border border-warning/40 bg-warning-subtle p-4 text-sm text-foreground flex items-start gap-3">
-          <AlertCircle className="size-5 shrink-0 text-warning mt-0.5" />
+        <div
+          className="border-warning/40 bg-warning-subtle text-foreground flex items-start gap-3 rounded-xl border p-4 text-sm"
+          role="status"
+        >
+          <AlertCircle className="text-warning mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-semibold">Paiement non finalisé</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               La session de paiement Stripe a été interrompue. Aucun prélèvement n'a été effectué.
             </p>
           </div>
         </div>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Formule en cours</CardTitle>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+              <CreditCard className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Formule en cours</CardTitle>
+              <CardDescription>
+                Statut de l’abonnement et prochaine échéance de votre entreprise.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {subscription.isPending ? (
             <Skeleton className="h-16 w-full" />
           ) : (
             <>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-foreground text-lg font-bold">
-                  {PLAN_LABELS[planCode] ?? 'Business'}
+              <div className="border-primary/20 bg-primary/[0.04] flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium">Votre formule</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-3">
+                    <span className="text-foreground text-xl font-bold tracking-tight">
+                      {PLAN_LABELS[planCode] ?? 'Business'}
+                    </span>
+                    {data !== null ? (
+                      <Badge variant={STATUS_VARIANTS[data.status]}>
+                        {STATUS_LABELS[data.status]}
+                      </Badge>
+                    ) : (
+                      <Badge variant="neutral">Aucun abonnement</Badge>
+                    )}
+                  </div>
+                </div>
+                <span className="bg-surface text-primary flex size-11 items-center justify-center self-start rounded-xl shadow-xs sm:self-auto">
+                  <Sparkles className="size-5" />
                 </span>
-                {data !== null ? (
-                  <Badge variant={STATUS_VARIANTS[data.status]}>
-                    {STATUS_LABELS[data.status]}
-                  </Badge>
-                ) : (
-                  <Badge variant="neutral">Aucun abonnement</Badge>
-                )}
               </div>
 
               {data !== null ? (
                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-muted-foreground text-xs">Début de période</dt>
-                    <dd className="text-foreground font-mono tabular-nums">
+                  <div className="border-border bg-surface-raised rounded-lg border p-3">
+                    <dt className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <CalendarDays className="text-primary size-3.5" /> Début de période
+                    </dt>
+                    <dd className="text-foreground mt-1 font-mono font-medium tabular-nums">
                       {formatDate(data.current_period_start)}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-muted-foreground text-xs">Fin de période</dt>
-                    <dd className="text-foreground font-mono tabular-nums">
+                  <div className="border-border bg-surface-raised rounded-lg border p-3">
+                    <dt className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <CalendarDays className="text-primary size-3.5" /> Fin de période
+                    </dt>
+                    <dd className="text-foreground mt-1 font-mono font-medium tabular-nums">
                       {formatDate(data.current_period_end)}
                     </dd>
                   </div>
@@ -265,16 +308,26 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Changer de formule</CardTitle>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+              <Users className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Changer de formule</CardTitle>
+              <CardDescription>
+                Comparez les capacités et visualisez le coût pour votre effectif actuel.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* L'erreur s'affiche de manière claire */}
           <FormError error={updatePlan.error ?? portal.error ?? resume.error} />
 
           {summary.data !== null && summary.data !== undefined ? (
-            <div className="space-y-3">
+            <div className="border-border bg-surface-sunken/35 space-y-3 rounded-xl border p-3 sm:p-4">
               {summary.isPending ? (
                 <Skeleton className="h-12 w-full" />
               ) : (
@@ -326,9 +379,10 @@ export default function BillingPage() {
           ) : null}
 
           {enEssai && !gereParStripe && joursDEssaiRestants > 2 ? (
-            <p className="border-primary/30 bg-primary/[0.06] text-muted-foreground rounded-xl border px-3 py-2 text-xs">
-              Vous gardez vos <strong className="text-foreground">{joursDEssaiRestants} jours
-              d’essai</strong> : en souscrivant maintenant, rien n’est prélevé avant le{' '}
+            <p className="border-primary/30 bg-primary/[0.06] text-muted-foreground rounded-xl border px-3 py-2.5 text-xs">
+              Vous gardez vos{' '}
+              <strong className="text-foreground">{joursDEssaiRestants} jours d’essai</strong> : en
+              souscrivant maintenant, rien n’est prélevé avant le{' '}
               <strong className="text-foreground">
                 {formatDate(data?.trial_ends_at ?? data?.current_period_end ?? null)}
               </strong>
@@ -367,38 +421,39 @@ export default function BillingPage() {
                       });
                     }
                   }}
-                  className={`h-auto sm:h-auto min-h-[88px] whitespace-normal flex-col items-start justify-center gap-1.5 p-4 text-left w-full transition-all ${
+                  aria-current={isCurrent ? 'true' : undefined}
+                  className={`h-auto min-h-[112px] w-full flex-col items-start justify-center gap-2 rounded-xl p-4 text-left whitespace-normal transition-[border-color,background-color,box-shadow,transform] sm:h-auto ${
                     isCurrent
-                      ? 'border-primary/60 bg-primary/5 cursor-default'
-                      : 'hover:border-primary/40 hover:bg-surface-hover'
+                      ? 'border-primary/60 bg-primary/[0.07] cursor-default shadow-xs disabled:opacity-100'
+                      : 'hover:border-primary/40 hover:bg-surface-hover hover:shadow-raised hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
                   }`}
                 >
-                  <div className="flex items-center justify-between w-full gap-2">
-                    <span className="font-semibold text-sm flex items-center gap-1.5">
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
                       {tier.name}
                       {isCurrent ? ' — actuelle' : ''}
                       {!isCurrent && isDowngrade && gereParStripe ? (
-                        <ArrowDownRight className="size-3.5 text-warning shrink-0" />
+                        <ArrowDownRight className="text-warning size-3.5 shrink-0" />
                       ) : !isCurrent ? (
-                        <ArrowUpRight className="size-3.5 text-primary shrink-0" />
+                        <ArrowUpRight className="text-primary size-3.5 shrink-0" />
                       ) : null}
                     </span>
                     {tier.popular && !isCurrent ? (
-                      <span className="text-[10px] font-bold text-primary border border-primary/30 bg-primary/10 rounded-md px-1.5 py-0.5">
+                      <span className="border-primary/30 bg-primary/10 text-primary rounded-md border px-1.5 py-0.5 text-[10px] font-bold">
                         Populaire
                       </span>
                     ) : null}
                   </div>
-                  <div className="flex flex-col gap-0.5 text-2xs">
-                    <span className="font-medium text-foreground">
+                  <div className="text-2xs flex flex-col gap-1">
+                    <span className="text-foreground font-semibold">
                       {tier.priceMonthly} € / mois · {tier.includedUsers} utilisateur
                       {tier.includedUsers > 1 ? 's' : ''} inclus
                     </span>
-                    <span className="font-normal text-muted-foreground">
+                    <span className="text-muted-foreground font-normal">
                       +{tier.additionalUserPriceMonthly} € / mois par utilisateur supplémentaire
                     </span>
                     {auDela > 0 ? (
-                      <span className="font-semibold text-warning">
+                      <span className="text-warning font-semibold">
                         {projete} € pour vos {seats} — {auDela} au-delà à{' '}
                         {tier.additionalUserPriceMonthly} €
                       </span>
@@ -416,7 +471,7 @@ export default function BillingPage() {
             </p>
           ) : null}
 
-          <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+          <div className="border-border flex flex-col items-stretch justify-between gap-4 border-t pt-4 sm:flex-row sm:items-center">
             <p className="text-muted-foreground text-sm">
               {gereParStripe ? (
                 'Moyen de paiement, factures et résiliation.'
@@ -433,8 +488,8 @@ export default function BillingPage() {
               )}
             </p>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant="ghost" size="sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
                 <Link to={ROUTES.pricing}>
                   Comparer les formules
                   <ExternalLink className="size-3.5" />
@@ -446,21 +501,27 @@ export default function BillingPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={portal.isPending || !canManageBilling}
+                  disabled={!canManageBilling}
+                  isLoading={portal.isPending}
+                  loadingLabel="Ouverture du portail Stripe"
                   onClick={() => portal.mutate()}
+                  trailingIcon={<ExternalLink />}
+                  className="w-full sm:w-auto"
                 >
                   {portal.isPending ? 'Ouverture…' : 'Gérer mon abonnement'}
-                  <ExternalLink className="size-3.5" />
                 </Button>
               ) : resiliationProgrammee ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={resume.isPending || !canManageBilling}
+                  disabled={!canManageBilling}
+                  isLoading={resume.isPending}
+                  loadingLabel="Reprise de l’abonnement"
                   onClick={() => {
                     resume.mutate();
                   }}
+                  className="w-full sm:w-auto"
                 >
                   {resume.isPending ? 'Reprise…' : 'Reprendre l’abonnement'}
                 </Button>
@@ -469,6 +530,7 @@ export default function BillingPage() {
                   type="button"
                   variant="danger-outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setConfirmerResiliation(true);
                   }}
@@ -490,11 +552,12 @@ export default function BillingPage() {
         title={`Rétrograder vers la formule ${targetDowngradeTier?.name ?? ''}`}
         description="Votre changement prendra effet immédiatement sans prélèvement supplémentaire."
         footer={
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               size="sm"
               disabled={updatePlan.isPending}
+              className="w-full sm:w-auto"
               onClick={() => {
                 setPlanToDowngrade(null);
               }}
@@ -504,7 +567,9 @@ export default function BillingPage() {
             <Button
               variant="primary"
               size="sm"
-              disabled={updatePlan.isPending}
+              isLoading={updatePlan.isPending}
+              loadingLabel="Modification de la formule"
+              className="w-full sm:w-auto"
               onClick={() => {
                 if (planToDowngrade) {
                   updatePlan.mutate(planToDowngrade, {
@@ -526,8 +591,8 @@ export default function BillingPage() {
         }
       >
         <div className="space-y-3 text-sm">
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1.5">
-            <p className="font-semibold text-foreground flex items-center gap-1.5">
+          <div className="border-primary/20 bg-primary/5 space-y-1.5 rounded-lg border p-3 text-xs">
+            <p className="text-foreground flex items-center gap-1.5 font-semibold">
               💰 Aucun paiement immédiat requis
             </p>
             <p className="text-muted-foreground">
@@ -537,8 +602,8 @@ export default function BillingPage() {
           </div>
 
           <div className="space-y-2 text-xs">
-            <p className="font-medium text-foreground">Ajustement de vos quotas :</p>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+            <p className="text-foreground font-medium">Ajustement de vos quotas :</p>
+            <ul className="text-muted-foreground list-inside list-disc space-y-1">
               <li>
                 Sièges inclus : passe à{' '}
                 <strong className="text-foreground">
@@ -569,11 +634,12 @@ export default function BillingPage() {
         title="Résilier l’abonnement"
         description="Vous ne perdez rien aujourd’hui."
         footer={
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               size="sm"
               disabled={cancel.isPending}
+              className="w-full sm:w-auto"
               onClick={() => {
                 setConfirmerResiliation(false);
               }}
@@ -583,7 +649,9 @@ export default function BillingPage() {
             <Button
               variant="danger-outline"
               size="sm"
-              disabled={cancel.isPending}
+              isLoading={cancel.isPending}
+              loadingLabel="Résiliation de l’abonnement"
+              className="w-full sm:w-auto"
               onClick={() => {
                 cancel.mutate(undefined, {
                   onSuccess: () => {

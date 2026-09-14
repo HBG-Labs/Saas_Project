@@ -1,18 +1,11 @@
-import {
-  AlertTriangle,
-  Car,
-  CheckCircle2,
-  Download,
-  Plus,
-  Search,
-  Truck,
-} from 'lucide-react';
+import { AlertTriangle, Car, CheckCircle2, Download, Plus, Search, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -54,12 +47,12 @@ export default function VehiclesPage() {
   const [historyVehicleId, setHistoryVehicleId] = useState<string | null>(null);
 
   const editingVehicle = useMemo(
-    () => (editingVehicleId ? vehicles.find((v) => v.id === editingVehicleId) ?? null : null),
-    [editingVehicleId, vehicles]
+    () => (editingVehicleId ? (vehicles.find((v) => v.id === editingVehicleId) ?? null) : null),
+    [editingVehicleId, vehicles],
   );
   const historyVehicle = useMemo(
-    () => (historyVehicleId ? vehicles.find((v) => v.id === historyVehicleId) ?? null : null),
-    [historyVehicleId, vehicles]
+    () => (historyVehicleId ? (vehicles.find((v) => v.id === historyVehicleId) ?? null) : null),
+    [historyVehicleId, vehicles],
   );
 
   // KPIs
@@ -71,7 +64,9 @@ export default function VehiclesPage() {
     const now = new Date().getTime();
     return vehicles.filter((v) => {
       const daysCt = Math.ceil((new Date(v.nextCtDate).getTime() - now) / (1000 * 60 * 60 * 24));
-      const daysRev = Math.ceil((new Date(v.nextRevisionDate).getTime() - now) / (1000 * 60 * 60 * 24));
+      const daysRev = Math.ceil(
+        (new Date(v.nextRevisionDate).getTime() - now) / (1000 * 60 * 60 * 24),
+      );
       return daysCt <= 45 || daysRev <= 30;
     }).length;
   }, [vehicles]);
@@ -120,7 +115,7 @@ export default function VehiclesPage() {
         { header: 'Prochaine Révision', accessor: (v) => v.nextRevisionDate },
         { header: 'Notes', accessor: (v) => v.notes ?? '' },
       ],
-      filteredVehicles
+      filteredVehicles,
     );
   };
 
@@ -137,20 +132,21 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
       {/* Page Header */}
       <PageHeader
         title="Flotte & Véhicules d'intervention"
         description="Parc automobile, affectations des techniciens terrain, contrôle technique et suivi de maintenance."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             {vehicles.length > 0 && (
               <Button
                 type="button"
                 variant="outline"
-                className="gap-2"
+                className="min-h-touch flex-1 gap-2 sm:min-h-0 sm:flex-none"
                 onClick={handleExportCsv}
                 title="Exporter la liste en CSV"
+                aria-label="Exporter la flotte au format CSV"
               >
                 <Download className="size-4" />
                 <span className="hidden sm:inline">Exporter CSV</span>
@@ -159,7 +155,7 @@ export default function VehiclesPage() {
             <Button
               type="button"
               variant="primary"
-              className="gap-2"
+              className="min-h-touch flex-[1.35] gap-2 sm:min-h-0 sm:flex-none"
               onClick={() => setIsAddModalOpen(true)}
             >
               <Plus className="size-4" />
@@ -173,70 +169,82 @@ export default function VehiclesPage() {
       <TeamsNavTabs />
 
       {/* 4 KPIs Flotte */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         {/* Total */}
-        <Card className="border-border">
-          <CardContent className="p-4 pt-4 sm:pt-4 flex items-center justify-between">
+        <Card className="before:bg-primary/70 hover:border-primary/35 hover:shadow-raised border-border/80 relative overflow-hidden shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0">
+          <CardContent className="flex items-center justify-between p-3.5 pt-3.5 sm:p-4 sm:pt-4">
             <div className="space-y-0.5">
-              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <p className="text-3xs text-muted-foreground font-semibold tracking-wider uppercase">
                 Total Flotte
               </p>
-              <p className="text-2xl font-bold font-mono text-foreground">{totalCount}</p>
+              <p className="text-foreground font-mono text-2xl font-bold">{totalCount}</p>
               <p className="text-3xs text-muted-foreground">Véhicules enregistrés</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <div className="bg-primary/10 text-primary rounded-xl p-2.5">
               <Truck className="size-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* En intervention */}
-        <Card className="border-border">
-          <CardContent className="p-4 pt-4 sm:pt-4 flex items-center justify-between">
+        <Card className="before:bg-success/70 hover:border-success/35 hover:shadow-raised border-border/80 relative overflow-hidden shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0">
+          <CardContent className="flex items-center justify-between p-3.5 pt-3.5 sm:p-4 sm:pt-4">
             <div className="space-y-0.5">
-              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <p className="text-3xs text-muted-foreground font-semibold tracking-wider uppercase">
                 Sur le terrain
               </p>
-              <p className="text-2xl font-bold font-mono text-success">{inServiceCount}</p>
+              <p className="text-success font-mono text-2xl font-bold">{inServiceCount}</p>
               <p className="text-3xs text-muted-foreground">
-                {totalCount > 0 ? `${Math.round((inServiceCount / totalCount) * 100)}% de la flotte` : '0%'}
+                {totalCount > 0
+                  ? `${Math.round((inServiceCount / totalCount) * 100)}% de la flotte`
+                  : '0%'}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-success/10 text-success">
+            <div className="bg-success/10 text-success rounded-xl p-2.5">
               <CheckCircle2 className="size-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Disponibles */}
-        <Card className="border-border">
-          <CardContent className="p-4 pt-4 sm:pt-4 flex items-center justify-between">
+        <Card className="before:bg-primary/70 hover:border-primary/35 hover:shadow-raised border-border/80 relative overflow-hidden shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0">
+          <CardContent className="flex items-center justify-between p-3.5 pt-3.5 sm:p-4 sm:pt-4">
             <div className="space-y-0.5">
-              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <p className="text-3xs text-muted-foreground font-semibold tracking-wider uppercase">
                 Disponibles
               </p>
-              <p className="text-2xl font-bold font-mono text-primary">{availableCount}</p>
+              <p className="text-primary font-mono text-2xl font-bold">{availableCount}</p>
               <p className="text-3xs text-muted-foreground">Au dépôt / Libres</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <div className="bg-primary/10 text-primary rounded-xl p-2.5">
               <Car className="size-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Alertes Entretien / CT */}
-        <Card className={cn('border-border', urgentAlertsCount > 0 && 'border-warning/40 bg-warning/5')}>
-          <CardContent className="p-4 pt-4 sm:pt-4 flex items-center justify-between">
+        <Card
+          className={cn(
+            'before:bg-warning/70 hover:shadow-raised border-border/80 relative overflow-hidden shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0',
+            urgentAlertsCount > 0 && 'border-warning/40 bg-warning/5',
+          )}
+        >
+          <CardContent className="flex items-center justify-between p-3.5 pt-3.5 sm:p-4 sm:pt-4">
             <div className="space-y-0.5">
-              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <p className="text-3xs text-muted-foreground font-semibold tracking-wider uppercase">
                 Échéances Proches
               </p>
-              <p className={cn('text-2xl font-bold font-mono', urgentAlertsCount > 0 ? 'text-warning' : 'text-foreground')}>
+              <p
+                className={cn(
+                  'font-mono text-2xl font-bold',
+                  urgentAlertsCount > 0 ? 'text-warning' : 'text-foreground',
+                )}
+              >
                 {urgentAlertsCount}
               </p>
               <p className="text-3xs text-muted-foreground">CT ou révision &lt; 45j</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-warning/10 text-warning">
+            <div className="bg-warning/10 text-warning rounded-xl p-2.5">
               <AlertTriangle className="size-5" />
             </div>
           </CardContent>
@@ -244,24 +252,28 @@ export default function VehiclesPage() {
       </div>
 
       {/* Barre de filtres et recherche */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-3 rounded-2xl border border-border">
+      <div className="border-border bg-surface flex flex-col items-stretch justify-between gap-3 rounded-2xl border p-3 shadow-xs sm:flex-row sm:items-center sm:p-4">
         {/* Recherche */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input
+        <div className="flex-1">
+          <Input
             type="text"
             placeholder="Rechercher une immatriculation, marque, modèle, conducteur..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-surface-hover/50 border border-border/80 rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            label="Rechercher un véhicule"
+            hideLabel
+            leadingIcon={<Search />}
+            className="rounded-xl text-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
           {/* Filtre statut */}
           <Select
             value={statusFilter}
             onValueChange={setStatusFilter}
+            aria-label="Filtrer les véhicules par statut"
+            className="min-w-0 sm:w-48"
             options={[
               { value: 'all', label: 'Tous les statuts' },
               { value: 'in_service', label: 'Sur le terrain' },
@@ -275,6 +287,8 @@ export default function VehiclesPage() {
           <Select
             value={typeFilter}
             onValueChange={setTypeFilter}
+            aria-label="Filtrer les véhicules par type"
+            className="min-w-0 sm:w-48"
             options={[
               { value: 'all', label: 'Tous les types' },
               { value: 'van', label: 'Fourgons / Ateliers' },
@@ -289,31 +303,45 @@ export default function VehiclesPage() {
 
       {/* Liste des véhicules */}
       {filteredVehicles.length === 0 ? (
-        <div className="text-center py-12 px-4 bg-surface rounded-2xl border border-dashed border-border space-y-3">
-          <div className="p-3 bg-surface-hover rounded-2xl w-fit mx-auto text-muted-foreground">
+        <div className="border-border bg-surface space-y-3 rounded-2xl border border-dashed px-4 py-12 text-center">
+          <div className="bg-surface-sunken text-muted-foreground mx-auto flex size-12 items-center justify-center rounded-2xl">
             <Truck className="size-6" />
           </div>
-          <h3 className="text-sm font-bold text-foreground">Aucun véhicule trouvé</h3>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          <h3 className="text-foreground text-sm font-bold">Aucun véhicule trouvé</h3>
+          <p className="text-muted-foreground mx-auto max-w-sm text-xs">
             {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
               ? 'Aucun véhicule ne correspond aux critères de recherche sélectionnés.'
               : 'Commencez par ajouter votre premier véhicule d’intervention.'}
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSearchQuery('');
-              setStatusFilter('all');
-              setTypeFilter('all');
-            }}
-          >
-            Réinitialiser les filtres
-          </Button>
+          {searchQuery || statusFilter !== 'all' || typeFilter !== 'all' ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setStatusFilter('all');
+                setTypeFilter('all');
+              }}
+              className="min-h-touch sm:min-h-0"
+            >
+              Réinitialiser les filtres
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddModalOpen(true)}
+              className="min-h-touch gap-2 sm:min-h-0"
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Ajouter le premier véhicule
+            </Button>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredVehicles.map((vehicle) => (
             <VehicleCard
               key={vehicle.id}

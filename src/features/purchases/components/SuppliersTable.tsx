@@ -1,7 +1,9 @@
 import {
+  Building2,
   Edit2,
   Globe,
   Mail,
+  MapPin,
   Phone,
   Search,
   ShoppingCart,
@@ -66,33 +68,158 @@ export function SuppliersTable({
   return (
     <Card className="border-border bg-surface shadow-xs">
       {/* Barre de recherche */}
-      <div className="p-3 sm:p-4 border-b border-border">
+      <div className="border-border border-b p-3 sm:p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Rechercher par raison sociale, contact, ville, téléphone, email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-9 rounded-xl border border-border bg-surface-raised pl-9 pr-4 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            aria-label="Rechercher un fournisseur"
+            className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
           />
         </div>
+        <p className="text-muted-foreground text-3xs mt-2" aria-live="polite">
+          {filteredSuppliers.length} fournisseur{filteredSuppliers.length !== 1 ? 's' : ''} affiché
+          {filteredSuppliers.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
-      {/* Tableau compact sans slider horizontal */}
-      <table className="w-full text-left text-xs border-collapse">
+      {filteredSuppliers.length === 0 ? (
+        <div className="text-muted-foreground px-4 py-12 text-center md:hidden">
+          <div className="bg-surface-sunken text-muted-foreground mx-auto flex size-11 items-center justify-center rounded-2xl">
+            <Building2 className="size-5" aria-hidden="true" />
+          </div>
+          <p className="text-foreground mt-3 text-sm font-semibold">Aucun fournisseur trouvé</p>
+          <p className="text-subtle-foreground mx-auto mt-1 max-w-sm text-xs">
+            Ajoutez un partenaire fournisseur ou modifiez votre recherche.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-border divide-y md:hidden">
+          {filteredSuppliers.map((sup) => {
+            const stat = supplierStats[sup.id] || { count: 0, totalSpent: 0 };
+
+            return (
+              <article key={sup.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="bg-primary-subtle text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+                        <Building2 className="size-4.5" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-foreground truncate text-sm font-bold">{sup.name}</h3>
+                        <p className="text-muted-foreground text-3xs">
+                          {sup.code ? `Réf. ${sup.code}` : 'Fournisseur référencé'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {stat.count > 0 ? (
+                    <span className="bg-primary-subtle text-primary text-3xs shrink-0 rounded-full px-2 py-1 font-semibold">
+                      {stat.count} commande{stat.count > 1 ? 's' : ''}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="bg-surface-sunken/45 border-border/70 grid gap-2 rounded-xl border p-3 text-xs">
+                  {sup.contactName ? (
+                    <p className="text-foreground font-semibold">{sup.contactName}</p>
+                  ) : null}
+                  <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-2">
+                    {sup.phone ? (
+                      <a
+                        className="hover:text-primary inline-flex items-center gap-1.5"
+                        href={`tel:${sup.phone}`}
+                      >
+                        <Phone className="size-3.5" aria-hidden="true" />
+                        {sup.phone}
+                      </a>
+                    ) : null}
+                    {sup.email ? (
+                      <a
+                        className="hover:text-primary inline-flex min-w-0 items-center gap-1.5"
+                        href={`mailto:${sup.email}`}
+                      >
+                        <Mail className="size-3.5 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{sup.email}</span>
+                      </a>
+                    ) : null}
+                    {sup.city ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-3.5" aria-hidden="true" />
+                        {sup.city} {sup.postalCode ? `(${sup.postalCode})` : ''}
+                      </span>
+                    ) : null}
+                  </div>
+                  {stat.count > 0 ? (
+                    <p className="text-foreground border-border/60 border-t pt-2 font-medium">
+                      {stat.totalSpent.toLocaleString('fr-FR', {
+                        style: 'currency',
+                        currency: 'EUR',
+                      })}{' '}
+                      HT commandés
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onCreateOrder(sup)}
+                    className="min-h-touch border-primary/30 text-primary flex-1 gap-1.5"
+                  >
+                    <ShoppingCart className="size-3.5" aria-hidden="true" />
+                    Commander
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onEdit(sup)}
+                    aria-label={`Modifier ${sup.name}`}
+                    className="min-h-touch min-w-touch p-0"
+                  >
+                    <Edit2 className="size-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const warningMsg =
+                        stat.count > 0
+                          ? `Ce fournisseur possède ${stat.count} commande(s) enregistrée(s).\nÊtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`
+                          : `Êtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`;
+                      if (confirm(warningMsg)) onDelete(sup.id);
+                    }}
+                    aria-label={`Supprimer ${sup.name}`}
+                    className="text-muted-foreground hover:text-error min-h-touch min-w-touch p-0"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tableau desktop */}
+      <table className="hidden w-full border-collapse text-left text-xs md:table">
         <thead>
-          <tr className="border-b border-border bg-surface-raised/50 text-muted-foreground text-3xs font-bold uppercase tracking-wider">
-            <th className="py-2.5 px-3 sm:px-4">Fournisseur &amp; Réf.</th>
-            <th className="py-2.5 px-3">Contact &amp; Coordonnées</th>
-            <th className="py-2.5 px-3 hidden md:table-cell">Localisation &amp; Activité</th>
-            <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
+          <tr className="border-border bg-surface-raised/50 text-muted-foreground text-3xs border-b font-bold tracking-wider uppercase">
+            <th className="px-3 py-2.5 sm:px-4">Fournisseur &amp; Réf.</th>
+            <th className="px-3 py-2.5">Contact &amp; Coordonnées</th>
+            <th className="hidden px-3 py-2.5 md:table-cell">Localisation &amp; Activité</th>
+            <th className="px-3 py-2.5 text-right sm:px-4">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-border divide-y">
           {filteredSuppliers.length === 0 ? (
             <tr>
-              <td colSpan={4} className="py-10 text-center text-muted-foreground">
+              <td colSpan={4} className="text-muted-foreground py-10 text-center">
                 <p className="text-sm font-semibold">Aucun fournisseur trouvé</p>
                 <p className="text-2xs text-subtle-foreground mt-1">
                   Ajoutez un nouveau partenaire fournisseur ou modifiez votre recherche.
@@ -103,33 +230,26 @@ export function SuppliersTable({
             filteredSuppliers.map((sup) => {
               const stat = supplierStats[sup.id] || { count: 0, totalSpent: 0 };
               return (
-                <tr
-                  key={sup.id}
-                  className="hover:bg-surface-hover/50 transition-colors group"
-                >
+                <tr key={sup.id} className="hover:bg-surface-hover/50 group transition-colors">
                   {/* 1. Fournisseur & Code */}
-                  <td className="py-3 px-3 sm:px-4">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <p className="font-bold text-foreground text-xs leading-snug">
-                        {sup.name}
-                      </p>
+                  <td className="px-3 py-3 sm:px-4">
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <p className="text-foreground text-xs leading-snug font-bold">{sup.name}</p>
                       {sup.code && (
-                        <span className="font-mono text-3xs font-bold text-muted-foreground bg-surface-raised px-1.5 py-0.2 rounded border border-border">
+                        <span className="text-3xs text-muted-foreground bg-surface-raised py-0.2 border-border rounded border px-1.5 font-mono font-bold">
                           {sup.code}
                         </span>
                       )}
                     </div>
                     {sup.notes && (
-                      <p className="text-3xs text-subtle-foreground line-clamp-1">
-                        {sup.notes}
-                      </p>
+                      <p className="text-3xs text-subtle-foreground line-clamp-1">{sup.notes}</p>
                     )}
                     {sup.website && (
                       <a
                         href={sup.website}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-3xs text-primary hover:underline mt-0.5"
+                        className="text-3xs text-primary mt-0.5 inline-flex items-center gap-1 hover:underline"
                       >
                         <Globe className="size-2.5" />
                         <span>Site web</span>
@@ -138,17 +258,15 @@ export function SuppliersTable({
                   </td>
 
                   {/* 2. Contact & Coordonnées */}
-                  <td className="py-3 px-3">
+                  <td className="px-3 py-3">
                     {sup.contactName && (
-                      <p className="font-semibold text-foreground text-xs">
-                        {sup.contactName}
-                      </p>
+                      <p className="text-foreground text-xs font-semibold">{sup.contactName}</p>
                     )}
-                    <div className="flex flex-col gap-0.5 text-3xs text-subtle-foreground mt-0.5">
+                    <div className="text-3xs text-subtle-foreground mt-0.5 flex flex-col gap-0.5">
                       {sup.email && (
                         <a
                           href={`mailto:${sup.email}`}
-                          className="hover:text-primary transition-colors flex items-center gap-1 truncate max-w-xs"
+                          className="hover:text-primary flex max-w-xs items-center gap-1 truncate transition-colors"
                         >
                           <Mail className="size-2.5" />
                           <span>{sup.email}</span>
@@ -157,7 +275,7 @@ export function SuppliersTable({
                       {sup.phone && (
                         <a
                           href={`tel:${sup.phone}`}
-                          className="hover:text-primary transition-colors flex items-center gap-1"
+                          className="hover:text-primary flex items-center gap-1 transition-colors"
                         >
                           <Phone className="size-2.5" />
                           <span>{sup.phone}</span>
@@ -167,15 +285,15 @@ export function SuppliersTable({
                   </td>
 
                   {/* 3. Localisation & Activité */}
-                  <td className="py-3 px-3 hidden md:table-cell">
+                  <td className="hidden px-3 py-3 md:table-cell">
                     <div className="flex items-center gap-2">
                       {sup.city && (
-                        <p className="text-xs text-foreground font-medium">
+                        <p className="text-foreground text-xs font-medium">
                           📍 {sup.city} {sup.postalCode ? `(${sup.postalCode})` : ''}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-3xs text-subtle-foreground">
+                    <div className="text-3xs text-subtle-foreground mt-0.5 flex items-center gap-2">
                       {sup.defaultPaymentTerms && (
                         <span>Règlement : {sup.defaultPaymentTerms}</span>
                       )}
@@ -196,14 +314,14 @@ export function SuppliersTable({
                   </td>
 
                   {/* 4. Actions */}
-                  <td className="py-3 px-3 sm:px-4 text-right">
+                  <td className="px-3 py-3 text-right sm:px-4">
                     <div className="flex items-center justify-end gap-1">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => onCreateOrder(sup)}
                         title="Créer un bon de commande auprès de ce fournisseur"
-                        className="h-7 px-2 text-2xs gap-1 text-primary border-primary/30 hover:bg-primary/10 cursor-pointer"
+                        className="text-2xs text-primary border-primary/30 hover:bg-primary/10 h-7 cursor-pointer gap-1 px-2"
                       >
                         <ShoppingCart className="size-3" />
                         <span className="hidden sm:inline">Commander</span>
@@ -214,7 +332,8 @@ export function SuppliersTable({
                         variant="ghost"
                         onClick={() => onEdit(sup)}
                         title="Modifier la fiche fournisseur"
-                        className="size-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                        aria-label={`Modifier ${sup.name}`}
+                        className="text-muted-foreground hover:text-foreground size-7 cursor-pointer p-0"
                       >
                         <Edit2 className="size-3.5" />
                       </Button>
@@ -233,7 +352,8 @@ export function SuppliersTable({
                           }
                         }}
                         title="Supprimer le fournisseur"
-                        className="size-7 p-0 text-muted-foreground hover:text-error cursor-pointer"
+                        aria-label={`Supprimer ${sup.name}`}
+                        className="text-muted-foreground hover:text-error size-7 cursor-pointer p-0"
                       >
                         <Trash2 className="size-3.5" />
                       </Button>

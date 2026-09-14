@@ -1,8 +1,10 @@
 import { Download, Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useStock } from '@/features/stock';
 import { exportToCsv } from '@/lib/csv-export';
@@ -34,6 +36,9 @@ export default function SuppliersPage() {
     updateSupplier,
     deleteSupplier,
     createOrder,
+    isLoading,
+    error,
+    refreshPurchases,
   } = usePurchases(organizationId);
 
   const { consumables } = useStock(organizationId);
@@ -91,37 +96,48 @@ export default function SuppliersPage() {
     );
   };
 
+  if (isLoading) return <ListSkeleton />;
+
+  if (error !== null && suppliers.length === 0 && orders.length === 0) {
+    return (
+      <ErrorState
+        error={error}
+        title="Fournisseurs indisponibles"
+        onRetry={() => void refreshPurchases()}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Répertoire Fournisseurs & Grossistes"
-          description="Gestion des contacts partenaires, conditions de règlement, tarifs négociés et commandes directes."
-        />
+      <PageHeader
+        title="Fournisseurs & grossistes"
+        description="Centralisez vos contacts partenaires, leurs conditions de règlement et vos commandes directes."
+        actions={
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="min-h-touch flex-1 gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+              aria-label="Exporter les fournisseurs au format CSV"
+            >
+              <Download className="size-3.5" />
+              <span>Export CSV</span>
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Download className="size-3.5" />
-            <span>Export CSV</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleOpenAddSupplier}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Plus className="size-3.5" />
-            <span>Nouveau Fournisseur</span>
-          </Button>
-        </div>
-      </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenAddSupplier}
+              className="min-h-touch flex-[1.35] gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+            >
+              <Plus className="size-3.5" />
+              <span>Nouveau fournisseur</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Onglets de navigation Achats */}
       <PurchasesNavTabs pendingDeliveryCount={metrics.ordersPendingDelivery} />

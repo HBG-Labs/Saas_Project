@@ -11,66 +11,70 @@ export function OrganizationBillingSettingsTab() {
   const { label: industryLabel } = useCurrentIndustry();
 
   return (
-    <div className="space-y-4 animate-in fade-in">
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <Building2 className="size-3.5 text-primary" />
-            <span>Entreprise & Facturation</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Gérez l'identité légale de votre entreprise, votre métier, l'équipe et vos factures.
-          </CardDescription>
+    <div className="animate-in fade-in space-y-4">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Building2 className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Entreprise & facturation</CardTitle>
+              <CardDescription>
+                Gérez l'identité légale de votre entreprise, votre métier, l'équipe et vos factures.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0 space-y-3">
-          <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-surface border border-border">
-            <div>
-              <h4 className="text-xs font-bold text-foreground">
+        <CardContent className="space-y-3 pt-4 sm:pt-5">
+          <div className="border-primary/20 bg-primary/[0.04] flex flex-col items-stretch justify-between gap-4 rounded-xl border p-4 sm:flex-row sm:items-center">
+            <div className="min-w-0">
+              <h4 className="text-foreground truncate text-sm font-semibold">
                 {organization?.name ?? 'Entreprise'}
               </h4>
-              <p className="text-3xs text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Métier actif : <strong className="text-foreground">{industryLabel}</strong>
               </p>
             </div>
 
             <NavLink
               to={ROUTES.organization}
-              className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+              className="min-h-touch text-primary hover:bg-primary/10 flex items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold sm:min-h-0 sm:justify-start"
             >
               <span>Paramètres Entreprise</span>
               <ChevronRight className="size-3.5" />
             </NavLink>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
             <NavLink
               to={ROUTES.organizationBilling}
-              className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface hover:border-primary/40 hover:bg-surface-hover transition-all group"
+              className="group border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover hover:shadow-raised flex min-h-24 items-center justify-between rounded-xl border p-4 transition-[border-color,background-color,box-shadow,transform] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <div>
-                <h5 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                <h5 className="text-foreground group-hover:text-primary text-sm font-semibold transition-colors">
                   Abonnement & Facturation
                 </h5>
-                <p className="text-3xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                   Changer de formule, gérer les sièges et factures Stripe.
                 </p>
               </div>
-              <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              <ExternalLink className="text-muted-foreground group-hover:text-primary size-3.5 shrink-0 transition-colors" />
             </NavLink>
 
             <NavLink
               to={ROUTES.organizationMembers}
-              className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface hover:border-primary/40 hover:bg-surface-hover transition-all group"
+              className="group border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover hover:shadow-raised flex min-h-24 items-center justify-between rounded-xl border p-4 transition-[border-color,background-color,box-shadow,transform] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <div>
-                <h5 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                <h5 className="text-foreground group-hover:text-primary text-sm font-semibold transition-colors">
                   Équipe & Techniciens
                 </h5>
-                <p className="text-3xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                   Gérer les membres, les invitations et les rôles.
                 </p>
               </div>
-              <ChevronRight className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              <ChevronRight className="text-muted-foreground group-hover:text-primary size-3.5 shrink-0 transition-colors" />
             </NavLink>
           </div>
         </CardContent>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { qk } from '@/lib/query-keys';
 import {
   disconnectSuperPdp,
@@ -72,21 +72,32 @@ export function ProviderConnectionCard({
     start.error ?? verify.error ?? disconnect.error ?? query.error ?? readinessQuery.error;
 
   return (
-    <Card aria-label="Plateforme agréée">
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2">
-            {status === 'connected' ? (
-              <CheckCircle2 className="text-success size-4" aria-hidden="true" />
-            ) : (
-              <Unplug className="text-muted-foreground size-4" aria-hidden="true" />
-            )}
-            Plateforme agréée
-          </CardTitle>
+    <Card aria-label="Plateforme agréée" className="overflow-hidden">
+      <CardHeader className="border-border bg-surface-sunken/35 border-b">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span
+              className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                status === 'connected'
+                  ? 'bg-success/10 text-success'
+                  : 'bg-surface text-muted-foreground'
+              }`}
+            >
+              {status === 'connected' ? (
+                <CheckCircle2 className="size-4" aria-hidden="true" />
+              ) : (
+                <Unplug className="size-4" aria-hidden="true" />
+              )}
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Plateforme agréée</CardTitle>
+              <CardDescription>Connexion sécurisée pour transmettre vos factures.</CardDescription>
+            </div>
+          </div>
           <Badge variant={config.variant}>{config.label}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4 sm:pt-5">
         <div className="space-y-1">
           <p className="text-foreground text-sm font-semibold">SUPER PDP</p>
           <p className="text-muted-foreground text-xs leading-relaxed">
@@ -97,13 +108,13 @@ export function ProviderConnectionCard({
 
         {connection?.provider_environment && (
           <dl className="grid gap-3 text-xs sm:grid-cols-2">
-            <div>
+            <div className="border-border bg-surface-raised rounded-lg border p-3">
               <dt className="text-muted-foreground">Environnement</dt>
               <dd className="text-foreground font-medium">
                 {connection.provider_environment === 'sandbox' ? 'Bac à sable' : 'Production'}
               </dd>
             </div>
-            <div>
+            <div className="border-border bg-surface-raised rounded-lg border p-3">
               <dt className="text-muted-foreground">Vérification de l’entreprise</dt>
               <dd className="text-foreground font-medium">
                 {connection.company_verification_status === 'verified'
@@ -144,17 +155,29 @@ export function ProviderConnectionCard({
         )}
 
         {canManage ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {readinessQuery.isPending && status === 'disconnected' && (
-              <Button disabled>Vérification de la disponibilité…</Button>
+              <Button disabled className="w-full sm:w-auto">
+                Vérification de la disponibilité…
+              </Button>
             )}
-            {awaitingConfiguration && <Button disabled>Connexion bientôt disponible</Button>}
+            {awaitingConfiguration && (
+              <Button disabled className="w-full sm:w-auto">
+                Connexion bientôt disponible
+              </Button>
+            )}
             {!readinessQuery.isPending &&
               !awaitingConfiguration &&
               (status === 'disconnected' || status === 'action_required') &&
               !authorizationUrl && (
-                <Button disabled={pending} onClick={() => start.mutate()}>
-                  <ExternalLink className="size-4" aria-hidden="true" />
+                <Button
+                  isLoading={start.isPending}
+                  loadingLabel="Préparation de la connexion"
+                  disabled={pending && !start.isPending}
+                  onClick={() => start.mutate()}
+                  leadingIcon={<ExternalLink />}
+                  className="w-full sm:w-auto"
+                >
                   {start.isPending ? 'Préparation…' : 'Préparer la connexion'}
                 </Button>
               )}
@@ -162,7 +185,7 @@ export function ProviderConnectionCard({
               <Button
                 asChild
                 variant="secondary"
-                className="border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 dark:border-emerald-500 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500"
+                className="w-full border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 sm:w-auto dark:border-emerald-500 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500"
               >
                 <a href={authorizationUrl}>
                   <ExternalLink className="size-4" aria-hidden="true" />
@@ -173,11 +196,13 @@ export function ProviderConnectionCard({
             {status === 'pending_verification' && (
               <Button
                 variant="outline"
-                className="gap-2"
-                disabled={pending}
+                isLoading={verify.isPending}
+                loadingLabel="Vérification de la connexion"
+                disabled={pending && !verify.isPending}
                 onClick={() => verify.mutate()}
+                leadingIcon={<RefreshCw />}
+                className="w-full sm:w-auto"
               >
-                <RefreshCw className="size-4" aria-hidden="true" />
                 Vérifier maintenant
               </Button>
             )}
@@ -185,14 +210,23 @@ export function ProviderConnectionCard({
               <>
                 <Button
                   variant="outline"
-                  className="gap-2"
-                  disabled={pending}
+                  isLoading={verify.isPending}
+                  loadingLabel="Vérification de la connexion"
+                  disabled={pending && !verify.isPending}
                   onClick={() => verify.mutate()}
+                  leadingIcon={<ShieldCheck />}
+                  className="w-full sm:w-auto"
                 >
-                  <ShieldCheck className="size-4" aria-hidden="true" />
                   Vérifier la connexion
                 </Button>
-                <Button variant="ghost" disabled={pending} onClick={() => disconnect.mutate()}>
+                <Button
+                  variant="ghost"
+                  isLoading={disconnect.isPending}
+                  loadingLabel="Déconnexion de SUPER PDP"
+                  disabled={pending && !disconnect.isPending}
+                  onClick={() => disconnect.mutate()}
+                  className="w-full sm:w-auto"
+                >
                   Déconnecter
                 </Button>
               </>

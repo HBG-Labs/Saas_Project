@@ -69,50 +69,51 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
   const isRevisionWarning = daysUntilRevision > 15 && daysUntilRevision <= 45;
 
   return (
-    <Card className="hover:border-border-strong hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">
-      <CardContent className="p-3.5 pt-3.5 sm:pt-3.5 space-y-2.5 flex-1">
+    <Card className="hover:border-primary/30 hover:shadow-raised group border-border/80 flex flex-col overflow-hidden shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0">
+      <CardContent className="flex-1 space-y-2.5 p-3.5 pt-3.5 sm:pt-3.5">
         {/* Top bar : Plaque immatriculation & Statut */}
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-0.5 min-w-0">
+          <div className="min-w-0 space-y-0.5">
             {/* French-style plate badge */}
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-surface-hover border border-border font-mono font-bold text-xs tracking-wider text-foreground shadow-2xs">
-              <span className="text-3xs font-extrabold text-primary">F</span>
+            <div className="bg-surface-hover border-border text-foreground inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-bold tracking-wider shadow-2xs">
+              <span className="text-3xs text-primary font-extrabold">F</span>
               <span>{vehicle.plate}</span>
             </div>
-            <h3 className="text-xs font-bold text-foreground truncate mt-0.5">
-              {vehicle.brand} <span className="font-semibold text-foreground/85">{vehicle.model}</span>
+            <h3 className="text-foreground mt-0.5 truncate text-xs font-bold">
+              {vehicle.brand}{' '}
+              <span className="text-foreground/85 font-semibold">{vehicle.model}</span>
             </h3>
           </div>
 
-          <Badge variant={statusCfg.variant} className="shrink-0 text-3xs px-2 py-0.5">
+          <Badge variant={statusCfg.variant} className="text-3xs shrink-0 px-2 py-0.5">
             {statusCfg.label}
           </Badge>
         </div>
 
         {/* Détails type & motorisation */}
-        <div className="flex flex-wrap items-center gap-1.5 text-3xs text-muted-foreground">
-          <span className="flex items-center gap-1 bg-surface-hover px-1.5 py-0.5 rounded-md">
-            <Truck className="size-2.5 text-primary" />
+        <div className="text-3xs text-muted-foreground flex flex-wrap items-center gap-1.5">
+          <span className="bg-surface-hover flex items-center gap-1 rounded-md px-1.5 py-0.5">
+            <Truck className="text-primary size-2.5" />
             <span>{TYPE_LABELS[vehicle.type] ?? vehicle.type}</span>
           </span>
-          <span className="flex items-center gap-1 bg-surface-hover px-1.5 py-0.5 rounded-md">
+          <span className="bg-surface-hover flex items-center gap-1 rounded-md px-1.5 py-0.5">
             {fuelCfg.isElectric ? (
-              <Zap className="size-2.5 text-success" />
+              <Zap className="text-success size-2.5" />
             ) : (
-              <Fuel className="size-2.5 text-warning" />
+              <Fuel className="text-warning size-2.5" />
             )}
             <span>{fuelCfg.label}</span>
           </span>
         </div>
 
         {/* Assignation & Compteur */}
-        <div className="grid grid-cols-2 gap-2 p-2 bg-surface-hover/50 rounded-lg border border-border/50 text-xs">
-          <div className="space-y-0.5 min-w-0">
+        <div className="bg-surface-hover/50 border-border/50 grid grid-cols-2 gap-2 rounded-lg border p-2 text-xs">
+          <div className="min-w-0 space-y-0.5">
             <span className="text-3xs text-muted-foreground flex items-center gap-1">
               <User className="size-2.5 shrink-0" />
               <span className="truncate">Conducteur assigné</span>
             </span>
-            <p className="font-semibold text-foreground truncate text-2xs">
+            <p className="text-foreground text-2xs truncate font-semibold">
               {vehicle.assignedMemberName ? vehicle.assignedMemberName : 'Pool partagé'}
             </p>
           </div>
@@ -121,25 +122,25 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
               <Gauge className="size-2.5 shrink-0" />
               <span>Kilométrage</span>
             </span>
-            <p className="font-mono font-bold text-foreground text-2xs">
+            <p className="text-foreground text-2xs font-mono font-bold">
               {vehicle.mileage.toLocaleString('fr-FR')} km
             </p>
           </div>
         </div>
 
         {/* Rappels d'entretien & Contrôle Technique */}
-        <div className="space-y-1 text-3xs bg-surface/80 p-2 rounded-lg border border-border/40">
+        <div className="text-3xs bg-surface/80 border-border/40 space-y-1 rounded-lg border p-2">
           {/* CT */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground flex items-center gap-1">
-              <ShieldCheck className="size-3 text-primary/80" />
+              <ShieldCheck className="text-primary/80 size-3" />
               <span>Contrôle Technique :</span>
             </span>
             <span
               className={cn(
                 'font-mono font-medium',
-                isCtUrgent && 'text-error font-bold flex items-center gap-0.5',
-                isCtWarning && 'text-warning font-semibold flex items-center gap-0.5',
+                isCtUrgent && 'text-error flex items-center gap-0.5 font-bold',
+                isCtWarning && 'text-warning flex items-center gap-0.5 font-semibold',
                 !isCtUrgent && !isCtWarning && 'text-foreground',
               )}
             >
@@ -152,14 +153,14 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
           {/* Révision */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground flex items-center gap-1">
-              <Wrench className="size-3 text-primary/80" />
+              <Wrench className="text-primary/80 size-3" />
               <span>Prochaine révision :</span>
             </span>
             <span
               className={cn(
                 'font-mono font-medium',
-                isRevisionUrgent && 'text-error font-bold flex items-center gap-0.5',
-                isRevisionWarning && 'text-warning font-semibold flex items-center gap-0.5',
+                isRevisionUrgent && 'text-error flex items-center gap-0.5 font-bold',
+                isRevisionWarning && 'text-warning flex items-center gap-0.5 font-semibold',
                 !isRevisionUrgent && !isRevisionWarning && 'text-foreground',
               )}
             >
@@ -171,19 +172,19 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
         </div>
 
         {vehicle.notes && (
-          <p className="text-3xs text-subtle-foreground bg-surface-hover/40 px-2 py-1.5 rounded-md line-clamp-1 border border-border/30">
+          <p className="text-3xs text-subtle-foreground bg-surface-hover/40 border-border/30 line-clamp-1 rounded-md border px-2 py-1.5">
             {vehicle.notes}
           </p>
         )}
       </CardContent>
 
       {/* Card actions footer */}
-      <div className="px-3.5 py-2 border-t border-border bg-surface-hover/20 flex items-center justify-between gap-2">
+      <div className="border-border bg-surface-sunken/35 flex items-center justify-between gap-2 border-t px-3.5 py-2.5">
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="text-2xs gap-1.5 h-7 px-2 text-muted-foreground hover:text-foreground"
+          className="min-h-touch text-2xs text-muted-foreground hover:text-foreground gap-1.5 px-2 sm:h-8 sm:min-h-0"
           onClick={() => onViewHistory(vehicle)}
         >
           <Wrench className="size-3" />
@@ -194,7 +195,7 @@ export function VehicleCard({ vehicle, onEdit, onViewHistory }: VehicleCardProps
           type="button"
           variant="outline"
           size="sm"
-          className="text-2xs gap-1 h-7 px-2.5"
+          className="min-h-touch text-2xs gap-1 px-3 sm:h-8 sm:min-h-0"
           onClick={() => onEdit(vehicle)}
         >
           <Edit2 className="size-2.5" />

@@ -80,8 +80,8 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         className={({ isActive }) =>
           cn(
             variant === 'bottom'
-              ? 'min-h-touch text-3xs relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-medium'
-              : 'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+              ? 'min-h-touch text-3xs focus-visible:ring-primary relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-medium focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset'
+              : 'focus-visible:ring-primary relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none',
             variant === 'side' && 'transition-colors',
             isActive
               ? variant === 'side'
@@ -105,7 +105,9 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             ) : (
               <Icon className="size-4" aria-hidden="true" />
             )}
-            <span className={variant === 'bottom' ? 'truncate' : undefined}>{item.label}</span>
+            <span className={variant === 'bottom' ? 'max-w-full truncate' : undefined}>
+              {item.label}
+            </span>
             {badge !== null ? (
               <span
                 className={cn(
@@ -142,8 +144,11 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         immédiatement distinct de l'espace entreprise.
       */}
       <header className="from-primary via-primary text-primary-foreground sticky top-0 z-40 bg-gradient-to-r to-blue-500 shadow-md">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4">
-          <Link to={ROUTES.portal} className="flex min-w-0 items-center gap-3">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-16">
+          <Link
+            to={ROUTES.portal}
+            className="min-h-touch flex min-w-0 items-center gap-3 rounded-xl focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          >
             <span
               aria-hidden="true"
               className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm font-bold uppercase shadow-inner ring-1 ring-white/30"
@@ -165,6 +170,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
               variant="ghost"
               size="sm"
               className="text-primary-foreground hover:text-primary-foreground hover:bg-white/15"
+              aria-label="Se déconnecter de l’espace client"
               onClick={() => {
                 void handleSignOut();
               }}

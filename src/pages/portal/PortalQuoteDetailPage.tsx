@@ -72,7 +72,8 @@ export default function PortalQuoteDetailPage() {
   }
 
   const q = quote.data;
-  const expire = q.valid_until !== null && new Date(q.valid_until) < new Date(new Date().toDateString());
+  const expire =
+    q.valid_until !== null && new Date(q.valid_until) < new Date(new Date().toDateString());
   const peutRepondre = q.status === 'sent' && !expire;
 
   const confirmer = () => {
@@ -100,34 +101,52 @@ export default function PortalQuoteDetailPage() {
         </Link>
       </Button>
 
-      <PortalPageHeader title={q.title ?? `Devis ${q.reference}`} description={q.reference} />
+      <PortalPageHeader
+        title={q.title ?? `Devis ${q.reference}`}
+        description={q.reference}
+        icon={FileText}
+        tone="info"
+        summary={
+          <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-1">
+            <StatusBadge status={q.status} kind="quote" />
+            <p className="text-foreground text-lg font-bold tabular-nums sm:text-xl">
+              {formatEuros(q.total_cents)}
+            </p>
+          </div>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={q.status} kind="quote" />
-        <span className="text-muted-foreground text-xs">
-          Émis le {formatDateFr(q.created_at)}
-          {q.valid_until ? ` · valable jusqu’au ${formatDateFr(q.valid_until)}` : ''}
-          {q.site_name ? ` · ${q.site_name}` : ''}
-        </span>
-        {expire && q.status === 'sent' ? <Badge variant="warning">Date de validité dépassée</Badge> : null}
+      <div className="border-border bg-surface-sunken/50 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-3 py-2.5 text-xs">
+        <span className="text-muted-foreground">Émis le {formatDateFr(q.created_at)}</span>
+        {q.valid_until ? (
+          <span className="text-muted-foreground">
+            · Valable jusqu’au {formatDateFr(q.valid_until)}
+          </span>
+        ) : null}
+        {q.site_name ? <span className="text-muted-foreground">· {q.site_name}</span> : null}
+        {expire && q.status === 'sent' ? (
+          <Badge variant="warning" className="sm:ml-auto">
+            Date de validité dépassée
+          </Badge>
+        ) : null}
       </div>
 
       {/* Réponse : la seule décision que le portail permet, et elle est confirmée. */}
       {peutRepondre ? (
         <Card className="border-primary/30 bg-primary-subtle/40 rounded-2xl">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
-            <div className="text-sm">
+          <CardContent className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm sm:max-w-xl">
               <p className="text-foreground font-semibold">Ce devis attend votre réponse</p>
               <p className="text-muted-foreground text-xs">
-                Votre décision est transmise immédiatement à l’entreprise. Pour une question ou une modification,
-                utilisez plutôt la messagerie.
+                Votre décision est transmise immédiatement à l’entreprise. Pour une question ou une
+                modification, utilisez plutôt la messagerie.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:flex">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-error/40 text-error hover:bg-error/10"
+                className="border-error/40 text-error hover:bg-error/10 w-full sm:w-auto"
                 onClick={() => {
                   setDecision('refused');
                 }}
@@ -137,6 +156,7 @@ export default function PortalQuoteDetailPage() {
               </Button>
               <Button
                 size="sm"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   setDecision('accepted');
                 }}
@@ -149,12 +169,13 @@ export default function PortalQuoteDetailPage() {
         </Card>
       ) : q.client_responded_at !== null ? (
         <p className="text-muted-foreground text-xs">
-          Vous avez {q.status === 'accepted' ? 'accepté' : 'refusé'} ce devis le {formatDateFr(q.client_responded_at, true)}.
+          Vous avez {q.status === 'accepted' ? 'accepté' : 'refusé'} ce devis le{' '}
+          {formatDateFr(q.client_responded_at, true)}.
         </p>
       ) : null}
 
-      <Card className="rounded-2xl">
-        <CardHeader>
+      <Card className="overflow-hidden rounded-2xl">
+        <CardHeader className="border-border bg-surface-sunken/40 border-b">
           <CardTitle className="text-sm">Détail des prestations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -165,39 +186,46 @@ export default function PortalQuoteDetailPage() {
                 <div className="min-w-0">
                   <p className="text-foreground">{item.description}</p>
                   <p className="text-muted-foreground text-xs">
-                    {quantite.format(item.quantity)} {item.unit} × {formatEuros(item.unit_price_cents)}
+                    {quantite.format(item.quantity)} {item.unit} ×{' '}
+                    {formatEuros(item.unit_price_cents)}
                   </p>
                 </div>
-                <span className="text-foreground shrink-0 font-semibold">{formatEuros(item.line_total_cents)}</span>
+                <span className="text-foreground shrink-0 font-semibold">
+                  {formatEuros(item.line_total_cents)}
+                </span>
               </li>
             ))}
           </ul>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
-              <thead className="text-muted-foreground text-xs">
+              <thead className="bg-surface-sunken/60 text-muted-foreground text-xs">
                 <tr>
-                  <th className="py-2 text-left font-medium">Désignation</th>
-                  <th className="py-2 text-right font-medium">Quantité</th>
-                  <th className="py-2 text-right font-medium">Prix unitaire HT</th>
-                  <th className="py-2 text-right font-medium">Total HT</th>
+                  <th className="rounded-l-lg px-3 py-2 text-left font-medium">Désignation</th>
+                  <th className="px-3 py-2 text-right font-medium">Quantité</th>
+                  <th className="px-3 py-2 text-right font-medium">Prix unitaire HT</th>
+                  <th className="rounded-r-lg px-3 py-2 text-right font-medium">Total HT</th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
                 {q.items.map((item) => (
                   <tr key={item.id}>
-                    <td className="text-foreground py-2.5">{item.description}</td>
-                    <td className="text-muted-foreground py-2.5 text-right">
+                    <td className="text-foreground px-3 py-2.5">{item.description}</td>
+                    <td className="text-muted-foreground px-3 py-2.5 text-right">
                       {quantite.format(item.quantity)} {item.unit}
                     </td>
-                    <td className="text-muted-foreground py-2.5 text-right">{formatEuros(item.unit_price_cents)}</td>
-                    <td className="text-foreground py-2.5 text-right font-semibold">{formatEuros(item.line_total_cents)}</td>
+                    <td className="text-muted-foreground px-3 py-2.5 text-right">
+                      {formatEuros(item.unit_price_cents)}
+                    </td>
+                    <td className="text-foreground px-3 py-2.5 text-right font-semibold">
+                      {formatEuros(item.line_total_cents)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <dl className="border-border ml-auto max-w-xs space-y-1 border-t pt-3 text-sm">
+          <dl className="bg-surface-sunken/60 ml-auto w-full max-w-xs space-y-1.5 rounded-xl p-3 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Total HT</dt>
               <dd className="text-foreground">{formatEuros(q.subtotal_cents)}</dd>
@@ -212,7 +240,11 @@ export default function PortalQuoteDetailPage() {
             </div>
           </dl>
 
-          {q.notes ? <p className="text-muted-foreground border-border border-t pt-3 text-xs whitespace-pre-wrap">{q.notes}</p> : null}
+          {q.notes ? (
+            <p className="text-muted-foreground border-border border-t pt-3 text-xs whitespace-pre-wrap">
+              {q.notes}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -229,21 +261,29 @@ export default function PortalQuoteDetailPage() {
         }
       >
         <FormError error={error} />
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => {
               setDecision(null);
             }}
+            className="w-full sm:w-auto"
           >
             Annuler
           </Button>
           <Button
             variant={decision === 'accepted' ? 'primary' : 'danger-outline'}
             disabled={respond.isPending}
+            isLoading={respond.isPending}
+            loadingLabel="Envoi de votre réponse"
             onClick={confirmer}
+            className="w-full sm:w-auto"
           >
-            {respond.isPending ? 'Envoi…' : decision === 'accepted' ? 'Confirmer l’acceptation' : 'Confirmer le refus'}
+            {respond.isPending
+              ? 'Envoi…'
+              : decision === 'accepted'
+                ? 'Confirmer l’acceptation'
+                : 'Confirmer le refus'}
           </Button>
         </div>
       </Modal>

@@ -152,6 +152,7 @@ export default function AuditLogPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const hasActiveFilters = action !== '' || entityType !== '' || search.trim() !== '';
+  const activeFilterCount = [action, entityType, search.trim()].filter(Boolean).length;
 
   return (
     <div className="space-y-6">
@@ -163,12 +164,15 @@ export default function AuditLogPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowMobileFilters((prev) => !prev)}
-            className="sm:hidden text-xs gap-1.5 cursor-pointer"
+            leadingIcon={<Filter />}
+            className="sm:hidden"
+            aria-expanded={showMobileFilters}
           >
-            <Filter className="size-3.5" />
             <span>Filtres</span>
             {hasActiveFilters && (
-              <span className="size-1.5 rounded-full bg-primary" />
+              <Badge variant="primary" className="ml-1 min-w-5 justify-center px-1.5">
+                {activeFilterCount}
+              </Badge>
             )}
           </Button>
         }
@@ -177,17 +181,17 @@ export default function AuditLogPage() {
       <OrganizationNavTabs />
 
       {/* Barre de Filtres & Recherche */}
-      <Card className="border-border/80 shadow-xs">
-        <CardContent className="p-3.5 sm:p-4 space-y-3">
-          <div className="grid gap-3 sm:grid-cols-12 items-center">
+      <Card className="border-border/80 bg-surface-raised shadow-xs">
+        <CardContent className="space-y-3 p-3.5 sm:p-4">
+          <div className="grid items-center gap-3 sm:grid-cols-12">
             {/* Recherche textuelle */}
-            <div className="sm:col-span-4 relative">
+            <div className="relative sm:col-span-4">
               <Input
                 value={search}
                 onChange={handleSearchChange}
                 placeholder="Rechercher une action, un auteur..."
-                leadingIcon={<Search className="size-4 text-muted-foreground" />}
-                className="h-9 text-xs"
+                leadingIcon={<Search className="text-muted-foreground size-4" />}
+                className="text-xs"
                 label="Rechercher"
                 hideLabel
               />
@@ -225,7 +229,12 @@ export default function AuditLogPage() {
             </div>
 
             {/* Taille de page & Réinitialisation */}
-            <div className={cn('sm:col-span-2 flex items-center justify-between sm:justify-end gap-2', !showMobileFilters && 'hidden sm:flex')}>
+            <div
+              className={cn(
+                'flex items-center justify-between gap-2 sm:col-span-2 sm:justify-end',
+                !showMobileFilters && 'hidden sm:flex',
+              )}
+            >
               <Select
                 options={PAGE_SIZE_OPTIONS}
                 value={String(pageSize)}
@@ -239,19 +248,37 @@ export default function AuditLogPage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleResetFilters}
-                  className="h-9 px-2 text-xs text-subtle-foreground hover:text-foreground shrink-0"
+                  className="text-subtle-foreground hover:text-foreground shrink-0 px-2"
                   title="Réinitialiser les filtres"
+                  aria-label="Réinitialiser les filtres"
                 >
                   <RotateCcw className="size-3.5" />
                 </Button>
               )}
             </div>
           </div>
+          {hasActiveFilters ? (
+            <div className="border-border text-muted-foreground flex flex-col gap-2 border-t pt-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                {totalItems} résultat{totalItems > 1 ? 's' : ''} avec {activeFilterCount} filtre
+                {activeFilterCount > 1 ? 's' : ''} actif{activeFilterCount > 1 ? 's' : ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                leadingIcon={<RotateCcw />}
+                className="text-primary self-start sm:self-auto"
+              >
+                Tout effacer
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
       {/* Contenu du Journal */}
-      <Card className="border-border/80 shadow-modal overflow-hidden">
+      <Card className="border-border/80 shadow-raised overflow-hidden">
         {logs.isPending ? (
           <div className="p-6">
             <ListSkeleton />
@@ -285,9 +312,26 @@ export default function AuditLogPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-border/60">
+          <div className="divide-border/60 divide-y">
+            <div className="border-border/60 bg-surface-raised flex items-center justify-between gap-3 border-b px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
+                  <ScrollText className="size-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-foreground text-sm font-semibold">Activité récente</p>
+                  <p className="text-muted-foreground text-xs">
+                    {totalItems} événement{totalItems > 1 ? 's' : ''} consultable
+                    {totalItems > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className="hidden sm:inline-flex">
+                Lecture seule
+              </Badge>
+            </div>
             {/* Entête du tableau sur grands écrans */}
-            <div className="hidden sm:grid sm:grid-cols-12 gap-3 px-4 py-2.5 bg-surface-sunken/80 text-2xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+            <div className="border-border/60 bg-surface-sunken/80 text-2xs text-muted-foreground hidden gap-3 border-b px-4 py-2.5 font-bold tracking-wider uppercase sm:grid sm:grid-cols-12">
               <span className="col-span-2">Date & Heure</span>
               <span className="col-span-6">Action Réalisée</span>
               <span className="col-span-2">Auteur</span>
@@ -295,7 +339,7 @@ export default function AuditLogPage() {
             </div>
 
             {/* Liste des entrées */}
-            <ul className="divide-y divide-border/40">
+            <ul className="divide-border/40 divide-y">
               {paginatedList.map((entry) => {
                 const dateObj = new Date(entry.created_at);
                 const formattedDate = dateObj.toLocaleDateString('fr-FR', {
@@ -314,28 +358,30 @@ export default function AuditLogPage() {
                 return (
                   <li
                     key={entry.id}
-                    className="p-3.5 sm:px-4 sm:py-3 hover:bg-surface-hover/50 transition-colors"
+                    className="hover:bg-surface-hover/50 relative p-4 transition-colors sm:px-4 sm:py-3"
                   >
-                    <div className="sm:grid sm:grid-cols-12 gap-3 items-center">
+                    <div className="grid gap-2.5 sm:grid-cols-12 sm:items-center sm:gap-3">
                       {/* Date & Heure */}
-                      <div className="sm:col-span-2 flex items-center gap-1.5 text-subtle-foreground font-mono text-2xs tabular-nums mb-1 sm:mb-0">
-                        <span className="font-semibold text-foreground/80">{formattedDate}</span>
-                        <span>{formattedTime}</span>
+                      <div className="flex items-center gap-2 pr-24 sm:col-span-2 sm:pr-0">
+                        <div className="text-2xs text-subtle-foreground flex items-center gap-1.5 font-mono tabular-nums">
+                          <span className="text-foreground/80 font-semibold">{formattedDate}</span>
+                          <span>{formattedTime}</span>
+                        </div>
                       </div>
 
                       {/* Libellé d'action */}
-                      <div className="sm:col-span-6 text-foreground font-medium text-xs sm:text-sm min-w-0">
+                      <div className="text-foreground min-w-0 text-sm font-medium sm:col-span-6">
                         <span>{describeAuditAction(entry.action)}</span>
                       </div>
 
                       {/* Auteur */}
-                      <div className="sm:col-span-2 flex items-center gap-1.5 text-xs text-muted-foreground mt-1 sm:mt-0">
-                        <User className="size-3.5 shrink-0 text-subtle-foreground" />
+                      <div className="text-muted-foreground flex items-center gap-1.5 text-xs sm:col-span-2">
+                        <User className="text-subtle-foreground size-3.5 shrink-0" />
                         <span className="truncate">{entry.actor_label ?? 'Système'}</span>
                       </div>
 
                       {/* Type d'entité Badge */}
-                      <div className="sm:col-span-2 flex justify-end mt-1 sm:mt-0">
+                      <div className="absolute top-3.5 right-4 flex justify-end sm:static sm:col-span-2">
                         <Badge variant={badgeVariant} className="text-2xs font-semibold">
                           {entityLabel}
                         </Badge>
@@ -347,30 +393,29 @@ export default function AuditLogPage() {
             </ul>
 
             {/* Barre de Pagination inférieure */}
-            <div className="p-3.5 sm:p-4 bg-surface-sunken/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div className="bg-surface-sunken/40 text-muted-foreground flex flex-col items-stretch justify-between gap-3 p-3.5 text-xs sm:flex-row sm:items-center sm:p-4">
               <div>
-                Affichage de{' '}
-                <span className="font-bold text-foreground">{startIndex + 1}</span> à{' '}
-                <span className="font-bold text-foreground">{endIndex}</span> sur{' '}
-                <span className="font-bold text-foreground">{totalItems}</span> action
+                Affichage de <span className="text-foreground font-bold">{startIndex + 1}</span> à{' '}
+                <span className="text-foreground font-bold">{endIndex}</span> sur{' '}
+                <span className="text-foreground font-bold">{totalItems}</span> action
                 {totalItems > 1 ? 's' : ''}
               </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center gap-1.5">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:flex">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safeCurrentPage === 1}
-                    className="h-8 px-2.5 text-xs"
+                    leadingIcon={<ChevronLeft />}
+                    className="px-2.5 text-xs"
                     title="Page précédente"
                   >
-                    <ChevronLeft className="size-3.5 mr-1" />
                     <span>Précédent</span>
                   </Button>
 
-                  <div className="flex items-center px-2 py-1 rounded-md bg-surface border border-border/80 text-xs font-mono font-bold text-foreground">
+                  <div className="border-border/80 bg-surface text-foreground flex h-11 items-center rounded-md border px-2 py-1 font-mono text-xs font-bold sm:h-8">
                     Page {safeCurrentPage} / {totalPages}
                   </div>
 
@@ -379,11 +424,11 @@ export default function AuditLogPage() {
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safeCurrentPage === totalPages}
-                    className="h-8 px-2.5 text-xs"
+                    trailingIcon={<ChevronRight />}
+                    className="px-2.5 text-xs"
                     title="Page suivante"
                   >
                     <span>Suivant</span>
-                    <ChevronRight className="size-3.5 ml-1" />
                   </Button>
                 </div>
               )}

@@ -1,12 +1,4 @@
-import {
-  Check,
-  Moon,
-  Palette,
-  RotateCcw,
-  Sparkles,
-  Sun,
-  User,
-} from 'lucide-react';
+import { Check, Moon, Palette, RotateCcw, Sparkles, Sun, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -36,20 +28,24 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="animate-in fade-in space-y-4">
       {/* Photo de profil (Avatar) */}
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <User className="size-3.5 text-primary" />
-            <span>Photo de profil</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Choisissez votre avatar pour vos fiches d'intervention et votre compte.
-          </CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <User className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Photo de profil</CardTitle>
+              <CardDescription>
+                Choisissez votre avatar pour vos fiches d'intervention et votre compte.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0">
-          <div className="flex items-center justify-between gap-4 p-2.5 rounded-xl bg-surface border border-border">
+        <CardContent className="pt-4 sm:pt-5">
+          <div className="border-border bg-surface-raised flex flex-col items-stretch justify-between gap-4 rounded-xl border p-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <UserAvatar
                 avatarId={avatarId}
@@ -58,17 +54,18 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 className="border-primary/40 shrink-0 border-2 shadow-xs"
               />
               <div>
-                <h4 className="text-xs font-bold text-foreground">Avatar sélectionné</h4>
+                <h4 className="text-foreground text-xs font-bold">Avatar sélectionné</h4>
                 <p className="text-3xs text-muted-foreground">50 avatars REZO360 au choix.</p>
               </div>
             </div>
 
             <Button
               type="button"
+              aria-pressed={theme === 'light'}
               variant="outline"
               size="sm"
               onClick={() => setIsAvatarPickerOpen(true)}
-              className="text-xs font-bold shrink-0 cursor-pointer"
+              className="shrink-0"
             >
               Changer d'avatar
             </Button>
@@ -77,26 +74,31 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
       </Card>
 
       {/* Mode Sombre / Clair */}
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <Sun className="size-3.5 text-primary" />
-            <span>Mode d'affichage</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Basculez entre le thème clair (chantier/plein jour) et le thème sombre haute lisibilité.
-          </CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-warning/10 text-warning flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Sun className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Mode d'affichage</CardTitle>
+              <CardDescription>
+                Basculez entre le thème clair et le thème sombre haute lisibilité.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0">
-          <div className="grid grid-cols-2 gap-3">
+        <CardContent className="pt-4 sm:pt-5">
+          <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
+              aria-pressed={theme === 'dark'}
               onClick={() => {
                 setTheme('light');
                 onSaved?.();
               }}
               className={cn(
-                'flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer text-xs font-semibold',
+                'flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 text-xs font-semibold transition-[border-color,background-color,box-shadow]',
                 theme === 'light'
                   ? 'border-primary bg-primary/10 text-primary shadow-xs'
                   : 'border-border bg-surface hover:border-border-hover text-muted-foreground',
@@ -113,7 +115,7 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 onSaved?.();
               }}
               className={cn(
-                'flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer text-xs font-semibold',
+                'flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 text-xs font-semibold transition-[border-color,background-color,box-shadow]',
                 theme === 'dark'
                   ? 'border-primary bg-primary/10 text-primary shadow-xs'
                   : 'border-border bg-surface hover:border-border-hover text-muted-foreground',
@@ -127,18 +129,22 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
       </Card>
 
       {/* Presets de Thèmes Métier */}
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <Sparkles className="size-3.5 text-primary" />
-            <span>Styles Visuels & Ambiances</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Ambiances graphiques harmonisées conçues pour les pros du terrain.
-          </CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Sparkles className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Styles visuels & ambiances</CardTitle>
+              <CardDescription>
+                Ambiances graphiques harmonisées conçues pour les pros du terrain.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <CardContent className="pt-4 sm:pt-5">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {THEME_PRESETS.map((p) => {
               const isSelected = preset === p.id;
 
@@ -146,22 +152,23 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 <button
                   key={p.id}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => {
                     setPreset(p.id);
                     onSaved?.();
                   }}
                   className={cn(
-                    'flex flex-col items-start gap-1 p-2.5 rounded-xl border-2 transition-all text-left cursor-pointer group',
+                    'group flex min-h-20 cursor-pointer flex-col items-start gap-1 rounded-xl border p-3 text-left transition-[border-color,background-color,box-shadow]',
                     isSelected
                       ? 'border-primary bg-primary/5 shadow-2xs'
                       : 'border-border bg-surface hover:border-primary/40 hover:bg-surface-hover',
                   )}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-foreground group-hover:text-primary text-xs font-bold transition-colors">
                       {p.label}
                     </span>
-                    {isSelected && <Check className="size-3 text-primary" />}
+                    {isSelected && <Check className="text-primary size-3" />}
                   </div>
                   <p className="text-3xs text-muted-foreground line-clamp-2 leading-tight">
                     {p.description}
@@ -174,17 +181,21 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
       </Card>
 
       {/* Nuances & Couleur Principale */}
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold flex items-center gap-1.5">
-            <Palette className="size-3.5 text-primary" />
-            <span>Couleur d'Accentuation Métier</span>
-          </CardTitle>
-          <CardDescription className="text-3xs">
-            Personnalisez la couleur des boutons, jauges, badges et éléments interactifs.
-          </CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <Palette className="size-4" />
+            </span>
+            <div className="space-y-1">
+              <CardTitle>Couleur d'accentuation métier</CardTitle>
+              <CardDescription>
+                Personnalisez la couleur des boutons, jauges, badges et éléments interactifs.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0">
+        <CardContent className="pt-4 sm:pt-5">
           <div className="flex flex-wrap gap-2 pt-1">
             {ACCENT_COLORS.map((c) => {
               const isSelected = accentColor === c.id;
@@ -193,19 +204,20 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 <button
                   key={c.id}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => {
                     setAccentColor(c.id);
                     onSaved?.();
                   }}
                   className={cn(
-                    'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer',
+                    'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-[border-color,background-color,box-shadow] sm:min-h-0',
                     isSelected
-                      ? 'border-foreground/40 bg-foreground/10 text-foreground font-bold shadow-2xs ring-2 ring-primary/40'
+                      ? 'border-foreground/40 bg-foreground/10 text-foreground ring-primary/40 font-bold shadow-2xs ring-2'
                       : 'border-border bg-surface hover:bg-surface-hover text-muted-foreground',
                   )}
                 >
                   <span
-                    className="size-3 rounded-full shrink-0 shadow-2xs border border-white/20"
+                    className="size-3 shrink-0 rounded-full border border-white/20 shadow-2xs"
                     style={{ backgroundColor: c.hex }}
                   />
                   <span>{c.label}</span>
@@ -217,20 +229,18 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
       </Card>
 
       {/* Mode Cockpit Compact & Réinitialisation */}
-      <Card>
-        <CardHeader className="py-3 px-4 pb-2">
-          <CardTitle className="text-xs font-bold">Options d'affichage avancé</CardTitle>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <CardTitle>Options d'affichage</CardTitle>
+          <CardDescription>
+            Ajustez la densité de l'interface à votre façon de travailler.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="px-4 pb-3.5 pt-0 space-y-3">
-          <div className="flex items-center justify-between gap-4 p-2.5 rounded-xl bg-surface border border-border">
-            <div>
-              <h4 className="text-xs font-semibold text-foreground">Mode Cockpit Compact</h4>
-              <p className="text-3xs text-muted-foreground">
-                Réduit les marges et la taille des cartes pour afficher plus d'informations à l'écran.
-              </p>
-            </div>
+        <CardContent className="space-y-4 pt-4 sm:pt-5">
+          <div className="border-border bg-surface-raised rounded-xl border p-3">
             <Switch
               label="Mode Cockpit Compact"
+              description="Réduit les marges et la taille des cartes pour afficher plus d'informations à l'écran."
               checked={compactMode}
               onCheckedChange={(val) => {
                 setCompactMode(val);
@@ -248,19 +258,16 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 resetCustomization();
                 onSaved?.();
               }}
-              className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              leadingIcon={<RotateCcw />}
+              className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
             >
-              <RotateCcw className="size-3.5" />
               <span>Rétablir le thème par défaut</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <AvatarPicker
-        open={isAvatarPickerOpen}
-        onOpenChange={setIsAvatarPickerOpen}
-      />
+      <AvatarPicker open={isAvatarPickerOpen} onOpenChange={setIsAvatarPickerOpen} />
     </div>
   );
 }

@@ -4,7 +4,12 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { ListSkeleton } from '@/components/ui/Skeleton';
-import { FileOpenButton, formatDateFr, PortalPageHeader, usePortalDocuments } from '@/features/portal';
+import {
+  FileOpenButton,
+  formatDateFr,
+  PortalPageHeader,
+  usePortalDocuments,
+} from '@/features/portal';
 import { useDocumentTitle } from '@/lib/use-document-title';
 
 function taille(bytes: number): string {
@@ -16,10 +21,23 @@ function taille(bytes: number): string {
 export default function PortalDocumentsPage() {
   useDocumentTitle('Mes documents — Espace client');
   const documents = usePortalDocuments();
+  const list = documents.data ?? [];
 
   return (
     <div>
-      <PortalPageHeader title="Mes documents" description="Les documents que votre prestataire partage avec vous." />
+      <PortalPageHeader
+        title="Mes documents"
+        description="Retrouvez les fichiers transmis par votre prestataire, disponibles au même endroit."
+        icon={FolderOpen}
+        tone="accent"
+        summary={
+          documents.isSuccess ? (
+            <Badge variant="accent" size="button">
+              {list.length} document{list.length > 1 ? 's' : ''}
+            </Badge>
+          ) : null
+        }
+      />
 
       {documents.isPending ? (
         <ListSkeleton />
@@ -30,27 +48,38 @@ export default function PortalDocumentsPage() {
             void documents.refetch();
           }}
         />
-      ) : (documents.data ?? []).length === 0 ? (
-        <EmptyState icon={FolderOpen} title="Aucun document" description="Les documents partagés avec vous apparaîtront ici." />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={FolderOpen}
+          title="Aucun document"
+          description="Les documents partagés avec vous apparaîtront ici."
+        />
       ) : (
-        <ul className="space-y-2">
-          {(documents.data ?? []).map((d) => (
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {list.map((d) => (
             <li
               key={d.id}
-              className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 shadow-xs"
+              className="border-border bg-surface hover:border-accent/40 flex flex-col gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md sm:flex-row sm:items-center"
             >
-              <span className="bg-accent-subtle text-accent inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
-                <FileText className="size-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-foreground truncate text-sm font-medium">{d.name}</p>
-                <p className="text-muted-foreground flex flex-wrap items-center gap-1 text-xs">
-                  {formatDateFr(d.created_at)}
-                  {d.file_size !== null ? ` · ${taille(d.file_size)}` : ''}
-                  {d.category ? <Badge variant="outline">{d.category}</Badge> : null}
-                </p>
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <span className="bg-accent-subtle text-accent inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
+                  <FileText className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <p className="text-foreground line-clamp-2 text-sm font-semibold">{d.name}</p>
+                  <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span>{formatDateFr(d.created_at)}</span>
+                    {d.file_size !== null ? <span>· {taille(d.file_size)}</span> : null}
+                    {d.category ? <Badge variant="outline">{d.category}</Badge> : null}
+                  </div>
+                </div>
               </div>
-              <FileOpenButton bucket="organization-documents" path={d.storage_path} label="Ouvrir" />
+              <FileOpenButton
+                bucket="organization-documents"
+                path={d.storage_path}
+                label="Ouvrir"
+                className="w-full sm:w-auto"
+              />
             </li>
           ))}
         </ul>

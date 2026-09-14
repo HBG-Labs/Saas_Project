@@ -2,8 +2,10 @@ import { ArrowDownLeft, Download, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { exportToCsv } from '@/lib/csv-export';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -39,6 +41,9 @@ export default function StockConsumablesPage() {
     deleteConsumable,
     recordMovement,
     quickAdjust,
+    isLoading,
+    error,
+    refreshAll,
   } = useStock(organizationId);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -104,9 +109,7 @@ export default function StockConsumablesPage() {
         {
           header: 'Valeur Totale HT (€)',
           accessor: (c) =>
-            c.unitPriceEur !== undefined
-              ? (c.quantityInStock * c.unitPriceEur).toFixed(2)
-              : '',
+            c.unitPriceEur !== undefined ? (c.quantityInStock * c.unitPriceEur).toFixed(2) : '',
         },
         { header: 'Emplacement', accessor: (c) => c.location },
         { header: 'Fournisseur', accessor: (c) => c.supplier ?? '' },
@@ -116,47 +119,54 @@ export default function StockConsumablesPage() {
     );
   };
 
+  if (isLoading) return <ListSkeleton />;
+
+  if (error !== null && consumables.length === 0 && movements.length === 0) {
+    return (
+      <ErrorState error={error} title="Stock indisponible" onRetry={() => void refreshAll()} />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      {/* En-tête de page avec boutons d'action */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Gestion des Stocks & Fournitures"
-          description="Catalogue d’articles, gestion des seuils d'alerte, prix d'achat et suivi des quantités en temps réel."
-        />
+      <PageHeader
+        title="Stocks & fournitures"
+        description="Pilotez vos articles, seuils d’alerte, prix d’achat et quantités disponibles."
+        actions={
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="min-h-touch gap-1.5 text-xs font-semibold sm:min-h-0"
+              aria-label="Exporter l’inventaire au format CSV"
+            >
+              <Download className="size-3.5" />
+              <span>Export CSV</span>
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Download className="size-3.5" />
-            <span>Export CSV</span>
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenMovementModal(null, 'in')}
+              className="min-h-touch border-success/30 text-success hover:bg-success/10 gap-1.5 text-xs font-semibold sm:min-h-0"
+            >
+              <ArrowDownLeft className="size-3.5" />
+              <span>Mouvement</span>
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleOpenMovementModal(null, 'in')}
-            className="gap-1.5 text-xs font-semibold text-success border-success/30 hover:bg-success/10 cursor-pointer"
-          >
-            <ArrowDownLeft className="size-3.5" />
-            <span>Mouvement</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleOpenAddModal}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Plus className="size-3.5" />
-            <span>Nouvel Article</span>
-          </Button>
-        </div>
-      </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenAddModal}
+              className="min-h-touch col-span-2 gap-1.5 text-xs font-semibold sm:min-h-0"
+            >
+              <Plus className="size-3.5" />
+              <span>Nouvel article</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Onglets de navigation Stock unifiée */}
       <StockNavTabs lowStockCount={lowStockArticles.length} />

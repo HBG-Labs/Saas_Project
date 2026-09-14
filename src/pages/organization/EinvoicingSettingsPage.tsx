@@ -1,5 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, Building2, Check, CheckCircle2, Circle, Landmark } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  CheckCircle2,
+  Circle,
+  Landmark,
+  ListChecks,
+  ReceiptText,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link } from 'react-router';
@@ -9,7 +18,7 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -137,14 +146,21 @@ function IdentityForm({
         </p>
       )}
       <fieldset disabled={!canUpdate || isSubmitting} className="min-w-0 space-y-5">
-        <Card id="identite">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="text-primary size-4" aria-hidden="true" /> Identité de
-              l’entreprise
-            </CardTitle>
+        <Card id="identite" className="scroll-mt-4 overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 border-b">
+            <div className="flex items-start gap-3">
+              <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+                <Building2 className="size-4" aria-hidden="true" />
+              </span>
+              <div className="space-y-1">
+                <CardTitle>Identité de l’entreprise</CardTitle>
+                <CardDescription>
+                  Coordonnées légales utilisées pour identifier l’émetteur.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4 sm:pt-5">
             <p className="text-muted-foreground text-xs">
               Ces informations sont partagées avec les paramètres de votre entreprise.
             </p>
@@ -188,8 +204,8 @@ function IdentityForm({
                 {...fieldError('country')}
               />
             </div>
-            <details className="border-border rounded-lg border p-3">
-              <summary className="text-foreground cursor-pointer text-xs font-medium">
+            <details className="border-border bg-surface-raised rounded-lg border p-3">
+              <summary className="min-h-touch text-foreground cursor-pointer content-center text-xs font-medium sm:min-h-0">
                 Informations complémentaires de l’entreprise
               </summary>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -206,11 +222,19 @@ function IdentityForm({
             </details>
           </CardContent>
         </Card>
-        <Card id="tva">
-          <CardHeader>
-            <CardTitle>TVA</CardTitle>
+        <Card id="tva" className="scroll-mt-4 overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 border-b">
+            <div className="flex items-start gap-3">
+              <span className="bg-warning/10 text-warning flex size-9 shrink-0 items-center justify-center rounded-lg">
+                <ReceiptText className="size-4" aria-hidden="true" />
+              </span>
+              <div className="space-y-1">
+                <CardTitle>TVA</CardTitle>
+                <CardDescription>Régime et identifiant fiscal de l’entreprise.</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4 sm:pt-5">
             <Controller
               control={control}
               name="vatRegime"
@@ -237,14 +261,21 @@ function IdentityForm({
             />
           </CardContent>
         </Card>
-        <Card id="paiement">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Landmark className="text-primary size-4" aria-hidden="true" /> Coordonnées de
-              règlement
-            </CardTitle>
+        <Card id="paiement" className="scroll-mt-4 overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 border-b">
+            <div className="flex items-start gap-3">
+              <span className="bg-success/10 text-success flex size-9 shrink-0 items-center justify-center rounded-lg">
+                <Landmark className="size-4" aria-hidden="true" />
+              </span>
+              <div className="space-y-1">
+                <CardTitle>Coordonnées de règlement</CardTitle>
+                <CardDescription>
+                  Informations bancaires affichées sur les nouvelles factures.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4 sm:pt-5">
             <Input
               label="IBAN"
               hint="Affiché sur les nouvelles factures pour faciliter le règlement par virement."
@@ -256,7 +287,7 @@ function IdentityForm({
         </Card>
       </fieldset>
       {canUpdate && (
-        <div className="bg-surface-raised border-border sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 shadow-lg">
+        <div className="border-border bg-surface-raised shadow-overlay sticky bottom-3 z-10 flex flex-col items-stretch justify-between gap-3 rounded-xl border p-4 sm:flex-row sm:items-center">
           <p className="text-muted-foreground text-xs" role="status">
             {isDirty
               ? 'Modifications à enregistrer'
@@ -267,10 +298,12 @@ function IdentityForm({
           <Button
             type="submit"
             variant="primary"
-            disabled={!isDirty || isSubmitting}
-            className="gap-2"
+            disabled={!isDirty}
+            isLoading={isSubmitting}
+            loadingLabel="Enregistrement des informations"
+            leadingIcon={<Check />}
+            className="w-full sm:w-auto"
           >
-            <Check className="size-4" aria-hidden="true" />
             {isSubmitting ? 'Enregistrement…' : 'Enregistrer les informations'}
           </Button>
         </div>
@@ -305,20 +338,26 @@ export default function EinvoicingSettingsPage() {
       {organization && (
         <ProviderConnectionCard organizationId={organization.id} canManage={canManageConnection} />
       )}
-      <div className="border-primary/20 bg-primary-subtle flex flex-col gap-4 rounded-xl border p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1.5">
-          <h2 className="text-foreground text-sm font-semibold">
-            Votre premier export électronique
-          </h2>
-          <p className="text-muted-foreground max-w-2xl text-sm">
-            Préparez un brouillon depuis un devis accepté. Sa fiche vous indique les informations à
-            compléter pour télécharger un fichier UBL après émission.
-          </p>
-          <p className="text-muted-foreground text-xs">
-            Disponible pour les factures en euros entre professionnels en France.
-          </p>
+      <div className="border-primary/20 bg-primary-subtle relative flex flex-col gap-4 overflow-hidden rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="bg-primary/10 pointer-events-none absolute -top-12 -right-8 size-32 rounded-full blur-3xl" />
+        <div className="relative flex items-start gap-3">
+          <span className="bg-surface text-primary flex size-10 shrink-0 items-center justify-center rounded-lg shadow-xs">
+            <ReceiptText className="size-5" aria-hidden="true" />
+          </span>
+          <div className="space-y-1.5">
+            <h2 className="text-foreground text-sm font-semibold">
+              Votre premier export électronique
+            </h2>
+            <p className="text-muted-foreground max-w-2xl text-sm">
+              Préparez un brouillon depuis un devis accepté. Sa fiche vous indique les informations
+              à compléter pour télécharger un fichier UBL après émission.
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Disponible pour les factures en euros entre professionnels en France.
+            </p>
+          </div>
         </div>
-        <Button asChild variant="outline" className="shrink-0 gap-2">
+        <Button asChild variant="outline" className="relative w-full shrink-0 sm:w-auto">
           <Link to={ROUTES.invoices}>
             Accéder aux factures
             <ArrowRight className="size-4" aria-hidden="true" />
@@ -332,11 +371,19 @@ export default function EinvoicingSettingsPage() {
       ) : data ? (
         <div className="grid items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="space-y-4 lg:sticky lg:top-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Votre préparation</CardTitle>
+            <Card className="overflow-hidden">
+              <CardHeader className="border-border bg-surface-sunken/35 border-b">
+                <div className="flex items-start gap-3">
+                  <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+                    <ListChecks className="size-4" aria-hidden="true" />
+                  </span>
+                  <div className="space-y-1">
+                    <CardTitle>Votre préparation</CardTitle>
+                    <CardDescription>Les informations nécessaires à l’émission.</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-5 pt-4 sm:pt-5">
                 <div>
                   <p className="text-foreground text-2xl font-semibold tabular-nums">
                     {completed}
@@ -365,7 +412,7 @@ export default function EinvoicingSettingsPage() {
                     <li key={step.code}>
                       <a
                         href={target(step.code)}
-                        className="group flex items-start gap-2.5 rounded-md py-1 text-xs focus-visible:outline-2 focus-visible:outline-offset-4"
+                        className="group min-h-touch flex items-start gap-2.5 rounded-md py-1 text-xs focus-visible:outline-2 focus-visible:outline-offset-4 sm:min-h-0"
                       >
                         {step.fait ? (
                           <CheckCircle2

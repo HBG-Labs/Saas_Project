@@ -1,8 +1,10 @@
 import { ArrowDownLeft, Download } from 'lucide-react';
 import { useState } from 'react';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { exportToCsv } from '@/lib/csv-export';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -28,13 +30,14 @@ export default function StockMovementsPage() {
     lowStockArticles,
     metrics,
     recordMovement,
+    isLoading,
+    error,
+    refreshAll,
   } = useStock(organizationId);
 
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<StockPeriod>('current_month');
-  const [customMonth, setCustomMonth] = useState<string>(
-    new Date().toISOString().slice(0, 7),
-  );
+  const [customMonth, setCustomMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
   const handleMovementSubmit = async (input: StockMovementInput) => {
     await recordMovement(input);
@@ -59,37 +62,48 @@ export default function StockMovementsPage() {
     );
   };
 
+  if (isLoading) return <ListSkeleton />;
+
+  if (error !== null && consumables.length === 0 && movements.length === 0) {
+    return (
+      <ErrorState
+        error={error}
+        title="Mouvements de stock indisponibles"
+        onRetry={() => void refreshAll()}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Grand Livre des Mouvements de Stock"
-          description="Traçabilité complète des entrées fournisseurs, sorties chantiers, transferts véhicules et inventaires."
-        />
+      <PageHeader
+        title="Mouvements de stock"
+        description="Retrouvez chaque entrée, sortie chantier, transfert véhicule et correction d’inventaire."
+        actions={
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="min-h-touch flex-1 gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+              aria-label="Exporter les mouvements de stock au format CSV"
+            >
+              <Download className="size-3.5" />
+              <span>Export CSV</span>
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Download className="size-3.5" />
-            <span>Export CSV</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsMovementModalOpen(true)}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <ArrowDownLeft className="size-3.5" />
-            <span>Nouveau Mouvement</span>
-          </Button>
-        </div>
-      </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsMovementModalOpen(true)}
+              className="min-h-touch flex-[1.35] gap-1.5 text-xs font-semibold sm:min-h-0 sm:flex-none"
+            >
+              <ArrowDownLeft className="size-3.5" />
+              <span>Nouveau mouvement</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Onglets de navigation Stock */}
       <StockNavTabs lowStockCount={lowStockArticles.length} />

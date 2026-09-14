@@ -5,6 +5,7 @@ import { useOutletContext } from 'react-router';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -41,9 +42,25 @@ export default function PortalMessagesPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <PortalPageHeader title="Messagerie" description={`Vos échanges avec ${context.organization_name}.`} />
-        {context.allow_client_initiated ? <NewConversationDialog onCreated={setSelectedId} /> : null}
+      <div className={cn(selected !== null && 'hidden lg:block')}>
+        <PortalPageHeader
+          title="Messagerie"
+          description={`Retrouvez vos échanges avec ${context.organization_name} et répondez depuis un fil unique.`}
+          icon={MessageSquare}
+          tone="accent"
+          summary={
+            conversations.isSuccess ? (
+              <Badge variant="neutral" size="button">
+                {list.length} conversation{list.length > 1 ? 's' : ''}
+              </Badge>
+            ) : null
+          }
+          action={
+            context.allow_client_initiated ? (
+              <NewConversationDialog onCreated={setSelectedId} />
+            ) : null
+          }
+        />
       </div>
 
       {conversations.isPending ? (
@@ -67,7 +84,12 @@ export default function PortalMessagesPage() {
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <ul className={cn('divide-border border-border divide-y rounded-xl border', selected !== null && 'hidden lg:block')}>
+          <ul
+            className={cn(
+              'divide-border border-border bg-surface divide-y overflow-hidden rounded-2xl border shadow-xs',
+              selected !== null && 'hidden lg:block',
+            )}
+          >
             {list.map((c) => (
               <li key={c.id}>
                 <button
@@ -76,30 +98,63 @@ export default function PortalMessagesPage() {
                     setSelectedId(c.id);
                   }}
                   className={cn(
-                    'flex w-full flex-col gap-1 px-3 py-3 text-left transition-colors',
+                    'group focus-visible:ring-primary flex min-h-[4.75rem] w-full items-start gap-3 px-3 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
                     c.id === selectedId ? 'bg-primary-subtle' : 'hover:bg-surface-hover',
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={cn('truncate text-sm', c.unread_count > 0 ? 'text-foreground font-semibold' : 'text-foreground')}>
-                      {c.subject}
-                    </span>
-                    {c.unread_count > 0 ? (
-                      <span className="bg-primary text-primary-foreground rounded-full px-2 text-xs font-bold" aria-label={`${c.unread_count} non lu(s)`}>
-                        {c.unread_count}
+                  <span
+                    className={cn(
+                      'flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+                      c.unread_count > 0
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-surface-sunken text-muted-foreground group-hover:text-foreground',
+                    )}
+                  >
+                    <MessageSquare className="size-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={cn(
+                          'text-foreground line-clamp-2 text-sm',
+                          c.unread_count > 0 && 'font-semibold',
+                        )}
+                      >
+                        {c.subject}
                       </span>
-                    ) : c.status === 'closed' ? (
-                      <Lock className="text-muted-foreground size-3.5 shrink-0" aria-label="Conversation close" />
-                    ) : null}
+                      {c.unread_count > 0 ? (
+                        <span
+                          className="bg-primary text-primary-foreground min-w-5 rounded-full px-1.5 text-center text-xs leading-5 font-bold"
+                          aria-label={`${c.unread_count} non lu(s)`}
+                        >
+                          {c.unread_count}
+                        </span>
+                      ) : c.status === 'closed' ? (
+                        <Badge variant="neutral">
+                          <Lock aria-hidden="true" />
+                          Clos
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <span className="text-muted-foreground mt-1 block text-xs">
+                      {formatDateFr(c.last_message_at, true)}
+                    </span>
                   </div>
-                  <span className="text-muted-foreground text-xs">{formatDateFr(c.last_message_at, true)}</span>
                 </button>
               </li>
             ))}
           </ul>
 
           {selected === null ? (
-            <p className="text-muted-foreground hidden self-center text-center text-xs lg:block">Sélectionnez une conversation.</p>
+            <div className="border-border bg-surface hidden min-h-[30rem] flex-col items-center justify-center rounded-2xl border p-8 text-center shadow-xs lg:flex">
+              <span className="bg-accent-subtle text-accent flex size-12 items-center justify-center rounded-2xl">
+                <MessageSquare className="size-6" aria-hidden="true" />
+              </span>
+              <p className="text-foreground mt-3 text-sm font-semibold">Ouvrez une conversation</p>
+              <p className="text-muted-foreground mt-1 max-w-xs text-xs">
+                Sélectionnez un échange dans la liste pour lire les messages et répondre.
+              </p>
+            </div>
           ) : (
             <Thread
               conversation={selected}
@@ -139,16 +194,30 @@ function Thread({
   const isClosed = conversation.status === 'closed';
 
   return (
-    <div className="border-border flex min-h-[24rem] flex-col rounded-xl border">
-      <div className="border-border flex items-center gap-2 border-b px-3 py-2">
-        <Button variant="ghost" size="icon-sm" className="lg:hidden" onClick={onBack} aria-label="Retour aux conversations">
+    <section className="border-border bg-surface flex h-[calc(100dvh-9.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border shadow-xs lg:h-[40rem]">
+      <header className="border-border bg-surface-sunken/40 flex items-center gap-2 border-b px-3 py-2.5 sm:px-4">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="lg:hidden"
+          onClick={onBack}
+          aria-label="Retour aux conversations"
+        >
           <ArrowLeft className="size-4" />
         </Button>
-        <p className="text-foreground min-w-0 flex-1 truncate text-sm font-semibold">{conversation.subject}</p>
-        {isClosed ? <Lock className="text-muted-foreground size-4" aria-label="Conversation close" /> : null}
-      </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-foreground truncate text-sm font-semibold">{conversation.subject}</h2>
+          <p className="text-muted-foreground truncate text-xs">Échange avec {organizationName}</p>
+        </div>
+        {isClosed ? (
+          <Badge variant="neutral">
+            <Lock aria-hidden="true" />
+            Conversation close
+          </Badge>
+        ) : null}
+      </header>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+      <div className="bg-background/40 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
         {messages.isPending ? (
           <div className="space-y-3">
             <Skeleton className="h-16 w-3/4" />
@@ -161,41 +230,69 @@ function Thread({
               void messages.refetch();
             }}
           />
+        ) : (messages.data ?? []).length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <span className="bg-surface-sunken text-muted-foreground flex size-10 items-center justify-center rounded-xl">
+              <MessageSquare className="size-5" aria-hidden="true" />
+            </span>
+            <p className="text-foreground mt-2 text-sm font-semibold">Aucun message</p>
+            <p className="text-muted-foreground mt-1 text-xs">Le premier message apparaîtra ici.</p>
+          </div>
         ) : (
           (messages.data ?? []).map((m) => {
             const mine = m.direction === 'inbound';
             return (
-              <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+              <article
+                key={m.id}
+                className={cn('flex', mine ? 'justify-end' : 'justify-start')}
+                aria-label={mine ? 'Votre message' : `Message de ${organizationName}`}
+              >
                 <div
                   className={cn(
-                    'max-w-[85%] space-y-1 rounded-2xl px-3 py-2 text-sm sm:max-w-[75%]',
-                    mine ? 'bg-primary text-primary-foreground' : 'bg-surface-sunken text-foreground',
+                    'max-w-[88%] space-y-1.5 rounded-2xl px-3 py-2.5 text-sm shadow-xs sm:max-w-[75%]',
+                    mine
+                      ? 'bg-primary text-primary-foreground rounded-tr-md'
+                      : 'border-border bg-surface text-foreground rounded-tl-md border',
                   )}
                 >
-                  {!mine ? <p className="text-muted-foreground text-[11px] font-semibold">{organizationName}</p> : null}
+                  {!mine ? (
+                    <p className="text-muted-foreground text-[11px] font-semibold">
+                      {organizationName}
+                    </p>
+                  ) : null}
                   <p className="break-words whitespace-pre-wrap">{m.body_text}</p>
                   {m.attachments.length > 0 ? (
                     <ul className="space-y-1">
                       {m.attachments.map((piece) => (
-                        <li key={piece.id} className="flex items-center gap-1 text-xs">
+                        <li key={piece.id} className="flex min-w-0 items-center gap-1 text-xs">
                           <Paperclip className="size-3" aria-hidden="true" />
-                          <FileOpenButton bucket="client-message-attachments" path={piece.storage_path} label={piece.file_name} />
+                          <FileOpenButton
+                            bucket="client-message-attachments"
+                            path={piece.storage_path}
+                            label={piece.file_name}
+                            className="max-w-full min-w-0"
+                          />
                         </li>
                       ))}
                     </ul>
                   ) : null}
-                  <p className={cn('text-[11px]', mine ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+                  <p
+                    className={cn(
+                      'text-[11px]',
+                      mine ? 'text-primary-foreground/80' : 'text-muted-foreground',
+                    )}
+                  >
                     {formatDateFr(m.created_at, true)}
                   </p>
                 </div>
-              </div>
+              </article>
             );
           })
         )}
       </div>
 
       <form
-        className="border-border space-y-2 border-t p-3"
+        className="border-border bg-surface space-y-2 border-t p-3 sm:p-4"
         onSubmit={(event) => {
           event.preventDefault();
           const body = draft.trim();
@@ -235,13 +332,20 @@ function Thread({
           }}
         />
         <div className="flex justify-end">
-          <Button type="submit" size="sm" disabled={isClosed || send.isPending || draft.trim().length === 0}>
-            <Send className="size-4" />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isClosed || send.isPending || draft.trim().length === 0}
+            isLoading={send.isPending}
+            loadingLabel="Envoi du message"
+            leadingIcon={<Send className="size-4" />}
+            className="w-full min-[380px]:w-auto"
+          >
             {send.isPending ? 'Envoi…' : 'Envoyer'}
           </Button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }
 
@@ -258,7 +362,7 @@ function NewConversationDialog({ onCreated }: { onCreated: (id: string) => void 
       onOpenChange={setOpen}
       title="Nouveau message"
       trigger={
-        <Button size="sm">
+        <Button size="sm" className="w-full min-[380px]:w-auto">
           <Plus className="size-4" />
           Nous écrire
         </Button>
@@ -305,18 +409,25 @@ function NewConversationDialog({ onCreated }: { onCreated: (id: string) => void 
             setBody(event.target.value);
           }}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
             onClick={() => {
               setOpen(false);
             }}
+            className="w-full sm:w-auto"
           >
             Annuler
           </Button>
-          <Button type="submit" disabled={send.isPending || subject.trim() === '' || body.trim() === ''}>
-            <Send className="size-4" />
+          <Button
+            type="submit"
+            disabled={send.isPending || subject.trim() === '' || body.trim() === ''}
+            isLoading={send.isPending}
+            loadingLabel="Envoi du nouveau message"
+            leadingIcon={<Send className="size-4" />}
+            className="w-full sm:w-auto"
+          >
             {send.isPending ? 'Envoi…' : 'Envoyer'}
           </Button>
         </div>
