@@ -34,6 +34,25 @@ export async function downloadTestFacturX(
   return data;
 }
 
+/**
+ * S'assure que le PDF Factur-X définitif existe (le génère s'il manque), sans
+ * le télécharger. C'est ce document que le portail client et l'envoi par
+ * e-mail utilisent.
+ */
+export async function ensureFacturX(invoiceId: string): Promise<void> {
+  const response = await supabase.functions.invoke<unknown>('generate-facturx', {
+    body: { invoiceId },
+  });
+  if (response.error) {
+    throw new Error(
+      await messageDeLaFonction(response.error, 'Le PDF de la facture n’a pas pu être préparé.'),
+    );
+  }
+  if (!documentSchema.safeParse(response.data).success) {
+    throw new Error('La réponse du service de documents est incomplète. Réessayez.');
+  }
+}
+
 /** Seul l'identifiant est transmis. Le serveur relit la facture et ses droits. */
 export async function downloadFacturX(invoiceId: string): Promise<Blob> {
   const responseFromServer = await supabase.functions.invoke<unknown>('generate-facturx', {

@@ -227,6 +227,8 @@ export interface SendMessageInput {
   missionId?: string;
   quoteId?: string;
   invoiceId?: string;
+  /** Joint le PDF de cette facture au courriel — vérifié côté serveur. */
+  attachInvoiceId?: string;
 }
 
 export interface SendMessageResult {
@@ -246,7 +248,7 @@ export async function sendMessage(input: SendMessageInput): Promise<SendMessageR
 
   if (response.error) {
     const contexte: unknown = (response.error as { context?: unknown }).context;
-    if (contexte instanceof Response && contexte.status === 502) {
+    if (contexte instanceof Response && (contexte.status === 502 || contexte.status === 409)) {
       try {
         const corps = (await contexte.clone().json()) as SendMessageResult;
         if (corps.status === 'failed' && typeof corps.messageId === 'string') return corps;

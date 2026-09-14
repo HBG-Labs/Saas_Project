@@ -41,6 +41,7 @@ function setup(options: {
   context?: ConversationContext | null;
   sendFails?: string;
   missing?: string[];
+  invoicePdf?: boolean;
 } = {}) {
   const journal: Journal = { conversations: [], inserts: [], sent: [], failed: [], emails: [] };
   const caller: CallerStore = {
@@ -57,6 +58,8 @@ function setup(options: {
   };
   const admin: AdminStore = {
     conversationContext: () => Promise.resolve(options.context === undefined ? CONTEXT : options.context),
+    invoiceAttachment: () =>
+      Promise.resolve(options.invoicePdf ? { filename: 'Facture-FAC-0001.pdf', content: 'JVBERi0=', contentType: 'application/pdf' } : null),
     markSent: (id, input) => { journal.sent.push({ id, ...input }); return Promise.resolve(); },
     markFailed: (id, error) => { journal.failed.push({ id, error }); return Promise.resolve(); },
   };
@@ -190,4 +193,19 @@ Deno.test('le courriel échappe le HTML et pointe vers le portail', () => {
   assertEquals(html.includes('Plomberie &lt;Dupont&gt;'), true);
   assertEquals(html.includes('https://rezo360.com/portail'), true);
   assertEquals(text.includes('Ligne 1 <script>x</script>'), true);
+});
+
+Deno.test('AC21 — une facture est jointe au courriel quand la base la reconnaît comme celle du client', async () => {
+  const { handler, journal } = setup({ invoicePdf: true });
+  const res = await handler(post({ conversationId: CONV, body: 'Votre facture.', attachInvoiceId: MSG }));
+  assertEquals(res.status, 200);
+  assertEquals(journal.emails[0]?.attachments, [{ filename: 'Facture-FAC-0001.pdf', content: 'JVBERi0=', contentType: 'application/pdf' }]);
+});
+
+Deno.test('AC03 — une facture étrangère au client, ou sans PDF, n’est jamais jointe : le message reste en échec', async () => {
+  const { handler, journal } = setup({ invoicePdf: false });
+  const res = await handler(post({ conversationId: CONV, body: 'Votre facture.', attachInvoiceId: MSG }));
+  assertEquals(res.status, 409);
+  assertEquals(journal.emails.length, 0);
+  assertEquals(journal.failed.length, 1);
 });

@@ -24,6 +24,8 @@ export interface SendToClientDialogProps {
   defaultBody?: string;
   /** Rattachement de la conversation : le client retrouvera le document depuis le fil. */
   link?: { quoteId?: string; invoiceId?: string; missionId?: string };
+  /** Joindre le PDF de la facture `link.invoiceId` au courriel. */
+  attachInvoicePdf?: boolean;
   onSent?: (conversationId: string) => void;
 }
 
@@ -42,6 +44,7 @@ export function SendToClientDialog({
   defaultSubject = '',
   defaultBody = '',
   link,
+  attachInvoicePdf = false,
   onSent,
 }: SendToClientDialogProps) {
   const [innerOpen, setInnerOpen] = useState(false);
@@ -97,7 +100,13 @@ export function SendToClientDialog({
             setError(null);
             setFailed(null);
             send.mutate(
-              { contactId: effectiveContactId, subject: subject.trim(), body: body.trim(), ...link },
+              {
+                contactId: effectiveContactId,
+                subject: subject.trim(),
+                body: body.trim(),
+                ...link,
+                ...(attachInvoicePdf && link?.invoiceId ? { attachInvoiceId: link.invoiceId } : {}),
+              },
               {
                 onSuccess: (result) => {
                   if (result.status === 'failed') {
@@ -155,7 +164,11 @@ export function SendToClientDialog({
             onChange={(event) => {
               setBody(event.target.value);
             }}
-            hint="Le client reçoit ce message par e-mail et le retrouve dans son espace client. Il peut répondre depuis les deux."
+            hint={
+              attachInvoicePdf
+                ? 'Le PDF de la facture est joint à l’e-mail. Le client le retrouve aussi dans son espace client, rubrique « Mes factures ».'
+                : 'Le client reçoit ce message par e-mail et le retrouve dans son espace client. Il peut répondre depuis les deux.'
+            }
           />
           <div className="flex justify-end gap-2">
             <Button

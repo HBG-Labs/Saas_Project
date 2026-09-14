@@ -148,6 +148,46 @@ const adminStore: AdminStore = {
     };
   },
 
+  async invoiceAttachment(invoiceId, conversationId) {
+    const { data: conv } = await admin
+      .from('client_conversations')
+      .select('customer_id, organization_id')
+      .eq('id', conversationId)
+      .maybeSingle();
+    if (conv === null) return null;
+
+    const { data: invoice } = await admin
+      .from('invoices')
+      .select('id, reference, document_type, status, customer_id, organization_id')
+      .eq('id', invoiceId)
+      .eq('customer_id', conv.customer_id)
+      .eq('organization_id', conv.organization_id)
+      .neq('status', 'draft')
+      .maybeSingle();
+    if (invoice === null) return null;
+
+    const { data: doc } = await admin
+      .from('invoice_electronic_documents')
+      .select('object_path')
+      .eq('invoice_id', invoice.id)
+      .maybeSingle();
+    if (doc === null) return null;
+
+    const file = await admin.storage.from('invoice-electronic-documents').download(doc.object_path as string);
+    if (file.error !== null || file.data === null) return null;
+    const bytes = new Uint8Array(await file.data.arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    }
+    const kind = invoice.document_type === 'credit_note' ? 'Avoir' : 'Facture';
+    return {
+      filename: `${kind}-${String(invoice.reference).replace(/[^\w.-]+/g, '_')}.pdf`,
+      content: btoa(binary),
+      contentType: 'application/pdf',
+    };
+  },
+
   async markSent(messageId, input) {
     await admin
       .from('client_messages')

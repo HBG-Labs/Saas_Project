@@ -33,6 +33,19 @@ export interface SendInput {
   missionId?: string;
   quoteId?: string;
   invoiceId?: string;
+  /**
+   * Joindre le PDF de cette facture au courriel. Le serveur vérifie que la
+   * facture est celle du client de la conversation, qu'elle est émise, et
+   * que son PDF existe — sinon il refuse avant tout envoi.
+   */
+  attachInvoiceId?: string;
+}
+
+export interface EmailAttachmentInput {
+  filename: string;
+  /** Base64. */
+  content: string;
+  contentType: string;
 }
 
 export interface InsertedMessage {
@@ -68,6 +81,11 @@ export interface CallerStore {
 
 export interface AdminStore {
   conversationContext(conversationId: string): Promise<ConversationContext | null>;
+  /**
+   * Le PDF d'une facture, seulement si elle appartient au client de la
+   * conversation et n'est plus un brouillon. `null` sinon — sans distinguer.
+   */
+  invoiceAttachment(invoiceId: string, conversationId: string): Promise<EmailAttachmentInput | null>;
   markSent(messageId: string, input: { providerId: string; internetMessageId: string; recipientEmail: string; inReplyTo: string | null; references: string | null }): Promise<void>;
   markFailed(messageId: string, error: string): Promise<void>;
 }
@@ -183,6 +201,21 @@ export function createPortalMessageSendHandler(config: SendConfig) {
       return json({ messageId: inserted.id, conversationId: inserted.conversation_id, status: 'failed' }, 500);
     }
 
+    const attachInvoiceId = optionalId(raw.attachInvoiceId);
+    let attachments: EmailAttachmentInput[] = [];
+    if (attachInvoiceId !== null) {
+      const piece = await config.admin.invoiceAttachment(attachInvoiceId, inserted.conversation_id);
+      if (piece === null) {
+        // Le message est déjà écrit ; le courriel, lui, n'est pas parti : on le dit.
+        await config.admin.markFailed(inserted.id, 'PDF de la facture introuvable ou facture étrangère au client.');
+        return json(
+          { messageId: inserted.id, conversationId: inserted.conversation_id, status: 'failed', error: 'Le PDF de la facture est introuvable. Générez-le, puis réessayez.' },
+          409,
+        );
+      }
+      attachments = [piece];
+    }
+
     const internetMessageId = buildMessageId(inserted.id, config.inboundDomain);
     const replyTo = await buildReplyAddress(inserted.conversation_id, config.replySecret, config.inboundDomain);
     const references = [...context.references, ...(context.lastInternetMessageId ? [context.lastInternetMessageId] : [])]
@@ -210,6 +243,7 @@ export function createPortalMessageSendHandler(config: SendConfig) {
         text: rendered.text,
         replyTo,
         headers,
+        attachments,
       });
       await config.admin.markSent(inserted.id, {
         providerId: result.providerId ?? '',

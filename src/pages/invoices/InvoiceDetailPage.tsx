@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Download,
+  Globe,
   Lock,
   Pencil,
   Send,
@@ -42,7 +43,8 @@ import {
   useUpdateInvoice,
 } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { formatInvoiceDate } from '@/features/einvoicing';
+import { SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
+import { ensureFacturX, formatInvoiceDate } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
 
@@ -94,6 +96,13 @@ export default function InvoiceDetailPage() {
   const deleteInvoice = useDeleteInvoice();
 
   const [edition, setEdition] = useState(false);
+  const portal = useClientPortalAccess();
+  const [envoiClient, setEnvoiClient] = useState<{ open: boolean; avecPdf: boolean; alerte: string | null }>({
+    open: false,
+    avecPdf: false,
+    alerte: null,
+  });
+  const [preparationEnvoi, setPreparationEnvoi] = useState(false);
   const [confirmationEmission, setConfirmationEmission] = useState(false);
   const [confirmationSuppression, setConfirmationSuppression] = useState(false);
 
@@ -346,6 +355,89 @@ export default function InvoiceDetailPage() {
             Suivi manuel : ces actions ne transmettent aucune facture et ne déclenchent aucun
             paiement. Une correction du montant après émission nécessite un avoir.
           </p>
+        </div>
+      )}
+
+      {/*
+        ESPACE CLIENT — envoi direct, sans plateforme de facturation électronique.
+
+        Deux conditions, tenues par la base (`portal_list_invoices`) : une fiche
+        client rattachée, et une facture émise. « Envoyer au client » prépare le
+        PDF définitif (celui du portail), marque la facture envoyée, puis ouvre
+        une conversation avec le PDF joint — e-mail par Resend, côté serveur.
+      */}
+      {portal.canView && figee && invoice.status !== 'cancelled' && (
+        <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 print:hidden">
+          <div className="flex items-start gap-2">
+            <Globe className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div className="text-xs">
+              <p className="text-foreground font-semibold">Espace client</p>
+              <p className="text-muted-foreground">
+                {invoice.customer_id === null
+                  ? 'Cette facture n’est rattachée à aucune fiche client : elle ne peut pas apparaître dans un espace client.'
+                  : `Visible dans l’espace client de ${invoice.customer_name ?? 'ce client'}. Le PDF y est téléchargeable dès qu’il a été généré.`}
+              </p>
+              {envoiClient.alerte !== null && (
+                <p className="text-warning mt-1">{envoiClient.alerte}</p>
+              )}
+            </div>
+          </div>
+          {invoice.customer_id !== null && portal.canSend && (
+            <>
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full justify-center gap-1.5 text-xs sm:w-auto"
+                disabled={preparationEnvoi || updateInvoice.isPending}
+                onClick={() => {
+                  void (async () => {
+                    setPreparationEnvoi(true);
+                    let avecPdf = true;
+                    let alerte: string | null = null;
+                    try {
+                      await ensureFacturX(invoice.id);
+                    } catch (e) {
+                      avecPdf = false;
+                      alerte = `PDF non joint : ${e instanceof Error ? e.message : 'génération impossible'}`;
+                    }
+                    if (invoice.status === 'issued') {
+                      await updateInvoice.mutateAsync({ status: 'sent' }).catch(() => undefined);
+                    }
+                    setPreparationEnvoi(false);
+                    setEnvoiClient({ open: true, avecPdf, alerte });
+                  })();
+                }}
+              >
+                <Send className="size-3.5" aria-hidden="true" />
+                {preparationEnvoi ? 'Préparation du PDF…' : 'Envoyer au client'}
+              </Button>
+              <SendToClientDialog
+                customerId={invoice.customer_id}
+                open={envoiClient.open}
+                onOpenChange={(open) => {
+                  setEnvoiClient((etat) => ({ ...etat, open }));
+                }}
+                title={`${estAvoir ? 'Avoir' : 'Facture'} ${invoice.reference} — envoyer au client`}
+                defaultSubject={`Votre ${estAvoir ? 'avoir' : 'facture'} ${invoice.reference}`}
+                defaultBody={[
+                  'Bonjour,',
+                  '',
+                  `veuillez trouver ${estAvoir ? 'votre avoir' : 'votre facture'} ${invoice.reference}${
+                    invoice.totals ? ` d’un montant de ${totalTTC.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} TTC` : ''
+                  }${!estAvoir && invoice.due_date ? `, à régler avant le ${formatInvoiceDate(invoice.due_date)}` : ''}.`,
+                  envoiClient.avecPdf
+                    ? 'Le PDF est joint à cet e-mail ; vous le retrouverez aussi dans votre espace client, rubrique « Mes factures ».'
+                    : 'Vous la retrouverez dans votre espace client, rubrique « Mes factures ».',
+                  '',
+                  'N’hésitez pas à nous répondre pour toute question.',
+                  '',
+                  organization?.name ?? '',
+                ].join('\n')}
+                link={{ invoiceId: invoice.id }}
+                attachInvoicePdf={envoiClient.avecPdf}
+              />
+            </>
+          )}
         </div>
       )}
 

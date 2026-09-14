@@ -29,3 +29,4 @@ export { TransmissionStatusPanel } from './components/TransmissionStatusPanel';
 export { ProviderConnectionCard } from './components/ProviderConnectionCard';
 
 export { formatInvoiceDate } from './canonical/date';
+export { ensureFacturX } from './api/facturx.api';
