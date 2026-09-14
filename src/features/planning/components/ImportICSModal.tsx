@@ -1,10 +1,10 @@
 import { SelectField } from '@/components/ui/SelectField';
 import { useState, useRef } from 'react';
-import { Dialog } from 'radix-ui';
-import { Upload, Calendar, CheckCircle2, AlertCircle, X, FileText, User } from 'lucide-react';
+import { Upload, Calendar, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { memberDisplayName } from '@/features/organizations';
 import type { MemberWithProfile } from '@/types/domain';
 
@@ -54,7 +54,11 @@ export function ImportICSModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.ics') && !file.name.endsWith('.ical')) {
+    setParsedEvents([]);
+    setFileName(null);
+
+    const normalizedName = file.name.toLowerCase();
+    if (!normalizedName.endsWith('.ics') && !normalizedName.endsWith('.ical')) {
       setErrorMsg('Veuillez sélectionner un fichier au format iCalendar (.ics ou .ical).');
       return;
     }
@@ -73,6 +77,10 @@ export function ImportICSModal({
           setParsedEvents(events);
         }
       }
+    };
+    reader.onerror = () => {
+      setParsedEvents([]);
+      setErrorMsg('Le fichier n’a pas pu être lu. Réessayez avec un autre export iCalendar.');
     };
     reader.readAsText(file);
   };
@@ -93,157 +101,134 @@ export function ImportICSModal({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] space-y-5 overflow-y-auto rounded-t-2xl border-t border-border bg-surface-raised p-5 shadow-modal focus:outline-hidden data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:p-6 sm:data-[state=open]:zoom-in-95">
-          <div className="mx-auto h-1 w-9 rounded-full bg-border-strong sm:hidden" aria-hidden="true" />
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                <Upload className="size-4.5" />
-              </div>
-              <div>
-                <Dialog.Title className="text-sm font-extrabold text-foreground">
-                  Importer un calendrier iCal (.ics)
-                </Dialog.Title>
-                <p className="text-xs text-muted-foreground">
-                  Outlook, Google Calendar, Apple Calendar
-                </p>
-              </div>
+    <Modal
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) handleClose();
+      }}
+      title="Importer un calendrier iCal"
+      description="Transformez les événements Outlook, Google Calendar ou Apple Calendar en missions."
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={handleClose} disabled={submitting}>
+            Annuler
+          </Button>
+          <Button
+            variant="primary"
+            disabled={parsedEvents.length === 0}
+            isLoading={submitting}
+            loadingLabel="Création des missions"
+            onClick={handleConfirmImport}
+            className="gap-1.5"
+          >
+            <CheckCircle2 className="size-4" aria-hidden="true" />
+            <span>
+              Créer {parsedEvents.length > 0 ? String(parsedEvents.length) : ''} mission
+              {parsedEvents.length > 1 ? 's' : ''}
+            </span>
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="border-primary/20 bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl border">
+              <Upload className="size-4" aria-hidden="true" />
             </div>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="flex size-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-subtle hover:text-foreground sm:size-8"
-                aria-label="Fermer"
-              >
-                <X className="size-4" />
-              </button>
-            </Dialog.Close>
+            <div>
+              <h3 className="text-foreground text-sm font-semibold">Fichier source</h3>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Sélectionnez un export iCalendar au format .ics ou .ical.
+              </p>
+            </div>
           </div>
 
-          {/* Upload Area */}
-          <div className="space-y-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".ics,.ical"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+          <input
+            id="ical-file"
+            ref={fileInputRef}
+            type="file"
+            accept=".ics,.ical"
+            aria-label="Fichier iCalendar"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex min-h-36 w-full cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface-subtle/40 p-6 text-center transition-[color,background-color,border-color] hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="border-border bg-surface-subtle/40 hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-ring/30 flex min-h-36 w-full cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition-[color,background-color,border-color] focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
+              <FileText className="size-5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-semibold">
+                {fileName ? fileName : 'Cliquez pour sélectionner votre fichier .ics'}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Format standard iCalendar exporté depuis votre messagerie ou agenda
+              </p>
+            </div>
+          </button>
+
+          {errorMsg && (
+            <div
+              role="alert"
+              className="border-error/30 bg-error/10 text-error flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold"
             >
-              <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                <FileText className="size-5" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-foreground">
-                  {fileName ? fileName : 'Cliquez pour sélectionner votre fichier .ics'}
-                </p>
-                <p className="text-3xs text-muted-foreground mt-0.5">
-                  Format standard iCalendar exporté depuis votre messagerie ou agenda
-                </p>
-              </div>
-            </button>
-
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-error/10 border border-error/30 text-error text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="size-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Parsed Events Preview */}
-          {parsedEvents.length > 0 && (
-            <div className="space-y-3 border-t border-border pt-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <span>Événements détectés</span>
-                  <Badge variant="primary" className="text-3xs">
-                    {parsedEvents.length}
-                  </Badge>
-                </h4>
-              </div>
-
-              {/* Intervenant assigné par défaut */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="tech-assign-select"
-                  className="text-3xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1"
-                >
-                  <User className="size-3 text-primary" />
-                  <span>Assigner ces missions à :</span>
-                </label>
-                <SelectField
-                  id="tech-assign-select"
-                  value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-9"
-                >
-                  <option value="">À affecter plus tard</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {memberDisplayName(member)}
-                    </option>
-                  ))}
-                </SelectField>
-                <p className="text-3xs text-muted-foreground">
-                  Chaque événement deviendra une mission planifiée à sa date.
-                </p>
-              </div>
-
-              {/* Event preview list */}
-              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 divide-y divide-border/60">
-                {parsedEvents.map((evt) => (
-                  <div key={evt.id} className="pt-2 first:pt-0 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-foreground truncate">{evt.title}</span>
-                      <span className="font-mono text-3xs font-bold text-primary shrink-0 flex items-center gap-1">
-                        <Calendar className="size-2.5" />
-                        {evt.date}
-                      </span>
-                    </div>
-                    {evt.details && (
-                      <p className="text-3xs text-muted-foreground truncate mt-0.5">
-                        {evt.details}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+              <span>{errorMsg}</span>
             </div>
           )}
+        </section>
 
-          {/* Footer Actions */}
-          <div className="safe-bottom flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
-            <Button size="sm" variant="outline" onClick={handleClose} className="h-11 text-xs sm:h-8">
-              Annuler
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              disabled={parsedEvents.length === 0 || submitting}
-              onClick={handleConfirmImport}
-              className="h-11 gap-1.5 text-xs sm:h-8"
+        {/* Parsed Events Preview */}
+        {parsedEvents.length > 0 && (
+          <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                <span>Événements détectés</span>
+                <Badge variant="primary">{parsedEvents.length}</Badge>
+              </h3>
+            </div>
+
+            <SelectField
+              id="tech-assign-select"
+              label="Assigner ces missions à"
+              value={selectedMemberId}
+              onChange={(e) => setSelectedMemberId(e.target.value)}
+              hint="Chaque événement deviendra une mission planifiée à sa date."
             >
-              <CheckCircle2 className="size-3.5" />
-              <span>
-                {submitting
-                  ? 'Création…'
-                  : `Créer ${parsedEvents.length > 0 ? String(parsedEvents.length) : ''} mission${parsedEvents.length > 1 ? 's' : ''}`}
-              </span>
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+              <option value="">À affecter plus tard</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {memberDisplayName(member)}
+                </option>
+              ))}
+            </SelectField>
+
+            {/* Event preview list */}
+            <div className="divide-border/60 border-border bg-surface max-h-52 divide-y overflow-y-auto rounded-xl border px-3">
+              {parsedEvents.map((evt) => (
+                <article key={evt.id} className="py-3 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-foreground truncate font-semibold">{evt.title}</span>
+                    <span className="text-3xs text-primary flex shrink-0 items-center gap-1 font-mono font-semibold">
+                      <Calendar className="size-3" aria-hidden="true" />
+                      {evt.date}
+                    </span>
+                  </div>
+                  {evt.details && (
+                    <p className="text-muted-foreground mt-1 truncate text-xs">{evt.details}</p>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </Modal>
   );
 }
