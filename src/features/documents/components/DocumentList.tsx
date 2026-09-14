@@ -183,7 +183,7 @@ export function DocumentList({
           return (
             <li
               key={document.id}
-              className="border-border bg-card shadow-xs hover:border-primary/30 flex items-start gap-3 rounded-xl border p-3.5 transition-[border-color,box-shadow]"
+              className="border-border/80 bg-card hover:border-primary/30 hover:shadow-raised flex items-start gap-3 rounded-2xl border p-3.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <span className="bg-surface-sunken flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
                 <Icone className={`h-5 w-5 ${apparence.couleur}`} aria-hidden />
@@ -220,10 +220,15 @@ export function DocumentList({
       </ul>
 
       {/* Écran large : tableau. */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- la liste horizontale doit être défilable au clavier */}
-      <div className="border-border bg-card shadow-xs focus-visible:ring-ring hidden overflow-x-auto rounded-xl border focus-visible:ring-2 focus-visible:outline-none md:block" role="region" aria-label="Liste des documents" tabIndex={0}>
-        <table className="min-w-[720px] w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground">
+      {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- la liste horizontale doit être défilable au clavier */}
+      <div
+        className="border-border/80 bg-card focus-visible:ring-ring hidden overflow-x-auto rounded-2xl border shadow-xs focus-visible:ring-2 focus-visible:outline-none md:block"
+        role="region"
+        aria-label="Liste des documents"
+        tabIndex={0}
+      >
+        <table className="w-full min-w-[720px] text-sm">
+          <thead className="bg-surface-raised/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Nom</th>
               <th className="px-4 py-3 text-left font-medium">Type</th>
@@ -286,6 +291,7 @@ export function DocumentList({
           </tbody>
         </table>
       </div>
+      {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
     </>
   );
 }

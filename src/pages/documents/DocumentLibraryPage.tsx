@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { useToast } from '@/components/feedback/toast-context';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button, Input, ListSkeleton, Modal } from '@/components/ui';
 import {
   DocumentEditDialog,
@@ -24,8 +25,13 @@ import {
   type FiltreFamille,
 } from '@/features/documents';
 import { useAuth } from '@/features/auth';
-import { DocumentShareDialog, useClientPortalAccess, useDocumentShares } from '@/features/client-portal';
+import {
+  DocumentShareDialog,
+  useClientPortalAccess,
+  useDocumentShares,
+} from '@/features/client-portal';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
+import { useDocumentTitle } from '@/lib/use-document-title';
 import type { OrganizationDocument } from '@/types/domain';
 
 /**
@@ -47,6 +53,7 @@ import type { OrganizationDocument } from '@/types/domain';
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export default function DocumentLibraryPage() {
+  useDocumentTitle('Bibliothèque');
   const toast = useToast();
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
@@ -143,32 +150,27 @@ export default function DocumentLibraryPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-foreground text-2xl font-semibold">Bibliothèque</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Documents partagés avec votre organisation
-          </p>
-        </div>
-        {canManage && (
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="outline"
-              onClick={() =>
-                setDemandeDossier({ mode: 'creer', parentFolderId: dossierCourant })
-              }
-              className="w-full sm:w-auto"
-            >
-              <FolderPlus className="mr-2 h-4 w-4" aria-hidden />
-              Nouveau dossier
-            </Button>
-            <Button onClick={() => setDepotOuvert(true)} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" aria-hidden />
-              Ajouter des documents
-            </Button>
-          </div>
-        )}
-      </header>
+      <PageHeader
+        title="Bibliothèque"
+        description="Centralisez les documents techniques, procédures, plans et notices utiles à votre organisation."
+        actions={
+          canManage ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setDemandeDossier({ mode: 'creer', parentFolderId: dossierCourant })}
+              >
+                <FolderPlus className="mr-2 h-4 w-4" aria-hidden />
+                Nouveau dossier
+              </Button>
+              <Button onClick={() => setDepotOuvert(true)}>
+                <Plus className="mr-2 h-4 w-4" aria-hidden />
+                Ajouter des documents
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       <FolderBreadcrumb
         folders={folders}
@@ -178,7 +180,7 @@ export default function DocumentLibraryPage() {
 
       <section
         aria-label="Rechercher et filtrer les documents"
-        className="border-border bg-surface shadow-xs space-y-3 rounded-xl border p-3 sm:p-4"
+        className="border-border/80 bg-surface space-y-3 rounded-2xl border p-3 shadow-xs sm:p-4"
       >
         <Input
           label="Rechercher"
@@ -198,7 +200,6 @@ export default function DocumentLibraryPage() {
               </Button>
             )
           }
-          className="h-11 sm:h-9"
           onChange={(event) => changerFiltre(() => setSearch(event.target.value))}
         />
 
@@ -367,7 +368,9 @@ export default function DocumentLibraryPage() {
           sharedCustomerIds={
             partage === null
               ? []
-              : (documentShares.data ?? []).filter((s) => s.document_id === partage.id).map((s) => s.customer_id)
+              : (documentShares.data ?? [])
+                  .filter((s) => s.document_id === partage.id)
+                  .map((s) => s.customer_id)
           }
           onOpenChange={(open) => {
             if (!open) setPartage(null);
@@ -388,12 +391,11 @@ export default function DocumentLibraryPage() {
           description={`« ${suppression.name} » sera retiré de la bibliothèque pour toute l’organisation. Cette action est définitive.`}
           size="sm"
           footer={
-            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <>
               <Button
                 variant="ghost"
                 onClick={() => setSuppression(null)}
                 disabled={remove.isPending}
-                className="w-full sm:w-auto"
               >
                 Annuler
               </Button>
@@ -403,11 +405,10 @@ export default function DocumentLibraryPage() {
                 disabled={remove.isPending}
                 isLoading={remove.isPending}
                 loadingLabel="Suppression du document"
-                className="w-full sm:w-auto"
               >
                 {remove.isPending ? 'Suppression…' : 'Supprimer'}
               </Button>
-            </div>
+            </>
           }
         />
       )}

@@ -43,11 +43,7 @@ export interface FolderBreadcrumbProps {
  * — une arborescence profonde repousserait sinon le contenu sous la ligne de
  * flottaison. Le bouton « remonter », lui, ne défile pas.
  */
-export function FolderBreadcrumb({
-  folders,
-  currentFolderId,
-  onNavigate,
-}: FolderBreadcrumbProps) {
+export function FolderBreadcrumb({ folders, currentFolderId, onNavigate }: FolderBreadcrumbProps) {
   const chemin = cheminDe(folders, currentFolderId);
   const parent = chemin.length >= 2 ? (chemin[chemin.length - 2]?.id ?? null) : null;
 
@@ -169,7 +165,7 @@ export function FolderGrid({
           return (
             <li
               key={dossier.id}
-              className="border-border bg-card shadow-xs hover:border-primary/40 hover:shadow-raised flex items-center gap-2 rounded-xl border p-2.5 transition-[border-color,box-shadow]"
+              className="border-border/80 bg-card hover:border-primary/30 hover:shadow-raised group flex items-center gap-2 rounded-2xl border p-2.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <button
                 type="button"
@@ -183,7 +179,7 @@ export function FolderGrid({
                   d'un fichier partageaient le même gris et le même trait, et
                   l'œil devait lire pour savoir sur quoi il allait cliquer.
                 */}
-                <span className="bg-primary-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <span className="bg-primary-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
                   <Folder className="text-primary fill-primary/15 h-5 w-5" aria-hidden />
                 </span>
                 <span className="min-w-0">
@@ -197,7 +193,7 @@ export function FolderGrid({
                   )}
                 </span>
                 <ChevronRight
-                  className="text-muted-foreground ml-auto h-4 w-4 shrink-0"
+                  className="text-muted-foreground group-hover:text-primary ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
                   aria-hidden
                 />
               </button>
