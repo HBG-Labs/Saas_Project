@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { Badge } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { useDefaultTerritory } from '@/config/territories';
 import { cn } from '@/lib/cn';
@@ -88,8 +88,7 @@ export default function PlanningPage() {
   // préférence par navigateur, qui donnait deux totaux pour la même demande.
   const { territory: defaultTerritoryConfig } = useDefaultTerritory();
   const organizationTerritory =
-    (organization?.holiday_territory as HolidayTerritory | undefined) ??
-    defaultTerritoryConfig.id;
+    (organization?.holiday_territory as HolidayTerritory | undefined) ?? defaultTerritoryConfig.id;
 
   const [chosenTerritory, setChosenTerritory] = useState<HolidayTerritory | null>(null);
   const selectedTerritory = chosenTerritory ?? organizationTerritory;
@@ -114,15 +113,9 @@ export default function PlanningPage() {
   const setLeaveStatus = useSetLeaveStatus();
   const createMission = useCreateMission();
 
-  const holidays = useMemo(
-    () => getHolidaysForTerritory(selectedTerritory),
-    [selectedTerritory],
-  );
+  const holidays = useMemo(() => getHolidaysForTerritory(selectedTerritory), [selectedTerritory]);
 
-  const leaves = useMemo(
-    () => (leavesQuery.data ?? []).map(toLeaveRequest),
-    [leavesQuery.data],
-  );
+  const leaves = useMemo(() => (leavesQuery.data ?? []).map(toLeaveRequest), [leavesQuery.data]);
   const balances = useMemo(
     () => (balancesQuery.data ?? []).map(toStaffLeaveBalance),
     [balancesQuery.data],
@@ -191,9 +184,7 @@ export default function PlanningPage() {
         title: submission.title,
         priority: submission.priority,
         scheduledStart: submission.scheduledStart,
-        ...(submission.scheduledEnd !== undefined
-          ? { scheduledEnd: submission.scheduledEnd }
-          : {}),
+        ...(submission.scheduledEnd !== undefined ? { scheduledEnd: submission.scheduledEnd } : {}),
         ...(submission.assignedMemberId !== null
           ? { assignedUserId: submission.assignedMemberId }
           : {}),
@@ -261,93 +252,80 @@ export default function PlanningPage() {
   }
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      {/* 1. Header Page & Actions Globales */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-4 rounded-2xl border border-border shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <CalendarIcon className="size-4" />
-            </div>
-            <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight">
-              Planning & Gestion des Congés
-            </h1>
-            <Badge variant="outline" className="hidden sm:inline-flex text-3xs font-mono">
-              Équipes & Chantiers
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Calendrier des interventions, gestion des absences du personnel et tâches récurrentes
-          </p>
-        </div>
+    <div className="mx-auto max-w-7xl space-y-4 pb-10">
+      <PageHeader
+        title="Planning & congés"
+        description="Planifiez les interventions, suivez les absences et anticipez les échéances récurrentes."
+        className="mb-4"
+        actions={
+          <>
+            {can(PERMISSIONS.missionCreate) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsImportICSOpen(true)}
+                title="Importer un fichier iCalendar (.ics / .ical)"
+              >
+                <Upload className="size-3.5" />
+                <span className="hidden sm:inline">Importer</span> .ics
+              </Button>
+            )}
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {can(PERMISSIONS.missionCreate) && (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setIsImportICSOpen(true)}
-              className="text-xs h-8 gap-1.5"
-              title="Importer un fichier iCalendar (.ics / .ical)"
+              onClick={handleExportICS}
+              title="Exporter vers Outlook, Apple Calendar ou Google Calendar"
             >
-              <Upload className="size-3.5" />
-              <span className="hidden sm:inline">Importer</span> .ics
+              <Download className="size-3.5" />
+              <span className="hidden sm:inline">Exporter</span> .ics
             </Button>
-          )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleExportICS}
-            className="text-xs h-8 gap-1.5"
-            title="Exporter vers Outlook, Apple Calendar ou Google Calendar"
-          >
-            <Download className="size-3.5" />
-            <span className="hidden sm:inline">Exporter</span> .ics
-          </Button>
+            {can(PERMISSIONS.leaveRequest) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsNewLeaveOpen(true)}
+                className="border-warning/30 text-warning hover:bg-warning/10"
+              >
+                <Palmtree className="size-3.5" />
+                <span>Poser un congé</span>
+              </Button>
+            )}
 
-          {can(PERMISSIONS.leaveRequest) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsNewLeaveOpen(true)}
-              className="text-xs h-8 gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
-            >
-              <Palmtree className="size-3.5" />
-              <span>Poser un congé</span>
-            </Button>
-          )}
-
-          {can(PERMISSIONS.missionCreate) && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => setIsNewEventOpen(true)}
-              className="text-xs h-8 gap-1.5 shadow-xs"
-            >
-              <Plus className="size-3.5" />
-              <span>Planifier</span>
-            </Button>
-          )}
-        </div>
-      </div>
+            {can(PERMISSIONS.missionCreate) && (
+              <Button size="sm" variant="primary" onClick={() => setIsNewEventOpen(true)}>
+                <Plus className="size-3.5" />
+                <span>Planifier</span>
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Floating Notification Toast */}
       {notification && (
-        <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-success-border bg-success-subtle text-success animate-in fade-in slide-in-from-top-2 flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold motion-reduce:animate-none"
+        >
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* 2. Main Tab Navigation Bar */}
-      <div className="flex items-center gap-1 sm:gap-1.5 bg-surface-subtle p-1 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
+      <div
+        className="no-scrollbar border-border/80 bg-surface flex items-center gap-1 overflow-x-auto scroll-smooth rounded-2xl border p-1 shadow-xs sm:gap-1.5"
+        aria-label="Sections du planning"
+      >
         <button
           type="button"
           onClick={() => setActiveTab('calendar')}
+          aria-pressed={activeTab === 'calendar'}
           className={cn(
-            'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'calendar'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -361,8 +339,9 @@ export default function PlanningPage() {
         <button
           type="button"
           onClick={() => setActiveTab('leaves')}
+          aria-pressed={activeTab === 'leaves'}
           className={cn(
-            'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'leaves'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -374,8 +353,8 @@ export default function PlanningPage() {
           {pendingLeavesCount > 0 && (
             <span
               className={cn(
-                'size-4 sm:size-5 rounded-full flex items-center justify-center text-[9px] sm:text-3xs font-extrabold shrink-0',
-                activeTab === 'leaves' ? 'bg-white text-primary' : 'bg-warning text-white',
+                'sm:text-3xs flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-extrabold sm:size-5',
+                activeTab === 'leaves' ? 'text-primary bg-white' : 'bg-warning text-white',
               )}
             >
               {pendingLeavesCount}
@@ -386,8 +365,9 @@ export default function PlanningPage() {
         <button
           type="button"
           onClick={() => setActiveTab('recurring')}
+          aria-pressed={activeTab === 'recurring'}
           className={cn(
-            'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'recurring'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -395,14 +375,15 @@ export default function PlanningPage() {
         >
           <RotateCcw className="size-3.5 shrink-0" />
           <span className="sm:hidden">Tâches</span>
-          <span className="hidden sm:inline">Tâches Récurrentes ({tasks.length})</span>
+          <span className="hidden sm:inline">Tâches récurrentes ({tasks.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('holidays')}
+          aria-pressed={activeTab === 'holidays'}
           className={cn(
-            'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98]',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'holidays'
               ? 'bg-primary text-primary-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
@@ -410,7 +391,7 @@ export default function PlanningPage() {
         >
           <Flag className="size-3.5 shrink-0" />
           <span className="sm:hidden">Fériés</span>
-          <span className="hidden sm:inline">Jours Fériés ({holidays.length})</span>
+          <span className="hidden sm:inline">Jours fériés ({holidays.length})</span>
         </button>
       </div>
 
