@@ -2,7 +2,9 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  Building2,
   ClipboardList,
+  FileText,
   Mail,
   MapPin,
   Pencil,
@@ -17,7 +19,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
@@ -128,7 +130,7 @@ export default function CustomerDetailPage() {
           className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4"
         >
           <span
-            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            className="bg-surface text-warning border-warning-border flex size-10 shrink-0 items-center justify-center rounded-lg border"
             aria-hidden="true"
           >
             <Archive className="size-5" />
@@ -155,48 +157,58 @@ export default function CustomerDetailPage() {
           </span>
         )}
       </div>
-      {/* Hero Header Card */}
-      <Card className="border-border bg-surface-raised/50 overflow-hidden backdrop-blur-xs">
+      {/* Identité du client : le nom et les actions avant les données secondaires. */}
+      <Card className="border-border/80 shadow-raised overflow-hidden">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-foreground text-2xl font-bold tracking-tight">{data.name}</h1>
-                <Badge variant="outline" className="font-mono text-xs">
-                  {data.reference}
-                </Badge>
-                {isArchived ? (
-                  <Badge variant="warning">Archivé</Badge>
-                ) : (
-                  <Badge variant="success">Actif</Badge>
-                )}
-              </div>
+            <div className="flex min-w-0 items-start gap-4">
+              <span className="bg-primary-subtle text-primary hidden size-12 shrink-0 items-center justify-center rounded-2xl sm:flex">
+                <Building2 className="size-6" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 space-y-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                    {data.name}
+                  </h1>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {data.reference}
+                  </Badge>
+                  {isArchived ? (
+                    <Badge variant="warning">Archivé</Badge>
+                  ) : (
+                    <Badge variant="success">Actif</Badge>
+                  )}
+                </div>
 
-              <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-xs">
-                {[data.address_line1, data.postal_code, data.city]
-                  .filter((part) => part !== null && part !== '')
-                  .join(', ') ? (
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="text-subtle-foreground size-3.5" aria-hidden="true" />
-                    {[data.address_line1, data.postal_code, data.city]
-                      .filter((part) => part !== null && part !== '')
-                      .join(', ')}
-                  </span>
-                ) : null}
+                <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  {[data.address_line1, data.postal_code, data.city]
+                    .filter((part) => part !== null && part !== '')
+                    .join(', ') ? (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="text-subtle-foreground size-3.5" aria-hidden="true" />
+                      {[data.address_line1, data.postal_code, data.city]
+                        .filter((part) => part !== null && part !== '')
+                        .join(', ')}
+                    </span>
+                  ) : null}
 
-                {data.phone ? (
-                  <span className="flex items-center gap-1.5 font-mono">
-                    <Phone className="text-subtle-foreground size-3.5" aria-hidden="true" />
-                    {data.phone}
-                  </span>
-                ) : null}
+                  {data.phone ? (
+                    <span className="flex items-center gap-1.5 font-mono">
+                      <Phone className="text-subtle-foreground size-3.5" aria-hidden="true" />
+                      {data.phone}
+                    </span>
+                  ) : null}
 
-                {data.email ? (
-                  <span className="flex items-center gap-1.5">
-                    <Mail className="text-subtle-foreground size-3.5" aria-hidden="true" />
-                    {data.email}
-                  </span>
-                ) : null}
+                  {data.email ? (
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <Mail
+                        className="text-subtle-foreground size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{data.email}</span>
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -313,11 +325,14 @@ export default function CustomerDetailPage() {
         <TabsContent value="fiche" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             {/* Coordonnées */}
-            <Card>
-              <CardContent className="space-y-4 pt-6">
-                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
-                  Coordonnées & Contact
-                </h3>
+            <Card className="overflow-hidden">
+              <CardHeader className="border-border border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="text-primary size-4.5" aria-hidden="true" />
+                  Coordonnées et contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-5">
                 <dl className="grid gap-3 text-sm">
                   <Field
                     label="Téléphone"
@@ -342,11 +357,14 @@ export default function CustomerDetailPage() {
             </Card>
 
             {/* Informations légales */}
-            <Card>
-              <CardContent className="space-y-4 pt-6">
-                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
-                  Informations Légales & Fiscales
-                </h3>
+            <Card className="overflow-hidden">
+              <CardHeader className="border-border border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="text-primary size-4.5" aria-hidden="true" />
+                  Informations légales et fiscales
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-5">
                 <dl className="grid gap-3 text-sm">
                   <Field label="Raison sociale" value={data.legal_name} />
                   <Field label="SIRET / SIREN" value={data.registration_number} />
@@ -359,11 +377,14 @@ export default function CustomerDetailPage() {
 
           {/* Notes */}
           {data.notes !== null && data.notes !== '' ? (
-            <Card>
-              <CardContent className="space-y-2 pt-6">
-                <h3 className="text-foreground text-xs font-semibold tracking-wider uppercase">
-                  Notes & Remarques
-                </h3>
+            <Card className="overflow-hidden">
+              <CardHeader className="border-border border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="text-primary size-4.5" aria-hidden="true" />
+                  Notes et remarques
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-5">
                 <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                   {data.notes}
                 </p>
@@ -467,30 +488,45 @@ function CustomerHistory({ customerId }: { customerId: string }) {
   }
 
   return (
-    <ul className="divide-border divide-y">
-      {missions.map((mission) => (
-        <li key={mission.id} className="flex flex-wrap items-center gap-3 py-3">
-          <Badge variant="outline">{mission.reference}</Badge>
+    <Card className="overflow-hidden">
+      <CardHeader className="border-border border-b">
+        <CardTitle className="flex items-center gap-2">
+          <ClipboardList className="text-primary size-4.5" aria-hidden="true" />
+          Historique des missions
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <ul className="divide-border divide-y">
+          {missions.map((mission) => (
+            <li key={mission.id}>
+              <Link
+                to={ROUTES.mission(mission.id)}
+                className="hover:bg-surface-hover min-h-touch -mx-2 flex flex-wrap items-center gap-3 rounded-lg px-2 py-3 transition-colors sm:min-h-0"
+              >
+                <Badge variant="outline">{mission.reference}</Badge>
 
-          <div className="min-w-0 flex-1">
-            <p className="text-foreground truncate text-sm font-medium">{mission.title}</p>
-            {mission.site !== null ? (
-              <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                <MapPin className="size-3" aria-hidden="true" />
-                {mission.site.name}
-              </p>
-            ) : null}
-          </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-foreground truncate text-sm font-semibold">{mission.title}</p>
+                  {mission.site !== null ? (
+                    <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <MapPin className="size-3" aria-hidden="true" />
+                      {mission.site.name}
+                    </p>
+                  ) : null}
+                </div>
 
-          <span className="text-subtle-foreground font-mono text-xs tabular-nums">
-            {mission.scheduled_start !== null
-              ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR')
-              : '—'}
-          </span>
+                <span className="text-subtle-foreground font-mono text-xs tabular-nums">
+                  {mission.scheduled_start !== null
+                    ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR')
+                    : '—'}
+                </span>
 
-          <Badge variant="neutral">{MISSION_STATUS_LABELS[mission.status]}</Badge>
-        </li>
-      ))}
-    </ul>
+                <Badge variant="neutral">{MISSION_STATUS_LABELS[mission.status]}</Badge>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

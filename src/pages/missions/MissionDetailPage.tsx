@@ -451,7 +451,7 @@ export default function MissionDetailPage() {
                   label: data.title,
                 }}
                 className="w-full justify-center gap-1.5"
-                label="🧭 Itinéraire vers le chantier"
+                label="Itinéraire vers le chantier"
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

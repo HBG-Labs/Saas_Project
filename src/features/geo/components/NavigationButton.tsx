@@ -19,7 +19,7 @@ export function NavigationButton({
   className,
   variant = 'outline',
   size = 'sm',
-  label = '🧭 Itinéraire',
+  label = 'Itinéraire',
 }: NavigationButtonProps) {
   const url = getNavigationUrl(destination);
   const isAvailable = url !== null;
@@ -56,7 +56,10 @@ export function NavigationButton({
       className={className}
       title="Ouvrir l’application GPS vers cette destination"
     >
-      <Navigation className="size-3.5 text-primary" aria-hidden="true" />
+      <Navigation
+        className={variant === 'primary' ? 'size-3.5' : 'text-primary size-3.5'}
+        aria-hidden="true"
+      />
       <span>{label}</span>
     </Button>
   );

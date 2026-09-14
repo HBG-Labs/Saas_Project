@@ -290,7 +290,7 @@ export default function InterventionPage() {
                   label: mission.data.title,
                 }}
                 className="w-full justify-center text-xs"
-                label="🧭 Itinéraire vers le site"
+                label="Itinéraire vers le site"
               />
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
