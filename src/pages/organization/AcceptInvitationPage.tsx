@@ -1,10 +1,11 @@
-import { Building2, MailWarning } from 'lucide-react';
+import { ArrowRight, Building2, Mail, MailWarning, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
@@ -80,20 +81,22 @@ export default function AcceptInvitationPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md py-12">
-      <Card>
-        <CardContent className="space-y-5 pt-6 text-center">
-          <div className="bg-primary-subtle text-primary mx-auto flex size-12 items-center justify-center rounded-full">
+    <div className="mx-auto max-w-md py-8 sm:py-12">
+      <Card className="overflow-hidden">
+        <div className="from-primary/[0.12] via-primary/[0.05] to-surface border-border relative flex justify-center border-b bg-gradient-to-br px-6 py-7">
+          <div className="bg-primary text-primary-foreground ring-surface shadow-raised flex size-14 items-center justify-center rounded-2xl ring-4">
             <Building2 className="size-6" aria-hidden="true" />
           </div>
+        </div>
 
+        <CardContent className="space-y-5 pt-5 text-center sm:pt-6">
           <div className="space-y-1">
             <h1 className="text-foreground text-xl font-semibold">
               Rejoindre {invitation.organizationName}
             </h1>
-            <p className="text-muted-foreground text-sm">
-              Vous y entrerez avec le rôle <strong>{ROLE_LABELS[invitation.role]}</strong>.
-            </p>
+            <Badge variant="primary" className="mt-2">
+              {ROLE_LABELS[invitation.role]}
+            </Badge>
             <p className="text-subtle-foreground text-xs">{ROLE_DESCRIPTIONS[invitation.role]}</p>
           </div>
 
@@ -135,11 +138,18 @@ export default function AcceptInvitationPage() {
                 l'invitation, et le serveur n'en acceptera aucune autre — il la
                 relit lui-même à partir du jeton.
               */}
-              <div className="space-y-1.5">
-                <span className="text-foreground block text-xs font-semibold">Votre adresse</span>
-                <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border px-3 py-2 text-sm">
-                  {invitation.invitedEmail}
-                </p>
+              <div className="border-border bg-surface-sunken/45 flex items-center gap-3 rounded-xl border p-3">
+                <span className="bg-surface text-primary flex size-9 shrink-0 items-center justify-center rounded-lg shadow-xs">
+                  <Mail className="size-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-subtle-foreground text-2xs block font-medium">
+                    Adresse invitée
+                  </span>
+                  <p className="text-foreground truncate text-sm font-semibold">
+                    {invitation.invitedEmail}
+                  </p>
+                </div>
               </div>
 
               <Input
@@ -161,8 +171,11 @@ export default function AcceptInvitationPage() {
                 size="lg"
                 className="w-full"
                 disabled={rejoindre.isPending}
+                isLoading={rejoindre.isPending}
+                loadingLabel="Création du compte et acceptation de l’invitation"
+                trailingIcon={<ArrowRight />}
               >
-                {rejoindre.isPending ? 'Création…' : `Rejoindre ${invitation.organizationName}`}
+                Rejoindre {invitation.organizationName}
               </Button>
 
               <Button asChild variant="ghost" size="sm" className="w-full">
@@ -173,7 +186,7 @@ export default function AcceptInvitationPage() {
               </Button>
             </form>
           ) : (
-            <>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Button
                   variant="primary"
@@ -183,8 +196,11 @@ export default function AcceptInvitationPage() {
                     void accept();
                   }}
                   disabled={acceptInvitation.isPending}
+                  isLoading={acceptInvitation.isPending}
+                  loadingLabel="Acceptation de l’invitation"
+                  trailingIcon={<ArrowRight />}
                 >
-                  {acceptInvitation.isPending ? 'Acceptation…' : 'Accepter l’invitation'}
+                  Accepter l’invitation
                 </Button>
 
                 <Button asChild variant="ghost" size="sm" className="w-full">
@@ -196,11 +212,15 @@ export default function AcceptInvitationPage() {
                 L'adresse connectée est rappelée : c'est LA cause d'échec la plus
                 fréquente, et la voir avant de cliquer évite un refus incompris.
               */}
-              <p className="text-subtle-foreground text-2xs">
-                Connecté en tant que {user.email ?? 'inconnu'}. L’invitation ne fonctionnera que
-                si cette adresse est celle qui a été invitée.
-              </p>
-            </>
+              <div className="border-border bg-surface-sunken/45 flex items-start gap-2.5 rounded-xl border p-3 text-left">
+                <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <p className="text-subtle-foreground text-2xs leading-relaxed">
+                  Connecté en tant que{' '}
+                  <strong className="text-foreground">{user.email ?? 'inconnu'}</strong>.
+                  L’invitation ne fonctionnera que si cette adresse est celle qui a été invitée.
+                </p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

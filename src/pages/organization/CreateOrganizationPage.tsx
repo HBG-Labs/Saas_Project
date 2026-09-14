@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, CircleCheck } from 'lucide-react';
+import { ArrowRight, Building2, CircleCheck, ShieldCheck } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ROUTES } from '@/config/routes';
@@ -135,14 +135,27 @@ export default function CreateOrganizationPage() {
   });
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-xl space-y-6 pb-10">
       <PageHeader
         title="Créer votre entreprise"
         description="Une entreprise regroupe vos équipes, vos clients et vos missions. Vous en serez le propriétaire."
       />
 
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border from-primary/[0.07] via-surface-sunken/40 to-surface border-b bg-gradient-to-r">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-xl shadow-xs">
+              <Building2 className="size-4.5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 space-y-1">
+              <CardTitle>Identité de l’entreprise</CardTitle>
+              <CardDescription>
+                Une seule étape : retrouvez votre entreprise ou renseignez-la manuellement.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-5">
           <FormError error={submitError} />
 
           <form onSubmit={onSubmit} noValidate className="space-y-4">
@@ -212,7 +225,10 @@ export default function CreateOrganizationPage() {
             />
 
             {verifiedCompany !== null ? (
-              <p className="text-success flex items-center gap-1.5 text-sm" role="status">
+              <p
+                className="border-success/25 bg-success/10 text-success flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium"
+                role="status"
+              >
                 <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 truncate">
                   Identité reprise de l’annuaire officiel : {verifiedCompany}
@@ -269,6 +285,14 @@ export default function CreateOrganizationPage() {
               {...(errors.industry?.message ? { error: errors.industry.message } : {})}
             />
 
+            <div className="border-border bg-surface-sunken/35 flex items-start gap-2.5 rounded-xl border p-3 text-xs">
+              <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <p className="text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Espace privé et isolé.</strong> Vos membres,
+                clients et missions seront rattachés uniquement à cette entreprise.
+              </p>
+            </div>
+
             <Button
               type="submit"
               variant="primary"
@@ -280,9 +304,12 @@ export default function CreateOrganizationPage() {
               // signale les champs manquants à la soumission, ce qui indique
               // AUSSI lequel manque — plus utile qu'un bouton inerte.
               disabled={isSubmitting}
+              isLoading={isSubmitting}
+              loadingLabel="Création de l’entreprise"
+              leadingIcon={<Building2 />}
+              trailingIcon={<ArrowRight />}
             >
-              <Building2 className="size-4" aria-hidden="true" />
-              {isSubmitting ? 'Création…' : 'Créer l’entreprise'}
+              Créer l’entreprise
             </Button>
           </form>
         </CardContent>
