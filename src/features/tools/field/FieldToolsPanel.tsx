@@ -1,13 +1,4 @@
-import {
-  CircleDot,
-  Compass,
-  Flashlight,
-  Mic,
-  Timer,
-  Wrench,
-  X,
-  ZoomIn,
-} from 'lucide-react';
+import { CircleDot, Compass, Flashlight, Mic, Timer, Wrench, X, ZoomIn } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
@@ -21,12 +12,7 @@ const StopwatchTool = lazy(() => import('./stopwatch/StopwatchTool'));
 const VoiceRecorderTool = lazy(() => import('./voice-recorder/VoiceRecorderTool'));
 
 export type FieldToolType =
-  | 'flashlight'
-  | 'magnifier'
-  | 'compass'
-  | 'level'
-  | 'stopwatch'
-  | 'voice-recorder';
+  'flashlight' | 'magnifier' | 'compass' | 'level' | 'stopwatch' | 'voice-recorder';
 
 interface FieldToolsPanelProps {
   initialTool?: FieldToolType;
@@ -91,23 +77,26 @@ export function FieldToolsPanel({
   isModal = false,
 }: FieldToolsPanelProps) {
   const [activeTool, setActiveTool] = useState<FieldToolType>(initialTool);
+  const activeToolLabel =
+    FIELD_TOOLS_TABS.find((tool) => tool.id === activeTool)?.label ?? 'Instrument de terrain';
 
   return (
     <div
       className={cn(
-        'w-full flex flex-col min-w-0',
-        isModal && 'max-h-[92vh] overflow-hidden rounded-2xl bg-surface border border-border shadow-overlay',
+        'flex w-full min-w-0 flex-col',
+        isModal &&
+          'bg-surface border-border shadow-overlay max-h-[92vh] overflow-hidden rounded-2xl border',
       )}
     >
       {/* Barre de Titre & Sélecteur d'Onglets du Volet */}
-      <div className="border-b border-border bg-surface-raised p-3 sm:p-4 space-y-2.5 min-w-0">
+      <div className="border-border bg-surface-raised min-w-0 space-y-2.5 border-b p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-surface border border-border text-foreground font-bold shadow-2xs">
-              <Wrench className="size-3.5 sm:size-4 text-primary" />
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="bg-surface border-border text-foreground flex size-7 shrink-0 items-center justify-center rounded-lg border font-bold shadow-2xs sm:size-8">
+              <Wrench className="text-primary size-3.5 sm:size-4" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight truncate">
+              <h2 className="text-foreground truncate text-xs font-extrabold tracking-tight sm:text-sm">
                 Instruments de Terrain
               </h2>
               <p className="text-3xs text-muted-foreground truncate">
@@ -120,16 +109,21 @@ export function FieldToolsPanel({
             <button
               type="button"
               onClick={onClose}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer shrink-0"
+              className="size-touch text-muted-foreground hover:bg-surface hover:text-foreground focus-visible:ring-ring flex shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-8"
+              aria-label="Fermer les instruments de terrain"
               title="Fermer le volet"
             >
-              <X className="size-5" />
+              <X className="size-5" aria-hidden="true" />
             </button>
           )}
         </div>
 
         {/* Barre de Défilement des 6 Outils */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5">
+        <div
+          role="group"
+          aria-label="Choisir un instrument de terrain"
+          className="grid grid-cols-3 gap-1 sm:grid-cols-6 sm:gap-1.5"
+        >
           {FIELD_TOOLS_TABS.map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTool === tab.id;
@@ -138,15 +132,22 @@ export function FieldToolsPanel({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTool(tab.id)}
+                aria-pressed={isSelected}
                 className={cn(
-                  'px-1.5 py-1.5 sm:px-2 sm:py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center min-w-0',
+                  'min-h-touch focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 text-center text-xs font-bold transition-[color,background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none sm:gap-1 sm:px-2 sm:py-2',
                   isSelected
                     ? 'border-primary bg-primary text-primary-foreground shadow-2xs'
                     : 'border-border bg-surface text-muted-foreground hover:text-foreground hover:border-primary/40',
                 )}
               >
-                <Icon className={cn('size-3.5 sm:size-4 shrink-0', !isSelected && tab.tint.split(' ')[0])} />
-                <span className="text-3xs truncate max-w-full font-semibold">{tab.shortLabel}</span>
+                <Icon
+                  className={cn(
+                    'size-3.5 shrink-0 sm:size-4',
+                    !isSelected && tab.tint.split(' ')[0],
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="text-3xs max-w-full truncate font-semibold">{tab.shortLabel}</span>
               </button>
             );
           })}
@@ -154,7 +155,11 @@ export function FieldToolsPanel({
       </div>
 
       {/* Contenu Actif de l'Outil */}
-      <div className="p-3 sm:p-5 overflow-y-auto overflow-x-hidden flex-1 bg-surface min-w-0">
+      <div
+        role="region"
+        aria-label={activeToolLabel}
+        className="bg-surface min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-5"
+      >
         <Suspense fallback={<LoadingScreen />}>
           {activeTool === 'flashlight' && <FlashlightTool />}
           {activeTool === 'magnifier' && <MagnifierTool />}

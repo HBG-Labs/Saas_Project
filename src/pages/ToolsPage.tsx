@@ -18,6 +18,7 @@ import {
   ZoomIn,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Dialog } from 'radix-ui';
 import { Link, useSearchParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -27,9 +28,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ROUTES } from '@/config/routes';
-import {
-  UNIVERSAL_TOOLS,
-} from '@/features/tools/calculators/universal';
+import { UNIVERSAL_TOOLS } from '@/features/tools/calculators/universal';
 import { ToolCard } from '@/features/tools';
 import { FieldToolsPanel, type FieldToolType } from '@/features/tools/field/FieldToolsPanel';
 import { useToolFavorites } from '@/features/tools/hooks/useToolFavorites';
@@ -40,7 +39,14 @@ import { useViewMode, VIEW_MODE_OPTIONS } from '@/lib/use-view-mode';
 
 type FilterTab = 'all' | 'field' | 'calculators' | 'conversions' | 'notes' | 'favorites';
 
-const FIELD_TOOL_SLUGS = ['flashlight', 'magnifier', 'compass', 'level', 'stopwatch', 'voice-recorder'];
+const FIELD_TOOL_SLUGS = [
+  'flashlight',
+  'magnifier',
+  'compass',
+  'level',
+  'stopwatch',
+  'voice-recorder',
+];
 const CONVERSION_TOOL_SLUGS = ['unit-converter', 'distance-calculator', 'time-calculator'];
 const NOTES_TOOL_SLUGS = ['notepad', 'voice-recorder'];
 const CALC_TOOL_SLUGS = [
@@ -158,15 +164,15 @@ export default function ToolsPage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. CEINTURE D'ACTION RAPIDE : LES 6 INSTRUMENTS DE TERRAIN   */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="mb-4 rounded-xl border border-border bg-surface p-2.5 sm:p-3 shadow-xs">
-        <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-border">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-surface-raised border border-border text-foreground font-bold shadow-2xs">
-              <Wrench className="size-3.5 text-primary" />
+      <div className="border-border bg-surface mb-4 rounded-xl border p-2.5 shadow-xs sm:p-3">
+        <div className="border-border mb-2 flex items-center justify-between gap-2 border-b pb-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="bg-surface-raised border-border text-foreground flex size-7 shrink-0 items-center justify-center rounded-lg border font-bold shadow-2xs">
+              <Wrench className="text-primary size-3.5" />
             </div>
-            <div className="flex items-center gap-1.5 min-w-0 truncate">
-              <h2 className="text-xs font-bold text-foreground truncate">Instruments de Terrain</h2>
-              <span className="shrink-0 rounded-full bg-surface-raised text-muted-foreground font-bold text-3xs px-1.5 py-0.2 border border-border">
+            <div className="flex min-w-0 items-center gap-1.5 truncate">
+              <h2 className="text-foreground truncate text-xs font-bold">Instruments de Terrain</h2>
+              <span className="bg-surface-raised text-muted-foreground text-3xs py-0.2 border-border shrink-0 rounded-full border px-1.5 font-bold">
                 1-tap
               </span>
             </div>
@@ -180,7 +186,7 @@ export default function ToolsPage() {
               setActiveFieldModalTool('flashlight');
               setShowFieldModal(true);
             }}
-            className="text-3xs font-semibold h-7 px-2.5 gap-1 shrink-0 cursor-pointer"
+            className="text-3xs h-7 shrink-0 cursor-pointer gap-1 px-2.5 font-semibold"
           >
             <span>Ouvrir boîte</span>
             <ChevronRight className="size-3" />
@@ -188,93 +194,108 @@ export default function ToolsPage() {
         </div>
 
         {/* Grille compacte et sobre des 6 instruments de terrain */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 sm:gap-2">
           <button
             type="button"
             onClick={() => openFieldInstrument('flashlight')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-warning/10 text-warning group-hover:bg-warning group-hover:text-foreground transition-colors shadow-2xs mb-1">
+            <div className="bg-warning/10 text-warning group-hover:bg-warning group-hover:text-foreground mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors sm:size-8">
               <Flashlight className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Lampe</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Lampe
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('magnifier')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="bg-primary/10 text-primary group-hover:bg-primary mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors group-hover:text-white sm:size-8">
               <ZoomIn className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Loupe HD</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Loupe HD
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('level')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-success/10 text-success group-hover:bg-success group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="bg-success/10 text-success group-hover:bg-success mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors group-hover:text-white sm:size-8">
               <CircleDot className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Niveau</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Niveau
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('compass')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-success/10 text-success group-hover:bg-success group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="bg-success/10 text-success group-hover:bg-success mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors group-hover:text-white sm:size-8">
               <Compass className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Boussole</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Boussole
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('stopwatch')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="bg-primary/10 text-primary group-hover:bg-primary mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors group-hover:text-white sm:size-8">
               <Timer className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Chrono</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Chrono
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => openFieldInstrument('voice-recorder')}
-            className="group flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-surface-raised/60 hover:bg-surface-raised border border-border hover:border-primary/40 transition-all cursor-pointer shadow-2xs active:scale-95 text-center"
+            className="group bg-surface-raised/60 hover:bg-surface-raised border-border hover:border-primary/40 flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-2 text-center shadow-2xs transition-all active:scale-95"
           >
-            <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-error/10 text-error group-hover:bg-error group-hover:text-white transition-colors shadow-2xs mb-1">
+            <div className="bg-error/10 text-error group-hover:bg-error mb-1 flex size-7 items-center justify-center rounded-lg shadow-2xs transition-colors group-hover:text-white sm:size-8">
               <Mic className="size-3.5 sm:size-4" />
             </div>
-            <span className="text-3xs sm:text-2xs font-bold text-foreground truncate max-w-full">Dictaphone</span>
+            <span className="text-3xs sm:text-2xs text-foreground max-w-full truncate font-bold">
+              Dictaphone
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Modal / Volet Dépliant Outils de Terrain */}
-      {showFieldModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-50 duration-200">
-          <div className="w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-xl sm:rounded-2xl bg-surface border border-border shadow-overlay flex flex-col min-w-0">
+      <Dialog.Root open={showFieldModal} onOpenChange={setShowFieldModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="data-[state=open]:animate-in data-[state=open]:fade-in fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" />
+          <Dialog.Content className="border-border bg-surface shadow-overlay data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:data-[state=open]:zoom-in-95 fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] min-w-0 flex-col overflow-hidden rounded-t-2xl border-t focus-visible:outline-none sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border">
+            <Dialog.Title className="sr-only">Instruments de terrain</Dialog.Title>
+            <Dialog.Description className="sr-only">
+              Choisissez et utilisez un instrument adapté à votre intervention.
+            </Dialog.Description>
             <FieldToolsPanel
               initialTool={activeFieldModalTool}
-              isModal
               onClose={() => setShowFieldModal(false)}
             />
-          </div>
-        </div>
-      )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 2. BARRE DE RECHERCHE, HISTORIQUE ET ONGLETS                  */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="mb-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Input
             label="Rechercher un outil"
             hideLabel
@@ -290,7 +311,7 @@ export default function ToolsPage() {
                       type="button"
                       onClick={() => setQuery('')}
                       aria-label="Effacer la recherche"
-                      className="text-subtle-foreground hover:text-foreground flex size-7 items-center justify-center rounded cursor-pointer"
+                      className="text-subtle-foreground hover:text-foreground flex size-7 cursor-pointer items-center justify-center rounded"
                     >
                       <X className="size-4" aria-hidden="true" />
                     </button>
@@ -299,19 +320,19 @@ export default function ToolsPage() {
               : {})}
           />
 
-          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* Bouton Historique des calculs */}
             <Button
               type="button"
               variant={showHistory ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setShowHistory((v) => !v)}
-              className="gap-1.5 text-xs font-semibold cursor-pointer shadow-xs"
+              className="cursor-pointer gap-1.5 text-xs font-semibold shadow-xs"
             >
               <Clock className="size-4" />
               <span>Historique</span>
               {history.length > 0 && (
-                <span className="rounded-full bg-primary-foreground/20 dark:bg-primary-foreground/30 px-1.5 py-0.2 text-3xs font-bold">
+                <span className="bg-primary-foreground/20 dark:bg-primary-foreground/30 py-0.2 text-3xs rounded-full px-1.5 font-bold">
                   {history.length}
                 </span>
               )}
@@ -328,11 +349,11 @@ export default function ToolsPage() {
 
         {/* Volet Historique déroulant global */}
         {showHistory && (
-          <Card className="border-border bg-surface p-4 space-y-3 shadow-md animate-in fade-in-50 duration-200">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <Card className="border-border bg-surface animate-in fade-in-50 space-y-3 p-4 shadow-md duration-200">
+            <div className="border-border flex items-center justify-between border-b pb-2">
               <div className="flex items-center gap-2">
-                <Clock className="size-4 text-primary" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                <Clock className="text-primary size-4" />
+                <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                   Derniers calculs effectués
                 </h2>
               </div>
@@ -340,7 +361,7 @@ export default function ToolsPage() {
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="text-3xs text-error hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                  className="text-3xs text-error flex cursor-pointer items-center gap-1 font-semibold hover:underline"
                 >
                   <RotateCcw className="size-3" />
                   <span>Vider tout l'historique</span>
@@ -349,31 +370,32 @@ export default function ToolsPage() {
             </div>
 
             {history.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                Aucun calcul récent. Utilisez les outils de calcul pour enregistrer automatiquement vos résultats.
+              <p className="text-muted-foreground py-4 text-center text-xs">
+                Aucun calcul récent. Utilisez les outils de calcul pour enregistrer automatiquement
+                vos résultats.
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="grid max-h-72 grid-cols-1 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
                 {history.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex flex-col justify-between p-3 rounded-xl bg-surface-raised border border-border text-xs gap-2"
+                    className="bg-surface-raised border-border flex flex-col justify-between gap-2 rounded-xl border p-3 text-xs"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-bold text-primary text-2xs uppercase tracking-wider truncate">
+                        <span className="text-primary text-2xs truncate font-bold tracking-wider uppercase">
                           {entry.toolName}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeHistoryEntry(entry.id)}
-                          className="text-muted-foreground hover:text-error text-xs px-1 cursor-pointer"
+                          className="text-muted-foreground hover:text-error cursor-pointer px-1 text-xs"
                           title="Supprimer"
                         >
                           ×
                         </button>
                       </div>
-                      <p className="font-mono font-extrabold text-foreground text-sm mt-1">
+                      <p className="text-foreground mt-1 font-mono text-sm font-extrabold">
                         {entry.result}
                       </p>
                       <p className="text-3xs text-muted-foreground mt-0.5 line-clamp-2">
@@ -381,7 +403,7 @@ export default function ToolsPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border/60 text-3xs text-subtle-foreground">
+                    <div className="border-border/60 text-3xs text-subtle-foreground flex items-center justify-between border-t pt-2">
                       <span>
                         {new Date(entry.timestamp).toLocaleTimeString('fr-FR', {
                           hour: '2-digit',
@@ -408,7 +430,7 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('all')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'all'
                 ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
@@ -422,13 +444,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('field')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'field'
                 ? 'border-success bg-success/10 text-success shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Wrench className="size-3.5 text-success" />
+            <Wrench className="text-success size-3.5" />
             <span>Instruments Terrain ({FIELD_TOOL_SLUGS.length})</span>
           </button>
 
@@ -436,13 +458,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('calculators')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'calculators'
                 ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Calculator className="size-3.5 text-primary" />
+            <Calculator className="text-primary size-3.5" />
             <span>Calculateurs ({CALC_TOOL_SLUGS.length})</span>
           </button>
 
@@ -450,13 +472,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('conversions')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'conversions'
                 ? 'border-primary bg-primary/10 text-primary shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <ArrowLeftRight className="size-3.5 text-primary" />
+            <ArrowLeftRight className="text-primary size-3.5" />
             <span>Conversions ({CONVERSION_TOOL_SLUGS.length})</span>
           </button>
 
@@ -464,13 +486,13 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('notes')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'notes'
                 ? 'border-accent bg-accent/10 text-accent shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <FileText className="size-3.5 text-accent" />
+            <FileText className="text-accent size-3.5" />
             <span>Notes & Mémos ({NOTES_TOOL_SLUGS.length})</span>
           </button>
 
@@ -478,13 +500,15 @@ export default function ToolsPage() {
             type="button"
             onClick={() => handleTabChange('favorites')}
             className={cn(
-              'min-h-touch sm:h-9 sm:min-h-0 rounded-lg border px-3.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 text-xs font-semibold transition-all sm:h-9 sm:min-h-0',
               activeTab === 'favorites'
                 ? 'border-warning bg-warning/10 text-warning shadow-xs'
                 : 'border-border bg-surface text-muted-foreground hover:text-foreground',
             )}
           >
-            <Star className={cn('size-3.5', favoriteTools.length > 0 && 'fill-amber-500 text-warning')} />
+            <Star
+              className={cn('size-3.5', favoriteTools.length > 0 && 'text-warning fill-amber-500')}
+            />
             <span>Favoris ({favoriteTools.length})</span>
           </button>
         </div>
@@ -500,10 +524,10 @@ export default function ToolsPage() {
           {/* Section Favoris si présents */}
           {favoriteTools.length > 0 && (
             <section className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-border pb-1.5">
+              <div className="border-border flex items-center justify-between border-b pb-1.5">
                 <div className="flex items-center gap-2">
-                  <Star className="size-3.5 text-warning fill-amber-500" />
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  <Star className="text-warning size-3.5 fill-amber-500" />
+                  <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                     Vos Outils Favoris
                   </h2>
                 </div>
@@ -515,7 +539,7 @@ export default function ToolsPage() {
                 className={cn(
                   viewMode === 'grid'
                     ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                    : 'space-y-2 w-full',
+                    : 'w-full space-y-2',
                 )}
               >
                 {favoriteTools.map((tool) => (
@@ -533,10 +557,10 @@ export default function ToolsPage() {
 
           {/* Section Calculateurs & Formules d'Ingénierie */}
           <section className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border pb-1.5">
+            <div className="border-border flex items-center justify-between border-b pb-1.5">
               <div className="flex items-center gap-2">
-                <Calculator className="size-3.5 text-primary" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                <Calculator className="text-primary size-3.5" />
+                <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                   Calculateurs d'Ingénierie & Formules Mathématiques
                 </h2>
               </div>
@@ -548,7 +572,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {engineeringCalcTools.map((tool) => (
@@ -565,10 +589,10 @@ export default function ToolsPage() {
 
           {/* Section Conversions & Mesures */}
           <section className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border pb-1.5">
+            <div className="border-border flex items-center justify-between border-b pb-1.5">
               <div className="flex items-center gap-2">
-                <ArrowLeftRight className="size-3.5 text-primary" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                <ArrowLeftRight className="text-primary size-3.5" />
+                <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                   Conversions & Mesures Universelles
                 </h2>
               </div>
@@ -580,7 +604,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {conversionTools.map((tool) => (
@@ -597,10 +621,10 @@ export default function ToolsPage() {
 
           {/* Section Instruments de Terrain */}
           <section className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border pb-1.5">
+            <div className="border-border flex items-center justify-between border-b pb-1.5">
               <div className="flex items-center gap-2">
-                <Wrench className="size-3.5 text-success" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                <Wrench className="text-success size-3.5" />
+                <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                   Instruments Physiques de Terrain
                 </h2>
               </div>
@@ -612,7 +636,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {fieldTools.map((tool) => (
@@ -629,10 +653,10 @@ export default function ToolsPage() {
 
           {/* Section Notes & Mémos */}
           <section className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border pb-1.5">
+            <div className="border-border flex items-center justify-between border-b pb-1.5">
               <div className="flex items-center gap-2">
-                <FileText className="size-3.5 text-accent" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                <FileText className="text-accent size-3.5" />
+                <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                   Productivité & Prise de Notes de Chantier
                 </h2>
               </div>
@@ -644,7 +668,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {notesTools.map((tool) => (
@@ -663,16 +687,17 @@ export default function ToolsPage() {
         /* Cas B : Recherche active ou onglet de filtre spécifique sélectionné */
         <div>
           {/* En-tête des résultats filtrés */}
-          <div className="flex items-center justify-between mb-3 pb-1.5 border-b border-border">
+          <div className="border-border mb-3 flex items-center justify-between border-b pb-1.5">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-3.5 text-primary" />
-              <h2 className="text-xs font-bold text-foreground">
+              <Sparkles className="text-primary size-3.5" />
+              <h2 className="text-foreground text-xs font-bold">
                 {query ? `Résultats pour « ${query} »` : `Outils sélectionnés`}
               </h2>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-3xs text-muted-foreground font-semibold">
-                {filteredTools.length} outil{filteredTools.length > 1 ? 's' : ''} trouvé{filteredTools.length > 1 ? 's' : ''}
+                {filteredTools.length} outil{filteredTools.length > 1 ? 's' : ''} trouvé
+                {filteredTools.length > 1 ? 's' : ''}
               </span>
               {(query || activeTab !== 'all') && (
                 <button
@@ -681,7 +706,7 @@ export default function ToolsPage() {
                     setQuery('');
                     handleTabChange('all');
                   }}
-                  className="text-3xs text-primary hover:underline cursor-pointer font-semibold"
+                  className="text-3xs text-primary cursor-pointer font-semibold hover:underline"
                 >
                   Réinitialiser
                 </button>
@@ -694,7 +719,7 @@ export default function ToolsPage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {filteredTools.map((tool) => (
