@@ -54,7 +54,7 @@ export function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        'border-border bg-surface shadow-xs flex items-center gap-1 rounded-lg border p-1',
+        'border-border bg-surface flex items-center gap-1 rounded-lg border p-1 shadow-xs',
         className,
       )}
     >
@@ -72,7 +72,7 @@ export function SegmentedControl<T extends string>({
               onValueChange(option.value);
             }}
             className={cn(
-              'min-h-touch flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-none sm:py-1.5',
+              'focus-visible:ring-ring min-h-touch flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none sm:py-1.5',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',

@@ -2,19 +2,17 @@ import {
   Award,
   BarChart3,
   Calendar,
-  Check,
   CheckCircle2,
-  ChevronDown,
   CircleDollarSign,
   Clock,
   Download,
   FileCheck,
   Layers,
-  Loader2,
   PieChart,
   Receipt,
   TrendingUp,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,6 +20,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Select } from '@/components/ui/Select';
 import { formatWorkedTime, useActivityStats } from '@/features/analytics';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useQuotes } from '@/features/quotes';
@@ -35,6 +35,17 @@ type ViewMode = 'month' | 'quarter' | 'year';
 type QuarterCode = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 type YearCode = 2026 | 2025 | 2024;
 
+const VIEW_OPTIONS = [
+  { value: 'month', label: '30 derniers jours', icon: Calendar },
+  { value: 'quarter', label: 'Vue trimestrielle', icon: BarChart3 },
+  { value: 'year', label: 'Vue annuelle', icon: TrendingUp },
+] as const;
+
+const YEAR_OPTIONS = [2026, 2025, 2024].map((year) => ({
+  value: String(year),
+  label: `Année ${String(year)}`,
+}));
+
 export default function AnalyticsPage() {
   useDocumentTitle('Statistiques & Analytics');
 
@@ -42,10 +53,6 @@ export default function AnalyticsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('quarter');
   const [selectedQuarter, setSelectedQuarter] = useState<QuarterCode>('Q3');
   const [selectedYear, setSelectedYear] = useState<YearCode>(2026);
-
-  // States pour les menus défilants personnalisés
-  const [isQuarterMenuOpen, setIsQuarterMenuOpen] = useState(false);
-  const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccessMessage, signalerExport, effacerExport] = useEphemeralValue<string>(5000);
@@ -668,190 +675,79 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8 pb-12">
       <PageHeader
-        title="Statistiques & Performance Opérationnelle"
+        title="Statistiques & performance"
         description={`Analyses avancées de l'activité, de la conformité qualité et de la productivité pour ${organization?.name ?? 'votre entreprise'}.`}
         actions={
-          <div className="flex flex-wrap items-center gap-3">
-            {/* BARRE DE CONTRÔLE ET SÉLECTEURS DE PÉRIODE PARFAITEMENT ALIGNÉS */}
-            <div className="border-border bg-surface flex flex-wrap items-center gap-2 rounded-xl border p-1.5 shadow-xs">
-              {/* Sélecteur de mode de vue */}
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode('month');
-                    setIsQuarterMenuOpen(false);
-                    setIsYearMenuOpen(false);
-                  }}
-                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
-                    viewMode === 'month'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  30 Derniers jours
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode('quarter');
-                    setIsQuarterMenuOpen(false);
-                    setIsYearMenuOpen(false);
-                  }}
-                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
-                    viewMode === 'quarter'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Vue Trimestrielle
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode('year');
-                    setIsQuarterMenuOpen(false);
-                    setIsYearMenuOpen(false);
-                  }}
-                  className={`min-h-touch cursor-pointer rounded-md px-3 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1.5 ${
-                    viewMode === 'year'
-                      ? 'bg-primary text-primary-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Vue Annuelle
-                </button>
-              </div>
+          <>
+            <SegmentedControl
+              options={VIEW_OPTIONS}
+              value={viewMode}
+              onValueChange={setViewMode}
+              label="Période d’analyse"
+            />
 
-              <div className="bg-border mx-1 my-auto h-4 w-px" />
+            {viewMode === 'quarter' ? (
+              <Select
+                label="Trimestre"
+                hideLabel
+                value={selectedQuarter}
+                onValueChange={(value) => setSelectedQuarter(value as QuarterCode)}
+                options={(Object.keys(quarterLabels) as QuarterCode[]).map((quarter) => ({
+                  value: quarter,
+                  label: quarterLabels[quarter],
+                }))}
+                triggerClassName="font-semibold"
+              />
+            ) : null}
 
-              {/* MENU TRIMESTRE (Affiché uniquement en Vue Trimestrielle) */}
-              {viewMode === 'quarter' ? (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsQuarterMenuOpen((prev) => !prev);
-                      setIsYearMenuOpen(false);
-                    }}
-                    className="min-h-touch border-border bg-surface-hover/80 text-foreground hover:bg-surface flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors sm:min-h-0"
-                  >
-                    <span>Trimestre : {selectedQuarter}</span>
-                    <ChevronDown className="text-primary size-3.5" />
-                  </button>
+            <Select
+              label="Année"
+              hideLabel
+              value={String(selectedYear)}
+              onValueChange={(value) => setSelectedYear(Number(value) as YearCode)}
+              options={YEAR_OPTIONS}
+              triggerClassName="font-semibold"
+            />
 
-                  {/* Popover du Menu Trimestre */}
-                  {isQuarterMenuOpen ? (
-                    <div className="border-border bg-surface animate-in fade-in zoom-in-95 absolute top-full left-0 z-50 mt-1.5 w-52 rounded-xl border p-1.5 shadow-xl duration-150">
-                      {(['Q1', 'Q2', 'Q3', 'Q4'] as QuarterCode[]).map((qCode) => (
-                        <button
-                          key={qCode}
-                          type="button"
-                          onClick={() => {
-                            setSelectedQuarter(qCode);
-                            setViewMode('quarter');
-                            setIsQuarterMenuOpen(false);
-                          }}
-                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                            selectedQuarter === qCode
-                              ? 'bg-primary/10 text-primary font-bold'
-                              : 'text-foreground hover:bg-surface-hover'
-                          }`}
-                        >
-                          <span>{quarterLabels[qCode]}</span>
-                          {selectedQuarter === qCode ? (
-                            <Check className="text-primary size-4" />
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {/* MENU ANNÉE */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsYearMenuOpen((prev) => !prev);
-                    setIsQuarterMenuOpen(false);
-                  }}
-                  className="min-h-touch border-border bg-surface-hover/80 text-foreground hover:bg-surface flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors sm:min-h-0"
-                >
-                  <span>Année : {selectedYear}</span>
-                  <ChevronDown className="text-muted-foreground size-3.5" />
-                </button>
-
-                {/* Popover du Menu Année */}
-                {isYearMenuOpen ? (
-                  <div className="border-border bg-surface animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-1.5 w-36 rounded-xl border p-1.5 shadow-xl duration-150">
-                    {([2026, 2025, 2024] as YearCode[]).map((yCode) => (
-                      <button
-                        key={yCode}
-                        type="button"
-                        onClick={() => {
-                          setSelectedYear(yCode);
-                          setIsYearMenuOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                          selectedYear === yCode
-                            ? 'bg-primary/10 text-primary font-bold'
-                            : 'text-foreground hover:bg-surface-hover'
-                        }`}
-                      >
-                        <span>Année {yCode}</span>
-                        {selectedYear === yCode ? <Check className="text-primary size-4" /> : null}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Bouton Export PDF Officiel Fonctionnel */}
             <Button
               variant="primary"
               size="sm"
               onClick={handleExportPDF}
-              disabled={isExporting}
-              className="h-9 gap-2 shadow-sm"
+              isLoading={isExporting}
+              loadingLabel="Génération du PDF…"
             >
-              {isExporting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Génération du PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="size-4" />
-                  Exporter le rapport PDF
-                </>
-              )}
+              <Download className="size-4" aria-hidden="true" />
+              Exporter le rapport PDF
             </Button>
-          </div>
+          </>
         }
       />
 
       {/* Message de Succès d'Exportation PDF */}
       {exportSuccessMessage ? (
-        <div className="border-success/30 bg-success/10 text-success animate-in fade-in flex items-center justify-between rounded-xl border p-4 text-xs font-semibold shadow-xs duration-300">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-success-border bg-success-subtle text-success animate-in fade-in flex items-center justify-between rounded-xl border p-4 text-xs font-semibold shadow-xs duration-300 motion-reduce:animate-none"
+        >
           <span className="flex items-center gap-2">
-            <FileCheck className="size-4 shrink-0" />
+            <FileCheck className="size-4 shrink-0" aria-hidden="true" />
             {exportSuccessMessage}
           </span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={effacerExport}
-            className="text-success/80 hover:text-success"
+            className="text-success hover:bg-success/10 hover:text-success"
+            aria-label="Masquer la confirmation d’export"
           >
-            ✕
-          </button>
+            <X className="size-4" aria-hidden="true" />
+          </Button>
         </div>
       ) : null}
 
       {/* En-tête de synthèse de la période sélectionnée */}
-      <div className="border-border bg-surface flex items-center justify-between rounded-xl border p-4 shadow-xs">
+      <div className="border-border/80 bg-surface flex flex-col gap-3 rounded-xl border p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Calendar className="text-primary size-5 shrink-0" />
           <div>
@@ -870,7 +766,7 @@ export default function AnalyticsPage() {
 
       {/* 1. Grille des 4 Métriques Clés Analytics Réactives */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
+        <div className="group border-border/80 bg-surface hover:border-primary/25 hover:shadow-raised relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="bg-success/10 text-success border-success/20 flex size-10 items-center justify-center rounded-xl border">
               <CheckCircle2 className="size-5" />
@@ -890,7 +786,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
+        <div className="group border-border/80 bg-surface hover:border-primary/25 hover:shadow-raised relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="bg-primary/10 text-primary border-primary/20 flex size-10 items-center justify-center rounded-xl border">
               <TrendingUp className="size-5" />
@@ -910,7 +806,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
+        <div className="group border-border/80 bg-surface hover:border-primary/25 hover:shadow-raised relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="bg-warning/10 text-warning border-warning/20 flex size-10 items-center justify-center rounded-xl border">
               <Clock className="size-5" />
@@ -930,7 +826,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group border-border bg-surface hover:border-border-strong relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all duration-200 hover:shadow-md sm:p-6">
+        <div className="group border-border/80 bg-surface hover:border-primary/25 hover:shadow-raised relative flex min-h-[152px] flex-col justify-between rounded-2xl border p-5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="bg-accent/10 text-accent border-accent/20 flex size-10 items-center justify-center rounded-xl border">
               <Award className="size-5" />
