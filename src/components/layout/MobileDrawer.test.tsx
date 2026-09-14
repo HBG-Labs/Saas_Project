@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MobileDrawer } from './MobileDrawer';
@@ -51,7 +52,7 @@ describe('MobileDrawer', () => {
       </MobileDrawer>,
     );
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
@@ -66,22 +67,25 @@ describe('MobileDrawer', () => {
       </MobileDrawer>,
     );
 
-    const dialog = screen.getByRole('dialog');
-    const drawerPanel = dialog.querySelector('div.relative') as HTMLElement;
-    expect(drawerPanel).not.toBeNull();
+    const drawerPanel = screen.getByRole('dialog');
 
     // Start touch at x: 200, y: 100
     fireEvent.touchStart(drawerPanel, {
       touches: [{ clientX: 200, clientY: 100 }],
+      changedTouches: [{ clientX: 200, clientY: 100 }],
     });
 
     // Swipe left to x: 50 (deltaX = -150)
     fireEvent.touchMove(drawerPanel, {
       touches: [{ clientX: 50, clientY: 100 }],
+      changedTouches: [{ clientX: 50, clientY: 100 }],
     });
 
     // Release touch
-    fireEvent.touchEnd(drawerPanel);
+    fireEvent.touchEnd(drawerPanel, {
+      touches: [],
+      changedTouches: [{ clientX: 50, clientY: 100 }],
+    });
 
     // Fast-forward animation timer
     act(() => {
@@ -90,5 +94,34 @@ describe('MobileDrawer', () => {
 
     expect(handleClose).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
+  });
+
+  it('rend le focus au bouton qui a ouvert le menu', async () => {
+    const user = userEvent.setup();
+
+    function DrawerHarness() {
+      const [open, setOpen] = useState(false);
+
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir le menu
+          </button>
+          <MobileDrawer isOpen={open} onClose={() => setOpen(false)}>
+            <a href="#contenu">Premier lien</a>
+          </MobileDrawer>
+        </>
+      );
+    }
+
+    render(<DrawerHarness />);
+    const trigger = screen.getByRole('button', { name: 'Ouvrir le menu' });
+    await user.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Menu de navigation' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Fermer le menu' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 });
