@@ -60,7 +60,7 @@ export default function PortalMissionsPage() {
               <li key={m.id}>
                 <Link
                   to={ROUTES.portalMission(m.id)}
-                  className="border-border bg-surface hover:border-primary/40 group flex min-h-24 items-start gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+                  className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group flex min-h-24 items-start gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
                 >
                   <span className="bg-primary-subtle text-primary inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <Wrench className="size-5" aria-hidden="true" />
@@ -97,7 +97,7 @@ export default function PortalMissionsPage() {
                     </div>
                   </div>
                   <ChevronRight
-                    className="text-muted-foreground mt-3 size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+                    className="text-muted-foreground mt-3 size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
                     aria-hidden="true"
                   />
                 </Link>

@@ -60,7 +60,7 @@ export default function PortalQuotesPage() {
             <li key={q.id}>
               <Link
                 to={ROUTES.portalQuote(q.id)}
-                className="border-border bg-surface hover:border-primary/40 group block rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+                className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group block rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
               >
                 <div className="flex items-start gap-3">
                   <span className="bg-info-subtle text-info inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
@@ -98,7 +98,7 @@ export default function PortalQuotesPage() {
                       <span className="text-muted-foreground text-xs font-medium">Consulter</span>
                     )}
                     <ChevronRight
-                      className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+                      className="text-muted-foreground size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
                       aria-hidden="true"
                     />
                   </div>

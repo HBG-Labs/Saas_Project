@@ -73,7 +73,7 @@ export default function PortalInvoicesPage() {
           {list.map((i) => (
             <li
               key={i.id}
-              className="border-border bg-surface hover:border-primary/30 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md"
+              className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <div className="flex items-start gap-3">
                 <span
@@ -100,7 +100,7 @@ export default function PortalInvoicesPage() {
                       : ''}
                   </p>
                 </div>
-                <p className="text-foreground shrink-0 text-lg font-bold tabular-nums">
+                <p className="text-foreground basis-full pl-[3.25rem] text-lg font-bold tabular-nums sm:basis-auto sm:pl-0">
                   {formatEuros(i.total_cents)}
                 </p>
               </div>

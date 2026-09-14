@@ -59,7 +59,7 @@ export default function PortalDocumentsPage() {
           {list.map((d) => (
             <li
               key={d.id}
-              className="border-border bg-surface hover:border-accent/40 flex flex-col gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md sm:flex-row sm:items-center"
+              className="border-border/80 bg-surface hover:border-accent/30 hover:shadow-raised flex flex-col gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:flex-row sm:items-center"
             >
               <div className="flex min-w-0 flex-1 items-start gap-3">
                 <span className="bg-accent-subtle text-accent inline-flex size-10 shrink-0 items-center justify-center rounded-xl">

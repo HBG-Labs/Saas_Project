@@ -1,4 +1,12 @@
-import { ChevronRight, FileText, FolderOpen, MessageSquare, Receipt, Sparkles, Wrench } from 'lucide-react';
+import {
+  ChevronRight,
+  FileText,
+  FolderOpen,
+  MessageSquare,
+  Receipt,
+  Sparkles,
+  Wrench,
+} from 'lucide-react';
 import { Link, useOutletContext } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -34,7 +42,9 @@ export default function PortalHomePage() {
 
   const missionList = missions.data ?? [];
   const invoiceList = invoices.data ?? [];
-  const enCours = missionList.filter((m) => m.status === 'in_progress' || m.status === 'assigned' || m.status === 'accepted').length;
+  const enCours = missionList.filter(
+    (m) => m.status === 'in_progress' || m.status === 'assigned' || m.status === 'accepted',
+  ).length;
   const realisees = missionList.filter((m) => m.status === 'completed').length;
   const dues = invoiceList.filter((i) => invoiceIsDue(i.status));
   const montantDu = dues.reduce((sum, i) => sum + i.total_cents, 0);
@@ -44,8 +54,14 @@ export default function PortalHomePage() {
     <div className="space-y-4">
       {/* Bandeau d'accueil : la touche de couleur de la page, tout le reste est calme. */}
       <section className="from-primary via-primary text-primary-foreground relative overflow-hidden rounded-2xl bg-gradient-to-br to-blue-500 p-4 shadow-md sm:p-5">
-        <div className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-16 left-1/3 size-48 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+        <div
+          className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10 blur-2xl"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -bottom-16 left-1/3 size-48 rounded-full bg-white/10 blur-3xl"
+          aria-hidden="true"
+        />
         <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ring-1 ring-white/25">
           <Sparkles className="size-3" aria-hidden="true" />
           Espace client
@@ -54,61 +70,75 @@ export default function PortalHomePage() {
           Bonjour{context.contact_first_name ? ` ${context.contact_first_name}` : ''} 👋
         </h1>
         <p className="mt-1 max-w-xl text-sm text-white/85">
-          Retrouvez ici tout ce que {context.organization_name} partage avec vous : interventions, devis,
-          factures, documents et échanges — au même endroit, à jour.
+          Retrouvez ici tout ce que {context.organization_name} partage avec vous : interventions,
+          devis, factures, documents et échanges — au même endroit, à jour.
         </p>
       </section>
 
       <section aria-labelledby="portal-priorities-title" className="space-y-2">
         <div>
-          <h2 id="portal-priorities-title" className="text-sm font-bold text-foreground">
+          <h2 id="portal-priorities-title" className="text-foreground text-sm font-bold">
             À suivre
           </h2>
-          <p className="text-xs text-muted-foreground">Vos échéances et activités essentielles.</p>
+          <p className="text-muted-foreground text-xs">Vos échéances et activités essentielles.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {context.features.invoicing ? (
+          {context.features.invoicing ? (
+            <Kpi
+              label={
+                dues.length > 0
+                  ? `${String(dues.length)} facture${dues.length > 1 ? 's' : ''} à régler`
+                  : 'Aucune facture à régler'
+              }
+              value={invoices.isPending ? null : formatEuros(montantDu)}
+              icon={Receipt}
+              tone={montantDu > 0 ? 'warning' : 'success'}
+              to={ROUTES.portalInvoices}
+            />
+          ) : null}
+          {context.features.missions ? (
+            <Kpi
+              label="Interventions en cours"
+              value={missions.isPending ? null : String(enCours)}
+              icon={Wrench}
+              tone="primary"
+              to={ROUTES.portalMissions}
+            />
+          ) : null}
           <Kpi
-            label={dues.length > 0 ? `${String(dues.length)} facture${dues.length > 1 ? 's' : ''} à régler` : 'Aucune facture à régler'}
-            value={invoices.isPending ? null : formatEuros(montantDu)}
-            icon={Receipt}
-            tone={montantDu > 0 ? 'warning' : 'success'}
-            to={ROUTES.portalInvoices}
+            label="Messages non lus"
+            value={conversations.isPending ? null : String(nonLus)}
+            icon={MessageSquare}
+            tone={nonLus > 0 ? 'accent' : 'info'}
+            to={ROUTES.portalMessages}
           />
-        ) : null}
-        {context.features.missions ? (
-          <Kpi
-            label="Interventions en cours"
-            value={missions.isPending ? null : String(enCours)}
-            icon={Wrench}
-            tone="primary"
-            to={ROUTES.portalMissions}
-          />
-        ) : null}
-        <Kpi
-          label="Messages non lus"
-          value={conversations.isPending ? null : String(nonLus)}
-          icon={MessageSquare}
-          tone={nonLus > 0 ? 'accent' : 'info'}
-          to={ROUTES.portalMessages}
-        />
-        {context.features.missions ? (
-          <Kpi
-            label="Interventions réalisées"
-            value={missions.isPending ? null : String(realisees)}
-            icon={Wrench}
-            tone="success"
-            to={ROUTES.portalMissions}
-          />
-        ) : null}
+          {context.features.missions ? (
+            <Kpi
+              label="Interventions réalisées"
+              value={missions.isPending ? null : String(realisees)}
+              icon={Wrench}
+              tone="success"
+              to={ROUTES.portalMissions}
+            />
+          ) : null}
         </div>
       </section>
 
       <div className="grid gap-3 lg:grid-cols-2">
         {context.features.invoicing ? (
-          <Section title="Dernières factures" to={ROUTES.portalInvoices} icon={Receipt} query={invoices}>
+          <Section
+            title="Dernières factures"
+            to={ROUTES.portalInvoices}
+            icon={Receipt}
+            query={invoices}
+          >
             {invoiceList.slice(0, 4).map((i) => (
-              <Row key={i.id} to={ROUTES.portalInvoices} title={i.reference} subtitle={`${formatDateFr(i.issued_at)} · ${formatEuros(i.total_cents)}`}>
+              <Row
+                key={i.id}
+                to={ROUTES.portalInvoices}
+                title={i.reference}
+                subtitle={`${formatDateFr(i.issued_at)} · ${formatEuros(i.total_cents)}`}
+              >
                 <StatusBadge status={i.status} kind="invoice" />
               </Row>
             ))}
@@ -116,29 +146,61 @@ export default function PortalHomePage() {
         ) : null}
 
         {context.features.missions ? (
-          <Section title="Dernières interventions" to={ROUTES.portalMissions} icon={Wrench} query={missions}>
+          <Section
+            title="Dernières interventions"
+            to={ROUTES.portalMissions}
+            icon={Wrench}
+            query={missions}
+          >
             {missionList.slice(0, 4).map((m) => (
-              <Row key={m.id} to={ROUTES.portalMission(m.id)} title={m.title} subtitle={`${m.reference} · ${formatDateFr(m.scheduled_start)}`}>
+              <Row
+                key={m.id}
+                to={ROUTES.portalMission(m.id)}
+                title={m.title}
+                subtitle={`${m.reference} · ${formatDateFr(m.scheduled_start)}`}
+              >
                 <StatusBadge status={m.status} kind="mission" />
               </Row>
             ))}
           </Section>
         ) : null}
 
-        <Section title="Derniers échanges" to={ROUTES.portalMessages} icon={MessageSquare} query={conversations}>
+        <Section
+          title="Derniers échanges"
+          to={ROUTES.portalMessages}
+          icon={MessageSquare}
+          query={conversations}
+        >
           {(conversations.data ?? []).slice(0, 4).map((c) => (
-            <Row key={c.id} to={ROUTES.portalMessages} title={c.subject} subtitle={formatDateFr(c.last_message_at, true)}>
+            <Row
+              key={c.id}
+              to={ROUTES.portalMessages}
+              title={c.subject}
+              subtitle={formatDateFr(c.last_message_at, true)}
+            >
               {c.unread_count > 0 ? (
-                <span className="bg-primary text-primary-foreground rounded-full px-2 text-xs font-bold">{c.unread_count}</span>
+                <span className="bg-primary text-primary-foreground rounded-full px-2 text-xs font-bold">
+                  {c.unread_count}
+                </span>
               ) : null}
             </Row>
           ))}
         </Section>
 
         {context.features.documents ? (
-          <Section title="Documents récents" to={ROUTES.portalDocuments} icon={FolderOpen} query={documents}>
+          <Section
+            title="Documents récents"
+            to={ROUTES.portalDocuments}
+            icon={FolderOpen}
+            query={documents}
+          >
             {(documents.data ?? []).slice(0, 4).map((d) => (
-              <Row key={d.id} to={ROUTES.portalDocuments} title={d.name} subtitle={formatDateFr(d.created_at)}>
+              <Row
+                key={d.id}
+                to={ROUTES.portalDocuments}
+                title={d.name}
+                subtitle={formatDateFr(d.created_at)}
+              >
                 <FileText className="text-muted-foreground size-4" aria-hidden="true" />
               </Row>
             ))}
@@ -159,22 +221,38 @@ const KPI_TONES: Record<KpiTone, string> = {
   accent: 'bg-accent-subtle text-accent',
 };
 
-function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: string | null; icon: typeof Wrench; tone: KpiTone; to: string }) {
+function Kpi({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  to,
+}: {
+  label: string;
+  value: string | null;
+  icon: typeof Wrench;
+  tone: KpiTone;
+  to: string;
+}) {
   return (
     <Link
       to={to}
-      className="border-border bg-surface hover:border-primary/40 flex min-h-[4.75rem] items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md"
+      className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring flex min-h-[4.75rem] items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
     >
-      <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}>
+      <span
+        className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}
+      >
         <Icon className="size-4" aria-hidden="true" />
       </span>
       <span className="min-w-0">
         {value === null ? (
           <Skeleton className="h-5 w-12" />
         ) : (
-          <span className="text-foreground block truncate text-lg leading-tight font-bold tracking-tight">{value}</span>
+          <span className="text-foreground block truncate text-lg leading-tight font-bold tracking-tight">
+            {value}
+          </span>
         )}
-        <span className="text-muted-foreground block text-3xs leading-tight">{label}</span>
+        <span className="text-muted-foreground text-3xs block leading-tight">{label}</span>
       </span>
     </Link>
   );
@@ -190,23 +268,34 @@ function Section({
   title: string;
   to: string;
   icon: typeof Wrench;
-  query: { isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown; data?: unknown[] | undefined };
+  query: {
+    isPending: boolean;
+    isError: boolean;
+    error: unknown;
+    refetch: () => unknown;
+    data?: unknown[] | undefined;
+  };
   children: React.ReactNode;
 }) {
   const empty = !query.isPending && !query.isError && (query.data?.length ?? 0) === 0;
   return (
-    <Card className="rounded-xl shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pt-3 pb-1">
+    <Card className="border-border/80 overflow-hidden rounded-2xl shadow-xs">
+      <CardHeader className="border-border/70 bg-surface-sunken/25 flex flex-row items-center justify-between space-y-0 border-b px-4 py-3">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Icon className="text-primary size-4" aria-hidden="true" />
+          <span className="bg-primary-subtle text-primary flex size-8 items-center justify-center rounded-xl">
+            <Icon className="size-4" aria-hidden="true" />
+          </span>
           {title}
         </CardTitle>
-        <Link to={to} className="text-primary flex items-center gap-0.5 text-xs font-semibold hover:underline">
+        <Link
+          to={to}
+          className="text-primary flex items-center gap-0.5 text-xs font-semibold hover:underline"
+        >
           Tout voir
           <ChevronRight className="size-3.5" aria-hidden="true" />
         </Link>
       </CardHeader>
-      <CardContent className="px-4 pt-0 pb-3">
+      <CardContent className="px-4 py-3">
         {query.isPending ? (
           <div className="space-y-2">
             <Skeleton className="h-8 w-full" />
@@ -231,10 +320,23 @@ function Section({
   );
 }
 
-function Row({ to, title, subtitle, children }: { to: string; title: string; subtitle: string; children?: React.ReactNode }) {
+function Row({
+  to,
+  title,
+  subtitle,
+  children,
+}: {
+  to: string;
+  title: string;
+  subtitle: string;
+  children?: React.ReactNode;
+}) {
   return (
     <li>
-      <Link to={to} className="hover:bg-surface-hover -mx-2 flex items-center gap-3 rounded-lg px-2 py-2">
+      <Link
+        to={to}
+        className="hover:bg-surface-hover focus-visible:ring-ring min-h-touch -mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      >
         <div className="min-w-0 flex-1">
           <p className="text-foreground truncate text-sm font-medium">{title}</p>
           <p className="text-muted-foreground truncate text-xs">{subtitle}</p>
