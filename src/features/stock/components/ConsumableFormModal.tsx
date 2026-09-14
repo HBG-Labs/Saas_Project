@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { Textarea } from '@/components/ui/Textarea';
 import {
   COMMON_CONSUMABLE_CATEGORIES,
   COMMON_UNITS,
@@ -65,7 +66,6 @@ export function ConsumableFormModal({
     `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
   */
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.reference.trim()) {
@@ -86,7 +86,9 @@ export function ConsumableFormModal({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de l’enregistrement.');
+      setError(
+        err instanceof Error ? err.message : 'Une erreur est survenue lors de l’enregistrement.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -98,37 +100,59 @@ export function ConsumableFormModal({
       onOpenChange={(open) => !open && onClose()}
       title={isEditing ? 'Modifier l’article de stock' : 'Ajouter un article / fourniture'}
       description="Renseignez les détails du consommable pour suivre les quantités et alertes de réapprovisionnement."
+      size="lg"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="consumable-form"
+            variant="primary"
+            isLoading={isSubmitting}
+            loadingLabel="Enregistrement…"
+          >
+            {isEditing ? 'Mettre à jour' : 'Ajouter l’article'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="consumable-form" onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="rounded-xl border border-error-border bg-error-subtle p-3 text-xs text-error">
+          <div
+            role="alert"
+            className="border-error-border bg-error-subtle text-error rounded-xl border p-3 text-sm"
+          >
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Référence */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
           <div>
-            <label htmlFor="consumableformmodal-reference-sku" className="block text-xs font-semibold text-foreground mb-1">
-              Référence / SKU *
-            </label>
-            <Input id="consumableformmodal-reference-sku"
+            <h3 className="text-foreground text-sm font-semibold">Article</h3>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Identifiez clairement la fourniture dans le catalogue et les mouvements de stock.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="consumableformmodal-reference-sku"
+              label="Référence / SKU"
               value={formData.reference}
               onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
               placeholder="Ex: FBR-PTO-01, DISJ-16A"
+              autoComplete="off"
               required
             />
-          </div>
 
-          {/* Catégorie */}
-          <div>
-            <label htmlFor="consumableformmodal-categorie" className="block text-xs font-semibold text-foreground mb-1">
-              Catégorie *
-            </label>
-            <SelectField id="consumableformmodal-categorie"
+            <SelectField
+              id="consumableformmodal-categorie"
+              label="Catégorie"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              required
             >
               {COMMON_CONSUMABLE_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
@@ -137,31 +161,33 @@ export function ConsumableFormModal({
               ))}
             </SelectField>
           </div>
-        </div>
 
-        {/* Nom / Désignation */}
-        <div>
-          <label htmlFor="consumableformmodal-designation-de-l-article" className="block text-xs font-semibold text-foreground mb-1">
-            Désignation de l’article *
-          </label>
-          <Input id="consumableformmodal-designation-de-l-article"
+          <Input
+            id="consumableformmodal-designation-de-l-article"
+            label="Désignation de l’article"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ex: Câble Fibre Optique 4 FO G.657.A2 (500m)"
+            autoComplete="off"
             required
           />
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {/* Unité */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
           <div>
-            <label htmlFor="consumableformmodal-unite" className="block text-xs font-semibold text-foreground mb-1">
-              Unité *
-            </label>
-            <SelectField id="consumableformmodal-unite"
+            <h3 className="text-foreground text-sm font-semibold">Stock &amp; prix</h3>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Définissez l’unité de suivi, le seuil d’alerte et les prix de référence.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <SelectField
+              id="consumableformmodal-unite"
+              label="Unité"
               value={formData.unit}
               onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-              className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              required
             >
               {COMMON_UNITS.map((unit) => (
                 <option key={unit} value={unit}>
@@ -169,31 +195,27 @@ export function ConsumableFormModal({
                 </option>
               ))}
             </SelectField>
-          </div>
 
-          {/* Quantité initiale / en stock */}
-          <div>
-            <label htmlFor="consumableformmodal-quantite-en-stock" className="block text-xs font-semibold text-foreground mb-1">
-              Quantité en stock *
-            </label>
-            <Input id="consumableformmodal-quantite-en-stock"
+            <Input
+              id="consumableformmodal-quantite-en-stock"
+              label="Quantité en stock"
               type="number"
               min={0}
-              step={formData.unit === 'm' || formData.unit === 'kg' || formData.unit === 'litre' ? '0.1' : '1'}
+              step={
+                formData.unit === 'm' || formData.unit === 'kg' || formData.unit === 'litre'
+                  ? '0.1'
+                  : '1'
+              }
               value={formData.quantityInStock}
               onChange={(e) =>
                 setFormData({ ...formData, quantityInStock: Math.max(0, Number(e.target.value)) })
               }
               required
             />
-          </div>
 
-          {/* Seuil minimum critique */}
-          <div>
-            <label htmlFor="consumableformmodal-seuil-d-alerte-min" className="block text-xs font-semibold text-foreground mb-1">
-              Seuil d’alerte min. *
-            </label>
-            <Input id="consumableformmodal-seuil-d-alerte-min"
+            <Input
+              id="consumableformmodal-seuil-d-alerte-min"
+              label="Seuil d’alerte min."
               type="number"
               min={0}
               step={1}
@@ -204,15 +226,11 @@ export function ConsumableFormModal({
               required
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Prix d'achat unitaire HT */}
-          <div>
-            <label htmlFor="consumableformmodal-prix-d-achat-unitaire-ht" className="block text-xs font-semibold text-foreground mb-1">
-              Prix d’achat unitaire HT (€)
-            </label>
-            <Input id="consumableformmodal-prix-d-achat-unitaire-ht"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="consumableformmodal-prix-d-achat-unitaire-ht"
+              label="Prix d’achat unitaire HT (€)"
               type="number"
               min={0}
               step="0.01"
@@ -225,14 +243,10 @@ export function ConsumableFormModal({
               }
               placeholder="Ex: 12.50"
             />
-          </div>
 
-          {/* Prix de vente unitaire HT */}
-          <div>
-            <label htmlFor="consumableformmodal-prix-de-facturation-ht" className="block text-xs font-semibold text-foreground mb-1">
-              Prix de facturation HT (€)
-            </label>
-            <Input id="consumableformmodal-prix-de-facturation-ht"
+            <Input
+              id="consumableformmodal-prix-de-facturation-ht"
+              label="Prix de facturation HT (€)"
               type="number"
               min={0}
               step="0.01"
@@ -246,56 +260,45 @@ export function ConsumableFormModal({
               placeholder="Ex: 24.00"
             />
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Emplacement */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
           <div>
-            <label htmlFor="consumableformmodal-emplacement-de-stockage" className="block text-xs font-semibold text-foreground mb-1">
-              Emplacement de stockage
-            </label>
-            <Input id="consumableformmodal-emplacement-de-stockage"
+            <h3 className="text-foreground text-sm font-semibold">Logistique &amp; notes</h3>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Ajoutez les informations qui facilitent le rangement et le réapprovisionnement.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="consumableformmodal-emplacement-de-stockage"
+              label="Emplacement de stockage"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="Ex: Dépôt Central - Allée B, Véhicule 01..."
+              autoComplete="off"
             />
-          </div>
 
-          {/* Fournisseur */}
-          <div>
-            <label htmlFor="consumableformmodal-fournisseur-habituel" className="block text-xs font-semibold text-foreground mb-1">
-              Fournisseur habituel
-            </label>
-            <Input id="consumableformmodal-fournisseur-habituel"
+            <Input
+              id="consumableformmodal-fournisseur-habituel"
+              label="Fournisseur habituel"
               value={formData.supplier ?? ''}
               onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
               placeholder="Ex: Rexel, Sonepar, CEDEO, Wurth..."
+              autoComplete="organization"
             />
           </div>
-        </div>
 
-        {/* Notes */}
-        <div>
-          <label htmlFor="consumableformmodal-notes-amp-remarques" className="block text-xs font-semibold text-foreground mb-1">
-            Notes &amp; Remarques
-          </label>
-          <textarea id="consumableformmodal-notes-amp-remarques"
+          <Textarea
+            id="consumableformmodal-notes-amp-remarques"
+            label="Notes & remarques"
             value={formData.notes ?? ''}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             placeholder="Informations utiles, fiche technique, équivalences..."
-            rows={2}
-            className="w-full rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+            rows={3}
           />
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : isEditing ? 'Mettre à jour' : 'Ajouter l’article'}
-          </Button>
-        </div>
+        </section>
       </form>
     </Modal>
   );

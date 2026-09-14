@@ -1,11 +1,12 @@
 import { Input } from '@/components/ui/Input';
 import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
-import { Dialog } from 'radix-ui';
-import { Calendar, Plus, X } from 'lucide-react';
+import { Calendar, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
 import { FormError } from '@/components/feedback/FormError';
 import { memberDisplayName } from '@/features/organizations';
 import type { MissionPriority } from '@/types/database';
@@ -61,9 +62,7 @@ export function NewEventModal({
 }: NewEventModalProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<MissionPriority>('normal');
-  const [date, setDate] = useState(
-    initialDate || (new Date().toISOString().split('T')[0] ?? ''),
-  );
+  const [date, setDate] = useState(initialDate || (new Date().toISOString().split('T')[0] ?? ''));
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('12:00');
   const [assignment, setAssignment] = useState('unassigned');
@@ -96,170 +95,153 @@ export function NewEventModal({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-surface-raised p-5 shadow-modal data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:p-6 sm:data-[state=open]:zoom-in-95">
-          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border-strong sm:hidden" aria-hidden="true" />
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                <Calendar className="size-4" />
-              </div>
-              <Dialog.Title className="text-base font-bold text-foreground">
-                Planifier un événement / tâche
-              </Dialog.Title>
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Planifier une mission"
+      description="Cadrez l’intervention, son horaire et son affectation depuis le planning."
+      size="lg"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="planning-event-form"
+            variant="primary"
+            isLoading={submitting}
+            loadingLabel="Création de la mission"
+            className="gap-1.5"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            Planifier la mission
+          </Button>
+        </>
+      }
+    >
+      <form id="planning-event-form" onSubmit={handleSubmit} className="space-y-5">
+        <FormError error={error} />
+
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="border-primary/20 bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl border">
+              <Calendar className="size-4" aria-hidden="true" />
             </div>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                className="flex size-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:size-8"
-                aria-label="Fermer"
-              >
-                <X className="size-4" />
-              </button>
-            </Dialog.Close>
+            <div>
+              <h3 className="text-foreground text-sm font-semibold">Mission</h3>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Donnez un intitulé précis et le niveau de priorité attendu.
+              </p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            <FormError error={error} />
+          <Input
+            id="evt-title"
+            label="Intitulé de l’intervention ou tâche"
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ex. Maintenance climatisation, raccordement…"
+            autoComplete="off"
+          />
 
-            <div>
-              <label htmlFor="evt-title" className="block text-xs font-semibold text-foreground mb-1.5">
-                Intitulé de l'intervention ou tâche
-              </label>
-              <input
-                id="evt-title"
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex. Maintenance climatisation, Raccordement..."
-                className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <SelectField
+              id="evt-priority"
+              label="Priorité"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as MissionPriority)}
+            >
+              <option value="low">Basse</option>
+              <option value="normal">Normale</option>
+              <option value="high">Haute</option>
+              <option value="urgent">Urgente</option>
+            </SelectField>
+
+            <Select
+              id="evt-assignment"
+              label="Affectation"
+              value={assignment}
+              onValueChange={setAssignment}
+              options={[{ value: 'unassigned', label: 'À affecter plus tard' }]}
+              groups={[
+                {
+                  label: 'Équipes',
+                  options: teams.map((team) => ({
+                    value: `team:${team.id}`,
+                    label: team.name,
+                  })),
+                },
+                {
+                  label: 'Intervenants',
+                  options: members.map((member) => ({
+                    value: `member:${member.id}`,
+                    label: memberDisplayName(member),
+                  })),
+                },
+              ]}
+              hint="Une équipe permet à chacun de ses membres d’intervenir."
+            />
+          </div>
+        </section>
+
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Créneau</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Fixez la date et les heures visibles par les équipes dans leur planning.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="evt-date"
+              label="Date"
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="evt-priority" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Priorité
-                </label>
-                <SelectField
-                  id="evt-priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as MissionPriority)}
-                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                >
-                  <option value="low">Basse</option>
-                  <option value="normal">Normale</option>
-                  <option value="high">Haute</option>
-                  <option value="urgent">Urgente</option>
-                </SelectField>
-              </div>
-
-              <div>
-                <Select
-                  id="evt-assignment"
-                  label="Affectation"
-                  value={assignment}
-                  onValueChange={setAssignment}
-                  options={[{ value: 'unassigned', label: 'À affecter plus tard' }]}
-                  groups={[
-                    {
-                      label: 'Équipes',
-                      options: teams.map((team) => ({
-                        value: `team:${team.id}`,
-                        label: team.name,
-                      })),
-                    },
-                    {
-                      label: 'Intervenants',
-                      options: members.map((member) => ({
-                        value: `member:${member.id}`,
-                        label: memberDisplayName(member),
-                      })),
-                    },
-                  ]}
-                  hint="Une équipe permet à chacun de ses membres d’intervenir."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label htmlFor="evt-date" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Date
-                </label>
-                <Input
-                  id="evt-date"
-                  type="date"
-                  required
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label htmlFor="evt-start" className="block text-xs font-semibold text-foreground mb-1.5">
-                    Début
-                  </label>
-                  <Input
-                    id="evt-start"
-                    type="time"
-                    required
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="evt-end" className="block text-xs font-semibold text-foreground mb-1.5">
-                    Fin
-                  </label>
-                  <Input
-                    id="evt-end"
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="evt-details" className="block text-xs font-semibold text-foreground mb-1.5">
-                Adresse & Détails de l'intervention
-              </label>
-              <textarea
-                id="evt-details"
-                rows={2}
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                placeholder="Ex. 18 Rue de Bercy Paris 12e — Remplacement disjoncteur"
-                className="w-full resize-none rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden"
+              <Input
+                id="evt-start"
+                label="Début"
+                type="time"
+                required
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+              <Input
+                id="evt-end"
+                label="Fin"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
               />
             </div>
+          </div>
+        </section>
 
-            <div className="safe-bottom flex flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={submitting}
-                className="gap-1.5 font-semibold"
-              >
-                <Plus className="size-4" />
-                {submitting ? 'Création…' : 'Planifier la mission'}
-              </Button>
-            </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Consignes terrain</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Ajoutez l’adresse et les informations utiles à l’intervention.
+            </p>
+          </div>
+          <Textarea
+            id="evt-details"
+            label="Adresse & détails de l’intervention"
+            rows={3}
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            placeholder="Ex. 18 rue de Bercy, Paris 12e — Remplacement du disjoncteur"
+          />
+        </section>
+      </form>
+    </Modal>
   );
 }

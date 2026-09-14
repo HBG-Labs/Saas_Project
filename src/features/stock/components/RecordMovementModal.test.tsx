@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RecordMovementModal } from './RecordMovementModal';
@@ -23,7 +23,7 @@ const mockConsumables: StockConsumable[] = [
 ];
 
 describe('RecordMovementModal', () => {
-  it('affiche le formulaire et permet de soumettre une entrée de stock', () => {
+  it('affiche le formulaire et permet de soumettre une entrée de stock', async () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 
@@ -44,17 +44,19 @@ describe('RecordMovementModal', () => {
     const submitButton = screen.getByRole('button', { name: /Valider le mouvement/i });
     fireEvent.click(submitButton);
 
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
-    expect(handleSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        consumableId: 'c1',
-        type: 'in',
-        quantity: 1,
-      }),
-    );
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalledTimes(1);
+      expect(handleSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consumableId: 'c1',
+          type: 'in',
+          quantity: 1,
+        }),
+      );
+    });
   });
 
-  it('permet de basculer en sortie et d’ajouter un technicien et référence', () => {
+  it('permet de basculer en sortie et d’ajouter un technicien et référence', async () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 
@@ -83,12 +85,14 @@ describe('RecordMovementModal', () => {
     const submitButton = screen.getByRole('button', { name: /Valider le mouvement/i });
     fireEvent.click(submitButton);
 
-    expect(handleSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'out',
-        technicianName: 'Jean Dupont',
-        interventionRef: 'INT-400',
-      }),
-    );
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'out',
+          technicianName: 'Jean Dupont',
+          interventionRef: 'INT-400',
+        }),
+      );
+    });
   });
 });

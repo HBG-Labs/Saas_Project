@@ -1,11 +1,12 @@
 import { Input } from '@/components/ui/Input';
 import { SelectField } from '@/components/ui/SelectField';
 import { useState } from 'react';
-import { Dialog } from 'radix-ui';
-import { Calendar, CheckCircle2, X } from 'lucide-react';
+import { Calendar, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { FormError } from '@/components/feedback/FormError';
+import { Modal } from '@/components/ui/Modal';
+import { Textarea } from '@/components/ui/Textarea';
 import { memberDisplayName, ROLE_LABELS } from '@/features/organizations';
 import type { MemberWithProfile } from '@/types/domain';
 
@@ -110,197 +111,180 @@ export function NewLeaveModal({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-surface-raised p-5 shadow-modal data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:p-6 sm:data-[state=open]:zoom-in-95">
-          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border-strong sm:hidden" aria-hidden="true" />
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-xl bg-warning/10 text-warning flex items-center justify-center border border-warning/20">
-                <Calendar className="size-4" />
-              </div>
-              <Dialog.Title className="text-base font-bold text-foreground">
-                Poser un congé ou une absence
-              </Dialog.Title>
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Poser un congé ou une absence"
+      description="Sélectionnez la personne concernée, le motif et la période à soumettre."
+      size="lg"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="leave-request-form"
+            variant="primary"
+            isLoading={submitting}
+            loadingLabel="Enregistrement de l’absence"
+            disabled={effectiveMemberId === ''}
+            className="gap-1.5"
+          >
+            <CheckCircle2 className="size-4" aria-hidden="true" />
+            Enregistrer l’absence
+          </Button>
+        </>
+      }
+    >
+      <form id="leave-request-form" onSubmit={handleSubmit} className="space-y-5">
+        <FormError error={error} />
+
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="border-warning/20 bg-warning/10 text-warning flex size-9 shrink-0 items-center justify-center rounded-xl border">
+              <Calendar className="size-4" aria-hidden="true" />
             </div>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                className="flex size-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:size-8"
-                aria-label="Fermer"
-              >
-                <X className="size-4" />
-              </button>
-            </Dialog.Close>
+            <div>
+              <h3 className="text-foreground text-sm font-semibold">Demande</h3>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Identifiez la personne et la nature de l’absence.
+              </p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            <FormError error={error} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <SelectField
+              id="leave-tech-select"
+              label="Membre du personnel"
+              value={effectiveMemberId}
+              disabled={!canRequestForOthers}
+              onChange={(e) => setSelectedMemberId(e.target.value)}
+              hint={
+                !canRequestForOthers
+                  ? 'Vous ne pouvez déposer une demande que pour vous-même.'
+                  : undefined
+              }
+            >
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {memberDisplayName(member)} — {ROLE_LABELS[member.role]}
+                </option>
+              ))}
+            </SelectField>
 
-            {/* Employé concerné */}
-            <div>
-              <label htmlFor="leave-tech-select" className="block text-xs font-semibold text-foreground mb-1.5">
-                Membre du personnel
-              </label>
-              <SelectField
-                id="leave-tech-select"
-                value={effectiveMemberId}
-                disabled={!canRequestForOthers}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden disabled:opacity-60 sm:h-10"
-              >
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {memberDisplayName(member)} — {ROLE_LABELS[member.role]}
-                  </option>
-                ))}
-              </SelectField>
-              {!canRequestForOthers && (
-                <p className="text-3xs text-muted-foreground mt-1">
-                  Vous ne pouvez déposer une demande que pour vous-même.
-                </p>
-              )}
-            </div>
+            <SelectField
+              id="leave-type-select"
+              label="Motif de l’absence"
+              value={leaveType}
+              onChange={(e) => setLeaveType(e.target.value as LeaveType)}
+            >
+              {LEAVE_TYPES.map((leave) => (
+                <option key={leave.value} value={leave.value}>
+                  {leave.label}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+        </section>
 
-            {/* Type de congé */}
-            <div>
-              <label htmlFor="leave-type-select" className="block text-xs font-semibold text-foreground mb-1.5">
-                Motif de l'absence
-              </label>
-              <SelectField
-                id="leave-type-select"
-                value={leaveType}
-                onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-                className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-              >
-                {LEAVE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-
-            {/* Période De / À */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="leave-start-date" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Date de début
-                </label>
-                <Input
-                  id="leave-start-date"
-                  type="date"
-                  required
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                />
-              </div>
-              <div>
-                <label htmlFor="leave-end-date" className="block text-xs font-semibold text-foreground mb-1.5">
-                  Date de fin (inclus)
-                </label>
-                <Input
-                  id="leave-end-date"
-                  type="date"
-                  required
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
-                />
-              </div>
-            </div>
-
-            {/* Demi-journées */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <label className="flex items-center gap-2 text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={halfDayStart}
-                  onChange={(e) => setHalfDayStart(e.target.checked)}
-                  className="size-4 rounded-sm border-border text-primary focus:ring-primary"
-                />
-                <span>Début l’après-midi</span>
-              </label>
-              <label className="flex items-center gap-2 text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={halfDayEnd}
-                  onChange={(e) => setHalfDayEnd(e.target.checked)}
-                  className="size-4 rounded-sm border-border text-primary focus:ring-primary"
-                />
-                <span>Fin le matin</span>
-              </label>
-            </div>
-
-            {/* Décompte — calculé par le serveur, détaillé pour être vérifiable */}
-            <div className="p-3 rounded-xl bg-surface-subtle border border-border/80 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-medium">Jours décomptés :</span>
-                <span className="font-extrabold text-foreground">
-                  {preview.isLoading ? '…' : `${String(total)} jour(s)`}
-                </span>
-              </div>
-
-              {excluded.length > 0 && (
-                <p className="text-3xs text-muted-foreground">
-                  Non décomptés :{' '}
-                  {excluded
-                    .map((day) => `${day.day.slice(8, 10)}/${day.day.slice(5, 7)} (${day.reason})`)
-                    .join(' · ')}
-                </p>
-              )}
-
-              {preview.isError && (
-                <p className="text-3xs font-semibold text-error">
-                  Le décompte n’a pas pu être calculé. Vérifiez les dates avant d’enregistrer.
-                </p>
-              )}
-            </div>
-
-            {/* Motif / Commentaire */}
-            <div>
-              <label htmlFor="leave-reason" className="block text-xs font-semibold text-foreground mb-1.5">
-                Commentaire / Justificatif (facultatif)
-              </label>
-              <textarea
-                id="leave-reason"
-                rows={2}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Ex. Vacances en famille, rendez-vous médical, etc."
-                className="w-full resize-none rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden"
-              />
-            </div>
-
-            {/* La case « valider automatiquement » a disparu, et ce n'est pas
-                un oubli : le serveur crée TOUTE demande en attente, puis exige
-                que la décision vienne de quelqu'un d'autre que son titulaire.
-                Offrir la case aurait produit une erreur à chaque envoi. */}
-            <p className="text-3xs text-muted-foreground bg-surface-subtle border border-border/80 rounded-xl p-2.5">
-              La demande est enregistrée en attente de validation. Elle devra être approuvée
-              par un responsable — nul ne peut statuer sur ses propres congés.
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Période</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Le décompte tient compte du territoire, des week-ends et des jours fériés.
             </p>
+          </div>
 
-            {/* Actions */}
-            <div className="safe-bottom flex flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={submitting || effectiveMemberId === ''}
-                className="gap-1.5 font-semibold"
-              >
-                <CheckCircle2 className="size-4" />
-                {submitting ? 'Enregistrement…' : "Enregistrer l'absence"}
-              </Button>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="leave-start-date"
+              label="Date de début"
+              type="date"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <Input
+              id="leave-end-date"
+              label="Date de fin (incluse)"
+              type="date"
+              required
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+            <label className="min-h-touch border-border bg-surface text-foreground hover:bg-surface-hover flex cursor-pointer items-center gap-2 rounded-xl border px-3 transition-colors">
+              <input
+                type="checkbox"
+                checked={halfDayStart}
+                onChange={(e) => setHalfDayStart(e.target.checked)}
+                className="border-border text-primary focus:ring-primary size-4 rounded-sm"
+              />
+              <span>Début l’après-midi</span>
+            </label>
+            <label className="min-h-touch border-border bg-surface text-foreground hover:bg-surface-hover flex cursor-pointer items-center gap-2 rounded-xl border px-3 transition-colors">
+              <input
+                type="checkbox"
+                checked={halfDayEnd}
+                onChange={(e) => setHalfDayEnd(e.target.checked)}
+                className="border-border text-primary focus:ring-primary size-4 rounded-sm"
+              />
+              <span>Fin le matin</span>
+            </label>
+          </div>
+
+          <div
+            className="border-primary/15 bg-primary/5 space-y-1.5 rounded-xl border p-3 text-xs"
+            aria-live="polite"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground font-medium">Jours décomptés</span>
+              <strong className="text-foreground text-sm">
+                {preview.isLoading ? 'Calcul…' : `${String(total)} jour(s)`}
+              </strong>
             </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+
+            {excluded.length > 0 && (
+              <p className="text-3xs text-muted-foreground">
+                Non décomptés :{' '}
+                {excluded
+                  .map((day) => `${day.day.slice(8, 10)}/${day.day.slice(5, 7)} (${day.reason})`)
+                  .join(' · ')}
+              </p>
+            )}
+
+            {preview.isError && (
+              <p className="text-3xs text-error font-semibold">
+                Le décompte n’a pas pu être calculé. Vérifiez les dates avant d’enregistrer.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+          <Textarea
+            id="leave-reason"
+            label="Commentaire / justificatif (facultatif)"
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ex. Vacances en famille, rendez-vous médical…"
+          />
+
+          <p className="border-border/80 bg-surface-subtle text-muted-foreground rounded-xl border p-3 text-xs">
+            La demande sera enregistrée en attente de validation par un responsable. Une personne ne
+            peut pas statuer sur sa propre demande.
+          </p>
+        </section>
+      </form>
+    </Modal>
   );
 }

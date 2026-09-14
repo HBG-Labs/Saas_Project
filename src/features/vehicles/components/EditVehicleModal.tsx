@@ -1,9 +1,11 @@
-import { X, Truck, Trash2 } from 'lucide-react';
+import { Trash2, Truck } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
 import { useMembers, memberDisplayName } from '@/features/organizations';
 import type { Vehicle, VehicleFuel, VehicleStatus, VehicleType } from '../types';
 
@@ -15,6 +17,8 @@ interface EditVehicleModalProps {
   onUpdate: (vehicleId: string, updates: Partial<Vehicle>) => void;
   onDelete: (vehicleId: string) => void;
 }
+
+const UNASSIGNED_MEMBER = 'unassigned';
 
 export function EditVehicleModal({
   vehicle,
@@ -33,17 +37,18 @@ export function EditVehicleModal({
   const [fuel, setFuel] = useState<VehicleFuel>(vehicle.fuel);
   const [status, setStatus] = useState<VehicleStatus>(vehicle.status);
   const [mileage, setMileage] = useState<number>(vehicle.mileage);
-  const [assignedMemberId, setAssignedMemberId] = useState<string>(vehicle.assignedMemberId ?? '');
+  const [assignedMemberId, setAssignedMemberId] = useState<string>(
+    vehicle.assignedMemberId ?? UNASSIGNED_MEMBER,
+  );
   const [nextCtDate, setNextCtDate] = useState<string>(vehicle.nextCtDate);
   const [nextRevisionDate, setNextRevisionDate] = useState<string>(vehicle.nextRevisionDate);
   const [notes, setNotes] = useState(vehicle.notes ?? '');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const assignedMember = (members.data ?? []).find((m) => m.id === assignedMemberId);
+    const hasAssignedMember = assignedMemberId !== UNASSIGNED_MEMBER;
 
     onUpdate(vehicle.id, {
       plate: plate.toUpperCase().trim(),
@@ -53,7 +58,7 @@ export function EditVehicleModal({
       fuel,
       status,
       mileage: Number(mileage) || 0,
-      assignedMemberId: assignedMemberId || null,
+      assignedMemberId: hasAssignedMember ? assignedMemberId : null,
       assignedMemberName: assignedMember ? memberDisplayName(assignedMember) : null,
       nextCtDate,
       nextRevisionDate,
@@ -69,33 +74,85 @@ export function EditVehicleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-surface border-border w-full max-w-xl rounded-2xl border shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-hover/30">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Truck className="size-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">Modifier le véhicule {vehicle.plate}</h2>
-              <p className="text-2xs text-muted-foreground">{vehicle.brand} {vehicle.model}</p>
+    <Modal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={`Modifier le véhicule ${vehicle.plate}`}
+      description={`${vehicle.brand} ${vehicle.model} · identité, affectation et entretien.`}
+      size="lg"
+      footer={
+        showConfirmDelete ? (
+          <div className="bg-error-subtle border-error-border flex w-full flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-error text-xs font-medium">
+              Confirmer la suppression définitive de ce véhicule ?
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowConfirmDelete(false)}
+                className="min-h-touch flex-1 sm:min-h-0 sm:flex-none"
+              >
+                Conserver
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={handleDelete}
+                className="min-h-touch flex-1 sm:min-h-0 sm:flex-none"
+              >
+                Supprimer
+              </Button>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        ) : (
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-error hover:bg-error-subtle hover:text-error min-h-touch gap-1.5 sm:min-h-0"
+              onClick={() => setShowConfirmDelete(true)}
+            >
+              <Trash2 className="size-3.5" aria-hidden="true" />
+              Retirer de la flotte
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="min-h-touch flex-1 sm:min-h-0 sm:flex-none"
+              >
+                Fermer
+              </Button>
+              <Button
+                type="submit"
+                form="edit-vehicle-form"
+                variant="primary"
+                className="min-h-touch flex-[1.35] gap-2 sm:min-h-0 sm:flex-none"
+              >
+                <Truck className="size-4" aria-hidden="true" />
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        )
+      }
+    >
+      <form id="edit-vehicle-form" onSubmit={handleSubmit} className="space-y-5">
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Identité du véhicule</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Corrigez les informations affichées dans la flotte et les exports.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
-              label="Immatriculation (Plaque)"
+              label="Immatriculation"
               required
               value={plate}
               onChange={(e) => setPlate(e.target.value)}
@@ -120,7 +177,7 @@ export function EditVehicleModal({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Modèle & Version"
               required
@@ -141,8 +198,16 @@ export function EditVehicleModal({
               ]}
             />
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Usage & affectation</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Mettez à jour son état opérationnel et son conducteur habituel.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Select
               label="Motorisation"
               value={fuel}
@@ -176,22 +241,28 @@ export function EditVehicleModal({
             />
           </div>
 
-          <div>
-            <Select
-              label="Technicien assigné par défaut"
-              value={assignedMemberId}
-              onValueChange={setAssignedMemberId}
-              options={[
-                { value: '', label: 'Aucun (Véhicule en pool partagé)' },
-                ...(members.data ?? []).map((m) => ({
-                  value: m.id,
-                  label: `${memberDisplayName(m)}${m.job_title ? ` (${m.job_title})` : ''}`,
-                })),
-              ]}
-            />
-          </div>
+          <Select
+            label="Technicien assigné par défaut"
+            value={assignedMemberId}
+            onValueChange={setAssignedMemberId}
+            options={[
+              { value: UNASSIGNED_MEMBER, label: 'Aucun (Véhicule en pool partagé)' },
+              ...(members.data ?? []).map((m) => ({
+                value: m.id,
+                label: `${memberDisplayName(m)}${m.job_title ? ` (${m.job_title})` : ''}`,
+              })),
+            ]}
+          />
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
+          <div>
+            <h3 className="text-foreground text-sm font-semibold">Entretien & équipements</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Ajustez les échéances et la description de l’aménagement embarqué.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Prochain Contrôle Technique (CT)"
               type="date"
@@ -207,70 +278,14 @@ export function EditVehicleModal({
             />
           </div>
 
-          <div>
-            <span className="block text-xs font-medium text-foreground mb-1.5">
-              Aménagements spécifiques & Équipements embarqués
-            </span>
-            <textarea
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[60px]"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          {/* Delete confirmation section */}
-          {showConfirmDelete ? (
-            <div className="p-3 bg-error-subtle border border-error/30 rounded-xl flex items-center justify-between gap-3 animate-in fade-in">
-              <span className="text-xs text-error font-medium">
-                Confirmer la suppression définitive de ce véhicule ?
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowConfirmDelete(false)}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  onClick={handleDelete}
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Footer actions */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
-            {!showConfirmDelete ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-error hover:bg-error-subtle hover:text-error gap-1.5"
-                onClick={() => setShowConfirmDelete(true)}
-              >
-                <Trash2 className="size-3.5" />
-                <span>Retirer de la flotte</span>
-              </Button>
-            ) : <div />}
-
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Fermer
-              </Button>
-              <Button type="submit" variant="primary">
-                Enregistrer les modifications
-              </Button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
+          <Textarea
+            label="Aménagements spécifiques & équipements embarqués"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+          />
+        </section>
+      </form>
+    </Modal>
   );
 }

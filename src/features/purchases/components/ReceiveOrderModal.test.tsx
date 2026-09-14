@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ReceiveOrderModal } from './ReceiveOrderModal';
@@ -33,7 +33,7 @@ const mockOrder: PurchaseOrder = {
 };
 
 describe('ReceiveOrderModal', () => {
-  it('affiche les articles à réceptionner et permet de valider la réception', () => {
+  it('affiche les articles à réceptionner et permet de valider la réception', async () => {
     const handleSubmit = vi.fn();
     const handleClose = vi.fn();
 
@@ -47,16 +47,14 @@ describe('ReceiveOrderModal', () => {
     );
 
     expect(screen.getByText(/Pointage BL & Réception — CMD-2026-001/i)).toBeInTheDocument();
-    expect(screen.getByText('ELEC-DISJ-16A')).toBeInTheDocument();
-    expect(screen.getByText('Disjoncteur 16A')).toBeInTheDocument();
+    expect(screen.getAllByText('ELEC-DISJ-16A')).not.toHaveLength(0);
+    expect(screen.getAllByText('Disjoncteur 16A')).not.toHaveLength(0);
 
     const submitBtn = screen.getByRole('button', { name: /Valider la réception/i });
     fireEvent.click(submitBtn);
 
-    expect(handleSubmit).toHaveBeenCalledWith(
-      'po-test-1',
-      { 'item-1': 20 },
-      undefined,
-    );
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalledWith('po-test-1', { 'item-1': 20 }, undefined);
+    });
   });
 });

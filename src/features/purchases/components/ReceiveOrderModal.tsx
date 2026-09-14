@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { Textarea } from '@/components/ui/Textarea';
 
 import type { PurchaseOrder } from '../types/purchases.types';
 
@@ -18,12 +19,7 @@ interface ReceiveOrderModalProps {
   order: PurchaseOrder | null;
 }
 
-export function ReceiveOrderModal({
-  isOpen,
-  onClose,
-  onSubmit,
-  order,
-}: ReceiveOrderModalProps) {
+export function ReceiveOrderModal({ isOpen, onClose, onSubmit, order }: ReceiveOrderModalProps) {
   // Prérempli avec le RESTE à recevoir : c'est le geste courant, et le
   // magasinier n'a qu'à corriger les écarts du bon de livraison.
   const [receivedQuantities, setReceivedQuantities] = useState<Record<string, number>>(() =>
@@ -44,7 +40,6 @@ export function ReceiveOrderModal({
     la laissait montée en permanence et recopiait les props dans l'état par un
     `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
   */
-
 
   if (!order) return null;
 
@@ -100,17 +95,39 @@ export function ReceiveOrderModal({
       size="xl"
       title={`Pointage BL & Réception — ${order.reference}`}
       description={`Validez les quantités livrées par ${order.supplierName}. Le stock sera automatiquement incrémenté.`}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="purchase-receipt-form"
+            variant="primary"
+            isLoading={isSubmitting}
+            loadingLabel="Traitement de la réception"
+            disabled={totalToReceiveNow <= 0}
+            className="gap-1.5"
+          >
+            <PackageCheck className="size-4" aria-hidden="true" />
+            <span>Valider la réception ({totalToReceiveNow} unités)</span>
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form id="purchase-receipt-form" onSubmit={handleSubmit} className="space-y-5 pt-1">
         {error && (
-          <div className="rounded-xl border border-error-border bg-error-subtle p-3 text-xs text-error">
+          <div
+            role="alert"
+            className="border-error-border bg-error-subtle text-error rounded-xl border p-3 text-sm"
+          >
             {error}
           </div>
         )}
 
-        <div className="flex items-center justify-between bg-surface-raised p-3 rounded-xl border border-border">
+        <div className="border-border bg-surface-raised flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold text-foreground">
+            <p className="text-foreground text-xs font-semibold">
               Fournisseur : {order.supplierName}
             </p>
             <p className="text-3xs text-subtle-foreground">
@@ -124,38 +141,33 @@ export function ReceiveOrderModal({
             variant="outline"
             size="sm"
             onClick={handleReceiveAll}
-            className="gap-1 text-2xs h-7 cursor-pointer"
+            className="min-h-touch w-full gap-1 sm:min-h-0 sm:w-auto"
           >
-            <Check className="size-3" />
+            <Check className="size-3.5" aria-hidden="true" />
             <span>Tout réceptionner</span>
           </Button>
         </div>
 
-        {/* Tableau des articles à réceptionner */}
-        <div className="space-y-2">
+        <section role="group" aria-labelledby="pointage-articles-libelle" className="space-y-3">
           {/* Intitulé d'un tableau de saisie, pas d'un champ unique. */}
           <span
             id="pointage-articles-libelle"
-            className="block text-xs font-bold text-foreground uppercase tracking-wider"
+            className="text-foreground block text-xs font-bold tracking-wider uppercase"
           >
             Pointage des articles livrés
           </span>
 
-          <div
-            role="group"
-            aria-labelledby="pointage-articles-libelle"
-            className="rounded-xl border border-border overflow-hidden"
-          >
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="border-border hidden overflow-hidden rounded-xl border sm:block">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
-                <tr className="border-b border-border bg-surface-raised/60 text-muted-foreground text-3xs font-bold uppercase tracking-wider">
-                  <th className="py-2.5 px-3">Réf. &amp; Article</th>
-                  <th className="py-2.5 px-2 text-center">Commandé</th>
-                  <th className="py-2.5 px-2 text-center">Déjà Reçu</th>
-                  <th className="py-2.5 px-3 text-right">Reçu sur ce BL *</th>
+                <tr className="border-border bg-surface-raised/60 text-muted-foreground text-3xs border-b font-bold tracking-wider uppercase">
+                  <th className="px-3 py-2.5">Réf. &amp; Article</th>
+                  <th className="px-2 py-2.5 text-center">Commandé</th>
+                  <th className="px-2 py-2.5 text-center">Déjà Reçu</th>
+                  <th className="px-3 py-2.5 text-right">Reçu sur ce BL *</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-border divide-y">
                 {order.items.map((item) => {
                   const remaining = Math.max(0, item.quantityOrdered - item.quantityReceived);
                   const isFullyReceived = remaining === 0;
@@ -165,29 +177,32 @@ export function ReceiveOrderModal({
                     <tr
                       key={item.id}
                       className={`transition-colors ${
-                        isFullyReceived ? 'bg-surface-raised/30 opacity-60' : 'hover:bg-surface-hover/50'
+                        isFullyReceived
+                          ? 'bg-surface-raised/30 opacity-60'
+                          : 'hover:bg-surface-hover/50'
                       }`}
                     >
-                      <td className="py-2.5 px-3">
-                        <span className="font-mono text-3xs font-bold text-muted-foreground bg-surface-raised px-1 py-0.5 rounded border border-border">
+                      <td className="px-3 py-2.5">
+                        <span className="text-3xs text-muted-foreground bg-surface-raised border-border rounded border px-1 py-0.5 font-mono font-bold">
                           {item.reference}
                         </span>
-                        <p className="font-semibold text-foreground text-xs leading-snug mt-0.5">
+                        <p className="text-foreground mt-0.5 text-xs leading-snug font-semibold">
                           {item.description}
                         </p>
                       </td>
 
-                      <td className="py-2.5 px-2 text-center font-mono font-medium text-foreground">
+                      <td className="text-foreground px-2 py-2.5 text-center font-mono font-medium">
                         {item.quantityOrdered} {item.unit}
                       </td>
 
-                      <td className="py-2.5 px-2 text-center font-mono font-semibold text-muted-foreground">
+                      <td className="text-muted-foreground px-2 py-2.5 text-center font-mono font-semibold">
                         {item.quantityReceived} {item.unit}
                       </td>
 
-                      <td className="py-2.5 px-3 text-right">
+                      <td className="px-3 py-2.5 text-right">
                         <div className="inline-flex items-center justify-end gap-1">
                           <Input
+                            aria-label={`Quantité reçue pour ${item.description}`}
                             type="number"
                             min={0}
                             max={remaining}
@@ -197,9 +212,9 @@ export function ReceiveOrderModal({
                               handleQtyChange(item.id, remaining, Number(e.target.value))
                             }
                             disabled={isFullyReceived}
-                            className="w-20 text-right h-8 font-mono font-bold"
+                            className="h-8 w-20 text-right font-mono font-bold"
                           />
-                          <span className="text-3xs text-muted-foreground uppercase font-semibold w-8 text-left">
+                          <span className="text-3xs text-muted-foreground w-8 text-left font-semibold uppercase">
                             {item.unit}
                           </span>
                         </div>
@@ -210,38 +225,76 @@ export function ReceiveOrderModal({
               </tbody>
             </table>
           </div>
-        </div>
 
-        {/* N° BL / Remarques */}
-        <div>
-          <label htmlFor="receiveordermodal-n-bon-de-livraison-bl-remarques-de-recep" className="block text-xs font-semibold text-foreground mb-1">
-            N° Bon de Livraison (BL) / Remarques de réception
-          </label>
-          <Input id="receiveordermodal-n-bon-de-livraison-bl-remarques-de-recep"
-            value={deliveryNotes}
-            onChange={(e) => setDeliveryNotes(e.target.value)}
-            placeholder="Ex: BL-89402 — Colis intact, vérifié au quai"
-          />
-        </div>
+          <div className="space-y-3 sm:hidden">
+            {order.items.map((item) => {
+              const remaining = Math.max(0, item.quantityOrdered - item.quantityReceived);
+              const isFullyReceived = remaining === 0;
+              const currentInput = receivedQuantities[item.id] ?? 0;
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            Annuler
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting || totalToReceiveNow <= 0}
-            className="gap-1.5 bg-success hover:bg-success text-white font-semibold cursor-pointer"
-          >
-            <PackageCheck className="size-4" />
-            <span>
-              {isSubmitting
-                ? 'Traitement…'
-                : `Valider la réception (${totalToReceiveNow} unités)`}
-            </span>
-          </Button>
-        </div>
+              return (
+                <article
+                  key={item.id}
+                  className={`border-border bg-surface rounded-2xl border p-4 shadow-xs ${
+                    isFullyReceived ? 'opacity-60' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="border-border bg-surface-raised text-3xs text-muted-foreground rounded border px-1.5 py-0.5 font-mono font-semibold">
+                        {item.reference}
+                      </span>
+                      <h4 className="text-foreground mt-1.5 text-sm leading-snug font-semibold">
+                        {item.description}
+                      </h4>
+                    </div>
+                    {isFullyReceived ? (
+                      <span className="bg-success/10 text-3xs text-success shrink-0 rounded-full px-2 py-1 font-semibold">
+                        Reçu
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <dl className="bg-surface-sunken/45 my-4 grid grid-cols-2 gap-3 rounded-xl p-3 text-xs">
+                    <div>
+                      <dt className="text-muted-foreground">Commandé</dt>
+                      <dd className="text-foreground mt-0.5 font-semibold">
+                        {item.quantityOrdered} {item.unit}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Déjà reçu</dt>
+                      <dd className="text-foreground mt-0.5 font-semibold">
+                        {item.quantityReceived} {item.unit}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <Input
+                    label={`Reçu sur ce BL (${item.unit})`}
+                    type="number"
+                    min={0}
+                    max={remaining}
+                    step="any"
+                    value={currentInput}
+                    onChange={(e) => handleQtyChange(item.id, remaining, Number(e.target.value))}
+                    disabled={isFullyReceived}
+                    className="font-mono font-semibold"
+                  />
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <Textarea
+          id="receiveordermodal-n-bon-de-livraison-bl-remarques-de-recep"
+          label="N° Bon de livraison (BL) / remarques de réception"
+          value={deliveryNotes}
+          onChange={(e) => setDeliveryNotes(e.target.value)}
+          placeholder="Ex: BL-89402 — Colis intact, vérifié au quai"
+          rows={3}
+        />
       </form>
     </Modal>
   );

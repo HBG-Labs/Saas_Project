@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { Textarea } from '@/components/ui/Textarea';
 
 import type { Supplier, SupplierInput } from '../types/purchases.types';
 
@@ -45,7 +46,6 @@ export function SupplierFormModal({
     la laissait montée en permanence et recopiait les props dans l'état par un
     `useEffect` — un `setState` dans un effet, donc un rendu en cascade.
   */
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,163 +90,169 @@ export function SupplierFormModal({
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title={isEditing ? 'Modifier la fiche fournisseur' : 'Ajouter un fournisseur'}
-      description="Enregistrez les coordonnées de votre fournisseur ou grossiste partenaire."
+      description="Centralisez son identité, ses coordonnées et vos conditions commerciales."
+      size="lg"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="min-h-touch sm:min-h-0"
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="supplier-form"
+            variant="primary"
+            isLoading={isSubmitting}
+            loadingLabel="Enregistrement du fournisseur"
+            className="min-h-touch sm:min-h-0"
+          >
+            {isEditing ? 'Mettre à jour le fournisseur' : 'Ajouter le fournisseur'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form id="supplier-form" onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="rounded-xl border border-error-border bg-error-subtle p-3 text-xs text-error">
+          <div
+            role="alert"
+            className="border-error-border bg-error-subtle text-error rounded-xl border p-3 text-xs"
+          >
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Nom du fournisseur */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
           <div>
-            <label htmlFor="supplierformmodal-raison-sociale-nom" className="block text-xs font-semibold text-foreground mb-1">
-              Raison sociale / Nom *
-            </label>
-            <Input id="supplierformmodal-raison-sociale-nom"
+            <h3 className="text-foreground text-sm font-semibold">Identité fournisseur</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Informations utilisées dans l’annuaire et les bons de commande.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Raison sociale / Nom"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Rexel, Sonepar, Foliatec..."
+              placeholder="Ex: Rexel, Sonepar, Foliatec…"
               required
             />
-          </div>
-
-          {/* Code fournisseur */}
-          <div>
-            <label htmlFor="supplierformmodal-code-fournisseur-interne" className="block text-xs font-semibold text-foreground mb-1">
-              Code Fournisseur (Interne)
-            </label>
-            <Input id="supplierformmodal-code-fournisseur-interne"
+            <Input
+              label="Code fournisseur interne"
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               placeholder="Ex: SUP-REXEL"
             />
           </div>
-        </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="SIRET"
+              inputMode="numeric"
+              value={formData.siret}
+              onChange={(e) => setFormData({ ...formData, siret: e.target.value })}
+              placeholder="14 chiffres"
+            />
+            <Input
+              label="N° TVA intracommunautaire"
+              value={formData.vatNumber}
+              onChange={(e) => setFormData({ ...formData, vatNumber: e.target.value })}
+              placeholder="Ex: FR12345678901"
+            />
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {/* Contact */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
           <div>
-            <label htmlFor="supplierformmodal-interlocuteur-commercial" className="block text-xs font-semibold text-foreground mb-1">
-              Interlocuteur / Commercial
-            </label>
-            <Input id="supplierformmodal-interlocuteur-commercial"
+            <h3 className="text-foreground text-sm font-semibold">Contact commercial</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Coordonnées utilisées pour vos échanges et vos commandes.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Input
+              label="Interlocuteur / Commercial"
               value={formData.contactName}
               onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
               placeholder="Ex: Marc Delorme"
+              autoComplete="name"
             />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="supplierformmodal-email-commandes" className="block text-xs font-semibold text-foreground mb-1">
-              Email commandes
-            </label>
-            <Input id="supplierformmodal-email-commandes"
+            <Input
+              label="Email commandes"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="commandes@fournisseur.fr"
+              autoComplete="email"
             />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label htmlFor="supplierformmodal-telephone" className="block text-xs font-semibold text-foreground mb-1">
-              Téléphone
-            </label>
-            <Input id="supplierformmodal-telephone"
+            <Input
+              label="Téléphone"
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="01 23 45 67 89"
+              autoComplete="tel"
             />
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {/* Adresse */}
-          <div className="sm:col-span-2">
-            <label htmlFor="supplierformmodal-adresse" className="block text-xs font-semibold text-foreground mb-1">
-              Adresse
-            </label>
-            <Input id="supplierformmodal-adresse"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="12 Avenue des Métiers"
-            />
-          </div>
-
-          {/* Ville / CP */}
+        <section className="border-border bg-surface-sunken/35 space-y-4 rounded-2xl border p-4">
           <div>
-            <label htmlFor="supplierformmodal-code-postal-amp-ville" className="block text-xs font-semibold text-foreground mb-1">
-              Code Postal &amp; Ville
-            </label>
-            <Input id="supplierformmodal-code-postal-amp-ville"
+            <h3 className="text-foreground text-sm font-semibold">Adresse & conditions</h3>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Complétez les informations administratives et commerciales utiles.
+            </p>
+          </div>
+          <Input
+            label="Adresse"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            placeholder="12 Avenue des Métiers"
+            autoComplete="street-address"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[0.65fr_1.35fr]">
+            <Input
+              label="Code postal"
+              inputMode="numeric"
+              value={formData.postalCode}
+              onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+              placeholder="75009"
+              autoComplete="postal-code"
+            />
+            <Input
+              label="Ville"
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              placeholder="75009 Paris"
+              placeholder="Paris"
+              autoComplete="address-level2"
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Modalités de paiement */}
-          <div>
-            <label htmlFor="supplierformmodal-conditions-de-reglement" className="block text-xs font-semibold text-foreground mb-1">
-              Conditions de règlement
-            </label>
-            <Input id="supplierformmodal-conditions-de-reglement"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Conditions de règlement"
               value={formData.defaultPaymentTerms}
-              onChange={(e) =>
-                setFormData({ ...formData, defaultPaymentTerms: e.target.value })
-              }
-              placeholder="Ex: 30 jours fin de mois, Virement 45j..."
+              onChange={(e) => setFormData({ ...formData, defaultPaymentTerms: e.target.value })}
+              placeholder="Ex: 30 jours fin de mois"
             />
-          </div>
-
-          {/* Site Web */}
-          <div>
-            <label htmlFor="supplierformmodal-site-internet-e-shop" className="block text-xs font-semibold text-foreground mb-1">
-              Site Internet / E-Shop
-            </label>
-            <Input id="supplierformmodal-site-internet-e-shop"
+            <Input
+              label="Site Internet / E-Shop"
               type="url"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              placeholder="https://..."
+              placeholder="https://…"
             />
           </div>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label htmlFor="supplierformmodal-notes-amp-tarifs-negocies" className="block text-xs font-semibold text-foreground mb-1">
-            Notes &amp; Tarifs négociés
-          </label>
-          <textarea id="supplierformmodal-notes-amp-tarifs-negocies"
+          <Textarea
+            label="Notes & tarifs négociés"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Numéro de compte client, franco de port, remise négociée..."
-            rows={2}
-            className="w-full rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+            placeholder="Numéro de compte, franco de port, remise négociée…"
+            rows={3}
           />
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting
-              ? 'Enregistrement…'
-              : isEditing
-                ? 'Mettre à jour le fournisseur'
-                : 'Ajouter le fournisseur'}
-          </Button>
-        </div>
+        </section>
       </form>
     </Modal>
   );
