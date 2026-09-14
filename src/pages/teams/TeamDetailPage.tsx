@@ -101,7 +101,7 @@ export default function TeamDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link to={ROUTES.teams}>
           <ArrowLeft className="size-4" />
           Équipes
@@ -112,7 +112,7 @@ export default function TeamDetailPage() {
         title={data.name}
         description={data.description ?? 'Aucune description'}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
             {data.status === 'archived' ? <Badge variant="warning">Archivée</Badge> : null}
 
             {canEdit && organizationId !== null ? (
@@ -120,7 +120,7 @@ export default function TeamDetailPage() {
                 organizationId={organizationId}
                 team={data}
                 trigger={
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
                     <Pencil className="size-4" />
                     Modifier
                   </Button>
@@ -132,6 +132,7 @@ export default function TeamDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   archiveTeam.mutate(data.id);
                 }}
@@ -144,10 +145,10 @@ export default function TeamDetailPage() {
 
             {canDelete ? (
               <>
-                <div className="h-4 w-px bg-border mx-1" aria-hidden="true" />
                 <Button
                   variant="danger-outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setIsDeleteModalOpen(true);
                   }}
@@ -163,7 +164,7 @@ export default function TeamDetailPage() {
                   title="Supprimer l'équipe"
                   description={`Êtes-vous sûr de vouloir supprimer définitivement l'équipe "${data.name}" ?`}
                   footer={
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                       <Button
                         variant="outline"
                         size="sm"
@@ -171,6 +172,7 @@ export default function TeamDetailPage() {
                           setIsDeleteModalOpen(false);
                         }}
                         disabled={deleteTeam.isPending}
+                        className="w-full sm:w-auto"
                       >
                         Annuler
                       </Button>
@@ -181,6 +183,9 @@ export default function TeamDetailPage() {
                           void handleDelete();
                         }}
                         disabled={deleteTeam.isPending}
+                        isLoading={deleteTeam.isPending}
+                        loadingLabel="Suppression de l’équipe"
+                        className="w-full sm:w-auto"
                       >
                         {deleteTeam.isPending ? 'Suppression…' : 'Supprimer l’équipe'}
                       </Button>
@@ -188,7 +193,8 @@ export default function TeamDetailPage() {
                   }
                 >
                   <p className="text-muted-foreground text-sm">
-                    Cette action est définitive. L'équipe sera retirée de l'organisation et ne sera plus proposée lors de l'affectation des missions.
+                    Cette action est définitive. L'équipe sera retirée de l'organisation et ne sera
+                    plus proposée lors de l'affectation des missions.
                   </p>
                 </Modal>
               </>
@@ -197,16 +203,25 @@ export default function TeamDetailPage() {
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Membres
-            <span className="text-muted-foreground ml-2 font-mono text-xs tabular-nums">
-              {data.members.length}
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+          <div className="flex items-center gap-3">
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+              style={{ backgroundColor: data.color ?? 'var(--color-primary)' }}
+            >
+              <Users className="size-4.5" aria-hidden="true" />
             </span>
-          </CardTitle>
+            <div className="min-w-0">
+              <CardTitle>Composition de l’équipe</CardTitle>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {data.members.length} membre{data.members.length > 1 ? 's' : ''} affecté
+                {data.members.length > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-4">
           <TeamMembersPanel
             team={data}
             organizationMembers={members.data ?? []}
