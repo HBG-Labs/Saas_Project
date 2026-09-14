@@ -58,7 +58,7 @@ export default function CustomersListPage() {
         { header: 'Pays', accessor: (c) => c.country ?? 'FR' },
         { header: 'Statut', accessor: (c) => c.status },
       ],
-      list
+      list,
     );
   };
 
@@ -154,13 +154,13 @@ export default function CustomersListPage() {
               : status === 'archived'
                 ? 'Les fiches archivées se retrouvent ici, et peuvent être réactivées à tout moment.'
                 : canCreate
-                ? 'Créez une fiche client pour rattacher ses sites, ses interlocuteurs et l’historique de vos interventions.'
-                : /*
+                  ? 'Créez une fiche client pour rattacher ses sites, ses interlocuteurs et l’historique de vos interventions.'
+                  : /*
                      Un technicien ne voit que les clients de SES missions : une
                      liste vide signifie qu'il n'en a aucune en cours, pas qu'il
                      manque un droit. Le dire évite de faire chercher une panne.
                    */
-                  'Les clients apparaîtront ici dès que vous serez affecté à une mission chez eux.'
+                    'Les clients apparaîtront ici dès que vous serez affecté à une mission chez eux.'
           }
         />
       ) : (
@@ -186,35 +186,48 @@ export default function CustomersListPage() {
                 vérifié : il ne change rien. C'est ici, sur l'élément de grille
                 lui-même, que la contrainte doit être levée.
               */
-              className="group block min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="group focus-visible:ring-primary block min-w-0 rounded-xl focus-visible:ring-2 focus-visible:outline-none"
             >
-              <Card className="h-full cursor-pointer transition-all duration-150 group-hover:border-primary/50 group-hover:shadow-md hover:border-primary/50 hover:shadow-md">
-                <CardContent className="p-5 space-y-3">
+              <Card className="border-border/80 group-hover:border-primary/30 group-hover:shadow-raised h-full cursor-pointer shadow-xs transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
+                <CardContent className="space-y-4 p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-hover text-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        <Building2 className="size-4" />
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
+                        <Building2 className="size-4.5" aria-hidden="true" />
                       </div>
-                      <span className="text-foreground truncate text-sm font-semibold group-hover:text-primary transition-colors">
-                        {customer.name}
-                      </span>
+                      <div className="min-w-0">
+                        <span className="text-foreground group-hover:text-primary block truncate text-sm font-bold transition-colors">
+                          {customer.name}
+                        </span>
+                        {customer.legal_name ? (
+                          <span className="text-muted-foreground block truncate text-xs">
+                            {customer.legal_name}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs shrink-0">
+                    <Badge variant="outline" className="shrink-0 font-mono text-xs">
                       {customer.reference}
                     </Badge>
                   </div>
 
-                  <div className="space-y-1 pt-1 text-xs">
+                  <div className="border-border/60 space-y-2 border-t pt-3 text-xs">
                     <p className="text-muted-foreground flex items-center gap-1.5 truncate">
-                      <MapPin className="text-subtle-foreground size-3.5 shrink-0" aria-hidden="true" />
+                      <MapPin
+                        className="text-subtle-foreground size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
                       {[customer.postal_code, customer.city]
                         .filter((part) => part !== null && part !== '')
                         .join(' ') || 'Ville non renseignée'}
                     </p>
 
                     {customer.phone !== null && customer.phone !== '' ? (
-                      <p className="text-subtle-foreground flex items-center gap-1.5 font-mono">
-                        <Phone className="text-subtle-foreground size-3.5 shrink-0" aria-hidden="true" />
+                      <p className="text-muted-foreground flex items-center gap-1.5 font-mono">
+                        <Phone
+                          className="text-subtle-foreground size-3.5 shrink-0"
+                          aria-hidden="true"
+                        />
                         {customer.phone}
                       </p>
                     ) : null}

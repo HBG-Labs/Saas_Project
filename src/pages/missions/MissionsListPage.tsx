@@ -1,5 +1,6 @@
 import {
   Calendar,
+  Building2,
   ClipboardList,
   Download,
   FileText,
@@ -210,7 +211,7 @@ export default function MissionsListPage() {
           ) : null}
         </div>
       ) : (
-        /* 📋 LISTE MODERNE DES MISSIONS */
+        /* Liste opérationnelle : l'information utile avant les actions. */
         <div className="space-y-3">
           {list.map((mission) => {
             const hasLocation =
@@ -222,7 +223,7 @@ export default function MissionsListPage() {
             return (
               <div
                 key={mission.id}
-                className="bg-surface border-border hover:border-primary/40 group space-y-3 rounded-2xl border p-3.5 shadow-2xs transition-all hover:shadow-xs sm:p-4"
+                className="bg-surface border-border/80 hover:border-primary/30 hover:shadow-raised group space-y-3 rounded-xl border p-3.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4"
               >
                 {/* Ligne 1 : Badges, Réf, Date & Statut */}
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -270,7 +271,11 @@ export default function MissionsListPage() {
                   <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                     {mission.customer !== null && (
                       <span className="text-foreground/90 font-semibold">
-                        🏢 {mission.customer.name}
+                        <Building2
+                          className="text-primary mr-1 inline size-3.5 align-[-0.125em]"
+                          aria-hidden="true"
+                        />
+                        {mission.customer.name}
                       </span>
                     )}
 
@@ -313,8 +318,8 @@ export default function MissionsListPage() {
                       className="text-3xs h-11 cursor-pointer gap-1.5 px-2.5 sm:h-7"
                       title="Lancer l'itinéraire GPS"
                     >
-                      <Navigation className="size-2.5" />
-                      <span>🧭 GPS</span>
+                      <Navigation className="size-3.5" aria-hidden="true" />
+                      <span>Itinéraire</span>
                     </Button>
                   )}
 
