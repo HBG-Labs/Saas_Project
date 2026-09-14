@@ -63,8 +63,11 @@ export function MetricCard({
     <Link
       to={to}
       className={cn(
-        'group bg-surface hover:shadow-raised flex flex-col justify-between gap-2 rounded-xl border p-3 transition-shadow sm:gap-3 sm:p-4',
-        attention ? 'border-warning-border bg-warning-subtle' : 'border-border hover:border-border-strong',
+        'group bg-surface hover:shadow-raised relative flex flex-col justify-between gap-2 overflow-hidden rounded-xl border p-3 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:gap-3 sm:p-4',
+        'before:absolute before:inset-x-0 before:top-0 before:h-0.5',
+        attention
+          ? 'border-warning-border bg-warning-subtle before:bg-warning'
+          : 'border-border/80 hover:border-primary/30 before:bg-primary/70',
         className,
       )}
     >
@@ -93,7 +96,7 @@ export function MetricCard({
           </span>
           <span
             className={cn(
-              'flex shrink-0 items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5',
+              'flex shrink-0 items-center gap-1 text-sm font-semibold transition-transform group-hover:translate-x-0.5',
               attention ? 'text-warning' : 'text-primary',
             )}
           >

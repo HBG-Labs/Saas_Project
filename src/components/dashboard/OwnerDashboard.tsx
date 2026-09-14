@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -93,48 +94,43 @@ export function OwnerDashboard() {
   return (
     <div className="space-y-8 pb-12">
       {/* ------------------------------------------------------------ EN-TÊTE */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
-            Tableau de bord
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {organization?.name ?? 'Votre entreprise'} — effectifs, {jobPlural.toLowerCase()} et
-            contrôle qualité.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {organizationId ? (
-            <>
-              {/* Les mêmes valeurs que sur l'écran des membres : un raccourci
+      <PageHeader
+        title="Tableau de bord"
+        description={`${organization?.name ?? 'Votre entreprise'} — effectifs, ${jobPlural.toLowerCase()} et contrôle qualité.`}
+        className="mb-0"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {organizationId ? (
+              <>
+                {/* Les mêmes valeurs que sur l'écran des membres : un raccourci
                   qui tairait le coût d'un siège supplémentaire ferait de ce
                   bouton le chemin le moins informé vers la même dépense. */}
-              <AddMemberDialog
-                organizationId={organizationId}
-                viewerIsOwner={true}
-                quotaReached={sieges.quotaBlocked}
-                isExtraSeat={sieges.isExtraSeat}
-                onMemberAdded={() => {
-                  void members.refetch();
-                }}
-              />
-              <InviteMemberDialog
-                organizationId={organizationId}
-                viewerIsOwner={true}
-                quotaReached={false}
-              />
-            </>
-          ) : null}
+                <AddMemberDialog
+                  organizationId={organizationId}
+                  viewerIsOwner={true}
+                  quotaReached={sieges.quotaBlocked}
+                  isExtraSeat={sieges.isExtraSeat}
+                  onMemberAdded={() => {
+                    void members.refetch();
+                  }}
+                />
+                <InviteMemberDialog
+                  organizationId={organizationId}
+                  viewerIsOwner={true}
+                  quotaReached={false}
+                />
+              </>
+            ) : null}
 
-          <Button asChild size="sm">
-            <Link to={ROUTES.missionNew}>
-              <Plus className="size-4" aria-hidden="true" />
-              {formatNewNoun(jobSingular)}
-            </Link>
-          </Button>
-        </div>
-      </div>
+            <Button asChild size="sm">
+              <Link to={ROUTES.missionNew}>
+                <Plus className="size-4" aria-hidden="true" />
+                {formatNewNoun(jobSingular)}
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Le parcours guidé, tant qu'il n'est pas bouclé. Avant les indicateurs :
           une entreprise qui n'a pas encore de mission n'a pas de KPI à lire. */}
@@ -148,15 +144,17 @@ export function OwnerDashboard() {
           icon={ClipboardCheck}
           to={ROUTES.review}
           actionLabel="Contrôler"
-          attention={!pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0}
+          attention={
+            !pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0
+          }
           badge={
             pendingReports.isPending
               ? { text: 'Chargement', variant: 'neutral' }
               : pendingReports.isError
                 ? { text: 'Indisponible', variant: 'neutral' }
                 : pendingReportsCount > 0
-              ? { text: 'En attente', variant: 'warning' }
-              : { text: 'À jour', variant: 'success' }
+                  ? { text: 'En attente', variant: 'warning' }
+                  : { text: 'À jour', variant: 'success' }
           }
         />
         <MetricCard
@@ -345,7 +343,7 @@ export function OwnerDashboard() {
             <Link
               key={to}
               to={to}
-              className="group border-border bg-surface hover:border-border-strong hover:shadow-raised flex min-w-0 items-center gap-3 rounded-xl border p-4 transition-shadow"
+              className="group border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised flex min-w-0 items-center gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               <span className="bg-primary-subtle text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
                 <Icon className="size-4.5" aria-hidden="true" />

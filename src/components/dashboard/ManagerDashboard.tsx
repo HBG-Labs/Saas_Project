@@ -2,6 +2,8 @@ import { ArrowRight, ClipboardCheck, ClipboardList, Plus, UsersRound } from 'luc
 import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -36,24 +38,19 @@ export function ManagerDashboard() {
 
   return (
     <div className="space-y-8 pb-12">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
-            Tableau de bord
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {organization?.name ?? 'Votre périmètre'} — {jobPlural.toLowerCase()} attribuées, revue
-            des comptes rendus et suivi des équipes.
-          </p>
-        </div>
-
-        <Button asChild size="sm">
-          <Link to={ROUTES.missionNew}>
-            <Plus className="size-4" aria-hidden="true" />
-            {formatNewNoun(jobSingular)}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Tableau de bord"
+        description={`${organization?.name ?? 'Votre périmètre'} — ${jobPlural.toLowerCase()} attribuées, revue des comptes rendus et suivi des équipes.`}
+        className="mb-0"
+        actions={
+          <Button asChild size="sm">
+            <Link to={ROUTES.missionNew}>
+              <Plus className="size-4" aria-hidden="true" />
+              {formatNewNoun(jobSingular)}
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Ce qui attend une action d'abord, le volume ensuite. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -63,15 +60,17 @@ export function ManagerDashboard() {
           icon={ClipboardCheck}
           to={ROUTES.review}
           actionLabel="Contrôler"
-          attention={!pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0}
+          attention={
+            !pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0
+          }
           badge={
             pendingReports.isPending
               ? { text: 'Chargement', variant: 'neutral' }
               : pendingReports.isError
                 ? { text: 'Indisponible', variant: 'neutral' }
                 : pendingReportsCount > 0
-              ? { text: 'En attente', variant: 'warning' }
-              : { text: 'À jour', variant: 'success' }
+                  ? { text: 'En attente', variant: 'warning' }
+                  : { text: 'À jour', variant: 'success' }
           }
         />
         <MetricCard
@@ -91,16 +90,16 @@ export function ManagerDashboard() {
       </div>
 
       {/* Missions de mon périmètre */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
-          <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
-            <ClipboardList className="text-primary size-4" />
-            {jobPlural} & Avancement
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border flex flex-row items-center justify-between border-b">
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="text-primary size-4.5" aria-hidden="true" />
+            {jobPlural} récentes
           </CardTitle>
-          <Button asChild variant="ghost" size="sm" className="text-xs">
-            <Link to={ROUTES.missions} className="flex items-center gap-1">
-              Toutes mes {jobPlural.toLowerCase()}
-              <ArrowRight className="size-3.5" />
+          <Button asChild variant="ghost" size="sm">
+            <Link to={ROUTES.missions}>
+              Voir tout
+              <ArrowRight className="size-3.5" aria-hidden="true" />
             </Link>
           </Button>
         </CardHeader>
@@ -115,28 +114,37 @@ export function ManagerDashboard() {
               }}
             />
           ) : missionList.length === 0 ? (
-            <p className="text-muted-foreground py-4 text-center text-xs">
-              {formatNoneNoun(jobSingular, 'attribué')} actuellement.
-            </p>
+            <EmptyState
+              icon={ClipboardList}
+              title={formatNoneNoun(jobSingular, 'attribué')}
+              description={`Les ${jobPlural.toLowerCase()} de votre périmètre apparaîtront ici.`}
+            />
           ) : (
-            <div className="divide-border space-y-1 divide-y">
+            <ul className="divide-border divide-y">
               {missionList.map((m) => (
-                <div key={m.id} className="flex items-center justify-between gap-4 py-2.5">
+                <li key={m.id}>
                   <Link
                     to={ROUTES.mission(m.id)}
-                    className="hover:text-primary flex min-w-0 flex-1 items-center justify-between text-xs transition-colors"
+                    className="hover:bg-surface-hover min-h-touch -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors sm:min-h-0"
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <Badge variant="outline" className="text-2xs font-mono">
-                        {m.reference}
-                      </Badge>
-                      <span className="text-foreground truncate font-medium">{m.title}</span>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="shrink-0 font-mono">
+                          {m.reference}
+                        </Badge>
+                        <span className="text-foreground truncate text-sm font-semibold">
+                          {m.title}
+                        </span>
+                      </div>
+                      {m.customer !== null ? (
+                        <p className="text-muted-foreground truncate text-sm">{m.customer.name}</p>
+                      ) : null}
                     </div>
+                    <MissionStatusBadge status={m.status} />
                   </Link>
-                  <MissionStatusBadge status={m.status} />
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </CardContent>
       </Card>
