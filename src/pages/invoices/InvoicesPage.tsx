@@ -95,10 +95,10 @@ export default function InvoicesPage() {
               <li key={invoice.id}>
                 <Link
                   to={ROUTES.invoiceDetail(invoice.id)}
-                  className="border-border bg-surface hover:border-primary/50 hover:bg-surface-hover focus-visible:ring-ring group flex min-h-touch items-start gap-3 rounded-xl border p-4 transition-[background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none"
+                  className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group min-h-touch flex items-start gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
                       estAvoir ? 'bg-warning/10 text-warning' : 'bg-primary-subtle text-primary'
                     }`}
                   >
@@ -151,7 +151,7 @@ export default function InvoicesPage() {
                   </div>
 
                   <ChevronRight
-                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-colors"
+                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
                     aria-hidden="true"
                   />
                 </Link>

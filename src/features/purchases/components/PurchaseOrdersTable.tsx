@@ -214,19 +214,19 @@ export function PurchaseOrdersTable({
   };
 
   return (
-    <Card className="border-border bg-surface shadow-xs">
+    <Card className="border-border/80 bg-surface overflow-hidden shadow-xs">
       {/* Barre de recherche et filtres */}
       <div className="border-border space-y-3 border-b p-3 sm:p-4">
         <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
-              type="text"
+          <div className="min-w-0 flex-1">
+            <Input
+              label="Rechercher une commande fournisseur"
+              hideLabel
               placeholder="Rechercher par référence, fournisseur, article, chantier…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              aria-label="Rechercher une commande fournisseur"
-              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
+              leadingIcon={<Search aria-hidden="true" />}
+              className="bg-surface-raised"
             />
           </div>
 

@@ -241,22 +241,23 @@ export function StockMovementsTable({
   }
 
   return (
-    <Card className="border-border bg-surface shadow-xs">
+    <Card className="border-border/80 bg-surface overflow-hidden shadow-xs">
       {/* Barre de recherche et filtres */}
       <div className="border-border space-y-3 border-b p-3 sm:p-4">
         <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
           {/* Champ de recherche */}
-          <div className="relative min-w-0 flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
-              type="text"
+          <div className="min-w-0 flex-1">
+            <Input
+              label="Rechercher un mouvement de stock"
+              hideLabel
               placeholder="Rechercher par article, motif, technicien, réf. intervention…"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
+              leadingIcon={<Search aria-hidden="true" />}
+              className="bg-surface-raised"
             />
           </div>
 
@@ -279,16 +280,20 @@ export function StockMovementsTable({
             >
               <DropdownLabel>Période d'affichage</DropdownLabel>
               <DropdownItem onClick={() => setSelectedPeriod('current_month')}>
-                <span className="text-xs">📌 Ce mois-ci ({currentMonthName})</span>
+                <Calendar aria-hidden="true" />
+                <span className="text-xs">Ce mois-ci ({currentMonthName})</span>
               </DropdownItem>
               <DropdownItem onClick={() => setSelectedPeriod('last_month')}>
-                <span className="text-xs">📅 Mois dernier ({prevMonthName})</span>
+                <Calendar aria-hidden="true" />
+                <span className="text-xs">Mois dernier ({prevMonthName})</span>
               </DropdownItem>
               <DropdownItem onClick={() => setSelectedPeriod('current_year')}>
-                <span className="text-xs">📊 Année {currentYear}</span>
+                <Calendar aria-hidden="true" />
+                <span className="text-xs">Année {currentYear}</span>
               </DropdownItem>
               <DropdownItem onClick={() => setSelectedPeriod('all')}>
-                <span className="text-xs">🌐 Tout l’historique</span>
+                <RefreshCw aria-hidden="true" />
+                <span className="text-xs">Tout l’historique</span>
               </DropdownItem>
 
               <DropdownSeparator />

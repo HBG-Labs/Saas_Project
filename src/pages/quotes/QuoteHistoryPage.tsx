@@ -23,7 +23,10 @@ import type { QuoteStatus } from '@/types/database';
  * Retrouver « DEV-0003 » plus tard n'était donc possible qu'en retéléchargeant
  * le PDF au moment même de l'enregistrement.
  */
-const STATUS_CONFIG: Record<QuoteStatus, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
+const STATUS_CONFIG: Record<
+  QuoteStatus,
+  { label: string; variant: NonNullable<BadgeProps['variant']> }
+> = {
   draft: { label: 'Brouillon', variant: 'neutral' },
   sent: { label: 'Envoyé', variant: 'info' },
   accepted: { label: 'Accepté', variant: 'success' },
@@ -85,9 +88,9 @@ export default function QuoteHistoryPage() {
               <li key={quote.id}>
                 <Link
                   to={ROUTES.quoteDetail(quote.id)}
-                  className="border-border bg-surface hover:border-primary/50 hover:bg-surface-hover focus-visible:ring-ring group flex min-h-touch items-start gap-3 rounded-xl border p-4 transition-[background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none"
+                  className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group min-h-touch flex items-start gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
                 >
-                  <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                  <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <FileText className="size-4.5" aria-hidden="true" />
                   </div>
 
@@ -120,7 +123,7 @@ export default function QuoteHistoryPage() {
                   </div>
 
                   <ChevronRight
-                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-colors"
+                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
                     aria-hidden="true"
                   />
                 </Link>

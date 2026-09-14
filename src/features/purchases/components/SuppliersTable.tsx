@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 
 import type { PurchaseOrder, Supplier } from '../types/purchases.types';
 
@@ -66,18 +67,18 @@ export function SuppliersTable({
   }, [orders]);
 
   return (
-    <Card className="border-border bg-surface shadow-xs">
+    <Card className="border-border/80 bg-surface overflow-x-auto shadow-xs">
       {/* Barre de recherche */}
       <div className="border-border border-b p-3 sm:p-4">
-        <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <input
-            type="text"
+        <div>
+          <Input
+            label="Rechercher un fournisseur"
+            hideLabel
             placeholder="Rechercher par raison sociale, contact, ville, téléphone, email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Rechercher un fournisseur"
-            className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
+            leadingIcon={<Search aria-hidden="true" />}
+            className="bg-surface-raised"
           />
         </div>
         <p className="text-muted-foreground text-3xs mt-2" aria-live="polite">
@@ -207,7 +208,7 @@ export function SuppliersTable({
       )}
 
       {/* Tableau desktop */}
-      <table className="hidden w-full border-collapse text-left text-xs md:table">
+      <table className="hidden w-full min-w-[760px] border-collapse text-left text-xs md:table">
         <thead>
           <tr className="border-border bg-surface-raised/50 text-muted-foreground text-3xs border-b font-bold tracking-wider uppercase">
             <th className="px-3 py-2.5 sm:px-4">Fournisseur &amp; Réf.</th>
@@ -288,8 +289,9 @@ export function SuppliersTable({
                   <td className="hidden px-3 py-3 md:table-cell">
                     <div className="flex items-center gap-2">
                       {sup.city && (
-                        <p className="text-foreground text-xs font-medium">
-                          📍 {sup.city} {sup.postalCode ? `(${sup.postalCode})` : ''}
+                        <p className="text-foreground inline-flex items-center gap-1 text-xs font-medium">
+                          <MapPin className="text-muted-foreground size-3" aria-hidden="true" />
+                          {sup.city} {sup.postalCode ? `(${sup.postalCode})` : ''}
                         </p>
                       )}
                     </div>

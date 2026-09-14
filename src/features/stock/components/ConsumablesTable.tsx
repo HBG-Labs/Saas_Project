@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   Boxes,
   Edit2,
+  MapPin,
   Minus,
   Plus,
   Search,
@@ -16,6 +17,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import type { StockConsumable } from '../types/stock.types';
 
 interface ConsumablesTableProps {
@@ -67,20 +69,20 @@ export function ConsumablesTable({
   }, [consumables]);
 
   return (
-    <Card className="border-border bg-surface shadow-xs">
+    <Card className="border-border/80 bg-surface overflow-x-auto shadow-xs">
       {/* Barre de recherche et filtres */}
       <div className="border-border space-y-3 border-b p-3 sm:p-4">
         <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
           {/* Champ de recherche */}
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
-              type="text"
+          <div className="flex-1">
+            <Input
+              label="Rechercher un article en stock"
+              hideLabel
               placeholder="Rechercher par référence, désignation, emplacement, fournisseur…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              aria-label="Rechercher un article en stock"
-              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
+              leadingIcon={<Search aria-hidden="true" />}
+              className="bg-surface-raised"
             />
           </div>
 
@@ -107,8 +109,8 @@ export function ConsumablesTable({
               className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9"
             >
               <option value="all">Tous niveaux</option>
-              <option value="low">⚠️ Stock faible</option>
-              <option value="ok">✅ Stock suffisant</option>
+              <option value="low">Stock faible</option>
+              <option value="ok">Stock suffisant</option>
             </SelectField>
           </div>
         </div>
@@ -269,7 +271,7 @@ export function ConsumablesTable({
       )}
 
       {/* Tableau desktop */}
-      <table className="hidden w-full border-collapse text-left text-xs md:table">
+      <table className="hidden w-full min-w-[760px] border-collapse text-left text-xs md:table">
         <thead>
           <tr className="border-border bg-surface-raised/50 text-muted-foreground text-3xs border-b font-bold tracking-wider uppercase">
             <th className="px-3 py-2.5 sm:px-4">Article &amp; Réf.</th>
@@ -310,7 +312,10 @@ export function ConsumablesTable({
                       {item.name}
                     </p>
                     <div className="text-3xs text-subtle-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      <span>📍 {item.location}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="size-3" aria-hidden="true" />
+                        {item.location}
+                      </span>
                       {item.supplier && <span>• Fournisseur : {item.supplier}</span>}
                     </div>
                   </td>
