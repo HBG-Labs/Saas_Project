@@ -3,8 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DownloadAppModal } from './DownloadAppModal';
 
-const installPwa = vi.fn();
-const usePwaInstall = vi.fn();
+interface PwaInstallState {
+  isInstallable: boolean;
+  isInstalled: boolean;
+  installPwa: () => Promise<boolean>;
+}
+
+const installPwa = vi.fn<() => Promise<boolean>>();
+const usePwaInstall = vi.fn<() => PwaInstallState>();
 
 vi.mock('@/components/feedback/usePwaInstall', () => ({
   usePwaInstall: () => usePwaInstall(),

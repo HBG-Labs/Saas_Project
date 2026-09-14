@@ -97,4 +97,26 @@ describe('SupportBubble', () => {
 
     expect(envoi.fn).not.toHaveBeenCalled();
   });
+
+  it('s’ouvre au clavier, se ferme avec Échap et rend le focus au bouton', async () => {
+    const user = userEvent.setup();
+    render(<SupportBubble />);
+    const trigger = screen.getByRole('button', { name: /Ouvrir le support/i });
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByRole('dialog', { name: /Centre d'Assistance/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Nom & Prénom/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', { name: /Comment pouvons-nous vous aider/i }),
+    ).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(trigger).toHaveFocus();
+  });
 });

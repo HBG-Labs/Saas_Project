@@ -1,8 +1,10 @@
-import { CheckCircle2, Headset, HelpCircle, Loader2, Send, X } from 'lucide-react';
+import { CheckCircle2, Headset, HelpCircle, Send, X } from 'lucide-react';
+import { Dialog } from 'radix-ui';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { useAuth } from '@/features/auth';
 import { submitSupportRequest } from '@/features/support';
 import { cn } from '@/lib/cn';
@@ -68,7 +70,6 @@ export function SupportBubble() {
   const [email, setEmail] = useState(() => user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
-  const cardRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Position personnalisée de la bulle
@@ -98,17 +99,6 @@ export function SupportBubble() {
     origY: number;
     hasMoved: boolean;
   }>({ startX: 0, startY: 0, origX: 0, origY: 0, hasMoved: false });
-
-  // Fermer avec la touche Échap
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
 
   // Recalibrer la position lors d'un redimensionnement d'écran
   useEffect(() => {
@@ -178,9 +168,27 @@ export function SupportBubble() {
           // ignore
         }
       }
-    } else {
-      setIsOpen((prev) => !prev);
     }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (typeof buttonRef.current?.releasePointerCapture === 'function') {
+      try {
+        buttonRef.current.releasePointerCapture(e.pointerId);
+      } catch {
+        // Le navigateur peut avoir libéré la capture avant cet événement.
+      }
+    }
+    setIsDragging(false);
+    dragInfoRef.current.hasMoved = false;
+  };
+
+  const handleTriggerClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Un glisser se termine lui aussi par un `click`. Le laisser parvenir au
+    // déclencheur Radix ouvrirait le formulaire à chaque déplacement.
+    if (!dragInfoRef.current.hasMoved) return;
+    e.preventDefault();
+    dragInfoRef.current.hasMoved = false;
   };
 
   /**
@@ -223,63 +231,67 @@ export function SupportBubble() {
   };
 
   return (
-    <>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen} modal={false}>
       {/* ------------------- BULLE FLOTTANTE BOUTON D'AIDE */}
       <div
-        style={
-          position
-            ? { left: `${position.x}px`, top: `${position.y}px` }
-            : undefined
-        }
+        style={position ? { left: `${position.x}px`, top: `${position.y}px` } : undefined}
         className={cn(
-          'fixed z-40 select-none touch-none',
+          'fixed z-40 touch-none select-none',
           !position && 'right-6 bottom-6 max-md:right-4 max-md:bottom-20',
         )}
       >
-        <button
-          ref={buttonRef}
-          type="button"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? "Fermer l'aide et le support" : "Ouvrir le support et l'aide"}
-          title="Besoin d'aide ? (Glisser-déposer pour déplacer)"
-          className={cn(
-            // `size-touch` (44 px) et non `size-9.5` : mesuré à 38x38, ce
-            // bouton flottant passait sous le minimum de WCAG 2.5.5. C'est le
-            // seul accès à l'aide, et il se vise au pouce, souvent en
-            // déplacement — le jeton `--spacing-touch` existe pour ce cas.
-            'support-bubble-btn group relative flex size-touch items-center justify-center rounded-full',
-            'bg-primary text-primary-foreground shadow-md transition-all duration-200',
-            'hover:bg-primary-hover hover:scale-105',
-            'focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none',
-            isDragging ? 'cursor-grabbing scale-110 shadow-xl ring-2 ring-primary/40' : 'cursor-grab active:scale-105',
-          )}
-        >
-          {isOpen ? (
-            <X className="size-4.5 sm:size-5 transition-transform duration-200 group-hover:rotate-90" />
-          ) : (
-            <>
-              <HelpCircle className="size-4.5 sm:size-5 transition-transform duration-200 group-hover:scale-110" />
-              {/* Badge d'état en ligne */}
-              <span className="absolute -top-0.5 -right-0.5 flex size-2.5 sm:size-3">
-                <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-75" />
-                <span className="border-surface bg-success relative inline-flex size-full rounded-full border-1.5" />
-              </span>
-            </>
-          )}
-        </button>
+        <Dialog.Trigger asChild>
+          <button
+            ref={buttonRef}
+            type="button"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
+            onClick={handleTriggerClick}
+            aria-label={isOpen ? "Fermer l'aide et le support" : "Ouvrir le support et l'aide"}
+            title="Besoin d'aide ? (Glisser-déposer pour déplacer)"
+            className={cn(
+              'support-bubble-btn group size-touch relative flex items-center justify-center rounded-full',
+              'bg-primary text-primary-foreground shadow-md transition-all duration-200',
+              'hover:bg-primary-hover hover:scale-105',
+              'focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none',
+              isDragging
+                ? 'ring-primary/40 scale-110 cursor-grabbing shadow-xl ring-2'
+                : 'cursor-grab active:scale-105',
+            )}
+          >
+            {isOpen ? (
+              <X
+                className="size-4.5 transition-transform duration-200 group-hover:rotate-90 sm:size-5"
+                aria-hidden="true"
+              />
+            ) : (
+              <>
+                <HelpCircle
+                  className="size-4.5 transition-transform duration-200 group-hover:scale-110 sm:size-5"
+                  aria-hidden="true"
+                />
+                <span
+                  className="absolute -top-0.5 -right-0.5 flex size-2.5 sm:size-3"
+                  aria-hidden="true"
+                >
+                  <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-75" />
+                  <span className="border-surface bg-success border-1.5 relative inline-flex size-full rounded-full" />
+                </span>
+              </>
+            )}
+          </button>
+        </Dialog.Trigger>
       </div>
 
       {/* ------------------- POPUP / CARTE FLOTTANTE D'ASSISTANCE */}
-      {isOpen ? (
-        <div
-          ref={cardRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="support-dialog-title"
+      <Dialog.Portal>
+        <Dialog.Content
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            buttonRef.current?.focus();
+          }}
           style={
             position && typeof window !== 'undefined'
               ? {
@@ -303,24 +315,27 @@ export function SupportBubble() {
                 <Headset className="size-4" />
               </div>
               <div>
-                <h3 id="support-dialog-title" className="text-foreground text-xs font-bold">
+                <Dialog.Title className="text-foreground text-xs font-bold">
                   Centre d&apos;Assistance
-                </h3>
-                <div className="text-3xs text-muted-foreground flex items-center gap-1.5">
-                  <span className="bg-success size-1.5 rounded-full" />
-                  <span>Équipe technique disponible</span>
-                </div>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <div className="text-3xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="bg-success size-1.5 rounded-full" aria-hidden="true" />
+                    <span>Équipe technique disponible</span>
+                  </div>
+                </Dialog.Description>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground cursor-pointer rounded-lg p-1 transition-colors"
-              aria-label="Fermer la boîte de support"
-            >
-              <X className="size-4" />
-            </button>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-8"
+                aria-label="Fermer la boîte de support"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </Dialog.Close>
           </div>
 
           {/* Contenu : Formulaire ou Succès */}
@@ -371,14 +386,11 @@ export function SupportBubble() {
                   >
                     Nouveau message
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setIsOpen(false)}
-                    className="rounded-xl text-xs"
-                  >
-                    Fermer
-                  </Button>
+                  <Dialog.Close asChild>
+                    <Button type="button" size="sm" className="rounded-xl text-xs">
+                      Fermer
+                    </Button>
+                  </Dialog.Close>
                 </div>
               </div>
             ) : (
@@ -399,109 +411,66 @@ export function SupportBubble() {
                     {erreur}
                   </p>
                 ) : null}
-                {/* Champ Nom */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="support-name"
-                    className="text-2xs text-foreground block font-semibold"
-                  >
-                    Nom & Prénom
-                  </label>
-                  <Input
-                    id="support-name"
-                    type="text"
-                    required
-                    placeholder="Votre nom"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-8.5 rounded-xl text-xs"
-                  />
-                </div>
+                <Input
+                  id="support-name"
+                  label="Nom & Prénom"
+                  type="text"
+                  required
+                  placeholder="Votre nom"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="rounded-xl text-xs"
+                />
 
-                {/* Champ Email */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="support-email"
-                    className="text-2xs text-foreground block font-semibold"
-                  >
-                    Adresse e-mail
-                  </label>
-                  <Input
-                    id="support-email"
-                    type="email"
-                    required
-                    placeholder="nom@entreprise.fr"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-8.5 rounded-xl text-xs"
-                  />
-                </div>
+                <Input
+                  id="support-email"
+                  label="Adresse e-mail"
+                  type="email"
+                  required
+                  placeholder="nom@entreprise.fr"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl text-xs"
+                />
 
-                {/* Champ Téléphone */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="support-phone"
-                    className="text-2xs text-foreground block font-semibold"
-                  >
-                    Numéro de téléphone
-                  </label>
-                  <Input
-                    id="support-phone"
-                    type="tel"
-                    placeholder="06 12 34 56 78"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="h-8.5 rounded-xl text-xs"
-                  />
-                </div>
+                <Input
+                  id="support-phone"
+                  label="Numéro de téléphone"
+                  type="tel"
+                  placeholder="06 12 34 56 78"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="rounded-xl text-xs"
+                />
 
-                {/* Champ Message */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="support-message"
-                    className="text-2xs text-foreground block font-semibold"
-                  >
-                    Comment pouvons-nous vous aider ?
-                  </label>
-                  <textarea
-                    id="support-message"
-                    required
-                    rows={3}
-                    placeholder="Décrivez votre question, problème ou suggestion…"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className={cn(
-                      'border-border bg-surface text-foreground placeholder:text-muted-foreground w-full rounded-xl border px-3 py-2 text-xs',
-                      'focus:border-primary focus:ring-primary/20 resize-none transition-colors focus:ring-2 focus:outline-none',
-                    )}
-                  />
-                </div>
+                <Textarea
+                  id="support-message"
+                  label="Comment pouvons-nous vous aider ?"
+                  required
+                  rows={3}
+                  placeholder="Décrivez votre question, problème ou suggestion…"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="resize-none rounded-xl text-xs"
+                />
 
                 {/* Bouton d'envoi */}
                 <div className="pt-2">
                   <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="h-9 w-full gap-2 rounded-xl text-xs font-semibold"
+                    isLoading={isSubmitting}
+                    loadingLabel="Envoi de la demande en cours"
+                    leadingIcon={<Send className="size-3.5" aria-hidden="true" />}
+                    className="w-full rounded-xl text-xs font-semibold"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="size-3.5 animate-spin" />
-                        <span>Envoi en cours…</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="size-3.5" />
-                        <span>Envoyer</span>
-                      </>
-                    )}
+                    {isSubmitting ? 'Envoi en cours…' : 'Envoyer'}
                   </Button>
                 </div>
               </form>
             )}
           </div>
-        </div>
-      ) : null}
-    </>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
