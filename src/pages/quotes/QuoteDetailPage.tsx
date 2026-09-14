@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
+import { LinkCustomerControl, SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
 import { useCreateInvoiceFromQuote } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import {
@@ -219,7 +219,7 @@ export default function QuoteDetailPage() {
               <p className="text-foreground font-semibold">Espace client</p>
               <p className="text-muted-foreground">
                 {quote.customer_id === null
-                  ? 'Ce devis n’est rattaché à aucune fiche client : il ne peut pas apparaître dans un espace client.'
+                  ? 'Ce devis n’est rattaché à aucune fiche client. Rattachez-le pour l’envoyer et le rendre visible dans son espace client — le devis lui-même ne change pas.'
                   : quote.status === 'draft'
                     ? 'Encore en brouillon : invisible pour le client. « Envoyer au client » le marque envoyé et prévient votre interlocuteur.'
                     : quote.client_responded_at !== null
@@ -228,6 +228,9 @@ export default function QuoteDetailPage() {
               </p>
             </div>
           </div>
+          {quote.customer_id === null && canManage && organization && (
+            <LinkCustomerControl kind="quote" documentId={quote.id} organizationId={organization.id} />
+          )}
           {quote.customer_id !== null && portal.canSend && (
             <>
               <Button

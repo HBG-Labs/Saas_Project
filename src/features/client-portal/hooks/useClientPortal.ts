@@ -10,6 +10,7 @@ import {
   countUnreadForStaff,
   getPortalSettings,
   listConversations,
+  linkDocumentCustomer,
   listDocumentShares,
   listMessages,
   markConversationRead,
@@ -104,6 +105,16 @@ export function useSetDocumentCustomerShares() {
     mutationFn: setDocumentCustomerShares,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.clientPortal.all });
+    },
+  });
+}
+
+export function useLinkDocumentCustomer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: linkDocumentCustomer,
+    onSuccess: async (_result, input) => {
+      await queryClient.invalidateQueries({ queryKey: input.kind === 'invoice' ? qk.invoices.all : qk.quotes.all });
     },
   });
 }

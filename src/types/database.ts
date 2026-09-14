@@ -3710,6 +3710,14 @@ export interface Database {
         Args: { p_bucket: string; p_path: string };
         Returns: boolean;
       };
+      link_invoice_customer: {
+        Args: { p_invoice_id: string; p_customer_id: string };
+        Returns: undefined;
+      };
+      link_quote_customer: {
+        Args: { p_quote_id: string; p_customer_id: string };
+        Returns: undefined;
+      };
       can_manage_einvoicing_connection: {
         Args: { p_organization_id: string };
         Returns: boolean;

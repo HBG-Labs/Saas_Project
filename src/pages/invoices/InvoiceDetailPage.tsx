@@ -43,7 +43,7 @@ import {
   useUpdateInvoice,
 } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
+import { LinkCustomerControl, SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
 import { ensureFacturX, formatInvoiceDate } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
@@ -374,7 +374,7 @@ export default function InvoiceDetailPage() {
               <p className="text-foreground font-semibold">Espace client</p>
               <p className="text-muted-foreground">
                 {invoice.customer_id === null
-                  ? 'Cette facture n’est rattachée à aucune fiche client : elle ne peut pas apparaître dans un espace client.'
+                  ? 'Cette facture n’est rattachée à aucune fiche client. Rattachez-la pour l’envoyer et la rendre visible dans son espace client — le document lui-même ne change pas.'
                   : `Visible dans l’espace client de ${invoice.customer_name ?? 'ce client'}. Le PDF y est téléchargeable dès qu’il a été généré.`}
               </p>
               {envoiClient.alerte !== null && (
@@ -382,6 +382,9 @@ export default function InvoiceDetailPage() {
               )}
             </div>
           </div>
+          {invoice.customer_id === null && canManage && organization !== null && (
+            <LinkCustomerControl kind="invoice" documentId={invoice.id} organizationId={organization.id} />
+          )}
           {invoice.customer_id !== null && portal.canSend && (
             <>
               <Button

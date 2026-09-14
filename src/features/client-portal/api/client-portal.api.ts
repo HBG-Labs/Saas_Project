@@ -127,6 +127,23 @@ export async function setDocumentShared(documentId: string, shared: boolean): Pr
 }
 
 // -----------------------------------------------------------------------------
+// Rattachement d'un document à une fiche client
+// -----------------------------------------------------------------------------
+
+/** Lie une facture ou un devis créé en texte libre à une fiche client — la base vérifie et journalise. */
+export async function linkDocumentCustomer(input: {
+  kind: 'invoice' | 'quote';
+  documentId: string;
+  customerId: string;
+}): Promise<void> {
+  const { error } =
+    input.kind === 'invoice'
+      ? await supabase.rpc('link_invoice_customer', { p_invoice_id: input.documentId, p_customer_id: input.customerId })
+      : await supabase.rpc('link_quote_customer', { p_quote_id: input.documentId, p_customer_id: input.customerId });
+  if (error) throw error;
+}
+
+// -----------------------------------------------------------------------------
 // Conversations et messages
 // -----------------------------------------------------------------------------
 
