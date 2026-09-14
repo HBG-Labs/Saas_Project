@@ -10,11 +10,13 @@ import {
   countUnreadForStaff,
   getPortalSettings,
   listConversations,
+  listDocumentShares,
   listMessages,
   markConversationRead,
   sendMessage,
   setAttachmentsShared,
   setContactPortalAccess,
+  setDocumentCustomerShares,
   setDocumentShared,
   upsertPortalSettings,
   type SendMessageInput,
@@ -84,6 +86,24 @@ export function useShareAttachments(interventionId: string) {
     mutationFn: ({ ids, shared }: { ids: string[]; shared: boolean }) => setAttachmentsShared(ids, shared),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.interventions.attachments(interventionId) });
+    },
+  });
+}
+
+export function useDocumentShares(organizationId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.clientPortal.documentShares(organizationId ?? 'none'),
+    queryFn: () => (organizationId === null ? [] : listDocumentShares(organizationId)),
+    enabled: organizationId !== null && enabled,
+  });
+}
+
+export function useSetDocumentCustomerShares() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setDocumentCustomerShares,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.clientPortal.all });
     },
   });
 }

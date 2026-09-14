@@ -358,6 +358,84 @@ do $$ begin
   perform pg_temp.ok(exists (select 1 from public.audit_logs where action = 'portal.access'), 'AC35 — l''accès au portail est journalisé');
 end $$;
 
+-- -----------------------------------------------------------------------------
+-- Partage ciblé d'un document (AC18, AC19, AC03)
+-- -----------------------------------------------------------------------------
+do $$ begin raise notice '=== PARTIE 4 — Partage ciblé d''un document ==='; end $$;
+
+-- Le propriétaire partage le document interne D2 avec le client A1 seulement.
+-- (Le technicien a `client_content.share` mais pas `customer.view` : il ne
+-- peut pas désigner un client qu'il ne voit pas — c'est cohérent.)
+select pg_temp.login('a_owner'); set local role authenticated;
+insert into public.organization_document_shares (document_id, customer_id, organization_id)
+select d.id, c.id, '00000000-0000-0000-0000-000000000000'
+from public.organization_documents d, public.customers c
+where d.storage_path = pg_temp.ref('d2') and c.name = 'Client A1';
+reset role;
+
+do $$ begin
+  perform pg_temp.ok(
+    (select sh.organization_id from public.organization_document_shares sh join public.organization_documents d on d.id = sh.document_id
+      where d.storage_path = pg_temp.ref('d2')) = pg_temp.ref('org')::uuid,
+    'AC18 — l''organisation du partage vient du document, pas du navigateur');
+end $$;
+
+-- A1 voit désormais D2 et peut le télécharger ; A2 toujours pas.
+select pg_temp.login('ca1'); set local role authenticated;
+do $$ begin
+  perform pg_temp.ok(exists (select 1 from public.portal_list_documents() where storage_path = pg_temp.ref('d2')), 'AC18 — le document partagé avec A1 lui apparaît');
+  perform pg_temp.ok(public.portal_can_read_file('organization-documents', pg_temp.ref('d2')), 'AC19 — et se télécharge');
+end $$;
+reset role;
+select pg_temp.login('ca2'); set local role authenticated;
+do $$ begin
+  perform pg_temp.ok(not exists (select 1 from public.portal_list_documents() where storage_path = pg_temp.ref('d2')), 'AC03 — le document partagé avec A1 reste invisible pour A2');
+  perform pg_temp.ok(not public.portal_can_read_file('organization-documents', pg_temp.ref('d2')), 'AC03 — et A2 ne le télécharge pas');
+end $$;
+reset role;
+
+-- Un partage vers un client d'une autre organisation est refusé par le trigger.
+select pg_temp.login('a_owner'); set local role authenticated;
+do $$ begin
+  perform pg_temp.refuses(
+    format('insert into public.organization_document_shares (document_id, customer_id, organization_id) select d.id, %L, d.organization_id from public.organization_documents d where d.storage_path = %L',
+      gen_random_uuid(), pg_temp.ref('d2')),
+    'AC02 — impossible de partager avec un client hors de l''organisation');
+end $$;
+reset role;
+
+-- L'employé (sans client_content.share) ne partage pas, ni ne retire.
+-- Un INSERT … SELECT filtré par la RLS touche zéro ligne sans erreur : on
+-- constate l'issue, comme pour les photos plus haut.
+select pg_temp.login('ca2'); set local role authenticated;
+insert into public.organization_document_shares (document_id, customer_id, organization_id)
+select d.id, c.id, d.organization_id from public.organization_documents d, public.customers c
+where d.storage_path = pg_temp.ref('d3') and c.name = 'Client A2';
+delete from public.organization_document_shares where document_id in (select id from public.organization_documents where storage_path = pg_temp.ref('d2'));
+reset role;
+do $$ begin
+  perform pg_temp.ok(not exists (select 1 from public.organization_document_shares sh join public.organization_documents d on d.id = sh.document_id where d.storage_path = pg_temp.ref('d3')),
+    'Un employé ne partage pas un document (client_content.share requis)');
+  perform pg_temp.ok(exists (select 1 from public.organization_document_shares sh join public.organization_documents d on d.id = sh.document_id where d.storage_path = pg_temp.ref('d2')),
+    'Un employé ne retire pas un partage (client_content.share requis)');
+end $$;
+
+-- Le propriétaire retire le partage : A1 ne voit plus D2.
+select pg_temp.login('a_owner'); set local role authenticated;
+delete from public.organization_document_shares where document_id in (select id from public.organization_documents where storage_path = pg_temp.ref('d2'));
+reset role;
+select pg_temp.login('ca1'); set local role authenticated;
+do $$ begin
+  perform pg_temp.ok(not exists (select 1 from public.portal_list_documents() where storage_path = pg_temp.ref('d2')), 'AC18 — le partage retiré, le document redevient invisible');
+end $$;
+reset role;
+do $$ begin
+  perform pg_temp.ok(
+    (select count(*) from public.audit_logs where action in ('portal.document_shared', 'portal.document_unshared')
+      and organization_id = pg_temp.ref('org')::uuid and metadata ->> 'scope' = 'customer') = 2,
+    'AC35 — partage ciblé et retrait journalisés');
+end $$;
+
 do $$ begin raise notice '=== TOUS LES TESTS PASSENT ==='; end $$;
 select 'TOUS LES TESTS PASSENT' as resultat;
 

@@ -77,6 +77,15 @@ export interface DocumentListProps {
    * `guard_document_share_update` rejuge `client_content.share`.
    */
   onToggleShare?: ((document: OrganizationDocument) => void) | undefined;
+  /** Nombre de clients avec lesquels chaque document est partagé (partage ciblé). */
+  sharedCustomerCounts?: ReadonlyMap<string, number> | undefined;
+}
+
+/** Libellé de la portée d'un document, ou `null` s'il est interne. */
+function porteeDePartage(document: OrganizationDocument, cibles: number): string | null {
+  if (document.shared_with_client) return 'Tous les clients';
+  if (cibles > 0) return `${cibles} client${cibles > 1 ? 's' : ''}`;
+  return null;
 }
 
 function dateCourte(iso: string): string {
@@ -106,7 +115,10 @@ export function DocumentList({
   onEdit,
   onDelete,
   onToggleShare,
+  sharedCustomerCounts,
 }: DocumentListProps) {
+  const portee = (document: OrganizationDocument) =>
+    porteeDePartage(document, sharedCustomerCounts?.get(document.id) ?? 0);
   const nomDossier = (id: string | null) =>
     id === null ? null : (folders.find((f) => f.id === id)?.name ?? null);
 
@@ -143,7 +155,7 @@ export function DocumentList({
             <DropdownSeparator />
             <DropdownItem onSelect={() => onToggleShare(document)}>
               <Users className="mr-2 h-4 w-4" aria-hidden />
-              {document.shared_with_client ? 'Retirer du portail client' : 'Partager avec le client'}
+              Partager avec des clients…
             </DropdownItem>
           </>
         )}
@@ -187,11 +199,11 @@ export function DocumentList({
                     {document.description}
                   </p>
                 )}
-                {document.shared_with_client && (
+                {portee(document) !== null && (
                   <span className="mt-2 flex flex-wrap items-center gap-1.5">
                     <Badge variant="info">
                       <Users className="mr-0.5 h-3 w-3" aria-hidden />
-                      Visible par le client
+                      {portee(document)}
                     </Badge>
                   </span>
                 )}
@@ -248,10 +260,10 @@ export function DocumentList({
                   <td className="px-4 py-3">
                     <span className="inline-flex flex-wrap items-center gap-1">
                       <Badge variant={apparence.badge}>{apparence.libelle}</Badge>
-                      {document.shared_with_client && (
+                      {portee(document) !== null && (
                         <Badge variant="info">
                           <Users className="mr-1 h-3 w-3" aria-hidden />
-                          Client
+                          {portee(document)}
                         </Badge>
                       )}
                     </span>

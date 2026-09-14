@@ -24,7 +24,7 @@ import {
   type FiltreFamille,
 } from '@/features/documents';
 import { useAuth } from '@/features/auth';
-import { useClientPortalAccess, useShareDocument } from '@/features/client-portal';
+import { DocumentShareDialog, useClientPortalAccess, useDocumentShares } from '@/features/client-portal';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import type { OrganizationDocument } from '@/types/domain';
 
@@ -85,7 +85,15 @@ export default function DocumentLibraryPage() {
   const foldersQuery = useDocumentFolders(organizationId);
   const { remove } = useDocumentMutations();
   const portal = useClientPortalAccess();
-  const shareDocument = useShareDocument();
+  const documentShares = useDocumentShares(organizationId, portal.canShare);
+  const [partage, setPartage] = useState<OrganizationDocument | null>(null);
+  const sharedCustomerCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const share of documentShares.data ?? []) {
+      counts.set(share.document_id, (counts.get(share.document_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [documentShares.data]);
 
   const documents = documentsQuery.data?.documents ?? [];
   const total = documentsQuery.data?.total ?? 0;
@@ -292,27 +300,8 @@ export default function DocumentLibraryPage() {
             onDownload={(document) => void telecharger(document)}
             onEdit={setEdition}
             onDelete={setSuppression}
-            onToggleShare={
-              portal.canShare
-                ? (document) => {
-                    shareDocument.mutate(
-                      { documentId: document.id, shared: !document.shared_with_client },
-                      {
-                        onSuccess: () => {
-                          toast.succes(
-                            document.shared_with_client
-                              ? 'Document retiré du portail client'
-                              : 'Document visible par le client',
-                          );
-                        },
-                        onError: () => {
-                          toast.erreur('Partage impossible', 'Vérifiez vos droits, puis réessayez.');
-                        },
-                      },
-                    );
-                  }
-                : undefined
-            }
+            onToggleShare={portal.canShare ? setPartage : undefined}
+            sharedCustomerCounts={sharedCustomerCounts}
           />
 
           {pages > 1 && (
@@ -371,6 +360,20 @@ export default function DocumentLibraryPage() {
       )}
 
       <DocumentPreviewDialog document={apercu} onOpenChange={() => setApercu(null)} />
+      {organizationId !== null && (
+        <DocumentShareDialog
+          document={partage}
+          organizationId={organizationId}
+          sharedCustomerIds={
+            partage === null
+              ? []
+              : (documentShares.data ?? []).filter((s) => s.document_id === partage.id).map((s) => s.customer_id)
+          }
+          onOpenChange={(open) => {
+            if (!open) setPartage(null);
+          }}
+        />
+      )}
       <DocumentEditDialog
         document={edition}
         folders={folders}

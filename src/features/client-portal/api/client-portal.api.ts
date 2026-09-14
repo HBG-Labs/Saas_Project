@@ -79,6 +79,45 @@ export async function setAttachmentsShared(attachmentIds: string[], shared: bool
   if (error) throw error;
 }
 
+export type DocumentShare = Tables<'organization_document_shares'>;
+
+/** Tous les partages ciblés de l'organisation — une requête, pas une par document. */
+export async function listDocumentShares(organizationId: string): Promise<DocumentShare[]> {
+  return unwrap(
+    supabase.from('organization_document_shares').select('*').eq('organization_id', organizationId),
+  );
+}
+
+/**
+ * Aligne les partages ciblés d'un document sur une liste de clients. Le trigger
+ * réécrit `organization_id` ; la valeur envoyée n'est qu'un remplissage.
+ */
+export async function setDocumentCustomerShares(input: {
+  documentId: string;
+  organizationId: string;
+  add: string[];
+  remove: string[];
+}): Promise<void> {
+  if (input.remove.length > 0) {
+    const { error } = await supabase
+      .from('organization_document_shares')
+      .delete()
+      .eq('document_id', input.documentId)
+      .in('customer_id', input.remove);
+    if (error) throw error;
+  }
+  if (input.add.length > 0) {
+    const { error } = await supabase.from('organization_document_shares').insert(
+      input.add.map((customerId) => ({
+        document_id: input.documentId,
+        customer_id: customerId,
+        organization_id: input.organizationId,
+      })),
+    );
+    if (error) throw error;
+  }
+}
+
 export async function setDocumentShared(documentId: string, shared: boolean): Promise<void> {
   const { error } = await supabase
     .from('organization_documents')

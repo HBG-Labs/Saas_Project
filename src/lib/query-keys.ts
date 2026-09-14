@@ -297,5 +297,7 @@ export const qk = {
       [...qk.clientPortal.all, organizationId, 'conversations', customerId ?? 'all'] as const,
     messages: (conversationId: string) => [...qk.clientPortal.all, 'messages', conversationId] as const,
     unread: (organizationId: string) => [...qk.clientPortal.all, organizationId, 'unread'] as const,
+    documentShares: (organizationId: string) =>
+      [...qk.clientPortal.all, organizationId, 'document-shares'] as const,
   },
 } as const;

@@ -3582,6 +3582,36 @@ export interface Database {
           },
         ];
       };
+      organization_document_shares: {
+        Row: {
+          document_id: string;
+          customer_id: string;
+          organization_id: string;
+          shared_by: string | null;
+          created_at: string;
+        };
+        /** `organization_id` et `shared_by` sont réécrits par trigger. */
+        Insert: {
+          document_id: string;
+          customer_id: string;
+          organization_id: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'organization_document_shares_document_id_fkey';
+            columns: ['document_id'];
+            referencedRelation: 'organization_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'organization_document_shares_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       // `resend_events` est délibérément absente : aucun droit pour `authenticated`,
       // seule la fonction Edge `resend-webhook` y écrit.
     };
