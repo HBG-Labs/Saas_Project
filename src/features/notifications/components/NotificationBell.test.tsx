@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -74,10 +75,9 @@ describe('NotificationBell', () => {
     fireEvent.click(screen.getByRole('button', { name: /Notifications d'activité/i }));
 
     expect(screen.getByRole('dialog', { name: 'Centre de notifications' })).toHaveClass(
-      'fixed',
-      'inset-x-3',
-      'sm:absolute',
-      'sm:right-0',
+      'w-[calc(100vw-1.5rem)]',
+      'sm:w-96',
+      'max-h-[calc(100dvh-5rem)]',
     );
   });
 
@@ -95,5 +95,42 @@ describe('NotificationBell', () => {
     fireEvent.click(markAllBtn);
 
     expect(mockMarkAllAsRead).toHaveBeenCalled();
+  });
+
+  it('s’ouvre au clavier, se ferme avec Échap et restitue le focus', async () => {
+    const user = userEvent.setup();
+    render(
+      <BrowserRouter>
+        <NotificationBell />
+      </BrowserRouter>,
+    );
+    const trigger = screen.getByRole('button', { name: /Notifications d'activité/i });
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('dialog', { name: 'Centre de notifications' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('sépare la navigation et la suppression d’une notification', async () => {
+    const user = userEvent.setup();
+    render(
+      <BrowserRouter>
+        <NotificationBell />
+      </BrowserRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Notifications d'activité/i }));
+    await user.click(
+      screen.getByRole('button', {
+        name: /Masquer la notification « Demande de congé en attente »/i,
+      }),
+    );
+
+    expect(mockDismissNotification).toHaveBeenCalledWith('leave_1');
+    expect(mockMarkAsRead).not.toHaveBeenCalled();
   });
 });

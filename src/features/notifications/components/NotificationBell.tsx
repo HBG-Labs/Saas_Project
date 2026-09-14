@@ -11,10 +11,12 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Popover } from 'radix-ui';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/cn';
 
@@ -52,53 +54,29 @@ function formatRelativeTime(dateStr: string): string {
 function getNotificationIcon(notification: AppNotification) {
   switch (notification.category) {
     case 'hr':
-      return <Palmtree className="size-4 text-warning" />;
+      return <Palmtree className="text-warning size-4" />;
     case 'stock':
-      return <Package className="size-4 text-error" />;
+      return <Package className="text-error size-4" />;
     case 'equipment':
-      return <Wrench className="size-4 text-accent" />;
+      return <Wrench className="text-accent size-4" />;
     case 'client':
-      return <MessageSquare className="size-4 text-info" />;
+      return <MessageSquare className="text-info size-4" />;
     case 'mission':
     default:
-      return <ClipboardList className="size-4 text-primary" />;
+      return <ClipboardList className="text-primary size-4" />;
   }
 }
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    dismissNotification,
-  } = useNotifications();
-
-  // Fermer quand on clique en dehors
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, dismissNotification } =
+    useNotifications();
 
   const displayedNotifications =
-    filter === 'unread'
-      ? notifications.filter((n) => !n.read)
-      : notifications;
+    filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
 
   const handleNotificationClick = (notification: AppNotification) => {
     markAsRead(notification.id);
@@ -107,50 +85,53 @@ export function NotificationBell() {
   };
 
   return (
-    <div ref={containerRef} className="relative inline-block">
+    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
       {/* Bouton Déclencheur Cloche */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Notifications d'activité"
-        aria-expanded={isOpen}
-        className={cn(
-          'relative flex size-touch sm:size-9 items-center justify-center rounded-lg transition-all cursor-pointer',
-          isOpen
-            ? 'bg-surface-hover text-primary ring-2 ring-primary/20'
-            : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
-        )}
-      >
-        <Bell className="size-4.5 sm:size-5" />
-
-        {/* Badge d'alertes non lues */}
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex size-4 sm:size-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-extrabold text-primary-foreground shadow-xs animate-in zoom-in-50">
-            {unreadCount > 9 ? '9+' : unreadCount}
-            <span className="absolute -inset-0.5 rounded-full bg-primary/40 animate-ping" />
-          </span>
-        )}
-      </button>
-
-      {/* Popover Panneau des Notifications */}
-      {isOpen && (
-        <div
-          role="dialog"
-          aria-label="Centre de notifications"
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`Notifications d'activité${unreadCount > 0 ? `, ${unreadCount} non lue${unreadCount > 1 ? 's' : ''}` : ''}`}
           className={cn(
-            'border-border bg-surface fixed inset-x-3 top-[3.75rem] z-50 flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150',
-            'sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 sm:max-h-none',
+            'size-touch relative flex cursor-pointer items-center justify-center rounded-lg transition-all sm:size-9',
+            'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+            isOpen
+              ? 'bg-surface-hover text-primary ring-primary/20 ring-2'
+              : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
           )}
         >
+          <Bell className="size-4.5 sm:size-5" aria-hidden="true" />
+
+          {unreadCount > 0 ? (
+            <span
+              className="bg-primary text-primary-foreground animate-in zoom-in-50 absolute -top-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full text-[10px] font-extrabold shadow-xs sm:size-4.5"
+              aria-hidden="true"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+              <span className="bg-primary/40 absolute -inset-0.5 -z-10 animate-ping rounded-full motion-reduce:animate-none" />
+            </span>
+          ) : null}
+        </button>
+      </Popover.Trigger>
+
+      {/* Popover Panneau des Notifications */}
+      <Popover.Portal>
+        <Popover.Content
+          aria-label="Centre de notifications"
+          align="end"
+          side="bottom"
+          sideOffset={8}
+          collisionPadding={12}
+          className="border-border bg-surface shadow-overlay data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-2 z-50 flex max-h-[calc(100dvh-5rem)] w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border duration-150 sm:w-96"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-3.5 border-b border-border bg-surface-sunken/40">
+          <div className="border-border bg-surface-sunken/40 flex items-center justify-between border-b p-3.5">
             <div className="flex min-w-0 items-center gap-2">
-              <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Bell className="size-4 text-primary" />
+              <h3 className="text-foreground flex items-center gap-1.5 text-xs font-bold">
+                <Bell className="text-primary size-4" aria-hidden="true" />
                 <span>Notifications</span>
               </h3>
               {unreadCount > 0 && (
-                <Badge variant="primary" className="text-3xs font-bold px-1.5 py-0.2">
+                <Badge variant="primary" className="text-3xs py-0.2 px-1.5 font-bold">
                   {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
                 </Badge>
               )}
@@ -158,34 +139,37 @@ export function NotificationBell() {
 
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={markAllAsRead}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-3xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                  title="Tout marquer comme lu"
+                  className="text-primary hover:bg-primary/10 text-3xs px-2 font-semibold"
+                  leadingIcon={<CheckCheck className="size-3.5" aria-hidden="true" />}
                 >
-                  <CheckCheck className="size-3.5" />
-                  <span className="hidden xs:inline">Tout marquer lu</span>
-                </button>
+                  <span className="xs:inline hidden">Tout marquer lu</span>
+                  <span className="xs:hidden sr-only">Tout marquer comme lu</span>
+                </Button>
               )}
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-1 rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer"
-                aria-label="Fermer"
-              >
-                <X className="size-4" />
-              </button>
+              <Popover.Close asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="Fermer les notifications">
+                  <X className="size-4" aria-hidden="true" />
+                </Button>
+              </Popover.Close>
             </div>
           </div>
 
           {/* Onglets Filtres */}
-          <div className="flex items-center gap-1 p-2 border-b border-border/60 bg-surface">
+          <div
+            role="group"
+            aria-label="Filtrer les notifications"
+            className="border-border/60 bg-surface flex items-center gap-1 border-b p-2"
+          >
             <button
               type="button"
               onClick={() => setFilter('all')}
+              aria-pressed={filter === 'all'}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-2xs font-semibold transition-all cursor-pointer',
+                'min-h-touch text-2xs cursor-pointer rounded-lg px-3 font-semibold transition-colors sm:min-h-0 sm:py-1.5',
                 filter === 'all'
                   ? 'bg-primary/10 text-primary font-bold'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -196,8 +180,9 @@ export function NotificationBell() {
             <button
               type="button"
               onClick={() => setFilter('unread')}
+              aria-pressed={filter === 'unread'}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-2xs font-semibold transition-all cursor-pointer',
+                'min-h-touch text-2xs cursor-pointer rounded-lg px-3 font-semibold transition-colors sm:min-h-0 sm:py-1.5',
                 filter === 'unread'
                   ? 'bg-primary/10 text-primary font-bold'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -208,112 +193,111 @@ export function NotificationBell() {
           </div>
 
           {/* Liste des Notifications */}
-          <div className="scrollbar-thin min-h-0 max-h-[380px] flex-1 divide-y divide-border/50 overflow-y-auto">
+          <div className="divide-border/50 max-h-[380px] min-h-0 flex-1 scrollbar-thin divide-y overflow-y-auto">
             {displayedNotifications.length === 0 ? (
-              <div className="p-8 text-center space-y-2">
-                <CheckCircle2 className="size-8 text-success/60 mx-auto" />
-                <p className="text-xs font-bold text-foreground">
-                  {filter === 'unread'
-                    ? 'Aucune notification non lue'
-                    : 'Aucune notification'}
+              <div className="space-y-2 p-8 text-center">
+                <CheckCircle2 className="text-success/60 mx-auto size-8" aria-hidden="true" />
+                <p className="text-foreground text-xs font-bold">
+                  {filter === 'unread' ? 'Aucune notification non lue' : 'Aucune notification'}
                 </p>
                 <p className="text-3xs text-muted-foreground">
                   Vous êtes à jour dans vos missions et validations !
                 </p>
               </div>
             ) : (
-              displayedNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={cn(
-                    'group relative p-3.5 flex items-start gap-3 transition-colors hover:bg-surface-hover cursor-pointer',
-                    !n.read && 'bg-primary/5 dark:bg-primary/10',
-                  )}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleNotificationClick(n)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleNotificationClick(n);
-                    }
-                  }}
-                >
-                  {/* Icône de catégorie */}
+              displayedNotifications.map((n) => {
+                const relativeTime = formatRelativeTime(n.timestamp);
+
+                return (
                   <div
+                    key={n.id}
                     className={cn(
-                      'size-8 rounded-xl flex items-center justify-center shrink-0 border mt-0.5',
-                      n.category === 'hr' && 'bg-warning/10 border-warning/20',
-                      n.category === 'stock' && 'bg-error/10 border-error/20',
-                      n.category === 'equipment' && 'bg-accent/10 border-accent/20',
-                      n.category === 'mission' && 'bg-primary/10 border-primary/20',
-                      n.category === 'client' && 'bg-info/10 border-info/20',
+                      'group hover:bg-surface-hover relative flex items-stretch transition-colors',
+                      !n.read && 'bg-primary/5 dark:bg-primary/10',
                     )}
                   >
-                    {getNotificationIcon(n)}
-                  </div>
-
-                  {/* Contenu */}
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="flex items-center justify-between gap-1">
-                      <h4
-                        className={cn(
-                          'text-xs truncate',
-                          !n.read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85',
-                        )}
-                      >
-                        {n.title}
-                      </h4>
-                      <span className="text-[10px] text-muted-foreground font-medium shrink-0">
-                        {formatRelativeTime(n.timestamp)}
-                      </span>
-                    </div>
-
-                    <p className="text-2xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {n.description}
-                    </p>
-                  </div>
-
-                  {/* Pastille non lu ou bouton dismiss */}
-                  <div
-                    role="presentation"
-                    className="flex flex-col items-center justify-between self-stretch shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    {!n.read && (
-                      <span className="size-2 rounded-full bg-primary shrink-0" />
-                    )}
-
                     <button
                       type="button"
-                      onClick={() => dismissNotification(n.id)}
-                      aria-label="Supprimer"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-error transition-all rounded"
-                      title="Masquer"
+                      onClick={() => handleNotificationClick(n)}
+                      className="focus-visible:ring-ring flex min-w-0 flex-1 cursor-pointer items-start gap-3 p-3.5 text-left focus-visible:ring-2 focus-visible:outline-none"
+                      aria-label={`${n.title}. ${n.description}${relativeTime ? `. ${relativeTime}` : ''}`}
                     >
-                      <Trash2 className="size-3" />
+                      <span
+                        className={cn(
+                          'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border',
+                          n.category === 'hr' && 'border-warning/20 bg-warning/10',
+                          n.category === 'stock' && 'border-error/20 bg-error/10',
+                          n.category === 'equipment' && 'border-accent/20 bg-accent/10',
+                          n.category === 'mission' && 'border-primary/20 bg-primary/10',
+                          n.category === 'client' && 'border-info/20 bg-info/10',
+                        )}
+                        aria-hidden="true"
+                      >
+                        {getNotificationIcon(n)}
+                      </span>
+
+                      <span className="min-w-0 flex-1 space-y-0.5">
+                        <span className="flex items-center justify-between gap-1">
+                          <span
+                            className={cn(
+                              'truncate text-xs',
+                              !n.read
+                                ? 'text-foreground font-bold'
+                                : 'text-foreground/85 font-semibold',
+                            )}
+                          >
+                            {n.title}
+                          </span>
+                          <span className="text-muted-foreground shrink-0 text-[10px] font-medium">
+                            {relativeTime}
+                          </span>
+                        </span>
+                        <span className="text-2xs text-muted-foreground line-clamp-2 block leading-relaxed">
+                          {n.description}
+                        </span>
+                      </span>
                     </button>
+
+                    <div className="flex shrink-0 flex-col items-center justify-between py-2.5 pr-2">
+                      {!n.read ? (
+                        <span
+                          className="bg-primary size-2 shrink-0 rounded-full"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span aria-hidden="true" />
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => dismissNotification(n.id)}
+                        aria-label={`Masquer la notification « ${n.title} »`}
+                        className="text-muted-foreground hover:text-error sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                      >
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
           {/* Footer Popover */}
-          <div className="p-2.5 border-t border-border bg-surface-sunken/30 flex items-center justify-between text-3xs text-muted-foreground">
+          <div className="border-border bg-surface-sunken/30 text-3xs text-muted-foreground flex items-center justify-between border-t p-2.5">
             <span>Centre d&apos;alertes REZO360</span>
             <Link
               to={ROUTES.planning}
               onClick={() => setIsOpen(false)}
-              className="text-primary font-semibold hover:underline flex items-center gap-1"
+              className="text-primary flex items-center gap-1 font-semibold hover:underline"
             >
               Voir le planning
-              <ExternalLink className="size-2.5" />
+              <ExternalLink className="size-2.5" aria-hidden="true" />
             </Link>
           </div>
-        </div>
-      )}
-    </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
