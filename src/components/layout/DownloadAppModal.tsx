@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Apple, CheckCircle2, Download, Globe, MonitorSmartphone, Smartphone, X } from 'lucide-react';
+import { useState } from 'react';
+import { Apple, CheckCircle2, Download, Globe, MonitorSmartphone, Smartphone } from 'lucide-react';
 
 import { usePwaInstall } from '@/components/feedback/usePwaInstall';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 
 interface DownloadAppModalProps {
   isOpen: boolean;
@@ -55,17 +55,11 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
   const { isInstallable, isInstalled, installPwa } = usePwaInstall();
   const [browserHelp, setBrowserHelp] = useState<string | null>(null);
 
-  // Fermer la modale avec la touche Échap
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen || typeof document === 'undefined') return null;
+  const handleOpenChange = (open: boolean) => {
+    if (open) return;
+    setBrowserHelp(null);
+    onClose();
+  };
 
   const handleDirectInstall = async () => {
     setBrowserHelp(null);
@@ -79,207 +73,128 @@ export function DownloadAppModal({ isOpen, onClose }: DownloadAppModalProps) {
     }
   };
 
-  return createPortal(
-    <div className="bg-black/70 animate-in fade-in fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-md duration-200 overflow-y-auto">
-      <button
-        type="button"
-        aria-label="Fermer la fenêtre d'installation"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-      />
-      {/*
-        CETTE MODALE AVAIT ÉTÉ ÉCRITE POUR LE THÈME SOMBRE, ET SEULEMENT LUI.
-
-        Elle codait `text-white` en dur à cinq endroits et empilait des fonds
-        `bg-primary/50` à `/70`. En thème sombre le résultat tenait : le blanc
-        se détachait sur `--surface-sunken: #070c11`. En thème clair, le même
-        token vaut `#e6ecf1` — du blanc dessus donne 1,16:1. Le titre et la
-        mention « directement depuis votre navigateur » étaient illisibles, et
-        le sous-titre de l'encadré, en `text-muted-foreground` sur un bleu
-        dilué, tombait vers 2,4:1.
-
-        D'où le passage aux paires sémantiques : la couleur du texte vient
-        toujours du même jeu de tokens que la surface qui le porte, et les
-        fonds ne sont plus dilués par une opacité qui rend le résultat
-        imprévisible.
-      */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="install-title"
-        className="border-border bg-surface-raised text-foreground animate-in zoom-in-95 relative z-10 w-full max-w-2xl max-h-[88dvh] flex flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200 my-auto"
-      >
-        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-primary/10 blur-3xl" />
-
-        {/* En-tête fixe / persistant */}
-        <div className="border-border bg-surface-raised sticky top-0 z-20 flex items-center justify-between border-b p-3.5 sm:p-5 shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="text-primary flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-              <Smartphone className="size-4 sm:size-5" />
-            </div>
-            <div className="min-w-0">
-              <h2
-                id="install-title"
-                className="text-foreground text-sm sm:text-base font-bold truncate"
-              >
-                Installer REZO360 sur votre appareil
-              </h2>
-              <p className="text-muted-foreground text-3xs sm:text-xs truncate">
-                Vos interventions et vos outils de calcul, en plein écran, comme une application native.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground cursor-pointer rounded-lg p-1.5 transition-colors shrink-0"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        {/* Corps de modale défilable verticalement */}
-        <div className="space-y-3.5 sm:space-y-4 p-3.5 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
-          {/*
-            Bouton d'installation permanent, dans un panneau TEINTÉ et non plein.
-
-            Un fond `bg-primary` plein aurait avalé le bouton d'action, qui est
-            lui-même en `primary` : deux bleus identiques l'un sur l'autre, et
-            l'appel à l'action disparaît. Une teinte à 10 % distingue la zone
-            sans entrer en concurrence avec ce qu'on veut faire cliquer.
-          */}
-          {!isInstalled && (
-            <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-xl bg-primary/10 border border-primary/25">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
-                    Installation rapide sur cet appareil
-                  </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
-                    {isInstallable
-                      ? "Votre navigateur est prêt pour l'installation instantanée en 1 clic."
-                      : "Installez REZO360 en mode application plein écran pour vos interventions."}
-                  </p>
-                </div>
-                {/*
-                  Aucune surcharge de couleur ici : `variant="primary"` porte
-                  déjà la paire fond/texte du thème. Les `bg-primary text-white`
-                  qui traînaient reproduisaient le défaut d'un cran plus bas —
-                  un blanc en dur qui ne suit aucun thème.
-                */}
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="md"
-                  onClick={handleDirectInstall}
-                  className="w-full sm:w-auto shrink-0 gap-2 rounded-xl px-4 font-bold"
-                >
-                  <Download className="size-4" />
-                  <span>Installer maintenant</span>
-                </Button>
-              </div>
-
-              {browserHelp && (
-                <div className="border-border bg-surface text-foreground animate-in fade-in rounded-lg border p-3 text-xs leading-relaxed">
-                  {browserHelp}
-                </div>
-              )}
-            </div>
-          )}
-
-          {isInstalled && (
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-success/10 border border-success/30 text-success text-xs font-semibold">
-              <CheckCircle2 className="size-4 shrink-0" />
-              <span>REZO360 est déjà installé sur cet appareil en mode application.</span>
-            </div>
-          )}
-
-          <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border p-3 text-xs leading-relaxed sm:px-3.5 sm:py-2.5">
-            REZO360 ne passe pas par les magasins d’applications. Il s’installe{' '}
-            <strong className="text-foreground">directement depuis votre navigateur</strong> — rien
-            à télécharger, aucune mise à jour à suivre : vous avez toujours la dernière version.
-          </p>
-
-          <div className="grid gap-2.5 sm:grid-cols-3">
-            {PARCOURS.map((parcours) => {
-              const Icone = parcours.icone;
-
-              return (
-                <div
-                  key={parcours.id}
-                  className="border-border bg-surface-sunken flex flex-col gap-2 rounded-xl border p-3 sm:p-3.5"
-                >
-                  <div className="text-muted-foreground flex items-center gap-2 text-xs font-bold">
-                    <Icone className="text-primary size-4 shrink-0" aria-hidden="true" />
-                    {parcours.titre}
-                  </div>
-                  <ol className="text-muted-foreground space-y-1.5 text-3xs sm:text-2xs leading-relaxed">
-                    {parcours.etapes.map((etape, index) => (
-                      <li key={etape} className="flex gap-1.5">
-                        <span className="text-muted-foreground font-mono">{index + 1}.</span>
-                        <span>{etape}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              );
-            })}
-          </div>
-
-          {/*
-            LE QR CODE N'EST PAS UNE ÉTAPE D'INSTALLATION, D'OÙ SA SORTIE DES CARTES.
-
-            Il vivait dans la carte « Ordinateur », en dessous de ses deux
-            points, où il se lisait comme un troisième point de la marche à
-            suivre — alors qu'il fait exactement l'inverse : il fait CHANGER
-            d'appareil. Et une colonne d'un tiers de modale écrasait sa légende
-            sur six lignes de trois mots pour un carré de 56 px, à la limite du
-            scannable.
-
-            En pleine largeur, la légende tient sur deux lignes et le code
-            atteint une taille qu'un téléphone accroche du premier coup.
-
-            La formulation évite « votre téléphone » : sur mobile, la modale
-            s'affiche aussi, et le seul usage qui reste — montrer le code à un
-            collègue pour qu'il l'installe — mérite de ne pas être contredit
-            par le texte.
-
-            Généré par `scripts/generate-install-qr.mjs`, jamais écrit à la
-            main : le SVG ne peut pas encoder une autre adresse que celle de la
-            constante du script.
-          */}
-          <div className="border-border bg-surface-sunken flex items-center gap-3 sm:gap-3.5 rounded-xl border p-3 sm:p-3.5">
-            <img
-              src="/images/rezo360-install-qr.svg"
-              alt={`QR code vers ${INSTALL_URL}`}
-              width={72}
-              height={72}
-              className="border-border size-16 sm:size-18 shrink-0 rounded-lg border bg-white p-1.5"
-            />
-            <div className="min-w-0 space-y-1">
-              <p className="text-foreground text-xs sm:text-sm font-bold">
-                Ouvrir sur un téléphone
-              </p>
-              <p className="text-muted-foreground text-3xs sm:text-2xs leading-relaxed">
-                Scannez ce code pour arriver directement sur {INSTALL_URL}, sans avoir à taper
-                l’adresse.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pied de page fixe / persistant */}
-        <div className="border-border bg-surface-raised text-muted-foreground sticky bottom-0 z-20 flex items-center justify-between border-t px-4 py-2.5 sm:px-6 sm:py-3.5 text-3xs sm:text-2xs shrink-0">
-          <span className="pr-2 line-clamp-1">
-            Application web progressive (PWA) ultra-rapide et sécurisée.
+  return (
+    <Modal
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      title="Installer REZO360 sur votre appareil"
+      description="Vos interventions et vos outils de calcul, en plein écran, comme une application native."
+      size="lg"
+      footer={
+        <div className="flex w-full items-center justify-between gap-3">
+          <span className="text-muted-foreground line-clamp-1 text-3xs sm:text-2xs">
+            Application web progressive, rapide et toujours à jour.
           </span>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-surface-hover shrink-0 text-xs">
+          <Button variant="ghost" size="sm" onClick={onClose} className="shrink-0">
             Fermer
           </Button>
         </div>
+      }
+    >
+      <div className="space-y-4">
+        {!isInstalled ? (
+          <section className="border-primary/25 bg-primary/10 rounded-xl border p-4">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="border-primary/20 bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl border">
+                  <Smartphone className="size-5" aria-hidden="true" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold sm:text-base">
+                    Installation rapide sur cet appareil
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                    {isInstallable
+                      ? "Votre navigateur est prêt : l'installation se lance en un clic."
+                      : 'Installez REZO360 en plein écran pour accéder plus vite à vos interventions.'}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleDirectInstall}
+                className="w-full shrink-0 sm:w-auto"
+                leadingIcon={<Download className="size-4" aria-hidden="true" />}
+              >
+                Installer maintenant
+              </Button>
+            </div>
+
+            {browserHelp ? (
+              <p
+                role="status"
+                className="border-border bg-surface text-foreground mt-3 rounded-lg border p-3 text-xs leading-relaxed"
+              >
+                {browserHelp}
+              </p>
+            ) : null}
+          </section>
+        ) : (
+          <div
+            role="status"
+            className="border-success/30 bg-success/10 text-success flex items-center gap-2.5 rounded-xl border p-3 text-xs font-semibold"
+          >
+            <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+            <span>REZO360 est déjà installé sur cet appareil.</span>
+          </div>
+        )}
+
+        <p className="border-border bg-surface-sunken text-muted-foreground rounded-xl border px-3.5 py-3 text-xs leading-relaxed">
+          REZO360 ne passe pas par les magasins d’applications. Il s’installe{' '}
+          <strong className="text-foreground">directement depuis votre navigateur</strong> : rien
+          à télécharger et aucune mise à jour à suivre.
+        </p>
+
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {PARCOURS.map((parcours) => {
+            const Icone = parcours.icone;
+
+            return (
+              <section
+                key={parcours.id}
+                className="border-border bg-surface-sunken flex flex-col gap-2 rounded-xl border p-3.5"
+                aria-labelledby={`install-${parcours.id}`}
+              >
+                <h3
+                  id={`install-${parcours.id}`}
+                  className="text-foreground flex items-center gap-2 text-xs font-semibold"
+                >
+                  <Icone className="text-primary size-4 shrink-0" aria-hidden="true" />
+                  {parcours.titre}
+                </h3>
+                <ol className="text-muted-foreground space-y-1.5 text-2xs leading-relaxed">
+                  {parcours.etapes.map((etape, index) => (
+                    <li key={etape} className="flex gap-1.5">
+                      <span className="font-mono" aria-hidden="true">
+                        {index + 1}.
+                      </span>
+                      <span>{etape}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            );
+          })}
+        </div>
+
+        <div className="border-border bg-surface-sunken flex items-center gap-3.5 rounded-xl border p-3.5">
+          <img
+            src="/images/rezo360-install-qr.svg"
+            alt={`QR code vers ${INSTALL_URL}`}
+            width={72}
+            height={72}
+            className="border-border size-18 shrink-0 rounded-lg border bg-white p-1.5"
+          />
+          <div className="min-w-0 space-y-1">
+            <p className="text-foreground text-sm font-semibold">Ouvrir sur un téléphone</p>
+            <p className="text-muted-foreground text-2xs leading-relaxed">
+              Scannez ce code pour ouvrir directement {INSTALL_URL}, sans saisir l’adresse.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>,
-    document.body
+    </Modal>
   );
 }
