@@ -175,7 +175,7 @@ end $$;
 
 -- Rien n'a été partagé par la fixture (les photos naissent privées).
 do $$ begin
-  perform pg_temp.ok(not exists (select 1 from public.intervention_attachments where shared_with_client), 'AC14 — les photos naissent privées');
+  perform pg_temp.ok(not exists (select 1 from public.intervention_attachments where shared_with_client and organization_id = pg_temp.ref('org')::uuid), 'AC14 — les photos naissent privées');
 end $$;
 
 -- -----------------------------------------------------------------------------
