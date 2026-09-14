@@ -10,7 +10,7 @@ const CONTENT_CLASSES = cn(
 );
 
 const ITEM_CLASSES = cn(
-  'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none',
+  'flex min-h-touch cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none sm:min-h-0',
   'text-foreground transition-colors [&_svg]:size-4 [&_svg]:shrink-0',
   // Radix pilote le survol ET le clavier via `data-highlighted` : un simple
   // `hover:` laisserait la navigation au clavier sans retour visuel.

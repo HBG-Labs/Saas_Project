@@ -81,9 +81,7 @@ export default function ReviewQueuePage() {
           drafts > 0
             ? `${drafts} compte${drafts > 1 ? 's' : ''} rendu${drafts > 1 ? 's' : ''} en cours de rédaction`
             : null,
-          rejected > 0
-            ? `${rejected} renvoyé${rejected > 1 ? 's' : ''} pour correction`
-            : null,
+          rejected > 0 ? `${rejected} renvoyé${rejected > 1 ? 's' : ''} pour correction` : null,
           approved > 0 ? `${approved} déjà validé${approved > 1 ? 's' : ''}` : null,
         ]
           .filter((part) => part !== null)
@@ -100,22 +98,24 @@ export default function ReviewQueuePage() {
       <MissionsNavTabs pendingReviewCount={rawList.length} />
 
       {isTechnicianOnly && (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">
+        <div className="border-primary/20 bg-primary/5 text-foreground flex items-center justify-between gap-3 rounded-xl border p-3.5 text-xs">
           <div className="flex items-center gap-2.5">
-            <FileText className="size-4 shrink-0 text-primary" />
+            <FileText className="text-primary size-4 shrink-0" />
             <span>
-              <strong>Espace Technicien :</strong> Cette file est dédiée au contrôle par les responsables. Pour rédiger ou consulter vos comptes rendus, ouvrez vos missions assignées.
+              <strong>Espace Technicien :</strong> Cette file est dédiée au contrôle par les
+              responsables. Pour rédiger ou consulter vos comptes rendus, ouvrez vos missions
+              assignées.
             </span>
           </div>
-          <Button asChild variant="outline" size="sm" className="text-3xs h-7 shrink-0">
+          <Button asChild variant="outline" size="sm" className="text-3xs h-11 shrink-0 sm:h-7">
             <Link to={ROUTES.missions}>Mes missions</Link>
           </Button>
         </div>
       )}
 
       {/* Barre de stats & recherche */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-border">
-        <div className="flex items-center gap-2 flex-wrap text-2xs font-semibold">
+      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-xl border p-3 sm:flex-row sm:items-center">
+        <div className="text-2xs flex flex-wrap items-center gap-2 font-semibold">
           <Badge variant="primary" className="text-3xs">
             {rawList.length} en attente de contrôle
           </Badge>
@@ -133,19 +133,19 @@ export default function ReviewQueuePage() {
 
         {rawList.length > 0 && (
           <div className="relative min-w-[200px] sm:w-64">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Filtrer par mission, technicien..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 rounded-lg border border-border bg-surface text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden"
+              className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus:border-primary h-8 w-full rounded-lg border pr-3 pl-8 text-xs focus:outline-hidden"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer text-xs"
               >
                 ✕
               </button>
@@ -166,11 +166,7 @@ export default function ReviewQueuePage() {
           }}
         />
       ) : list.length === 0 ? (
-        <EmptyState
-          icon={ClipboardCheck}
-          title="Rien à contrôler"
-          description={emptyExplanation}
-        />
+        <EmptyState icon={ClipboardCheck} title="Rien à contrôler" description={emptyExplanation} />
       ) : (
         <ul className="space-y-3">
           {list.map((report) => (
@@ -257,39 +253,39 @@ export default function ReviewQueuePage() {
                         : 'Votre rôle ne permet pas de contrôler les comptes rendus.'}
                     </p>
                   ) : (
-                  <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        setError(null);
-                        approve.mutate(report.id, {
-                          onError: (mutationError) => {
-                            setError(mutationError);
-                          },
-                        });
-                      }}
-                      disabled={approve.isPending}
-                    >
-                      <CheckCircle2 className="size-4" />
-                      Valider
-                    </Button>
-
-                    <RejectDialog
-                      onReject={(reason) => {
-                        setError(null);
-                        reject.mutate(
-                          { reportId: report.id, reason },
-                          {
+                    <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          setError(null);
+                          approve.mutate(report.id, {
                             onError: (mutationError) => {
                               setError(mutationError);
                             },
-                          },
-                        );
-                      }}
-                      busy={reject.isPending}
-                    />
-                  </div>
+                          });
+                        }}
+                        disabled={approve.isPending}
+                      >
+                        <CheckCircle2 className="size-4" />
+                        Valider
+                      </Button>
+
+                      <RejectDialog
+                        onReject={(reason) => {
+                          setError(null);
+                          reject.mutate(
+                            { reportId: report.id, reason },
+                            {
+                              onError: (mutationError) => {
+                                setError(mutationError);
+                              },
+                            },
+                          );
+                        }}
+                        busy={reject.isPending}
+                      />
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -308,13 +304,7 @@ export default function ReviewQueuePage() {
  * base. La vérifier ici évite un aller-retour pour un champ vide, et surtout
  * rappelle à quoi il sert : c'est ce que l'intervenant lira pour corriger.
  */
-function RejectDialog({
-  onReject,
-  busy,
-}: {
-  onReject: (reason: string) => void;
-  busy: boolean;
-}) {
+function RejectDialog({ onReject, busy }: { onReject: (reason: string) => void; busy: boolean }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
 

@@ -88,7 +88,7 @@ export function InviteMemberDialog({
           }
         : {})}
       trigger={
-        <Button variant="primary" size="sm" disabled={quotaReached}>
+        <Button variant="primary" size="sm" disabled={quotaReached} className="w-full sm:w-auto">
           <UserPlus className="size-4" />
           <span>Inviter</span>
         </Button>
@@ -99,8 +99,8 @@ export function InviteMemberDialog({
           <FormError error={submitError} />
 
           {isExtraSeat ? (
-            <div className="border-primary/40 bg-primary/10 rounded-xl border p-3 text-xs flex items-start gap-2.5">
-              <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
+            <div className="border-primary/40 bg-primary/10 flex items-start gap-2.5 rounded-xl border p-3 text-xs">
+              <Sparkles className="text-primary mt-0.5 size-4 shrink-0" />
               <div>
                 <p className="text-foreground font-semibold">
                   Siège supplémentaire à l’acceptation (+5,00 € / mois)
@@ -121,13 +121,21 @@ export function InviteMemberDialog({
             placeholder="collegue@entreprise.fr"
             hint="Elle devra correspondre exactement à celle du compte utilisé pour accepter."
             required
+            className="h-11 sm:h-9"
             {...(errors.email?.message ? { error: errors.email.message } : {})}
             {...register('email')}
           />
 
           <RoleSelect value={role} onChange={setRole} canAssignOwner={viewerIsOwner} />
 
-          <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            loadingLabel="Création de l’invitation"
+          >
             {isSubmitting
               ? 'Création…'
               : isExtraSeat
@@ -142,8 +150,9 @@ export function InviteMemberDialog({
               configuré et échouait toujours. Maintenant qu'il part, il
               contredisait la phrase suivante, qui annonçait l'expédition. */}
           <div
+            role="status"
             className={cn(
-              'rounded-lg border p-3',
+              'rounded-xl border p-4',
               emailSent ? 'border-success/40 bg-success-subtle' : 'border-warning/40 bg-warning-subtle',
             )}
           >
@@ -168,10 +177,10 @@ export function InviteMemberDialog({
 
           <InvitationLink token={created.token} />
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-full sm:flex-1"
               onClick={() => {
                 setCreated(null);
               }}
@@ -180,7 +189,7 @@ export function InviteMemberDialog({
             </Button>
             <Button
               variant="primary"
-              className="flex-1"
+              className="w-full sm:flex-1"
               onClick={() => {
                 close(false);
               }}

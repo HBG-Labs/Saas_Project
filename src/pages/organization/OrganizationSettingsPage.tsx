@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, X } from 'lucide-react';
+import { Building2, Check, MapPin, ReceiptText, X } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -250,7 +250,7 @@ export default function OrganizationSettingsPage() {
             variant="outline"
             size="sm"
             onClick={handleClose}
-            className="gap-1.5"
+            className="w-full gap-1.5 sm:w-auto"
           >
             <X className="size-4" />
             <span>Fermer</span>
@@ -275,8 +275,16 @@ export default function OrganizationSettingsPage() {
           <FormError error={submitError} />
 
           <Card>
-            <CardHeader>
-              <CardTitle>Identité & Secteur d'activité</CardTitle>
+            <CardHeader className="flex-row items-start gap-3">
+              <span className="bg-primary-subtle text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <Building2 className="size-5" aria-hidden />
+              </span>
+              <div>
+                <CardTitle>Identité & Secteur d'activité</CardTitle>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Informations légales et métier utilisées dans vos documents.
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -374,8 +382,16 @@ export default function OrganizationSettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Coordonnées</CardTitle>
+            <CardHeader className="flex-row items-start gap-3">
+              <span className="bg-info-subtle text-info flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <MapPin className="size-5" aria-hidden />
+              </span>
+              <div>
+                <CardTitle>Coordonnées</CardTitle>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Adresse et contacts affichés sur vos échanges professionnels.
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -410,8 +426,16 @@ export default function OrganizationSettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Devis</CardTitle>
+            <CardHeader className="flex-row items-start gap-3">
+              <span className="bg-accent-subtle text-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <ReceiptText className="size-5" aria-hidden />
+              </span>
+              <div>
+                <CardTitle>Devis</CardTitle>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Mentions de paiement proposées par défaut sur les nouveaux devis.
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -436,8 +460,10 @@ export default function OrganizationSettingsPage() {
                         type="button"
                         disabled={!canUpdate}
                         onClick={() => applyPaymentTermsPreset(preset.text)}
+                        aria-pressed={isActive}
                         className={cn(
-                          'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                          'min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:text-2xs',
+                          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                           'disabled:cursor-not-allowed disabled:opacity-50',
                           isActive
                             ? 'border-primary bg-primary/10 text-primary'
@@ -475,7 +501,8 @@ export default function OrganizationSettingsPage() {
                         onClick={() => togglePaymentMethod(method)}
                         aria-pressed={isActive}
                         className={cn(
-                          'rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors',
+                          'min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:text-2xs',
+                          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                           'disabled:cursor-not-allowed disabled:opacity-50',
                           isActive
                             ? 'border-primary bg-primary/10 text-primary'
@@ -492,15 +519,29 @@ export default function OrganizationSettingsPage() {
           </Card>
 
           {canUpdate ? (
-            <div className="flex items-center gap-3 flex-wrap">
-              <Button type="submit" variant="primary" disabled={isSubmitting || !isDirty}>
-                {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
-              </Button>
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Fermer
-              </Button>
+            <div className="border-border bg-background/95 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:flex">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isSubmitting || !isDirty}
+                  isLoading={isSubmitting}
+                  loadingLabel="Enregistrement des paramètres"
+                  className="w-full sm:w-auto"
+                >
+                  {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="w-full sm:w-auto"
+                >
+                  Fermer
+                </Button>
+              </div>
               {saved && !isDirty ? (
-                <span className="text-success text-sm font-semibold flex items-center gap-1.5 animate-in fade-in">
+                <span className="text-success animate-in fade-in flex items-center gap-1.5 text-sm font-semibold">
                   <Check className="size-4 text-success" />
                   <span>Modifications enregistrées. Fermeture…</span>
                 </span>

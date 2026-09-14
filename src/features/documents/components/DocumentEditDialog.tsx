@@ -84,13 +84,25 @@ function Formulaire({
       open
       onOpenChange={onOpenChange}
       title="Modifier le document"
+      description="Le fichier d’origine reste inchangé."
       size="lg"
       footer={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={update.isPending}>
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={update.isPending}
+            className="w-full sm:w-auto"
+          >
             Annuler
           </Button>
-          <Button onClick={() => void enregistrer()} disabled={nomInvalide || update.isPending}>
+          <Button
+            onClick={() => void enregistrer()}
+            disabled={nomInvalide || update.isPending}
+            isLoading={update.isPending}
+            loadingLabel="Enregistrement du document"
+            className="w-full sm:w-auto"
+          >
             {update.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </div>

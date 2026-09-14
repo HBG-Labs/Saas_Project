@@ -2,13 +2,15 @@ import { ArrowRight, Briefcase, Calendar, ClipboardList, FileText, MapPin, User,
 import { Link } from 'react-router';
 
 import { displayNameOf } from '@/components/layout/user-display';
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { formatNoneNoun, useCurrentIndustry, useLabel } from '@/features/industries';
-import { MissionStatusBadge, useMissions } from '@/features/missions';
+import { ACTIVE_STATUSES, MissionStatusBadge, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 
 export function TechnicianDashboard() {
@@ -21,8 +23,9 @@ export function TechnicianDashboard() {
   const jobSingular = useLabel('job');
   const workerSingular = useLabel('worker');
 
-  const missions = useMissions(organizationId, { limit: 5 });
+  const missions = useMissions(organizationId, { status: ACTIVE_STATUSES, limit: 5 });
   const myMissions = missions.data ?? [];
+  const [nextMission, ...followingMissions] = myMissions;
   const nameToDisplay = displayNameOf(user);
 
   return (
@@ -73,12 +76,12 @@ export function TechnicianDashboard() {
         </div>
       </div>
 
-      {/* 1. Mes Missions du Jour */}
-      <Card className="border-border bg-surface">
+      {/* 1. La prochaine action terrain, puis seulement le reste de la file. */}
+      <Card className="border-border bg-surface overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <ClipboardList className="size-4 text-primary" />
-            Mes {jobPlural} & Interventions confiées
+            À traiter en priorité
           </CardTitle>
           <Button asChild variant="ghost" size="sm" className="text-xs">
             <Link to={ROUTES.missions}>
@@ -88,40 +91,96 @@ export function TechnicianDashboard() {
           </Button>
         </CardHeader>
         <CardContent className="pt-4">
-          {myMissions.length === 0 ? (
+          {missions.isPending ? (
+            <ListSkeleton rows={4} />
+          ) : missions.isError ? (
+            <ErrorState
+              error={missions.error}
+              onRetry={() => {
+                void missions.refetch();
+              }}
+            />
+          ) : nextMission === undefined ? (
             <div className="py-8 text-center space-y-2">
               <Calendar className="size-8 text-subtle-foreground/60 mx-auto" />
               <p className="text-xs text-muted-foreground font-medium">{formatNoneNoun(jobSingular, 'planifié')} pour le moment.</p>
               <p className="text-2xs text-subtle-foreground">Vos prochaines interventions attribuées par votre responsable apparaîtront ici.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-border/60">
-              {myMissions.map((mission) => (
-                <li key={mission.id} className="py-3 first:pt-0">
-                  <Link to={ROUTES.mission(mission.id)} className="block group">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="outline" className="font-mono text-2xs shrink-0">{mission.reference}</Badge>
-                        <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                          {mission.title}
-                        </span>
-                      </div>
-                      <MissionStatusBadge status={mission.status} />
-                    </div>
+            <div className="space-y-4">
+              <Link
+                to={ROUTES.mission(nextMission.id)}
+                className="border-primary/25 bg-primary-subtle/35 hover:border-primary/45 group block rounded-xl border p-4 transition-[background-color,border-color,box-shadow] hover:shadow-raised sm:p-5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge variant="outline" className="bg-surface shrink-0 font-mono text-2xs">
+                    {nextMission.reference}
+                  </Badge>
+                  <MissionStatusBadge status={nextMission.status} />
+                </div>
 
-                    <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      {mission.customer?.name ? <span>Client: <strong className="text-foreground/80">{mission.customer.name}</strong></span> : null}
-                      {mission.site?.city ? (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="size-3 text-primary" />
-                          {mission.site.city}
-                        </span>
-                      ) : null}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                <h2 className="text-foreground group-hover:text-primary mt-3 text-lg font-bold tracking-tight transition-colors sm:text-xl">
+                  {nextMission.title}
+                </h2>
+
+                <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                  {nextMission.scheduled_start !== null ? (
+                    <span className="text-foreground font-semibold capitalize">
+                      {new Date(nextMission.scheduled_start).toLocaleString('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  ) : (
+                    <span>Date à confirmer</span>
+                  )}
+                  {nextMission.customer?.name ? <span>{nextMission.customer.name}</span> : null}
+                  {nextMission.site?.city ? (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="text-primary size-3.5" aria-hidden="true" />
+                      {nextMission.site.city}
+                    </span>
+                  ) : null}
+                </div>
+
+                <span className="text-primary mt-4 inline-flex min-h-touch items-center gap-1.5 text-sm font-semibold sm:min-h-0">
+                  Ouvrir la mission
+                  <ArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+              </Link>
+
+              {followingMissions.length > 0 ? (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
+                    Ensuite
+                  </p>
+                  <ul className="divide-border divide-y">
+                    {followingMissions.map((mission) => (
+                      <li key={mission.id}>
+                        <Link
+                          to={ROUTES.mission(mission.id)}
+                          className="hover:bg-surface-hover group flex min-h-touch items-center gap-3 rounded-lg py-2.5 transition-colors sm:min-h-0"
+                        >
+                          <Badge variant="outline" className="shrink-0 font-mono text-2xs">
+                            {mission.reference}
+                          </Badge>
+                          <span className="text-foreground group-hover:text-primary min-w-0 flex-1 truncate text-sm font-medium transition-colors">
+                            {mission.title}
+                          </span>
+                          <MissionStatusBadge status={mission.status} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           )}
         </CardContent>
       </Card>

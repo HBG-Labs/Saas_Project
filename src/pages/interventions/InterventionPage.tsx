@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -28,6 +29,14 @@ import { useClientPortalAccess } from '@/features/client-portal';
 import { useMission, useUpdateMission } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import type { InterventionStatus } from '@/types/database';
+
+const INTERVENTION_STATUS_LABELS: Record<InterventionStatus, string> = {
+  planned: 'Planifiée',
+  in_progress: 'En cours',
+  completed: 'Terminée',
+  cancelled: 'Annulée',
+};
 
 /**
  * Vue terrain d'une intervention.
@@ -110,9 +119,38 @@ export default function InterventionPage() {
         </Link>
       </Button>
 
+      <PageHeader
+        title={mission.data?.title ?? 'Intervention'}
+        description={
+          mission.data
+            ? `${mission.data.reference} · ${
+                mission.data.location_label || mission.data.site?.name || 'Lieu à préciser'
+              }`
+            : 'Suivi du temps, compte rendu et justificatifs terrain.'
+        }
+        actions={
+          <Badge
+            variant={
+              data.status === 'completed'
+                ? 'success'
+                : data.status === 'in_progress'
+                  ? 'primary'
+                  : data.status === 'cancelled'
+                    ? 'neutral'
+                    : 'outline'
+            }
+          >
+            {INTERVENTION_STATUS_LABELS[data.status]}
+          </Badge>
+        }
+      />
+
       {/* Le chronomètre EN PREMIER : c'est la raison d'ouvrir cet écran. */}
-      <Card>
+      <Card className="border-primary/25 bg-primary-subtle/20 shadow-raised">
         <CardContent className="pt-6">
+          <p className="text-primary mb-3 text-3xs font-bold tracking-[0.14em] uppercase">
+            Action terrain
+          </p>
           <InterventionTimer
             interventionId={interventionId}
             entries={timeEntries.data ?? []}
@@ -122,6 +160,29 @@ export default function InterventionPage() {
           />
         </CardContent>
       </Card>
+
+      {mission.data?.site?.access_notes !== null &&
+      mission.data?.site?.access_notes !== undefined ? (
+        <section
+          aria-labelledby="intervention-access-title"
+          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4 shadow-xs"
+        >
+          <span
+            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            aria-hidden="true"
+          >
+            <KeyRound className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="intervention-access-title" className="text-foreground text-sm font-semibold">
+              Consignes d’accès au site
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed whitespace-pre-line">
+              {mission.data.site.access_notes}
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       {/*
         Le compte rendu est la suite naturelle du chronomètre : on le rédige en
@@ -197,19 +258,6 @@ export default function InterventionPage() {
               Les consignes d'accès sont mises en évidence : c'est ce que le
               technicien cherche en arrivant devant une grille fermée.
             */}
-            {mission.data.site?.access_notes !== null &&
-            mission.data.site?.access_notes !== undefined ? (
-              <div className="bg-surface-sunken flex gap-2 rounded-md p-2">
-                <KeyRound
-                  className="text-muted-foreground mt-0.5 size-3.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <p className="text-muted-foreground text-xs whitespace-pre-line">
-                  {mission.data.site.access_notes}
-                </p>
-              </div>
-            ) : null}
-
             {mission.data.description !== null && mission.data.description !== '' ? (
               <p className="text-foreground text-sm whitespace-pre-line">
                 {mission.data.description}

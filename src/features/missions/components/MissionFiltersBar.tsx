@@ -43,6 +43,55 @@ export function MissionFiltersBar({
   };
 
   const activeCount = countActiveFilters(value);
+  const activeChips: Array<{ key: string; label: string; clear: () => void }> = [];
+
+  if (value.search.trim() !== '') {
+    activeChips.push({
+      key: 'search',
+      label: `Recherche : ${value.search.trim()}`,
+      clear: () => set('search', ''),
+    });
+  }
+
+  if (value.status !== ANY_STATUS) {
+    activeChips.push({
+      key: 'status',
+      label: `Statut : ${MISSION_STATUS_LABELS[value.status as keyof typeof MISSION_STATUS_LABELS] ?? value.status}`,
+      clear: () => set('status', ANY_STATUS),
+    });
+  }
+
+  if (value.customerId !== ANY) {
+    activeChips.push({ key: 'customer', label: 'Client sélectionné', clear: () => set('customerId', ANY) });
+  }
+
+  if (value.teamId !== ANY) {
+    activeChips.push({ key: 'team', label: 'Équipe sélectionnée', clear: () => set('teamId', ANY) });
+  }
+
+  if (value.memberId !== ANY) {
+    activeChips.push({
+      key: 'member',
+      label: 'Intervenant sélectionné',
+      clear: () => set('memberId', ANY),
+    });
+  }
+
+  if (value.from !== '') {
+    activeChips.push({
+      key: 'from',
+      label: `À partir du ${formatFilterDate(value.from)}`,
+      clear: () => set('from', ''),
+    });
+  }
+
+  if (value.to !== '') {
+    activeChips.push({
+      key: 'to',
+      label: `Jusqu’au ${formatFilterDate(value.to)}`,
+      clear: () => set('to', ''),
+    });
+  }
 
   return (
     <div className="space-y-3">
@@ -97,6 +146,34 @@ export function MissionFiltersBar({
           ) : null}
         </div>
       </div>
+
+      {activeChips.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2" aria-label="Filtres actifs">
+          <span className="text-muted-foreground mr-1 text-xs font-medium">Filtres actifs</span>
+          {activeChips.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.clear}
+              className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/45 hover:bg-primary/15 focus-visible:ring-ring inline-flex min-h-touch cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-[color,background-color,border-color] focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
+              aria-label={`Retirer le filtre « ${chip.label} »`}
+            >
+              <span className="max-w-56 truncate">{chip.label}</span>
+              <X className="size-3.5 shrink-0" aria-hidden="true" />
+            </button>
+          ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              onChange(EMPTY_MISSION_FILTERS);
+            }}
+            className="text-xs"
+          >
+            Tout effacer
+          </Button>
+        </div>
+      ) : null}
 
       {showAdvanced && expanded ? (
         <div className="border-border bg-surface-sunken space-y-3 rounded-lg border p-3">
@@ -164,6 +241,14 @@ export function MissionFiltersBar({
       ) : null}
     </div>
   );
+}
+
+function formatFilterDate(value: string): string {
+  return new Date(`${value}T00:00:00`).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function CustomerFilter({

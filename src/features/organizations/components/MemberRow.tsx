@@ -82,13 +82,14 @@ export function MemberRow({
   };
 
   return (
-    <li className="border-border flex flex-wrap items-start justify-between gap-4 border-b py-4 last:border-b-0">
-      <div className="flex items-start gap-3 min-w-0 flex-1">
+    <li className="border-border flex flex-col gap-4 border-b py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <UserAvatar avatarId={member.profile?.avatar_id ?? null} name={name} size="sm" className="mt-0.5" />
 
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
             <p className="text-foreground truncate text-sm font-medium">{name}</p>
+            {isSelf ? <Badge variant="neutral">Vous</Badge> : null}
             {isInvited ? <Badge variant="warning">Invitation en attente</Badge> : null}
           </div>
 
@@ -124,7 +125,7 @@ export function MemberRow({
         boutons passent maintenant à la ligne quand la place manque, ce qui est
         le comportement attendu d'une barre d'actions étroite.
       */}
-      <div className="flex flex-wrap items-start gap-2">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-start sm:justify-end">
         {canUpdateRole && (
           <>
             <Tooltip content="Modifier le nom ou la spécialité / fonction">
@@ -138,6 +139,7 @@ export function MemberRow({
                 }}
                 disabled={busy}
                 aria-label={`Modifier les détails de ${name}`}
+                className="w-full sm:w-auto"
               >
                 <Pencil className="size-3.5" />
                 Modifier
@@ -164,16 +166,24 @@ export function MemberRow({
                   onChange={(e) => setEditJobTitle(e.target.value)}
                   placeholder="Ex: Technicien Fibre Optique, Conducteur de travaux..."
                 />
-                <div className="flex items-center justify-end gap-2 pt-2">
+                <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsEditOpen(false)}
                     disabled={busy}
+                    className="w-full sm:w-auto"
                   >
                     Annuler
                   </Button>
-                  <Button type="submit" variant="primary" disabled={busy}>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={busy}
+                    isLoading={busy}
+                    loadingLabel="Enregistrement du membre"
+                    className="w-full sm:w-auto"
+                  >
                     {busy ? 'Enregistrement…' : 'Enregistrer'}
                   </Button>
                 </div>
@@ -183,7 +193,7 @@ export function MemberRow({
         )}
 
         {canUpdateRole && !roleLocked ? (
-          <div className="w-48 sm:w-56">
+          <div className="w-full sm:w-56">
             <RoleSelect
               value={member.role}
               onChange={onRoleChange}
@@ -200,7 +210,7 @@ export function MemberRow({
               size="sm"
               disabled
               className={cn(
-                'font-semibold opacity-100 disabled:opacity-100 cursor-default',
+                'w-full cursor-default font-semibold opacity-100 disabled:opacity-100 sm:w-auto',
                 member.role === 'owner' && 'border-accent/40 bg-accent/20 text-accent',
                 member.role === 'admin' && 'border-primary/40 bg-primary/20 text-primary',
                 member.role === 'manager' && 'border-primary/40 bg-primary/20 text-primary',
@@ -215,8 +225,14 @@ export function MemberRow({
         {canRemove ? (
           removeLocked ? (
             <Tooltip content={removeLockReason}>
-              <span>
-                <Button variant="danger-outline" size="sm" disabled aria-label={`Retirer ${name}`}>
+              <span className="block w-full sm:w-auto">
+                <Button
+                  variant="danger-outline"
+                  size="sm"
+                  disabled
+                  aria-label={`Retirer ${name}`}
+                  className="w-full sm:w-auto"
+                >
                   <Trash2 className="size-3.5" />
                   Supprimer
                 </Button>
@@ -232,6 +248,7 @@ export function MemberRow({
                 }}
                 disabled={busy}
                 aria-label={`Retirer ${name}`}
+                className="w-full sm:w-auto"
               >
                 <Trash2 className="size-3.5" />
                 Supprimer
@@ -243,7 +260,7 @@ export function MemberRow({
                 title="Supprimer le membre"
                 description={`Êtes-vous sûr de vouloir retirer ${name} de l'entreprise ?`}
                 footer={
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
                     <Button
                       variant="outline"
                       size="sm"
@@ -251,14 +268,18 @@ export function MemberRow({
                         setIsConfirmOpen(false);
                       }}
                       disabled={busy}
+                      className="w-full sm:w-auto"
                     >
                       Annuler
                     </Button>
                     <Button
-                      variant="danger-outline"
+                      variant="danger"
                       size="sm"
                       onClick={handleConfirmRemove}
                       disabled={busy}
+                      isLoading={busy}
+                      loadingLabel="Suppression du membre"
+                      className="w-full sm:w-auto"
                     >
                       {busy ? 'Suppression…' : 'Supprimer le membre'}
                     </Button>

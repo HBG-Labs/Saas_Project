@@ -158,13 +158,21 @@ function FormulaireDossier({
       title={titres[demande.mode]}
       size="sm"
       footer={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={enCours}>
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={enCours}
+            className="w-full sm:w-auto"
+          >
             Annuler
           </Button>
           <Button
             onClick={() => void enregistrer()}
             disabled={enCours || (demande.mode !== 'deplacer' && nomInvalide)}
+            isLoading={enCours}
+            loadingLabel="Enregistrement du dossier"
+            className="w-full sm:w-auto"
           >
             {enCours ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
@@ -244,13 +252,15 @@ function SuppressionDossier({ folder, onOpenChange, onDeleted }: SuppressionProp
       open
       onOpenChange={onOpenChange}
       title={`Supprimer « ${folder.name} » ?`}
+      description="Cette action ne supprime aucun document."
       size="sm"
       footer={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={removeFolder.isPending}
+            className="w-full sm:w-auto"
           >
             Annuler
           </Button>
@@ -258,6 +268,9 @@ function SuppressionDossier({ folder, onOpenChange, onDeleted }: SuppressionProp
             variant="danger"
             onClick={() => void confirmer()}
             disabled={removeFolder.isPending || contenu.isPending}
+            isLoading={removeFolder.isPending}
+            loadingLabel="Suppression du dossier"
+            className="w-full sm:w-auto"
           >
             {removeFolder.isPending ? 'Suppression…' : 'Supprimer le dossier'}
           </Button>
@@ -269,8 +282,8 @@ function SuppressionDossier({ folder, onOpenChange, onDeleted }: SuppressionProp
       ) : total === 0 ? (
         <p className="text-muted-foreground text-sm">Ce dossier est vide.</p>
       ) : (
-        <div className="space-y-2 text-sm">
-          <p className="text-foreground">Ce dossier n’est pas vide :</p>
+        <div className="border-warning-border bg-warning-subtle space-y-2 rounded-xl border p-4 text-sm">
+          <p className="text-foreground font-medium">Ce dossier n’est pas vide :</p>
           <ul className="text-muted-foreground list-inside list-disc">
             {(contenu.data?.sousDossiers ?? 0) > 0 && (
               <li>

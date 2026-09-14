@@ -1,14 +1,16 @@
 import { ArrowRight, ClipboardCheck, ClipboardList, Plus, UsersRound } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { MetricCard } from '@/components/ui/MetricCard';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { formatNewNoun, formatNoneNoun, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
-import { MissionStatusBadge, useMissions } from '@/features/missions';
+import { MissionStatusBadge, useMissionStatusCounts, useMissions } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
 
@@ -20,11 +22,16 @@ export function ManagerDashboard() {
   const jobSingular = useLabel('job');
 
   const missions = useMissions(organizationId, { limit: 5 });
+  const missionStatusCounts = useMissionStatusCounts(organizationId);
   const pendingReports = useReportsPendingReview(organizationId);
   const teams = useTeams(organizationId);
 
   const pendingReportsCount = (pendingReports.data ?? []).length;
   const missionList = missions.data ?? [];
+  const missionCount = Object.values(missionStatusCounts.data ?? {}).reduce(
+    (total, count) => total + count,
+    0,
+  );
   const teamList = teams.data ?? [];
 
   return (
@@ -35,8 +42,8 @@ export function ManagerDashboard() {
             Tableau de bord
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {organization?.name ?? 'Votre périmètre'} — {jobPlural.toLowerCase()} attribuées,
-            revue des comptes rendus et suivi des équipes.
+            {organization?.name ?? 'Votre périmètre'} — {jobPlural.toLowerCase()} attribuées, revue
+            des comptes rendus et suivi des équipes.
           </p>
         </div>
 
@@ -52,27 +59,31 @@ export function ManagerDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MetricCard
           label="Comptes rendus à contrôler"
-          value={pendingReportsCount}
+          value={pendingReports.isPending || pendingReports.isError ? '—' : pendingReportsCount}
           icon={ClipboardCheck}
           to={ROUTES.review}
           actionLabel="Contrôler"
-          attention={pendingReportsCount > 0}
+          attention={!pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0}
           badge={
-            pendingReportsCount > 0
+            pendingReports.isPending
+              ? { text: 'Chargement', variant: 'neutral' }
+              : pendingReports.isError
+                ? { text: 'Indisponible', variant: 'neutral' }
+                : pendingReportsCount > 0
               ? { text: 'En attente', variant: 'warning' }
               : { text: 'À jour', variant: 'success' }
           }
         />
         <MetricCard
           label={`${jobPlural} du périmètre`}
-          value={missionList.length}
+          value={missionStatusCounts.isPending || missionStatusCounts.isError ? '—' : missionCount}
           icon={ClipboardList}
           to={ROUTES.missions}
           actionLabel="Voir"
         />
         <MetricCard
           label="Mes équipes"
-          value={teamList.length}
+          value={teams.isPending || teams.isError ? '—' : teamList.length}
           icon={UsersRound}
           to={ROUTES.teams}
           actionLabel="Organiser"
@@ -81,9 +92,9 @@ export function ManagerDashboard() {
 
       {/* Missions de mon périmètre */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
-          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <ClipboardList className="size-4 text-primary" />
+        <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
+          <CardTitle className="text-foreground flex items-center gap-2 text-sm font-semibold">
+            <ClipboardList className="text-primary size-4" />
             {jobPlural} & Avancement
           </CardTitle>
           <Button asChild variant="ghost" size="sm" className="text-xs">
@@ -94,16 +105,32 @@ export function ManagerDashboard() {
           </Button>
         </CardHeader>
         <CardContent className="pt-4">
-          {missionList.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">{formatNoneNoun(jobSingular, 'attribué')} actuellement.</p>
+          {missions.isPending ? (
+            <ListSkeleton rows={4} />
+          ) : missions.isError ? (
+            <ErrorState
+              error={missions.error}
+              onRetry={() => {
+                void missions.refetch();
+              }}
+            />
+          ) : missionList.length === 0 ? (
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              {formatNoneNoun(jobSingular, 'attribué')} actuellement.
+            </p>
           ) : (
-            <div className="divide-y divide-border space-y-1">
+            <div className="divide-border space-y-1 divide-y">
               {missionList.map((m) => (
-                <div key={m.id} className="py-2.5 flex items-center justify-between gap-4">
-                  <Link to={ROUTES.mission(m.id)} className="flex items-center justify-between text-xs hover:text-primary transition-colors min-w-0 flex-1">
+                <div key={m.id} className="flex items-center justify-between gap-4 py-2.5">
+                  <Link
+                    to={ROUTES.mission(m.id)}
+                    className="hover:text-primary flex min-w-0 flex-1 items-center justify-between text-xs transition-colors"
+                  >
                     <div className="flex items-center gap-2 truncate">
-                      <Badge variant="outline" className="font-mono text-2xs">{m.reference}</Badge>
-                      <span className="font-medium text-foreground truncate">{m.title}</span>
+                      <Badge variant="outline" className="text-2xs font-mono">
+                        {m.reference}
+                      </Badge>
+                      <span className="text-foreground truncate font-medium">{m.title}</span>
                     </div>
                   </Link>
                   <MissionStatusBadge status={m.status} />

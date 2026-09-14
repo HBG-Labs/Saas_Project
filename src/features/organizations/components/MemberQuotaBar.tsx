@@ -50,10 +50,10 @@ export function MemberQuotaBar({
   const remaining = Math.max(baseIncluded - current, 0);
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-1 text-xs sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2">
         <span className="text-muted-foreground font-medium">Utilisateurs actifs</span>
-        <span className="text-foreground font-mono font-bold tabular-nums">
+        <span className="text-foreground font-mono font-bold tabular-nums sm:text-right">
           {hasExtraUsers ? (
             <span>
               {current} utilisateurs — <span className="text-muted-foreground font-normal">{baseIncluded} inclus</span>{' '}
@@ -94,11 +94,11 @@ export function MemberQuotaBar({
       </div>
 
       {isFree && current >= 1 ? (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1">
+        <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
           <p className="text-muted-foreground text-2xs">
             Plan Free limité à <strong>1 utilisateur</strong> (Monocompte). Pour collaborer en équipe, passez à une offre payante.
           </p>
-          <Button asChild variant="primary" size="sm" className="text-2xs h-7 gap-1 shrink-0">
+          <Button asChild variant="primary" size="sm" className="w-full shrink-0 gap-1 text-xs sm:w-auto">
             <Link to={ROUTES.pricing}>
               <Sparkles className="size-3" />
               <span>Passer au plan supérieur</span>
@@ -107,7 +107,7 @@ export function MemberQuotaBar({
           </Button>
         </div>
       ) : isQuotaReached && !hasExtraUsers ? (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1">
+        <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
           <p className="text-muted-foreground text-2xs">
             Limite incluse atteinte ({baseIncluded}{' '}
             {baseIncluded > 1 ? 'utilisateurs' : 'utilisateur'}). Chaque compte actif
@@ -116,7 +116,7 @@ export function MemberQuotaBar({
               ? ', ajouté au prorata sur votre prochaine facture.'
               : ' — décompté à partir de votre souscription, rien n’est prélevé pendant l’essai.'}
           </p>
-          <Button asChild variant="outline" size="sm" className="text-2xs h-7 gap-1 shrink-0">
+          <Button asChild variant="outline" size="sm" className="w-full shrink-0 gap-1 text-xs sm:w-auto">
             <Link to={ROUTES.pricing}>
               <span>Passer au plan supérieur</span>
               <ArrowUpRight className="size-3" />

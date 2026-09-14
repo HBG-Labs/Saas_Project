@@ -98,8 +98,9 @@ export function NewEventModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs animate-in fade-in" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] z-50 max-h-[90vh] w-[95vw] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-2xl bg-surface p-6 shadow-2xl border border-border overflow-y-auto animate-in zoom-in-95">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-surface-raised p-5 shadow-modal data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:p-6 sm:data-[state=open]:zoom-in-95">
+          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border-strong sm:hidden" aria-hidden="true" />
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
@@ -112,7 +113,7 @@ export function NewEventModal({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
+                className="flex size-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:size-8"
                 aria-label="Fermer"
               >
                 <X className="size-4" />
@@ -134,7 +135,7 @@ export function NewEventModal({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex. Maintenance climatisation, Raccordement..."
-                className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
               />
             </div>
 
@@ -147,7 +148,7 @@ export function NewEventModal({
                   id="evt-priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as MissionPriority)}
-                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
                 >
                   <option value="low">Basse</option>
                   <option value="normal">Normale</option>
@@ -184,7 +185,7 @@ export function NewEventModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="evt-date" className="block text-xs font-semibold text-foreground mb-1.5">
                   Date
@@ -195,7 +196,7 @@ export function NewEventModal({
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
                 />
               </div>
 
@@ -210,7 +211,7 @@ export function NewEventModal({
                     required
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
                   />
                 </div>
                 <div>
@@ -222,7 +223,7 @@ export function NewEventModal({
                     type="time"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-foreground focus:border-primary focus:outline-hidden"
+                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-10"
                   />
                 </div>
               </div>
@@ -238,11 +239,11 @@ export function NewEventModal({
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Ex. 18 Rue de Bercy Paris 12e — Remplacement disjoncteur"
-                className="w-full p-2.5 rounded-xl border border-border bg-surface text-xs text-foreground focus:border-primary focus:outline-hidden resize-none"
+                className="w-full resize-none rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <div className="safe-bottom flex flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>

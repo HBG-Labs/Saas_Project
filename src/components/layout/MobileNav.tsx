@@ -7,14 +7,6 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
-const MOBILE_NAV_ICON_COLORS: Record<string, string> = {
-  Accueil: 'text-[#2563EB]',
-  Missions: 'text-[#10B981]',
-  Planning: 'text-[#F59E0B]',
-  Outils: 'text-[#7C3AED]',
-  Clients: 'text-[#1D4ED8]',
-};
-
 /**
  * Navigation basse, mobile uniquement.
  *
@@ -35,7 +27,7 @@ export function MobileNav() {
     <nav
       aria-label="Navigation rapide"
       className={cn(
-        'bg-surface/95 border-border fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur-md shadow-lg',
+        'bg-surface/95 border-border fixed inset-x-0 bottom-0 z-40 border-t shadow-lg backdrop-blur-md',
         'safe-bottom md:hidden',
       )}
     >
@@ -52,7 +44,7 @@ export function MobileNav() {
                   cn(
                     // 44 px minimum : cible tactile WCAG 2.5.5.
                     'min-h-touch relative flex flex-col items-center justify-center gap-0.5 px-1 py-1.5',
-                    'text-3xs font-medium transition-colors duration-[120ms] xs:text-2xs',
+                    'text-3xs xs:text-2xs font-medium transition-colors duration-[120ms]',
                     isActive
                       ? 'text-primary font-bold'
                       : 'text-muted-foreground hover:text-foreground',
@@ -64,7 +56,7 @@ export function MobileNav() {
                     <Icon
                       className={cn(
                         'size-5 shrink-0 transition-transform',
-                        MOBILE_NAV_ICON_COLORS[item.label],
+                        isActive ? 'text-primary' : 'text-muted-foreground',
                         isActive && 'scale-110',
                       )}
                       aria-hidden="true"

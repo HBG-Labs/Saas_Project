@@ -86,29 +86,26 @@ export default function MissionsListPage() {
             : `Vos ${jobPlural.toLowerCase()} confiés et à traiter sur le terrain.`
         }
         actions={
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() =>
-                exportMissionsToCsv(
-                  list,
-                  `missions-${new Date().toISOString().slice(0, 10)}.csv`,
-                )
+                exportMissionsToCsv(list, `missions-${new Date().toISOString().slice(0, 10)}.csv`)
               }
               className="text-xs"
               disabled={list.length === 0}
               title="Exporter les missions affichées en fichier CSV"
             >
-              <Download className="size-3.5 mr-1" />
+              <Download className="mr-1 size-3.5" />
               CSV
             </Button>
 
             {canViewPlanning && (
               <Button asChild variant="outline" size="sm" className="text-xs">
                 <Link to={ROUTES.planning}>
-                  <Calendar className="size-3.5 mr-1 text-primary" />
+                  <Calendar className="text-primary mr-1 size-3.5" />
                   Planning
                 </Link>
               </Button>
@@ -116,7 +113,7 @@ export default function MissionsListPage() {
 
             <Button asChild variant="outline" size="sm" className="text-xs">
               <Link to={ROUTES.map}>
-                <MapIcon className="size-3.5 mr-1 text-primary" />
+                <MapIcon className="text-primary mr-1 size-3.5" />
                 Carte
               </Link>
             </Button>
@@ -124,7 +121,7 @@ export default function MissionsListPage() {
             {canCreate ? (
               <Button asChild variant="primary" size="sm" className="text-xs">
                 <Link to={ROUTES.missionNew}>
-                  <Plus className="size-4 mr-1" />
+                  <Plus className="mr-1 size-4" />
                   Nouvelle mission
                 </Link>
               </Button>
@@ -136,11 +133,12 @@ export default function MissionsListPage() {
       <MissionsNavTabs />
 
       {/* Bannière de guidage pour les comptes-rendus terrain */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex items-center justify-between gap-3 text-xs text-foreground">
+      <div className="border-primary/20 bg-primary/5 text-foreground flex items-center justify-between gap-3 rounded-xl border p-3.5 text-xs">
         <div className="flex items-center gap-2.5">
-          <FileText className="size-4 shrink-0 text-primary" />
+          <FileText className="text-primary size-4 shrink-0" />
           <span>
-            <strong>Interventions terrain :</strong> Ouvrez une mission pour démarrer l’intervention, enregistrer vos temps et compléter le compte-rendu.
+            <strong>Interventions terrain :</strong> Ouvrez une mission pour démarrer
+            l’intervention, enregistrer vos temps et compléter le compte-rendu.
           </span>
         </div>
       </div>
@@ -183,7 +181,7 @@ export default function MissionsListPage() {
               ) : canCreate ? (
                 <Button asChild variant="primary" size="sm">
                   <Link to={ROUTES.missionNew}>
-                    <Plus className="size-4 mr-1" />
+                    <Plus className="mr-1 size-4" />
                     Créer une première mission
                   </Link>
                 </Button>
@@ -192,7 +190,7 @@ export default function MissionsListPage() {
           />
 
           {elsewhere.length > 0 ? (
-            <div className="space-y-2 text-center pt-2">
+            <div className="space-y-2 pt-2 text-center">
               <p className="text-muted-foreground text-xs">Vos autres missions se trouvent ici :</p>
               <div className="flex flex-wrap justify-center gap-1.5">
                 {elsewhere.map(([status, count]) => (
@@ -202,7 +200,7 @@ export default function MissionsListPage() {
                     onClick={() => {
                       setFilters({ ...EMPTY_MISSION_FILTERS, status });
                     }}
-                    className="border-border bg-surface hover:border-primary/50 hover:text-foreground text-muted-foreground cursor-pointer rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors"
+                    className="border-border bg-surface hover:border-primary/50 hover:text-foreground text-muted-foreground text-2xs cursor-pointer rounded-full border px-2.5 py-1 font-medium transition-colors"
                   >
                     {MISSION_STATUS_LABELS[status]} · {count}
                   </button>
@@ -219,27 +217,24 @@ export default function MissionsListPage() {
               (mission.latitude !== null && mission.longitude !== null) ||
               Boolean(mission.address_line1 || mission.city);
             const addressText =
-              mission.address_line1 ??
-              mission.location_label ??
-              mission.city ??
-              null;
+              mission.address_line1 ?? mission.location_label ?? mission.city ?? null;
 
             return (
               <div
                 key={mission.id}
-                className="p-3.5 sm:p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 shadow-2xs hover:shadow-xs transition-all space-y-3 group"
+                className="bg-surface border-border hover:border-primary/40 group space-y-3 rounded-2xl border p-3.5 shadow-2xs transition-all hover:shadow-xs sm:p-4"
               >
                 {/* Ligne 1 : Badges, Réf, Date & Statut */}
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="font-mono text-2xs font-bold">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="text-2xs font-mono font-bold">
                       {mission.reference}
                     </Badge>
                     <MissionPriorityBadge priority={mission.priority} />
                     <MissionStatusBadge status={mission.status} />
 
                     {mission.assigned_team !== null && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-subtle text-3xs font-semibold text-muted-foreground border border-border">
+                      <span className="bg-surface-subtle text-3xs text-muted-foreground border-border inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-semibold">
                         <span
                           className="size-2 rounded-full"
                           style={{
@@ -252,7 +247,7 @@ export default function MissionsListPage() {
                     )}
                   </div>
 
-                  <span className="text-muted-foreground font-mono text-xs tabular-nums font-semibold">
+                  <span className="text-muted-foreground font-mono text-xs font-semibold tabular-nums">
                     {mission.scheduled_start !== null
                       ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR', {
                           day: '2-digit',
@@ -267,27 +262,27 @@ export default function MissionsListPage() {
                 <div>
                   <Link
                     to={ROUTES.mission(mission.id)}
-                    className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors block"
+                    className="text-foreground group-hover:text-primary block text-sm font-bold transition-colors sm:text-base"
                   >
                     {mission.title}
                   </Link>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                     {mission.customer !== null && (
-                      <span className="font-semibold text-foreground/90">
+                      <span className="text-foreground/90 font-semibold">
                         🏢 {mission.customer.name}
                       </span>
                     )}
 
                     {mission.site !== null && (
                       <span className="flex items-center gap-1">
-                        <MapPin className="size-3 text-primary shrink-0" />
+                        <MapPin className="text-primary size-3 shrink-0" />
                         {mission.site.name} {mission.site.city ? `(${mission.site.city})` : ''}
                       </span>
                     )}
 
                     {mission.assigned_member !== null && (
-                      <span className="flex items-center gap-1 text-primary font-medium">
+                      <span className="text-primary flex items-center gap-1 font-medium">
                         <User className="size-3" />
                         {memberDisplayName(mission.assigned_member)}
                       </span>
@@ -296,7 +291,7 @@ export default function MissionsListPage() {
                 </div>
 
                 {/* Ligne 3 : Actions rapides */}
-                <div className="flex items-center gap-2 pt-2 border-t border-border/50 flex-wrap">
+                <div className="border-border/50 flex flex-wrap items-center gap-2 border-t pt-2">
                   {hasLocation && (
                     <Button
                       type="button"
@@ -315,7 +310,7 @@ export default function MissionsListPage() {
                           });
                         }
                       }}
-                      className="text-3xs h-7 px-2.5 gap-1.5 cursor-pointer"
+                      className="text-3xs h-11 cursor-pointer gap-1.5 px-2.5 sm:h-7"
                       title="Lancer l'itinéraire GPS"
                     >
                       <Navigation className="size-2.5" />
@@ -323,9 +318,14 @@ export default function MissionsListPage() {
                     </Button>
                   )}
 
-                  <Button asChild variant="outline" size="sm" className="text-3xs h-7 px-3 gap-1.5">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-3xs h-11 gap-1.5 px-3 sm:h-7"
+                  >
                     <Link to={ROUTES.mission(mission.id)}>
-                      <Eye className="size-3 text-primary" />
+                      <Eye className="text-primary size-3" />
                       <span>Voir la fiche</span>
                     </Link>
                   </Button>
@@ -335,10 +335,10 @@ export default function MissionsListPage() {
                       asChild
                       variant="ghost"
                       size="sm"
-                      className="text-3xs h-7 px-2.5 text-muted-foreground hover:text-foreground ml-auto"
+                      className="text-3xs text-muted-foreground hover:text-foreground ml-auto h-11 px-2.5 sm:h-7"
                     >
                       <a href={`tel:${mission.customer_phone}`}>
-                        <Phone className="size-3 text-success mr-1" />
+                        <Phone className="text-success mr-1 size-3" />
                         Appeler
                       </a>
                     </Button>

@@ -1,11 +1,4 @@
-import {
-  Clock,
-  History,
-  MessageSquare,
-  Search,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Clock, History, MessageSquare, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -78,24 +71,25 @@ export function AiSearchHistoryDrawer({
       {/* Fond sombre transparent cliquable pour fermer */}
       <div
         onClick={handleClose}
-        className="fixed inset-0 bg-black/50 backdrop-blur-2xs cursor-pointer"
+        className="backdrop-blur-2xs fixed inset-0 cursor-pointer bg-black/50"
         aria-hidden="true"
       />
 
       {/* Tiroir latéral droit */}
-      <div className="relative z-10 flex h-full w-full max-w-sm flex-col bg-surface shadow-overlay border-l border-border text-foreground">
+      <div className="bg-surface shadow-overlay border-border text-foreground relative z-10 flex h-full w-full max-w-sm flex-col border-l">
         {/* En-tête du volet */}
-        <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="border-border flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
               <History className="size-4" />
             </div>
             <div>
-              <h2 id="ai-history-title" className="text-sm font-bold text-foreground">
+              <h2 id="ai-history-title" className="text-foreground text-sm font-bold">
                 Historique des recherches
               </h2>
               <p className="text-2xs text-muted-foreground">
-                {history.length} {history.length > 1 ? 'requêtes enregistrées' : 'requête enregistrée'}
+                {history.length}{' '}
+                {history.length > 1 ? 'requêtes enregistrées' : 'requête enregistrée'}
               </p>
             </div>
           </div>
@@ -103,7 +97,7 @@ export function AiSearchHistoryDrawer({
           <button
             type="button"
             onClick={handleClose}
-            className="flex size-7 items-center justify-center rounded-lg text-subtle-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer"
+            className="text-subtle-foreground hover:bg-surface-hover hover:text-foreground flex size-11 cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-7"
             aria-label="Fermer l'historique"
           >
             <X className="size-4" />
@@ -112,41 +106,39 @@ export function AiSearchHistoryDrawer({
 
         {/* Barre de filtrage interne si plusieurs entrées */}
         {history.length > 3 && (
-          <div className="p-3 border-b border-border">
+          <div className="border-border border-b p-3">
             <div className="relative flex items-center">
-              <Search className="absolute left-2.5 size-3.5 text-subtle-foreground" />
+              <Search className="text-subtle-foreground absolute left-2.5 size-3.5" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Filtrer l'historique…"
-                className="w-full rounded-xl border border-border bg-surface-sunken py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="border-border bg-surface-sunken text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary w-full rounded-xl border py-1.5 pr-3 pl-8 text-xs focus:ring-1 focus:outline-none"
               />
             </div>
           </div>
         )}
 
         {/* Liste des recherches */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <div className="flex-1 space-y-1 overflow-y-auto p-3">
           {history.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-subtle-foreground">
-              <Clock className="size-8 stroke-[1.5] mb-2 opacity-50" />
-              <p className="text-xs font-semibold text-foreground">
-                Aucun historique de recherche
-              </p>
+            <div className="text-subtle-foreground flex flex-col items-center justify-center py-12 text-center">
+              <Clock className="mb-2 size-8 stroke-[1.5] opacity-50" />
+              <p className="text-foreground text-xs font-semibold">Aucun historique de recherche</p>
               <p className="text-2xs mt-1 max-w-[220px]">
                 Vos prochaines questions et analyses apparaîtront ici pour un accès rapide.
               </p>
             </div>
           ) : filteredHistory.length === 0 ? (
-            <div className="py-8 text-center text-xs text-subtle-foreground">
+            <div className="text-subtle-foreground py-8 text-center text-xs">
               Aucune recherche ne correspond à « {searchTerm} »
             </div>
           ) : (
             filteredHistory.map((item) => (
               <div
                 key={item.id}
-                className="group relative flex items-center justify-between rounded-xl border border-transparent p-2.5 hover:border-border hover:bg-surface-hover transition-all"
+                className="group hover:border-border hover:bg-surface-hover relative flex items-center justify-between rounded-xl border border-transparent p-2.5 transition-all"
               >
                 <button
                   type="button"
@@ -154,14 +146,14 @@ export function AiSearchHistoryDrawer({
                     onSelectSearch(item.query);
                     handleClose();
                   }}
-                  className="flex flex-1 items-start gap-2.5 text-left cursor-pointer overflow-hidden pr-2"
+                  className="flex flex-1 cursor-pointer items-start gap-2.5 overflow-hidden pr-2 text-left"
                 >
-                  <MessageSquare className="size-4 text-subtle-foreground group-hover:text-primary transition-colors shrink-0 mt-0.5" />
+                  <MessageSquare className="text-subtle-foreground group-hover:text-primary mt-0.5 size-4 shrink-0 transition-colors" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                    <p className="text-foreground group-hover:text-primary line-clamp-2 text-xs font-medium transition-colors">
                       {item.query}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-muted-foreground mt-0.5 text-[10px]">
                       {formatRelativeTime(item.timestamp) || 'Récemment'}
                     </p>
                   </div>
@@ -174,7 +166,7 @@ export function AiSearchHistoryDrawer({
                     e.stopPropagation();
                     onRemoveItem(item.id);
                   }}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-subtle-foreground opacity-60 hover:opacity-100 hover:bg-error-subtle hover:text-error transition-all cursor-pointer"
+                  className="text-subtle-foreground hover:bg-error-subtle hover:text-error flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-lg opacity-60 transition-[color,background-color,opacity] hover:opacity-100 sm:size-7"
                   title="Supprimer cette recherche"
                   aria-label="Supprimer cette recherche"
                 >
@@ -187,14 +179,14 @@ export function AiSearchHistoryDrawer({
 
         {/* Pied de volet avec suppression totale */}
         {history.length > 0 && (
-          <div className="border-t border-border p-3 bg-surface-sunken/50">
+          <div className="border-border bg-surface-sunken/50 border-t p-3">
             {confirmClear ? (
               <div className="flex items-center gap-2">
                 <Button
                   variant="danger"
                   size="sm"
                   onClick={handleClearAll}
-                  className="flex-1 text-xs h-8 font-semibold"
+                  className="h-8 flex-1 text-xs font-semibold"
                 >
                   Confirmer la suppression
                 </Button>
@@ -202,7 +194,7 @@ export function AiSearchHistoryDrawer({
                   variant="ghost"
                   size="sm"
                   onClick={() => setConfirmClear(false)}
-                  className="text-xs h-8"
+                  className="h-8 text-xs"
                 >
                   Annuler
                 </Button>
@@ -212,7 +204,7 @@ export function AiSearchHistoryDrawer({
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAll}
-                className="w-full text-xs text-error hover:bg-error-subtle hover:text-error h-8 justify-center gap-1.5"
+                className="text-error hover:bg-error-subtle hover:text-error h-8 w-full justify-center gap-1.5 text-xs"
               >
                 <Trash2 className="size-3.5" />
                 <span>Effacer tout l’historique</span>

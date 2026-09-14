@@ -19,20 +19,20 @@ export function AiActionCard({ action, onExecute }: AiActionCardProps) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {action.requiresConfirmation ? (
-            <ShieldAlert className="size-4 text-warning shrink-0" />
+            <ShieldAlert className="text-warning size-4 shrink-0" />
           ) : (
-            <ArrowRight className="size-4 text-primary shrink-0" />
+            <ArrowRight className="text-primary size-4 shrink-0" />
           )}
           <span className="text-foreground text-xs font-semibold">{action.title}</span>
         </div>
 
         {isCompleted ? (
-          <Badge variant="success" className="gap-1 text-2xs">
+          <Badge variant="success" className="text-2xs gap-1">
             <CheckCircle2 className="size-3" />
             Exécuté
           </Badge>
         ) : isRejected ? (
-          <Badge variant="neutral" className="gap-1 text-2xs">
+          <Badge variant="neutral" className="text-2xs gap-1">
             <XCircle className="size-3" />
             Ignoré
           </Badge>
@@ -53,7 +53,7 @@ export function AiActionCard({ action, onExecute }: AiActionCardProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => onExecute(action.id, false)}
-                className="h-7 text-xs"
+                className="h-11 text-xs sm:h-7"
               >
                 Refuser
               </Button>
@@ -61,7 +61,7 @@ export function AiActionCard({ action, onExecute }: AiActionCardProps) {
                 variant="primary"
                 size="sm"
                 onClick={() => onExecute(action.id, true)}
-                className="h-7 text-xs font-semibold"
+                className="h-11 text-xs font-semibold sm:h-7"
               >
                 Confirmer l’action
               </Button>
@@ -71,7 +71,7 @@ export function AiActionCard({ action, onExecute }: AiActionCardProps) {
               variant="outline"
               size="sm"
               onClick={() => onExecute(action.id, true)}
-              className="h-7 text-xs"
+              className="h-11 text-xs sm:h-7"
             >
               Accéder <ArrowRight className="size-3" />
             </Button>

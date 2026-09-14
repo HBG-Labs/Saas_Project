@@ -13,7 +13,7 @@ import { cva } from 'class-variance-authority';
 export const buttonVariants = cva(
   [
     'inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap cursor-pointer select-none',
-    'transition-colors duration-[120ms] ease-out-expo',
+    'transition-[color,background-color,border-color,box-shadow,transform] duration-[120ms] ease-out-expo active:scale-[0.98] motion-reduce:transform-none',
     'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_*]:pointer-events-none',
   ],
@@ -26,9 +26,9 @@ export const buttonVariants = cva(
         outline:
           'border border-border-strong bg-surface text-foreground hover:bg-surface-hover active:bg-border',
         ghost: 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
-        danger: 'bg-red-600/90 text-white hover:bg-red-600 active:bg-red-700 shadow-xs',
+        danger: 'bg-error text-error-foreground hover:bg-error/90 active:bg-error/80 shadow-xs',
         'danger-outline':
-          'border border-red-500/60 bg-red-600/35 text-white hover:bg-red-600/50 hover:border-red-500/80 active:bg-red-600/60 transition-all shadow-xs font-medium',
+          'border border-error-border bg-error-subtle text-error hover:border-error hover:bg-error/15 active:bg-error/20 shadow-xs font-medium',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       /*
@@ -38,11 +38,11 @@ export const buttonVariants = cva(
         à 44 px pour conserver une hiérarchie claire.
       */
       size: {
-        sm: 'h-10 px-3 text-xs sm:h-8 [&_svg]:size-3.5',
-        md: 'h-10 px-3.5 text-sm sm:h-9 sm:px-4 [&_svg]:size-4',
+        sm: 'h-11 px-3 text-xs sm:h-8 [&_svg]:size-3.5',
+        md: 'h-11 px-3.5 text-sm sm:h-9 sm:px-4 [&_svg]:size-4',
         lg: 'h-11 px-5 text-sm [&_svg]:size-4',
-        icon: 'size-10 sm:size-9 [&_svg]:size-4',
-        'icon-sm': 'size-10 sm:size-8 [&_svg]:size-3.5',
+        icon: 'size-11 sm:size-9 [&_svg]:size-4',
+        'icon-sm': 'size-11 sm:size-8 [&_svg]:size-3.5',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

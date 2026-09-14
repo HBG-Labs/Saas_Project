@@ -52,7 +52,7 @@ export function FolderBreadcrumb({
   const parent = chemin.length >= 2 ? (chemin[chemin.length - 2]?.id ?? null) : null;
 
   const lien =
-    'hover:text-foreground rounded-md px-2 py-1 transition-colors hover:underline cursor-pointer';
+    'hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 py-1 transition-colors hover:underline focus-visible:ring-2 focus-visible:outline-none sm:min-h-0';
 
   return (
     <div className="flex items-center gap-2">
@@ -169,12 +169,12 @@ export function FolderGrid({
           return (
             <li
               key={dossier.id}
-              className="border-border bg-card hover:border-primary/40 flex items-center gap-3 rounded-lg border p-3 transition-colors"
+              className="border-border bg-card shadow-xs hover:border-primary/40 hover:shadow-raised flex items-center gap-2 rounded-xl border p-2.5 transition-[border-color,box-shadow]"
             >
               <button
                 type="button"
                 onClick={() => onOpen(dossier.id)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                className="focus-visible:ring-ring flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 text-left focus-visible:ring-2 focus-visible:outline-none"
               >
                 {/*
                   Icône PLEINE et colorée, là où les documents portent une
@@ -183,7 +183,9 @@ export function FolderGrid({
                   d'un fichier partageaient le même gris et le même trait, et
                   l'œil devait lire pour savoir sur quoi il allait cliquer.
                 */}
-                <Folder className="text-primary fill-primary/15 h-5 w-5 shrink-0" aria-hidden />
+                <span className="bg-primary-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                  <Folder className="text-primary fill-primary/15 h-5 w-5" aria-hidden />
+                </span>
                 <span className="min-w-0">
                   <span className="text-foreground block truncate text-sm font-medium">
                     {dossier.name}
@@ -194,6 +196,10 @@ export function FolderGrid({
                     </span>
                   )}
                 </span>
+                <ChevronRight
+                  className="text-muted-foreground ml-auto h-4 w-4 shrink-0"
+                  aria-hidden
+                />
               </button>
 
               {(canManage || canDelete) && (
@@ -203,7 +209,7 @@ export function FolderGrid({
                     <button
                       type="button"
                       aria-label={`Actions pour le dossier ${dossier.name}`}
-                      className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:w-9"
                     >
                       <MoreHorizontal className="h-4 w-4" aria-hidden />
                     </button>
@@ -224,7 +230,7 @@ export function FolderGrid({
                   {canDelete && (
                     <>
                       {canManage && <DropdownSeparator />}
-                      <DropdownItem onSelect={() => onDelete(dossier)}>
+                      <DropdownItem className="text-error" onSelect={() => onDelete(dossier)}>
                         <Trash2 className="mr-2 h-4 w-4" aria-hidden />
                         Supprimer
                       </DropdownItem>

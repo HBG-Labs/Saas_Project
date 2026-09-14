@@ -1,11 +1,15 @@
 import {
   ArrowLeft,
+  CheckCircle2,
   ClipboardList,
+  Clock3,
   KeyRound,
   MapPin,
   Phone,
   Trash2,
   User,
+  UserMinus,
+  XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -241,10 +245,6 @@ export default function MissionDetailPage() {
           : {})}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{data.reference}</Badge>
-            <MissionPriorityBadge priority={data.priority} />
-            <MissionStatusBadge status={data.status} />
-
             {/*
               Réservé à `mission.update`. Le trigger `enforce_mission_assignee_scope`
               interdit à l'intervenant de modifier tout ce que ce formulaire
@@ -314,14 +314,54 @@ export default function MissionDetailPage() {
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Avancement</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <section
+        aria-labelledby="mission-progress-title"
+        className="border-primary/20 bg-primary-subtle/35 grid gap-4 rounded-xl border p-4 shadow-xs sm:p-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-center"
+      >
+        <div>
+          <p
+            id="mission-progress-title"
+            className="text-primary text-3xs font-bold tracking-[0.14em] uppercase"
+          >
+            Avancement
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="bg-surface font-mono">
+              {data.reference}
+            </Badge>
+            <MissionPriorityBadge priority={data.priority} />
+            <MissionStatusBadge status={data.status} />
+          </div>
+          <p className="text-muted-foreground mt-2 text-xs">
+            Les actions disponibles dépendent de l’état actuel de la mission.
+          </p>
+        </div>
+        <div className="border-primary/15 border-t pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5">
           <MissionTransitions mission={data} role={role} isAssignee={isAssignee} />
-        </CardContent>
-      </Card>
+        </div>
+      </section>
+
+      {data.site?.access_notes !== null && data.site?.access_notes !== undefined ? (
+        <section
+          aria-labelledby="mission-access-title"
+          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4 shadow-xs"
+        >
+          <span
+            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            aria-hidden="true"
+          >
+            <KeyRound className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="mission-access-title" className="text-foreground text-sm font-semibold">
+              Consignes d’accès au site
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed whitespace-pre-line">
+              {data.site.access_notes}
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       {/*
         Le maillon entre la mission et le travail réel. Sans lui, la machine à
@@ -392,18 +432,6 @@ export default function MissionDetailPage() {
                 <Phone className="size-3.5 shrink-0" aria-hidden="true" />
                 {data.customer_phone}
               </a>
-            ) : null}
-
-            {data.site?.access_notes !== null && data.site?.access_notes !== undefined ? (
-              <div className="bg-surface-sunken flex gap-2 rounded-md p-2">
-                <KeyRound
-                  className="text-muted-foreground mt-0.5 size-3.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <p className="text-muted-foreground text-xs whitespace-pre-line">
-                  {data.site.access_notes}
-                </p>
-              </div>
             ) : null}
 
             {data.latitude != null && data.longitude != null && (
@@ -533,8 +561,8 @@ export default function MissionDetailPage() {
           ) : (assignments.data ?? []).length === 0 ? (
             <p className="text-muted-foreground text-xs">Aucune affectation enregistrée.</p>
           ) : (
-            <ul className="divide-border divide-y">
-              {(assignments.data ?? []).map((assignment) => {
+            <ol className="relative">
+              {(assignments.data ?? []).map((assignment, index, allAssignments) => {
                 const team =
                   assignment.team_id === null
                     ? null
@@ -555,29 +583,76 @@ export default function MissionDetailPage() {
                   // dire « supprimée » serait une déduction, pas un fait.
                   'Destinataire non consultable';
 
+                const presentation =
+                  assignment.declined_at !== null
+                    ? {
+                        label: 'Refusée',
+                        variant: 'error' as const,
+                        icon: XCircle,
+                        iconClass: 'border-error-border bg-error-subtle text-error',
+                      }
+                    : assignment.accepted_at !== null
+                      ? {
+                          label: 'Acceptée',
+                          variant: 'success' as const,
+                          icon: CheckCircle2,
+                          iconClass: 'border-success-border bg-success-subtle text-success',
+                        }
+                      : assignment.unassigned_at !== null
+                        ? {
+                            label: 'Retirée',
+                            variant: 'neutral' as const,
+                            icon: UserMinus,
+                            iconClass: 'border-border bg-surface-sunken text-muted-foreground',
+                          }
+                        : {
+                            label: 'En attente',
+                            variant: 'outline' as const,
+                            icon: Clock3,
+                            iconClass: 'border-primary/25 bg-primary-subtle text-primary',
+                          };
+
+                const AssignmentIcon = presentation.icon;
+
                 return (
-                  <li key={assignment.id} className="flex flex-wrap items-center gap-3 py-2 text-xs">
-                    <span className="text-subtle-foreground font-mono tabular-nums">
-                      {new Date(assignment.assigned_at).toLocaleString('fr-FR')}
+                  <li key={assignment.id} className="relative flex gap-3 pb-5 last:pb-0">
+                    {index < allAssignments.length - 1 ? (
+                      <span
+                        aria-hidden="true"
+                        className="bg-border absolute top-9 bottom-1 left-[19px] w-px"
+                      />
+                    ) : null}
+                    <span
+                      className={`relative flex size-10 shrink-0 items-center justify-center rounded-full border ${presentation.iconClass}`}
+                      aria-hidden="true"
+                    >
+                      <AssignmentIcon className="size-4" />
                     </span>
 
-                    <span className="text-foreground flex-1 font-medium">{target}</span>
-
-                    {assignment.declined_at !== null ? (
-                      <Badge variant="error">
-                        Refusée{assignment.decline_reason !== null ? ` — ${assignment.decline_reason}` : ''}
-                      </Badge>
-                    ) : assignment.accepted_at !== null ? (
-                      <Badge variant="success">Acceptée</Badge>
-                    ) : assignment.unassigned_at !== null ? (
-                      <Badge variant="neutral">Retirée</Badge>
-                    ) : (
-                      <Badge variant="outline">En attente</Badge>
-                    )}
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-foreground min-w-0 flex-1 text-sm font-semibold">
+                          {target}
+                        </p>
+                        <Badge variant={presentation.variant}>{presentation.label}</Badge>
+                      </div>
+                      <time
+                        dateTime={assignment.assigned_at}
+                        className="text-subtle-foreground mt-0.5 block font-mono text-xs tabular-nums"
+                      >
+                        Affectée le {new Date(assignment.assigned_at).toLocaleString('fr-FR')}
+                      </time>
+                      {assignment.decline_reason !== null ? (
+                        <p className="border-error-border bg-error-subtle text-error mt-2 rounded-lg border px-3 py-2 text-xs leading-relaxed">
+                          <span className="font-semibold">Motif du refus :</span>{' '}
+                          {assignment.decline_reason}
+                        </p>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}
-            </ul>
+            </ol>
           )}
         </CardContent>
       </Card>

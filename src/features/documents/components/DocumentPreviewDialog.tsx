@@ -1,4 +1,4 @@
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '@/components/ui';
@@ -83,8 +83,8 @@ function Apercu({
       description={`${famille.toUpperCase()} · ${formaterTaille(document.file_size)}`}
       size="2xl"
       footer={
-        <div className="flex justify-end">
-          <Button onClick={() => void telecharger()}>
+        <div className="flex w-full justify-end">
+          <Button className="w-full sm:w-auto" onClick={() => void telecharger()}>
             <Download className="mr-2 h-4 w-4" aria-hidden />
             Télécharger
           </Button>
@@ -92,20 +92,40 @@ function Apercu({
       }
     >
       {erreur ? (
-        <p role="alert" className="text-destructive py-8 text-center text-sm">
-          Ce document n’a pas pu être ouvert. Réessayez dans un instant.
-        </p>
+        <div
+          role="alert"
+          className="border-error-border bg-error-subtle rounded-xl border px-4 py-8 text-center"
+        >
+          <FileText className="text-error mx-auto mb-3 h-10 w-10" aria-hidden />
+          <p className="text-error text-sm font-medium">Ce document n’a pas pu être ouvert.</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Vous pouvez encore essayer de le télécharger.
+          </p>
+        </div>
       ) : famille === 'image' && url !== null ? (
-        <img src={url} alt={document.name} className="mx-auto max-h-[70vh] rounded-md" />
+        <div className="bg-surface-sunken flex min-h-48 items-center justify-center overflow-hidden rounded-xl p-2 sm:p-4">
+          <img
+            src={url}
+            alt={document.name}
+            className="max-h-[58dvh] w-auto rounded-md object-contain sm:max-h-[70vh]"
+          />
+        </div>
       ) : famille === 'pdf' && url !== null ? (
-        <iframe src={url} title={document.name} className="h-[70vh] w-full rounded-md border-0" />
+        <iframe
+          src={url}
+          title={document.name}
+          className="bg-surface-sunken h-[58dvh] w-full rounded-xl border-0 sm:h-[70vh]"
+        />
       ) : estPrevisualisable(document.mime_type) ? (
-        <div className="py-12 text-center">
+        <div className="bg-surface-sunken rounded-xl py-16 text-center" role="status">
+          <Loader2 className="text-primary mx-auto mb-3 h-6 w-6 animate-spin" aria-hidden />
           <p className="text-muted-foreground text-sm">Préparation de l’aperçu…</p>
         </div>
       ) : (
-        <div className="py-10 text-center">
-          <FileText className="text-muted-foreground mx-auto mb-3 h-10 w-10" aria-hidden />
+        <div className="border-border bg-surface-sunken rounded-xl border px-4 py-10 text-center">
+          <span className="bg-surface mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl shadow-xs">
+            <FileText className="text-muted-foreground h-7 w-7" aria-hidden />
+          </span>
           <p className="text-foreground text-sm font-medium">{document.name}</p>
           <p className="text-muted-foreground mt-1 text-sm">
             Ce format ne s’affiche pas ici. Téléchargez-le pour l’ouvrir dans votre application

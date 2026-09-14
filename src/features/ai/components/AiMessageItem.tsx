@@ -173,7 +173,7 @@ export function AiMessageItem({ message, onExecuteAction, onRetry }: AiMessageIt
         <button
           type="button"
           onClick={handleCopy}
-          className="text-subtle-foreground hover:bg-surface-hover hover:text-foreground flex size-7 cursor-pointer items-center justify-center rounded-lg transition-colors"
+          className="text-subtle-foreground hover:bg-surface-hover hover:text-foreground flex size-11 cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-7"
           title={copied ? 'Copié !' : 'Copier'}
           aria-label="Copier la réponse"
         >
@@ -214,7 +214,7 @@ export function AiMessageItem({ message, onExecuteAction, onRetry }: AiMessageIt
           <button
             type="button"
             onClick={onRetry}
-            className="text-subtle-foreground hover:bg-surface-hover hover:text-foreground flex size-7 cursor-pointer items-center justify-center rounded-lg transition-colors"
+            className="text-subtle-foreground hover:bg-surface-hover hover:text-foreground flex size-11 cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-7"
             title="Régénérer"
             aria-label="Régénérer la réponse"
           >

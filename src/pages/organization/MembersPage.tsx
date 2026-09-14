@@ -99,7 +99,7 @@ export default function MembersPage() {
         description={`Gestion des ${workerLabelPlural.toLowerCase()}, des rôles et des accès aux interventions de l’entreprise.`}
         actions={
           canInvite && organizationId !== null ? (
-            <div className="flex items-center gap-2">
+            <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:flex sm:w-auto">
               <AddMemberDialog
                 organizationId={organizationId}
                 viewerIsOwner={viewerIsOwner}
@@ -123,7 +123,7 @@ export default function MembersPage() {
       <TeamsNavTabs memberCount={activeMembers.length} />
 
       {includedSeats !== null ? (
-        <Card>
+        <Card className="border-primary/20 bg-primary-subtle/30">
           <CardContent className="pt-6">
             {/* Les mêmes chiffres que la facture : les comptes FACTURABLES, et
                 les sièges que la formule comprend. La barre montrait auparavant
@@ -139,8 +139,13 @@ export default function MembersPage() {
       ) : null}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Équipe</CardTitle>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle>Équipe</CardTitle>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {activeMembers.length} membre{activeMembers.length > 1 ? 's' : ''} actif{activeMembers.length > 1 ? 's' : ''}
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           {members.isPending ? (
@@ -189,8 +194,13 @@ export default function MembersPage() {
 
       {canInvite ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Invitations en attente</CardTitle>
+          <CardHeader className="flex-row items-center justify-between gap-3">
+            <div>
+              <CardTitle>Invitations en attente</CardTitle>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Accès non encore activés
+              </p>
+            </div>
           </CardHeader>
           <CardContent>
             {invitations.isPending ? (
@@ -210,14 +220,32 @@ export default function MembersPage() {
                 description="Les invitations créées apparaissent ici jusqu’à leur acceptation ou leur expiration."
               />
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {(invitations.data ?? []).map((invitation) => (
-                  <li key={invitation.id} className="border-border space-y-2 border-b pb-4 last:border-b-0 last:pb-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-foreground flex-1 truncate text-sm font-medium">
-                        {invitation.email}
-                      </span>
+                  <li
+                    key={invitation.id}
+                    className="border-border bg-surface-sunken/50 space-y-3 rounded-xl border p-3.5 sm:p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-foreground truncate text-sm font-medium">
+                          {invitation.email}
+                        </p>
+                        <p className="text-subtle-foreground mt-1 text-xs">
+                          Expire le{' '}
+                          {new Date(invitation.expires_at).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
                       <RoleBadge role={invitation.role} />
+                    </div>
+
+                    <InvitationLink token={invitation.token} />
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         variant="outline"
                         size="sm"
@@ -225,26 +253,37 @@ export default function MembersPage() {
                           resendInvitation.mutate(invitation.id);
                         }}
                         disabled={resendInvitation.isPending}
-                        className="gap-1.5 text-2xs"
+                        isLoading={
+                          resendInvitation.isPending &&
+                          resendInvitation.variables === invitation.id
+                        }
+                        loadingLabel={`Renvoi du courriel à ${invitation.email}`}
+                        className="w-full gap-1.5 text-xs sm:w-auto"
                         aria-label={`Renvoyer le courriel à ${invitation.email}`}
+                        leadingIcon={<Send className="size-3.5" aria-hidden />}
                       >
-                        <Send className="size-3" />
                         {resendInvitation.isPending &&
                         resendInvitation.variables === invitation.id
                           ? 'Envoi…'
                           : 'Renvoyer'}
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon-sm"
+                        variant="danger-outline"
+                        size="sm"
                         onClick={() => {
                           revokeInvitation.mutate(invitation.id);
                         }}
                         disabled={revokeInvitation.isPending}
-                        className="text-muted-foreground hover:text-error"
+                        isLoading={
+                          revokeInvitation.isPending &&
+                          revokeInvitation.variables === invitation.id
+                        }
+                        loadingLabel={`Révocation de l’invitation de ${invitation.email}`}
+                        className="w-full sm:w-auto"
                         aria-label={`Révoquer l’invitation de ${invitation.email}`}
+                        leadingIcon={<X className="size-3.5" aria-hidden />}
                       >
-                        <X className="size-4" />
+                        Révoquer
                       </Button>
                     </div>
 
@@ -260,16 +299,6 @@ export default function MembersPage() {
                         </p>
                       )}
 
-                    <InvitationLink token={invitation.token} />
-
-                    <p className="text-subtle-foreground text-2xs">
-                      Expire le{' '}
-                      {new Date(invitation.expires_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
                   </li>
                 ))}
               </ul>

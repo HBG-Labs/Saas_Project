@@ -169,9 +169,7 @@ export default function QuotesPage() {
   };
 
   const handleUpdateItem = (id: string, key: keyof QuoteLineItem, value: string | number) => {
-    setItems((previous) =>
-      previous.map((it) => (it.id === id ? { ...it, [key]: value } : it)),
-    );
+    setItems((previous) => previous.map((it) => (it.id === id ? { ...it, [key]: value } : it)));
     setSavedReference(null);
     setSavedQuoteId(null);
   };
@@ -274,7 +272,7 @@ export default function QuotesPage() {
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Building className="size-4 text-primary" />
+                <Building className="text-primary size-4" />
                 Informations Client & Intervention
               </CardTitle>
             </CardHeader>
@@ -313,8 +311,8 @@ export default function QuotesPage() {
           {/* Catalog Prestations Rapides */}
           <Card>
             <CardHeader className="flex flex-col items-stretch gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="flex min-w-0 items-start gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:items-center">
-                <Sparkles className="mt-0.5 size-3.5 shrink-0 text-warning sm:mt-0" />
+              <CardTitle className="text-muted-foreground flex min-w-0 items-start gap-2 text-xs font-bold tracking-wider uppercase sm:items-center">
+                <Sparkles className="text-warning mt-0.5 size-3.5 shrink-0 sm:mt-0" />
                 Catalogue des Prestations Standards & Perso
               </CardTitle>
 
@@ -322,7 +320,7 @@ export default function QuotesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddCustomModalOpen(true)}
-                className="w-full cursor-pointer justify-center gap-1.5 border-primary/30 text-2xs text-primary hover:bg-primary/10 sm:w-auto"
+                className="border-primary/30 text-2xs text-primary hover:bg-primary/10 w-full cursor-pointer justify-center gap-1.5 sm:w-auto"
               >
                 <Plus className="size-3" />
                 Créer une prestation perso
@@ -337,7 +335,7 @@ export default function QuotesPage() {
                   return (
                     <div
                       key={preset.id}
-                      className="group relative flex items-center rounded-lg border border-border bg-surface pl-2 pr-1.5 py-1 text-2xs text-muted-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
+                      className="group border-border bg-surface text-muted-foreground hover:border-primary/50 hover:bg-primary/5 relative flex min-h-touch items-center rounded-lg border pr-1 pl-3 text-xs transition-[background-color,border-color] sm:min-h-8"
                     >
                       <button
                         type="button"
@@ -348,18 +346,20 @@ export default function QuotesPage() {
                             price: priceEuros,
                           })
                         }
-                        className="flex items-center gap-1.5 text-left cursor-pointer focus-visible:outline-none"
+                        className="focus-visible:ring-ring flex min-h-touch min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
                       >
-                        <Plus className="size-3 text-primary shrink-0" />
-                        <span className="truncate max-w-[200px] text-foreground">{preset.label}</span>
-                        <span className="font-semibold text-success shrink-0">
+                        <Plus className="text-primary size-3 shrink-0" />
+                        <span className="text-foreground max-w-[200px] truncate">
+                          {preset.label}
+                        </span>
+                        <span className="text-success shrink-0 font-semibold">
                           ({priceEuros.toFixed(2)} €)
                         </span>
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
-                        className="ml-1.5 flex size-4.5 items-center justify-center rounded-full text-subtle-foreground hover:bg-error/20 hover:text-error transition-colors cursor-pointer"
+                        className="text-subtle-foreground hover:bg-error/20 hover:text-error focus-visible:ring-ring ml-1 flex size-touch shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-7"
                         title="Supprimer cette prestation du catalogue"
                         aria-label={`Supprimer ${preset.label} du catalogue`}
                       >
@@ -380,9 +380,9 @@ export default function QuotesPage() {
                       size="sm"
                       onClick={() => seedTemplates.mutate(STANDARD_PRESETS)}
                       disabled={seedTemplates.isPending}
-                      className="cursor-pointer gap-1.5 text-2xs"
+                      className="text-2xs cursor-pointer gap-1.5"
                     >
-                      <Sparkles className="size-3 text-warning" />
+                      <Sparkles className="text-warning size-3" />
                       {seedTemplates.isPending
                         ? 'Import en cours…'
                         : 'Importer les prestations standards'}
@@ -398,7 +398,7 @@ export default function QuotesPage() {
             <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Calculator className="size-4 text-success" />
+                  <Calculator className="text-success size-4" />
                   Détail des Prestations & Fournitures
                 </CardTitle>
               </div>
@@ -425,7 +425,7 @@ export default function QuotesPage() {
                 sache lequel est la quantité et lequel le prix.
               */}
               {items.length > 0 ? (
-                <div className="text-subtle-foreground hidden grid-cols-12 gap-2 px-3 text-3xs font-bold tracking-wider uppercase sm:grid">
+                <div className="text-subtle-foreground text-3xs hidden grid-cols-12 gap-2 px-3 font-bold tracking-wider uppercase sm:grid">
                   <span className="col-span-5">Désignation</span>
                   <span className="col-span-2 text-center">Quantité</span>
                   <span className="col-span-2 text-right">Prix unitaire</span>
@@ -440,7 +440,10 @@ export default function QuotesPage() {
                   className="border-border bg-surface grid grid-cols-12 items-end gap-2 rounded-lg border p-3 text-xs sm:items-center"
                 >
                   <div className="col-span-12 sm:col-span-5">
-                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span
+                      aria-hidden="true"
+                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                    >
                       Désignation
                     </span>
                     <input
@@ -448,12 +451,15 @@ export default function QuotesPage() {
                       value={item.description}
                       aria-label="Désignation de la prestation"
                       onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none"
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
                     />
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
-                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span
+                      aria-hidden="true"
+                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                    >
                       Qté
                     </span>
                     <input
@@ -464,12 +470,15 @@ export default function QuotesPage() {
                       onChange={(e) =>
                         handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
                       }
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none"
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
                     />
                   </div>
 
                   <div className="col-span-4 sm:col-span-2">
-                    <span aria-hidden="true" className="text-subtle-foreground mb-1 block text-3xs font-bold tracking-wider uppercase sm:hidden">
+                    <span
+                      aria-hidden="true"
+                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                    >
                       P.U.
                     </span>
                     <div className="relative flex items-center">
@@ -482,9 +491,9 @@ export default function QuotesPage() {
                         onChange={(e) =>
                           handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
                         }
-                        className="border-border-strong bg-surface-sunken focus:border-primary w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold text-success focus:outline-none"
+                        className="border-border-strong bg-surface-sunken focus:border-primary focus-visible:ring-ring/30 text-success min-h-touch w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold focus:outline-none focus-visible:ring-2 sm:min-h-0"
                       />
-                      <span className="text-muted-foreground absolute right-2 text-2xs">€</span>
+                      <span className="text-muted-foreground text-2xs absolute right-2">€</span>
                     </div>
                   </div>
 
@@ -499,7 +508,7 @@ export default function QuotesPage() {
                       // 44 px : la corbeille est collée au montant, et un
                       // pouce qui vise mal efface une ligne au lieu de la
                       // corriger.
-                      className="text-subtle-foreground hover:text-error flex size-touch cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
+                      className="text-subtle-foreground hover:text-error size-touch flex cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
                       title="Supprimer la ligne"
                       aria-label={`Supprimer la ligne « ${item.description} »`}
                     >
@@ -521,10 +530,10 @@ export default function QuotesPage() {
 
         {/* Aperçu & Synthèse Financière (1/3) */}
         <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-          <Card className="border-success/30 bg-gradient-to-b from-surface to-surface-sunken shadow-xl">
+          <Card className="border-success/30 from-surface to-surface-sunken bg-gradient-to-b shadow-xl">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <FileText className="size-4 text-success" />
+                <FileText className="text-success size-4" />
                 Synthèse du Devis
               </CardTitle>
               <CardDescription>Calcul automatique des totaux HT & TTC.</CardDescription>
@@ -532,30 +541,36 @@ export default function QuotesPage() {
 
             <CardContent className="space-y-5 pt-5 text-xs">
               <div className="space-y-2.5">
-                <div className="flex justify-between text-muted-foreground">
+                <div className="text-muted-foreground flex justify-between">
                   <span>Client :</span>
-                  <strong className="text-foreground truncate max-w-[160px]">{clientName || '—'}</strong>
+                  <strong className="text-foreground max-w-[160px] truncate">
+                    {clientName || '—'}
+                  </strong>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
+                <div className="text-muted-foreground flex justify-between">
                   <span>Site :</span>
-                  <strong className="text-foreground truncate max-w-[160px]">{siteName || '—'}</strong>
+                  <strong className="text-foreground max-w-[160px] truncate">
+                    {siteName || '—'}
+                  </strong>
                 </div>
                 <div className="flex flex-col gap-1.5 pt-1">
-                  <div className="flex justify-between items-center text-muted-foreground">
+                  <div className="text-muted-foreground flex items-center justify-between">
                     <span>Taux de TVA (%) :</span>
-                    <div className="relative flex items-center w-24">
+                    <div className="relative flex w-24 items-center">
                       <input
                         type="text"
                         inputMode="decimal"
                         value={vatInput}
                         onChange={(e) => setVatInput(e.target.value)}
-                        className="w-full rounded border border-border-strong bg-surface py-1 pl-2 pr-6 text-xs text-right text-success font-bold focus:border-primary focus:outline-none"
+                        className="border-border-strong bg-surface text-success focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border py-1 pr-6 pl-2 text-right text-xs font-bold focus:outline-none focus-visible:ring-2 sm:min-h-0"
                       />
-                      <span className="absolute right-2 text-2xs text-muted-foreground font-semibold">%</span>
+                      <span className="text-2xs text-muted-foreground absolute right-2 font-semibold">
+                        %
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-1 text-3xs">
+                  <div className="text-3xs flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => setVatInput('8.5')}
@@ -596,29 +611,29 @@ export default function QuotesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 border-t border-border pt-4">
-                <div className="flex justify-between text-muted-foreground">
+              <div className="border-border space-y-2 border-t pt-4">
+                <div className="text-muted-foreground flex justify-between">
                   <span>Sous-total HT :</span>
-                  <span className="font-semibold text-foreground">{totalHT.toFixed(2)} €</span>
+                  <span className="text-foreground font-semibold">{totalHT.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
+                <div className="text-muted-foreground flex justify-between">
                   <span>TVA ({vatRate}%) :</span>
                   <span>{totalVAT.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between items-center border-t border-border pt-3 text-sm">
-                  <span className="font-bold text-foreground">Total TTC :</span>
-                  <span className="text-xl font-bold text-success">{totalTTC.toFixed(2)} €</span>
+                <div className="border-border flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="text-foreground font-bold">Total TTC :</span>
+                  <span className="text-success text-xl font-bold">{totalTTC.toFixed(2)} €</span>
                 </div>
               </div>
 
-              <div className="space-y-2.5 pt-4 border-t border-border">
+              <div className="border-border space-y-2.5 border-t pt-4">
                 <FormError error={submitError} />
 
                 <Button
                   variant="primary"
                   onClick={handleSendQuote}
                   disabled={createQuote.isPending}
-                  className="w-full justify-center gap-2 cursor-pointer font-semibold"
+                  className="w-full cursor-pointer justify-center gap-2 font-semibold"
                 >
                   <Send className="size-4" />
                   {createQuote.isPending
@@ -645,7 +660,7 @@ export default function QuotesPage() {
                 <Button
                   variant="outline"
                   onClick={() => setIsPreviewPdfOpen(true)}
-                  className="w-full justify-center gap-2 cursor-pointer text-xs"
+                  className="w-full cursor-pointer justify-center gap-2 text-xs"
                 >
                   <Download className="size-4" />
                   Télécharger le Devis PDF
@@ -676,14 +691,17 @@ export default function QuotesPage() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="quote-new-preset-unit" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              <label
+                htmlFor="quote-new-preset-unit"
+                className="text-muted-foreground mb-1.5 block text-xs font-medium"
+              >
                 Unité de facturation
               </label>
               <SelectField
                 id="quote-new-preset-unit"
                 value={newPreset.unit}
                 onChange={(e) => setNewPreset({ ...newPreset, unit: e.target.value })}
-                className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
               >
                 <option value="Unité">Unité / Pièce</option>
                 <option value="Forfait">Forfait Global</option>
@@ -700,16 +718,27 @@ export default function QuotesPage() {
               step="0.5"
               placeholder="ex: 150"
               value={newPreset.price}
-              onChange={(e) => setNewPreset({ ...newPreset, price: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+                setNewPreset({ ...newPreset, price: parseFloat(e.target.value) || 0 })
+              }
               required
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setIsAddCustomModalOpen(false)} className="cursor-pointer">
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-3 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setIsAddCustomModalOpen(false)}
+              className="w-full cursor-pointer sm:w-auto"
+            >
               Annuler
             </Button>
-            <Button type="submit" variant="primary" className="cursor-pointer font-semibold">
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full cursor-pointer font-semibold sm:w-auto"
+            >
               Enregistrer & Ajouter au Devis
             </Button>
           </div>
@@ -722,6 +751,7 @@ export default function QuotesPage() {
         onOpenChange={setIsPreviewPdfOpen}
         title="Document Officiel Devis PDF"
         description="Aperçu avant impression et téléversement du document client."
+        size="2xl"
       >
         <div className="space-y-6 pt-2">
           {/* Document Paper Preview Container (Fond Blanc Style Papier Imprimable) */}
@@ -733,18 +763,23 @@ export default function QuotesPage() {
             le passer sur les jetons produirait une page noire pour quiconque
             travaille en thème sombre. Ce n'est pas une dette de design system.
           */}
-          <div id="quote-printable-area" className="rounded-xl border border-slate-300 bg-white p-6 sm:p-8 text-slate-900 shadow-2xl space-y-6 font-sans">
+          <div
+            id="quote-printable-area"
+            className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
+          >
             {/* Header Document */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
+            <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-blue-900">
                   {organization?.name ?? 'REZO360 Pro'}
                 </h2>
                 {organization?.legal_name && organization.legal_name !== organization.name && (
-                  <p className="text-xs text-slate-600 font-semibold">{organization.legal_name}</p>
+                  <p className="text-xs font-semibold text-slate-600">{organization.legal_name}</p>
                 )}
-                <p className="text-2xs text-slate-500 mt-1">
-                  {organization?.registration_number ? `SIRET : ${organization.registration_number}` : ''}
+                <p className="text-2xs mt-1 text-slate-500">
+                  {organization?.registration_number
+                    ? `SIRET : ${organization.registration_number}`
+                    : ''}
                   {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
                   {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
                 </p>
@@ -757,47 +792,56 @@ export default function QuotesPage() {
                 )}
               </div>
 
-              <div className="text-right sm:text-right">
+              <div className="text-left sm:text-right">
                 <span className="inline-block rounded-md bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-900">
                   DEVIS N° {quoteNumber}
                 </span>
-                <p className="text-2xs text-slate-500 mt-1">Émis le : {todayDate}</p>
+                <p className="text-2xs mt-1 text-slate-500">Émis le : {todayDate}</p>
                 <p className="text-2xs text-slate-500">Valide jusqu'au : {validUntilDate}</p>
               </div>
             </div>
 
             {/* Informations Client & Site */}
-            <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4 border border-slate-200 text-xs">
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs sm:grid-cols-2">
               <div>
-                <p className="text-3xs uppercase font-bold tracking-wider text-slate-500">DESTINATAIRE CLIENT</p>
-                <p className="text-sm font-bold text-slate-900 mt-0.5">{clientName || 'Client non spécifié'}</p>
+                <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+                  DESTINATAIRE CLIENT
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-slate-900">
+                  {clientName || 'Client non spécifié'}
+                </p>
               </div>
               <div>
-                <p className="text-3xs uppercase font-bold tracking-wider text-slate-500">SITE D'INTERVENTION</p>
-                <p className="text-sm font-semibold text-slate-800 mt-0.5">{siteName || 'Site principal'}</p>
+                <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+                  SITE D'INTERVENTION
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-slate-800">
+                  {siteName || 'Site principal'}
+                </p>
               </div>
             </div>
 
             {/* Tableau des Lignes du Devis */}
-            <div className="scroll-x">
-              <table className="w-full text-left text-xs border-collapse">
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
+            <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes du devis à imprimer" tabIndex={0}>
+              <table className="w-full min-w-[34rem] border-collapse text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-300 bg-slate-100 text-slate-700 font-semibold">
-                    <th className="py-2.5 px-3">Désignation de la prestation</th>
-                    <th className="py-2.5 px-2 text-center">Qté</th>
-                    <th className="py-2.5 px-2 text-center">Unité</th>
-                    <th className="py-2.5 px-3 text-right">P.U HT</th>
-                    <th className="py-2.5 px-3 text-right">Total HT</th>
+                  <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
+                    <th className="px-3 py-2.5">Désignation de la prestation</th>
+                    <th className="px-2 py-2.5 text-center">Qté</th>
+                    <th className="px-2 py-2.5 text-center">Unité</th>
+                    <th className="px-3 py-2.5 text-right">P.U HT</th>
+                    <th className="px-3 py-2.5 text-right">Total HT</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 text-slate-800">
                   {items.map((it) => (
                     <tr key={it.id}>
-                      <td className="py-2.5 px-3 font-medium text-slate-900">{it.description}</td>
-                      <td className="py-2.5 px-2 text-center">{it.quantity}</td>
-                      <td className="py-2.5 px-2 text-center text-slate-500">{it.unit}</td>
-                      <td className="py-2.5 px-3 text-right">{it.unitPrice.toFixed(2)} €</td>
-                      <td className="py-2.5 px-3 text-right font-semibold text-slate-900">
+                      <td className="px-3 py-2.5 font-medium text-slate-900">{it.description}</td>
+                      <td className="px-2 py-2.5 text-center">{it.quantity}</td>
+                      <td className="px-2 py-2.5 text-center text-slate-500">{it.unit}</td>
+                      <td className="px-3 py-2.5 text-right">{it.unitPrice.toFixed(2)} €</td>
+                      <td className="px-3 py-2.5 text-right font-semibold text-slate-900">
                         {(it.quantity * it.unitPrice).toFixed(2)} €
                       </td>
                     </tr>
@@ -807,8 +851,8 @@ export default function QuotesPage() {
             </div>
 
             {/* Récapitulatif Financier */}
-            <div className="flex flex-col sm:flex-row justify-between items-end border-t border-slate-300 pt-4 gap-4">
-              <div className="text-3xs text-slate-500 space-y-1">
+            <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
+              <div className="text-3xs space-y-1 text-slate-500">
                 <p>
                   <strong>Conditions de règlement :</strong>{' '}
                   {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
@@ -817,10 +861,14 @@ export default function QuotesPage() {
                   <strong>Mode de paiement :</strong>{' '}
                   {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
                 </p>
-                <p><em>En cas de retard de paiement, une indemnité forfaitaire de 40 € sera appliquée.</em></p>
+                <p>
+                  <em>
+                    En cas de retard de paiement, une indemnité forfaitaire de 40 € sera appliquée.
+                  </em>
+                </p>
               </div>
 
-              <div className="w-full sm:w-56 space-y-1.5 text-xs text-right border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-4 pt-3 sm:pt-0">
+              <div className="w-full space-y-1.5 border-t border-slate-200 pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
                 <div className="flex justify-between text-slate-600">
                   <span>Total HT :</span>
                   <span className="font-semibold text-slate-900">{totalHT.toFixed(2)} €</span>
@@ -829,7 +877,7 @@ export default function QuotesPage() {
                   <span>TVA ({vatRate}%) :</span>
                   <span>{totalVAT.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-blue-900 border-t border-slate-300 pt-2">
+                <div className="flex justify-between border-t border-slate-300 pt-2 text-sm font-bold text-blue-900">
                   <span>TOTAL TTC :</span>
                   <span className="text-base text-blue-900">{totalTTC.toFixed(2)} €</span>
                 </div>
@@ -837,13 +885,15 @@ export default function QuotesPage() {
             </div>
 
             {/* Cadre Bon pour Accord & Signature Client */}
-            <div className="mt-6 rounded-lg border border-slate-300 p-4 bg-slate-50/50">
-              <div className="flex justify-between items-start text-2xs text-slate-600">
+            <div className="mt-6 rounded-lg border border-slate-300 bg-slate-50/50 p-4">
+              <div className="text-2xs flex flex-col items-start justify-between gap-3 text-slate-600 sm:flex-row">
                 <div>
                   <p className="font-bold text-slate-800">Bon pour accord et commande :</p>
-                  <p className="text-3xs text-slate-500">Mention manuscrite « Bon pour accord », Date et Signature du Client :</p>
+                  <p className="text-3xs text-slate-500">
+                    Mention manuscrite « Bon pour accord », Date et Signature du Client :
+                  </p>
                 </div>
-                <div className="h-14 w-40 rounded border border-dashed border-slate-400 bg-white flex items-center justify-center text-3xs text-slate-500 italic">
+                <div className="text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed border-slate-400 bg-white text-slate-500 italic sm:w-40">
                   [Emplacement Signature Client]
                 </div>
               </div>
@@ -851,14 +901,18 @@ export default function QuotesPage() {
           </div>
 
           {/* Action Buttons Modal */}
-          <div className="flex justify-end gap-3 pt-3 border-t border-border">
-            <Button variant="outline" onClick={() => setIsPreviewPdfOpen(false)} className="cursor-pointer">
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-3 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsPreviewPdfOpen(false)}
+              className="w-full cursor-pointer sm:w-auto"
+            >
               Fermer
             </Button>
             <Button
               variant="primary"
               onClick={handlePrintPdf}
-              className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white font-semibold gap-2"
+              className="w-full cursor-pointer gap-2 font-semibold sm:w-auto"
             >
               <Download className="size-4" />
               Imprimer / Enregistrer en PDF

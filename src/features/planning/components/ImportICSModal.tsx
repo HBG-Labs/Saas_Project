@@ -95,8 +95,9 @@ export function ImportICSModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-lg max-h-[85vh] overflow-y-auto bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xl z-50 focus:outline-hidden space-y-5">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] space-y-5 overflow-y-auto rounded-t-2xl border-t border-border bg-surface-raised p-5 shadow-modal focus:outline-hidden data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:p-6 sm:data-[state=open]:zoom-in-95">
+          <div className="mx-auto h-1 w-9 rounded-full bg-border-strong sm:hidden" aria-hidden="true" />
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2.5">
@@ -116,7 +117,7 @@ export function ImportICSModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-subtle flex items-center justify-center transition-colors"
+                className="flex size-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-subtle hover:text-foreground sm:size-8"
                 aria-label="Fermer"
               >
                 <X className="size-4" />
@@ -137,7 +138,7 @@ export function ImportICSModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-border hover:border-primary/60 rounded-2xl p-6 text-center transition-all bg-surface-subtle/40 hover:bg-primary/5 cursor-pointer flex flex-col items-center gap-2"
+              className="flex min-h-36 w-full cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface-subtle/40 p-6 text-center transition-[color,background-color,border-color] hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
             >
               <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <FileText className="size-5" />
@@ -185,7 +186,7 @@ export function ImportICSModal({
                   id="tech-assign-select"
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full h-9 px-3 rounded-xl border border-border bg-surface text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
+                  className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/25 focus:outline-hidden sm:h-9"
                 >
                   <option value="">À affecter plus tard</option>
                   {members.map((member) => (
@@ -222,8 +223,8 @@ export function ImportICSModal({
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-            <Button size="sm" variant="outline" onClick={handleClose} className="text-xs h-8">
+          <div className="safe-bottom flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
+            <Button size="sm" variant="outline" onClick={handleClose} className="h-11 text-xs sm:h-8">
               Annuler
             </Button>
             <Button
@@ -231,7 +232,7 @@ export function ImportICSModal({
               variant="primary"
               disabled={parsedEvents.length === 0 || submitting}
               onClick={handleConfirmImport}
-              className="text-xs h-8 gap-1.5"
+              className="h-11 gap-1.5 text-xs sm:h-8"
             >
               <CheckCircle2 className="size-3.5" />
               <span>

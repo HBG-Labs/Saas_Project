@@ -46,7 +46,6 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 import type { EquipmentStatus } from '@/types/database';
 import type { EquipmentWithAssignee } from '@/types/domain';
 
-
 const STATUS_OPTIONS: { value: EquipmentStatus; label: string }[] = [
   { value: 'assigned', label: 'Attribué à un technicien' },
   { value: 'available', label: 'Disponible en Stock' },
@@ -80,7 +79,9 @@ export default function EquipmentPage() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | EquipmentStatus>('all');
-  const [filterCalibration, setFilterCalibration] = useState<'all' | 'valid' | 'due_soon' | 'expired'>('all');
+  const [filterCalibration, setFilterCalibration] = useState<
+    'all' | 'valid' | 'due_soon' | 'expired'
+  >('all');
 
   /*
     Categories du metier de l'entreprise, plus les communes.
@@ -217,12 +218,13 @@ export default function EquipmentPage() {
         { header: 'Statut', accessor: (eq) => EQUIPMENT_STATUS_LABELS[eq.status] ?? eq.status },
         {
           header: 'Technicien assigné',
-          accessor: (eq) => (eq.assigned_member ? memberDisplayName(eq.assigned_member) : 'Non assigné'),
+          accessor: (eq) =>
+            eq.assigned_member ? memberDisplayName(eq.assigned_member) : 'Non assigné',
         },
         { header: 'Prochain contrôle', accessor: (eq) => eq.next_calibration ?? '' },
         { header: 'État étalonnage', accessor: (eq) => calibrationState(eq.next_calibration) },
       ],
-      list
+      list,
     );
   };
 
@@ -267,10 +269,12 @@ export default function EquipmentPage() {
         <Card className="border-primary/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Total Équipements</p>
+              <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
+                Total Équipements
+              </p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{totalCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-primary/10 text-primary border border-primary/20">
+            <div className="bg-primary/10 text-primary border-primary/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
               <Cpu className="size-5" />
             </div>
           </div>
@@ -279,10 +283,12 @@ export default function EquipmentPage() {
         <Card className="border-success/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-success">Attribués / Sur le terrain</p>
+              <p className="text-2xs text-success font-semibold tracking-wider uppercase">
+                Attribués / Sur le terrain
+              </p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{assignedCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-success/10 text-success border border-success/20">
+            <div className="bg-success/10 text-success border-success/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
               <User className="size-5" />
             </div>
           </div>
@@ -291,10 +297,12 @@ export default function EquipmentPage() {
         <Card className="border-border-strong p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Disponibles en Stock</p>
+              <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
+                Disponibles en Stock
+              </p>
               <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{availableCount}</p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-surface-raised text-muted-foreground border border-border-strong">
+            <div className="bg-surface-raised text-muted-foreground border-border-strong hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
               <CheckCircle2 className="size-5" />
             </div>
           </div>
@@ -303,10 +311,14 @@ export default function EquipmentPage() {
         <Card className="border-warning/20 p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-warning">Étalonnage / Révision</p>
-              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">{maintenanceCount}</p>
+              <p className="text-2xs text-warning font-semibold tracking-wider uppercase">
+                Étalonnage / Révision
+              </p>
+              <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
+                {maintenanceCount}
+              </p>
             </div>
-            <div className="hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex bg-warning/10 text-warning border border-warning/20">
+            <div className="bg-warning/10 text-warning border-warning/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
               <AlertTriangle className="size-5" />
             </div>
           </div>
@@ -315,15 +327,15 @@ export default function EquipmentPage() {
 
       {/* Barre d'action et filtres */}
       <Card className="p-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Rechercher par nom, marque ou matricule S/N…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus:border-primary min-h-touch w-full rounded-md border py-2 pr-4 pl-9 text-xs focus:outline-none md:min-h-0"
+              className="border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border py-2 pr-4 pl-9 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0"
             />
           </div>
 
@@ -338,7 +350,7 @@ export default function EquipmentPage() {
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               aria-label="Filtrer par catégorie"
-              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto"
+              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
             >
               <option value="all">Toutes catégories</option>
               {categories.map((option) => (
@@ -352,7 +364,7 @@ export default function EquipmentPage() {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | EquipmentStatus)}
               aria-label="Filtrer par statut"
-              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto"
+              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
             >
               <option value="all">Tous les statuts</option>
               {STATUS_OPTIONS.map((option) => (
@@ -364,9 +376,11 @@ export default function EquipmentPage() {
 
             <SelectField
               value={filterCalibration}
-              onChange={(e) => setFilterCalibration(e.target.value as 'all' | 'valid' | 'due_soon' | 'expired')}
+              onChange={(e) =>
+                setFilterCalibration(e.target.value as 'all' | 'valid' | 'due_soon' | 'expired')
+              }
               aria-label="Filtrer par conformité étalonnage"
-              className="border-border-strong bg-surface text-foreground focus:border-primary min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none md:min-h-0 md:w-auto font-medium"
+              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
             >
               <option value="all">Tous contrôles</option>
               <option value="valid">✅ Étalonnage Conforme</option>
@@ -380,7 +394,7 @@ export default function EquipmentPage() {
                 variant="outline"
                 onClick={handleExportCsv}
                 title="Exporter le matériel en CSV"
-                className="col-span-2 min-h-touch cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
+                className="min-h-touch col-span-2 cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
               >
                 <Download className="size-4" />
                 <span className="hidden sm:inline">Exporter CSV</span>
@@ -391,7 +405,7 @@ export default function EquipmentPage() {
               <Button
                 variant="primary"
                 onClick={() => setIsAddOpen(true)}
-                className="col-span-2 min-h-touch cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
+                className="min-h-touch col-span-2 cursor-pointer gap-2 text-xs md:col-span-1 md:min-h-0"
               >
                 <Plus className="size-4" />
                 Nouveau matériel
@@ -401,10 +415,12 @@ export default function EquipmentPage() {
         </div>
 
         {calibrationAlertsCount > 0 && (
-          <div className="mt-3 flex items-center gap-2.5 p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold">
-            <AlertTriangle className="size-4 shrink-0 text-warning" />
+          <div className="bg-warning/10 border-warning/30 text-warning mt-3 flex items-center gap-2.5 rounded-xl border p-3 text-xs font-semibold">
+            <AlertTriangle className="text-warning size-4 shrink-0" />
             <span>
-              <strong>Alerte Réglementaire :</strong> {calibrationAlertsCount} appareil(s) de mesure nécessite(nt) un étalonnage ou un contrôle périodique urgent pour rester conformes aux exigences des donneurs d'ordre.
+              <strong>Alerte Réglementaire :</strong> {calibrationAlertsCount} appareil(s) de mesure
+              nécessite(nt) un étalonnage ou un contrôle périodique urgent pour rester conformes aux
+              exigences des donneurs d'ordre.
             </span>
           </div>
         )}
@@ -425,15 +441,24 @@ export default function EquipmentPage() {
 
             const statusBadge =
               eq.status === 'assigned' ? (
-                <Badge variant="outline" className="border-success/30 bg-success/10 text-success text-2xs">
+                <Badge
+                  variant="outline"
+                  className="border-success/30 bg-success/10 text-success text-2xs"
+                >
                   Attribué{assigneeName !== null ? ` · ${assigneeName}` : ''}
                 </Badge>
               ) : eq.status === 'available' ? (
-                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary text-2xs">
+                <Badge
+                  variant="outline"
+                  className="border-primary/30 bg-primary/10 text-primary text-2xs"
+                >
                   Stock Disponible
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning text-2xs">
+                <Badge
+                  variant="outline"
+                  className="border-warning/30 bg-warning/10 text-warning text-2xs"
+                >
                   En Révision / Étalonnage
                 </Badge>
               );
@@ -441,18 +466,18 @@ export default function EquipmentPage() {
             const calibration = calibrationState(eq.next_calibration);
 
             return (
-              <Card key={eq.id} className="p-4 hover:border-border-strong transition-colors">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <Card key={eq.id} className="hover:border-border-strong p-4 transition-colors">
+                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                   <div className="flex items-start gap-3.5">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-raised text-primary border border-border-strong mt-0.5">
+                    <div className="bg-surface-raised text-primary border-border-strong mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border">
                       <Wrench className="size-5" />
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="text-sm font-semibold text-foreground">{eq.name}</h3>
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h3 className="text-foreground text-sm font-semibold">{eq.name}</h3>
                         {eq.brand !== null && eq.brand !== '' && (
-                          <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-2xs text-muted-foreground">
+                          <span className="bg-surface-raised text-2xs text-muted-foreground rounded px-2 py-0.5 font-mono">
                             {eq.brand}
                           </span>
                         )}
@@ -470,7 +495,8 @@ export default function EquipmentPage() {
                         <span>
                           Catégorie :{' '}
                           <strong className="text-muted-foreground">
-                            {categories.find((c) => c.id === eq.category_id)?.label ?? (eq.category ? EQUIPMENT_CATEGORY_LABELS[eq.category] : 'Général')}
+                            {categories.find((c) => c.id === eq.category_id)?.label ??
+                              (eq.category ? EQUIPMENT_CATEGORY_LABELS[eq.category] : 'Général')}
                           </strong>
                         </span>
                         <span className="hidden sm:inline">•</span>
@@ -504,7 +530,7 @@ export default function EquipmentPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setEditing(eq)}
-                        className="cursor-pointer text-muted-foreground hover:text-primary"
+                        className="text-muted-foreground hover:text-primary cursor-pointer"
                         title="Modifier cet équipement"
                       >
                         <Pencil className="size-4" />
@@ -514,11 +540,15 @@ export default function EquipmentPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => {
-                          if (confirm(`Êtes-vous sûr de vouloir supprimer l'équipement « ${eq.name} » ?`)) {
+                          if (
+                            confirm(
+                              `Êtes-vous sûr de vouloir supprimer l'équipement « ${eq.name} » ?`,
+                            )
+                          ) {
                             removeEquipment.mutate(eq.id);
                           }
                         }}
-                        className="cursor-pointer text-muted-foreground hover:text-error"
+                        className="text-muted-foreground hover:text-error cursor-pointer"
                         title="Supprimer"
                       >
                         <Trash2 className="size-4" />
@@ -532,7 +562,7 @@ export default function EquipmentPage() {
         )}
 
         {!equipmentQuery.isPending && list.length === 0 && (
-          <Card className="p-8 text-center text-muted-foreground">
+          <Card className="text-muted-foreground p-8 text-center">
             <p className="text-sm">
               {totalCount === 0
                 ? 'Aucun équipement enregistré. Ajoutez votre premier appareil de mesure.'
@@ -580,14 +610,17 @@ export default function EquipmentPage() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="new-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              <label
+                htmlFor="new-eq-category"
+                className="text-muted-foreground mb-1.5 block text-xs font-medium"
+              >
                 Catégorie technique
               </label>
               <SelectField
                 id="new-eq-category"
                 value={newEq.categoryId}
                 onChange={(e) => setNewEq({ ...newEq, categoryId: e.target.value })}
-                className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
               >
                 {categories.map((option) => (
                   <option key={option.id} value={option.id}>
@@ -598,14 +631,17 @@ export default function EquipmentPage() {
             </div>
 
             <div>
-              <label htmlFor="new-eq-member" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              <label
+                htmlFor="new-eq-member"
+                className="text-muted-foreground mb-1.5 block text-xs font-medium"
+              >
                 Affecter à un technicien
               </label>
               <SelectField
                 id="new-eq-member"
                 value={newEq.assignedMemberId}
                 onChange={(e) => setNewEq({ ...newEq, assignedMemberId: e.target.value })}
-                className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
               >
                 <option value="">Aucun — laisser en stock</option>
                 {members.map((member) => (
@@ -624,15 +660,20 @@ export default function EquipmentPage() {
             onChange={(e) => setNewEq({ ...newEq, nextCalibration: e.target.value })}
           />
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setIsAddOpen(false)} className="cursor-pointer">
+          <div className="border-border flex justify-end gap-2 border-t pt-3">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="cursor-pointer"
+            >
               Annuler
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={createEquipment.isPending}
-              className="cursor-pointer bg-primary hover:bg-primary text-white"
+              className="bg-primary hover:bg-primary cursor-pointer text-white"
             >
               {createEquipment.isPending ? 'Enregistrement…' : "Enregistrer l'équipement"}
             </Button>
@@ -678,16 +719,17 @@ export default function EquipmentPage() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label htmlFor="edit-eq-category" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                <label
+                  htmlFor="edit-eq-category"
+                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                >
                   Catégorie technique
                 </label>
                 <SelectField
                   id="edit-eq-category"
                   value={editing.category_id ?? ''}
-                  onChange={(e) =>
-                    setEditing({ ...editing, category_id: e.target.value })
-                  }
-                  className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                  onChange={(e) => setEditing({ ...editing, category_id: e.target.value })}
+                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
                 >
                   {categories.map((option) => (
                     <option key={option.id} value={option.id}>
@@ -698,7 +740,10 @@ export default function EquipmentPage() {
               </div>
 
               <div>
-                <label htmlFor="edit-eq-status" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                <label
+                  htmlFor="edit-eq-status"
+                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                >
                   Statut du matériel
                 </label>
                 <SelectField
@@ -707,7 +752,7 @@ export default function EquipmentPage() {
                   onChange={(e) =>
                     setEditing({ ...editing, status: e.target.value as EquipmentStatus })
                   }
-                  className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
                 >
                   {STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -720,7 +765,10 @@ export default function EquipmentPage() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label htmlFor="edit-eq-member" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                <label
+                  htmlFor="edit-eq-member"
+                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
+                >
                   Attribué au technicien
                 </label>
                 <SelectField
@@ -732,7 +780,7 @@ export default function EquipmentPage() {
                       assigned_member_id: e.target.value === '' ? null : e.target.value,
                     })
                   }
-                  className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
                 >
                   <option value="">Aucun — retour en stock</option>
                   {members.map((member) => (
@@ -753,7 +801,7 @@ export default function EquipmentPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <div className="border-border flex justify-end gap-2 border-t pt-3">
               <Button
                 variant="outline"
                 type="button"
@@ -766,7 +814,7 @@ export default function EquipmentPage() {
                 type="submit"
                 variant="primary"
                 disabled={updateEquipment.isPending}
-                className="cursor-pointer bg-primary hover:bg-primary text-white font-semibold"
+                className="bg-primary hover:bg-primary cursor-pointer font-semibold text-white"
               >
                 {updateEquipment.isPending ? 'Enregistrement…' : 'Enregistrer les modifications'}
               </Button>

@@ -2,7 +2,7 @@ import { AlertCircle, Check, Loader2, UploadCloud, X } from 'lucide-react';
 import { useId, useRef, useState, type DragEvent } from 'react';
 
 import { useToast } from '@/components/feedback/toast-context';
-import { Button, Modal } from '@/components/ui';
+import { Badge, Button, Modal } from '@/components/ui';
 import { SelectField } from '@/components/ui/SelectField';
 import type { DocumentFolder } from '@/types/domain';
 
@@ -25,6 +25,13 @@ const LIBELLES: Record<EtatFichier, string> = {
   envoi: 'Envoi…',
   reussi: 'Ajouté',
   echec: 'Échec',
+};
+
+const BADGES: Record<EtatFichier, 'neutral' | 'info' | 'success' | 'error'> = {
+  en_attente: 'neutral',
+  envoi: 'info',
+  reussi: 'success',
+  echec: 'error',
 };
 
 /**
@@ -110,7 +117,7 @@ export function DocumentUploadDialog({
       description={`PDF, images, Word, Excel, CSV et texte. ${TAILLE_MAX_LISIBLE} par fichier.`}
       size="lg"
       footer={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-muted-foreground text-sm" aria-live="polite">
             {file.length === 0
               ? ''
@@ -119,10 +126,21 @@ export function DocumentUploadDialog({
                 : `${file.length} fichier${file.length > 1 ? 's' : ''} sélectionné${file.length > 1 ? 's' : ''}`}
           </span>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={fermer} disabled={enCours}>
+            <Button
+              variant="ghost"
+              onClick={fermer}
+              disabled={enCours}
+              className="w-full sm:w-auto"
+            >
               {traites > 0 && enAttente === 0 ? 'Fermer' : 'Annuler'}
             </Button>
-            <Button onClick={() => void envoyer()} disabled={enAttente === 0 || enCours}>
+            <Button
+              onClick={() => void envoyer()}
+              disabled={enAttente === 0 || enCours}
+              isLoading={enCours}
+              loadingLabel="Envoi des documents en cours"
+              className="w-full sm:w-auto"
+            >
               {enCours
                 ? 'Envoi en cours…'
                 : enAttente > 1
@@ -142,12 +160,17 @@ export function DocumentUploadDialog({
           onDragLeave={() => setSurvole(false)}
           onDrop={surDepot}
           className={[
-            'rounded-lg border-2 border-dashed p-6 text-center transition-colors',
-            survole ? 'border-primary bg-primary/5' : 'border-border',
+            'rounded-xl border-2 border-dashed p-5 text-center transition-[border-color,background-color,box-shadow] sm:p-8',
+            survole
+              ? 'border-primary bg-primary-subtle ring-primary/15 ring-4'
+              : 'border-border-strong bg-surface-sunken/60 hover:border-primary/50',
           ].join(' ')}
         >
-          <UploadCloud className="text-muted-foreground mx-auto mb-2 h-8 w-8" aria-hidden />
-          <p className="text-muted-foreground text-sm">
+          <span className="bg-primary-subtle mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl">
+            <UploadCloud className="text-primary h-6 w-6" aria-hidden />
+          </span>
+          <p className="text-foreground text-sm font-medium">Sélectionnez vos documents</p>
+          <p className="text-muted-foreground mt-1 text-sm">
             <span className="hidden sm:inline">Glissez vos fichiers ici, ou </span>
             choisissez-en plusieurs depuis votre appareil.
           </p>
@@ -169,7 +192,7 @@ export function DocumentUploadDialog({
           <Button
             type="button"
             variant="outline"
-            className="mt-3"
+            className="mt-4 w-full sm:w-auto"
             disabled={enCours}
             onClick={() => inputRef.current?.click()}
           >
@@ -191,38 +214,70 @@ export function DocumentUploadDialog({
         </SelectField>
 
         {file.length > 0 && (
-          <ul className="divide-border border-border max-h-64 divide-y overflow-y-auto rounded-lg border">
-            {file.map((entree) => (
-              <li key={entree.id} className="flex items-center gap-3 p-3">
-                <EtatIcone etat={entree.etat} />
+          <section aria-labelledby={`${inputId}-queue-title`} className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 id={`${inputId}-queue-title`} className="text-foreground text-sm font-medium">
+                Fichiers sélectionnés
+              </h3>
+              <span className="text-muted-foreground text-xs">
+                {file.length} fichier{file.length > 1 ? 's' : ''}
+              </span>
+            </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-foreground truncate text-sm font-medium">
-                    {entree.fichier.name}
-                  </p>
-                  <p
-                    className={[
-                      'truncate text-xs',
-                      entree.etat === 'echec' ? 'text-destructive' : 'text-muted-foreground',
-                    ].join(' ')}
-                  >
-                    {formaterTaille(entree.fichier.size)} · {entree.erreur ?? LIBELLES[entree.etat]}
-                  </p>
-                </div>
+            {enCours && (
+              <div
+                className="bg-surface-sunken h-1.5 overflow-hidden rounded-full"
+                role="progressbar"
+                aria-label="Progression de l’envoi"
+                aria-valuemin={0}
+                aria-valuemax={file.length}
+                aria-valuenow={traites}
+              >
+                <div
+                  className="bg-primary h-full rounded-full transition-[width] duration-300"
+                  style={{ width: `${Math.round((traites / file.length) * 100)}%` }}
+                />
+              </div>
+            )}
 
-                {entree.etat !== 'envoi' && (
-                  <button
-                    type="button"
-                    onClick={() => retirer(entree.id)}
-                    aria-label={`Retirer ${entree.fichier.name}`}
-                    className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
-                  >
-                    <X className="h-4 w-4" aria-hidden />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+            <ul className="divide-border border-border max-h-[min(16rem,40dvh)] divide-y overflow-y-auto rounded-xl border">
+              {file.map((entree) => (
+                <li key={entree.id} className="bg-surface flex items-start gap-3 p-3 sm:items-center">
+                  <EtatIcone etat={entree.etat} />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground truncate text-sm font-medium">
+                      {entree.fichier.name}
+                    </p>
+                    <p
+                      className={[
+                        'mt-0.5 text-xs leading-relaxed',
+                        entree.etat === 'echec' ? 'text-error' : 'text-muted-foreground',
+                      ].join(' ')}
+                    >
+                      {formaterTaille(entree.fichier.size)} ·{' '}
+                      {entree.erreur ?? LIBELLES[entree.etat]}
+                    </p>
+                  </div>
+
+                  <Badge variant={BADGES[entree.etat]} className="hidden sm:inline-flex">
+                    {LIBELLES[entree.etat]}
+                  </Badge>
+
+                  {entree.etat !== 'envoi' && (
+                    <button
+                      type="button"
+                      onClick={() => retirer(entree.id)}
+                      aria-label={`Retirer ${entree.fichier.name}`}
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring -my-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-8 sm:w-8"
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     </Modal>
@@ -231,13 +286,15 @@ export function DocumentUploadDialog({
 
 function EtatIcone({ etat }: { etat: EtatFichier }) {
   if (etat === 'reussi') {
-    return <Check className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />;
+    return <Check className="text-success mt-0.5 h-5 w-5 shrink-0 sm:mt-0" aria-hidden />;
   }
   if (etat === 'echec') {
-    return <AlertCircle className="text-destructive h-5 w-5 shrink-0" aria-hidden />;
+    return <AlertCircle className="text-error mt-0.5 h-5 w-5 shrink-0 sm:mt-0" aria-hidden />;
   }
   if (etat === 'envoi') {
-    return <Loader2 className="text-primary h-5 w-5 shrink-0 animate-spin" aria-hidden />;
+    return <Loader2 className="text-primary mt-0.5 h-5 w-5 shrink-0 animate-spin sm:mt-0" aria-hidden />;
   }
-  return <UploadCloud className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />;
+  return (
+    <UploadCloud className="text-muted-foreground mt-0.5 h-5 w-5 shrink-0 sm:mt-0" aria-hidden />
+  );
 }

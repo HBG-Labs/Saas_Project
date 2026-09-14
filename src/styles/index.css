@@ -49,7 +49,8 @@
 
     --foreground: #0e1720;
     --muted-foreground: #46545f;
-    --subtle-foreground: #77868f;
+    /* 4,94:1 sur blanc : reste discret sans passer sous WCAG AA. */
+    --subtle-foreground: #65727c;
 
     --primary: #1b44c8;
     --primary-hover: #163aac;
@@ -73,7 +74,8 @@
     --success-border: #a8d8c4;
     --success-foreground: #ffffff;
 
-    --warning: #c46a00;
+    /* 4,76:1 sur le fond warning-subtle pour le texte de petite taille. */
+    --warning: #a35500;
     --warning-subtle: #fbeedc;
     --warning-border: #efc188;
     --warning-foreground: #ffffff;
@@ -119,7 +121,8 @@
 
     --foreground: #f0f4ff;
     --muted-foreground: #8fa3c8;
-    --subtle-foreground: #5d7499;
+    /* Lisible aussi sur les surfaces marine élevées (4,93:1 minimum). */
+    --subtle-foreground: #7b90b3;
 
     --primary: #7fa0ff;
     --primary-hover: #9db6ff;
@@ -258,14 +261,13 @@
     éventuellement installée sur le poste.
   */
   --font-display:
-    'Archivo Variable', 'Archivo', 'IBM Plex Sans Variable', -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    'Archivo Variable', 'Archivo', 'IBM Plex Sans Variable', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
   --font-sans:
-    'IBM Plex Sans Variable', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
+    'IBM Plex Sans Variable', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-hand:
-    'Caveat Variable', 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  --font-hand: 'Caveat Variable', 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
 
   /*
     Palier supplémentaire sous `sm`.
@@ -414,13 +416,17 @@
     Archivo est plus serrée qu'IBM Plex Sans : l'interlettrage négatif est
     réduit de -0.02em à -0.015em, sinon les gros titres se referment.
   */
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: -0.015em;
   }
 
-  .tabular, table {
+  .tabular,
+  table {
     font-variant-numeric: tabular-nums;
   }
 }
@@ -665,4 +671,3 @@ html.compact-mode {
    `animate-spin-slow` (déclaré dans `@theme`) reste en place : lui est
    réellement utilisé, pour l'indicateur de synchronisation.
    ============================================================================= */
-

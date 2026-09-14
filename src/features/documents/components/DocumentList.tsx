@@ -118,7 +118,7 @@ export function DocumentList({
           <button
             type="button"
             aria-label={`Actions pour ${document.name}`}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:w-9"
           >
             <MoreHorizontal className="h-4 w-4" aria-hidden />
           </button>
@@ -150,7 +150,7 @@ export function DocumentList({
         {canDelete && (
           <>
             <DropdownSeparator />
-            <DropdownItem onSelect={() => onDelete(document)}>
+            <DropdownItem className="text-error" onSelect={() => onDelete(document)}>
               <Trash2 className="mr-2 h-4 w-4" aria-hidden />
               Supprimer
             </DropdownItem>
@@ -163,7 +163,7 @@ export function DocumentList({
   return (
     <>
       {/* Téléphone : cartes compactes. */}
-      <ul className="space-y-2 md:hidden">
+      <ul className="space-y-2.5 md:hidden">
         {documents.map((document) => {
           const apparence = APPARENCE[familleDeDocument(document.mime_type)];
           const Icone = apparence.icone;
@@ -171,20 +171,35 @@ export function DocumentList({
           return (
             <li
               key={document.id}
-              className="border-border bg-card flex items-center gap-3 rounded-lg border p-3"
+              className="border-border bg-card shadow-xs hover:border-primary/30 flex items-start gap-3 rounded-xl border p-3.5 transition-[border-color,box-shadow]"
             >
-              <Icone className={`h-5 w-5 shrink-0 ${apparence.couleur}`} aria-hidden />
+              <span className="bg-surface-sunken flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <Icone className={`h-5 w-5 ${apparence.couleur}`} aria-hidden />
+              </span>
               <button
                 type="button"
                 onClick={() => onOpen(document)}
-                className="min-w-0 flex-1 text-left"
+                className="focus-visible:ring-ring min-w-0 flex-1 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none"
               >
                 <p className="text-foreground truncate text-sm font-medium">{document.name}</p>
-                <p className="text-muted-foreground truncate text-xs">
-                  {apparence.libelle} · {formaterTaille(document.file_size)}
+                {document.description !== null && (
+                  <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
+                    {document.description}
+                  </p>
+                )}
+                {document.shared_with_client && (
+                  <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge variant="info">
+                      <Users className="mr-0.5 h-3 w-3" aria-hidden />
+                      Visible par le client
+                    </Badge>
+                  </span>
+                )}
+                <span className="text-muted-foreground mt-2 block truncate text-xs">
+                  {apparence.libelle} · {formaterTaille(document.file_size)} ·{' '}
+                  {dateCourte(document.created_at)}
                   {dossier !== null && ` · ${dossier}`}
-                  {document.shared_with_client && ' · Visible par le client'}
-                </p>
+                </span>
               </button>
               {menu(document)}
             </li>
@@ -193,8 +208,9 @@ export function DocumentList({
       </ul>
 
       {/* Écran large : tableau. */}
-      <div className="border-border hidden overflow-x-auto rounded-lg border md:block">
-        <table className="w-full text-sm">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- la liste horizontale doit être défilable au clavier */}
+      <div className="border-border bg-card shadow-xs focus-visible:ring-ring hidden overflow-x-auto rounded-xl border focus-visible:ring-2 focus-visible:outline-none md:block" role="region" aria-label="Liste des documents" tabIndex={0}>
+        <table className="min-w-[720px] w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Nom</th>
@@ -213,15 +229,15 @@ export function DocumentList({
               const Icone = apparence.icone;
               const dossier = nomDossier(document.folder_id);
               return (
-                <tr key={document.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={document.id} className="hover:bg-surface-hover transition-colors">
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       onClick={() => onOpen(document)}
-                      className="flex items-center gap-2 text-left"
+                      className="focus-visible:ring-ring flex max-w-[32rem] min-w-0 items-center gap-2 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none"
                     >
                       <Icone className={`h-4 w-4 shrink-0 ${apparence.couleur}`} aria-hidden />
-                      <span className="text-foreground font-medium">{document.name}</span>
+                      <span className="text-foreground truncate font-medium">{document.name}</span>
                     </button>
                     {document.description !== null && (
                       <p className="text-muted-foreground mt-0.5 line-clamp-1 pl-6 text-xs">

@@ -122,6 +122,29 @@ export default function CustomerDetailPage() {
         </Link>
       </Button>
 
+      {isArchived ? (
+        <section
+          aria-labelledby="customer-archived-title"
+          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4"
+        >
+          <span
+            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            aria-hidden="true"
+          >
+            <Archive className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="customer-archived-title" className="text-foreground text-sm font-semibold">
+              Client archivé
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              Cette fiche reste conservée dans vos archives. Réactivez-la pour reprendre son
+              utilisation courante.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
       <div className="border-border bg-surface-subtle flex flex-wrap items-center gap-2 rounded-xl border p-3 text-xs">
         <Badge variant={manquesFacturation.length === 0 ? 'success' : 'warning'}>
           Données de facturation : {manquesFacturation.length === 0 ? 'renseignées' : 'à compléter'}

@@ -80,7 +80,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         className={({ isActive }) =>
           cn(
             variant === 'bottom'
-              ? 'min-h-touch relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium'
+              ? 'min-h-touch text-3xs relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-medium'
               : 'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
             variant === 'side' && 'transition-colors',
             isActive
@@ -106,21 +106,21 @@ export function PortalLayout({ context }: { context: PortalContext }) {
               <Icon className="size-4" aria-hidden="true" />
             )}
             <span className={variant === 'bottom' ? 'truncate' : undefined}>{item.label}</span>
-        {badge !== null ? (
-          <span
-            className={cn(
-              'rounded-full px-1.5 text-[10px] font-bold leading-4',
-              variant === 'bottom'
-                ? 'bg-accent text-accent-foreground absolute top-1 right-1/4'
-                : isActive
-                  ? 'bg-primary-foreground/20 text-primary-foreground ml-auto'
-                  : 'bg-primary text-primary-foreground ml-auto',
-            )}
-            aria-label={`${badge} message(s) non lu(s)`}
-          >
-            {badge}
-          </span>
-        ) : null}
+            {badge !== null ? (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-[10px] leading-4 font-bold',
+                  variant === 'bottom'
+                    ? 'bg-accent text-accent-foreground absolute top-1 right-1/4'
+                    : isActive
+                      ? 'bg-primary-foreground/20 text-primary-foreground ml-auto'
+                      : 'bg-primary text-primary-foreground ml-auto',
+                )}
+                aria-label={`${badge} message(s) non lu(s)`}
+              >
+                {badge}
+              </span>
+            ) : null}
           </>
         )}
       </NavLink>
@@ -152,11 +152,15 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold">{context.organization_name}</span>
-              <span className="block truncate text-[11px] text-white/80">Espace client · {context.customer_name}</span>
+              <span className="text-3xs block truncate text-white/80">
+                Espace client · {context.customer_name}
+              </span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="hidden max-w-[16rem] truncate text-xs text-white/80 sm:inline">{context.contact_email}</span>
+            <span className="hidden max-w-[16rem] truncate text-xs text-white/80 sm:inline">
+              {context.contact_email}
+            </span>
             <Button
               variant="ghost"
               size="sm"
@@ -183,12 +187,12 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             </nav>
             <div className="border-border bg-surface-subtle rounded-2xl border p-3">
               <p className="text-foreground text-xs font-semibold">Une question ?</p>
-              <p className="text-muted-foreground mt-1 text-[11px]">
-                Écrivez à {context.organization_name} depuis la messagerie, ou répondez simplement à l’un de
-                ses e-mails : votre réponse arrive ici.
+              <p className="text-muted-foreground text-3xs mt-1">
+                Écrivez à {context.organization_name} depuis la messagerie, ou répondez simplement à
+                l’un de ses e-mails : votre réponse arrive ici.
               </p>
             </div>
-            <p className="text-muted-foreground px-2 text-center text-[11px]">
+            <p className="text-muted-foreground text-3xs px-2 text-center">
               Propulsé par <span className="text-foreground font-semibold">REZO360</span>
             </p>
           </div>

@@ -27,9 +27,12 @@ export function useMissions(organizationId: string | null, filters: MissionFilte
 
 /** Répartition par statut — contexte affiché quand un filtre ne renvoie rien. */
 export function useMissionStatusCounts(organizationId: string | null) {
-  return useQuery({
+  return useQuery<Record<string, number>>({
     queryKey: [...qk.missions.all, organizationId ?? 'none', 'status-counts'],
-    queryFn: () => (organizationId === null ? {} : countMissionsByStatus(organizationId)),
+    queryFn: () =>
+      organizationId === null
+        ? {}
+        : countMissionsByStatus(organizationId),
     enabled: organizationId !== null,
     staleTime: 60_000,
   });

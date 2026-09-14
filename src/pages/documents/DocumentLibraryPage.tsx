@@ -1,4 +1,4 @@
-import { FolderOpen, FolderPlus, Plus } from 'lucide-react';
+import { FolderOpen, FolderPlus, Plus, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -168,21 +168,39 @@ export default function DocumentLibraryPage() {
         onNavigate={ouvrirDossier}
       />
 
-      <div className="space-y-3">
+      <section
+        aria-label="Rechercher et filtrer les documents"
+        className="border-border bg-surface shadow-xs space-y-3 rounded-xl border p-3 sm:p-4"
+      >
         <Input
           label="Rechercher"
           hideLabel
           placeholder="Rechercher dans toute la bibliothèque…"
           value={search}
+          leadingIcon={<Search />}
+          trailingSlot={
+            search === '' ? undefined : (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Effacer la recherche"
+                onClick={() => changerFiltre(() => setSearch(''))}
+              >
+                <X aria-hidden />
+              </Button>
+            )
+          }
+          className="h-11 sm:h-9"
           onChange={(event) => changerFiltre(() => setSearch(event.target.value))}
         />
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="no-scrollbar -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
           {FILTRES_FAMILLE.map((option) => (
             <Button
               key={option.valeur}
               size="sm"
               variant={famille === option.valeur ? 'primary' : 'outline'}
+              aria-pressed={famille === option.valeur}
               onClick={() => changerFiltre(() => setFamille(option.valeur))}
             >
               {option.label}
@@ -191,22 +209,31 @@ export default function DocumentLibraryPage() {
         </div>
 
         {enRecherche && (
-          <p className="text-muted-foreground text-xs">
-            La recherche porte sur toute la bibliothèque, tous dossiers confondus.
-          </p>
+          <div className="border-border flex flex-col gap-1 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-xs">
+              Recherche dans toute la bibliothèque, tous dossiers confondus.
+            </p>
+            {!documentsQuery.isPending && !documentsQuery.isError && (
+              <p className="text-foreground text-xs font-medium" aria-live="polite">
+                {total} résultat{total > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
         )}
-      </div>
+      </section>
 
-      <FolderGrid
-        folders={folders}
-        currentFolderId={dossierCourant}
-        canManage={canManage}
-        canDelete={canDelete}
-        onOpen={ouvrirDossier}
-        onRename={(folder) => setDemandeDossier({ mode: 'renommer', folder })}
-        onMove={(folder) => setDemandeDossier({ mode: 'deplacer', folder })}
-        onDelete={(folder) => setDemandeDossier({ mode: 'supprimer', folder })}
-      />
+      {!enRecherche && (
+        <FolderGrid
+          folders={folders}
+          currentFolderId={dossierCourant}
+          canManage={canManage}
+          canDelete={canDelete}
+          onOpen={ouvrirDossier}
+          onRename={(folder) => setDemandeDossier({ mode: 'renommer', folder })}
+          onMove={(folder) => setDemandeDossier({ mode: 'deplacer', folder })}
+          onDelete={(folder) => setDemandeDossier({ mode: 'supprimer', folder })}
+        />
+      )}
 
       {documentsQuery.isPending ? (
         <ListSkeleton />
@@ -289,14 +316,18 @@ export default function DocumentLibraryPage() {
           />
 
           {pages > 1 && (
-            <nav className="flex items-center justify-between gap-3" aria-label="Pagination">
+            <nav
+              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              aria-label="Pagination"
+            >
               <p className="text-muted-foreground text-sm">
                 {total} document{total > 1 ? 's' : ''} · page {page + 1} sur {pages}
               </p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                 >
@@ -305,6 +336,7 @@ export default function DocumentLibraryPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   disabled={page + 1 >= pages}
                   onClick={() => setPage((p) => p + 1)}
                 >
@@ -353,11 +385,12 @@ export default function DocumentLibraryPage() {
           description={`« ${suppression.name} » sera retiré de la bibliothèque pour toute l’organisation. Cette action est définitive.`}
           size="sm"
           footer={
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
                 onClick={() => setSuppression(null)}
                 disabled={remove.isPending}
+                className="w-full sm:w-auto"
               >
                 Annuler
               </Button>
@@ -365,6 +398,9 @@ export default function DocumentLibraryPage() {
                 variant="danger"
                 onClick={() => void confirmerSuppression()}
                 disabled={remove.isPending}
+                isLoading={remove.isPending}
+                loadingLabel="Suppression du document"
+                className="w-full sm:w-auto"
               >
                 {remove.isPending ? 'Suppression…' : 'Supprimer'}
               </Button>

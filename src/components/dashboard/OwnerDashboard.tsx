@@ -12,16 +12,18 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { MetricCard } from '@/components/ui/MetricCard';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { useAuditLogs } from '@/features/audit';
 import { useSeatBilling } from '@/features/billing';
 import { formatNewNoun, formatNoneNoun, useLabel } from '@/features/industries';
 import { useReportsPendingReview } from '@/features/interventions';
-import { MissionStatusBadge, useMissions } from '@/features/missions';
+import { MissionStatusBadge, useMissionStatusCounts, useMissions } from '@/features/missions';
 import {
   AddMemberDialog,
   InviteMemberDialog,
@@ -66,6 +68,7 @@ export function OwnerDashboard() {
   const sieges = useSeatBilling(organizationId);
   const members = useMembers(organizationId);
   const missions = useMissions(organizationId, { limit: 6 });
+  const missionStatusCounts = useMissionStatusCounts(organizationId);
   const pendingReports = useReportsPendingReview(organizationId);
   const teams = useTeams(organizationId);
   const auditLogs = useAuditLogs(organizationId, { limit: 6 });
@@ -73,6 +76,10 @@ export function OwnerDashboard() {
   const activeMembersCount = (members.data ?? []).filter((m) => m.status === 'active').length;
   const pendingReportsCount = (pendingReports.data ?? []).length;
   const missionList = missions.data ?? [];
+  const missionCount = Object.values(missionStatusCounts.data ?? {}).reduce(
+    (total, count) => total + count,
+    0,
+  );
   const teamList = teams.data ?? [];
   const recentLogs = auditLogs.data ?? [];
 
@@ -137,38 +144,48 @@ export function OwnerDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Comptes rendus à valider"
-          value={pendingReportsCount}
+          value={pendingReports.isPending || pendingReports.isError ? '—' : pendingReportsCount}
           icon={ClipboardCheck}
           to={ROUTES.review}
           actionLabel="Contrôler"
-          attention={pendingReportsCount > 0}
+          attention={!pendingReports.isPending && !pendingReports.isError && pendingReportsCount > 0}
           badge={
-            pendingReportsCount > 0
+            pendingReports.isPending
+              ? { text: 'Chargement', variant: 'neutral' }
+              : pendingReports.isError
+                ? { text: 'Indisponible', variant: 'neutral' }
+                : pendingReportsCount > 0
               ? { text: 'En attente', variant: 'warning' }
               : { text: 'À jour', variant: 'success' }
           }
         />
         <MetricCard
           label={jobPlural}
-          value={missionList.length}
+          value={missionStatusCounts.isPending || missionStatusCounts.isError ? '—' : missionCount}
           icon={ClipboardList}
           to={ROUTES.missions}
           actionLabel="Voir"
         />
         <MetricCard
           label="Équipes de terrain"
-          value={teamList.length}
+          value={teams.isPending || teams.isError ? '—' : teamList.length}
           icon={UsersRound}
           to={ROUTES.teams}
           actionLabel="Organiser"
         />
         <MetricCard
           label={workerPlural}
-          value={activeMembersCount}
+          value={members.isPending || members.isError ? '—' : activeMembersCount}
           icon={Users}
           to={ROUTES.organizationMembers}
           actionLabel="Gérer"
-          badge={{ text: `${activeMembersCount} actif${activeMembersCount > 1 ? 's' : ''}` }}
+          badge={
+            members.isPending
+              ? { text: 'Chargement', variant: 'neutral' }
+              : members.isError
+                ? { text: 'Indisponible', variant: 'neutral' }
+                : { text: `${activeMembersCount} actif${activeMembersCount > 1 ? 's' : ''}` }
+          }
         />
       </div>
 
@@ -189,7 +206,16 @@ export function OwnerDashboard() {
           </CardHeader>
 
           <CardContent className="pt-4">
-            {missionList.length === 0 ? (
+            {missions.isPending ? (
+              <ListSkeleton rows={4} />
+            ) : missions.isError ? (
+              <ErrorState
+                error={missions.error}
+                onRetry={() => {
+                  void missions.refetch();
+                }}
+              />
+            ) : missionList.length === 0 ? (
               <div className="text-muted-foreground flex flex-col items-center py-10 text-center">
                 <ClipboardList className="text-subtle-foreground mb-3 size-8" aria-hidden="true" />
                 <p className="text-foreground text-sm font-medium">
@@ -264,9 +290,21 @@ export function OwnerDashboard() {
           </CardHeader>
 
           <CardContent className="pt-4">
-            {recentLogs.length === 0 ? (
+            {auditLogs.isPending ? (
+              <ListSkeleton rows={4} />
+            ) : auditLogs.isError ? (
+              <ErrorState
+                error={auditLogs.error}
+                onRetry={() => {
+                  void auditLogs.refetch();
+                }}
+              />
+            ) : recentLogs.length === 0 ? (
               <div className="py-8 text-center">
-                <Activity className="text-subtle-foreground mx-auto mb-2 size-7" aria-hidden="true" />
+                <Activity
+                  className="text-subtle-foreground mx-auto mb-2 size-7"
+                  aria-hidden="true"
+                />
                 <p className="text-muted-foreground text-sm">Aucune activité récente</p>
                 <p className="text-subtle-foreground mt-1 text-sm">
                   Les actions de vos équipes apparaîtront ici.
@@ -313,7 +351,9 @@ export function OwnerDashboard() {
                 <Icon className="size-4.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="text-foreground block truncate text-sm font-semibold">{label}</span>
+                <span className="text-foreground block truncate text-sm font-semibold">
+                  {label}
+                </span>
                 <span className="text-muted-foreground block truncate text-sm">{sub}</span>
               </span>
             </Link>

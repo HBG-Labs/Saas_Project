@@ -1,4 +1,12 @@
-import { AlertTriangle, ArrowLeft, Pen, Printer, Send, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Pen,
+  Printer,
+  Send,
+  ShieldCheck,
+  CheckCircle2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -84,7 +92,7 @@ export default function ReportEditorPage() {
    *
    * La garde sur l'identifiant est essentielle : sans elle, chaque
    * rafraîchissement de la requête écraserait la saisie en cours.
-  */
+   */
   if (report !== null && report.id !== loadedReportId) {
     const localDraft = readLocalReportDraft(user?.id, report.id, report.updated_at);
     setLoadedReportId(report.id);
@@ -252,7 +260,7 @@ export default function ReportEditorPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsPdfModalOpen(true)}
-                className="text-xs gap-1.5"
+                className="gap-1.5 text-xs"
               >
                 <Printer className="size-3.5" />
                 <span>PV / PDF</span>
@@ -397,33 +405,33 @@ export default function ReportEditorPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="size-4 text-primary" />
+                <ShieldCheck className="text-primary size-4" />
                 Signatures & Validation terrain
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Signature Technicien */}
-                <div className="p-3.5 rounded-xl border border-border bg-surface-subtle/50 flex flex-col justify-between min-h-[140px] space-y-2">
+                <div className="border-border bg-surface-subtle/50 flex min-h-[140px] flex-col justify-between space-y-2 rounded-xl border p-3.5">
                   <div>
-                    <span className="text-3xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-3xs text-muted-foreground font-extrabold tracking-wider uppercase">
                       Signature Intervenant / Technicien
                     </span>
-                    <p className="text-xs font-bold text-foreground mt-0.5">
+                    <p className="text-foreground mt-0.5 text-xs font-bold">
                       {user?.email ?? 'Technicien'}
                     </p>
                   </div>
 
                   {report.technician_signature_path ? (
                     <div className="space-y-1">
-                      <div className="p-1 rounded bg-white dark:bg-surface-sunken border border-border inline-block">
+                      <div className="dark:bg-surface-sunken border-border inline-block rounded border bg-white p-1">
                         <img
                           src={report.technician_signature_path}
                           alt="Signature technicien"
                           className="max-h-14 object-contain"
                         />
                       </div>
-                      <p className="text-success font-semibold flex items-center gap-1">
+                      <p className="text-success flex items-center gap-1 font-semibold">
                         <CheckCircle2 className="size-3" />
                         Signature enregistrée
                       </p>
@@ -438,7 +446,7 @@ export default function ReportEditorPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsTechSignOpen(true)}
-                      className="text-xs h-7 gap-1 self-start cursor-pointer"
+                      className="h-11 cursor-pointer gap-1 self-start text-xs sm:h-7"
                     >
                       <Pen className="size-3" />
                       <span>{report.technician_signature_path ? 'Modifier' : 'Signer'}</span>
@@ -447,26 +455,26 @@ export default function ReportEditorPage() {
                 </div>
 
                 {/* Signature Client */}
-                <div className="p-3.5 rounded-xl border border-border bg-surface-subtle/50 flex flex-col justify-between min-h-[140px] space-y-2">
+                <div className="border-border bg-surface-subtle/50 flex min-h-[140px] flex-col justify-between space-y-2 rounded-xl border p-3.5">
                   <div>
-                    <span className="text-3xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-3xs text-muted-foreground font-extrabold tracking-wider uppercase">
                       Signature Client / Réceptionnaire
                     </span>
-                    <p className="text-xs font-bold text-foreground mt-0.5">
+                    <p className="text-foreground mt-0.5 text-xs font-bold">
                       {report.customer_signature_name || mission.data?.customer?.name || 'Client'}
                     </p>
                   </div>
 
                   {report.customer_signature_path ? (
                     <div className="space-y-1">
-                      <div className="p-1 rounded bg-white dark:bg-surface-sunken border border-border inline-block">
+                      <div className="dark:bg-surface-sunken border-border inline-block rounded border bg-white p-1">
                         <img
                           src={report.customer_signature_path}
                           alt="Signature client"
                           className="max-h-14 object-contain"
                         />
                       </div>
-                      <p className="text-success font-semibold flex items-center gap-1">
+                      <p className="text-success flex items-center gap-1 font-semibold">
                         <CheckCircle2 className="size-3" />
                         Signé par {report.customer_signature_name || 'le client'}
                       </p>
@@ -481,10 +489,14 @@ export default function ReportEditorPage() {
                       variant="primary"
                       size="sm"
                       onClick={() => setIsCustomerSignOpen(true)}
-                      className="text-xs h-7 gap-1 self-start cursor-pointer"
+                      className="h-11 cursor-pointer gap-1 self-start text-xs sm:h-7"
                     >
                       <Pen className="size-3" />
-                      <span>{report.customer_signature_path ? 'Faire re-signer' : 'Faire signer le client'}</span>
+                      <span>
+                        {report.customer_signature_path
+                          ? 'Faire re-signer'
+                          : 'Faire signer le client'}
+                      </span>
                     </Button>
                   )}
                 </div>
@@ -496,8 +508,8 @@ export default function ReportEditorPage() {
             <Card>
               <CardContent className="space-y-3 pt-6">
                 <p className="text-muted-foreground text-xs">
-                  Une fois soumis, le compte rendu part au contrôle et n’est plus modifiable —
-                  sauf s’il vous est renvoyé avec un motif.
+                  Une fois soumis, le compte rendu part au contrôle et n’est plus modifiable — sauf
+                  s’il vous est renvoyé avec un motif.
                 </p>
 
                 {!worksFinished ? (

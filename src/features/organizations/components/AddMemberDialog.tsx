@@ -111,7 +111,7 @@ export function AddMemberDialog({
           : 'Transmettez ces accès à votre collaborateur. Le mot de passe ne sera plus affiché après fermeture.'
       }
       trigger={
-        <Button variant="primary" size="sm" disabled={quotaReached}>
+        <Button variant="outline" size="sm" disabled={quotaReached} className="w-full sm:w-auto">
           <UserPlus className="size-4" />
           <span>Créer un compte</span>
         </Button>
@@ -129,14 +129,14 @@ export function AddMemberDialog({
               {jobTitle.trim() !== '' && <> — {jobTitle}</>}
             </p>
 
-            <dl className="border-border/60 bg-surface-sunken/60 mt-3 space-y-1.5 rounded-lg border p-3 font-mono text-xs">
-              <div className="flex justify-between gap-3">
+            <dl className="border-border/60 bg-surface-sunken/60 mt-3 space-y-3 rounded-lg border p-3 font-mono text-xs sm:space-y-1.5">
+              <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-3">
                 <dt className="text-muted-foreground">Identifiant</dt>
                 <dd className="text-foreground font-semibold break-all">{account.email}</dd>
               </div>
-              <div className="flex justify-between gap-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-3">
                 <dt className="text-muted-foreground">Mot de passe</dt>
-                <dd className="font-bold tracking-wider text-success">
+                <dd className="text-success break-all font-bold tracking-wider">
                   {account.password}
                 </dd>
               </div>
@@ -149,12 +149,12 @@ export function AddMemberDialog({
             qui fonctionne dès maintenant sur cette adresse.
           </p>
 
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={copyCredentials}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="w-full sm:flex-1" onClick={copyCredentials}>
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
               {copied ? 'Copié' : 'Copier les accès'}
             </Button>
-            <Button variant="primary" className="flex-1" onClick={() => close(false)}>
+            <Button variant="primary" className="w-full sm:flex-1" onClick={() => close(false)}>
               Terminer
             </Button>
           </div>
@@ -164,8 +164,8 @@ export function AddMemberDialog({
           <FormError error={submitError} />
 
           {isExtraSeat ? (
-            <div className="border-primary/40 bg-primary/10 rounded-xl border p-3 text-xs flex items-start gap-2.5">
-              <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
+            <div className="border-primary/40 bg-primary/10 flex items-start gap-2.5 rounded-xl border p-3 text-xs">
+              <Sparkles className="text-primary mt-0.5 size-4 shrink-0" />
               <div>
                 <p className="text-foreground font-semibold">Siège supplémentaire (+5,00 € / mois)</p>
                 <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
@@ -182,6 +182,7 @@ export function AddMemberDialog({
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
+            className="h-11 sm:h-9"
           />
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -190,12 +191,14 @@ export function AddMemberDialog({
               placeholder="ex : Kevin Moreau"
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
+              className="h-11 sm:h-9"
             />
             <Input
               label="Poste"
               placeholder="ex : Technicien fibre"
               value={jobTitle}
               onChange={(event) => setJobTitle(event.target.value)}
+              className="h-11 sm:h-9"
             />
           </div>
 
@@ -204,6 +207,7 @@ export function AddMemberDialog({
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Généré automatiquement si vide"
+            className="h-11 sm:h-9"
           />
 
           <p className="text-muted-foreground flex items-start gap-1.5 text-xs">
@@ -221,6 +225,8 @@ export function AddMemberDialog({
             variant="primary"
             className="w-full"
             disabled={createAccount.isPending}
+            isLoading={createAccount.isPending}
+            loadingLabel="Création du compte"
           >
             {createAccount.isPending
               ? 'Création du compte…'

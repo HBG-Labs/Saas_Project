@@ -71,26 +71,43 @@ export function CookieConsentBanner() {
         <div
           role="dialog"
           aria-label="Préférences de cookies"
-          className="border-border bg-surface-raised shadow-modal safe-bottom fixed inset-x-0 bottom-0 z-40 border-t p-4 sm:p-5"
+          className="border-border bg-surface-raised shadow-modal safe-bottom fixed inset-x-0 bottom-0 z-40 border-t p-3 sm:p-5"
         >
-          <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-xs leading-relaxed sm:max-w-xl">
-              Nous utilisons un traceur publicitaire pour savoir quelles annonces amènent des
-              inscriptions. Vous pouvez tout accepter, tout refuser, ou choisir précisément — le
-              site fonctionne à l’identique dans tous les cas. Détails dans notre{' '}
+          <div className="mx-auto flex max-w-4xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <p className="text-muted-foreground text-2xs leading-snug sm:max-w-xl sm:text-xs sm:leading-relaxed">
+              Avec votre accord, le Pixel Meta nous aide à mesurer les inscriptions provenant de nos
+              publicités. Le site fonctionne de la même façon si vous refusez. Détails dans notre{' '}
               <a href={ROUTES.cookies} className="text-primary hover:underline">
                 politique de cookies
               </a>
               .
             </p>
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={openCustomize}>
+            <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="px-1.5 sm:px-3"
+                onClick={openCustomize}
+              >
                 Personnaliser
               </Button>
-              <Button type="button" variant="secondary" size="sm" onClick={refuseAllCookies}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="px-1.5 sm:px-3"
+                onClick={refuseAllCookies}
+              >
                 Tout refuser
               </Button>
-              <Button type="button" variant="primary" size="sm" onClick={acceptAllCookies}>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="px-1.5 sm:px-3"
+                onClick={acceptAllCookies}
+              >
                 Tout accepter
               </Button>
             </div>

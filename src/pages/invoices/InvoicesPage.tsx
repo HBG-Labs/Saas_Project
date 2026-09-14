@@ -53,7 +53,7 @@ export default function InvoicesPage() {
         title="Factures"
         description="Vos factures et avoirs, avec leur statut et leur montant."
         actions={
-          <Button asChild variant="outline" className="gap-2">
+          <Button asChild variant="primary" className="gap-2">
             <Link to={ROUTES.quotesHistory}>
               <Calculator className="size-4" aria-hidden="true" />
               Facturer un devis
@@ -95,7 +95,7 @@ export default function InvoicesPage() {
               <li key={invoice.id}>
                 <Link
                   to={ROUTES.invoiceDetail(invoice.id)}
-                  className="border-border bg-surface hover:border-primary/50 hover:bg-surface-hover group flex items-center gap-3 rounded-xl border p-4 transition-colors"
+                  className="border-border bg-surface hover:border-primary/50 hover:bg-surface-hover focus-visible:ring-ring group flex min-h-touch items-start gap-3 rounded-xl border p-4 transition-[background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <div
                     className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
@@ -127,13 +127,22 @@ export default function InvoicesPage() {
                       {invoice.customer_name || invoice.title || 'Client non renseigné'}
                       {invoice.site_name ? ` — ${invoice.site_name}` : ''}
                     </p>
+                    <div className="flex items-baseline justify-between gap-3 pt-1 sm:hidden">
+                      <p className="text-foreground text-sm font-bold tabular-nums">
+                        {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
+                      </p>
+                      <p className="text-subtle-foreground text-xs">
+                        {estAvoir && <span>À créditer · </span>}
+                        {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="shrink-0 text-right">
+                  <div className="hidden shrink-0 text-right sm:block">
                     <p className="text-foreground text-sm font-bold tabular-nums">
                       {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
                     </p>
-                    <p className="text-subtle-foreground text-3xs">
+                    <p className="text-subtle-foreground text-xs">
                       {estAvoir && <span>À créditer · </span>}
                       {/* Un brouillon n'a pas de date d'émission : on montre alors
                           celle de création, seule date qui existe. */}

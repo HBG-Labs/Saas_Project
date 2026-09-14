@@ -123,6 +123,30 @@ export default function QuoteDetailPage() {
         }
       />
 
+      <dl
+        aria-label="Résumé financier du devis"
+        className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-xl border shadow-xs sm:grid-cols-3 print:hidden"
+      >
+        <div className="border-border border-r p-3 sm:p-4">
+          <dt className="text-muted-foreground text-xs">Total HT</dt>
+          <dd className="text-foreground mt-1 font-mono text-sm font-bold tabular-nums sm:text-base">
+            {totalHT.toFixed(2)} €
+          </dd>
+        </div>
+        <div className="border-border p-3 sm:border-r sm:p-4">
+          <dt className="text-muted-foreground text-xs">TVA</dt>
+          <dd className="text-foreground mt-1 font-mono text-sm font-bold tabular-nums sm:text-base">
+            {totalVAT.toFixed(2)} €
+          </dd>
+        </div>
+        <div className="border-border bg-primary-subtle/45 col-span-2 border-t p-3 sm:col-span-1 sm:border-t-0 sm:p-4">
+          <dt className="text-primary text-xs font-semibold">Total TTC</dt>
+          <dd className="text-primary mt-1 font-mono text-base font-bold tabular-nums sm:text-lg">
+            {totalTTC.toFixed(2)} €
+          </dd>
+        </div>
+      </dl>
+
       {/*
         MODIFIER LE STATUT NE MODIFIE JAMAIS LES LIGNES.
 
@@ -134,13 +158,15 @@ export default function QuoteDetailPage() {
       */}
       {canManage && quote.status !== 'accepted' && quote.status !== 'refused' && (
         <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center gap-2 rounded-xl border p-3">
-          <span className="text-muted-foreground text-xs font-medium">Faire évoluer le statut :</span>
+          <span className="text-muted-foreground w-full text-xs font-medium sm:w-auto">
+            Faire évoluer le statut :
+          </span>
 
           {quote.status === 'draft' && (
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={updateQuote.isPending}
               onClick={() => updateQuote.mutate({ status: 'sent' })}
             >
@@ -154,7 +180,7 @@ export default function QuoteDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-success/40 text-success hover:bg-success/10 gap-1.5 text-xs"
+                className="border-success/40 text-success hover:bg-success/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
                 disabled={updateQuote.isPending}
                 onClick={() => updateQuote.mutate({ status: 'accepted' })}
               >
@@ -164,7 +190,7 @@ export default function QuoteDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-error/40 text-error hover:bg-error/10 gap-1.5 text-xs"
+                className="border-error/40 text-error hover:bg-error/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
                 disabled={updateQuote.isPending}
                 onClick={() => updateQuote.mutate({ status: 'refused' })}
               >
@@ -207,7 +233,7 @@ export default function QuoteDetailPage() {
               <Button
                 variant={quote.status === 'draft' ? 'primary' : 'outline'}
                 size="sm"
-                className="gap-1.5 text-xs"
+                className="w-full justify-center gap-1.5 text-xs sm:w-auto"
                 disabled={updateQuote.isPending}
                 onClick={() => {
                   if (quote.status === 'draft') {
@@ -258,7 +284,7 @@ export default function QuoteDetailPage() {
       */}
       <div
         id="quote-printable-area"
-        className="rounded-xl border border-slate-300 bg-white p-6 text-slate-900 shadow-2xl space-y-6 font-sans sm:p-8"
+        className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
       >
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
           <div>
@@ -275,7 +301,7 @@ export default function QuoteDetailPage() {
             </p>
           </div>
 
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="inline-block rounded-md bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-900">
               DEVIS N° {quote.reference}
             </span>
@@ -286,7 +312,7 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs">
+        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs sm:grid-cols-2">
           <div>
             <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">Destinataire client</p>
             <p className="mt-0.5 text-sm font-bold text-slate-900">
@@ -301,8 +327,9 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        <div className="scroll-x">
-          <table className="w-full border-collapse text-left text-xs">
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
+        <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes du devis" tabIndex={0}>
+          <table className="w-full min-w-[34rem] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
                 <th className="px-3 py-2.5">Désignation de la prestation</th>
@@ -374,10 +401,10 @@ export default function QuoteDetailPage() {
       */}
       {canManage && quote.status === 'accepted' && (
         <Card className="border-primary/20">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+          <CardContent className="flex flex-col items-stretch justify-between gap-3 py-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-foreground text-xs font-semibold">Facturer ce devis</p>
-              <p className="text-muted-foreground text-3xs">
+              <p className="text-muted-foreground text-xs">
                 Crée une facture en brouillon reprenant les lignes, le client et les montants. Vous
                 pourrez la relire avant de l’émettre.
               </p>
@@ -386,7 +413,7 @@ export default function QuoteDetailPage() {
             <Button
               variant="primary"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={createInvoice.isPending}
               onClick={() => {
                 if (!quote.organization_id) return;
@@ -416,17 +443,17 @@ export default function QuoteDetailPage() {
 
       {canManage && (
         <Card className="border-error/20">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+          <CardContent className="flex flex-col items-stretch justify-between gap-3 py-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-foreground text-xs font-semibold">Supprimer ce devis</p>
-              <p className="text-muted-foreground text-3xs">
+              <p className="text-muted-foreground text-xs">
                 Le devis et ses lignes sont définitivement retirés. Cette action est irréversible.
               </p>
             </div>
             <Button
               variant="danger-outline"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               onClick={() => setIsDeleteConfirmOpen(true)}
             >
               <Trash2 className="size-3.5" aria-hidden="true" />
@@ -442,15 +469,19 @@ export default function QuoteDetailPage() {
         title="Supprimer ce devis ?"
         description={`Le devis ${quote.reference} et ses lignes seront définitivement supprimés.`}
       >
-        <div className="flex justify-end gap-2 pt-3">
-          <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+        <div className="flex flex-col-reverse gap-2 pt-3 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => setIsDeleteConfirmOpen(false)}
+            className="w-full sm:w-auto"
+          >
             Annuler
           </Button>
           <Button
             variant="danger-outline"
             disabled={deleteQuote.isPending}
             onClick={handleDelete}
-            className="gap-1.5"
+            className="w-full gap-1.5 sm:w-auto"
           >
             <Trash2 className="size-3.5" aria-hidden="true" />
             {deleteQuote.isPending ? 'Suppression…' : 'Supprimer définitivement'}

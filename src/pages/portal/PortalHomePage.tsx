@@ -59,38 +59,67 @@ export default function PortalHomePage() {
         </p>
       </section>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {context.features.missions ? (
-          <>
-            <Kpi label="Interventions en cours" value={missions.isPending ? null : String(enCours)} icon={Wrench} tone="primary" to={ROUTES.portalMissions} />
-            <Kpi label="Interventions réalisées" value={missions.isPending ? null : String(realisees)} icon={Wrench} tone="success" to={ROUTES.portalMissions} />
-          </>
-        ) : null}
+      <section aria-labelledby="portal-priorities-title" className="space-y-2">
+        <div>
+          <h2 id="portal-priorities-title" className="text-sm font-bold text-foreground">
+            À suivre
+          </h2>
+          <p className="text-xs text-muted-foreground">Vos échéances et activités essentielles.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {context.features.invoicing ? (
-          <>
-            <Kpi label="Factures à régler" value={invoices.isPending ? null : String(dues.length)} icon={Receipt} tone={dues.length > 0 ? 'warning' : 'success'} to={ROUTES.portalInvoices} />
-            <Kpi label="Montant dû" value={invoices.isPending ? null : formatEuros(montantDu)} icon={Receipt} tone={montantDu > 0 ? 'warning' : 'success'} to={ROUTES.portalInvoices} />
-          </>
+          <Kpi
+            label={dues.length > 0 ? `${String(dues.length)} facture${dues.length > 1 ? 's' : ''} à régler` : 'Aucune facture à régler'}
+            value={invoices.isPending ? null : formatEuros(montantDu)}
+            icon={Receipt}
+            tone={montantDu > 0 ? 'warning' : 'success'}
+            to={ROUTES.portalInvoices}
+          />
         ) : null}
-        <Kpi label="Messages non lus" value={conversations.isPending ? null : String(nonLus)} icon={MessageSquare} tone={nonLus > 0 ? 'accent' : 'info'} to={ROUTES.portalMessages} />
-      </div>
+        {context.features.missions ? (
+          <Kpi
+            label="Interventions en cours"
+            value={missions.isPending ? null : String(enCours)}
+            icon={Wrench}
+            tone="primary"
+            to={ROUTES.portalMissions}
+          />
+        ) : null}
+        <Kpi
+          label="Messages non lus"
+          value={conversations.isPending ? null : String(nonLus)}
+          icon={MessageSquare}
+          tone={nonLus > 0 ? 'accent' : 'info'}
+          to={ROUTES.portalMessages}
+        />
+        {context.features.missions ? (
+          <Kpi
+            label="Interventions réalisées"
+            value={missions.isPending ? null : String(realisees)}
+            icon={Wrench}
+            tone="success"
+            to={ROUTES.portalMissions}
+          />
+        ) : null}
+        </div>
+      </section>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        {context.features.missions ? (
-          <Section title="Dernières interventions" to={ROUTES.portalMissions} icon={Wrench} query={missions}>
-            {missionList.slice(0, 4).map((m) => (
-              <Row key={m.id} to={ROUTES.portalMission(m.id)} title={m.title} subtitle={`${m.reference} · ${formatDateFr(m.scheduled_start)}`}>
-                <StatusBadge status={m.status} kind="mission" />
-              </Row>
-            ))}
-          </Section>
-        ) : null}
-
         {context.features.invoicing ? (
           <Section title="Dernières factures" to={ROUTES.portalInvoices} icon={Receipt} query={invoices}>
             {invoiceList.slice(0, 4).map((i) => (
               <Row key={i.id} to={ROUTES.portalInvoices} title={i.reference} subtitle={`${formatDateFr(i.issued_at)} · ${formatEuros(i.total_cents)}`}>
                 <StatusBadge status={i.status} kind="invoice" />
+              </Row>
+            ))}
+          </Section>
+        ) : null}
+
+        {context.features.missions ? (
+          <Section title="Dernières interventions" to={ROUTES.portalMissions} icon={Wrench} query={missions}>
+            {missionList.slice(0, 4).map((m) => (
+              <Row key={m.id} to={ROUTES.portalMission(m.id)} title={m.title} subtitle={`${m.reference} · ${formatDateFr(m.scheduled_start)}`}>
+                <StatusBadge status={m.status} kind="mission" />
               </Row>
             ))}
           </Section>
@@ -134,7 +163,7 @@ function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: str
   return (
     <Link
       to={to}
-      className="border-border bg-surface hover:border-primary/40 flex items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-all hover:shadow-md"
+      className="border-border bg-surface hover:border-primary/40 flex min-h-[4.75rem] items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-[border-color,box-shadow] duration-150 hover:shadow-md"
     >
       <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}>
         <Icon className="size-4" aria-hidden="true" />
@@ -145,7 +174,7 @@ function Kpi({ label, value, icon: Icon, tone, to }: { label: string; value: str
         ) : (
           <span className="text-foreground block truncate text-lg leading-tight font-bold tracking-tight">{value}</span>
         )}
-        <span className="text-muted-foreground block text-[11px] leading-tight">{label}</span>
+        <span className="text-muted-foreground block text-3xs leading-tight">{label}</span>
       </span>
     </Link>
   );

@@ -172,6 +172,32 @@ export default function InvoiceDetailPage() {
 
       <FormError error={updateInvoice.error ?? issueInvoice.error ?? deleteInvoice.error} />
 
+      <dl
+        aria-label="Résumé financier de la facture"
+        className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-xl border shadow-xs sm:grid-cols-3 print:hidden"
+      >
+        <div className="border-border border-r p-3 sm:p-4">
+          <dt className="text-muted-foreground text-xs">Total HT</dt>
+          <dd className="text-foreground mt-1 font-mono text-sm font-bold tabular-nums sm:text-base">
+            {totalHT.toFixed(2)} €
+          </dd>
+        </div>
+        <div className="border-border p-3 sm:border-r sm:p-4">
+          <dt className="text-muted-foreground text-xs">TVA</dt>
+          <dd className="text-foreground mt-1 font-mono text-sm font-bold tabular-nums sm:text-base">
+            {totalTVA.toFixed(2)} €
+          </dd>
+        </div>
+        <div className="border-border bg-primary-subtle/45 col-span-2 border-t p-3 sm:col-span-1 sm:border-t-0 sm:p-4">
+          <dt className="text-primary text-xs font-semibold">
+            {estAvoir ? 'À créditer' : 'Total TTC'}
+          </dt>
+          <dd className="text-primary mt-1 font-mono text-base font-bold tabular-nums sm:text-lg">
+            {totalTTC.toFixed(2)} €
+          </dd>
+        </div>
+      </dl>
+
       {/*
         L'ÉMISSION EST LE SEUL GESTE IRRÉVERSIBLE DE CETTE PAGE.
 
@@ -246,15 +272,20 @@ export default function InvoiceDetailPage() {
 
       {canManage && !figee && (
         <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center gap-2 rounded-xl border p-3 print:hidden">
-          <span className="text-muted-foreground text-xs font-medium">Brouillon :</span>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEdition(true)}>
+          <span className="text-muted-foreground w-full text-xs font-medium sm:w-auto">Brouillon :</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-center gap-1.5 sm:w-auto"
+            onClick={() => setEdition(true)}
+          >
             <Pencil className="size-3.5" aria-hidden="true" />
             Modifier le brouillon
           </Button>
           <Button
             variant="primary"
             size="sm"
-            className="gap-1.5 text-xs"
+            className="w-full justify-center gap-1.5 text-xs sm:w-auto"
             disabled={issueInvoice.isPending || !verdict.emissionPossible}
             onClick={() => setConfirmationEmission(true)}
           >
@@ -264,7 +295,7 @@ export default function InvoiceDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-error/40 text-error hover:bg-error/10 gap-1.5 text-xs"
+            className="border-error/40 text-error hover:bg-error/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
             disabled={deleteInvoice.isPending}
             onClick={() => setConfirmationSuppression(true)}
           >
@@ -276,13 +307,15 @@ export default function InvoiceDetailPage() {
 
       {canManage && figee && invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
         <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center gap-2 rounded-xl border p-3 print:hidden">
-          <span className="text-muted-foreground text-xs font-medium">Faire évoluer :</span>
+          <span className="text-muted-foreground w-full text-xs font-medium sm:w-auto">
+            Faire évoluer :
+          </span>
 
           {invoice.status === 'issued' && (
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={updateInvoice.isPending}
               onClick={() => updateInvoice.mutate({ status: 'sent' })}
             >
@@ -301,7 +334,7 @@ export default function InvoiceDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-success/40 text-success hover:bg-success/10 gap-1.5 text-xs"
+            className="border-success/40 text-success hover:bg-success/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
             disabled={updateInvoice.isPending}
             onClick={() => updateInvoice.mutate({ status: 'paid' })}
           >
@@ -346,7 +379,7 @@ export default function InvoiceDetailPage() {
       */}
       <div
         id="invoice-printable-area"
-        className="space-y-6 rounded-xl border border-slate-300 bg-white p-6 font-sans text-slate-900 shadow-2xl sm:p-8"
+        className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
       >
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
           <div>
@@ -363,7 +396,7 @@ export default function InvoiceDetailPage() {
             </p>
           </div>
 
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span
               className={`inline-block rounded-md px-2.5 py-1 text-xs font-bold ${
                 estAvoir ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'
@@ -456,8 +489,9 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        <div className="scroll-x">
-          <table className="w-full border-collapse text-left text-xs">
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
+        <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes de la facture" tabIndex={0}>
+          <table className="w-full min-w-[40rem] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
                 <th className="px-3 py-2.5">Désignation</th>
@@ -621,12 +655,17 @@ export default function InvoiceDetailPage() {
             Vérifiez le destinataire, les lignes et les taux de TVA avant de continuer.
           </p>
           <FormError error={issueInvoice.error} />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setConfirmationEmission(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmationEmission(false)}
+              className="w-full sm:w-auto"
+            >
               Relire d’abord
             </Button>
             <Button
               variant="primary"
+              className="w-full sm:w-auto"
               disabled={issueInvoice.isPending || !verdict.emissionPossible}
               onClick={() => {
                 issueInvoice.mutate(invoice.updated_at, {
@@ -650,12 +689,17 @@ export default function InvoiceDetailPage() {
             Le brouillon sera supprimé. Un brouillon ne consomme aucun numéro dans la série des
             factures émises.
           </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setConfirmationSuppression(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmationSuppression(false)}
+              className="w-full sm:w-auto"
+            >
               Annuler
             </Button>
             <Button
               variant="danger"
+              className="w-full sm:w-auto"
               disabled={deleteInvoice.isPending}
               onClick={() => {
                 deleteInvoice.mutate(invoice.id, {

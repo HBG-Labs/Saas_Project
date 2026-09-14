@@ -4,6 +4,7 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from 'react-hook-form';
+import type { ReactNode } from 'react';
 
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -95,23 +96,27 @@ export function MissionFormFields({
   ];
 
   return (
-    <>
-      <Input
-        label="Intitulé"
-        placeholder="Raccordement FTTH — armoire de rue"
-        required
-        {...(errors.title?.message ? { error: errors.title.message } : {})}
-        {...register('title')}
-      />
+    <div className="space-y-5">
+      <FormSection
+        title="Mission"
+        description="Décrivez clairement le travail demandé et son niveau de priorité."
+      >
+        <Input
+          label="Intitulé"
+          placeholder="Raccordement FTTH — armoire de rue"
+          required
+          {...(errors.title?.message ? { error: errors.title.message } : {})}
+          {...register('title')}
+        />
 
-      <Textarea
-        label="Description"
-        rows={3}
-        placeholder="Nature des travaux, matériel attendu, contraintes particulières."
-        {...register('description')}
-      />
+        <Textarea
+          label="Description"
+          rows={3}
+          placeholder="Nature des travaux, matériel attendu, contraintes particulières."
+          {...register('description')}
+        />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
         {onInterventionTypeChange ? (
           <Select
             options={typeOptions}
@@ -134,7 +139,68 @@ export function MissionFormFields({
           }}
           label="Priorité"
         />
+        </div>
+      </FormSection>
 
+      <FormSection
+        title="Client et lieu d’intervention"
+        description="Rattachez la mission à la bonne fiche et précisez le point de rendez-vous."
+      >
+        <CustomerPicker
+          organizationId={organizationId}
+          value={customerId}
+          onChange={(next) => {
+            onCustomerChange(next);
+            onSiteChange(null);
+          }}
+        />
+
+        <SitePicker customerId={customerId} value={siteId} onChange={onSiteChange} />
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-semibold text-foreground">Précision de lieu / Adresse</span>
+            {setValue && (
+              <MapLocationPickerDialog
+                initialAddress={watch ? watch('locationLabel') : ''}
+                onSelectLocation={(loc) => {
+                  onLocationSelect?.(loc);
+                  const label =
+                    loc.label ||
+                    [loc.addressLine1, loc.postalCode, loc.city].filter(Boolean).join(' ');
+                  setValue('locationLabel', label, { shouldDirty: true });
+                }}
+              />
+            )}
+          </div>
+          <Input
+            placeholder="Armoire PM 12, trottoir pair ou adresse exacte"
+            hint="Complète l’adresse du site — ou cliquez pour pointer sur la carte GPS."
+            {...register('locationLabel')}
+          />
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Planification et affectation"
+        description="Programmez le créneau puis désignez les personnes qui interviendront."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Début prévu"
+            type="datetime-local"
+            {...(errors.scheduledStart?.message ? { error: errors.scheduledStart.message } : {})}
+            {...register('scheduledStart')}
+          />
+          <Input
+            label="Fin prévue"
+            type="datetime-local"
+            {...(errors.scheduledEnd?.message ? { error: errors.scheduledEnd.message } : {})}
+            {...register('scheduledEnd')}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
         {onAssignedTeamChange ? (
           <Select
             options={teamOptions}
@@ -144,66 +210,46 @@ export function MissionFormFields({
             hint="L'équipe entière recevra la notification"
           />
         ) : null}
-      </div>
 
-      {onAssignedMemberChange ? (
-        <Select
-          options={memberOptions}
-          value={assignedMemberId ?? ''}
-          onValueChange={(value) => onAssignedMemberChange(value === '' ? null : value)}
-          label="Affecter un technicien"
-          hint="Technicien désigné pour l'intervention terrain"
-        />
-      ) : null}
-
-      <CustomerPicker
-        organizationId={organizationId}
-        value={customerId}
-        onChange={(next) => {
-          onCustomerChange(next);
-          onSiteChange(null);
-        }}
-      />
-
-      <SitePicker customerId={customerId} value={siteId} onChange={onSiteChange} />
-
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-foreground">Précision de lieu / Adresse</span>
-          {setValue && (
-            <MapLocationPickerDialog
-              initialAddress={watch ? watch('locationLabel') : ''}
-              onSelectLocation={(loc) => {
-                onLocationSelect?.(loc);
-                const label = loc.label || [loc.addressLine1, loc.postalCode, loc.city].filter(Boolean).join(' ');
-                setValue('locationLabel', label, { shouldDirty: true });
-              }}
+          {onAssignedMemberChange ? (
+            <Select
+              options={memberOptions}
+              value={assignedMemberId ?? ''}
+              onValueChange={(value) => onAssignedMemberChange(value === '' ? null : value)}
+              label="Affecter un technicien"
+              hint="Technicien désigné pour l'intervention terrain"
             />
-          )}
+          ) : null}
         </div>
-        <Input
-          placeholder="Armoire PM 12, trottoir pair ou adresse exacte"
-          hint="Complète l’adresse du site — ou cliquez pour pointer sur la carte GPS."
-          {...register('locationLabel')}
-        />
-      </div>
+      </FormSection>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="Début prévu"
-          type="datetime-local"
-          {...(errors.scheduledStart?.message ? { error: errors.scheduledStart.message } : {})}
-          {...register('scheduledStart')}
-        />
-        <Input
-          label="Fin prévue"
-          type="datetime-local"
-          {...(errors.scheduledEnd?.message ? { error: errors.scheduledEnd.message } : {})}
-          {...register('scheduledEnd')}
-        />
-      </div>
+      <FormSection
+        title="Informations internes"
+        description="Ces notes restent réservées à votre équipe."
+      >
+        <Textarea label="Notes internes" hideLabel rows={2} {...register('notes')} />
+      </FormSection>
+    </div>
+  );
+}
 
-      <Textarea label="Notes internes" rows={2} {...register('notes')} />
-    </>
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <fieldset className="border-border bg-surface-subtle/55 space-y-4 rounded-xl border p-4 sm:p-5">
+      <legend className="sr-only">{title}</legend>
+      <div>
+        <h2 className="text-sm font-bold text-foreground">{title}</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </fieldset>
   );
 }

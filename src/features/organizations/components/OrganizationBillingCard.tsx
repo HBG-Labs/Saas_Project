@@ -49,13 +49,13 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
+      <CardHeader className="flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Formule & Propriété de l’entreprise</CardTitle>
         {/* Mène là où l'on AGIT. « Comparer les formules » renvoyait vers la
             page tarifaire publique — informative, mais sans aucun bouton pour
             souscrire. La page Facturation, elle, ouvre la session de paiement
             et le portail Stripe. */}
-        <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+        <Button asChild variant="outline" size="sm" className="w-full gap-1.5 text-xs sm:w-auto">
           <Link to={ROUTES.organizationBilling}>
             <span>Gérer l’abonnement</span>
             <ExternalLink className="size-3.5" />
@@ -65,7 +65,7 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
       <CardContent className="space-y-4 pt-1">
         {/* Propriétaire & Formule */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="border-border bg-surface-sunken/50 space-y-1.5 rounded-lg border p-3">
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
               <Crown className="size-3.5 text-warning" aria-hidden="true" />
               {owners.length > 1 ? 'Propriétaires de l’entreprise' : 'Propriétaire de l’entreprise'}
@@ -88,7 +88,7 @@ export function OrganizationBillingCard({ organizationId }: { organizationId: st
             )}
           </div>
 
-          <div className="space-y-1.5">
+          <div className="border-border bg-surface-sunken/50 space-y-1.5 rounded-lg border p-3">
             <p className="text-muted-foreground text-xs font-medium">Formule active</p>
             {subscription.isPending ? (
               <Skeleton className="h-6 w-36" />

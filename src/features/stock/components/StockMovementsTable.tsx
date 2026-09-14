@@ -17,12 +17,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownLabel,
-  DropdownSeparator,
-} from '@/components/ui/Dropdown';
+import { Dropdown, DropdownItem, DropdownLabel, DropdownSeparator } from '@/components/ui/Dropdown';
 import type { StockPeriod } from './StockKpiCards';
 import {
   STOCK_MOVEMENT_TYPE_LABELS,
@@ -81,10 +76,7 @@ export function StockMovementsTable({
   // Mois actuel et précédent pour affichage dynamique
   const now = useMemo(() => new Date(), []);
   const currentMonthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-  const prevMonthDate = useMemo(
-    () => new Date(now.getFullYear(), now.getMonth() - 1, 1),
-    [now],
-  );
+  const prevMonthDate = useMemo(() => new Date(now.getFullYear(), now.getMonth() - 1, 1), [now]);
   const prevMonthName = prevMonthDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
   const currentYear = now.getFullYear();
 
@@ -163,28 +155,28 @@ export function StockMovementsTable({
     switch (type) {
       case 'in':
         return (
-          <Badge variant="success" className="gap-1 text-3xs py-0 px-1.5">
+          <Badge variant="success" className="text-3xs gap-1 px-1.5 py-0">
             <ArrowDownLeft className="size-3" />
             <span>{label}</span>
           </Badge>
         );
       case 'out':
         return (
-          <Badge variant="error" className="gap-1 text-3xs py-0 px-1.5">
+          <Badge variant="error" className="text-3xs gap-1 px-1.5 py-0">
             <ArrowUpRight className="size-3" />
             <span>{label}</span>
           </Badge>
         );
       case 'transfer':
         return (
-          <Badge variant="info" className="gap-1 text-3xs py-0 px-1.5">
+          <Badge variant="info" className="text-3xs gap-1 px-1.5 py-0">
             <ArrowRight className="size-3" />
             <span>{label}</span>
           </Badge>
         );
       case 'adjustment':
         return (
-          <Badge variant="warning" className="gap-1 text-3xs py-0 px-1.5">
+          <Badge variant="warning" className="text-3xs gap-1 px-1.5 py-0">
             <RefreshCw className="size-3" />
             <span>{label}</span>
           </Badge>
@@ -192,14 +184,70 @@ export function StockMovementsTable({
     }
   }
 
+  function renderMobileMovement(mov: StockMovement) {
+    const variant = STOCK_MOVEMENT_TYPE_VARIANTS[mov.type];
+    const location =
+      mov.type === 'transfer'
+        ? `${mov.locationFrom || 'Dépôt'} → ${mov.locationTo || 'Véhicule'}`
+        : mov.locationFrom || mov.locationTo || 'Dépôt Central';
+
+    return (
+      <article key={mov.id} className="space-y-3 px-4 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <span className="border-border bg-surface-subtle text-muted-foreground text-3xs inline-flex rounded-md border px-1.5 py-0.5 font-mono font-bold">
+              {mov.consumableReference}
+            </span>
+            <p className="text-foreground mt-1 truncate text-sm font-semibold">
+              {mov.consumableName}
+            </p>
+          </div>
+          <span className={`shrink-0 font-mono text-base font-extrabold ${variant.color}`}>
+            {variant.sign}
+            {mov.quantity}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {renderTypeBadge(mov.type)}
+          <span className="text-muted-foreground text-3xs inline-flex items-center gap-1 font-mono">
+            <Calendar className="size-3.5" aria-hidden="true" />
+            {new Date(mov.date).toLocaleDateString('fr-FR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })}
+          </span>
+          {mov.interventionRef ? (
+            <span className="bg-primary-subtle text-primary text-3xs rounded-md px-1.5 py-0.5 font-mono">
+              {mov.interventionRef}
+            </span>
+          ) : null}
+        </div>
+
+        <p className="text-foreground text-xs leading-relaxed">{mov.reason}</p>
+
+        <div className="border-border text-3xs text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+          <span>{location}</span>
+          {mov.technicianName ? (
+            <span className="text-foreground inline-flex items-center gap-1 font-medium">
+              <User className="size-3.5" aria-hidden="true" />
+              {mov.technicianName}
+            </span>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
+
   return (
     <Card className="border-border bg-surface shadow-xs">
       {/* Barre de recherche et filtres */}
-      <div className="p-3 sm:p-4 border-b border-border space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="border-border space-y-3 border-b p-3 sm:p-4">
+        <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
           {/* Champ de recherche */}
           <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Rechercher par article, motif, technicien, réf. intervention…"
@@ -208,7 +256,7 @@ export function StockMovementsTable({
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-9 rounded-xl border border-border bg-surface-raised pl-9 pr-4 text-xs text-foreground placeholder:text-subtle-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="border-border bg-surface-raised text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-primary/25 h-11 w-full rounded-xl border pr-4 pl-9 text-xs focus:ring-2 focus:outline-none sm:h-9"
             />
           </div>
 
@@ -220,12 +268,12 @@ export function StockMovementsTable({
               trigger={
                 <button
                   type="button"
-                  className="h-9 min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-raised px-3 py-1 text-xs font-semibold text-foreground hover:border-accent/50 hover:bg-accent/10 transition-colors cursor-pointer sm:flex-none"
+                  className="border-border bg-surface-raised text-foreground hover:border-accent/50 hover:bg-accent/10 focus-visible:ring-ring/30 inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:flex-none"
                   title="Filtrer par mois ou période"
                 >
-                  <Calendar className="size-3.5 text-accent shrink-0" />
+                  <Calendar className="text-accent size-3.5 shrink-0" />
                   <span className="truncate">{periodBadgeText}</span>
-                  <ChevronDown className="size-3 opacity-60 shrink-0" />
+                  <ChevronDown className="size-3 shrink-0 opacity-60" />
                 </button>
               }
             >
@@ -245,11 +293,15 @@ export function StockMovementsTable({
 
               <DropdownSeparator />
 
-              <div className="p-2 space-y-1.5">
-                <label htmlFor="stockmovementstable-choisir-un-mois-precis" className="block text-3xs font-bold text-muted-foreground uppercase tracking-wider">
+              <div className="space-y-1.5 p-2">
+                <label
+                  htmlFor="stockmovementstable-choisir-un-mois-precis"
+                  className="text-3xs text-muted-foreground block font-bold tracking-wider uppercase"
+                >
                   Choisir un mois précis :
                 </label>
-                <Input id="stockmovementstable-choisir-un-mois-precis"
+                <Input
+                  id="stockmovementstable-choisir-un-mois-precis"
                   type="month"
                   value={customMonth}
                   onChange={(e) => {
@@ -258,7 +310,7 @@ export function StockMovementsTable({
                       setSelectedPeriod('custom_month');
                     }
                   }}
-                  className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-xs text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="border-border bg-surface text-foreground focus:border-accent focus:ring-accent/25 h-11 w-full rounded-lg border px-2 text-xs focus:ring-2 focus:outline-none sm:h-8"
                 />
               </div>
             </Dropdown>
@@ -270,7 +322,7 @@ export function StockMovementsTable({
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-9 min-w-0 flex-1 rounded-xl border border-border bg-surface-raised px-2.5 py-1 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:flex-none"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 flex-1 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9 sm:flex-none"
             >
               <option value="all">Tous les types</option>
               <option value="in">Entrées (Réceptions)</option>
@@ -283,124 +335,119 @@ export function StockMovementsTable({
       </div>
 
       {paginatedMovements.length === 0 ? (
-        <div className="px-4 py-10 text-center text-muted-foreground">
+        <div className="text-muted-foreground px-4 py-10 text-center">
           <p className="text-sm font-semibold">Aucun mouvement pour cette sélection</p>
-          <p className="mx-auto mt-1 max-w-md text-2xs text-subtle-foreground">
+          <p className="text-2xs text-subtle-foreground mx-auto mt-1 max-w-md">
             Changez de période ou ajustez vos critères de recherche.
           </p>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[640px] w-full border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-border bg-surface-raised/50 text-3xs font-bold uppercase tracking-wider text-muted-foreground">
-                <th className="py-2.5 px-3 sm:px-4">Date &amp; Type</th>
-                <th className="py-2.5 px-3">Article Concerné</th>
-                <th className="py-2.5 px-3 text-center">Quantité</th>
-                <th className="py-2.5 px-3 hidden md:table-cell">Motif &amp; Justificatif</th>
-                <th className="py-2.5 px-3 sm:px-4 text-right">Intervenant / Emplacement</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {paginatedMovements.map((mov) => {
-              const variant = STOCK_MOVEMENT_TYPE_VARIANTS[mov.type];
-
-              return (
-                <tr
-                  key={mov.id}
-                  className="hover:bg-surface-hover/50 transition-colors"
-                >
-                  {/* 1. Date & Type */}
-                  <td className="py-3 px-3 sm:px-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Calendar className="size-3 text-subtle-foreground" />
-                        <span className="font-mono text-3xs">
-                          {new Date(mov.date).toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                      <div>{renderTypeBadge(mov.type)}</div>
-                    </div>
-                  </td>
-
-                  {/* 2. Article & Réf */}
-                  <td className="py-3 px-3">
-                    <span className="font-mono text-3xs font-bold text-muted-foreground bg-surface-raised px-1.5 py-0.5 rounded border border-border">
-                      {mov.consumableReference}
-                    </span>
-                    <p className="font-semibold text-foreground text-xs leading-snug mt-0.5">
-                      {mov.consumableName}
-                    </p>
-                  </td>
-
-                  {/* 3. Quantité */}
-                  <td className="py-3 px-3 text-center">
-                    <span
-                      className={`font-mono text-sm font-extrabold ${variant.color}`}
-                    >
-                      {variant.sign}
-                      {mov.quantity}
-                    </span>
-                  </td>
-
-                  {/* 4. Motif & Justificatif */}
-                  <td className="py-3 px-3 hidden md:table-cell">
-                    <p className="text-foreground text-xs font-medium">
-                      {mov.reason}
-                    </p>
-                    {mov.interventionRef && (
-                      <span className="text-3xs font-mono text-primary bg-primary/10 px-1 py-0.5 rounded mt-0.5 inline-block">
-                        Réf : {mov.interventionRef}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 5. Intervenant / Trajet */}
-                  <td className="py-3 px-3 sm:px-4 text-right">
-                    {mov.technicianName && (
-                      <div className="inline-flex items-center gap-1 text-foreground font-medium text-xs">
-                        <User className="size-3 text-muted-foreground" />
-                        <span>{mov.technicianName}</span>
-                      </div>
-                    )}
-                    <div className="text-3xs text-subtle-foreground mt-0.5">
-                      {mov.type === 'transfer' ? (
-                        <span>
-                          {mov.locationFrom || 'Dépôt'} → {mov.locationTo || 'Véhicule'}
-                        </span>
-                      ) : (
-                        <span>{mov.locationFrom || mov.locationTo || 'Dépôt Central'}</span>
-                      )}
-                    </div>
-                  </td>
+        <>
+          <div className="divide-border divide-y md:hidden">
+            {paginatedMovements.map(renderMobileMovement)}
+          </div>
+          <div className="hidden w-full overflow-x-auto md:block">
+            <table className="w-full min-w-[640px] border-collapse text-left text-xs">
+              <thead>
+                <tr className="border-border bg-surface-raised/50 text-3xs text-muted-foreground border-b font-bold tracking-wider uppercase">
+                  <th className="px-3 py-2.5 sm:px-4">Date &amp; Type</th>
+                  <th className="px-3 py-2.5">Article Concerné</th>
+                  <th className="px-3 py-2.5 text-center">Quantité</th>
+                  <th className="hidden px-3 py-2.5 md:table-cell">Motif &amp; Justificatif</th>
+                  <th className="px-3 py-2.5 text-right sm:px-4">Intervenant / Emplacement</th>
                 </tr>
-              );
-              })}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-border divide-y">
+                {paginatedMovements.map((mov) => {
+                  const variant = STOCK_MOVEMENT_TYPE_VARIANTS[mov.type];
+
+                  return (
+                    <tr key={mov.id} className="hover:bg-surface-hover/50 transition-colors">
+                      {/* 1. Date & Type */}
+                      <td className="px-3 py-3 sm:px-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-muted-foreground flex items-center gap-1">
+                            <Calendar className="text-subtle-foreground size-3" />
+                            <span className="text-3xs font-mono">
+                              {new Date(mov.date).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          </div>
+                          <div>{renderTypeBadge(mov.type)}</div>
+                        </div>
+                      </td>
+
+                      {/* 2. Article & Réf */}
+                      <td className="px-3 py-3">
+                        <span className="text-3xs text-muted-foreground bg-surface-raised border-border rounded border px-1.5 py-0.5 font-mono font-bold">
+                          {mov.consumableReference}
+                        </span>
+                        <p className="text-foreground mt-0.5 text-xs leading-snug font-semibold">
+                          {mov.consumableName}
+                        </p>
+                      </td>
+
+                      {/* 3. Quantité */}
+                      <td className="px-3 py-3 text-center">
+                        <span className={`font-mono text-sm font-extrabold ${variant.color}`}>
+                          {variant.sign}
+                          {mov.quantity}
+                        </span>
+                      </td>
+
+                      {/* 4. Motif & Justificatif */}
+                      <td className="hidden px-3 py-3 md:table-cell">
+                        <p className="text-foreground text-xs font-medium">{mov.reason}</p>
+                        {mov.interventionRef && (
+                          <span className="text-3xs text-primary bg-primary/10 mt-0.5 inline-block rounded px-1 py-0.5 font-mono">
+                            Réf : {mov.interventionRef}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 5. Intervenant / Trajet */}
+                      <td className="px-3 py-3 text-right sm:px-4">
+                        {mov.technicianName && (
+                          <div className="text-foreground inline-flex items-center gap-1 text-xs font-medium">
+                            <User className="text-muted-foreground size-3" />
+                            <span>{mov.technicianName}</span>
+                          </div>
+                        )}
+                        <div className="text-3xs text-subtle-foreground mt-0.5">
+                          {mov.type === 'transfer' ? (
+                            <span>
+                              {mov.locationFrom || 'Dépôt'} → {mov.locationTo || 'Véhicule'}
+                            </span>
+                          ) : (
+                            <span>{mov.locationFrom || mov.locationTo || 'Dépôt Central'}</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Pagination & Compteur */}
       {filteredMovements.length > 0 && (
-        <div className="p-3 sm:p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div className="border-border text-muted-foreground flex flex-col items-center justify-between gap-3 border-t p-3 text-xs sm:flex-row sm:p-4">
           <div>
             Affichage de{' '}
-            <span className="font-semibold text-foreground">
+            <span className="text-foreground font-semibold">
               {(currentPage - 1) * ITEMS_PER_PAGE + 1}
             </span>{' '}
             à{' '}
-            <span className="font-semibold text-foreground">
+            <span className="text-foreground font-semibold">
               {Math.min(currentPage * ITEMS_PER_PAGE, filteredMovements.length)}
             </span>{' '}
-            sur{' '}
-            <span className="font-semibold text-foreground">
-              {filteredMovements.length}
-            </span>{' '}
+            sur <span className="text-foreground font-semibold">{filteredMovements.length}</span>{' '}
             mouvement{filteredMovements.length > 1 ? 's' : ''}
           </div>
 
@@ -411,13 +458,13 @@ export function StockMovementsTable({
                 size="sm"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="h-8 px-2 text-xs"
+                className="h-11 px-2 text-xs sm:h-8"
               >
                 <ChevronLeft className="size-3.5" />
                 <span className="hidden sm:inline">Précédent</span>
               </Button>
 
-              <span className="px-2 text-xs font-semibold text-foreground">
+              <span className="text-foreground px-2 text-xs font-semibold">
                 Page {currentPage} / {totalPages}
               </span>
 
@@ -426,7 +473,7 @@ export function StockMovementsTable({
                 size="sm"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="h-8 px-2 text-xs"
+                className="h-11 px-2 text-xs sm:h-8"
               >
                 <span className="hidden sm:inline">Suivant</span>
                 <ChevronRight className="size-3.5" />
