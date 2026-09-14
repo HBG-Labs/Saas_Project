@@ -82,9 +82,14 @@ export function MemberRow({
   };
 
   return (
-    <li className="border-border flex flex-col gap-4 border-b py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between">
+    <li className="border-border bg-surface-raised hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 flex flex-col gap-4 rounded-xl border p-3.5 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:flex-row sm:items-center sm:justify-between sm:p-4 sm:hover:-translate-y-0.5">
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <UserAvatar avatarId={member.profile?.avatar_id ?? null} name={name} size="sm" className="mt-0.5" />
+        <UserAvatar
+          avatarId={member.profile?.avatar_id ?? null}
+          name={name}
+          size="lg"
+          className="ring-border bg-surface shrink-0 ring-1"
+        />
 
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
@@ -98,11 +103,11 @@ export function MemberRow({
           ) : null}
 
           {teams.length > 0 ? (
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+            <ul className="flex flex-wrap items-center gap-1.5 pt-1.5">
               {teams.map((team) => (
                 <li
                   key={team.id}
-                  className="text-muted-foreground flex items-center gap-1.5 text-xs"
+                  className="border-border bg-surface-sunken/60 text-muted-foreground text-2xs flex items-center gap-1.5 rounded-full border px-2 py-1 font-medium"
                 >
                   <span
                     aria-hidden="true"
@@ -151,8 +156,36 @@ export function MemberRow({
               onOpenChange={setIsEditOpen}
               title="Modifier le technicien"
               description="Ajustez le nom complet et l'intitulé de poste ou la spécialité."
+              footer={
+                <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditOpen(false)}
+                    disabled={busy}
+                    className="w-full sm:w-auto"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    type="submit"
+                    form={`member-details-${member.id}`}
+                    variant="primary"
+                    disabled={busy}
+                    isLoading={busy}
+                    loadingLabel="Enregistrement du membre"
+                    className="w-full sm:w-auto"
+                  >
+                    {busy ? 'Enregistrement…' : 'Enregistrer'}
+                  </Button>
+                </div>
+              }
             >
-              <form onSubmit={handleSaveDetails} className="space-y-4">
+              <form
+                id={`member-details-${member.id}`}
+                onSubmit={handleSaveDetails}
+                className="space-y-4"
+              >
                 <Input
                   label="Nom complet"
                   value={editName}
@@ -166,27 +199,6 @@ export function MemberRow({
                   onChange={(e) => setEditJobTitle(e.target.value)}
                   placeholder="Ex: Technicien Fibre Optique, Conducteur de travaux..."
                 />
-                <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditOpen(false)}
-                    disabled={busy}
-                    className="w-full sm:w-auto"
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={busy}
-                    isLoading={busy}
-                    loadingLabel="Enregistrement du membre"
-                    className="w-full sm:w-auto"
-                  >
-                    {busy ? 'Enregistrement…' : 'Enregistrer'}
-                  </Button>
-                </div>
               </form>
             </Modal>
           </>
@@ -287,7 +299,8 @@ export function MemberRow({
                 }
               >
                 <p className="text-muted-foreground text-sm">
-                  Cette personne n'aura plus accès aux outils, missions et données de l'organisation.
+                  Cette personne n'aura plus accès aux outils, missions et données de
+                  l'organisation.
                 </p>
               </Modal>
             </>

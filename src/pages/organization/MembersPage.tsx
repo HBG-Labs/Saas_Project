@@ -123,7 +123,7 @@ export default function MembersPage() {
       <TeamsNavTabs memberCount={activeMembers.length} />
 
       {includedSeats !== null ? (
-        <Card className="border-primary/20 bg-primary-subtle/30">
+        <Card className="border-primary/20 from-primary-subtle/55 via-surface to-surface overflow-hidden bg-gradient-to-br">
           <CardContent className="pt-6">
             {/* Les mêmes chiffres que la facture : les comptes FACTURABLES, et
                 les sièges que la formule comprend. La barre montrait auparavant
@@ -138,16 +138,17 @@ export default function MembersPage() {
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-border bg-surface-sunken/35 flex-row items-center justify-between gap-3 border-b">
           <div>
             <CardTitle>Équipe</CardTitle>
             <p className="text-muted-foreground mt-1 text-xs">
-              {activeMembers.length} membre{activeMembers.length > 1 ? 's' : ''} actif{activeMembers.length > 1 ? 's' : ''}
+              {activeMembers.length} membre{activeMembers.length > 1 ? 's' : ''} actif
+              {activeMembers.length > 1 ? 's' : ''}
             </p>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-4">
           {members.isPending ? (
             <ListSkeleton />
           ) : members.isError ? (
@@ -164,7 +165,7 @@ export default function MembersPage() {
               description="Invitez vos collègues pour leur confier des missions et suivre leurs interventions."
             />
           ) : (
-            <ul>
+            <ul className="space-y-2.5">
               {activeMembers.map((member) => (
                 <MemberRow
                   key={member.id}
@@ -193,16 +194,14 @@ export default function MembersPage() {
       </Card>
 
       {canInvite ? (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between gap-3">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-border bg-surface-sunken/35 flex-row items-center justify-between gap-3 border-b">
             <div>
               <CardTitle>Invitations en attente</CardTitle>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Accès non encore activés
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">Accès non encore activés</p>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-4">
             {invitations.isPending ? (
               <ListSkeleton />
             ) : invitations.isError ? (
@@ -224,7 +223,7 @@ export default function MembersPage() {
                 {(invitations.data ?? []).map((invitation) => (
                   <li
                     key={invitation.id}
-                    className="border-border bg-surface-sunken/50 space-y-3 rounded-xl border p-3.5 sm:p-4"
+                    className="border-border bg-surface-raised hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 space-y-3 rounded-xl border p-3.5 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -254,16 +253,14 @@ export default function MembersPage() {
                         }}
                         disabled={resendInvitation.isPending}
                         isLoading={
-                          resendInvitation.isPending &&
-                          resendInvitation.variables === invitation.id
+                          resendInvitation.isPending && resendInvitation.variables === invitation.id
                         }
                         loadingLabel={`Renvoi du courriel à ${invitation.email}`}
                         className="w-full gap-1.5 text-xs sm:w-auto"
                         aria-label={`Renvoyer le courriel à ${invitation.email}`}
                         leadingIcon={<Send className="size-3.5" aria-hidden />}
                       >
-                        {resendInvitation.isPending &&
-                        resendInvitation.variables === invitation.id
+                        {resendInvitation.isPending && resendInvitation.variables === invitation.id
                           ? 'Envoi…'
                           : 'Renvoyer'}
                       </Button>
@@ -275,8 +272,7 @@ export default function MembersPage() {
                         }}
                         disabled={revokeInvitation.isPending}
                         isLoading={
-                          revokeInvitation.isPending &&
-                          revokeInvitation.variables === invitation.id
+                          revokeInvitation.isPending && revokeInvitation.variables === invitation.id
                         }
                         loadingLabel={`Révocation de l’invitation de ${invitation.email}`}
                         className="w-full sm:w-auto"
@@ -287,18 +283,15 @@ export default function MembersPage() {
                       </Button>
                     </div>
 
-                    {resendInvitation.isError &&
-                      resendInvitation.variables === invitation.id && (
-                        <FormError error={resendInvitation.error} />
-                      )}
+                    {resendInvitation.isError && resendInvitation.variables === invitation.id && (
+                      <FormError error={resendInvitation.error} />
+                    )}
 
-                    {resendInvitation.isSuccess &&
-                      resendInvitation.variables === invitation.id && (
-                        <p className="text-2xs font-medium text-success">
-                          Courriel renvoyé à {invitation.email}.
-                        </p>
-                      )}
-
+                    {resendInvitation.isSuccess && resendInvitation.variables === invitation.id && (
+                      <p className="text-2xs text-success font-medium">
+                        Courriel renvoyé à {invitation.email}.
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

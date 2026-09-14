@@ -49,9 +49,19 @@ export function InvitationLink({ token }: { token: string }) {
         onFocus={(event) => {
           event.target.select();
         }}
-        className="bg-surface-sunken border-border-strong text-foreground h-11 min-w-0 flex-1 truncate rounded-md border px-3 font-mono text-xs focus-visible:ring-2 sm:h-9"
+        className="bg-surface-sunken border-border-strong text-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 min-w-0 flex-1 truncate rounded-lg border px-3 font-mono text-xs transition-[border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none sm:h-9"
       />
-      <Button variant="outline" size="sm" onClick={copy} className="w-full sm:w-auto">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={copy}
+        className={
+          copied
+            ? 'border-success/40 bg-success/10 text-success w-full sm:w-auto'
+            : 'w-full sm:w-auto'
+        }
+        aria-live="polite"
+      >
         {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
         {copied ? 'Copié' : 'Copier'}
       </Button>
