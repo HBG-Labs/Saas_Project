@@ -397,12 +397,6 @@ export default function ProfilePage() {
                   <span className="mt-0.5 text-[9px] font-bold">Modifier</span>
                 </div>
               </button>
-              <span
-                className="bg-success text-3xs ring-surface pointer-events-none absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full text-white shadow-xs ring-2"
-                title="Disponible pour intervention"
-              >
-                ✓
-              </span>
             </div>
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -415,21 +409,15 @@ export default function ProfilePage() {
                 >
                   {role ? ROLE_LABELS[role] : 'Compte Professionnel'}
                 </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-success/40 bg-success/10 text-success px-2.5 py-0.5 text-xs font-semibold"
-                >
-                  🟢 En service
-                </Badge>
               </div>
               <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
                 <Briefcase className="text-primary size-3.5" />
-                {profile.jobTitle}
+                {profile.jobTitle || 'Fonction non renseignée'}
               </p>
               <div className="text-muted-foreground grid gap-1.5 pt-1 text-xs sm:flex sm:items-center sm:gap-4">
                 <span className="flex items-center gap-1">
                   <MapPin className="text-muted-foreground size-3" />
-                  {profile.zone}
+                  {profile.zone || 'Zone non renseignée'}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="text-muted-foreground size-3" />
@@ -506,28 +494,20 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="profile-email-readonly"
-                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                >
-                  Adresse e-mail (Compte)
-                </label>
-                <div className="relative flex items-center">
-                  <Mail className="text-muted-foreground absolute left-3 size-4" />
-                  <input
-                    id="profile-email-readonly"
-                    type="email"
-                    value={user?.email ?? ''}
-                    readOnly
-                    disabled
-                    className="h-touch border-border-strong bg-surface text-muted-foreground w-full cursor-not-allowed rounded-md border pr-24 pl-9 text-sm opacity-80 sm:h-9"
-                  />
-                  <span className="border-success/20 bg-success/10 text-2xs text-success absolute right-2 rounded border px-2 py-0.5 font-semibold">
-                    ✓ Vérifiée
+              <Input
+                id="profile-email-readonly"
+                label="Adresse e-mail du compte"
+                type="email"
+                value={user?.email ?? ''}
+                readOnly
+                leadingIcon={<Mail />}
+                trailingSlot={
+                  <span className="border-success/20 bg-success/10 text-2xs text-success rounded-md border px-2 py-0.5 font-semibold whitespace-nowrap">
+                    Vérifiée
                   </span>
-                </div>
-              </div>
+                }
+                className="pr-20"
+              />
 
               <Input
                 label="Téléphone mobile direct"
@@ -605,7 +585,7 @@ export default function ProfilePage() {
                     return (
                       <div
                         key={cert.id}
-                        className="border-border bg-surface-raised hover:border-primary/40 flex items-start gap-3 rounded-lg border p-3 transition-[border-color,box-shadow] hover:shadow-xs"
+                        className="border-border bg-surface-raised hover:border-primary/35 hover:shadow-raised flex items-start gap-3 rounded-xl border p-3 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5"
                       >
                         {isElec ? (
                           <Zap className="text-warning mt-0.5 size-5 shrink-0" />
@@ -662,7 +642,7 @@ export default function ProfilePage() {
                       return (
                         <div
                           key={eq.id}
-                          className="border-border bg-surface-raised flex flex-col items-start justify-between gap-2 rounded-lg border px-3 py-2.5 text-xs sm:flex-row sm:items-center"
+                          className="border-border bg-surface-raised hover:border-primary/25 flex flex-col items-start justify-between gap-2 rounded-xl border px-3 py-2.5 text-xs transition-colors sm:flex-row sm:items-center"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className={`size-2 rounded-full ${dotColor}`} />
@@ -744,8 +724,29 @@ export default function ProfilePage() {
         title="Gérer les habilitations & équipements"
         description="Modifiez ou ajoutez les matériels de mesure et habilitations attribués à votre fiche technicien."
         size="lg"
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="profile-equipment-form"
+              variant="primary"
+              leadingIcon={<Check />}
+              className="w-full font-semibold sm:w-auto"
+            >
+              Enregistrer
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleModalSubmit} className="space-y-5 pt-2">
+        <form id="profile-equipment-form" onSubmit={handleModalSubmit} className="space-y-5">
           {/* Section Équipements */}
           <div className="space-y-3">
             <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
@@ -765,7 +766,7 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
+            <div className="space-y-2.5">
               {draftProfile.equipments.length === 0 ? (
                 <p className="text-muted-foreground border-border rounded-lg border border-dashed py-4 text-center text-xs italic">
                   Aucun équipement renseigné. Cliquez sur « Ajouter un matériel » ci-dessus.
@@ -824,7 +825,7 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+            <div className="space-y-3">
               {draftProfile.certifications.length === 0 ? (
                 <p className="text-muted-foreground border-border rounded-lg border border-dashed py-4 text-center text-xs italic">
                   Aucune habilitation enregistrée. Cliquez sur « Ajouter une habilitation »
@@ -880,26 +881,6 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-
-          {/* Boutons d'action de la modale */}
-          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              leadingIcon={<Check />}
-              className="w-full font-semibold sm:w-auto"
-            >
-              Enregistrer
-            </Button>
-          </div>
         </form>
       </Modal>
 
@@ -910,8 +891,32 @@ export default function ProfilePage() {
         title="Modifier votre mot de passe"
         description="Saisissez votre nouveau mot de passe contenant au moins 6 caractères pour sécuriser votre compte."
         size="md"
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPasswordModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="profile-password-form"
+              variant="primary"
+              disabled={newPassword.trim() === ''}
+              isLoading={isChangingPassword}
+              loadingLabel="Enregistrement du mot de passe"
+              leadingIcon={<KeyRound />}
+              className="w-full font-semibold sm:w-auto"
+            >
+              Enregistrer le mot de passe
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
+        <form id="profile-password-form" onSubmit={handleChangePassword} className="space-y-4">
           <FormError error={passwordError} />
 
           <div>
@@ -982,28 +987,6 @@ export default function ProfilePage() {
                 {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
-          </div>
-
-          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsPasswordModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={newPassword.trim() === ''}
-              isLoading={isChangingPassword}
-              loadingLabel="Enregistrement du mot de passe"
-              leadingIcon={<KeyRound />}
-              className="w-full font-semibold sm:w-auto"
-            >
-              {isChangingPassword ? 'Enregistrement…' : 'Enregistrer le mot de passe'}
-            </Button>
           </div>
         </form>
       </Modal>
