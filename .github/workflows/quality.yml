@@ -64,6 +64,7 @@ jobs:
             supabase/functions/ai-assistant/index.ts \
             supabase/functions/sync-subscription-seats/index.ts \
             supabase/functions/subscription-seat-sync-worker/index.ts \
+            supabase/functions/notify-admin-signup-worker/index.ts \
             supabase/functions/resend-webhook/index.ts \
             supabase/functions/portal-message-send/index.ts \
             supabase/functions/portal-request-access/index.ts \
@@ -101,6 +102,8 @@ jobs:
             supabase/functions/superpdp-worker/handler.test.ts \
             supabase/functions/_shared/subscription-seats.test.ts \
             supabase/functions/subscription-seat-sync-worker/handler.test.ts \
+            supabase/functions/_shared/admin-signup-alerts.test.ts \
+            supabase/functions/notify-admin-signup-worker/handler.test.ts \
             supabase/functions/_shared/portal-mail.test.ts \
             supabase/functions/resend-webhook/handler.test.ts \
             supabase/functions/portal-message-send/handler.test.ts \

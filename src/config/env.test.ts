@@ -49,4 +49,19 @@ describe('parseEnv', () => {
       }),
     ).toThrow(/HTTPS/);
   });
+
+  it('VITE_ONESIGNAL_APP_ID est facultatif : absent ou vide, il reste undefined', () => {
+    expect(parseEnv(VALID).VITE_ONESIGNAL_APP_ID).toBeUndefined();
+    expect(parseEnv({ ...VALID, VITE_ONESIGNAL_APP_ID: '' }).VITE_ONESIGNAL_APP_ID).toBeUndefined();
+  });
+
+  it('VITE_ONESIGNAL_APP_ID doit être un UUID', () => {
+    expect(() => parseEnv({ ...VALID, VITE_ONESIGNAL_APP_ID: 'pas-un-uuid' })).toThrow(
+      /VITE_ONESIGNAL_APP_ID/,
+    );
+    expect(
+      parseEnv({ ...VALID, VITE_ONESIGNAL_APP_ID: '11111111-2222-4333-8444-555555555555' })
+        .VITE_ONESIGNAL_APP_ID,
+    ).toBe('11111111-2222-4333-8444-555555555555');
+  });
 });

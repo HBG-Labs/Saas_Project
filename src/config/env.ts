@@ -54,6 +54,20 @@ const envSchema = z
         )
         .optional(),
     ),
+    /**
+     * Identifiant d'application OneSignal (public : c'est un identifiant de
+     * routage, pas un secret — la clé REST qui autorise l'ENVOI reste
+     * exclusivement dans les secrets Supabase de `notify-admin-signup-worker`).
+     *
+     * FACULTATIF, et c'est essentiel : sans lui, `src/lib/push-notifications.ts`
+     * ne s'initialise pas. Un poste de développement ou une prévisualisation
+     * n'ont donc rien à configurer, et n'enregistrent pas d'appareil auprès de
+     * OneSignal par accident.
+     */
+    VITE_ONESIGNAL_APP_ID: z.preprocess(
+      (valeur) => (typeof valeur === 'string' && valeur.trim() === '' ? undefined : valeur),
+      z.uuid('VITE_ONESIGNAL_APP_ID doit être l’identifiant d’application OneSignal (un UUID)').optional(),
+    ),
   })
   .superRefine((value, context) => {
     if (value.VITE_APP_ENV === 'production' && !value.VITE_PUBLIC_APP_URL) {

@@ -109,7 +109,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
     email,
     password,
     email_confirm: true,
-    ...(displayName !== '' ? { user_metadata: { display_name: displayName } } : {}),
+    user_metadata: {
+      ...(displayName !== '' ? { display_name: displayName } : {}),
+      // Lu par `app.enqueue_admin_signup_alert()` : un collaborateur qui
+      // rejoint une entreprise existante n'est pas une nouvelle inscription
+      // REZO360, l'administrateur n'a pas à en être alerté.
+      rezo360_member_added_by_admin: true,
+    },
   });
 
   if (createError || !created.user) {

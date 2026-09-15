@@ -459,6 +459,11 @@ verify_jwt = false
 [functions.subscription-seat-sync-worker]
 verify_jwt = false
 
+# Même patron : alerte administrateur à chaque inscription réelle, réveillée
+# toutes les minutes par pg_cron. Voir functions/README-SIGNUP-ALERTS.md.
+[functions.notify-admin-signup-worker]
+verify_jwt = false
+
 # Portail client ---------------------------------------------------------------
 # Resend n'a pas de jeton Supabase : c'est la signature Svix, verifiee dans
 # `handler.ts`, qui authentifie chaque livraison.

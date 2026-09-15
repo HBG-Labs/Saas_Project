@@ -179,7 +179,13 @@ Deno.serve(async (request) => {
     // Le dirigeant remet les accès en main propre : exiger une confirmation par
     // courriel replacerait l'obstacle que cette fonction est là pour lever.
     email_confirm: true,
-    ...(displayName !== '' ? { user_metadata: { display_name: displayName } } : {}),
+    user_metadata: {
+      ...(displayName !== '' ? { display_name: displayName } : {}),
+      // Lu par `app.enqueue_admin_signup_alert()` : un compte créé par le
+      // dirigeant pour un collaborateur n'est pas une nouvelle inscription
+      // REZO360, l'administrateur n'a pas à en être alerté.
+      rezo360_member_added_by_admin: true,
+    },
   });
 
   if (createError || !created.user) {

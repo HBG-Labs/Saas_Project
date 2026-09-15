@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { clearPrivateSessionStorage } from '@/lib/private-session-storage';
+import { syncPushIdentity } from '@/lib/push-notifications';
 
 import {
   getCurrentSession,
@@ -54,6 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (previousUserId !== undefined && previousUserId !== nextUserId) {
         queryClient.clear();
         clearPrivateSessionStorage();
+        // Inerte hors app Capacitor / sans OneSignal configuré — voir
+        // `src/lib/push-notifications.ts`. Ne bloque jamais l'authentification.
+        syncPushIdentity(nextUserId);
       }
 
       previousUserIdRef.current = nextUserId;
