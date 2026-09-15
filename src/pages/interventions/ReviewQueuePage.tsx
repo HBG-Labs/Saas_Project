@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardCheck, Search, XCircle, FileText } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, FileText, Search, X, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
@@ -98,7 +99,7 @@ export default function ReviewQueuePage() {
       <MissionsNavTabs pendingReviewCount={rawList.length} />
 
       {isTechnicianOnly && (
-        <div className="border-primary/20 bg-primary/5 text-foreground flex items-center justify-between gap-3 rounded-xl border p-3.5 text-xs">
+        <div className="border-primary/20 bg-primary/5 text-foreground flex flex-col items-stretch justify-between gap-3 rounded-xl border p-3.5 text-xs sm:flex-row sm:items-center">
           <div className="flex items-center gap-2.5">
             <FileText className="text-primary size-4 shrink-0" />
             <span>
@@ -107,15 +108,18 @@ export default function ReviewQueuePage() {
               assignées.
             </span>
           </div>
-          <Button asChild variant="outline" size="sm" className="text-3xs h-11 shrink-0 sm:h-7">
+          <Button asChild variant="outline" size="sm" className="w-full shrink-0 sm:w-auto">
             <Link to={ROUTES.missions}>Mes missions</Link>
           </Button>
         </div>
       )}
 
       {/* Barre de stats & recherche */}
-      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-xl border p-3 sm:flex-row sm:items-center">
+      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-2xl border p-3.5 shadow-xs sm:flex-row sm:items-center sm:p-4">
         <div className="text-2xs flex flex-wrap items-center gap-2 font-semibold">
+          <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+            <ClipboardCheck className="size-4" aria-hidden="true" />
+          </span>
           <Badge variant="primary" className="text-3xs">
             {rawList.length} en attente de contrôle
           </Badge>
@@ -132,24 +136,31 @@ export default function ReviewQueuePage() {
         </div>
 
         {rawList.length > 0 && (
-          <div className="relative min-w-[200px] sm:w-64">
-            <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
-            <input
+          <div className="min-w-0 sm:w-72">
+            <Input
               type="text"
               placeholder="Filtrer par mission, technicien..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus:border-primary h-8 w-full rounded-lg border pr-3 pl-8 text-xs focus:outline-hidden"
+              label="Filtrer les comptes rendus"
+              hideLabel
+              leadingIcon={<Search />}
+              trailingSlot={
+                search ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setSearch('')}
+                    aria-label="Effacer la recherche"
+                    className="-mr-1"
+                  >
+                    <X className="size-3.5" aria-hidden="true" />
+                  </Button>
+                ) : null
+              }
+              className="rounded-xl text-xs"
             />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer text-xs"
-              >
-                ✕
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -171,8 +182,8 @@ export default function ReviewQueuePage() {
         <ul className="space-y-3">
           {list.map((report) => (
             <li key={report.id}>
-              <Card>
-                <CardContent className="space-y-3 pt-5">
+              <Card className="hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 overflow-hidden transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5">
+                <CardContent className="space-y-4 p-4 sm:p-5">
                   {/*
                     La carte se nomme.
 
@@ -185,12 +196,12 @@ export default function ReviewQueuePage() {
                     contrôle sans détenir `mission.view_all`. On le dit alors,
                     plutôt que d'afficher un vide.
                   */}
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="border-border/60 flex flex-wrap items-center gap-2 border-b pb-3">
                     {report.intervention?.mission != null ? (
                       <Badge variant="outline">{report.intervention.mission.reference}</Badge>
                     ) : null}
 
-                    <span className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
+                    <span className="text-foreground min-w-0 flex-1 truncate text-sm font-semibold">
                       {report.intervention?.mission?.title ?? 'Mission non consultable'}
                     </span>
 
@@ -247,7 +258,7 @@ export default function ReviewQueuePage() {
                     reviewerUserId: user?.id ?? null,
                     technicianUserId: report.intervention?.technician?.user_id ?? null,
                   }) ? (
-                    <p className="text-muted-foreground border-border rounded-md border border-dashed p-2.5 text-xs">
+                    <p className="text-muted-foreground border-border bg-surface-sunken/35 rounded-xl border border-dashed p-3 text-xs">
                       {report.intervention?.technician?.user_id === user?.id
                         ? 'Vous avez réalisé cette intervention : son contrôle revient à quelqu’un d’autre. C’est ce qui donne sa valeur au compte rendu.'
                         : 'Votre rôle ne permet pas de contrôler les comptes rendus.'}
@@ -266,8 +277,10 @@ export default function ReviewQueuePage() {
                           });
                         }}
                         disabled={approve.isPending}
+                        isLoading={approve.isPending && approve.variables === report.id}
+                        loadingLabel="Validation du compte rendu"
+                        leadingIcon={<CheckCircle2 />}
                       >
-                        <CheckCircle2 className="size-4" />
                         Valider
                       </Button>
 
@@ -320,6 +333,33 @@ function RejectDialog({ onReject, busy }: { onReject: (reason: string) => void; 
           Refuser
         </Button>
       }
+      footer={
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+            className="w-full sm:w-auto"
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="danger-outline"
+            disabled={reason.trim().length < 5 || busy}
+            isLoading={busy}
+            loadingLabel="Refus du compte rendu"
+            onClick={() => {
+              onReject(reason.trim());
+              setReason('');
+              setOpen(false);
+            }}
+            className="w-full sm:w-auto"
+          >
+            Refuser le compte rendu
+          </Button>
+        </div>
+      }
     >
       <div className="space-y-4">
         <Textarea
@@ -332,28 +372,6 @@ function RejectDialog({ onReject, busy }: { onReject: (reason: string) => void; 
             setReason(event.target.value);
           }}
         />
-
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button
-            variant="primary"
-            disabled={reason.trim().length < 5 || busy}
-            onClick={() => {
-              onReject(reason.trim());
-              setReason('');
-              setOpen(false);
-            }}
-          >
-            Refuser
-          </Button>
-        </div>
       </div>
     </Modal>
   );
