@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
 import { useStock, type StockConsumable } from '@/features/stock';
@@ -51,6 +52,9 @@ export default function PurchaseOrdersPage() {
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [orderToSend, setOrderToSend] = useState<PurchaseOrder | null>(null);
+  const [isSendingOrder, setIsSendingOrder] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   /*
     Le préremplissage vient de la navigation depuis la page Stock (« Commander
@@ -139,13 +143,25 @@ export default function PurchaseOrdersPage() {
     await receiveOrder(orderId, receivedQuantities, deliveryNotes);
   };
 
-  const handleSendOrder = async (order: PurchaseOrder) => {
-    if (
-      confirm(
-        `Confirmez-vous la transmission de la commande « ${order.reference} » auprès de ${order.supplierName} ?`,
-      )
-    ) {
-      await updateOrder(order.id, { status: 'sent' });
+  const handleSendOrder = (order: PurchaseOrder) => {
+    setSendError(null);
+    setOrderToSend(order);
+  };
+
+  const confirmSendOrder = async () => {
+    if (!orderToSend) return;
+
+    setIsSendingOrder(true);
+    setSendError(null);
+    try {
+      await updateOrder(orderToSend.id, { status: 'sent' });
+      setOrderToSend(null);
+    } catch {
+      setSendError(
+        'La commande n’a pas pu être marquée comme transmise. Vérifiez votre connexion puis réessayez.',
+      );
+    } finally {
+      setIsSendingOrder(false);
     }
   };
 
@@ -262,6 +278,62 @@ export default function PurchaseOrdersPage() {
         onClose={() => setIsViewModalOpen(false)}
         order={selectedOrder}
       />
+
+      <Modal
+        open={orderToSend !== null}
+        onOpenChange={(open) => {
+          if (!open && !isSendingOrder) {
+            setOrderToSend(null);
+            setSendError(null);
+          }
+        }}
+        title="Transmettre la commande"
+        description={
+          orderToSend
+            ? `Confirmez l’envoi de « ${orderToSend.reference} » à ${orderToSend.supplierName}.`
+            : 'Confirmez la transmission de cette commande fournisseur.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={isSendingOrder}
+              onClick={() => {
+                setOrderToSend(null);
+                setSendError(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              disabled={isSendingOrder}
+              isLoading={isSendingOrder}
+              loadingLabel="Transmission de la commande"
+              onClick={() => void confirmSendOrder()}
+              className="w-full sm:w-auto"
+            >
+              Confirmer la transmission
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            La commande quittera le statut brouillon et sera considérée comme envoyée au
+            fournisseur.
+          </p>
+          {sendError ? (
+            <p
+              role="alert"
+              className="border-error-border bg-error-subtle text-error rounded-xl border p-3 text-xs"
+            >
+              {sendError}
+            </p>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }

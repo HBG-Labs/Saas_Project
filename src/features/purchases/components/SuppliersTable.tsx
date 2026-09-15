@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 
 import type { PurchaseOrder, Supplier } from '../types/purchases.types';
 
@@ -33,6 +34,7 @@ export function SuppliersTable({
   onCreateOrder,
 }: SuppliersTableProps) {
   const [search, setSearch] = useState('');
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((sup) => {
@@ -188,13 +190,7 @@ export function SuppliersTable({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      const warningMsg =
-                        stat.count > 0
-                          ? `Ce fournisseur possède ${stat.count} commande(s) enregistrée(s).\nÊtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`
-                          : `Êtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`;
-                      if (confirm(warningMsg)) onDelete(sup.id);
-                    }}
+                    onClick={() => setSupplierToDelete(sup)}
                     aria-label={`Supprimer ${sup.name}`}
                     className="text-muted-foreground hover:text-error min-h-touch min-w-touch p-0"
                   >
@@ -343,16 +339,7 @@ export function SuppliersTable({
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => {
-                          const warningMsg =
-                            stat.count > 0
-                              ? `Ce fournisseur possède ${stat.count} commande(s) enregistrée(s).\nÊtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`
-                              : `Êtes-vous sûr de vouloir supprimer le fournisseur « ${sup.name} » ?`;
-
-                          if (confirm(warningMsg)) {
-                            onDelete(sup.id);
-                          }
-                        }}
+                        onClick={() => setSupplierToDelete(sup)}
                         title="Supprimer le fournisseur"
                         aria-label={`Supprimer ${sup.name}`}
                         className="text-muted-foreground hover:text-error size-7 cursor-pointer p-0"
@@ -367,6 +354,52 @@ export function SuppliersTable({
           )}
         </tbody>
       </table>
+
+      <Modal
+        open={supplierToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSupplierToDelete(null);
+        }}
+        title="Supprimer le fournisseur"
+        description={
+          supplierToDelete
+            ? `« ${supplierToDelete.name} » sera retiré de votre annuaire fournisseurs.`
+            : 'Confirmez la suppression de ce fournisseur.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setSupplierToDelete(null)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (supplierToDelete) {
+                  onDelete(supplierToDelete.id);
+                  setSupplierToDelete(null);
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-2 text-sm">
+          <p className="text-muted-foreground">Cette action est irréversible.</p>
+          {supplierToDelete && (supplierStats[supplierToDelete.id]?.count ?? 0) > 0 ? (
+            <p className="border-warning/40 bg-warning-subtle text-foreground rounded-xl border p-3 text-xs">
+              Ce fournisseur possède {supplierStats[supplierToDelete.id]?.count ?? 0} commande(s)
+              enregistrée(s). Vérifiez leur historique avant de continuer.
+            </p>
+          ) : null}
+        </div>
+      </Modal>
     </Card>
   );
 }

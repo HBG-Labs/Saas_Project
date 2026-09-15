@@ -89,4 +89,52 @@ describe('listes achats responsive', () => {
     expect(screen.getByText('0 commandes affichées')).toBeInTheDocument();
     expect(screen.getByText('Aucun bon de commande trouvé')).toBeInTheDocument();
   });
+
+  it('demande une confirmation contextualisée avant de supprimer un fournisseur', () => {
+    const onDelete = vi.fn();
+
+    render(
+      <SuppliersTable
+        suppliers={[supplier]}
+        orders={[order]}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+        onCreateOrder={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Supprimer Rexel France' })[0]!);
+
+    expect(screen.getByRole('dialog', { name: 'Supprimer le fournisseur' })).toBeInTheDocument();
+    expect(screen.getByText(/possède 1 commande/)).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement' }));
+    expect(onDelete).toHaveBeenCalledWith(supplier.id);
+  });
+
+  it('demande une confirmation avant de supprimer une commande', () => {
+    const onDelete = vi.fn();
+
+    render(
+      <PurchaseOrdersTable
+        orders={[order]}
+        onView={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+        onReceive={vi.fn()}
+        onSend={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: `Supprimer la commande ${order.reference}` })[0]!,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Supprimer la commande' })).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement' }));
+    expect(onDelete).toHaveBeenCalledWith(order.id);
+  });
 });

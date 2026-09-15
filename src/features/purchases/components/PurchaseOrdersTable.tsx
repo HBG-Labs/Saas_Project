@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import {
   PURCHASE_STATUS_LABELS,
   PURCHASE_STATUS_VARIANTS,
@@ -36,6 +37,7 @@ export function PurchaseOrdersTable({
   const [customMonth, setCustomMonth] = useState<string>(
     new Date().toISOString().slice(0, 7), // YYYY-MM
   );
+  const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
 
   const uniqueSuppliers = useMemo(() => {
     const names = new Set(orders.map((o) => o.supplierName));
@@ -196,13 +198,7 @@ export function PurchaseOrdersTable({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => {
-              if (
-                confirm(`Êtes-vous sûr de vouloir supprimer la commande « ${order.reference} » ?`)
-              ) {
-                onDelete(order.id);
-              }
-            }}
+            onClick={() => setOrderToDelete(order)}
             aria-label={`Supprimer la commande ${order.reference}`}
             className="text-muted-foreground hover:text-error min-h-touch min-w-touch p-0"
           >
@@ -479,15 +475,7 @@ export function PurchaseOrdersTable({
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Êtes-vous sûr de vouloir supprimer la commande « ${order.reference} » ?`,
-                                )
-                              ) {
-                                onDelete(order.id);
-                              }
-                            }}
+                            onClick={() => setOrderToDelete(order)}
                             title="Supprimer la commande"
                             aria-label={`Supprimer la commande ${order.reference}`}
                             className="text-muted-foreground hover:text-error size-6.5 cursor-pointer p-0"
@@ -504,6 +492,47 @@ export function PurchaseOrdersTable({
           </div>
         </>
       )}
+
+      <Modal
+        open={orderToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setOrderToDelete(null);
+        }}
+        title="Supprimer la commande"
+        description={
+          orderToDelete
+            ? `« ${orderToDelete.reference} » sera supprimée définitivement.`
+            : 'Confirmez la suppression de cette commande.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setOrderToDelete(null)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (orderToDelete) {
+                  onDelete(orderToDelete.id);
+                  setOrderToDelete(null);
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-muted-foreground text-sm">
+          Cette action est irréversible. Les informations de suivi associées à ce bon de commande ne
+          seront plus accessibles.
+        </p>
+      </Modal>
     </Card>
   );
 }

@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import type { StockConsumable } from '../types/stock.types';
 
 interface ConsumablesTableProps {
@@ -40,6 +41,7 @@ export function ConsumablesTable({
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockStatusFilter, setStockStatusFilter] = useState<'all' | 'low' | 'ok'>('all');
+  const [itemToDelete, setItemToDelete] = useState<StockConsumable | null>(null);
 
   const filteredItems = useMemo(() => {
     return consumables.filter((item) => {
@@ -238,13 +240,7 @@ export function ConsumablesTable({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
-                        if (
-                          confirm(`Êtes-vous sûr de vouloir supprimer l'article « ${item.name} » ?`)
-                        ) {
-                          onDelete(item.id);
-                        }
-                      }}
+                      onClick={() => setItemToDelete(item)}
                       aria-label={`Supprimer ${item.name}`}
                       className="text-muted-foreground hover:text-error min-h-touch min-w-touch p-0"
                     >
@@ -435,15 +431,7 @@ export function ConsumablesTable({
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Êtes-vous sûr de vouloir supprimer l'article « ${item.name} » ?`,
-                            )
-                          ) {
-                            onDelete(item.id);
-                          }
-                        }}
+                        onClick={() => setItemToDelete(item)}
                         title="Supprimer l'article"
                         aria-label={`Supprimer ${item.name}`}
                         className="text-muted-foreground hover:text-error size-10 cursor-pointer p-0 sm:size-8"
@@ -458,6 +446,47 @@ export function ConsumablesTable({
           )}
         </tbody>
       </table>
+
+      <Modal
+        open={itemToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setItemToDelete(null);
+        }}
+        title="Supprimer l’article"
+        description={
+          itemToDelete
+            ? `« ${itemToDelete.name} » sera retiré définitivement du stock.`
+            : 'Confirmez la suppression de cet article.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setItemToDelete(null)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (itemToDelete) {
+                  onDelete(itemToDelete.id);
+                  setItemToDelete(null);
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-muted-foreground text-sm">
+          Cette action est irréversible. L’article et son niveau de stock ne seront plus visibles
+          dans le parc de consommables.
+        </p>
+      </Modal>
     </Card>
   );
 }

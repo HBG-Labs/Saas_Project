@@ -41,4 +41,27 @@ describe('ConsumablesTable', () => {
     expect(screen.getByText('0 articles affichés')).toBeInTheDocument();
     expect(screen.queryByText('Câble réseau')).not.toBeInTheDocument();
   });
+
+  it('demande une confirmation avant de supprimer un article', () => {
+    const onDelete = vi.fn();
+
+    render(
+      <ConsumablesTable
+        consumables={[consumable]}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+        onQuickAdjust={vi.fn()}
+        onRecordMovement={vi.fn()}
+        onOrder={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Supprimer Câble réseau' })[0]!);
+
+    expect(screen.getByRole('dialog', { name: 'Supprimer l’article' })).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement' }));
+    expect(onDelete).toHaveBeenCalledWith(consumable.id);
+  });
 });
