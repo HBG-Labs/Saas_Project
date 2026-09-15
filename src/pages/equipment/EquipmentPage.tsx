@@ -1,4 +1,3 @@
-import { SelectField } from '@/components/ui/SelectField';
 import {
   AlertTriangle,
   Calendar,
@@ -22,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { exportToCsv } from '@/lib/csv-export';
 import {
@@ -128,6 +128,7 @@ export default function EquipmentPage() {
   });
 
   const [editing, setEditing] = useState<EquipmentWithAssignee | null>(null);
+  const [deleting, setDeleting] = useState<EquipmentWithAssignee | null>(null);
 
   const resetNewEq = () => {
     setNewEq({
@@ -266,7 +267,7 @@ export default function EquipmentPage() {
 
       {/* KPI Cards Header */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="border-primary/20 p-3 sm:p-4">
+        <Card className="before:bg-primary/70 hover:border-primary/35 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
@@ -280,7 +281,7 @@ export default function EquipmentPage() {
           </div>
         </Card>
 
-        <Card className="border-success/20 p-3 sm:p-4">
+        <Card className="before:bg-success/70 hover:border-success/35 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs text-success font-semibold tracking-wider uppercase">
@@ -294,7 +295,7 @@ export default function EquipmentPage() {
           </div>
         </Card>
 
-        <Card className="border-border-strong p-3 sm:p-4">
+        <Card className="before:bg-primary/50 hover:border-primary/30 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
@@ -308,7 +309,7 @@ export default function EquipmentPage() {
           </div>
         </Card>
 
-        <Card className="border-warning/20 p-3 sm:p-4">
+        <Card className="before:bg-warning/70 hover:border-warning/35 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xs text-warning font-semibold tracking-wider uppercase">
@@ -326,16 +327,18 @@ export default function EquipmentPage() {
       </div>
 
       {/* Barre d'action et filtres */}
-      <Card className="p-4">
+      <Card className="overflow-hidden rounded-2xl p-3.5 shadow-xs sm:p-4">
         <div className="flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center">
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
+          <div className="flex-1">
+            <Input
               type="text"
               placeholder="Rechercher par nom, marque ou matricule S/N…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border py-2 pr-4 pl-9 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0"
+              label="Rechercher un équipement"
+              hideLabel
+              leadingIcon={<Search />}
+              className="rounded-xl text-xs"
             />
           </div>
 
@@ -346,47 +349,45 @@ export default function EquipmentPage() {
             au bout d'une rangée.
           */}
           <div className="grid grid-cols-2 gap-2 md:flex md:items-center">
-            <SelectField
+            <Select
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onValueChange={setFilterCategory}
               aria-label="Filtrer par catégorie"
-              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
-            >
-              <option value="all">Toutes catégories</option>
-              {categories.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectField>
+              className="min-w-0 md:w-44"
+              options={[
+                { value: 'all', label: 'Toutes catégories' },
+                ...categories.map((option) => ({ value: option.id, label: option.label })),
+              ]}
+            />
 
-            <SelectField
+            <Select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as 'all' | EquipmentStatus)}
+              onValueChange={(value) => setFilterStatus(value as 'all' | EquipmentStatus)}
               aria-label="Filtrer par statut"
-              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
-            >
-              <option value="all">Tous les statuts</option>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {EQUIPMENT_STATUS_LABELS[option.value]}
-                </option>
-              ))}
-            </SelectField>
+              className="min-w-0 md:w-44"
+              options={[
+                { value: 'all', label: 'Tous les statuts' },
+                ...STATUS_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: EQUIPMENT_STATUS_LABELS[option.value],
+                })),
+              ]}
+            />
 
-            <SelectField
+            <Select
               value={filterCalibration}
-              onChange={(e) =>
-                setFilterCalibration(e.target.value as 'all' | 'valid' | 'due_soon' | 'expired')
+              onValueChange={(value) =>
+                setFilterCalibration(value as 'all' | 'valid' | 'due_soon' | 'expired')
               }
               aria-label="Filtrer par conformité étalonnage"
-              className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-md border px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 md:min-h-0 md:w-auto"
-            >
-              <option value="all">Tous contrôles</option>
-              <option value="valid">✅ Étalonnage Conforme</option>
-              <option value="due_soon">⚠️ Échéance &lt; 30 jours</option>
-              <option value="expired">🚫 Étalonnage Expiré</option>
-            </SelectField>
+              className="col-span-2 min-w-0 md:col-span-1 md:w-48"
+              options={[
+                { value: 'all', label: 'Tous les contrôles' },
+                { value: 'valid', label: 'Étalonnage conforme' },
+                { value: 'due_soon', label: 'Échéance sous 30 jours' },
+                { value: 'expired', label: 'Étalonnage expiré' },
+              ]}
+            />
 
             {list.length > 0 && (
               <Button
@@ -466,7 +467,10 @@ export default function EquipmentPage() {
             const calibration = calibrationState(eq.next_calibration);
 
             return (
-              <Card key={eq.id} className="hover:border-border-strong p-4 transition-colors">
+              <Card
+                key={eq.id}
+                className="hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 p-4 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5"
+              >
                 <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                   <div className="flex items-start gap-3.5">
                     <div className="bg-surface-raised text-primary border-border-strong mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border">
@@ -532,24 +536,18 @@ export default function EquipmentPage() {
                         onClick={() => setEditing(eq)}
                         className="text-muted-foreground hover:text-primary cursor-pointer"
                         title="Modifier cet équipement"
+                        aria-label={`Modifier ${eq.name}`}
                       >
                         <Pencil className="size-4" />
                       </Button>
 
                       <Button
-                        variant="ghost"
+                        variant="danger-outline"
                         size="icon-sm"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Êtes-vous sûr de vouloir supprimer l'équipement « ${eq.name} » ?`,
-                            )
-                          ) {
-                            removeEquipment.mutate(eq.id);
-                          }
-                        }}
-                        className="text-muted-foreground hover:text-error cursor-pointer"
+                        onClick={() => setDeleting(eq)}
+                        className="cursor-pointer"
                         title="Supprimer"
+                        aria-label={`Supprimer ${eq.name}`}
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -581,8 +579,31 @@ export default function EquipmentPage() {
         }}
         title="Ajouter un équipement au parc"
         description="Enregistrez un nouvel appareil de mesure, réflectomètre ou outil professionnel."
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="add-equipment-form"
+              variant="primary"
+              disabled={createEquipment.isPending}
+              isLoading={createEquipment.isPending}
+              loadingLabel="Enregistrement de l’équipement"
+              className="w-full sm:w-auto"
+            >
+              Enregistrer l'équipement
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleAddSubmit} className="space-y-4 pt-2">
+        <form id="add-equipment-form" onSubmit={handleAddSubmit} className="space-y-4">
           <FormError error={submitError} />
 
           <Input
@@ -609,48 +630,30 @@ export default function EquipmentPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="new-eq-category"
-                className="text-muted-foreground mb-1.5 block text-xs font-medium"
-              >
-                Catégorie technique
-              </label>
-              <SelectField
-                id="new-eq-category"
-                value={newEq.categoryId}
-                onChange={(e) => setNewEq({ ...newEq, categoryId: e.target.value })}
-                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
-              >
-                {categories.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
+            <Select
+              id="new-eq-category"
+              label="Catégorie technique"
+              value={newEq.categoryId || undefined}
+              onValueChange={(value) => setNewEq({ ...newEq, categoryId: value })}
+              placeholder="Choisir une catégorie"
+              options={categories.map((option) => ({ value: option.id, label: option.label }))}
+            />
 
-            <div>
-              <label
-                htmlFor="new-eq-member"
-                className="text-muted-foreground mb-1.5 block text-xs font-medium"
-              >
-                Affecter à un technicien
-              </label>
-              <SelectField
-                id="new-eq-member"
-                value={newEq.assignedMemberId}
-                onChange={(e) => setNewEq({ ...newEq, assignedMemberId: e.target.value })}
-                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
-              >
-                <option value="">Aucun — laisser en stock</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {memberDisplayName(member)}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
+            <Select
+              id="new-eq-member"
+              label="Affecter à un technicien"
+              value={newEq.assignedMemberId || 'unassigned'}
+              onValueChange={(value) =>
+                setNewEq({ ...newEq, assignedMemberId: value === 'unassigned' ? '' : value })
+              }
+              options={[
+                { value: 'unassigned', label: 'Aucun — laisser en stock' },
+                ...members.map((member) => ({
+                  value: member.id,
+                  label: memberDisplayName(member),
+                })),
+              ]}
+            />
           </div>
 
           <Input
@@ -659,25 +662,6 @@ export default function EquipmentPage() {
             value={newEq.nextCalibration}
             onChange={(e) => setNewEq({ ...newEq, nextCalibration: e.target.value })}
           />
-
-          <div className="border-border flex justify-end gap-2 border-t pt-3">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="cursor-pointer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={createEquipment.isPending}
-              className="bg-primary hover:bg-primary cursor-pointer text-white"
-            >
-              {createEquipment.isPending ? 'Enregistrement…' : "Enregistrer l'équipement"}
-            </Button>
-          </div>
         </form>
       </Modal>
 
@@ -693,8 +677,31 @@ export default function EquipmentPage() {
           }}
           title="Modifier l'équipement"
           description="Mettez à jour le nom, le matricule S/N, l'affectation ou la date du prochain étalonnage."
+          footer={
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setEditing(null)}
+                className="w-full sm:w-auto"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                form="edit-equipment-form"
+                variant="primary"
+                disabled={updateEquipment.isPending}
+                isLoading={updateEquipment.isPending}
+                loadingLabel="Enregistrement des modifications"
+                className="w-full sm:w-auto"
+              >
+                Enregistrer les modifications
+              </Button>
+            </div>
+          }
         >
-          <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
+          <form id="edit-equipment-form" onSubmit={handleEditSubmit} className="space-y-4">
             <FormError error={submitError} />
 
             <Input
@@ -718,78 +725,48 @@ export default function EquipmentPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="edit-eq-category"
-                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                >
-                  Catégorie technique
-                </label>
-                <SelectField
-                  id="edit-eq-category"
-                  value={editing.category_id ?? ''}
-                  onChange={(e) => setEditing({ ...editing, category_id: e.target.value })}
-                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
-                >
-                  {categories.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </SelectField>
-              </div>
+              <Select
+                id="edit-eq-category"
+                label="Catégorie technique"
+                value={editing.category_id ?? undefined}
+                onValueChange={(value) => setEditing({ ...editing, category_id: value })}
+                placeholder="Choisir une catégorie"
+                options={categories.map((option) => ({ value: option.id, label: option.label }))}
+              />
 
-              <div>
-                <label
-                  htmlFor="edit-eq-status"
-                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                >
-                  Statut du matériel
-                </label>
-                <SelectField
-                  id="edit-eq-status"
-                  value={editing.status}
-                  onChange={(e) =>
-                    setEditing({ ...editing, status: e.target.value as EquipmentStatus })
-                  }
-                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {EQUIPMENT_STATUS_LABELS[option.value]}
-                    </option>
-                  ))}
-                </SelectField>
-              </div>
+              <Select
+                id="edit-eq-status"
+                label="Statut du matériel"
+                value={editing.status}
+                onValueChange={(value) =>
+                  setEditing({ ...editing, status: value as EquipmentStatus })
+                }
+                options={STATUS_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: EQUIPMENT_STATUS_LABELS[option.value],
+                }))}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="edit-eq-member"
-                  className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                >
-                  Attribué au technicien
-                </label>
-                <SelectField
-                  id="edit-eq-member"
-                  value={editing.assigned_member_id ?? ''}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      assigned_member_id: e.target.value === '' ? null : e.target.value,
-                    })
-                  }
-                  className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
-                >
-                  <option value="">Aucun — retour en stock</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {memberDisplayName(member)}
-                    </option>
-                  ))}
-                </SelectField>
-              </div>
+              <Select
+                id="edit-eq-member"
+                label="Attribué au technicien"
+                value={editing.assigned_member_id ?? 'unassigned'}
+                onValueChange={(value) =>
+                  setEditing({
+                    ...editing,
+                    assigned_member_id: value === 'unassigned' ? null : value,
+                  })
+                }
+                options={[
+                  { value: 'unassigned', label: 'Aucun — retour en stock' },
+                  ...members.map((member) => ({
+                    value: member.id,
+                    label: memberDisplayName(member),
+                  })),
+                ]}
+              />
 
               <Input
                 label="Date du prochain étalonnage"
@@ -800,28 +777,55 @@ export default function EquipmentPage() {
                 }
               />
             </div>
-
-            <div className="border-border flex justify-end gap-2 border-t pt-3">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setEditing(null)}
-                className="cursor-pointer"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={updateEquipment.isPending}
-                className="bg-primary hover:bg-primary cursor-pointer font-semibold text-white"
-              >
-                {updateEquipment.isPending ? 'Enregistrement…' : 'Enregistrer les modifications'}
-              </Button>
-            </div>
           </form>
         </Modal>
       )}
+
+      <Modal
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        title="Supprimer l’équipement"
+        description={
+          deleting
+            ? `« ${deleting.name} » sera retiré définitivement du parc.`
+            : 'Confirmez la suppression de cet équipement.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={removeEquipment.isPending}
+              onClick={() => setDeleting(null)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              disabled={removeEquipment.isPending}
+              isLoading={removeEquipment.isPending}
+              loadingLabel="Suppression de l’équipement"
+              onClick={() => {
+                if (deleting) {
+                  removeEquipment.mutate(deleting.id, {
+                    onSuccess: () => setDeleting(null),
+                  });
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-muted-foreground text-sm">
+          Cette action ne peut pas être annulée. Vérifiez que le matériel n’est plus affecté à un
+          technicien avant de continuer.
+        </p>
+      </Modal>
     </div>
   );
 }
