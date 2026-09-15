@@ -335,13 +335,14 @@ export async function sendSignupAlertPush(
 /**
  * Marque le résultat d'UN canal, sans toucher à l'autre.
  *
- * Pas d'état « skipped » ici : un canal tenté réussit ou échoue, c'est tout.
- * La colonne SQL en garde un pour un usage futur (désactivation manuelle d'un
- * canal), mais rien dans ce worker ne le produit aujourd'hui.
+ * `skipped` : le canal n'est pas configuré et ne le sera peut-être jamais
+ * (le push est facultatif — décision du 15/09/2026). La ligne se clôt sans
+ * lui, plutôt que de le retenter toutes les heures pour toujours. Le jour où
+ * le canal est configuré, il ne repart QUE pour les inscriptions suivantes.
  */
 export interface ChannelResult {
   channel: 'email' | 'push';
-  outcome: 'sent' | 'failed';
+  outcome: 'sent' | 'failed' | 'skipped';
   providerId?: string | null;
   error?: unknown;
 }
@@ -370,6 +371,9 @@ export async function recordSignupAlertResult(
         patch.email_sent_at = now.toISOString();
         patch.email_provider_id = result.providerId ?? null;
         patch.email_error = null;
+      } else if (result.outcome === 'skipped') {
+        patch.email_status = 'skipped';
+        patch.email_error = errorMessage(result.error).slice(0, 500);
       } else {
         patch.email_error = errorMessage(result.error).slice(0, 500);
         errors.push(`e-mail : ${patch.email_error}`);
@@ -379,6 +383,11 @@ export async function recordSignupAlertResult(
         patch.push_status = 'sent';
         patch.push_sent_at = now.toISOString();
         patch.push_error = null;
+      } else if (result.outcome === 'skipped') {
+        // Le motif reste lisible dans `push_error`, mais ce n'est pas une
+        // erreur : il n'entre pas dans `last_error` et ne planifie rien.
+        patch.push_status = 'skipped';
+        patch.push_error = errorMessage(result.error).slice(0, 500);
       } else {
         patch.push_error = errorMessage(result.error).slice(0, 500);
         errors.push(`push : ${patch.push_error}`);

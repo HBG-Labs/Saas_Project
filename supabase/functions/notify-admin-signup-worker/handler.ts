@@ -136,10 +136,12 @@ export function createSignupAlertWorkerHandler(config: SignupAlertWorkerConfig) 
 
       if (alert.push_status === 'pending') {
         if (!config.sendPush || !config.oneSignalAppId || !config.oneSignalExternalUserId) {
+          // Facultatif, à la différence de l'e-mail : non configuré = on passe,
+          // on ne retente pas. Voir `ChannelResult`.
           results.push({
             channel: 'push',
-            outcome: 'failed',
-            error: new Error('OneSignal (ONESIGNAL_APP_ID / ONESIGNAL_ADMIN_EXTERNAL_ID / clé REST) non configuré.'),
+            outcome: 'skipped',
+            error: new Error('OneSignal non configuré (ONESIGNAL_APP_ID / ONESIGNAL_ADMIN_EXTERNAL_ID / clé REST).'),
           });
         } else {
           try {
@@ -155,7 +157,7 @@ export function createSignupAlertWorkerHandler(config: SignupAlertWorkerConfig) 
         }
       }
 
-      let rowOk = results.every((entry) => entry.outcome === 'sent');
+      let rowOk = results.every((entry) => entry.outcome !== 'failed');
       try {
         await recordSignupAlertResult(admin, alert, results, clock());
       } catch (recordFailure) {

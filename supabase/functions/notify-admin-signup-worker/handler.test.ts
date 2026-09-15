@@ -294,7 +294,7 @@ Deno.test('la réponse HTTP ne contient ni adresse, ni contenu, ni détail d’e
 
 // --------------------------------------------------- configuration absente
 
-Deno.test('canaux non configurés : le worker termine proprement, sans lever', async () => {
+Deno.test('e-mail non configuré : la ligne reste à retenter (canal principal)', async () => {
   const { fetchImpl, updates } = fakeSupabase([alert()]);
   const handler = createSignupAlertWorkerHandler(
     baseConfig({ fetch: fetchImpl, sendEmail: null, sendPush: null, adminEmail: undefined }),
@@ -306,6 +306,31 @@ Deno.test('canaux non configurés : le worker termine proprement, sans lever', a
   assertEquals(response.status, 200);
   assertEquals(body.failed, 1);
   assertExists(updates[0]?.last_error);
+  assertEquals('email_status' in updates[0], false, 'l’e-mail reste pending, donc retenté');
+});
+
+Deno.test('push non configuré, e-mail parti : la ligne est close, rien ne sera retenté', async () => {
+  const pushCalls: unknown[] = [];
+  const { fetchImpl, updates } = fakeSupabase([alert()]);
+  const handler = createSignupAlertWorkerHandler(
+    baseConfig({
+      fetch: fetchImpl,
+      sendPush: null,
+      sendEmail: async () => ({ providerId: null }),
+    }),
+  );
+
+  const body = await (await handler(request())).json();
+
+  // Le push est facultatif : non configuré, il est passé — pas en échec.
+  assertEquals(body.sent, 1);
+  assertEquals(body.failed, 0);
+  assertEquals(pushCalls.length, 0);
+  assertEquals(updates[0]?.email_status, 'sent');
+  assertEquals(updates[0]?.push_status, 'skipped');
+  assertEquals(updates[0]?.last_error, null);
+  // Les deux canaux sont clos : `claim` ne reverra jamais cette ligne.
+  assertEquals(updates[0]?.next_attempt_at, alert().signed_up_at);
 });
 
 // --------------------------------------------------------- aucune tâche

@@ -237,6 +237,27 @@ Deno.test('e-mail en échec, push réussi : seul l’e-mail est planifié pour u
   assertEquals(patch?.next_attempt_at !== CLAIMED.signed_up_at, true);
 });
 
+Deno.test('un canal passé (skipped) clôt la ligne sans compter comme une erreur', async () => {
+  const { admin, updates } = fakeAdminClient();
+
+  await recordSignupAlertResult(
+    admin,
+    CLAIMED,
+    [
+      { channel: 'email', outcome: 'sent', providerId: null },
+      { channel: 'push', outcome: 'skipped', error: new Error('OneSignal non configuré') },
+    ],
+    new Date('2026-09-15T10:00:05.000Z'),
+  );
+
+  const patch = updates[0];
+  assertEquals(patch?.push_status, 'skipped');
+  assertMatch(String(patch?.push_error), /non configuré/);
+  assertEquals(patch?.last_error, null);
+  // Plus rien à retenter : `next_attempt_at` n'est pas repoussé.
+  assertEquals(patch?.next_attempt_at, CLAIMED.signed_up_at);
+});
+
 Deno.test('aucun message d’erreur enregistré ne dépasse 500 caractères', async () => {
   const { admin, updates } = fakeAdminClient();
 

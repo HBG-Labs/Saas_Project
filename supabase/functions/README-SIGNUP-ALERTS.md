@@ -3,12 +3,12 @@
 Le code est prêt et testé (26 tests Deno + une suite SQL). Il manque des
 comptes tiers et quelques secrets. Ce document décrit exactement ces étapes.
 
-> **Statut actuel : DORMANT.** La migration pose le trigger, la file
-> d'attente et le tirage atomique — les inscriptions réelles s'y accumulent
-> dès l'application de la migration, quoi qu'il arrive ensuite. Mais sans les
-> secrets ci-dessous, le worker les tire, échoue proprement sur les deux
-> canaux, et les retente indéfiniment (jusqu'à une heure d'intervalle) sans
-> jamais rien envoyer ni perdre une seule inscription.
+> **Statut actuel : E-MAIL ACTIF, PUSH LAISSÉ DE CÔTÉ** (décision du
+> 15/09/2026). L'e-mail part vers `ADMIN_SIGNUP_EMAIL` à chaque inscription
+> réelle, vérifié en production. Le push est facultatif : tant que OneSignal
+> n'est pas configuré, le worker le marque `skipped` et clôt la ligne dès que
+> l'e-mail est parti — rien n'est retenté pour rien. Le brancher plus tard
+> (sections 2, 3, 5) ne vaudra que pour les inscriptions suivantes.
 
 ---
 
