@@ -65,6 +65,7 @@ jobs:
             supabase/functions/sync-subscription-seats/index.ts \
             supabase/functions/subscription-seat-sync-worker/index.ts \
             supabase/functions/notify-admin-signup-worker/index.ts \
+            supabase/functions/quote-reminder-worker/index.ts \
             supabase/functions/resend-webhook/index.ts \
             supabase/functions/portal-message-send/index.ts \
             supabase/functions/portal-request-access/index.ts \
@@ -82,6 +83,7 @@ jobs:
           # `unpdf` est une dépendance npm propre au runtime Edge, pas au
           # bundle React. Deno l'installe dans son espace isolé pour ce check.
           deno check --node-modules-dir=auto supabase/functions/index-ai-document/index.ts
+          deno check --node-modules-dir=auto supabase/functions/generate-quote-pdf/index.ts
 
       # Ces tests tournent SANS aucune permission Deno : ni réseau, ni disque.
       # C'est la garantie qu'ils n'atteignent jamais le partenaire ni la base,
@@ -104,6 +106,8 @@ jobs:
             supabase/functions/subscription-seat-sync-worker/handler.test.ts \
             supabase/functions/_shared/admin-signup-alerts.test.ts \
             supabase/functions/notify-admin-signup-worker/handler.test.ts \
+            supabase/functions/_shared/quote-reminders.test.ts \
+            supabase/functions/quote-reminder-worker/handler.test.ts \
             supabase/functions/_shared/portal-mail.test.ts \
             supabase/functions/resend-webhook/handler.test.ts \
             supabase/functions/portal-message-send/handler.test.ts \

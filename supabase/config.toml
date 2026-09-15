@@ -464,6 +464,11 @@ verify_jwt = false
 [functions.notify-admin-signup-worker]
 verify_jwt = false
 
+# Relances automatiques des devis, toutes les 15 minutes par pg_cron. Voir
+# functions/README-QUOTE-REMINDERS.md.
+[functions.quote-reminder-worker]
+verify_jwt = false
+
 # Portail client ---------------------------------------------------------------
 # Resend n'a pas de jeton Supabase : c'est la signature Svix, verifiee dans
 # `handler.ts`, qui authentifie chaque livraison.

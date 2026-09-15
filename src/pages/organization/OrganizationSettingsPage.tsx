@@ -30,6 +30,7 @@ import { DEFAULT_QUOTE_PAYMENT_METHOD, DEFAULT_QUOTE_PAYMENT_TERMS } from '@/fea
 import { cn } from '@/lib/cn';
 import {
   organizationSettingsSchema,
+  parseReminderDays,
   type OrganizationSettingsInputValues,
   type OrganizationSettingsValues,
 } from '@/features/organizations/schemas/organization.schema';
@@ -134,6 +135,7 @@ export default function OrganizationSettingsPage() {
             country: toFormValue(data.country),
             quotePaymentTerms: toFormValue(data.quote_payment_terms),
             quotePaymentMethod: toFormValue(data.quote_payment_method),
+            quoteReminderDays: (data.quote_reminder_days ?? []).join(', '),
           },
         }
       : {}),
@@ -169,6 +171,8 @@ export default function OrganizationSettingsPage() {
         country: toPatchValue(values.country),
         quote_payment_terms: toPatchValue(values.quotePaymentTerms),
         quote_payment_method: toPatchValue(values.quotePaymentMethod),
+        // Validé par le schéma : `null` est impossible ici.
+        quote_reminder_days: parseReminderDays(values.quoteReminderDays ?? '') ?? [],
       });
       setSaved(true);
       setTimeout(() => {
@@ -515,6 +519,16 @@ export default function OrganizationSettingsPage() {
                   })}
                 </div>
               </div>
+
+              <Input
+                label="Relances automatiques (jours après l’envoi)"
+                placeholder="7, 14"
+                hint="Un devis envoyé au client depuis REZO360 et resté sans réponse est relancé dans le même fil à ces échéances, jamais après sa date de validité. Laissez vide pour ne jamais relancer. Cinq échéances au plus."
+                disabled={!canUpdate}
+                inputMode="numeric"
+                {...(errors.quoteReminderDays?.message ? { error: errors.quoteReminderDays.message } : {})}
+                {...register('quoteReminderDays')}
+              />
             </CardContent>
           </Card>
 

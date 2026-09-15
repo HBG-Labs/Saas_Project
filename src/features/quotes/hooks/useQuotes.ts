@@ -9,7 +9,9 @@ import {
   createQuoteTemplates,
   deleteQuote,
   deleteQuoteTemplate,
+  ensureQuotePdf,
   getQuote,
+  listQuoteReminders,
   listQuotes,
   listQuoteTemplates,
   listQuotesWithTotals,
@@ -65,6 +67,25 @@ export function useQuotes(organizationId: string | null) {
     queryKey: qk.quotes.list(organizationId ?? 'none'),
     queryFn: () => (organizationId === null ? [] : listQuotes(organizationId)),
     enabled: organizationId !== null,
+  });
+}
+
+/**
+ * Prépare (ou récupère) le PDF du devis et renvoie son lien signé.
+ *
+ * Appelée sans attendre à l'envoi au client (le PDF se prépare pendant que
+ * l'entreprise remplit le reste), et à nouveau — instantanément, le document
+ * existe déjà — quand quelqu'un clique « Télécharger le PDF ».
+ */
+export function useEnsureQuotePdf() {
+  return useMutation({ mutationFn: ensureQuotePdf });
+}
+
+export function useQuoteReminders(quoteId: string | undefined) {
+  return useQuery({
+    queryKey: qk.quotes.reminders(quoteId ?? 'none'),
+    queryFn: () => (quoteId === undefined ? [] : listQuoteReminders(quoteId)),
+    enabled: quoteId !== undefined,
   });
 }
 

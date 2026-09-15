@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
+  FileOpenButton,
   formatDateFr,
   formatEuros,
   PortalPageHeader,
@@ -130,6 +131,10 @@ export default function PortalQuoteDetailPage() {
           </Badge>
         ) : null}
       </div>
+
+      {q.pdf_path ? (
+        <FileOpenButton bucket="quote-documents" path={q.pdf_path} label="Télécharger le PDF" />
+      ) : null}
 
       {/* Réponse : la seule décision que le portail permet, et elle est confirmée. */}
       {peutRepondre ? (

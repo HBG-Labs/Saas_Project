@@ -164,6 +164,7 @@ export const qk = {
     list: (organizationId: string, filters?: unknown) =>
       [...qk.quotes.all, organizationId, 'list', filters ?? null] as const,
     detail: (quoteId: string) => [...qk.quotes.all, 'detail', quoteId] as const,
+    reminders: (quoteId: string) => [...qk.quotes.all, 'detail', quoteId, 'reminders'] as const,
     templates: (organizationId: string) => [...qk.quotes.all, organizationId, 'templates'] as const,
   },
 

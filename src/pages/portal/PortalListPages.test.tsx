@@ -130,6 +130,7 @@ describe('Listes du portail client', () => {
         subtotal_cents: 10_000,
         vat_cents: 2_000,
         total_cents: 12_000,
+        pdf_path: null,
       },
     ];
 

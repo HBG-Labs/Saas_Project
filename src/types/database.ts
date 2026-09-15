@@ -71,6 +71,7 @@ export type EquipmentStatus = 'available' | 'assigned' | 'maintenance' | 'expire
 export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
+export type QuoteReminderStatus = 'pending' | 'sent' | 'skipped' | 'failed';
 
 /**
  * Cycle de vie d'une facture. `sent` dit que le document est parti chez le
@@ -246,6 +247,7 @@ export interface PortalQuote {
   subtotal_cents: number;
   vat_cents: number;
   total_cents: number;
+  pdf_path: string | null;
 }
 
 /** Document JSON de `portal_quote_detail(uuid)` ; `null` si invisible. */
@@ -264,6 +266,7 @@ export interface PortalQuoteDetail {
   subtotal_cents: number;
   vat_cents: number;
   total_cents: number;
+  pdf_path: string | null;
   items: Array<{
     id: string;
     description: string;
@@ -534,6 +537,8 @@ export interface Database {
           quote_payment_terms: string | null;
           /** Moyens de paiement acceptés, affichés sur les devis. `null` = texte par défaut côté client. */
           quote_payment_method: string | null;
+          /** Jours de relance d'un devis sans réponse (`{7,14}` par défaut). Vide = aucune. */
+          quote_reminder_days: number[];
           legal_form: string | null;
           ape_code: string | null;
           share_capital_cents: number | null;
@@ -574,6 +579,7 @@ export interface Database {
           default_vat_rate?: number | null;
           quote_payment_terms?: string | null;
           quote_payment_method?: string | null;
+          quote_reminder_days?: number[];
           legal_form?: string | null;
           ape_code?: string | null;
           share_capital_cents?: number | null;
@@ -602,6 +608,7 @@ export interface Database {
           default_vat_rate?: number | null;
           quote_payment_terms?: string | null;
           quote_payment_method?: string | null;
+          quote_reminder_days?: number[];
           legal_form?: string | null;
           ape_code?: string | null;
           share_capital_cents?: number | null;
@@ -2271,6 +2278,10 @@ export interface Database {
           created_by: string | null;
           /** Réponse donnée depuis le portail client ; NULL si décidée par l'entreprise. */
           client_responded_at: string | null;
+          /** Posée par trigger au passage à « envoyé » ; NULL pour un devis envoyé avant les relances automatiques. */
+          sent_at: string | null;
+          /** Relances automatiques pour CE devis (le réglage de l'entreprise reste intact). */
+          reminders_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -2300,6 +2311,7 @@ export interface Database {
           status?: QuoteStatus;
           notes?: string | null;
           valid_until?: string | null;
+          reminders_enabled?: boolean;
         };
         Relationships: [
           {
@@ -2312,6 +2324,36 @@ export interface Database {
             foreignKeyName: 'quotes_customer_id_fkey';
             columns: ['customer_id'];
             referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      quote_reminders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          quote_id: string;
+          /** 1 = première relance, 2 = deuxième… */
+          sequence: number;
+          due_at: string;
+          status: QuoteReminderStatus;
+          message_id: string | null;
+          /** Motif d'un `skipped` ou d'un `failed`, lisible par l'entreprise. */
+          reason: string | null;
+          attempts: number;
+          sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        /** Écrite par trigger et par le worker uniquement. */
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'quote_reminders_quote_id_fkey';
+            columns: ['quote_id'];
+            referencedRelation: 'quotes';
             referencedColumns: ['id'];
           },
         ];

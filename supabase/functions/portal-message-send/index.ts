@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
 import { readTransport, sendMessage } from '../_shared/email.ts';
+import { createOutboundStore } from '../_shared/portal-outbound.ts';
 import {
   createPortalMessageSendHandler,
   type AdminStore,
   type CallerStore,
-  type ConversationContext,
   type InsertedMessage,
 } from './handler.ts';
 
@@ -110,43 +110,8 @@ function makeCallerStore(caller: SupabaseClient): CallerStore {
 }
 
 const adminStore: AdminStore = {
-  async conversationContext(conversationId): Promise<ConversationContext | null> {
-    const { data: conv } = await admin
-      .from('client_conversations')
-      .select('subject, organization_id, customer_contacts!inner(email, first_name, last_name), organizations!inner(name)')
-      .eq('id', conversationId)
-      .maybeSingle();
-    if (conv === null) return null;
-    type Contact = { email: string | null; first_name: string | null; last_name: string | null };
-    type Org = { name: string };
-    const one = <T,>(v: unknown): T | undefined => (Array.isArray(v) ? v[0] as T : v as T);
-    const contact = one<Contact>(conv.customer_contacts);
-    const org = one<Org>(conv.organizations);
-    if (!contact?.email || !org) return null;
-
-    const { data: settings } = await admin
-      .from('client_portal_settings')
-      .select('display_name')
-      .eq('organization_id', conv.organization_id)
-      .maybeSingle();
-
-    const { data: previous } = await admin
-      .from('client_messages')
-      .select('internet_message_id, direction')
-      .eq('conversation_id', conversationId)
-      .not('internet_message_id', 'is', null)
-      .order('created_at', { ascending: true });
-    const ids = (previous ?? []).map((m) => m.internet_message_id as string);
-
-    return {
-      subject: conv.subject,
-      contactEmail: contact.email,
-      contactName: [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.email,
-      organizationName: (settings?.display_name as string | null)?.trim() || org.name,
-      lastInternetMessageId: ids.at(-1) ?? null,
-      references: ids.slice(0, -1),
-    };
-  },
+  // Contexte du fil et suivi d'envoi : partagés avec `quote-reminder-worker`.
+  ...createOutboundStore(admin),
 
   async invoiceAttachment(invoiceId, conversationId) {
     const { data: conv } = await admin
@@ -186,27 +151,7 @@ const adminStore: AdminStore = {
       content: btoa(binary),
       contentType: 'application/pdf',
     };
-  },
-
-  async markSent(messageId, input) {
-    await admin
-      .from('client_messages')
-      .update({
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        resend_email_id: input.providerId || null,
-        internet_message_id: input.internetMessageId,
-        recipient_email: input.recipientEmail,
-        in_reply_to: input.inReplyTo,
-        references_header: input.references,
-        error: null,
-      })
-      .eq('id', messageId);
-  },
-
-  async markFailed(messageId, error) {
-    await admin.from('client_messages').update({ status: 'failed', error }).eq('id', messageId);
-  },
+  }
 };
 
 Deno.serve(async (request) => {

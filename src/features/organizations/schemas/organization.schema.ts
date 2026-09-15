@@ -88,6 +88,19 @@ export const organizationSettingsSchema = z.object({
     .optional(),
   quotePaymentTerms: z.string().trim().max(500).optional().or(z.literal('')),
   quotePaymentMethod: z.string().trim().max(500).optional().or(z.literal('')),
+  /**
+   * Jours de relance d'un devis sans réponse, saisis « 7, 14 ». Vide = pas de
+   * relance automatique. Mêmes bornes que la contrainte en base : au plus 5,
+   * entre 1 et 365 jours.
+   */
+  quoteReminderDays: z
+    .string()
+    .trim()
+    .refine((value) => value === '' || parseReminderDays(value) !== null, {
+      error: 'Indiquez des jours entiers séparés par des virgules (ex. 7, 14), entre 1 et 365, cinq au plus.',
+    })
+    .optional()
+    .or(z.literal('')),
   // `char_length(country) = 2` en base : un code ISO, pas un nom de pays.
   country: z
     .string()
@@ -133,4 +146,23 @@ export function slugifyOrganizationName(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
+}
+
+/**
+ * « 7, 14 » → `[7, 14]`, triés et dédoublonnés ; `null` si la saisie est
+ * invalide. Chaîne vide → `[]` (aucune relance).
+ */
+export function parseReminderDays(value: string): number[] | null {
+  const trimmed = value.trim();
+  if (trimmed === '') return [];
+  const parts = trimmed.split(/[,;\s]+/).filter((part) => part !== '');
+  const days: number[] = [];
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    const day = Number(part);
+    if (day < 1 || day > 365) return null;
+    if (!days.includes(day)) days.push(day);
+  }
+  if (days.length > 5) return null;
+  return days.sort((a, b) => a - b);
 }

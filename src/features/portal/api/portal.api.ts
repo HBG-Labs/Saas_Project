@@ -100,6 +100,7 @@ export type PortalBucket =
   | 'intervention-attachments'
   | 'organization-documents'
   | 'invoice-electronic-documents'
+  | 'quote-documents'
   | 'client-message-attachments';
 
 export async function getPortalFileUrl(bucket: PortalBucket, path: string): Promise<string> {

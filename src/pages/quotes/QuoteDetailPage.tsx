@@ -17,8 +17,10 @@ import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/o
 import {
   DEFAULT_QUOTE_PAYMENT_METHOD,
   DEFAULT_QUOTE_PAYMENT_TERMS,
+  QuoteRemindersCard,
   toEuros,
   useDeleteQuote,
+  useEnsureQuotePdf,
   useQuote,
   useUpdateQuote,
 } from '@/features/quotes';
@@ -47,9 +49,20 @@ export default function QuoteDetailPage() {
   const updateQuote = useUpdateQuote(quoteId ?? '');
   const deleteQuote = useDeleteQuote();
   const createInvoice = useCreateInvoiceFromQuote();
+  const ensureQuotePdf = useEnsureQuotePdf();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const portal = useClientPortalAccess();
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  /**
+   * Prépare le PDF sans bloquer l'envoi ni le faire échouer : le document
+   * existera au plus tard au prochain clic sur « Télécharger le PDF ». Voir
+   * `generate-quote-pdf` — mêmes garanties que `ensureFacturX`.
+   */
+  const warmUpQuotePdf = (id: string) => {
+    ensureQuotePdf.mutate(id, { onError: () => undefined });
+  };
 
   useDocumentTitle(quote ? `Devis ${quote.reference}` : 'Devis');
 
@@ -115,13 +128,40 @@ export default function QuoteDetailPage() {
             <Badge variant={status.variant} className="self-center">
               {status.label}
             </Badge>
-            <Button variant="outline" className="gap-2" onClick={() => window.print()}>
-              <Download className="size-4" aria-hidden="true" />
-              PDF
-            </Button>
+            {quote.status === 'draft' ? (
+              // Brouillon : rien n'est conservé côté serveur — les montants
+              // peuvent encore changer. L'aperçu navigateur reste le seul PDF.
+              <Button variant="outline" className="gap-2" onClick={() => window.print()}>
+                <Download className="size-4" aria-hidden="true" />
+                Aperçu
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={ensureQuotePdf.isPending}
+                isLoading={ensureQuotePdf.isPending}
+                loadingLabel="Préparation du PDF"
+                onClick={() => {
+                  setPdfError(null);
+                  ensureQuotePdf.mutate(quote.id, {
+                    onSuccess: (document) => {
+                      window.open(document.url, '_blank', 'noopener');
+                    },
+                    onError: (error) => {
+                      setPdfError(error instanceof Error ? error.message : 'Le PDF n’a pas pu être préparé.');
+                    },
+                  });
+                }}
+              >
+                <Download className="size-4" aria-hidden="true" />
+                Télécharger le PDF
+              </Button>
+            )}
           </>
         }
       />
+      {pdfError && <FormError error={new Error(pdfError)} />}
 
       <dl
         aria-label="Résumé financier du devis"
@@ -168,7 +208,12 @@ export default function QuoteDetailPage() {
               size="sm"
               className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={updateQuote.isPending}
-              onClick={() => updateQuote.mutate({ status: 'sent' })}
+              onClick={() =>
+                updateQuote.mutate(
+                  { status: 'sent' },
+                  { onSuccess: () => warmUpQuotePdf(quote.id) },
+                )
+              }
             >
               <Send className="size-3.5" aria-hidden="true" />
               Marquer comme envoyé
@@ -244,6 +289,7 @@ export default function QuoteDetailPage() {
                       { status: 'sent' },
                       {
                         onSuccess: () => {
+                          warmUpQuotePdf(quote.id);
                           setNotifyOpen(true);
                         },
                       },
@@ -276,6 +322,15 @@ export default function QuoteDetailPage() {
             </>
           )}
         </div>
+      )}
+
+      {portal.canView && (
+        <QuoteRemindersCard
+          quote={quote}
+          canManage={canManage}
+          isUpdating={updateQuote.isPending}
+          onToggle={(enabled) => updateQuote.mutate({ reminders_enabled: enabled })}
+        />
       )}
 
       {/*

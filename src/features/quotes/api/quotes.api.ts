@@ -1,5 +1,7 @@
-import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { TablesInsert, TablesUpdate } from '@/types/database';
+import { z } from 'zod';
+
+import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database';
 import type { Quote, QuoteItem, QuoteTemplate, QuoteTotals, QuoteWithItems, QuoteWithTotals } from '@/types/domain';
 
 /**
@@ -259,6 +261,55 @@ export async function updateQuote(
   patch: TablesUpdate<'quotes'>,
 ): Promise<Quote> {
   return unwrap(supabase.from('quotes').update(patch).eq('id', quoteId).select('*').single());
+}
+
+export type QuoteReminder = Tables<'quote_reminders'>;
+
+const quotePdfDocumentSchema = z.object({
+  url: z.url(),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  byteSize: z.number().int().positive().max(5_000_000),
+  generatedAt: z.string(),
+});
+
+export type QuotePdfDocument = z.infer<typeof quotePdfDocumentSchema>;
+
+/**
+ * S'assure que le PDF du devis existe (le génère s'il manque, à l'envoi), et
+ * renvoie le lien signé pour l'ouvrir. Un devis en brouillon n'a pas de PDF :
+ * le serveur refuse, ce n'est pas une erreur mais un état attendu — pas de
+ * document tant que les montants peuvent encore changer.
+ */
+export async function ensureQuotePdf(quoteId: string): Promise<QuotePdfDocument> {
+  const response = await supabase.functions.invoke<unknown>('generate-quote-pdf', {
+    body: { quoteId },
+  });
+  if (response.error) {
+    throw new Error(
+      await messageDeLaFonction(response.error, 'Le PDF du devis n’a pas pu être préparé.'),
+    );
+  }
+  const parsed = quotePdfDocumentSchema.safeParse(response.data);
+  if (!parsed.success) {
+    throw new Error('La réponse du service de documents est incomplète. Réessayez.');
+  }
+  return parsed.data;
+}
+
+/**
+ * Les relances d'un devis : planifiées, envoyées, passées (avec le motif).
+ * Lecture seule — l'entreprise agit sur le devis (`reminders_enabled`, statut),
+ * la base replanifie.
+ */
+export async function listQuoteReminders(quoteId: string): Promise<QuoteReminder[]> {
+  return unwrap(
+    supabase
+      .from('quote_reminders')
+      .select('*')
+      .eq('quote_id', quoteId)
+      .order('created_at', { ascending: true })
+      .order('sequence', { ascending: true }),
+  );
 }
 
 export async function deleteQuote(quoteId: string): Promise<void> {

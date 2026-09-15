@@ -9,6 +9,7 @@ import type { PortalQuoteDetail } from '@/types/database';
 const state = vi.hoisted(() => ({
   quote: null as PortalQuoteDetail | null,
   respond: vi.fn(),
+  openFile: vi.fn(),
 }));
 
 vi.mock('@/features/portal', async (importActual) => {
@@ -23,6 +24,7 @@ vi.mock('@/features/portal', async (importActual) => {
       refetch: vi.fn(),
     }),
     useRespondPortalQuote: () => ({ isPending: false, mutate: state.respond }),
+    usePortalFileUrl: () => ({ isPending: false, mutate: state.openFile }),
   };
 });
 
@@ -41,6 +43,7 @@ const QUOTE: PortalQuoteDetail = {
   subtotal_cents: 10_000,
   vat_cents: 2_000,
   total_cents: 12_000,
+  pdf_path: null,
   items: [
     {
       id: 'item-1',
@@ -64,6 +67,19 @@ describe('PortalQuoteDetailPage', () => {
     expect(screen.getAllByText('120,00 €')).toHaveLength(2);
     expect(screen.getAllByText('Tableau électrique')).not.toHaveLength(0);
     expect(screen.getByText(/agence centrale/i)).toBeInTheDocument();
+  });
+
+  it('affiche le téléchargement du PDF seulement quand il existe', () => {
+    state.quote = { ...QUOTE, pdf_path: null };
+    const { unmount } = renderWithProviders(<PortalQuoteDetailPage />, {
+      route: '/portail/devis/quote-1',
+    });
+    expect(screen.queryByRole('button', { name: /télécharger le pdf/i })).not.toBeInTheDocument();
+    unmount();
+
+    state.quote = { ...QUOTE, pdf_path: `${QUOTE.organization_id}/quote-1/devis.pdf` };
+    renderWithProviders(<PortalQuoteDetailPage />, { route: '/portail/devis/quote-1' });
+    expect(screen.getByRole('button', { name: /télécharger le pdf/i })).toBeInTheDocument();
   });
 
   it('demande confirmation avant de transmettre une acceptation', async () => {
