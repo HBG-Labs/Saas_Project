@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
+  ProspectContactsPanel,
   ProspectConversionActions,
   ProspectFollowupsPanel,
   ProspectMessageDraft,
@@ -218,9 +219,7 @@ export default function ProspectDetailPage() {
               <CardTitle className="text-sm">Coordonnées</CardTitle>
             </CardHeader>
             <CardContent className="mt-3 p-0">
-              <p className="text-muted-foreground text-xs">
-                Aucune coordonnée collectée — aucune source d’enrichissement n’est branchée en V1.
-              </p>
+              <ProspectContactsPanel siren={prospect.siren} contacts={prospect.contacts} />
             </CardContent>
           </Card>
 

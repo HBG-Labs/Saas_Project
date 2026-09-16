@@ -3913,8 +3913,20 @@ export interface Database {
           confidence: number | null;
           created_at: string;
         };
-        /** Vide en V1 : aucune source d'enrichissement branchée (Phase 11). */
-        Insert: never;
+        /**
+         * Aucune source d'enrichissement AUTOMATISÉE branchée (Phase 11,
+         * décision du 24/09/2026) — mais la saisie MANUELLE par un
+         * administrateur reste possible, c'est ce que ce type autorise.
+         */
+        Insert: {
+          id?: string;
+          siren: string;
+          contact_type: 'email' | 'phone' | 'website';
+          value: string;
+          source?: string;
+          verified_at?: string | null;
+          confidence?: number | null;
+        };
         Update: never;
         Relationships: [
           {

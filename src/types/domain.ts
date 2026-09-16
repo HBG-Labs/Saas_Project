@@ -255,6 +255,7 @@ export interface RecurringTaskWithRefs extends RecurringTaskRow {
 // par construction — voir `supabase/functions/README-PROSPECT-RADAR.md`.
 export type Prospect = Tables<'prospects'>;
 export type ProspectEstablishment = Tables<'prospect_establishments'>;
+export type ProspectContact = Tables<'prospect_contacts'>;
 export type ProspectNote = Tables<'prospect_notes'>;
 export type ProspectFollowup = Tables<'prospect_followups'>;
 export type ProspectActivity = Tables<'prospect_activities'>;
@@ -273,6 +274,7 @@ export interface ProspectDetail extends Prospect {
   sector: Pick<ProspectingSector, 'id' | 'label' | 'ape_code'> | null;
   zone: Pick<ProspectingZone, 'id' | 'code' | 'label'> | null;
   establishments: ProspectEstablishment[];
+  contacts: ProspectContact[];
   notes: ProspectNote[];
   followups: ProspectFollowup[];
   activities: ProspectActivity[];

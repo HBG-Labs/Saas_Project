@@ -5,6 +5,7 @@ import { qk } from '@/lib/query-keys';
 import type { ProspectStatus } from '@/types/database';
 
 import {
+  addProspectContact,
   addProspectNote,
   completeFollowup,
   convertProspectToClient,
@@ -94,6 +95,16 @@ export function useSuppressProspect(siren: string) {
   const invalidate = useInvalidateProspecting();
   return useMutation({
     mutationFn: (reason: string | null) => suppressProspect(siren, reason),
+    onSuccess: () => invalidate(),
+  });
+}
+
+/** Phase 11 : saisie manuelle d'une coordonnée — aucune source automatisée. */
+export function useAddProspectContact(siren: string) {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (input: { contactType: 'email' | 'phone' | 'website'; value: string }) =>
+      addProspectContact({ siren, ...input }),
     onSuccess: () => invalidate(),
   });
 }

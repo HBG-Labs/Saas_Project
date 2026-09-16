@@ -1,5 +1,5 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { ProspectDetail, ProspectFollowup, ProspectListRow, ProspectNote } from '@/types/domain';
+import type { ProspectContact, ProspectDetail, ProspectFollowup, ProspectListRow, ProspectNote } from '@/types/domain';
 import type { ProspectStatus } from '@/types/database';
 
 /**
@@ -137,11 +137,13 @@ export async function getProspect(siren: string): Promise<ProspectDetail | null>
          sector:prospecting_sectors(id, label, ape_code),
          zone:prospecting_zones(id, code, label),
          establishments:prospect_establishments(*),
+         contacts:prospect_contacts(*),
          notes:prospect_notes(*),
          followups:prospect_followups(*),
          activities:prospect_activities(*)`,
       )
       .eq('siren', siren)
+      .order('collected_at', { referencedTable: 'prospect_contacts', ascending: false })
       .order('created_at', { referencedTable: 'prospect_notes', ascending: false })
       .order('due_at', { referencedTable: 'prospect_followups', ascending: true })
       .order('created_at', { referencedTable: 'prospect_activities', ascending: false })
@@ -246,6 +248,31 @@ export async function suppressProspect(siren: string, reason: string | null): Pr
       .single(),
   );
   await updateProspectStatus(siren, 'ne_plus_contacter');
+}
+
+/**
+ * Coordonnée saisie À LA MAIN par un administrateur — jamais une source
+ * automatisée (Phase 11, aucun fournisseur connecté). `source` distingue
+ * clairement l'origine : une future intégration ne doit jamais pouvoir se
+ * confondre avec une saisie manuelle dans les mêmes lignes.
+ */
+export async function addProspectContact(input: {
+  siren: string;
+  contactType: 'email' | 'phone' | 'website';
+  value: string;
+}): Promise<ProspectContact> {
+  return unwrap(
+    supabase
+      .from('prospect_contacts')
+      .insert({
+        siren: input.siren,
+        contact_type: input.contactType,
+        value: input.value,
+        source: 'saisie_manuelle',
+      })
+      .select('*')
+      .single(),
+  );
 }
 
 export async function addProspectNote(input: {
