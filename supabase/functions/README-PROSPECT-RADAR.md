@@ -95,3 +95,42 @@ déciderez — pas glissé silencieusement dans une phase qui ne le mentionne pa
 - `prospect_activities` est insert-only (même patron qu'`audit_logs`) : la
   timeline commerciale, y compris les instants où une opposition a été posée
   ou une conversion actée, ne peut jamais être réécrite après coup.
+
+## Secteurs ciblés (Phase 4, `20260919090000`)
+
+Codes NAF rév. 2 réels, jamais une correspondance par mot-clé. Choix
+explicitement validés avec l'utilisateur :
+
+| Métier REZO360 | Code(s) NAF | Poids | Remarque |
+|---|---|---|---|
+| Plomberie | 43.22A | 1.0 | |
+| Électricité | 43.21A | 1.0 | |
+| Chauffage | 43.22B | 1.0 | Couvre AUSSI le froid/climatisation — la nomenclature française ne les distingue pas. |
+| Froid & Climatisation | — | — | Aucune ligne séparée : capté par 43.22B (ci-dessus), pas de code distinct en NAF rév. 2. |
+| Nettoyage | 81.21Z, 81.22Z | 1.0 | Bâtiments courant / industriel. |
+| Paysage & Espaces verts | 81.30Z | 1.0 | |
+| Dératisation & Désinsectisation | 81.29A | 1.0 | |
+| Aide à domicile | 88.10A | 1.0 | |
+| Mécanique | 45.20A, 45.20B | 1.0 | Véhicules légers / autres véhicules. |
+| Transport | 49.41A, 49.41B | 0.5 | Code réel mais large (transporteurs classiques, pas seulement du terrain proche REZO360). |
+| Réseaux & IT | 62.02A | 0.5 | Idem : couvre surtout des ESN généralistes. |
+| Fibre & Télécom | — | — | Non ciblé : aucun code NAF spécifique et fiable aux installateurs de terrain (43.21A se confondrait avec l'électricité, 61.90Z vise des opérateurs/FAI). |
+| Autre métier de terrain | — | — | Catch-all, jamais ciblé. |
+
+## Dédoublonnage SIREN / SIRET (Phase 4)
+
+- **SIREN** identifie l'entreprise (`prospects`, clé primaire) — jamais
+  recréé, toujours mis à jour via `upsert_prospect` (Phase 3), qui ne touche
+  jamais au statut commercial ni à l'historique.
+- **SIRET** identifie l'établissement retenu pour représenter la présence
+  dans la zone ciblée (`prospect_establishments`) — un SIREN peut porter
+  plusieurs SIRET (plusieurs établissements), une seule ligne par SIRET.
+- Une entreprise n'a qu'une seule activité principale (un seul code NAF) à un
+  instant donné : elle ne peut donc jamais être détectée deux fois dans le
+  même run pour deux codes NAF ciblés différents — pas de risque de double
+  traitement à ce niveau.
+- Le worker (`prospecting-worker`) peut désormais traiter plusieurs zones
+  actives dans un même run (ex. Martinique + Guadeloupe une fois cette
+  dernière activée) : chacune contribue au même plafond de sécurité global —
+  activer une zone supplémentaire n'augmente jamais la taille de
+  l'échantillon au-delà de `MAX_SAMPLE_PER_RUN`.

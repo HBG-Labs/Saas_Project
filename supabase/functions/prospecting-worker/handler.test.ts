@@ -58,10 +58,12 @@ function sampleProspect(overrides: Partial<RawProspect> = {}): RawProspect {
   };
 }
 
-function fakeSupabase(options: { sectors?: Array<{ ape_code: string; id: string }>; zone?: Record<string, unknown> | null }) {
+function fakeSupabase(options: {
+  sectors?: Array<{ ape_code: string; id: string }>;
+  zones?: Array<Record<string, unknown>>;
+}) {
   const calls: string[] = [];
-  const zone =
-    'zone' in options ? options.zone : { id: 'zone-1', code: 'martinique', department_code: '972', active: true };
+  const zones = options.zones ?? [{ id: 'zone-1', code: 'martinique', department_code: '972', active: true }];
   const sectors = options.sectors ?? [];
 
   const fetchImpl: typeof fetch = (input) => {
@@ -69,13 +71,12 @@ function fakeSupabase(options: { sectors?: Array<{ ape_code: string; id: string 
     calls.push(url);
 
     if (url.includes('/prospecting_zones')) {
-      // `.maybeSingle()` attend un tableau JSON (200) : vide = aucune ligne,
-      // un élément = la ligne — pas un 406, contrairement à `.single()`.
+      // `.maybeSingle()`/liste attend un tableau JSON (200), pas un 406.
+      const filtered = url.includes('code=eq.')
+        ? zones.filter((zone) => url.includes(`code=eq.${zone.code}`))
+        : zones;
       return Promise.resolve(
-        new Response(JSON.stringify(zone ? [zone] : []), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(JSON.stringify(filtered), { status: 200, headers: { 'Content-Type': 'application/json' } }),
       );
     }
     if (url.includes('/prospecting_sectors')) {
@@ -134,7 +135,7 @@ Deno.test("sans secteur actif ni apeCodes fourni, le worker refuse plutôt que d
 });
 
 Deno.test('sans zone active correspondante, le worker refuse', async () => {
-  const { fetchImpl } = fakeSupabase({ zone: null });
+  const { fetchImpl } = fakeSupabase({ zones: [] });
   const handler = createProspectingWorkerHandler({
     url: ROOT,
     serviceRoleKey: 'service-role',
@@ -187,6 +188,35 @@ Deno.test('la limite plafonne au maximum de sécurité de la Phase 3, même si d
 
   await handler(request({ apeCodes: ['43.22A'], limit: 10_000 }));
   assertEquals(provider.calls[0].perPage <= 25, true);
+});
+
+Deno.test('plusieurs zones actives sont traitées dans le même run, sans dépasser le plafond global', async () => {
+  const { fetchImpl } = fakeSupabase({
+    sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
+    zones: [
+      { id: 'zone-1', code: 'martinique', department_code: '972', active: true },
+      { id: 'zone-2', code: 'guadeloupe', department_code: '971', active: true },
+    ],
+  });
+  const provider = stubProvider([sampleProspect(), sampleProspect({ siren: '987654321' })]);
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+  });
+
+  const response = await handler(request({ apeCodes: ['43.22A'], limit: 3 }));
+  const payload = await response.json();
+
+  assertEquals(response.status, 200);
+  assertEquals(payload.zones, ['martinique', 'guadeloupe']);
+  // Une recherche par zone au minimum, avec le bon département à chaque fois.
+  assertEquals(provider.calls.some((call) => call.departmentCode === '972'), true);
+  assertEquals(provider.calls.some((call) => call.departmentCode === '971'), true);
+  // Le plafond global (3) est respecté même réparti sur deux zones.
+  assertEquals(payload.filtered <= 3, true);
 });
 
 Deno.test('un code NAF mal formé est refusé avant tout appel réseau', async () => {

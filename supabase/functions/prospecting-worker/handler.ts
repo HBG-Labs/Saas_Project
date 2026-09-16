@@ -4,7 +4,7 @@ import type { ProspectSourceProvider, RawProspect } from '../_shared/prospecting
 import { workerSecretMatches } from '../_shared/worker-secret.ts';
 
 /**
- * Détection minimale — Phase 3.
+ * Détection minimale — Phase 3, secteurs réels et zones multiples — Phase 4.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * PAS de CRON branché sur ce worker pour l'instant (Phase 10). Il est appelé à
@@ -13,11 +13,24 @@ import { workerSecretMatches } from '../_shared/worker-secret.ts';
  * synchronisation de masse — conformément à la demande explicite de ne pas
  * lancer de récupération massive dès cette phase.
  *
- * `prospecting_sectors` est vide tant que la Phase 4 n'a pas choisi les codes
- * NAF à cibler : ce worker accepte donc un `apeCodes` explicite dans la
- * requête pour ce test, et se rabat sur les secteurs actifs en base s'il n'en
- * reçoit pas. Le score n'est jamais calculé ici (Phase 5) : `opportunity_score`
- * reste à sa valeur par défaut (0), fixée par `upsert_prospect`.
+ * `prospecting_sectors` est peuplée depuis la Phase 4 (20260919090000) : ce
+ * worker se rabat dessus (secteurs actifs) si `apeCodes` n'est pas fourni
+ * explicitement dans la requête — utile pour tester un code isolé sans
+ * toucher à la configuration. Le score n'est jamais calculé ici (Phase 5) :
+ * `opportunity_score` reste à sa valeur par défaut (0), fixée par
+ * `upsert_prospect`.
+ *
+ * ZONES : toutes les zones ACTIVES sont traitées dans le même run (plus une
+ * seule, comme en Phase 3), chacune apportant sa part au même plafond global
+ * `limit` — activer une seconde zone (ex. Guadeloupe) n'échappe donc jamais
+ * au plafond de sécurité, elle se contente de se partager l'échantillon.
+ *
+ * DÉDOUBLONNAGE : une entreprise n'a qu'une seule activité principale, donc
+ * elle ne peut apparaître que sous UN SEUL code NAF ciblé au sein d'un même
+ * run — aucun risque de double traitement apeCode×apeCode. Le SIREN reste la
+ * clé d'identité de l'entreprise (`prospects`), le SIRET celle de
+ * l'établissement retenu pour la zone (`prospect_establishments`) : jamais
+ * confondus, jamais fusionnés.
  *
  * L'écriture passe exclusivement par `upsert_prospect`/`upsert_prospect_establishment`
  * (RPC SECURITY DEFINER, 20260918090000) : ce fichier ne peut PAS toucher au
@@ -73,18 +86,33 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const zoneQuery = body.zoneCode
-      ? admin.from('prospecting_zones').select('id, code, department_code, active').eq('code', body.zoneCode).maybeSingle()
-      : admin
-          .from('prospecting_zones')
-          .select('id, code, department_code, active')
-          .eq('active', true)
-          .order('priority', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-    const { data: zone, error: zoneError } = await zoneQuery;
-    if (zoneError) return json({ error: 'Zones de prospection illisibles.' }, 503);
-    if (!zone || !zone.active || !zone.department_code) {
+    interface Zone {
+      id: string;
+      code: string;
+      department_code: string | null;
+      active: boolean;
+    }
+
+    let zones: Zone[];
+    if (body.zoneCode) {
+      const { data: zone, error: zoneError } = await admin
+        .from('prospecting_zones')
+        .select('id, code, department_code, active')
+        .eq('code', body.zoneCode)
+        .maybeSingle();
+      if (zoneError) return json({ error: 'Zones de prospection illisibles.' }, 503);
+      zones = zone ? [zone as Zone] : [];
+    } else {
+      const { data: activeZones, error: zonesError } = await admin
+        .from('prospecting_zones')
+        .select('id, code, department_code, active')
+        .eq('active', true)
+        .order('priority', { ascending: true });
+      if (zonesError) return json({ error: 'Zones de prospection illisibles.' }, 503);
+      zones = (activeZones ?? []) as Zone[];
+    }
+    zones = zones.filter((zone) => zone.active && zone.department_code);
+    if (zones.length === 0) {
       return json({ error: 'Aucune zone active correspondante (activez-la dans prospecting_zones).' }, 400);
     }
 
@@ -118,28 +146,30 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
 
     const stats = { fetched: 0, filtered: 0, created: 0, updated: 0, ignored: 0, errors: 0 };
     const errors: string[] = [];
-    const collected: RawProspect[] = [];
+    const collected: Array<{ raw: RawProspect; zoneId: string }> = [];
 
     try {
-      for (const apeCode of apeCodes) {
-        if (collected.length >= limit) break;
-        const { results } = await config.provider.search({
-          departmentCode: zone.department_code,
-          apeCode,
-          createdAfter: body.createdAfter,
-          perPage: Math.min(limit - collected.length, MAX_SAMPLE_PER_RUN),
-        });
-        stats.fetched += results.length;
-        for (const raw of results) {
-          if (collected.length >= limit) break;
-          collected.push(raw);
+      outer: for (const zone of zones) {
+        for (const apeCode of apeCodes) {
+          if (collected.length >= limit) break outer;
+          const { results } = await config.provider.search({
+            departmentCode: zone.department_code!,
+            apeCode,
+            createdAfter: body.createdAfter,
+            perPage: Math.min(limit - collected.length, MAX_SAMPLE_PER_RUN),
+          });
+          stats.fetched += results.length;
+          for (const raw of results) {
+            if (collected.length >= limit) break;
+            collected.push({ raw, zoneId: zone.id });
+          }
         }
       }
 
       const { data: sectorRows } = await admin.from('prospecting_sectors').select('id, ape_code');
       const sectorBySector = new Map((sectorRows ?? []).map((row) => [row.ape_code as string, row.id as string]));
 
-      for (const raw of collected) {
+      for (const { raw, zoneId } of collected) {
         stats.filtered += 1;
         try {
           const { data: upserted, error: upsertError } = await admin
@@ -157,7 +187,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
               p_code_postal: raw.establishment?.codePostal ?? null,
               p_departement: raw.departement,
               p_region: raw.region,
-              p_zone_id: zone.id,
+              p_zone_id: zoneId,
             })
             .single();
           if (upsertError) throw new Error(upsertError.message);
@@ -198,7 +228,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
         })
         .eq('id', run.id);
 
-      return json({ runId: run.id, zone: zone.code, apeCodes, ...stats });
+      return json({ runId: run.id, zones: zones.map((zone) => zone.code), apeCodes, ...stats });
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : String(failure);
       await admin
