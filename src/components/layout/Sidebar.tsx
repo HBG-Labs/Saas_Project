@@ -11,6 +11,7 @@ import { NavLink, useLocation } from 'react-router';
 
 import {
   ACCOUNT_NAV,
+  PLATFORM_ADMIN_NAV,
   SIDEBAR_GROUPS,
   type NavGroup,
   type ResolvedNavItem,
@@ -18,6 +19,7 @@ import {
 import { ROUTES } from '@/config/routes';
 import { useCurrentIndustry } from '@/features/industries';
 import { useCurrentOrganization, useVisibleNavGroups } from '@/features/organizations';
+import { usePlatformAdmin } from '@/features/prospecting';
 import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
@@ -31,6 +33,7 @@ const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
   'outils-metiers': 'text-[#1D4ED8]',
   resources: 'text-[#0F766E]',
   account: 'text-[#4F46E5]',
+  'platform-admin': 'text-[#DC2626]',
 };
 
 interface SidebarProps {
@@ -282,6 +285,7 @@ export function Sidebar({
   const { organization } = useCurrentOrganization();
   const { label: industryLabel, isResolved } = useCurrentIndustry();
   const location = useLocation();
+  const { isAdmin: isPlatformAdmin } = usePlatformAdmin();
 
   const accountGroup: NavGroup = {
     id: 'account',
@@ -290,7 +294,14 @@ export function Sidebar({
     items: ACCOUNT_NAV,
   };
 
-  const allGroups = [...activeGroups, accountGroup];
+  // Jamais dans `SIDEBAR_GROUPS` : ce groupe ne dépend d'aucun rôle
+  // d'organisation, d'aucun métier, d'aucun abonnement — seulement du statut
+  // d'administrateur plateforme, invisible au système de permissions tenant.
+  const platformAdminGroup: NavGroup | null = isPlatformAdmin
+    ? { id: 'platform-admin', label: 'Administration REZO360', icon: 'radar', items: PLATFORM_ADMIN_NAV }
+    : null;
+
+  const allGroups = [...activeGroups, ...(platformAdminGroup ? [platformAdminGroup] : []), accountGroup];
   const currentFullPath = location.pathname + location.search;
 
   // Un seul volet ouvert à la fois : celui qui contient la page courante.
@@ -418,6 +429,25 @@ export function Sidebar({
             ))}
           </CollapsibleSidebarSection>
         ))}
+
+        {platformAdminGroup ? (
+          <CollapsibleSidebarSection
+            group={platformAdminGroup}
+            collapsed={isCollapsed}
+            isOpen={openGroupId === platformAdminGroup.id}
+            onToggle={() => handleToggleGroup(platformAdminGroup.id)}
+          >
+            {platformAdminGroup.items.map((item) => (
+              <SidebarLink
+                key={`${platformAdminGroup.id}-${item.to}-${item.label}`}
+                item={{ ...item, locked: false }}
+                collapsed={isCollapsed}
+                onNavigate={onNavigate}
+                iconColor={SIDEBAR_GROUP_ICON_COLORS['platform-admin']}
+              />
+            ))}
+          </CollapsibleSidebarSection>
+        ) : null}
       </div>
 
       <div className="pt-2 border-t border-border">

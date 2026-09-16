@@ -40,6 +40,7 @@ import {
   Package,
   Paintbrush,
   Pickaxe,
+  Radar,
   Scale,
   ScrollText,
   Settings,
@@ -126,6 +127,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   box: Box,
   grid: Grid,
   'bar-chart-2': BarChart2,
+  radar: Radar,
 };
 
 export const FALLBACK_NAV_ICON: LucideIcon = Wrench;

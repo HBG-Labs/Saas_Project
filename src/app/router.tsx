@@ -3,7 +3,12 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { ErrorFallback } from '@/components/feedback/ErrorFallback';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
-import { RequireOrganization, RequirePermission, RequirePlan } from '@/components/guards';
+import {
+  RequireOrganization,
+  RequirePermission,
+  RequirePlan,
+  RequirePlatformAdmin,
+} from '@/components/guards';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { RootLayout } from '@/components/layout/RootLayout';
@@ -562,6 +567,30 @@ export const routes: RouteObject[] = [
                         ],
                       },
                     ],
+                  },
+                ],
+              },
+
+              // Prospect Radar — module INTERNE, HORS de `RequireOrganization` :
+              // il n'appartient à aucune organisation, cliente ou non. Seule
+              // condition d'accès : être administrateur plateforme
+              // (`platform_admins`/`prospecting.view`, Phase 2). Un client
+              // REZO360 authentifié qui atteindrait ces routes à la main ne
+              // verrait toujours rien — la RLS ne lui renvoie aucune ligne.
+              {
+                element: <RequirePlatformAdmin permission="prospecting.view" />,
+                children: [
+                  {
+                    path: ROUTES.prospecting,
+                    lazy: lazyPage(() => import('@/pages/prospecting/ProspectingDashboardPage')),
+                  },
+                  {
+                    path: ROUTES.prospectingList,
+                    lazy: lazyPage(() => import('@/pages/prospecting/ProspectingListPage')),
+                  },
+                  {
+                    path: ROUTE_PATTERNS.prospect,
+                    lazy: lazyPage(() => import('@/pages/prospecting/ProspectDetailPage')),
                   },
                 ],
               },

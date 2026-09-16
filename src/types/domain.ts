@@ -248,3 +248,38 @@ export interface RecurringTaskWithRefs extends RecurringTaskRow {
 // Les tables `technician_locations` et `technician_location_pings` existent
 // encore en base, vides et inatteignables. Leur redonner un type exporté
 // reviendrait à rouvrir la porte par commodité.
+
+// ------------------------------------------------------------ Prospect Radar
+//
+// Module INTERNE (pas client) : aucun de ces types ne porte `organization_id`,
+// par construction — voir `supabase/functions/README-PROSPECT-RADAR.md`.
+export type Prospect = Tables<'prospects'>;
+export type ProspectEstablishment = Tables<'prospect_establishments'>;
+export type ProspectNote = Tables<'prospect_notes'>;
+export type ProspectFollowup = Tables<'prospect_followups'>;
+export type ProspectActivity = Tables<'prospect_activities'>;
+export type ProspectingZone = Tables<'prospecting_zones'>;
+export type ProspectingSector = Tables<'prospecting_sectors'>;
+
+/** Une raison de score, telle que posée dans `prospects.score_reasons`. */
+export interface ProspectScoreReason {
+  criterion: string;
+  label: string;
+  points: number;
+}
+
+/** Fiche complète affichée par la Phase 6 : le prospect et tout ce qu'il porte. */
+export interface ProspectDetail extends Prospect {
+  sector: Pick<ProspectingSector, 'id' | 'label' | 'ape_code'> | null;
+  zone: Pick<ProspectingZone, 'id' | 'code' | 'label'> | null;
+  establishments: ProspectEstablishment[];
+  notes: ProspectNote[];
+  followups: ProspectFollowup[];
+  activities: ProspectActivity[];
+}
+
+/** Ligne de liste : juste ce qu'affichent la carte mobile et la table desktop. */
+export interface ProspectListRow extends Prospect {
+  sector: Pick<ProspectingSector, 'label'> | null;
+  zone: Pick<ProspectingZone, 'label'> | null;
+}

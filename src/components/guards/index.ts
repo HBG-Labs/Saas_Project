@@ -9,3 +9,4 @@
 export { RequireOrganization } from './RequireOrganization';
 export { RequirePermission, type RequirePermissionProps } from './RequirePermission';
 export { RequirePlan, type RequirePlanProps } from './RequirePlan';
+export { RequirePlatformAdmin, type RequirePlatformAdminProps } from './RequirePlatformAdmin';

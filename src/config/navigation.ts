@@ -289,6 +289,20 @@ export const ADMINISTRATION_NAV: readonly NavItem[] = [
  */
 export const ALL_TOOLS_NAV: readonly NavItem[] = [...TOOLS_NAV, ...METIERS_TOOLS_NAV];
 
+/**
+ * Prospect Radar — module INTERNE réservé aux administrateurs plateforme.
+ *
+ * Volontairement HORS de `SIDEBAR_GROUPS`/`useVisibleNavGroups` : ce système
+ * filtre sur le rôle dans l'organisation courante (`permission`), le métier
+ * et l'abonnement — trois notions qu'un administrateur plateforme n'a pas
+ * forcément, et qui ne le concernent pas ici. `Sidebar.tsx` affiche ce groupe
+ * séparément, uniquement quand `usePlatformAdmin()` répond `true` — jamais via
+ * `permission`, qui vaudrait pour n'importe quel rôle d'organisation.
+ */
+export const PLATFORM_ADMIN_NAV: readonly NavItem[] = [
+  { to: ROUTES.prospecting, label: 'Prospect Radar', icon: 'radar', primary: true },
+];
+
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
   { id: 'interventions', label: 'Interventions', icon: 'clipboard', items: INTERVENTIONS_NAV },
   { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },

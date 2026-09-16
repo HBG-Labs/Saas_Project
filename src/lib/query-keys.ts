@@ -290,6 +290,25 @@ export const qk = {
       [...qk.audit.all, 'entity', entityType, entityId] as const,
   },
 
+  // ------------------------------------------------------- Prospect Radar
+  //
+  // Module interne : pas d'`organizationId` dans ces clés, contrairement à la
+  // convention générale — ces données n'appartiennent à aucune organisation.
+  // `userId` figure dans `platformAdmin` pour la même raison que `billing.mySubscription` :
+  // ne jamais servir le statut administrateur du compte précédent après une déconnexion.
+  platformAdmin: {
+    all: ['platform-admin'] as const,
+    status: (userId: string) => [...qk.platformAdmin.all, userId] as const,
+  },
+  prospecting: {
+    all: ['prospecting'] as const,
+    dashboard: () => [...qk.prospecting.all, 'dashboard'] as const,
+    zones: () => [...qk.prospecting.all, 'zones'] as const,
+    sectors: () => [...qk.prospecting.all, 'sectors'] as const,
+    list: (filters?: unknown) => [...qk.prospecting.all, 'list', filters ?? null] as const,
+    detail: (siren: string) => [...qk.prospecting.all, 'detail', siren] as const,
+  },
+
   // ---------------------------------------------------------- portail client
   clientPortal: {
     all: ['client-portal'] as const,

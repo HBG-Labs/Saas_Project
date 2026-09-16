@@ -138,6 +138,20 @@ export type TechnicianPresence = 'on_road' | 'on_site' | 'available' | 'offline'
 export type FormFieldType =
   'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'multiselect' | 'date';
 
+/** Parcours commercial d'un prospect (Prospect Radar, module interne). */
+export type ProspectStatus =
+  | 'nouveau'
+  | 'a_qualifier'
+  | 'a_contacter'
+  | 'contacte'
+  | 'a_relancer'
+  | 'interesse'
+  | 'essai'
+  | 'converti'
+  | 'refuse'
+  | 'ignore'
+  | 'ne_plus_contacter';
+
 // -----------------------------------------------------------------------------
 // Portail client
 // -----------------------------------------------------------------------------
@@ -3656,6 +3670,406 @@ export interface Database {
       };
       // `resend_events` est délibérément absente : aucun droit pour `authenticated`,
       // seule la fonction Edge `resend-webhook` y écrit.
+
+      // -----------------------------------------------------------------------
+      // Prospect Radar — module INTERNE (pas client). Isolation totale des
+      // organisations : aucune de ces tables ne porte `organization_id`, et
+      // aucune n'est lisible par `authenticated` sans `prospecting.view`
+      // (`app.has_platform_permission`, non exposé ici — schéma `app`).
+      // -----------------------------------------------------------------------
+      platform_admins: {
+        Row: {
+          user_id: string;
+          granted_by: string | null;
+          granted_at: string;
+          note: string | null;
+        };
+        /** Attribution du premier administrateur : script ponctuel, jamais l'UI. */
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'platform_admins_granted_by_fkey';
+            columns: ['granted_by'];
+            referencedRelation: 'platform_admins';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      platform_admin_permissions: {
+        Row: {
+          user_id: string;
+          permission: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'platform_admin_permissions_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'platform_admins';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      prospecting_zones: {
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          department_code: string | null;
+          region_code: string | null;
+          territory: 'outre_mer' | 'metropole';
+          priority: number;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          department_code?: string | null;
+          region_code?: string | null;
+          territory: 'outre_mer' | 'metropole';
+          priority: number;
+          active?: boolean;
+        };
+        Update: {
+          label?: string;
+          department_code?: string | null;
+          region_code?: string | null;
+          priority?: number;
+          active?: boolean;
+        };
+        Relationships: [];
+      };
+      prospecting_sectors: {
+        Row: {
+          id: string;
+          ape_code: string;
+          label: string;
+          industry_code: string | null;
+          relevance_weight: number;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          ape_code: string;
+          label: string;
+          industry_code?: string | null;
+          relevance_weight?: number;
+          active?: boolean;
+        };
+        Update: {
+          label?: string;
+          industry_code?: string | null;
+          relevance_weight?: number;
+          active?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'prospecting_sectors_industry_code_fkey';
+            columns: ['industry_code'];
+            referencedRelation: 'industries';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
+      prospecting_score_weights: {
+        Row: {
+          criterion: string;
+          weight: number;
+          description: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          criterion: string;
+          weight: number;
+          description?: string | null;
+        };
+        Update: {
+          weight?: number;
+          description?: string | null;
+        };
+        Relationships: [];
+      };
+      prospects: {
+        Row: {
+          siren: string;
+          raison_sociale: string;
+          nom_commercial: string | null;
+          forme_juridique: string | null;
+          ape_code: string;
+          sector_id: string | null;
+          created_on: string | null;
+          statut_administratif: 'actif' | 'cesse';
+          tranche_effectif: string | null;
+          commune: string | null;
+          code_postal: string | null;
+          departement: string | null;
+          region: string | null;
+          zone_id: string | null;
+          source: string;
+          first_detected_at: string;
+          last_checked_at: string;
+          /** Calculé par trigger (Phase 5) — jamais écrit directement par l'UI. */
+          opportunity_score: number;
+          /** `[{ criterion, label, points }]` — jamais une raison inventée. */
+          score_reasons: Json;
+          priority: 'haute' | 'normale' | 'basse';
+          status: ProspectStatus;
+          assigned_to: string | null;
+          next_followup_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          siren: string;
+          raison_sociale: string;
+          nom_commercial?: string | null;
+          forme_juridique?: string | null;
+          ape_code: string;
+          sector_id?: string | null;
+          created_on?: string | null;
+          statut_administratif?: 'actif' | 'cesse';
+          tranche_effectif?: string | null;
+          commune?: string | null;
+          code_postal?: string | null;
+          departement?: string | null;
+          region?: string | null;
+          zone_id?: string | null;
+          source?: string;
+          priority?: 'haute' | 'normale' | 'basse';
+          status?: ProspectStatus;
+          assigned_to?: string | null;
+          next_followup_at?: string | null;
+        };
+        Update: {
+          priority?: 'haute' | 'normale' | 'basse';
+          status?: ProspectStatus;
+          assigned_to?: string | null;
+          next_followup_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'prospects_sector_id_fkey';
+            columns: ['sector_id'];
+            referencedRelation: 'prospecting_sectors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'prospects_zone_id_fkey';
+            columns: ['zone_id'];
+            referencedRelation: 'prospecting_zones';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      prospect_establishments: {
+        Row: {
+          siret: string;
+          siren: string;
+          enseigne: string | null;
+          is_headquarters: boolean;
+          adresse_line: string | null;
+          code_postal: string | null;
+          commune: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        /** Écrite exclusivement par `prospecting-worker` (service_role). */
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'prospect_establishments_siren_fkey';
+            columns: ['siren'];
+            referencedRelation: 'prospects';
+            referencedColumns: ['siren'];
+          },
+        ];
+      };
+      prospect_contacts: {
+        Row: {
+          id: string;
+          siren: string;
+          contact_type: 'email' | 'phone' | 'website';
+          value: string;
+          source: string;
+          collected_at: string;
+          verified_at: string | null;
+          confidence: number | null;
+          created_at: string;
+        };
+        /** Vide en V1 : aucune source d'enrichissement branchée (Phase 11). */
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'prospect_contacts_siren_fkey';
+            columns: ['siren'];
+            referencedRelation: 'prospects';
+            referencedColumns: ['siren'];
+          },
+        ];
+      };
+      prospect_notes: {
+        Row: {
+          id: string;
+          siren: string;
+          author_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          siren: string;
+          author_id?: string | null;
+          body: string;
+        };
+        Update: {
+          body?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'prospect_notes_siren_fkey';
+            columns: ['siren'];
+            referencedRelation: 'prospects';
+            referencedColumns: ['siren'];
+          },
+        ];
+      };
+      prospect_followups: {
+        Row: {
+          id: string;
+          siren: string;
+          due_at: string;
+          note: string | null;
+          kind: string | null;
+          created_by: string | null;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          siren: string;
+          due_at: string;
+          note?: string | null;
+          kind?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'prospect_followups_siren_fkey';
+            columns: ['siren'];
+            referencedRelation: 'prospects';
+            referencedColumns: ['siren'];
+          },
+        ];
+      };
+      prospect_activities: {
+        Row: {
+          id: string;
+          siren: string;
+          event: string;
+          actor_id: string | null;
+          /** Posé uniquement aux transitions commerciales majeures (Phase 2/5). */
+          score_snapshot: number | null;
+          score_reasons_snapshot: Json | null;
+          metadata: Json;
+          created_at: string;
+        };
+        /** Insert-only par trigger : jamais un insert direct depuis l'UI. */
+        Insert: never;
+        /** Immuable — un trigger refuse toute modification, même pour un administrateur. */
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'prospect_activities_siren_fkey';
+            columns: ['siren'];
+            referencedRelation: 'prospects';
+            referencedColumns: ['siren'];
+          },
+        ];
+      };
+      prospect_suppressions: {
+        Row: {
+          siren: string;
+          reason: string | null;
+          requested_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          siren: string;
+          reason?: string | null;
+          created_by?: string | null;
+        };
+        /** Pas d'UPDATE : une opposition se retire (DELETE) puis se repose si besoin. */
+        Update: never;
+        Relationships: [];
+      };
+      prospecting_runs: {
+        Row: {
+          id: string;
+          started_at: string;
+          completed_at: string | null;
+          status: 'running' | 'completed' | 'completed_with_errors' | 'failed';
+          source: string;
+          fetched: number;
+          filtered: number;
+          created: number;
+          updated: number;
+          ignored: number;
+          errors: number;
+          error_message: string | null;
+        };
+        /** Écrite exclusivement par `prospecting-worker` (service_role). */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      prospecting_message_templates: {
+        Row: {
+          id: string;
+          sector_id: string;
+          opening_variant: string | null;
+          pain_points: Json;
+          features: Json;
+          body_template: string;
+          created_at: string;
+          updated_at: string;
+        };
+        /** Vide tant que la Phase 8 n'a pas rédigé les argumentaires. */
+        Insert: {
+          id?: string;
+          sector_id: string;
+          opening_variant?: string | null;
+          pain_points?: Json;
+          features?: Json;
+          body_template: string;
+        };
+        Update: {
+          opening_variant?: string | null;
+          pain_points?: Json;
+          features?: Json;
+          body_template?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'prospecting_message_templates_sector_id_fkey';
+            columns: ['sector_id'];
+            referencedRelation: 'prospecting_sectors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
 
     Views: {
@@ -4014,6 +4428,16 @@ export interface Database {
         };
         Returns: Json;
       };
+
+      /**
+       * Compteurs agrégés du tableau de bord Prospect Radar (module interne).
+       * Refuse quiconque n'a pas `prospecting.view` — y compris un client
+       * REZO360 authentifié — jamais une ligne de `prospects` en sortie.
+       */
+      prospecting_dashboard_stats: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
     };
 
     Enums: {
@@ -4039,6 +4463,7 @@ export interface Database {
       ai_document_status: AiDocumentStatus;
       invoice_transmission_status: InvoiceTransmissionStatus;
       einvoicing_connection_status: EinvoicingConnectionStatus;
+      prospect_status: ProspectStatus;
     };
 
     CompositeTypes: Record<never, never>;

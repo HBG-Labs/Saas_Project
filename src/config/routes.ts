@@ -119,6 +119,16 @@ export const ROUTES = {
   metiers: '/metiers',
   metierTrade: (tradeSlug: string) => `/metiers/${tradeSlug}`,
   metierTool: (tradeSlug: string, toolSlug: string) => `/metiers/${tradeSlug}/${toolSlug}`,
+
+  /**
+   * Prospect Radar — module INTERNE réservé aux administrateurs plateforme
+   * (`platform_admins`/`prospecting.view`), jamais aux clients REZO360.
+   * Préfixe `/admin` délibéré : aucune autre route de l'application ne le
+   * porte, pour qu'une confusion avec l'espace organisation soit impossible.
+   */
+  prospecting: '/admin/prospection',
+  prospectingList: '/admin/prospection/liste',
+  prospect: (siren: string) => `/admin/prospection/${siren}`,
 } as const;
 
 /** Patrons utilisés par la déclaration des routes (paramètres non résolus). */
@@ -138,4 +148,5 @@ export const ROUTE_PATTERNS = {
   quoteDetail: '/devis/:quoteId',
   invoiceDetail: '/factures/:invoiceId',
   tutorial: '/tutoriels/:tutorialSlug',
+  prospect: '/admin/prospection/:siren',
 } as const;
