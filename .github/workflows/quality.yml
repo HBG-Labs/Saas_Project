@@ -66,6 +66,7 @@ jobs:
             supabase/functions/subscription-seat-sync-worker/index.ts \
             supabase/functions/notify-admin-signup-worker/index.ts \
             supabase/functions/quote-reminder-worker/index.ts \
+            supabase/functions/prospecting-worker/index.ts \
             supabase/functions/resend-webhook/index.ts \
             supabase/functions/portal-message-send/index.ts \
             supabase/functions/portal-request-access/index.ts \
@@ -108,6 +109,8 @@ jobs:
             supabase/functions/notify-admin-signup-worker/handler.test.ts \
             supabase/functions/_shared/quote-reminders.test.ts \
             supabase/functions/quote-reminder-worker/handler.test.ts \
+            supabase/functions/_shared/prospecting-provider.test.ts \
+            supabase/functions/prospecting-worker/handler.test.ts \
             supabase/functions/_shared/portal-mail.test.ts \
             supabase/functions/resend-webhook/handler.test.ts \
             supabase/functions/portal-message-send/handler.test.ts \

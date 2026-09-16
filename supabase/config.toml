@@ -469,6 +469,13 @@ verify_jwt = false
 [functions.quote-reminder-worker]
 verify_jwt = false
 
+# Prospect Radar (module interne, Phase 3) : détection minimale via l'API
+# Recherche d'Entreprises. Pas encore de CRON — appel manuel authentifié par
+# `x-worker-secret`, comme les autres workers. Voir
+# functions/README-PROSPECT-RADAR.md.
+[functions.prospecting-worker]
+verify_jwt = false
+
 # Portail client ---------------------------------------------------------------
 # Resend n'a pas de jeton Supabase : c'est la signature Svix, verifiee dans
 # `handler.ts`, qui authentifie chaque livraison.
