@@ -25,6 +25,20 @@ import { workerSecretMatches } from '../_shared/worker-secret.ts';
  * `limit` — activer une seconde zone (ex. Guadeloupe) n'échappe donc jamais
  * au plafond de sécurité, elle se contente de se partager l'échantillon.
  *
+ * PRIORISATION DES ENTREPRISES RÉCENTES (objectif n°1 du cahier des charges) :
+ * l'API Recherche d'Entreprises n'offre AUCUN filtre ni tri par date de
+ * création (vérifié contre sa spécification OpenAPI — seul `sort_by_size`
+ * existe). Un paramètre `date_creation` envoyé à cette API est silencieusement
+ * ignoré : c'est ce qui s'est produit en usage réel avant d'être remarqué.
+ * Le seul levier disponible est donc de demander systématiquement une page
+ * pleine (25, le maximum de l'API) par zone × code NAF — jamais moins, même
+ * si le plafond global restant est plus petit — puis de la trier par date de
+ * création décroissante avant de ne garder que ce qu'il reste de budget. Ça
+ * ne garantit pas de capter les entreprises les plus récentes parmi TOUTES
+ * celles qui existent (l'API ne renvoie qu'une page à la fois, dans un ordre
+ * qui lui est propre), mais ça priorise correctement ce qui EST reçu — sans
+ * réclamer plus de résultats par appel que ce que l'API rend déjà.
+ *
  * DÉDOUBLONNAGE : une entreprise n'a qu'une seule activité principale, donc
  * elle ne peut apparaître que sous UN SEUL code NAF ciblé au sein d'un même
  * run — aucun risque de double traitement apeCode×apeCode. Le SIREN reste la
@@ -53,7 +67,6 @@ export interface ProspectingWorkerConfig {
 interface RequestBody {
   zoneCode?: string;
   apeCodes?: string[];
-  createdAfter?: string;
   limit?: number;
 }
 
@@ -146,25 +159,40 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
 
     const stats = { fetched: 0, filtered: 0, created: 0, updated: 0, ignored: 0, errors: 0 };
     const errors: string[] = [];
-    const collected: Array<{ raw: RawProspect; zoneId: string }> = [];
+    const candidates: Array<{ raw: RawProspect; zoneId: string }> = [];
 
     try {
-      outer: for (const zone of zones) {
+      // Chaque zone × code NAF est interrogée une fois, page pleine (25) —
+      // JAMAIS de page 2 : le coût reste borné par
+      // `nombre de zones actives × nombre de secteurs actifs`, un nombre
+      // petit et connu à l'avance, pas une pagination qui pourrait s'emballer.
+      // Le tri par recence ne peut porter que sur ce qui a été rassemblé :
+      // le limiter zone×NAF par zone×NAF (comme le faisait la première
+      // version de cette Phase) revenait à ne jamais trier que la toute
+      // première page non vide, puisqu'elle seule suffit déjà à remplir le
+      // budget — constaté en usage réel (run `4c9ef8e5-...`, 18/09/2026).
+      for (const zone of zones) {
         for (const apeCode of apeCodes) {
-          if (collected.length >= limit) break outer;
           const { results } = await config.provider.search({
             departmentCode: zone.department_code!,
             apeCode,
-            createdAfter: body.createdAfter,
-            perPage: Math.min(limit - collected.length, MAX_SAMPLE_PER_RUN),
+            perPage: MAX_SAMPLE_PER_RUN,
           });
           stats.fetched += results.length;
-          for (const raw of results) {
-            if (collected.length >= limit) break;
-            collected.push({ raw, zoneId: zone.id });
-          }
+          for (const raw of results) candidates.push({ raw, zoneId: zone.id });
         }
       }
+
+      // Priorisation des entreprises récentes (objectif n°1 du cahier des
+      // charges) : l'API ne l'offre pas elle-même (voir le commentaire
+      // d'en-tête) — c'est fait ici, une seule fois, sur l'ensemble rassemblé,
+      // puis tronqué au budget global.
+      candidates.sort((a, b) => {
+        if (a.raw.createdOn === null) return 1;
+        if (b.raw.createdOn === null) return -1;
+        return b.raw.createdOn.localeCompare(a.raw.createdOn);
+      });
+      const collected = candidates.slice(0, limit);
 
       const { data: sectorRows } = await admin.from('prospecting_sectors').select('id, ape_code');
       const sectorBySector = new Map((sectorRows ?? []).map((row) => [row.ape_code as string, row.id as string]));

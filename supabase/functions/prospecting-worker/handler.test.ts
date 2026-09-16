@@ -66,9 +66,16 @@ function fakeSupabase(options: {
   const zones = options.zones ?? [{ id: 'zone-1', code: 'martinique', department_code: '972', active: true }];
   const sectors = options.sectors ?? [];
 
-  const fetchImpl: typeof fetch = (input) => {
+  const upsertedSirens: string[] = [];
+
+  const fetchImpl: typeof fetch = (input, init) => {
     const url = String(input);
     calls.push(url);
+
+    if (url.includes('/rpc/upsert_prospect') && !url.includes('establishment') && init?.body) {
+      const parsed = JSON.parse(String(init.body)) as { p_siren?: string };
+      if (parsed.p_siren) upsertedSirens.push(parsed.p_siren);
+    }
 
     if (url.includes('/prospecting_zones')) {
       // `.maybeSingle()`/liste attend un tableau JSON (200), pas un 406.
@@ -105,7 +112,7 @@ function fakeSupabase(options: {
     return Promise.resolve(new Response(JSON.stringify({ message: 'unexpected ' + url }), { status: 500 }));
   };
 
-  return { fetchImpl, calls };
+  return { fetchImpl, calls, upsertedSirens };
 }
 
 Deno.test('le worker de prospection refuse tout secret absent ou incorrect', async () => {
@@ -189,6 +196,54 @@ Deno.test('la limite plafonne au maximum de sécurité de la Phase 3, même si d
   await handler(request({ apeCodes: ['43.22A'], limit: 10_000 }));
   assertEquals(provider.calls[0].perPage <= 25, true);
 });
+
+Deno.test(
+  "une page pleine est toujours demandée, même si le budget global restant est plus petit — " +
+    "sans quoi il n'y aurait jamais rien à trier",
+  async () => {
+    const { fetchImpl } = fakeSupabase({ sectors: [{ ape_code: '43.22A', id: 'sector-1' }] });
+    const provider = stubProvider([sampleProspect()]);
+    const handler = createProspectingWorkerHandler({
+      url: ROOT,
+      serviceRoleKey: 'service-role',
+      secret: SECRET,
+      provider,
+      fetch: fetchImpl,
+    });
+
+    await handler(request({ apeCodes: ['43.22A'], limit: 2 }));
+    assertEquals(provider.calls[0].perPage, 25);
+  },
+);
+
+Deno.test(
+  "priorise les entreprises les plus récemment créées — l'API ne le fait pas elle-même",
+  async () => {
+    const { fetchImpl, upsertedSirens } = fakeSupabase({ sectors: [{ ape_code: '43.22A', id: 'sector-1' }] });
+    const provider = stubProvider([
+      sampleProspect({ siren: '111111111', createdOn: '1990-01-01' }),
+      sampleProspect({ siren: '222222222', createdOn: '2026-06-01' }),
+      sampleProspect({ siren: '333333333', createdOn: null }),
+      sampleProspect({ siren: '444444444', createdOn: '2010-01-01' }),
+    ]);
+    const handler = createProspectingWorkerHandler({
+      url: ROOT,
+      serviceRoleKey: 'service-role',
+      secret: SECRET,
+      provider,
+      fetch: fetchImpl,
+    });
+
+    const response = await handler(request({ apeCodes: ['43.22A'], limit: 2 }));
+    const payload = await response.json();
+
+    assertEquals(response.status, 200);
+    assertEquals(payload.filtered, 2);
+    // Les deux plus récentes (2026 puis 2010), dans cet ordre — jamais la plus
+    // ancienne (1990) ni celle sans date connue.
+    assertEquals(upsertedSirens, ['222222222', '444444444']);
+  },
+);
 
 Deno.test('plusieurs zones actives sont traitées dans le même run, sans dépasser le plafond global', async () => {
   const { fetchImpl } = fakeSupabase({

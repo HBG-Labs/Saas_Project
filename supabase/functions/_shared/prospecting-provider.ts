@@ -38,8 +38,6 @@ export interface ProspectSearchCriteria {
   /** Code département (ex. « 972 »). */
   departmentCode: string;
   apeCode: string;
-  /** Ne retourner que les entreprises créées à partir de cette date (incluse). */
-  createdAfter?: string;
   perPage: number;
   page?: number;
 }
@@ -142,7 +140,14 @@ export function createRechercheEntreprisesProvider(fetchImpl: typeof fetch = fet
         // solvabilité — on ne demande que ce dont Prospect Radar a l'usage.
         minimal: 'false',
       });
-      if (criteria.createdAfter) params.set('date_creation', criteria.createdAfter);
+      // Pas de filtre par date de création : l'API ne l'expose pas (vérifié
+      // contre sa spécification OpenAPI — seul `sort_by_size` existe comme
+      // tri, et aucun `date_creation`/`date_creation_min` comme filtre). Un
+      // paramètre `date_creation` envoyé ici serait silencieusement ignoré,
+      // ce qui a effectivement été constaté en usage réel (Phase 3/4) avant
+      // que ce ne soit remarqué : la priorisation des entreprises récentes
+      // se fait donc en aval, dans `prospecting-worker`, par tri de la page
+      // reçue — jamais en le demandant à cette API.
 
       const response = await fetchImpl(`https://recherche-entreprises.api.gouv.fr/search?${params.toString()}`, {
         headers: { Accept: 'application/json' },
