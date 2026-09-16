@@ -7,8 +7,8 @@ import { SelectField } from '@/components/ui/SelectField';
 import { formatDateTime } from '@/lib/format';
 import type { ProspectContact } from '@/types/domain';
 
-import { useAddProspectContact } from '../hooks/useProspecting';
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
+import { useAddProspectContact, useScrapeProspectContacts } from '../hooks/useProspecting';
 import { ManageOnlyNotice } from './ManageOnlyNotice';
 
 const CONTACT_ICON = { email: Mail, phone: Phone, website: Globe } as const;
@@ -18,18 +18,25 @@ const CONTACT_LABEL: Record<ProspectContact['contact_type'], string> = {
   website: 'Site web',
 };
 
+const SOURCE_LABEL: Record<string, string> = {
+  saisie_manuelle: 'saisie manuelle',
+  site_officiel: 'trouvée sur le site officiel',
+};
+
 /**
- * §11 du cahier des charges — aucune source d'enrichissement automatisée
- * n'est branchée en V1 (Phase 11, décision du 24/09/2026 : rien à connecter,
- * rien à payer). La saisie MANUELLE reste possible : `source` distingue
- * toujours une coordonnée saisie à la main d'une future intégration.
+ * §11 du cahier des charges — saisie MANUELLE des coordonnées (Phase 11),
+ * plus une recherche ciblée sur le site officiel déjà renseigné (Phase 14,
+ * jamais un annuaire tiers ni un moteur de recherche). `source` distingue
+ * toujours l'origine d'une coordonnée, jamais confondue dans l'affichage.
  */
 export function ProspectContactsPanel({ siren, contacts }: { siren: string; contacts: ProspectContact[] }) {
   const [contactType, setContactType] = useState<ProspectContact['contact_type']>('email');
   const [value, setValue] = useState('');
   const addContact = useAddProspectContact(siren);
+  const scrapeContacts = useScrapeProspectContacts(siren);
   const { can } = usePlatformAdmin();
   const canManage = can('prospecting.manage');
+  const website = contacts.find((c) => c.contact_type === 'website');
 
   const handleSubmit = () => {
     const trimmed = value.trim();
@@ -41,8 +48,8 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
     <div className="space-y-3">
       {contacts.length === 0 ? (
         <p className="text-muted-foreground text-xs">
-          Aucune coordonnée — aucune source d’enrichissement automatisée n’est branchée en V1
-          {canManage ? ', mais vous pouvez en saisir une manuellement ci-dessous.' : '.'}
+          Aucune coordonnée pour l’instant
+          {canManage ? ' — saisissez-en une ci-dessous, ou renseignez le site officiel pour lancer une recherche.' : '.'}
         </p>
       ) : (
         <div className="space-y-2">
@@ -55,7 +62,8 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
                   <p className="text-foreground truncate font-semibold">{contact.value}</p>
                   <p className="text-subtle-foreground text-3xs mt-0.5">
                     {CONTACT_LABEL[contact.contact_type]}
-                    {contact.source === 'saisie_manuelle' ? ' · saisie manuelle' : ` · ${contact.source}`}
+                    {' · '}
+                    {SOURCE_LABEL[contact.source] ?? contact.source}
                     {' · '}
                     {formatDateTime(contact.collected_at)}
                   </p>
@@ -92,6 +100,31 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
         </div>
       ) : (
         contacts.length > 0 && <ManageOnlyNotice />
+      )}
+
+      {canManage && website && (
+        <div className="space-y-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={scrapeContacts.isPending}
+            onClick={() => scrapeContacts.mutate()}
+          >
+            {scrapeContacts.isPending ? 'Recherche en cours…' : 'Rechercher sur le site officiel'}
+          </Button>
+          {scrapeContacts.data && (
+            <p className="text-subtle-foreground text-3xs">
+              {scrapeContacts.data.found.length > 0
+                ? `${scrapeContacts.data.found.length} coordonnée${scrapeContacts.data.found.length !== 1 ? 's' : ''} trouvée${scrapeContacts.data.found.length !== 1 ? 's' : ''}.`
+                : (scrapeContacts.data.message ?? 'Aucune coordonnée trouvée sur cette page.')}
+            </p>
+          )}
+          {scrapeContacts.isError && (
+            <p className="text-error text-3xs">
+              {scrapeContacts.error instanceof Error ? scrapeContacts.error.message : 'La recherche a échoué.'}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

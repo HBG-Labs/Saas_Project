@@ -1,4 +1,5 @@
-import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import { AppError } from '@/lib/errors';
+import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { ProspectContact, ProspectDetail, ProspectFollowup, ProspectListRow, ProspectNote } from '@/types/domain';
 import type { ProspectStatus } from '@/types/database';
 
@@ -309,9 +310,8 @@ export async function suppressProspect(siren: string, reason: string | null): Pr
 }
 
 /**
- * Coordonnée saisie À LA MAIN par un administrateur — jamais une source
- * automatisée (Phase 11, aucun fournisseur connecté). `source` distingue
- * clairement l'origine : une future intégration ne doit jamais pouvoir se
+ * Coordonnée saisie À LA MAIN par un administrateur. `source` distingue
+ * toujours l'origine : une source automatisée (Phase 14) ne doit jamais se
  * confondre avec une saisie manuelle dans les mêmes lignes.
  */
 export async function addProspectContact(input: {
@@ -331,6 +331,31 @@ export async function addProspectContact(input: {
       .select('*')
       .single(),
   );
+}
+
+export interface ScrapeProspectContactsResult {
+  found: ProspectContact[];
+  message?: string;
+}
+
+/**
+ * Recherche de coordonnées sur le site officiel déjà renseigné (Phase 14,
+ * décision du 25/09/2026 qui revient sur l'interdiction de scraper posée en
+ * Phase 2/11 — UNIQUEMENT pour le site propre de l'entreprise, jamais un
+ * annuaire tiers). Le fetch cross-origin se fait côté fonction Edge
+ * (`prospecting-contact-scraper`) : le navigateur ne peut pas l'appeler
+ * directement (CORS). L'écriture reste sous les droits de l'appelant —
+ * `prospecting.manage`, comme toute écriture de ce module.
+ */
+export async function scrapeProspectContacts(siren: string): Promise<ScrapeProspectContactsResult> {
+  const response = await supabase.functions.invoke<ScrapeProspectContactsResult>('prospecting-contact-scraper', {
+    body: { siren },
+  });
+  if (response.error) {
+    throw new AppError('unknown', await messageDeLaFonction(response.error, 'La recherche de coordonnées a échoué.'));
+  }
+  if (!response.data) throw new AppError('unknown', 'La fonction de recherche n’a renvoyé aucune donnée.');
+  return response.data;
 }
 
 export async function addProspectNote(input: {

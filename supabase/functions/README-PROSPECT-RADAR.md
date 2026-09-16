@@ -15,21 +15,22 @@ c'est **à qui elle se rapporte** et **par quel canal elle est utilisée**.
 
 | Type de donnée | Nature | Base légale mobilisable | Canal | Traitement Prospect Radar |
 |---|---|---|---|---|
-| Adresse générique d'entreprise (`contact@`, `info@`, standard) | Donnée de personne morale | Intérêt légitime (art. 6.1.f), prospection B2B | E-mail, téléphone | **Seul canal envisagé en V1**, et seulement une fois une source d'enrichissement validée (Phase 11 — aucune en V1) |
-| Adresse professionnelle nominative (`prenom.nom@entreprise.fr`) | Donnée à caractère personnel (identifie une personne physique) | Intérêt légitime, à condition stricte que le contenu reste strictement professionnel et que l'opposition soit immédiate et sans justification à fournir | E-mail | Non utilisée en V1. Si une source future ne fournit QUE ce type d'adresse, la fonctionnalité doit le signaler explicitement avant tout envoi — jamais traité comme équivalent à une adresse générique |
-| Téléphone professionnel (standard entreprise) | Donnée de personne morale | Intérêt légitime | Appel, SMS | Non collecté en V1 (aucun enrichissement branché) |
+| Adresse générique d'entreprise (`contact@`, `info@`, standard) | Donnée de personne morale | Intérêt légitime (art. 6.1.f), prospection B2B | E-mail, téléphone | Saisie manuelle (Phase 11) **et** recherche automatisée sur le site officiel du prospect (Phase 14, § dédiée plus bas) — jamais un autre canal |
+| Adresse professionnelle nominative (`prenom.nom@entreprise.fr`) | Donnée à caractère personnel (identifie une personne physique) | Intérêt légitime, à condition stricte que le contenu reste strictement professionnel et que l'opposition soit immédiate et sans justification à fournir | E-mail | Non utilisée. La recherche automatisée (Phase 14) ne retient QUE des adresses génériques trouvées sur le site officiel — une adresse à l'évidence nominative n'est pas filtrée par le code, seule la discipline de relecture humaine s'applique ici ; à durcir si un cas réel se présente |
+| Téléphone professionnel (standard entreprise) | Donnée de personne morale | Intérêt légitime | Appel, SMS | Saisie manuelle (Phase 11) et recherche automatisée sur le site officiel (Phase 14) |
 | Téléphone mobile nominatif | Donnée à caractère personnel | Intérêt légitime plus difficile à justifier pour un premier contact froid non sollicité — risque élevé | SMS, appel, WhatsApp | **Exclu de toute automatisation** ; si collecté un jour, traitement manuel exclusivement, jamais dans `prospect_contacts` sans confidence/source explicite |
 | Nom du dirigeant (donnée Sirene/RNE) | Donnée à caractère personnel | Intérêt légitime pour PERSONNALISER un message professionnel adressé à l'entreprise (« à l'attention de… ») | — | Non stocké en V1 ; l'API Recherche d'Entreprises expose ce champ pour certaines structures, il n'est volontairement PAS repris dans `prospects` tant que ce point n'est pas retranché |
-| Réseaux sociaux, sites tiers (LinkedIn, Facebook, Google) | — | — | — | **Hors périmètre absolu** : aucun scraping, quel que soit le canal, sans autorisation explicite de la plateforme concernée |
+| **Site officiel de l'entreprise elle-même** (page renseignée manuellement sur la fiche) | Donnée de personne morale, rendue publique par l'entreprise pour être contactée | Intérêt légitime, garanties CNIL « moissonnage » (19/06/2025) respectées — voir § Phase 14 | E-mail, téléphone génériques | **Seule cible de scraping autorisée** (Phase 14, 25/09/2026) |
+| Réseaux sociaux, annuaires tiers, moteurs de recherche (LinkedIn, Facebook, Google, Société.com, Pages Jaunes…) | — | — | — | **Hors périmètre absolu, inchangé** : aucun scraping, quel que soit le canal, sans autorisation explicite de la plateforme concernée — la Phase 14 ne lève l'interdiction que pour le site propre de l'entreprise, jamais un tiers |
 
 ## Base légale retenue pour Prospect Radar V1
 
 **Intérêt légitime** (article 6.1.f du RGPD), pour une prospection commerciale
 B2B, limitée à :
 - des personnes morales (entreprises), jamais des particuliers ;
-- un contact **professionnel générique** si et seulement si un enrichissement
-  futur en fournit un — en V1, aucune coordonnée de contact n'est collectée du
-  tout, seule la fiche d'identification (Sirene) l'est ;
+- un contact **professionnel générique**, saisi manuellement (Phase 11) ou
+  trouvé par recherche automatisée sur le site officiel du prospect
+  (Phase 14) — jamais une autre source ;
 - un message respectant les critères CNIL de la prospection B2B légitime :
   lien direct avec l'activité professionnelle du destinataire, mention claire
   de qui contacte et pourquoi, moyen simple de s'opposer.
@@ -77,8 +78,9 @@ déciderez — pas glissé silencieusement dans une phase qui ne le mentionne pa
 
 ## Minimisation
 
-- Aucune ligne `prospect_contacts` n'est créée « au cas où » : la table reste
-  vide tant qu'une source d'enrichissement n'est pas validée.
+- Aucune ligne `prospect_contacts` n'est créée « au cas où » : uniquement une
+  saisie manuelle explicite, ou une recherche sur le site officiel lancée
+  volontairement par un administrateur, jamais un traitement en arrière-plan.
 - `tranche_effectif` (tranche d'effectif salarié) est stockée à titre informatif
   uniquement — jamais utilisée dans le calcul du score sans décision explicite
   ultérieure, pour ne pas laisser une donnée collectée « dériver » vers un
@@ -220,3 +222,62 @@ désormais dans son organisation REZO360, pas dans Prospect Radar.
   Un échec d'envoi (transport non configuré, panne du fournisseur) ne fait
   jamais échouer le run de détection lui-même — best-effort, comme le reste
   de ce module qui n'envoie jamais rien automatiquement à un tiers.
+
+## Recherche de coordonnées sur le site officiel (Phase 14, 25/09/2026)
+
+**Revient sur l'interdiction de scraper posée en Phase 2/11** — décision
+explicite de l'utilisateur, après audit des risques. À bien distinguer de
+l'enrichissement automatisé refusé en Phase 11 (fournisseur tiers, payant ou
+non, connecté à l'ensemble de la base) : ici, la cible est **uniquement le
+site que l'entreprise elle-même a publié pour être contactée**, jamais un
+annuaire tiers, jamais un moteur de recherche, jamais un réseau social —
+ceux-là restent hors périmètre absolu (voir matrice ci-dessus).
+
+**Pourquoi cette cible précisément** : la CNIL a sanctionné plusieurs fois en
+2023-2025 des pratiques de moissonnage pour la prospection B2B (Kaspr,
+240 000 €, LinkedIn, décembre 2024 ; sanctions SAN-2023-016, SAN-2024-003,
+SAN-2025-009, 50 000 à 250 000 €) — toutes portaient sur des sources tierces
+à grande échelle (réseaux sociaux, annuaires), jamais sur le site propre
+d'une entreprise consulté au cas par cas, à la demande d'un administrateur,
+pour une seule page.
+
+**Garanties posées, en écho direct à la fiche CNIL « intérêt légitime et
+moissonnage » du 19/06/2025** :
+- **URL jamais découverte automatiquement** : elle vient d'une saisie
+  manuelle sur la fiche prospect (`prospect_contacts`, `contact_type =
+  'website'`, Phase 11) — aucune recherche Google/Bing automatisée
+  n'est faite pour la trouver.
+- **Une seule page lue**, jamais un crawl du site — `prospecting-contact-scraper`
+  (Edge Function) ne suit aucun lien interne.
+- **`robots.txt` respecté** avant toute lecture (`isAllowedByRobotsTxt`,
+  `_shared/contact-scraper.ts`) — absent ou illisible = autorisé par défaut,
+  convention de facto ; présent et qui interdit la page = refus immédiat.
+- **User-agent honnête**, qui identifie le robot (`REZO360-ProspectBot/1.0`)
+  — jamais une usurpation de navigateur pour contourner une protection.
+- **Extraction minimale** : au plus 2 e-mails et 2 téléphones génériques par
+  recherche, jamais un nom de personne (le schéma `prospect_contacts` ne
+  l'autoriserait de toute façon pas), jamais le contenu de la page.
+  `mailto:` prime sur un motif trouvé dans le texte — signal plus fiable
+  qu'une adresse qui traîne dans une balise de tracking.
+- **Source toujours distincte** : `source = 'site_officiel'`, jamais confondu
+  avec `saisie_manuelle` dans l'affichage ni les données — même principe
+  que la Phase 11.
+- **Protection SSRF** : l'URL est une saisie humaine mais reste une entrée
+  non fiable une fois stockée. Avant tout fetch, le nom d'hôte est résolu en
+  DNS réel et refusé si une IP obtenue est privée/loopback/lien-local
+  (`resolveIsPublic`, `prospecting-contact-scraper/index.ts`) — protège
+  aussi contre le « DNS rebinding » (un domaine public qui pointerait vers
+  un service interne), pas seulement un filtre sur la chaîne de caractères.
+- **Écriture sous les droits de l'appelant** (même patron que
+  `portal-message-send`) : la lecture du site déjà renseigné exige
+  `prospecting.view`, l'écriture des coordonnées trouvées exige
+  `prospecting.manage` — la RLS juge, la fonction Edge n'ajoute qu'un fetch
+  cross-origin que le navigateur ne peut pas faire lui-même (CORS).
+- **Déclenché uniquement à la demande** d'un administrateur (bouton
+  « Rechercher sur le site officiel », fiche prospect) — jamais en
+  arrière-plan, jamais par le CRON quotidien.
+
+**Ce qui reste hors périmètre, sans changement** : tout scraping d'un site
+tiers (annuaire, réseau social, moteur de recherche), toute automatisation de
+découverte d'URL, tout fournisseur d'enrichissement payant — la Phase 11
+reste refusée sur ces points.

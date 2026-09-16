@@ -18,6 +18,7 @@ import {
   listProspectingZones,
   listProspects,
   scheduleFollowup,
+  scrapeProspectContacts,
   searchOrganizationsForConversion,
   suppressProspect,
   updateProspectStatus,
@@ -100,13 +101,24 @@ export function useSuppressProspect(siren: string) {
   });
 }
 
-/** Phase 11 : saisie manuelle d'une coordonnée — aucune source automatisée. */
+/** Phase 11 : saisie manuelle d'une coordonnée. */
 export function useAddProspectContact(siren: string) {
   const invalidate = useInvalidateProspecting();
   return useMutation({
     mutationFn: (input: { contactType: 'email' | 'phone' | 'website'; value: string }) =>
       addProspectContact({ siren, ...input }),
     onSuccess: () => invalidate(),
+  });
+}
+
+/** Phase 14 : recherche de coordonnées sur le site officiel déjà renseigné. */
+export function useScrapeProspectContacts(siren: string) {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: () => scrapeProspectContacts(siren),
+    onSuccess: (result) => {
+      if (result.found.length > 0) void invalidate();
+    },
   });
 }
 
