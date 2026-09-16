@@ -134,3 +134,36 @@ explicitement validés avec l'utilisateur :
   dernière activée) : chacune contribue au même plafond de sécurité global —
   activer une zone supplémentaire n'augmente jamais la taille de
   l'échantillon au-delà de `MAX_SAMPLE_PER_RUN`.
+
+## Score d'opportunité (Phase 5, `20260920090000`)
+
+Trois critères, tous vérifiables directement sur la fiche du prospect —
+jamais une donnée devinée, jamais `tranche_effectif` (voir § Minimisation) :
+
+| Critère | Points max | Condition |
+|---|---|---|
+| Récence de création | 40 | Créée il y a moins de 6 mois (25 si < 12 mois, 10 si < 24 mois — le meilleur palier, jamais cumulé) |
+| Pertinence du secteur | 40 | `prospecting_score_weights.secteur_pertinence_max` × `prospecting_sectors.relevance_weight` du secteur ciblé |
+| Présence locale | 20 | L'établissement retenu par le worker est bien dans le département de la zone ciblée (pas un repli sur un siège ailleurs) |
+
+Une entreprise administrativement **cessée reçoit toujours 0**, sans
+exception : c'est une porte, pas un critère pondérable parmi d'autres.
+
+Les pondérations vivent dans `prospecting_score_weights` (modifiables sans
+déploiement), mais **un changement de pondération ne rescore pas
+rétroactivement** les prospects déjà notés — décision volontaire, pour éviter
+une réévaluation de masse silencieuse à chaque ajustement de configuration.
+Une reprise explicite resterait une action délibérée, hors périmètre de
+cette phase.
+
+**Recalcul** : déclenché uniquement quand une donnée qui participe
+réellement au score change (`created_on`, `statut_administratif`,
+`sector_id`, `departement`, `zone_id`) — jamais sur une note, une priorité
+manuelle, un statut commercial ou une assignation. Le trigger compare même
+l'ancienne et la nouvelle valeur avant de recalculer, pour ne pas refaire le
+travail lors d'une resynchronisation qui réécrit ces colonnes sans qu'elles
+changent réellement.
+
+`score_reasons` ne contient jamais un critère qui ne s'applique pas
+réellement : un prospect sans secteur reconnu n'a pas de ligne
+« secteur_pertinence » à 0, il n'en a simplement pas.

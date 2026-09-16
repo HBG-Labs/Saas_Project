@@ -146,10 +146,17 @@ select pg_temp.login_admin(); set local role authenticated;
 insert into public.prospects (siren, raison_sociale, ape_code, created_on, statut_administratif, commune, departement)
 values ('123456789', 'Plomberie Test Martinique', '43.22B', current_date - interval '10 days', 'actif', 'Fort-de-France', '972');
 
+-- Depuis la Phase 5 (20260920090000), un prospect neuf n'est plus figé à 0 :
+-- créé il y a 10 jours, sans secteur ni zone renseignés ici, il ne reçoit que
+-- la récence (aucune raison inventée pour un critère qui ne s'applique pas).
 do $$ begin
 perform pg_temp.ok(
-  (select opportunity_score = 0 and score_reasons = '[]'::jsonb from public.prospects where siren = '123456789'),
-  'un prospect neuf part à 0, sans raison inventée');
+  (select opportunity_score = 40 from public.prospects where siren = '123456789'),
+  'un prospect récent (< 6 mois) reçoit les points de récence, rien d''autre sans secteur/zone');
+perform pg_temp.ok(
+  (select score_reasons = '[{"points": 40, "criterion": "recence_creation", "label": "Entreprise créée il y a moins de 6 mois"}]'::jsonb
+   from public.prospects where siren = '123456789'),
+  'la raison correspond exactement au critère appliqué, jamais une raison inventée');
 end $$;
 
 do $$ begin
@@ -157,7 +164,7 @@ perform pg_temp.ok(
   (select count(*) from public.prospect_activities where siren = '123456789' and event = 'detecte') = 1,
   'la détection écrit une ligne de timeline');
 perform pg_temp.ok(
-  (select score_snapshot from public.prospect_activities where siren = '123456789' and event = 'detecte') = 0,
+  (select score_snapshot from public.prospect_activities where siren = '123456789' and event = 'detecte') = 40,
   'avec un instantané du score au moment de la détection');
 end $$;
 
