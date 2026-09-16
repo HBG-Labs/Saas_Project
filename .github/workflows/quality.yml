@@ -110,6 +110,7 @@ jobs:
             supabase/functions/_shared/quote-reminders.test.ts \
             supabase/functions/quote-reminder-worker/handler.test.ts \
             supabase/functions/_shared/prospecting-provider.test.ts \
+            supabase/functions/_shared/prospecting-notifications.test.ts \
             supabase/functions/prospecting-worker/handler.test.ts \
             supabase/functions/_shared/portal-mail.test.ts \
             supabase/functions/resend-webhook/handler.test.ts \

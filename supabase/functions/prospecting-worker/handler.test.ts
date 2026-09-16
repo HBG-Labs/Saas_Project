@@ -61,12 +61,19 @@ function sampleProspect(overrides: Partial<RawProspect> = {}): RawProspect {
 function fakeSupabase(options: {
   sectors?: Array<{ ape_code: string; id: string }>;
   zones?: Array<Record<string, unknown>>;
+  cursors?: Array<{ zone_id: string; sector_id: string; next_page: number }>;
+  scores?: Record<string, number>;
 }) {
   const calls: string[] = [];
-  const zones = options.zones ?? [{ id: 'zone-1', code: 'martinique', department_code: '972', active: true }];
+  const zones = options.zones ?? [
+    { id: 'zone-1', code: 'martinique', label: 'Martinique', department_code: '972', active: true },
+  ];
   const sectors = options.sectors ?? [];
+  const cursors = options.cursors ?? [];
+  const scores = options.scores ?? {};
 
   const upsertedSirens: string[] = [];
+  const cursorUpserts: Array<{ zone_id: string; sector_id: string; next_page: number }> = [];
 
   const fetchImpl: typeof fetch = (input, init) => {
     const url = String(input);
@@ -77,6 +84,16 @@ function fakeSupabase(options: {
       if (parsed.p_siren) upsertedSirens.push(parsed.p_siren);
     }
 
+    if (url.includes('/prospecting_sync_cursors')) {
+      if (init?.method === 'POST' && init.body) {
+        const parsed = JSON.parse(String(init.body)) as { zone_id: string; sector_id: string; next_page: number };
+        cursorUpserts.push(parsed);
+        return Promise.resolve(new Response('{}', { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(cursors), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
+    }
     if (url.includes('/prospecting_zones')) {
       // `.maybeSingle()`/liste attend un tableau JSON (200), pas un 406.
       const filtered = url.includes('code=eq.')
@@ -98,6 +115,12 @@ function fakeSupabase(options: {
         new Response(JSON.stringify({ id: 'run-1' }), { status: 201, headers: { 'Content-Type': 'application/json' } }),
       );
     }
+    if (url.includes('/prospects') && !url.includes('/rpc/')) {
+      const rows = Object.entries(scores).map(([siren, opportunity_score]) => ({ siren, opportunity_score }));
+      return Promise.resolve(
+        new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
+    }
     if (url.includes('/rpc/upsert_prospect_establishment')) {
       return Promise.resolve(new Response('{}', { status: 200 }));
     }
@@ -112,7 +135,7 @@ function fakeSupabase(options: {
     return Promise.resolve(new Response(JSON.stringify({ message: 'unexpected ' + url }), { status: 500 }));
   };
 
-  return { fetchImpl, calls, upsertedSirens };
+  return { fetchImpl, calls, upsertedSirens, cursorUpserts };
 }
 
 Deno.test('le worker de prospection refuse tout secret absent ou incorrect', async () => {
@@ -249,8 +272,8 @@ Deno.test('plusieurs zones actives sont traitées dans le même run, sans dépas
   const { fetchImpl } = fakeSupabase({
     sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
     zones: [
-      { id: 'zone-1', code: 'martinique', department_code: '972', active: true },
-      { id: 'zone-2', code: 'guadeloupe', department_code: '971', active: true },
+      { id: 'zone-1', code: 'martinique', label: 'Martinique', department_code: '972', active: true },
+      { id: 'zone-2', code: 'guadeloupe', label: 'Guadeloupe', department_code: '971', active: true },
     ],
   });
   const provider = stubProvider([sampleProspect(), sampleProspect({ siren: '987654321' })]);
@@ -288,4 +311,170 @@ Deno.test('un code NAF mal formé est refusé avant tout appel réseau', async (
   const response = await handler(request({ apeCodes: ['4322A'] }));
   assertEquals(response.status, 400);
   assertEquals(provider.calls.length, 0);
+});
+
+Deno.test('Phase 10 — lit le curseur existant et interroge la bonne page', async () => {
+  const { fetchImpl } = fakeSupabase({
+    sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
+    cursors: [{ zone_id: 'zone-1', sector_id: 'sector-1', next_page: 3 }],
+  });
+  const provider = stubProvider([sampleProspect()]);
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+  });
+
+  await handler(request({ apeCodes: ['43.22A'] }));
+  assertEquals(provider.calls[0].page, 3);
+});
+
+Deno.test("Phase 10 — sans curseur existant, repart de la page 1", async () => {
+  const { fetchImpl } = fakeSupabase({ sectors: [{ ape_code: '43.22A', id: 'sector-1' }] });
+  const provider = stubProvider([sampleProspect()]);
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+  });
+
+  await handler(request({ apeCodes: ['43.22A'] }));
+  assertEquals(provider.calls[0].page, 1);
+});
+
+Deno.test('Phase 10 — avance le curseur d’une page quand la fin des résultats n’est pas atteinte', async () => {
+  const { fetchImpl, cursorUpserts } = fakeSupabase({
+    sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
+    cursors: [{ zone_id: 'zone-1', sector_id: 'sector-1', next_page: 2 }],
+  });
+  const provider: ProspectSourceProvider = {
+    name: 'recherche_entreprises',
+    // 25 résultats renvoyés sur un total de 100 : encore de la marge, page suivante.
+    search: () => Promise.resolve({ results: [sampleProspect()], totalResults: 100 }),
+  };
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+  });
+
+  await handler(request({ apeCodes: ['43.22A'] }));
+
+  assertEquals(cursorUpserts, [{ zone_id: 'zone-1', sector_id: 'sector-1', next_page: 3 }]);
+});
+
+Deno.test('Phase 10 — revient à la page 1 une fois la fin des résultats atteinte', async () => {
+  const { fetchImpl, cursorUpserts } = fakeSupabase({
+    sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
+    cursors: [{ zone_id: 'zone-1', sector_id: 'sector-1', next_page: 4 }],
+  });
+  const provider: ProspectSourceProvider = {
+    name: 'recherche_entreprises',
+    // Page 4 × 25 = 100, totalResults = 90 : la fin est déjà dépassée.
+    search: () => Promise.resolve({ results: [sampleProspect()], totalResults: 90 }),
+  };
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+  });
+
+  await handler(request({ apeCodes: ['43.22A'] }));
+
+  assertEquals(cursorUpserts, [{ zone_id: 'zone-1', sector_id: 'sector-1', next_page: 1 }]);
+});
+
+Deno.test('Phase 10 — notifie uniquement sur demande explicite (notify: true), jamais un appel manuel', async () => {
+  const { fetchImpl } = fakeSupabase({
+    sectors: [{ ape_code: '43.22A', id: 'sector-1' }],
+    scores: { '123456789': 85 },
+  });
+  const provider = stubProvider([sampleProspect()]);
+  let sent = 0;
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+    notifyEmail: 'contact@rezo360.fr',
+    sendNotification: () => {
+      sent += 1;
+      return Promise.resolve({ transport: 'resend' as const, providerId: null });
+    },
+  });
+
+  await handler(request({ apeCodes: ['43.22A'] })); // notify absent
+  assertEquals(sent, 0);
+
+  const response = await handler(request({ apeCodes: ['43.22A'], notify: true }));
+  const payload = await response.json();
+  assertEquals(sent, 1);
+  assertEquals(payload.notified, true);
+});
+
+Deno.test('Phase 10 — n’envoie aucune notification si aucun prospect n’a été CRÉÉ (mise à jour seule ne compte pas)', async () => {
+  const { fetchImpl } = fakeSupabase({ sectors: [{ ape_code: '43.22A', id: 'sector-1' }] });
+  const provider = stubProvider([sampleProspect()]);
+  let sent = 0;
+
+  // Reprend le double `fakeSupabase`, mais force `inserted: false` pour ce test.
+  const fetchWithUpdateOnly: typeof fetch = (input, init) => {
+    const url = String(input);
+    if (url.includes('/rpc/upsert_prospect') && !url.includes('establishment')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ siren: '123456789', inserted: false }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    }
+    return fetchImpl(input, init);
+  };
+
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchWithUpdateOnly,
+    notifyEmail: 'contact@rezo360.fr',
+    sendNotification: () => {
+      sent += 1;
+      return Promise.resolve({ transport: 'resend' as const, providerId: null });
+    },
+  });
+
+  const response = await handler(request({ apeCodes: ['43.22A'], notify: true }));
+  const payload = await response.json();
+
+  assertEquals(sent, 0);
+  assertEquals(payload.notified, false);
+});
+
+Deno.test('Phase 10 — sans transport de notification configuré, le run réussit quand même', async () => {
+  const { fetchImpl } = fakeSupabase({ sectors: [{ ape_code: '43.22A', id: 'sector-1' }] });
+  const provider = stubProvider([sampleProspect()]);
+  const handler = createProspectingWorkerHandler({
+    url: ROOT,
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    provider,
+    fetch: fetchImpl,
+    // Ni notifyEmail ni sendNotification : notification non configurée.
+  });
+
+  const response = await handler(request({ apeCodes: ['43.22A'], notify: true }));
+  const payload = await response.json();
+
+  assertEquals(response.status, 200);
+  assertEquals(payload.notified, false);
 });

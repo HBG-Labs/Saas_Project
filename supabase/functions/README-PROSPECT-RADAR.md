@@ -196,3 +196,27 @@ particulier. « Convertir en client » (§22) est plus exigeant :
 Un prospect converti ne montre plus les actions de statut « ordinaires »
 (refuser, ignorer…) sur son écran — sa relation commerciale se gère
 désormais dans son organisation REZO360, pas dans Prospect Radar.
+
+## CRON quotidien et notification agrégée (Phase 10, `20260924090000`)
+
+- **05:00 UTC**, validé explicitement par l'utilisateur, sans conflit avec
+  les CRON existants (vérifié avant application).
+- **Pagination incrémentale** : l'API Recherche d'Entreprises n'offre ni
+  filtre ni tri par date (§ Phase 3-4). Sans curseur, un passage quotidien
+  relirait indéfiniment la même première page. `prospecting_sync_cursors`
+  retient, par zone × secteur, la prochaine page à lire ; le worker avance
+  d'une page à chaque passage réussi et revient à la page 1 une fois la fin
+  des résultats atteinte. Un run en échec (ex. limite de débit de l'API)
+  laisse les curseurs intacts — vérifié en conditions réelles (deux passages
+  consécutifs : 1→2, puis un 429 qui n'a PAS avancé les curseurs).
+- **Notification interne** (§27) : un e-mail agrégé (🔥/🟠/🔵 + répartition
+  géographique) part au même destinataire que les alertes d'inscription
+  (`ADMIN_SIGNUP_EMAIL`, actuellement `contact@rezo360.fr` — jamais un
+  second secret qui risquerait de diverger). Envoyé UNIQUEMENT si :
+  - `notify: true` dans le corps de la requête — posé exclusivement par
+    `app.trigger_prospecting_worker()`, jamais par un appel manuel de test ;
+  - au moins un prospect a été **créé** (une simple mise à jour ne compte
+    jamais) — « éviter les notifications inutiles ».
+  Un échec d'envoi (transport non configuré, panne du fournisseur) ne fait
+  jamais échouer le run de détection lui-même — best-effort, comme le reste
+  de ce module qui n'envoie jamais rien automatiquement à un tiers.

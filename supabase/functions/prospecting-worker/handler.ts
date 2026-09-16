@@ -1,17 +1,22 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
 import type { ProspectSourceProvider, RawProspect } from '../_shared/prospecting-provider.ts';
+import {
+  buildProspectingNotificationEmail,
+  type EmailContent,
+  type ProspectingRunBreakdown,
+} from '../_shared/prospecting-notifications.ts';
+import type { SendResult } from '../_shared/email.ts';
 import { workerSecretMatches } from '../_shared/worker-secret.ts';
 
 /**
- * Détection minimale — Phase 3, secteurs réels et zones multiples — Phase 4.
+ * Détection — Phase 3, zones/secteurs — Phase 4, CRON quotidien — Phase 10.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * PAS de CRON branché sur ce worker pour l'instant (Phase 10). Il est appelé à
- * la main, avec un échantillon volontairement petit (`MAX_SAMPLE_PER_RUN`),
- * pour valider la connexion à la source et le chemin d'écriture avant toute
- * synchronisation de masse — conformément à la demande explicite de ne pas
- * lancer de récupération massive dès cette phase.
+ * CRON quotidien (05:00 UTC, `20260924090000`) OU appel manuel — l'échantillon
+ * reste volontairement petit dans les deux cas (`MAX_SAMPLE_PER_RUN`),
+ * conformément à la demande explicite de ne jamais lancer de récupération
+ * massive.
  *
  * `prospecting_sectors` est peuplée depuis la Phase 4 (20260919090000) : ce
  * worker se rabat dessus (secteurs actifs) si `apeCodes` n'est pas fourni
@@ -19,6 +24,19 @@ import { workerSecretMatches } from '../_shared/worker-secret.ts';
  * toucher à la configuration. Le score n'est jamais calculé ici (Phase 5) :
  * `opportunity_score` reste à sa valeur par défaut (0), fixée par
  * `upsert_prospect`.
+ *
+ * PAGINATION INCRÉMENTALE (Phase 10) : `prospecting_sync_cursors` retient,
+ * par zone × secteur, la page suivante à lire. Sans elle, un passage
+ * quotidien relirait indéfiniment la même première page de résultats — voir
+ * le commentaire de la migration `20260924090000` pour le détail. Le curseur
+ * avance d'une page à chaque zone × secteur interrogé avec succès, et revient
+ * à la page 1 une fois la fin des résultats de l'API atteinte.
+ *
+ * NOTIFICATION (§27, Phase 10) : `notify: true` dans le corps de la requête
+ * (posé UNIQUEMENT par `app.trigger_prospecting_worker()`, jamais par un
+ * appel manuel de test) déclenche un e-mail agrégé si au moins un prospect a
+ * été CRÉÉ (jamais sur une simple mise à jour) — jamais de notification pour
+ * un passage qui n'a rien trouvé de nouveau.
  *
  * ZONES : toutes les zones ACTIVES sont traitées dans le même run (plus une
  * seule, comme en Phase 3), chacune apportant sa part au même plafond global
@@ -62,12 +80,20 @@ export interface ProspectingWorkerConfig {
   provider: ProspectSourceProvider;
   fetch?: typeof fetch;
   now?: () => Date;
+  /** Destinataire de la notification agrégée — `undefined` = notification non configurée. */
+  notifyEmail?: string;
+  /** Lien vers le tableau de bord, inclus dans la notification si connu. */
+  appUrl?: string;
+  /** `undefined` : transport e-mail non configuré, la notification est tentée et échoue proprement. */
+  sendNotification?: (content: EmailContent, to: string) => Promise<SendResult>;
 }
 
 interface RequestBody {
   zoneCode?: string;
   apeCodes?: string[];
   limit?: number;
+  /** Posé uniquement par le CRON — jamais par un appel manuel de test. */
+  notify?: boolean;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -102,6 +128,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
     interface Zone {
       id: string;
       code: string;
+      label: string;
       department_code: string | null;
       active: boolean;
     }
@@ -110,7 +137,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
     if (body.zoneCode) {
       const { data: zone, error: zoneError } = await admin
         .from('prospecting_zones')
-        .select('id, code, department_code, active')
+        .select('id, code, label, department_code, active')
         .eq('code', body.zoneCode)
         .maybeSingle();
       if (zoneError) return json({ error: 'Zones de prospection illisibles.' }, 503);
@@ -118,7 +145,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
     } else {
       const { data: activeZones, error: zonesError } = await admin
         .from('prospecting_zones')
-        .select('id, code, department_code, active')
+        .select('id, code, label, department_code, active')
         .eq('active', true)
         .order('priority', { ascending: true });
       if (zonesError) return json({ error: 'Zones de prospection illisibles.' }, 503);
@@ -162,24 +189,49 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
     const candidates: Array<{ raw: RawProspect; zoneId: string }> = [];
 
     try {
+      const { data: sectorRows } = await admin.from('prospecting_sectors').select('id, ape_code');
+      const sectorBySector = new Map((sectorRows ?? []).map((row) => [row.ape_code as string, row.id as string]));
+
+      // Curseurs existants pour les zone × secteur en jeu (Phase 10) — un
+      // secteur fourni ad hoc via `apeCodes` sans ligne `prospecting_sectors`
+      // n'a pas de suivi (pas de `sector_id` auquel l'accrocher) : il repart
+      // systématiquement de la page 1, ce qui reste correct pour un test manuel.
+      const sectorIds = [...sectorBySector.values()];
+      const { data: cursorRows } = await admin
+        .from('prospecting_sync_cursors')
+        .select('zone_id, sector_id, next_page')
+        .in('zone_id', zones.map((zone) => zone.id))
+        .in('sector_id', sectorIds.length > 0 ? sectorIds : ['00000000-0000-0000-0000-000000000000']);
+      const cursorByKey = new Map(
+        (cursorRows ?? []).map((row) => [`${row.zone_id}:${row.sector_id}`, row.next_page as number]),
+      );
+
       // Chaque zone × code NAF est interrogée une fois, page pleine (25) —
-      // JAMAIS de page 2 : le coût reste borné par
-      // `nombre de zones actives × nombre de secteurs actifs`, un nombre
-      // petit et connu à l'avance, pas une pagination qui pourrait s'emballer.
-      // Le tri par recence ne peut porter que sur ce qui a été rassemblé :
-      // le limiter zone×NAF par zone×NAF (comme le faisait la première
-      // version de cette Phase) revenait à ne jamais trier que la toute
-      // première page non vide, puisqu'elle seule suffit déjà à remplir le
-      // budget — constaté en usage réel (run `4c9ef8e5-...`, 18/09/2026).
+      // le tri par récence ne peut porter que sur ce qui a été rassemblé :
+      // le limiter zone×NAF par zone×NAF revenait à ne jamais trier que la
+      // toute première page non vide, puisqu'elle seule suffit déjà à remplir
+      // le budget — constaté en usage réel (run `4c9ef8e5-...`, 18/09/2026).
+      const cursorUpdates: Array<{ zone_id: string; sector_id: string; next_page: number }> = [];
+
       for (const zone of zones) {
         for (const apeCode of apeCodes) {
-          const { results } = await config.provider.search({
+          const sectorId = sectorBySector.get(apeCode) ?? null;
+          const cursorKey = sectorId ? `${zone.id}:${sectorId}` : null;
+          const page = cursorKey ? (cursorByKey.get(cursorKey) ?? 1) : 1;
+
+          const { results, totalResults } = await config.provider.search({
             departmentCode: zone.department_code!,
             apeCode,
             perPage: MAX_SAMPLE_PER_RUN,
+            page,
           });
           stats.fetched += results.length;
           for (const raw of results) candidates.push({ raw, zoneId: zone.id });
+
+          if (sectorId) {
+            const reachedEnd = page * MAX_SAMPLE_PER_RUN >= totalResults;
+            cursorUpdates.push({ zone_id: zone.id, sector_id: sectorId, next_page: reachedEnd ? 1 : page + 1 });
+          }
         }
       }
 
@@ -194,8 +246,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
       });
       const collected = candidates.slice(0, limit);
 
-      const { data: sectorRows } = await admin.from('prospecting_sectors').select('id, ape_code');
-      const sectorBySector = new Map((sectorRows ?? []).map((row) => [row.ape_code as string, row.id as string]));
+      const createdSirens: Array<{ siren: string; zoneId: string }> = [];
 
       for (const { raw, zoneId } of collected) {
         stats.filtered += 1;
@@ -220,8 +271,12 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
             .single();
           if (upsertError) throw new Error(upsertError.message);
 
-          if ((upserted as { inserted: boolean }).inserted) stats.created += 1;
-          else stats.updated += 1;
+          if ((upserted as { inserted: boolean }).inserted) {
+            stats.created += 1;
+            createdSirens.push({ siren: raw.siren, zoneId });
+          } else {
+            stats.updated += 1;
+          }
 
           if (raw.establishment) {
             await admin.rpc('upsert_prospect_establishment', {
@@ -241,6 +296,54 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
         }
       }
 
+      // Curseurs avancés seulement après que le run a effectivement réussi à
+      // interroger chaque zone × secteur — un échec plus haut (catch
+      // ci-dessous) laisse les curseurs intacts, pour que le prochain passage
+      // reparte du même point plutôt que de sauter des pages jamais lues.
+      for (const update of cursorUpdates) {
+        await admin.from('prospecting_sync_cursors').upsert(update, { onConflict: 'zone_id,sector_id' });
+      }
+
+      let notified = false;
+      if (body.notify === true && createdSirens.length > 0 && config.sendNotification && config.notifyEmail) {
+        try {
+          const { data: scoredRows } = await admin
+            .from('prospects')
+            .select('siren, opportunity_score')
+            .in(
+              'siren',
+              createdSirens.map((c) => c.siren),
+            );
+          const scoreBySiren = new Map(
+            (scoredRows ?? []).map((row) => [row.siren as string, row.opportunity_score as number]),
+          );
+          const zoneLabelById = new Map(zones.map((zone) => [zone.id, zone.label]));
+
+          const breakdown: ProspectingRunBreakdown = {
+            total: createdSirens.length,
+            tiers: { forte: 0, moyenne: 0, basse: 0 },
+            byZone: {},
+          };
+          for (const { siren, zoneId } of createdSirens) {
+            const score = scoreBySiren.get(siren) ?? 0;
+            if (score >= 70) breakdown.tiers.forte += 1;
+            else if (score >= 40) breakdown.tiers.moyenne += 1;
+            else breakdown.tiers.basse += 1;
+
+            const zoneLabel = zoneLabelById.get(zoneId) ?? 'Zone inconnue';
+            breakdown.byZone[zoneLabel] = (breakdown.byZone[zoneLabel] ?? 0) + 1;
+          }
+
+          const content = buildProspectingNotificationEmail(breakdown, config.appUrl);
+          await config.sendNotification(content, config.notifyEmail);
+          notified = true;
+        } catch (notifyFailure) {
+          // Best-effort : une notification manquée ne doit jamais faire
+          // échouer un run de détection qui, par ailleurs, a réussi.
+          console.error('prospecting-worker: notification non envoyée', notifyFailure);
+        }
+      }
+
       await admin
         .from('prospecting_runs')
         .update({
@@ -256,7 +359,7 @@ export function createProspectingWorkerHandler(config: ProspectingWorkerConfig) 
         })
         .eq('id', run.id);
 
-      return json({ runId: run.id, zones: zones.map((zone) => zone.code), apeCodes, ...stats });
+      return json({ runId: run.id, zones: zones.map((zone) => zone.code), apeCodes, notified, ...stats });
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : String(failure);
       await admin
