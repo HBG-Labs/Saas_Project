@@ -589,6 +589,10 @@ export const routes: RouteObject[] = [
                     lazy: lazyPage(() => import('@/pages/prospecting/ProspectingListPage')),
                   },
                   {
+                    path: ROUTES.prospectingAnalytics,
+                    lazy: lazyPage(() => import('@/pages/prospecting/ProspectingAnalyticsPage')),
+                  },
+                  {
                     path: ROUTE_PATTERNS.prospect,
                     lazy: lazyPage(() => import('@/pages/prospecting/ProspectDetailPage')),
                   },

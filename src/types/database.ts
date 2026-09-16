@@ -4461,6 +4461,15 @@ export interface Database {
       };
 
       /**
+       * Analytics du funnel de prospection (Phase 12, §31) : cohorte par
+       * date de DÉTECTION, jamais un instantané du statut courant.
+       */
+      prospecting_analytics: {
+        Args: { p_from?: string | null; p_to?: string | null };
+        Returns: Json;
+      };
+
+      /**
        * Recherche d'organisations REZO360 à lier à un prospect converti
        * (Phase 9). Refuse quiconque n'a pas prospecting.manage ; exclut les
        * organisations déjà liées à un autre prospect.

@@ -11,6 +11,7 @@ import {
   convertProspectToClient,
   getMessageTemplateForSector,
   getProspect,
+  getProspectingAnalytics,
   getProspectingDashboardStats,
   listDueFollowups,
   listProspectingSectors,
@@ -173,5 +174,18 @@ export function useConvertProspectToClient(siren: string) {
   return useMutation({
     mutationFn: (organizationId: string) => convertProspectToClient(siren, organizationId),
     onSuccess: () => invalidate(),
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Phase 12 — analytics
+// -----------------------------------------------------------------------------
+
+/** Cohorte par date de DÉTECTION — `from`/`to` au format ISO `yyyy-mm-dd`. */
+export function useProspectingAnalytics(range: { from: string | null; to: string | null }) {
+  return useQuery({
+    queryKey: qk.prospecting.analytics(range.from, range.to),
+    queryFn: () => getProspectingAnalytics(range),
+    staleTime: 60 * 1000,
   });
 }

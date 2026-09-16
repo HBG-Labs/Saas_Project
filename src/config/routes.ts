@@ -128,6 +128,7 @@ export const ROUTES = {
    */
   prospecting: '/admin/prospection',
   prospectingList: '/admin/prospection/liste',
+  prospectingAnalytics: '/admin/prospection/analytics',
   prospect: (siren: string) => `/admin/prospection/${siren}`,
 } as const;
 

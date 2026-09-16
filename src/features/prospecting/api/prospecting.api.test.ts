@@ -75,6 +75,7 @@ vi.mock('@/services/supabase', async () => {
 import {
   checkPlatformAdminStatus,
   convertProspectToClient,
+  getProspectingAnalytics,
   searchOrganizationsForConversion,
   suppressProspect,
   updateProspectStatus,
@@ -190,5 +191,66 @@ describe('convertProspectToClient', () => {
     );
 
     await expect(convertProspectToClient(SIREN, ORG_ID)).rejects.toThrow(/déjà liée/);
+  });
+});
+
+interface SingleRpcDouble extends PromiseLike<Reponse> {
+  single: () => SingleRpcDouble;
+}
+
+function singleRpcRequete(reponse: Reponse): SingleRpcDouble {
+  const double: SingleRpcDouble = {
+    single: () => double,
+    then: (ok, ko) => Promise.resolve(reponse).then(ok, ko),
+  };
+  return double;
+}
+
+describe('getProspectingAnalytics', () => {
+  it('transmet la fenêtre de dates (cohorte par date de DÉTECTION) telle quelle à la RPC', async () => {
+    const funnel = { detected: 3, qualified: 2, contacted: 1, interested: 1, trial: 1, converted: 1 };
+    rpcMock.mockReturnValueOnce(
+      singleRpcRequete({
+        data: {
+          funnel,
+          rates: { qualification: 0.6667, contact: 0.3333, interest: 0.3333, trial: 0.3333, conversion: 0.3333 },
+          by_zone: [],
+          by_sector: [],
+          by_score_tier: [],
+          by_company_age: [],
+          by_source: [],
+        },
+        error: null,
+      }),
+    );
+
+    const result = await getProspectingAnalytics({ from: '2026-09-01', to: '2026-09-30' });
+
+    expect(rpcMock).toHaveBeenCalledWith('prospecting_analytics', {
+      p_from: '2026-09-01',
+      p_to: '2026-09-30',
+    });
+    expect(result.funnel).toEqual(funnel);
+  });
+
+  it('transmet null en l’absence de filtre (aucune fenêtre)', async () => {
+    rpcMock.mockReturnValueOnce(
+      singleRpcRequete({
+        data: {
+          funnel: { detected: 0, qualified: 0, contacted: 0, interested: 0, trial: 0, converted: 0 },
+          rates: { qualification: 0, contact: 0, interest: 0, trial: 0, conversion: 0 },
+          by_zone: [],
+          by_sector: [],
+          by_score_tier: [],
+          by_company_age: [],
+          by_source: [],
+        },
+        error: null,
+      }),
+    );
+
+    await getProspectingAnalytics({ from: null, to: null });
+
+    expect(rpcMock).toHaveBeenCalledWith('prospecting_analytics', { p_from: null, p_to: null });
   });
 });

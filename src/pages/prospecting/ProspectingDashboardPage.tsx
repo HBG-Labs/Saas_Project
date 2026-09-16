@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
@@ -44,6 +45,11 @@ export default function ProspectingDashboardPage() {
       <PageHeader
         title="Prospect Radar"
         description="Détection interne de prospects B2B — jamais visible des clients REZO360."
+        actions={
+          <Button asChild variant="secondary">
+            <Link to={ROUTES.prospectingAnalytics}>📊 Analytics</Link>
+          </Button>
+        }
       />
 
       {isPending ? (

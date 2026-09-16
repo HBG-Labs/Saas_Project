@@ -64,6 +64,64 @@ export async function getProspectingDashboardStats(): Promise<ProspectingDashboa
 }
 
 // -----------------------------------------------------------------------------
+// Analytics (Phase 12, §31)
+// -----------------------------------------------------------------------------
+//
+// « Réponses » du cahier des charges (détecté → qualifié → contacté →
+// RÉPONSES → intéressé → essai → client) est absent : aucun événement
+// distinct ne l'enregistre dans ce système — voir la migration
+// `20260925090000` pour le détail. Jamais un chiffre inventé pour combler
+// l'écart.
+
+export interface ProspectingFunnelBreakdownRow {
+  detected: number;
+  converted: number;
+  conversion_rate: number;
+}
+
+export interface ProspectingAnalytics {
+  funnel: {
+    detected: number;
+    qualified: number;
+    contacted: number;
+    interested: number;
+    trial: number;
+    converted: number;
+  };
+  rates: {
+    qualification: number;
+    contact: number;
+    interest: number;
+    trial: number;
+    conversion: number;
+  };
+  by_zone: Array<ProspectingFunnelBreakdownRow & { label: string }>;
+  by_sector: Array<ProspectingFunnelBreakdownRow & { label: string }>;
+  by_score_tier: Array<ProspectingFunnelBreakdownRow & { tier: 'forte' | 'moyenne' | 'basse' }>;
+  by_company_age: Array<
+    ProspectingFunnelBreakdownRow & {
+      bucket: 'moins_6_mois' | 'moins_12_mois' | 'moins_24_mois' | 'plus_24_mois' | 'inconnue';
+    }
+  >;
+  by_source: Array<ProspectingFunnelBreakdownRow & { source: string }>;
+}
+
+/**
+ * Cohorte par date de DÉTECTION (§ migration) — `from`/`to` filtrent quand
+ * un prospect a été détecté, pas quand il a franchi les étapes suivantes.
+ */
+export async function getProspectingAnalytics(range: {
+  from: string | null;
+  to: string | null;
+}): Promise<ProspectingAnalytics> {
+  return unwrap(
+    supabase
+      .rpc('prospecting_analytics', { p_from: range.from, p_to: range.to })
+      .single<ProspectingAnalytics>(),
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Liste, filtrée et paginée par la base
 // -----------------------------------------------------------------------------
 
