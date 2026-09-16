@@ -10,3 +10,5 @@ export { ProspectStatusActions } from './components/ProspectStatusActions';
 export { ProspectNotesPanel } from './components/ProspectNotesPanel';
 export { ProspectFollowupsPanel } from './components/ProspectFollowupsPanel';
 export { DueFollowupsCard } from './components/DueFollowupsCard';
+export { ProspectMessageDraft } from './components/ProspectMessageDraft';
+export { buildProspectMessageDraft, isRecentCreation, joinFrench } from './lib/message-draft';

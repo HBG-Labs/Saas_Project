@@ -163,6 +163,32 @@ export async function listProspectingZones() {
   );
 }
 
+export interface ProspectMessageTemplate {
+  id: string;
+  sector_id: string;
+  opening_variant: string | null;
+  pain_points: string[];
+  features: string[];
+  body_template: string;
+}
+
+/**
+ * Le gabarit de brouillon du secteur du prospect (Phase 8). `null` si le
+ * prospect n'a pas de secteur reconnu, ou si son secteur n'a pas (encore) de
+ * gabarit — jamais un gabarit générique de repli qui laisserait croire à une
+ * personnalisation qui n'existe pas.
+ */
+export async function getMessageTemplateForSector(sectorId: string): Promise<ProspectMessageTemplate | null> {
+  return unwrapMaybe(
+    supabase
+      .from('prospecting_message_templates')
+      .select('*')
+      .eq('sector_id', sectorId)
+      .maybeSingle()
+      .returns<ProspectMessageTemplate>(),
+  );
+}
+
 export async function listProspectingSectors() {
   return unwrap(
     supabase

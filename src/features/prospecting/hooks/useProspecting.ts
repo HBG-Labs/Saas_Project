@@ -7,6 +7,7 @@ import type { ProspectStatus } from '@/types/database';
 import {
   addProspectNote,
   completeFollowup,
+  getMessageTemplateForSector,
   getProspect,
   getProspectingDashboardStats,
   listDueFollowups,
@@ -128,5 +129,15 @@ export function useDueFollowups() {
     queryKey: qk.prospecting.dueFollowups(),
     queryFn: listDueFollowups,
     staleTime: 30 * 1000,
+  });
+}
+
+/** Phase 8 : gabarit de brouillon du secteur — `null` si aucun n'est configuré. */
+export function useMessageTemplate(sectorId: string | undefined) {
+  return useQuery({
+    queryKey: qk.prospecting.messageTemplate(sectorId ?? 'none'),
+    queryFn: () => (sectorId === undefined ? null : getMessageTemplateForSector(sectorId)),
+    enabled: sectorId !== undefined,
+    staleTime: 5 * 60 * 1000,
   });
 }

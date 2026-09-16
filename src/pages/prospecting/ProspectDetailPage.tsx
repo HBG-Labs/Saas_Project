@@ -9,6 +9,7 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
   ProspectFollowupsPanel,
+  ProspectMessageDraft,
   ProspectNotesPanel,
   ProspectScoreBadge,
   ProspectStatusActions,
@@ -91,6 +92,19 @@ export default function ProspectDetailPage() {
                   </div>
                 ))
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/80 bg-surface p-5 shadow-xs">
+            <CardHeader className="p-0">
+              <CardTitle className="text-sm">Brouillon de message</CardTitle>
+            </CardHeader>
+            <CardContent className="mt-3 p-0">
+              <ProspectMessageDraft
+                sectorId={prospect.sector_id}
+                createdOn={prospect.created_on}
+                commune={prospect.commune}
+              />
             </CardContent>
           </Card>
 
