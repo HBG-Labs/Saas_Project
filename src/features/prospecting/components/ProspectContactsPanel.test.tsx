@@ -4,14 +4,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/utils';
 import type { ProspectContact } from '@/types/domain';
 
-const { addProspectContact } = vi.hoisted(() => ({
+const { addProspectContact, canManage } = vi.hoisted(() => ({
   addProspectContact: vi.fn(),
+  canManage: { current: true },
 }));
 
 vi.mock('../api/prospecting.api', async () => {
   const actual = await vi.importActual<typeof import('../api/prospecting.api')>('../api/prospecting.api');
   return { ...actual, addProspectContact };
 });
+
+vi.mock('../hooks/usePlatformAdmin', () => ({
+  usePlatformAdmin: () => ({
+    isAdmin: true,
+    isLoading: false,
+    can: (permission: string) => permission === 'prospecting.manage' && canManage.current,
+  }),
+}));
 
 import { ProspectContactsPanel } from './ProspectContactsPanel';
 
@@ -34,6 +43,7 @@ function contact(overrides: Partial<ProspectContact> = {}): ProspectContact {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  canManage.current = true;
   addProspectContact.mockResolvedValue(contact());
 });
 
@@ -70,5 +80,14 @@ describe('ProspectContactsPanel', () => {
     renderWithProviders(<ProspectContactsPanel siren={SIREN} contacts={[]} />);
 
     expect(screen.getByRole('button', { name: 'Ajouter' })).toBeDisabled();
+  });
+
+  it('masque le formulaire de saisie pour un administrateur sans prospecting.manage', () => {
+    canManage.current = false;
+    renderWithProviders(<ProspectContactsPanel siren={SIREN} contacts={[contact()]} />);
+
+    expect(screen.getByText('contact@plomberie-antilles.fr')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ajouter' })).not.toBeInTheDocument();
+    expect(screen.getByText(/lecture seule/i)).toBeInTheDocument();
   });
 });

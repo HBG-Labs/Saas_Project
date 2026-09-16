@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import type { ProspectStatus } from '@/types/database';
 
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
 import { useConvertProspectToClient, useOrganizationSearch, useUpdateProspectStatus } from '../hooks/useProspecting';
 
 /**
@@ -23,9 +24,12 @@ export function ProspectConversionActions({ siren, status }: { siren: string; st
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { data: results, isPending } = useOrganizationSearch(query);
+  const { can } = usePlatformAdmin();
+  const canManage = can('prospecting.manage');
+  const { data: results, isPending } = useOrganizationSearch(query, canManage && modalOpen);
 
   if (status === 'converti') return null;
+  if (!canManage) return null;
 
   const closeModal = () => {
     setModalOpen(false);

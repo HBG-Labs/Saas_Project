@@ -7,7 +7,9 @@ import type { ProspectStatus } from '@/types/database';
 
 import { MANUAL_PROSPECT_STATUSES } from '../api/prospecting.api';
 import { useSuppressProspect, useUpdateProspectStatus } from '../hooks/useProspecting';
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
 import { PROSPECT_STATUS_LABELS } from '../lib/prospect-display';
+import { ManageOnlyNotice } from './ManageOnlyNotice';
 
 /**
  * §19 du cahier des charges — actions commerciales, à l'exception de :
@@ -29,8 +31,10 @@ export function ProspectStatusActions({ siren, status }: { siren: string; status
   const suppress = useSuppressProspect(siren);
   const [suppressOpen, setSuppressOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const { can } = usePlatformAdmin();
 
   if (status === 'converti') return null;
+  if (!can('prospecting.manage')) return <ManageOnlyNotice />;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

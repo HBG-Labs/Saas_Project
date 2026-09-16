@@ -107,11 +107,11 @@ export default function ProspectingAnalyticsPage() {
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <div className="space-y-6">
-          <Card className="border-border/80 bg-surface overflow-x-auto p-5 shadow-xs">
+          <Card className="border-border/80 bg-surface p-5 shadow-xs">
             <h2 className="text-foreground text-sm font-bold">Funnel</h2>
-            <div className="mt-3 flex min-w-max gap-4">
+            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               {FUNNEL_STEPS.map((step) => (
-                <div key={step.key} className="min-w-20">
+                <div key={step.key}>
                   <p className="text-muted-foreground text-3xs font-bold tracking-wide uppercase">
                     {step.emoji} {step.label}
                   </p>

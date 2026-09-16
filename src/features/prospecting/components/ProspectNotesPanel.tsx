@@ -5,11 +5,16 @@ import { Textarea } from '@/components/ui/Textarea';
 import { formatDateTime } from '@/lib/format';
 import type { ProspectNote } from '@/types/domain';
 
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
 import { useAddProspectNote } from '../hooks/useProspecting';
+
+import { ManageOnlyNotice } from './ManageOnlyNotice';
 
 export function ProspectNotesPanel({ siren, notes }: { siren: string; notes: ProspectNote[] }) {
   const [draft, setDraft] = useState('');
   const addNote = useAddProspectNote(siren);
+  const { can } = usePlatformAdmin();
+  const canManage = can('prospecting.manage');
 
   const handleSubmit = () => {
     const body = draft.trim();
@@ -32,24 +37,28 @@ export function ProspectNotesPanel({ siren, notes }: { siren: string; notes: Pro
         </div>
       )}
 
-      <div className="space-y-2">
-        <Textarea
-          label="Ajouter une note"
-          hideLabel
-          placeholder="Ajouter une note interne…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          rows={2}
-        />
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={draft.trim() === '' || addNote.isPending}
-          onClick={handleSubmit}
-        >
-          Ajouter la note
-        </Button>
-      </div>
+      {canManage ? (
+        <div className="space-y-2">
+          <Textarea
+            label="Ajouter une note"
+            hideLabel
+            placeholder="Ajouter une note interne…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={2}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={draft.trim() === '' || addNote.isPending}
+            onClick={handleSubmit}
+          >
+            Ajouter la note
+          </Button>
+        </div>
+      ) : (
+        notes.length > 0 && <ManageOnlyNotice />
+      )}
     </div>
   );
 }

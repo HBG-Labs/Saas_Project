@@ -8,6 +8,8 @@ import { formatDateTime } from '@/lib/format';
 import type { ProspectContact } from '@/types/domain';
 
 import { useAddProspectContact } from '../hooks/useProspecting';
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
+import { ManageOnlyNotice } from './ManageOnlyNotice';
 
 const CONTACT_ICON = { email: Mail, phone: Phone, website: Globe } as const;
 const CONTACT_LABEL: Record<ProspectContact['contact_type'], string> = {
@@ -26,6 +28,8 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
   const [contactType, setContactType] = useState<ProspectContact['contact_type']>('email');
   const [value, setValue] = useState('');
   const addContact = useAddProspectContact(siren);
+  const { can } = usePlatformAdmin();
+  const canManage = can('prospecting.manage');
 
   const handleSubmit = () => {
     const trimmed = value.trim();
@@ -37,8 +41,8 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
     <div className="space-y-3">
       {contacts.length === 0 ? (
         <p className="text-muted-foreground text-xs">
-          Aucune coordonnée — aucune source d’enrichissement automatisée n’est branchée en V1, mais
-          vous pouvez en saisir une manuellement ci-dessous.
+          Aucune coordonnée — aucune source d’enrichissement automatisée n’est branchée en V1
+          {canManage ? ', mais vous pouvez en saisir une manuellement ci-dessous.' : '.'}
         </p>
       ) : (
         <div className="space-y-2">
@@ -62,29 +66,33 @@ export function ProspectContactsPanel({ siren, contacts }: { siren: string; cont
         </div>
       )}
 
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <SelectField
-          value={contactType}
-          onChange={(e) => setContactType(e.target.value as ProspectContact['contact_type'])}
-          aria-label="Type de coordonnée"
-          className="sm:w-36"
-        >
-          <option value="email">E-mail</option>
-          <option value="phone">Téléphone</option>
-          <option value="website">Site web</option>
-        </SelectField>
-        <Input
-          label="Valeur"
-          hideLabel
-          placeholder={contactType === 'email' ? 'contact@entreprise.fr' : contactType === 'phone' ? '05 96 …' : 'https://…'}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="flex-1"
-        />
-        <Button size="sm" variant="outline" disabled={value.trim() === '' || addContact.isPending} onClick={handleSubmit}>
-          Ajouter
-        </Button>
-      </div>
+      {canManage ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <SelectField
+            value={contactType}
+            onChange={(e) => setContactType(e.target.value as ProspectContact['contact_type'])}
+            aria-label="Type de coordonnée"
+            className="sm:w-36"
+          >
+            <option value="email">E-mail</option>
+            <option value="phone">Téléphone</option>
+            <option value="website">Site web</option>
+          </SelectField>
+          <Input
+            label="Valeur"
+            hideLabel
+            placeholder={contactType === 'email' ? 'contact@entreprise.fr' : contactType === 'phone' ? '05 96 …' : 'https://…'}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="flex-1"
+          />
+          <Button size="sm" variant="outline" disabled={value.trim() === '' || addContact.isPending} onClick={handleSubmit}>
+            Ajouter
+          </Button>
+        </div>
+      ) : (
+        contacts.length > 0 && <ManageOnlyNotice />
+      )}
     </div>
   );
 }

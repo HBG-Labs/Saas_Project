@@ -161,11 +161,17 @@ export function useMessageTemplate(sectorId: string | undefined) {
 // -----------------------------------------------------------------------------
 
 /** Recherche d'organisations à lier (§ modale « Convertir en client »). */
-export function useOrganizationSearch(query: string) {
+/**
+ * `enabled` évite d'appeler la RPC (gardée par `prospecting.manage`, Phase 9)
+ * pour un administrateur qui n'a que `prospecting.view` — la requête
+ * échouerait de toute façon côté serveur, inutile de la déclencher.
+ */
+export function useOrganizationSearch(query: string, enabled = true) {
   return useQuery({
     queryKey: qk.prospecting.organizationSearch(query),
     queryFn: () => searchOrganizationsForConversion(query),
     staleTime: 30 * 1000,
+    enabled,
   });
 }
 

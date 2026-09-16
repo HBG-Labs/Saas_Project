@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/Input';
 import { formatDateTime } from '@/lib/format';
 import type { ProspectFollowup } from '@/types/domain';
 
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin';
 import { useCompleteFollowup, useScheduleFollowup } from '../hooks/useProspecting';
+
+import { ManageOnlyNotice } from './ManageOnlyNotice';
 
 /** §21 du cahier des charges. Aucun envoi n'est déclenché : c'est un pense-bête. */
 export function ProspectFollowupsPanel({
@@ -19,6 +22,8 @@ export function ProspectFollowupsPanel({
   const [note, setNote] = useState('');
   const schedule = useScheduleFollowup(siren);
   const complete = useCompleteFollowup();
+  const { can } = usePlatformAdmin();
+  const canManage = can('prospecting.manage');
 
   const pending = followups.filter((followup) => followup.completed_at === null);
   const done = followups.filter((followup) => followup.completed_at !== null);
@@ -46,14 +51,16 @@ export function ProspectFollowupsPanel({
                 <p className="text-foreground font-semibold">{formatDateTime(followup.due_at)}</p>
                 {followup.note && <p className="text-muted-foreground mt-0.5">{followup.note}</p>}
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={complete.isPending}
-                onClick={() => complete.mutate(followup.id)}
-              >
-                Traitée
-              </Button>
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={complete.isPending}
+                  onClick={() => complete.mutate(followup.id)}
+                >
+                  Traitée
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -74,19 +81,23 @@ export function ProspectFollowupsPanel({
         </details>
       )}
 
-      <div className="space-y-2">
-        <Input type="datetime-local" label="Programmer une relance" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
-        <Input
-          label="Note (optionnel)"
-          hideLabel
-          placeholder="Ex. : rappeler après la réouverture des chantiers"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <Button size="sm" variant="outline" disabled={dueAt === '' || schedule.isPending} onClick={handleSchedule}>
-          Programmer
-        </Button>
-      </div>
+      {canManage ? (
+        <div className="space-y-2">
+          <Input type="datetime-local" label="Programmer une relance" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+          <Input
+            label="Note (optionnel)"
+            hideLabel
+            placeholder="Ex. : rappeler après la réouverture des chantiers"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+          <Button size="sm" variant="outline" disabled={dueAt === '' || schedule.isPending} onClick={handleSchedule}>
+            Programmer
+          </Button>
+        </div>
+      ) : (
+        (pending.length > 0 || done.length > 0) && <ManageOnlyNotice />
+      )}
     </div>
   );
 }

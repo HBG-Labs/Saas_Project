@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '@/test/utils';
 
-const { updateProspectStatus, suppressProspect } = vi.hoisted(() => ({
+const { updateProspectStatus, suppressProspect, canManage } = vi.hoisted(() => ({
   updateProspectStatus: vi.fn().mockResolvedValue(undefined),
   suppressProspect: vi.fn().mockResolvedValue(undefined),
+  canManage: { current: true },
 }));
 
 vi.mock('../api/prospecting.api', async () => {
@@ -13,12 +14,25 @@ vi.mock('../api/prospecting.api', async () => {
   return { ...actual, updateProspectStatus, suppressProspect };
 });
 
+// `usePlatformAdmin` appelle `useAuth()`, qui exige un `<AuthProvider>` réel —
+// absent de `renderWithProviders`. Le mocker directement isole ce test de
+// l'authentification, tout en gardant le contrôle sur `prospecting.manage`
+// pour vérifier le masquage (Phase 13, audit permissions).
+vi.mock('../hooks/usePlatformAdmin', () => ({
+  usePlatformAdmin: () => ({
+    isAdmin: true,
+    isLoading: false,
+    can: (permission: string) => permission === 'prospecting.manage' && canManage.current,
+  }),
+}));
+
 import { ProspectStatusActions } from './ProspectStatusActions';
 
 const SIREN = '123456789';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  canManage.current = true;
 });
 
 describe('ProspectStatusActions', () => {
@@ -61,5 +75,14 @@ describe('ProspectStatusActions', () => {
     await waitFor(() => {
       expect(suppressProspect).toHaveBeenCalledWith(SIREN, null);
     });
+  });
+
+  it('masque toutes les actions d’écriture pour un administrateur sans prospecting.manage', () => {
+    canManage.current = false;
+    renderWithProviders(<ProspectStatusActions siren={SIREN} status="nouveau" />);
+
+    expect(screen.queryByRole('button', { name: 'À qualifier' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ne plus contacter' })).not.toBeInTheDocument();
+    expect(screen.getByText(/lecture seule/i)).toBeInTheDocument();
   });
 });
