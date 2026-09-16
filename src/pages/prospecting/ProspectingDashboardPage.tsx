@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { PROSPECT_STATUS_LABELS, useProspectingDashboard } from '@/features/prospecting';
+import { DueFollowupsCard, PROSPECT_STATUS_LABELS, useProspectingDashboard } from '@/features/prospecting';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { ProspectStatus } from '@/types/database';
 
@@ -52,6 +52,8 @@ export default function ProspectingDashboardPage() {
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <div className="space-y-6">
+          <DueFollowupsCard />
+
           <Card className="border-border/80 bg-surface p-5 shadow-xs">
             <p className="text-muted-foreground text-3xs font-bold tracking-wide uppercase">
               Aujourd’hui

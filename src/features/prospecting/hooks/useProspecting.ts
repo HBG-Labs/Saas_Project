@@ -1,13 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuth } from '@/features/auth';
 import { qk } from '@/lib/query-keys';
+import type { ProspectStatus } from '@/types/database';
 
 import {
+  addProspectNote,
+  completeFollowup,
   getProspect,
   getProspectingDashboardStats,
+  listDueFollowups,
   listProspectingSectors,
   listProspectingZones,
   listProspects,
+  scheduleFollowup,
+  suppressProspect,
+  updateProspectStatus,
   type ProspectFilters,
 } from '../api/prospecting.api';
 
@@ -49,5 +57,76 @@ export function useProspectingSectors() {
     queryKey: qk.prospecting.sectors(),
     queryFn: listProspectingSectors,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Phase 7 — mutations
+// -----------------------------------------------------------------------------
+//
+// Chaque mutation invalide la fiche ET la liste ET le tableau de bord :
+// changer un statut déplace le prospect d'un compteur à l'autre, et la
+// remise en question de « quoi invalider précisément » coûterait plus cher
+// qu'une invalidation large sur un module qui ne pagine que par dizaines.
+
+function useInvalidateProspecting() {
+  const queryClient = useQueryClient();
+  // Racine entière plutôt que des clés ciblées : un changement de statut
+  // déplace le prospect d'un compteur de tableau de bord à l'autre et peut
+  // le faire entrer ou sortir de la liste filtrée — deviner précisément quoi
+  // invalider coûterait plus cher que de tout relire sur un module qui
+  // pagine par dizaines de lignes, pas par milliers.
+  return () => queryClient.invalidateQueries({ queryKey: qk.prospecting.all });
+}
+
+export function useUpdateProspectStatus(siren: string) {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (status: ProspectStatus) => updateProspectStatus(siren, status),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useSuppressProspect(siren: string) {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (reason: string | null) => suppressProspect(siren, reason),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useAddProspectNote(siren: string) {
+  const { user } = useAuth();
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (body: string) => addProspectNote({ siren, body, authorId: user?.id ?? null }),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useScheduleFollowup(siren: string) {
+  const { user } = useAuth();
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (input: { dueAt: string; note: string | null; kind: string | null }) =>
+      scheduleFollowup({ siren, ...input, createdBy: user?.id ?? null }),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useCompleteFollowup() {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (followupId: string) => completeFollowup(followupId),
+    onSuccess: () => invalidate(),
+  });
+}
+
+/** §21 : widget « Relances aujourd'hui », affiché sur le tableau de bord. */
+export function useDueFollowups() {
+  return useQuery({
+    queryKey: qk.prospecting.dueFollowups(),
+    queryFn: listDueFollowups,
+    staleTime: 30 * 1000,
   });
 }

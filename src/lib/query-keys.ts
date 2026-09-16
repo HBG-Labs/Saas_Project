@@ -307,6 +307,7 @@ export const qk = {
     sectors: () => [...qk.prospecting.all, 'sectors'] as const,
     list: (filters?: unknown) => [...qk.prospecting.all, 'list', filters ?? null] as const,
     detail: (siren: string) => [...qk.prospecting.all, 'detail', siren] as const,
+    dueFollowups: () => [...qk.prospecting.all, 'due-followups'] as const,
   },
 
   // ---------------------------------------------------------- portail client

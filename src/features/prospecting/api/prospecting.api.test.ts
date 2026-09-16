@@ -14,20 +14,51 @@ interface Reponse {
   error: { code?: string; message: string } | null;
 }
 
+interface Appel {
+  methode: string;
+  args: unknown[];
+}
+
 interface RequeteDouble extends PromiseLike<Reponse> {
+  appels: Appel[];
   select: (...args: unknown[]) => RequeteDouble;
   eq: (...args: unknown[]) => RequeteDouble;
+  is: (...args: unknown[]) => RequeteDouble;
+  lte: (...args: unknown[]) => RequeteDouble;
+  order: (...args: unknown[]) => RequeteDouble;
   maybeSingle: (...args: unknown[]) => RequeteDouble;
+  single: (...args: unknown[]) => RequeteDouble;
+  insert: (...args: unknown[]) => RequeteDouble;
+  update: (...args: unknown[]) => RequeteDouble;
 }
 
 function requete(reponse: Reponse): RequeteDouble {
+  const appels: Appel[] = [];
+  const enregistrer =
+    (methode: string) =>
+    (...args: unknown[]): RequeteDouble => {
+      appels.push({ methode, args });
+      return double;
+    };
+
   const double: RequeteDouble = {
-    select: () => double,
-    eq: () => double,
-    maybeSingle: () => double,
+    appels,
+    select: enregistrer('select'),
+    eq: enregistrer('eq'),
+    is: enregistrer('is'),
+    lte: enregistrer('lte'),
+    order: enregistrer('order'),
+    maybeSingle: enregistrer('maybeSingle'),
+    single: enregistrer('single'),
+    insert: enregistrer('insert'),
+    update: enregistrer('update'),
     then: (ok, ko) => Promise.resolve(reponse).then(ok, ko),
   };
   return double;
+}
+
+function argsDe(double: RequeteDouble, methode: string): unknown[] | undefined {
+  return double.appels.find((a) => a.methode === methode)?.args;
 }
 
 const { fromMock } = vi.hoisted(() => ({ fromMock: vi.fn() }));
@@ -41,7 +72,7 @@ vi.mock('@/services/supabase', async () => {
   };
 });
 
-import { checkPlatformAdminStatus } from './prospecting.api';
+import { checkPlatformAdminStatus, suppressProspect, updateProspectStatus } from './prospecting.api';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -74,5 +105,35 @@ describe('checkPlatformAdminStatus', () => {
     expect(status).toEqual({ isAdmin: true, permissions: ['prospecting.view', 'prospecting.manage'] });
     expect(fromMock).toHaveBeenNthCalledWith(1, 'platform_admins');
     expect(fromMock).toHaveBeenNthCalledWith(2, 'platform_admin_permissions');
+  });
+});
+
+const SIREN = '123456789';
+
+describe('updateProspectStatus', () => {
+  it('met à jour uniquement le statut, sur le bon prospect', async () => {
+    const double = requete({ data: { siren: SIREN }, error: null });
+    fromMock.mockReturnValueOnce(double);
+
+    await updateProspectStatus(SIREN, 'a_qualifier');
+
+    expect(fromMock).toHaveBeenCalledWith('prospects');
+    expect(argsDe(double, 'update')).toEqual([{ status: 'a_qualifier' }]);
+    expect(argsDe(double, 'eq')).toEqual(['siren', SIREN]);
+  });
+});
+
+describe('suppressProspect', () => {
+  it('pose l’opposition PUIS force le statut — jamais l’inverse', async () => {
+    const insertion = requete({ data: { siren: SIREN }, error: null });
+    const maj = requete({ data: { siren: SIREN }, error: null });
+    fromMock.mockReturnValueOnce(insertion).mockReturnValueOnce(maj);
+
+    await suppressProspect(SIREN, 'demande explicite');
+
+    expect(fromMock).toHaveBeenNthCalledWith(1, 'prospect_suppressions');
+    expect(argsDe(insertion, 'insert')).toEqual([{ siren: SIREN, reason: 'demande explicite' }]);
+    expect(fromMock).toHaveBeenNthCalledWith(2, 'prospects');
+    expect(argsDe(maj, 'update')).toEqual([{ status: 'ne_plus_contacter' }]);
   });
 });

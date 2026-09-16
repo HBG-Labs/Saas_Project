@@ -6,3 +6,7 @@ export { ProspectScoreBadge } from './components/ProspectScoreBadge';
 export { ProspectStatusBadge } from './components/ProspectStatusBadge';
 export { ProspectFiltersBar, type ProspectFiltersBarProps } from './components/ProspectFilters';
 export { ProspectsTable } from './components/ProspectsTable';
+export { ProspectStatusActions } from './components/ProspectStatusActions';
+export { ProspectNotesPanel } from './components/ProspectNotesPanel';
+export { ProspectFollowupsPanel } from './components/ProspectFollowupsPanel';
+export { DueFollowupsCard } from './components/DueFollowupsCard';

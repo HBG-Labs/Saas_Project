@@ -7,7 +7,14 @@ import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { ProspectScoreBadge, ProspectStatusBadge, useProspect } from '@/features/prospecting';
+import {
+  ProspectFollowupsPanel,
+  ProspectNotesPanel,
+  ProspectScoreBadge,
+  ProspectStatusActions,
+  ProspectStatusBadge,
+  useProspect,
+} from '@/features/prospecting';
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { ProspectScoreReason } from '@/types/domain';
@@ -56,6 +63,10 @@ export default function ProspectDetailPage() {
             <Badge variant="outline">Priorité {prospect.priority}</Badge>
           </div>
         </div>
+      </div>
+
+      <div className="mb-5">
+        <ProspectStatusActions siren={prospect.siren} status={prospect.status} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -195,41 +206,19 @@ export default function ProspectDetailPage() {
             <CardHeader className="p-0">
               <CardTitle className="text-sm">Notes</CardTitle>
             </CardHeader>
-            <CardContent className="mt-3 space-y-2 p-0">
-              {prospect.notes.length === 0 ? (
-                <p className="text-muted-foreground text-xs">Aucune note pour l’instant.</p>
-              ) : (
-                prospect.notes.map((note) => (
-                  <div key={note.id} className="border-border/70 rounded-lg border px-3 py-2 text-xs">
-                    <p className="text-foreground">{note.body}</p>
-                    <p className="text-subtle-foreground text-3xs mt-1">{formatDateTime(note.created_at)}</p>
-                  </div>
-                ))
-              )}
+            <CardContent className="mt-3 p-0">
+              <ProspectNotesPanel siren={prospect.siren} notes={prospect.notes} />
             </CardContent>
           </Card>
 
           <Card className="border-border/80 bg-surface p-5 shadow-xs">
             <CardHeader className="p-0">
-              <CardTitle className="text-sm">Relances programmées</CardTitle>
+              <CardTitle className="text-sm">Relances</CardTitle>
             </CardHeader>
-            <CardContent className="mt-3 space-y-2 p-0">
-              {prospect.followups.length === 0 ? (
-                <p className="text-muted-foreground text-xs">Aucune relance programmée.</p>
-              ) : (
-                prospect.followups.map((followup) => (
-                  <div key={followup.id} className="border-border/70 rounded-lg border px-3 py-2 text-xs">
-                    <p className="text-foreground font-semibold">{formatDateTime(followup.due_at)}</p>
-                    {followup.note && <p className="text-muted-foreground mt-0.5">{followup.note}</p>}
-                  </div>
-                ))
-              )}
+            <CardContent className="mt-3 p-0">
+              <ProspectFollowupsPanel siren={prospect.siren} followups={prospect.followups} />
             </CardContent>
           </Card>
-
-          <p className="text-subtle-foreground text-3xs">
-            Qualifier, noter, programmer une relance ou changer le statut : disponible à la Phase 7.
-          </p>
         </div>
       </div>
     </div>

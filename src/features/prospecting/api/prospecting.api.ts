@@ -1,5 +1,5 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { ProspectDetail, ProspectListRow } from '@/types/domain';
+import type { ProspectDetail, ProspectFollowup, ProspectListRow, ProspectNote } from '@/types/domain';
 import type { ProspectStatus } from '@/types/database';
 
 /**
@@ -169,6 +169,123 @@ export async function listProspectingSectors() {
       .from('prospecting_sectors')
       .select('id, ape_code, label, active')
       .order('label', { ascending: true }),
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Phase 7 — statuts, notes, relances
+// -----------------------------------------------------------------------------
+//
+// Aucune RPC ici : les policies RLS posées en Phase 2
+// (`prospects_update_platform`, `prospect_notes_insert_platform`,
+// `prospect_followups_*_platform`) autorisent déjà directement ces écritures
+// à `prospecting.manage` — les mêmes garanties qu'ailleurs dans l'app
+// (`customers.api.ts`, etc.). Le trigger `app.audit_prospect_status_change`
+// (Phase 2) journalise chaque changement de statut et prend l'instantané du
+// score aux transitions qui comptent SANS action supplémentaire ici.
+//
+// « Essai » et « Converti » ne sont volontairement PAS proposés : leur
+// passage relie le prospect à une organisation/client réel (§22) — c'est la
+// Phase 9, pas celle-ci.
+
+/** Ordre de progression manuelle proposé par l'écran — jamais automatique. */
+export const MANUAL_PROSPECT_STATUSES: readonly ProspectStatus[] = [
+  'a_qualifier',
+  'a_contacter',
+  'contacte',
+  'a_relancer',
+  'interesse',
+  'refuse',
+  'ignore',
+];
+
+export async function updateProspectStatus(siren: string, status: ProspectStatus): Promise<void> {
+  await unwrap(
+    supabase.from('prospects').update({ status }).eq('siren', siren).select('siren').single(),
+  );
+}
+
+/**
+ * « Ne plus contacter » (§23, critique) : pose l'opposition ET le statut
+ * dans le même geste. Le trigger `app.enforce_prospect_suppression` forcerait
+ * de toute façon le statut à la prochaine écriture — l'appliquer ici aussi
+ * évite d'attendre une resynchronisation pour que l'écran reflète la réalité.
+ */
+export async function suppressProspect(siren: string, reason: string | null): Promise<void> {
+  await unwrap(
+    supabase
+      .from('prospect_suppressions')
+      .insert({ siren, reason })
+      .select('siren')
+      .single(),
+  );
+  await updateProspectStatus(siren, 'ne_plus_contacter');
+}
+
+export async function addProspectNote(input: {
+  siren: string;
+  body: string;
+  authorId: string | null;
+}): Promise<ProspectNote> {
+  return unwrap(
+    supabase
+      .from('prospect_notes')
+      .insert({ siren: input.siren, body: input.body, author_id: input.authorId })
+      .select('*')
+      .single(),
+  );
+}
+
+export async function scheduleFollowup(input: {
+  siren: string;
+  dueAt: string;
+  note: string | null;
+  kind: string | null;
+  createdBy: string | null;
+}): Promise<ProspectFollowup> {
+  return unwrap(
+    supabase
+      .from('prospect_followups')
+      .insert({
+        siren: input.siren,
+        due_at: input.dueAt,
+        note: input.note,
+        kind: input.kind,
+        created_by: input.createdBy,
+      })
+      .select('*')
+      .single(),
+  );
+}
+
+export async function completeFollowup(followupId: string): Promise<void> {
+  await unwrap(
+    supabase
+      .from('prospect_followups')
+      .update({ completed_at: new Date().toISOString() })
+      .eq('id', followupId)
+      .select('id')
+      .single(),
+  );
+}
+
+/** §21 : « RELANCES AUJOURD'HUI » — dues aujourd'hui ou en retard, non traitées. */
+export async function listDueFollowups(): Promise<
+  Array<ProspectFollowup & { prospect: Pick<ProspectListRow, 'siren' | 'raison_sociale' | 'nom_commercial'> }>
+> {
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  return unwrap(
+    supabase
+      .from('prospect_followups')
+      .select('*, prospect:prospects(siren, raison_sociale, nom_commercial)')
+      .is('completed_at', null)
+      .lte('due_at', endOfToday.toISOString())
+      .order('due_at', { ascending: true })
+      .returns<
+        Array<ProspectFollowup & { prospect: Pick<ProspectListRow, 'siren' | 'raison_sociale' | 'nom_commercial'> }>
+      >(),
   );
 }
 
