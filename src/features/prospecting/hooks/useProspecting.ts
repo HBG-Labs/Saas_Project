@@ -7,6 +7,7 @@ import type { ProspectStatus } from '@/types/database';
 import {
   addProspectNote,
   completeFollowup,
+  convertProspectToClient,
   getMessageTemplateForSector,
   getProspect,
   getProspectingDashboardStats,
@@ -15,6 +16,7 @@ import {
   listProspectingZones,
   listProspects,
   scheduleFollowup,
+  searchOrganizationsForConversion,
   suppressProspect,
   updateProspectStatus,
   type ProspectFilters,
@@ -139,5 +141,26 @@ export function useMessageTemplate(sectorId: string | undefined) {
     queryFn: () => (sectorId === undefined ? null : getMessageTemplateForSector(sectorId)),
     enabled: sectorId !== undefined,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Phase 9 — conversion
+// -----------------------------------------------------------------------------
+
+/** Recherche d'organisations à lier (§ modale « Convertir en client »). */
+export function useOrganizationSearch(query: string) {
+  return useQuery({
+    queryKey: qk.prospecting.organizationSearch(query),
+    queryFn: () => searchOrganizationsForConversion(query),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useConvertProspectToClient(siren: string) {
+  const invalidate = useInvalidateProspecting();
+  return useMutation({
+    mutationFn: (organizationId: string) => convertProspectToClient(siren, organizationId),
+    onSuccess: () => invalidate(),
   });
 }

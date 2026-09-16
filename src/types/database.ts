@@ -3823,6 +3823,8 @@ export interface Database {
           status: ProspectStatus;
           assigned_to: string | null;
           next_followup_at: string | null;
+          /** Organisation REZO360 réelle (Phase 9) — NULL tant que non converti. */
+          converted_organization_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3852,6 +3854,7 @@ export interface Database {
           status?: ProspectStatus;
           assigned_to?: string | null;
           next_followup_at?: string | null;
+          converted_organization_id?: string | null;
         };
         Relationships: [
           {
@@ -3864,6 +3867,12 @@ export interface Database {
             foreignKeyName: 'prospects_zone_id_fkey';
             columns: ['zone_id'];
             referencedRelation: 'prospecting_zones';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'prospects_converted_organization_id_fkey';
+            columns: ['converted_organization_id'];
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
@@ -4437,6 +4446,31 @@ export interface Database {
       prospecting_dashboard_stats: {
         Args: Record<string, never>;
         Returns: Json;
+      };
+
+      /**
+       * Recherche d'organisations REZO360 à lier à un prospect converti
+       * (Phase 9). Refuse quiconque n'a pas prospecting.manage ; exclut les
+       * organisations déjà liées à un autre prospect.
+       */
+      prospecting_search_organizations: {
+        Args: { p_query?: string };
+        Returns: Array<{
+          id: string;
+          name: string;
+          legal_name: string | null;
+          registration_number: string | null;
+        }>;
+      };
+
+      /**
+       * Convertit un prospect en client REZO360 : statut, lien vers
+       * l'organisation réelle, arrêt des relances en attente — en une seule
+       * transaction. Refuse quiconque n'a pas prospecting.manage.
+       */
+      convert_prospect_to_client: {
+        Args: { p_siren: string; p_organization_id: string };
+        Returns: undefined;
       };
     };
 

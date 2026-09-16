@@ -309,6 +309,7 @@ export const qk = {
     detail: (siren: string) => [...qk.prospecting.all, 'detail', siren] as const,
     dueFollowups: () => [...qk.prospecting.all, 'due-followups'] as const,
     messageTemplate: (sectorId: string) => [...qk.prospecting.all, 'message-template', sectorId] as const,
+    organizationSearch: (query: string) => [...qk.prospecting.all, 'organization-search', query] as const,
   },
 
   // ---------------------------------------------------------- portail client

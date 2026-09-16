@@ -39,6 +39,7 @@ function prospect(overrides: Partial<ProspectListRow> = {}): ProspectListRow {
     status: 'nouveau',
     assigned_to: null,
     next_followup_at: null,
+    converted_organization_id: null,
     created_at: '2026-09-16T00:00:00Z',
     updated_at: '2026-09-16T00:00:00Z',
     sector: { label: 'Plomberie' },

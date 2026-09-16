@@ -19,12 +19,18 @@ import { PROSPECT_STATUS_LABELS } from '../lib/prospect-display';
  * Progression strictement MANUELLE (§9) : aucun bouton n'est désactivé selon
  * le statut courant — l'utilisateur décide, l'écran ne verrouille pas un
  * parcours.
+ *
+ * Exception : un prospect déjà CONVERTI (Phase 9) n'affiche plus ces actions
+ * — un client REZO360 ne se « refuse » ni ne s'« ignore » plus depuis cet
+ * écran, sa relation commerciale se gère désormais dans son organisation.
  */
 export function ProspectStatusActions({ siren, status }: { siren: string; status: ProspectStatus }) {
   const updateStatus = useUpdateProspectStatus(siren);
   const suppress = useSuppressProspect(siren);
   const [suppressOpen, setSuppressOpen] = useState(false);
   const [reason, setReason] = useState('');
+
+  if (status === 'converti') return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

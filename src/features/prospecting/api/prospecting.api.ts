@@ -315,3 +315,35 @@ export async function listDueFollowups(): Promise<
   );
 }
 
+// -----------------------------------------------------------------------------
+// Phase 9 — conversion prospect → client
+// -----------------------------------------------------------------------------
+//
+// « Passer en essai » reste un simple changement de statut : voir
+// `updateProspectStatus` ci-dessus, rien de spécifique ici. « Convertir en
+// client », en revanche, doit lier une VRAIE organisation REZO360 — deux RPC
+// dédiées (§ migration `20260923090000`) : `organizations` est une table
+// tenant, invisible en lecture directe à un administrateur plateforme qui
+// n'est membre d'aucune organisation cliente.
+
+export interface OrganizationSearchResult {
+  id: string;
+  name: string;
+  legal_name: string | null;
+  registration_number: string | null;
+}
+
+export async function searchOrganizationsForConversion(query: string): Promise<OrganizationSearchResult[]> {
+  return unwrap(
+    supabase.rpc('prospecting_search_organizations', { p_query: query }).returns<OrganizationSearchResult[]>(),
+  );
+}
+
+export async function convertProspectToClient(siren: string, organizationId: string): Promise<void> {
+  const { error } = await supabase.rpc('convert_prospect_to_client', {
+    p_siren: siren,
+    p_organization_id: organizationId,
+  });
+  if (error) throw error;
+}
+

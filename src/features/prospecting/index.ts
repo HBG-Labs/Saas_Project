@@ -12,3 +12,4 @@ export { ProspectFollowupsPanel } from './components/ProspectFollowupsPanel';
 export { DueFollowupsCard } from './components/DueFollowupsCard';
 export { ProspectMessageDraft } from './components/ProspectMessageDraft';
 export { buildProspectMessageDraft, isRecentCreation, joinFrench } from './lib/message-draft';
+export { ProspectConversionActions } from './components/ProspectConversionActions';

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import {
+  ProspectConversionActions,
   ProspectFollowupsPanel,
   ProspectMessageDraft,
   ProspectNotesPanel,
@@ -66,8 +67,15 @@ export default function ProspectDetailPage() {
         </div>
       </div>
 
-      <div className="mb-5">
+      {prospect.status === 'converti' ? (
+        <div className="border-success-border bg-success-subtle text-success mb-5 rounded-xl border px-4 py-3 text-xs font-semibold">
+          Converti en client REZO360 — historique, source et score initial conservés.
+        </div>
+      ) : null}
+
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <ProspectStatusActions siren={prospect.siren} status={prospect.status} />
+        <ProspectConversionActions siren={prospect.siren} status={prospect.status} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

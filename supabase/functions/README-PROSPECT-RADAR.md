@@ -167,3 +167,32 @@ changent réellement.
 `score_reasons` ne contient jamais un critère qui ne s'applique pas
 réellement : un prospect sans secteur reconnu n'a pas de ligne
 « secteur_pertinence » à 0, il n'en a simplement pas.
+
+## Conversion prospect → essai → client (Phase 9, `20260923090000`)
+
+« Passer en essai » est un simple changement de statut (`essai`), sans lien
+particulier. « Convertir en client » (§22) est plus exigeant :
+
+- **Relie le prospect à une VRAIE organisation REZO360**, jamais devinée :
+  l'administrateur la choisit explicitement dans une recherche
+  (`prospecting_search_organizations`, RPC `SECURITY DEFINER` gardée par
+  `prospecting.manage` — `organizations` est une table tenant, invisible en
+  lecture directe à un administrateur plateforme qui n'est membre d'aucune
+  organisation cliente).
+- **Ne crée jamais de doublon** : un index unique
+  (`prospects_converted_organization_unique_idx`) empêche en base qu'une
+  organisation soit liée à deux prospects — pas seulement une vérification
+  applicative.
+- **Arrête les relances commerciales en attente** : `convert_prospect_to_client`
+  marque `completed_at` sur les `prospect_followups` encore ouverts du
+  prospect, dans la même transaction que le changement de statut — un échec
+  à mi-chemin ne peut jamais laisser un prospect « converti » avec des
+  relances actives.
+- **Conserve historique, source et score initial** sans code spécifique :
+  la conversion ne touche ni `first_detected_at`, ni `source`, ni
+  `score_reasons`, et le trigger de la Phase 2 prend un instantané du score
+  à la transition `converti`, comme aux autres transitions majeures.
+
+Un prospect converti ne montre plus les actions de statut « ordinaires »
+(refuser, ignorer…) sur son écran — sa relation commerciale se gère
+désormais dans son organisation REZO360, pas dans Prospect Radar.

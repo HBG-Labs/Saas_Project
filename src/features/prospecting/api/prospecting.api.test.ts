@@ -61,18 +61,24 @@ function argsDe(double: RequeteDouble, methode: string): unknown[] | undefined {
   return double.appels.find((a) => a.methode === methode)?.args;
 }
 
-const { fromMock } = vi.hoisted(() => ({ fromMock: vi.fn() }));
+const { fromMock, rpcMock } = vi.hoisted(() => ({ fromMock: vi.fn(), rpcMock: vi.fn() }));
 
 vi.mock('@/services/supabase', async () => {
   const query = await import('@/services/supabase/query');
   return {
     unwrap: query.unwrap,
     unwrapMaybe: query.unwrapMaybe,
-    supabase: { from: fromMock },
+    supabase: { from: fromMock, rpc: rpcMock },
   };
 });
 
-import { checkPlatformAdminStatus, suppressProspect, updateProspectStatus } from './prospecting.api';
+import {
+  checkPlatformAdminStatus,
+  convertProspectToClient,
+  searchOrganizationsForConversion,
+  suppressProspect,
+  updateProspectStatus,
+} from './prospecting.api';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -135,5 +141,54 @@ describe('suppressProspect', () => {
     expect(argsDe(insertion, 'insert')).toEqual([{ siren: SIREN, reason: 'demande explicite' }]);
     expect(fromMock).toHaveBeenNthCalledWith(2, 'prospects');
     expect(argsDe(maj, 'update')).toEqual([{ status: 'ne_plus_contacter' }]);
+  });
+});
+
+interface RpcDouble extends PromiseLike<Reponse> {
+  returns: () => RpcDouble;
+}
+
+function rpcRequete(reponse: Reponse): RpcDouble {
+  const double: RpcDouble = {
+    returns: () => double,
+    then: (ok, ko) => Promise.resolve(reponse).then(ok, ko),
+  };
+  return double;
+}
+
+const ORG_ID = '22222222-2222-4222-8222-222222222222';
+
+describe('searchOrganizationsForConversion', () => {
+  it('transmet la requête telle quelle à la RPC', async () => {
+    rpcMock.mockReturnValueOnce(
+      rpcRequete({ data: [{ id: ORG_ID, name: 'HBG Labs', legal_name: null, registration_number: null }], error: null }),
+    );
+
+    const results = await searchOrganizationsForConversion('hbg');
+
+    expect(rpcMock).toHaveBeenCalledWith('prospecting_search_organizations', { p_query: 'hbg' });
+    expect(results).toHaveLength(1);
+    expect(results[0]!.name).toBe('HBG Labs');
+  });
+});
+
+describe('convertProspectToClient', () => {
+  it('appelle la RPC avec le siren et l’organisation, et lève en cas d’erreur', async () => {
+    rpcMock.mockReturnValueOnce(Promise.resolve({ data: null, error: null }));
+
+    await convertProspectToClient(SIREN, ORG_ID);
+
+    expect(rpcMock).toHaveBeenCalledWith('convert_prospect_to_client', {
+      p_siren: SIREN,
+      p_organization_id: ORG_ID,
+    });
+  });
+
+  it('propage l’erreur de la RPC (ex. organisation déjà liée)', async () => {
+    rpcMock.mockReturnValueOnce(
+      Promise.resolve({ data: null, error: { message: 'Cette organisation est déjà liée à un autre prospect converti.' } }),
+    );
+
+    await expect(convertProspectToClient(SIREN, ORG_ID)).rejects.toThrow(/déjà liée/);
   });
 });
