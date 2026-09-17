@@ -111,6 +111,83 @@ Deno.test('une entreprise sans SIREN, sans code NAF ou sans raison sociale est i
   assertEquals(results.length, 0);
 });
 
+Deno.test("une entreprise en opposition à la diffusion (statut_diffusion « P ») est exclue, jamais remontée", async () => {
+  const fakeFetch: typeof fetch = () =>
+    Promise.resolve(
+      apiResponse([
+        {
+          siren: '444444444',
+          nom_raison_sociale: 'ENTREPRISE OPPOSEE',
+          activite_principale: '43.22A',
+          etat_administratif: 'A',
+          statut_diffusion: 'P',
+          siege: { siret: '44444444400010', est_siege: true, code_postal: '97200', departement: '972' },
+        },
+        {
+          siren: '555555555',
+          nom_raison_sociale: 'ENTREPRISE DIFFUSIBLE',
+          activite_principale: '43.22A',
+          etat_administratif: 'A',
+          statut_diffusion: 'O',
+          siege: { siret: '55555555500010', est_siege: true, code_postal: '97200', departement: '972' },
+        },
+      ]),
+    );
+
+  const provider = createRechercheEntreprisesProvider(fakeFetch);
+  const { results } = await provider.search({ departmentCode: '972', apeCode: '43.22A', perPage: 5 });
+
+  assertEquals(results.length, 1);
+  assertEquals(results[0].siren, '555555555');
+});
+
+Deno.test("un établissement en opposition à la diffusion est exclu même si l'unité légale est diffusible", async () => {
+  const fakeFetch: typeof fetch = () =>
+    Promise.resolve(
+      apiResponse([
+        {
+          siren: '666666666',
+          nom_raison_sociale: 'ETABLISSEMENT OPPOSE',
+          activite_principale: '43.22A',
+          etat_administratif: 'A',
+          statut_diffusion: 'O',
+          siege: {
+            siret: '66666666600010',
+            est_siege: true,
+            code_postal: '97200',
+            departement: '972',
+            statut_diffusion_etablissement: 'P',
+          },
+        },
+      ]),
+    );
+
+  const provider = createRechercheEntreprisesProvider(fakeFetch);
+  const { results } = await provider.search({ departmentCode: '972', apeCode: '43.22A', perPage: 5 });
+
+  assertEquals(results.length, 0);
+});
+
+Deno.test('sans statut_diffusion (absent), l’entreprise est traitée comme diffusible — « O » est le défaut', async () => {
+  const fakeFetch: typeof fetch = () =>
+    Promise.resolve(
+      apiResponse([
+        {
+          siren: '777777777',
+          nom_raison_sociale: 'ENTREPRISE SANS CHAMP',
+          activite_principale: '43.22A',
+          etat_administratif: 'A',
+          siege: { siret: '77777777700010', est_siege: true, code_postal: '97200', departement: '972' },
+        },
+      ]),
+    );
+
+  const provider = createRechercheEntreprisesProvider(fakeFetch);
+  const { results } = await provider.search({ departmentCode: '972', apeCode: '43.22A', perPage: 5 });
+
+  assertEquals(results.length, 1);
+});
+
 Deno.test('une réponse HTTP en erreur lève une exception explicite', async () => {
   const fakeFetch: typeof fetch = () => Promise.resolve(new Response('boom', { status: 500 }));
   const provider = createRechercheEntreprisesProvider(fakeFetch);

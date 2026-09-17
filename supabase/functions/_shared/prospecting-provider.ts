@@ -70,6 +70,8 @@ interface ApiEtablissement {
   libelle_commune?: string | null;
   departement?: string | null;
   region?: string | null;
+  /** « O » = diffusible ; « P » = diffusion partielle (opposition Sirene demandée). */
+  statut_diffusion_etablissement?: string | null;
 }
 
 interface ApiCompany {
@@ -83,6 +85,8 @@ interface ApiCompany {
   tranche_effectif_salarie?: string | null;
   siege?: ApiEtablissement | null;
   matching_etablissements?: ApiEtablissement[] | null;
+  /** « O » = diffusible ; « P » = diffusion partielle (opposition Sirene demandée). */
+  statut_diffusion?: string | null;
 }
 
 function pickEstablishment(company: ApiCompany, departmentCode: string): ApiEtablissement | null {
@@ -95,12 +99,27 @@ function pickEstablishment(company: ApiCompany, departmentCode: string): ApiEtab
   return inZone ?? company.siege ?? candidates[0] ?? null;
 }
 
+/**
+ * « P » (diffusion partielle) signifie que l'entreprise a fait une demande
+ * d'opposition à la diffusion de ses données auprès de l'INSEE (Sirene,
+ * article A123-96 du Code de commerce) — le statut par défaut est « O »
+ * (diffusible), jamais l'inverse. Une entreprise qui a exercé ce droit ne
+ * doit jamais entrer dans Prospect Radar, quels que soient par ailleurs son
+ * secteur ou sa récence : ce n'est pas un critère de score, c'est un refus
+ * qui prime sur tout le reste — voir README-PROSPECT-RADAR.md § RGPD.
+ */
+function estDiffusible(statut: string | null | undefined): boolean {
+  return statut !== 'P';
+}
+
 function mapCompany(company: ApiCompany, departmentCode: string): RawProspect | null {
   const apeCode = company.activite_principale ?? null;
   const raisonSociale = company.nom_raison_sociale ?? company.nom_complet ?? null;
   if (!company.siren || !apeCode || !raisonSociale) return null;
+  if (!estDiffusible(company.statut_diffusion)) return null;
 
   const chosen = pickEstablishment(company, departmentCode);
+  if (chosen && !estDiffusible(chosen.statut_diffusion_etablissement)) return null;
   const establishment: RawProspectEstablishment | null = chosen?.siret
     ? {
         siret: chosen.siret,

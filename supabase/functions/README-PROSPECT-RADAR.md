@@ -281,3 +281,33 @@ moissonnage » du 19/06/2025** :
 tiers (annuaire, réseau social, moteur de recherche), toute automatisation de
 découverte d'URL, tout fournisseur d'enrichissement payant — la Phase 11
 reste refusée sur ces points.
+
+## Respect du statut de diffusion Sirene (corrigé le 25/09/2026)
+
+**Manque de conformité trouvé et corrigé** : l'API Recherche d'Entreprises
+expose `statut_diffusion` (unité légale) et `statut_diffusion_etablissement`
+(établissement) — `"O"` = diffusible (le défaut), `"P"` = diffusion
+partielle, c'est-à-dire qu'une **demande d'opposition à la diffusion** a été
+faite auprès de l'INSEE (Sirene, article A123-96 du Code de commerce). Le
+worker ne vérifiait ce champ nulle part avant cette date : une entreprise
+ayant exercé ce droit pouvait donc être détectée, scorée et proposée à la
+prospection comme n'importe quelle autre — jamais l'intention, mais un vrai
+manque.
+
+**Corrigé** (`_shared/prospecting-provider.ts`, `estDiffusible`) :
+`mapCompany` refuse désormais toute entreprise dont `statut_diffusion` **ou**
+`statut_diffusion_etablissement` (de l'établissement retenu) vaut `"P"` —
+elle n'entre jamais dans `RawProspect`, donc jamais dans `upsert_prospect`.
+Ce n'est pas un critère de score : une opposition prime sur la récence, le
+secteur ou toute autre qualité du prospect, exactement comme une entreprise
+cessée reçoit toujours 0 au score (Phase 5) — un refus, pas une pondération.
+Absence du champ (ancienne réponse API, ou champ non renseigné) = `"O"` par
+défaut, jamais `"P"` par prudence excessive : le statut par défaut du Sirene
+lui-même est diffusible.
+
+**Vérifié en conditions réelles, pas seulement en test** : les 72 prospects
+déjà en base au 25/09/2026 ont été recontrôlés un par un contre l'API en
+direct — **aucun n'est en opposition** (`statut_diffusion` et
+`statut_diffusion_etablissement` à `"O"` pour les 72). Aucune purge
+rétroactive n'a donc été nécessaire ; le correctif protège uniquement les
+détections futures.

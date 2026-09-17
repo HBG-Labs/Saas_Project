@@ -108,10 +108,15 @@ end $$;
 -- -----------------------------------------------------------------------------
 -- 1.4 — Une deuxième inscription réelle produit une alerte INDÉPENDANTE
 -- -----------------------------------------------------------------------------
+-- Limité aux deux comptes de CE test, jamais un COUNT(*) sans filtre sur une
+-- table de production partagée : une vraie inscription concurrente (hors de
+-- cette transaction, donc jamais annulée par son `rollback`) ferait échouer
+-- une assertion sur le total absolu sans que rien ici ne soit en cause.
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.admin_signup_alerts) = 2,
-  'deux inscriptions reelles (et deux comptes exclus) -> exactement deux lignes au total');
+  (select count(*) from public.admin_signup_alerts
+   where user_id in (pg_temp.uid('organique'), pg_temp.uid('second'))) = 2,
+  'deux inscriptions reelles (et deux comptes exclus) -> exactement deux lignes pour ces comptes');
 end $$;
 
 do $$ begin raise notice '=== PARTIE 2 — ce qui ne doit JAMAIS recreer ou dupliquer une alerte ==='; end $$;
@@ -139,7 +144,8 @@ values ('signup-alerts-test', 'Entreprise de test', pg_temp.uid('organique'));
 
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.admin_signup_alerts) = 2,
+  (select count(*) from public.admin_signup_alerts
+   where user_id in (pg_temp.uid('organique'), pg_temp.uid('second'))) = 2,
   'creer une entreprise et y rattacher l''inscrit ne cree ni doublon ni ligne supplementaire');
 end $$;
 
