@@ -128,6 +128,15 @@ export async function getProspectingAnalytics(range: {
 
 const PROSPECTS_PER_PAGE = 25;
 
+/** Colonnes triables de la liste (§ tableau `ProspectsTable`). */
+export type ProspectSortColumn =
+  | 'raison_sociale'
+  | 'sector'
+  | 'zone'
+  | 'created_on'
+  | 'opportunity_score'
+  | 'status';
+
 export interface ProspectFilters {
   search?: string;
   // `| undefined` explicite : ces filtres se posent ET se retirent (choix
@@ -139,6 +148,9 @@ export interface ProspectFilters {
   sectorId?: string | undefined;
   minScore?: number;
   page?: number;
+  /** Absent = tri par défaut (score puis date de détection, décroissants). */
+  sortBy?: ProspectSortColumn | undefined;
+  sortDirection?: 'asc' | 'desc' | undefined;
 }
 
 export interface ProspectListResult {
@@ -173,9 +185,36 @@ export async function listProspects(filters: ProspectFilters = {}): Promise<Pros
     }
   }
 
+  const ascending = filters.sortDirection === 'asc';
+  switch (filters.sortBy) {
+    case 'raison_sociale':
+      query = query.order('raison_sociale', { ascending });
+      break;
+    case 'sector':
+      // Tri sur la table jointe : les prospects sans secteur catégorisé
+      // (`sector_id` nul) se retrouvent toujours en dernier, quel que soit le
+      // sens — PostgREST place les NULL en fin, jamais mélangés au reste.
+      query = query.order('label', { referencedTable: 'prospecting_sectors', ascending });
+      break;
+    case 'zone':
+      query = query.order('label', { referencedTable: 'prospecting_zones', ascending });
+      break;
+    case 'created_on':
+      query = query.order('created_on', { ascending });
+      break;
+    case 'opportunity_score':
+      query = query.order('opportunity_score', { ascending });
+      break;
+    case 'status':
+      query = query.order('status', { ascending });
+      break;
+    default:
+      // Par défaut (aucune colonne cliquée) : opportunités les plus fortes
+      // et les plus récentes d'abord — inchangé depuis la Phase 6.
+      query = query.order('opportunity_score', { ascending: false }).order('first_detected_at', { ascending: false });
+  }
+
   const { data, error, count } = await query
-    .order('opportunity_score', { ascending: false })
-    .order('first_detected_at', { ascending: false })
     .range(start, start + PROSPECTS_PER_PAGE - 1)
     .returns<ProspectListRow[]>();
 

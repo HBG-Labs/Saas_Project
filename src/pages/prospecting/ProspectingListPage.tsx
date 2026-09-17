@@ -10,6 +10,7 @@ import {
   ProspectsTable,
   useProspects,
   type ProspectFilters as Filters,
+  type ProspectSort,
 } from '@/features/prospecting';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { ProspectStatus } from '@/types/database';
@@ -38,6 +39,15 @@ export default function ProspectingListPage() {
   const page = filters.page ?? 0;
   const hasNextPage = useMemo(() => (page + 1) * PROSPECTS_PER_PAGE < total, [page, total]);
 
+  const sort: ProspectSort | undefined = filters.sortBy
+    ? { column: filters.sortBy, direction: filters.sortDirection ?? 'desc' }
+    : undefined;
+
+  // Changer de tri revient à la première page : la page courante d'un tri
+  // n'a aucune raison de rester pertinente dans un autre ordre.
+  const handleSortChange = (next: ProspectSort) =>
+    setFilters({ ...filters, sortBy: next.column, sortDirection: next.direction, page: 0 });
+
   return (
     <div>
       <PageHeader
@@ -55,7 +65,7 @@ export default function ProspectingListPage() {
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <>
-          <ProspectsTable rows={data.rows} />
+          <ProspectsTable rows={data.rows} sort={sort} onSortChange={handleSortChange} />
 
           {(page > 0 || hasNextPage) && (
             <div className="mt-4 flex items-center justify-between">

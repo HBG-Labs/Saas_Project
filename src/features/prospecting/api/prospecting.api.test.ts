@@ -76,6 +76,7 @@ import {
   checkPlatformAdminStatus,
   convertProspectToClient,
   getProspectingAnalytics,
+  listProspects,
   searchOrganizationsForConversion,
   suppressProspect,
   updateProspectStatus,
@@ -252,5 +253,68 @@ describe('getProspectingAnalytics', () => {
     await getProspectingAnalytics({ from: null, to: null });
 
     expect(rpcMock).toHaveBeenCalledWith('prospecting_analytics', { p_from: null, p_to: null });
+  });
+});
+
+interface ListDouble extends PromiseLike<Reponse> {
+  select: (...args: unknown[]) => ListDouble;
+  order: (...args: unknown[]) => ListDouble;
+  range: (...args: unknown[]) => ListDouble;
+  returns: () => ListDouble;
+  ordres: Array<{ column: string; options: unknown }>;
+}
+
+function listeRequete(): ListDouble {
+  const ordres: Array<{ column: string; options: unknown }> = [];
+  const double: ListDouble = {
+    ordres,
+    select: () => double,
+    order: (column: unknown, options: unknown) => {
+      ordres.push({ column: column as string, options });
+      return double;
+    },
+    range: () => double,
+    returns: () => double,
+    then: (ok, ko) => Promise.resolve({ data: [], error: null }).then(ok, ko),
+  };
+  return double;
+}
+
+describe('listProspects', () => {
+  it('sans tri explicite, garde l’ordre par défaut (score puis date de détection, décroissants)', async () => {
+    const requete = listeRequete();
+    fromMock.mockReturnValueOnce(requete);
+
+    await listProspects({});
+
+    expect(requete.ordres).toEqual([
+      { column: 'opportunity_score', options: { ascending: false } },
+      { column: 'first_detected_at', options: { ascending: false } },
+    ]);
+  });
+
+  it('trie par ancienneté croissante quand demandé', async () => {
+    const requete = listeRequete();
+    fromMock.mockReturnValueOnce(requete);
+
+    await listProspects({ sortBy: 'created_on', sortDirection: 'asc' });
+
+    expect(requete.ordres).toEqual([{ column: 'created_on', options: { ascending: true } }]);
+  });
+
+  it('trie sur la table jointe pour le secteur et la zone', async () => {
+    const requeteSecteur = listeRequete();
+    fromMock.mockReturnValueOnce(requeteSecteur);
+    await listProspects({ sortBy: 'sector', sortDirection: 'desc' });
+    expect(requeteSecteur.ordres).toEqual([
+      { column: 'label', options: { referencedTable: 'prospecting_sectors', ascending: false } },
+    ]);
+
+    const requeteZone = listeRequete();
+    fromMock.mockReturnValueOnce(requeteZone);
+    await listProspects({ sortBy: 'zone', sortDirection: 'asc' });
+    expect(requeteZone.ordres).toEqual([
+      { column: 'label', options: { referencedTable: 'prospecting_zones', ascending: true } },
+    ]);
   });
 });

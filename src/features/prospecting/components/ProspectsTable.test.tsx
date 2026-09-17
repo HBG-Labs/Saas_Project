@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '@/test/utils';
 import type { ProspectListRow } from '@/types/domain';
@@ -50,13 +50,13 @@ function prospect(overrides: Partial<ProspectListRow> = {}): ProspectListRow {
 
 describe('ProspectsTable', () => {
   it('affiche un état vide explicite en l’absence de résultats', () => {
-    render(<ProspectsTable rows={[]} />);
+    render(<ProspectsTable rows={[]} onSortChange={() => {}} />);
 
     expect(screen.getByText('Aucun prospect trouvé')).toBeInTheDocument();
   });
 
   it('affiche chaque prospect, avec son secteur, son score et son statut', () => {
-    renderWithProviders(<ProspectsTable rows={[prospect()]} />);
+    renderWithProviders(<ProspectsTable rows={[prospect()]} onSortChange={() => {}} />);
 
     // Le nom apparaît deux fois (carte mobile + ligne desktop) : jsdom rend
     // les deux balisages, seule la CSS les distingue en conditions réelles.
@@ -66,8 +66,49 @@ describe('ProspectsTable', () => {
   });
 
   it('bascule sur la raison sociale quand aucun nom commercial n’est connu', () => {
-    renderWithProviders(<ProspectsTable rows={[prospect({ nom_commercial: 'Clim’Antilles' })]} />);
+    renderWithProviders(
+      <ProspectsTable rows={[prospect({ nom_commercial: 'Clim’Antilles' })]} onSortChange={() => {}} />,
+    );
 
     expect(screen.getAllByText('Clim’Antilles').length).toBeGreaterThan(0);
+  });
+
+  it('premier clic sur une colonne : tri décroissant', () => {
+    const onSortChange = vi.fn();
+    renderWithProviders(<ProspectsTable rows={[prospect()]} onSortChange={onSortChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Trier par Ancienneté/ }));
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'created_on', direction: 'desc' });
+  });
+
+  it('un second clic sur la même colonne déjà triée bascule croissant/décroissant', () => {
+    const onSortChange = vi.fn();
+    renderWithProviders(
+      <ProspectsTable
+        rows={[prospect()]}
+        sort={{ column: 'opportunity_score', direction: 'desc' }}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Trier par Score/ }));
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'opportunity_score', direction: 'asc' });
+  });
+
+  it('cliquer une autre colonne repart décroissant, peu importe le tri précédent', () => {
+    const onSortChange = vi.fn();
+    renderWithProviders(
+      <ProspectsTable
+        rows={[prospect()]}
+        sort={{ column: 'opportunity_score', direction: 'asc' }}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Trier par Zone/ }));
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'zone', direction: 'desc' });
   });
 });
