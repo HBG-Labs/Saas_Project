@@ -281,7 +281,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isCollapsed = showCollapseButton ? (externalCollapsed ?? internalCollapsed) : false;
-  const activeGroups = useVisibleNavGroups(groups ?? SIDEBAR_GROUPS);
+  const resolvedTenantGroups = useVisibleNavGroups(groups ?? SIDEBAR_GROUPS);
   const { organization } = useCurrentOrganization();
   const { label: industryLabel, isResolved } = useCurrentIndustry();
   const location = useLocation();
@@ -301,13 +301,21 @@ export function Sidebar({
     ? { id: 'platform-admin', label: 'Administration REZO360', icon: 'radar', items: PLATFORM_ADMIN_NAV }
     : null;
 
-  const allGroups = [...activeGroups, ...(platformAdminGroup ? [platformAdminGroup] : []), accountGroup];
+  // Sans organisation, `resolvedTenantGroups` (Interventions, Stock, Achats…)
+  // reste toujours non vide — `useVisibleNavGroups` ne filtre que sur
+  // métier/rôle, jamais sur « appartient à une organisation ». Un
+  // administrateur plateforme sans organisation (Prospect Radar est
+  // délibérément HORS `RequireOrganization`, Phase 6) atteint donc cette
+  // sidebar sans jamais passer par la redirection « Créer votre entreprise »
+  // — il ne doit voir QUE le volet plateforme.
+  const tenantGroups = organization ? resolvedTenantGroups : [];
+  const allGroups = [...tenantGroups, ...(platformAdminGroup ? [platformAdminGroup] : []), accountGroup];
   const currentFullPath = location.pathname + location.search;
 
   // Un seul volet ouvert à la fois : celui qui contient la page courante.
   const activeGroupId =
     allGroups.find((g) => isGroupActive(g, location.pathname, location.search))?.id ??
-    activeGroups[0]?.id ??
+    tenantGroups[0]?.id ??
     'interventions';
 
   // Le repli manuel ne vaut QUE pour la page où il a été fait. Mémoriser le
@@ -370,7 +378,7 @@ export function Sidebar({
                 <Building2 className="size-3.5 text-primary shrink-0" />
                 <span className="truncate">{organization?.name ?? 'REZO360'}</span>
               </div>
-              {isResolved && industryLabel ? (
+              {organization && isResolved && industryLabel ? (
                 <div className="mt-0.5 flex items-center gap-1 text-2xs text-muted-foreground group-hover:text-foreground/80 transition-colors truncate">
                   <Briefcase className="size-3 text-subtle-foreground shrink-0" />
                   <span className="truncate">{industryLabel}</span>
@@ -410,7 +418,7 @@ export function Sidebar({
         </div>
 
         {/* Sections de navigation accordéon (un seul volet ouvert à la fois) */}
-        {activeGroups.map((group) => (
+        {tenantGroups.map((group) => (
           <CollapsibleSidebarSection
             key={group.id}
             group={group}
