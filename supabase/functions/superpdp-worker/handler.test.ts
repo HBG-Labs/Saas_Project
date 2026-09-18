@@ -18,12 +18,13 @@ const json = (valeur: unknown, status = 200) =>
 const requete = (entetes: Record<string, string> = {}, methode = 'POST') =>
   new Request(`${RACINE}/functions/v1/superpdp-worker`, { method: methode, headers: entetes });
 
-async function connexion() {
+async function connexion(receptionStatus = 'not_requested') {
   const contexte = `${ORGANISATION}:superpdp`;
   return {
     organization_id: ORGANISATION,
     provider_code: 'superpdp',
     status: 'connected',
+    reception_status: receptionStatus,
     provider_environment: 'production',
     access_token_ciphertext: await encryptSecret('jeton-acces', CLE, contexte),
     refresh_token_ciphertext: await encryptSecret('jeton-renouvellement', CLE, contexte),
@@ -54,6 +55,11 @@ function banc(
     transmissions?: Record<string, unknown>[];
     connectee?: boolean;
     fileIllisible?: boolean;
+    receptionStatus?: string;
+    /** Factures reçues déjà connues (utilisées pour dériver le curseur). */
+    recuesConnues?: Record<string, unknown>[];
+    /** Factures reçues renvoyées par `GET /v1.beta/invoices?direction=in`. */
+    recuesEntrantes?: Record<string, unknown>[];
   } = {},
 ) {
   const vu: string[] = [];
@@ -66,12 +72,67 @@ function banc(
     vu.push(`${req.method} ${url.pathname}${filtre ? `?status=${filtre}` : ''}`);
 
     if (url.origin === PARTENAIRE) {
+      if (
+        url.pathname === '/v1.beta/invoices' &&
+        req.method === 'GET' &&
+        url.searchParams.get('direction') === 'in'
+      ) {
+        const apres = Number(url.searchParams.get('starting_after_id') ?? '0');
+        const page = (options.recuesEntrantes ?? []).filter((i) => Number(i['id']) > apres);
+        return json({ data: page, has_after: false });
+      }
+      const format = url.searchParams.get('format');
+      if (url.pathname.startsWith('/v1.beta/invoices/') && format === 'en16931')
+        return json({
+          seller: { name: 'Fournisseur Test', legal_registration_identifier: { value: '852322915' } },
+          buyer: { name: 'Client' },
+          currency_code: 'EUR',
+          issue_date: '2026-09-01',
+          payment_due_date: '2026-10-01',
+          totals: { total_without_vat: 100, total_vat_amount: 20, total_with_vat: 120 },
+        });
+      if (url.pathname.startsWith('/v1.beta/invoices/') && format === 'original')
+        return new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/xml' },
+        });
       if (url.pathname.startsWith('/v1.beta/invoices/')) return json({ id: 448618, events: [] });
       if (url.pathname === '/v1.beta/invoice_events') return json({ data: [], has_after: false });
       return json({});
     }
     if (url.pathname === '/rest/v1/einvoicing_provider_connections')
-      return json(options.connectee === false ? [] : [await connexion()]);
+      return json(options.connectee === false ? [] : [await connexion(options.receptionStatus)]);
+    if (url.pathname === '/rest/v1/received_invoices') {
+      if (req.method === 'GET') {
+        const providerInvoiceId = url.searchParams.get('provider_invoice_id')?.replace('eq.', '');
+        const connues = options.recuesConnues ?? [];
+        if (providerInvoiceId) {
+          const found = connues.find((c) => c['provider_invoice_id'] === providerInvoiceId);
+          return json(found ? [found] : []);
+        }
+        // Requete du curseur (order desc, limit 1).
+        const max = Math.max(0, ...connues.map((c) => Number(c['provider_invoice_id']) || 0));
+        return json(max > 0 ? [{ provider_invoice_id: String(max) }] : []);
+      }
+      const corps = JSON.parse(await req.text()) as Record<string, unknown>;
+      return json({
+        id: 'nouvelle-facture-recue',
+        organization_id: ORGANISATION,
+        provider_code: 'superpdp',
+        provider_invoice_id: corps['provider_invoice_id'],
+        regulatory_status: null,
+      });
+    }
+    if (url.pathname === '/rest/v1/received_invoice_events') {
+      if (req.method === 'GET') return json([]);
+      return json({}, 201);
+    }
+    if (url.pathname === '/rest/v1/received_invoice_documents') {
+      if (req.method === 'GET') return json([]);
+      return json({}, 201);
+    }
+    if (url.pathname.startsWith('/storage/v1/object/received-invoice-documents/'))
+      return json({ Key: url.pathname }, 200);
     if (url.pathname === '/rest/v1/invoice_transmissions') {
       if (options.fileIllisible && req.method === 'GET')
         return json({ message: 'colonne inconnue' }, 400);
@@ -253,4 +314,49 @@ Deno.test('une file illisible est signalee, pas confondue avec une file vide', a
   assert.equal(bilan['organisations'], 1);
   assert.equal(bilan['synchronisees'], 0);
   assert.ok(bilan['echecs']! >= 1, 'Une file illisible doit compter comme un echec');
+});
+
+Deno.test('une organisation avec reception active recoit ses factures fournisseurs', async () => {
+  const { handler, vu, battements, transport } = banc({
+    receptionStatus: 'active',
+    recuesEntrantes: [{ id: 555, events: [] }],
+  });
+  const original = globalThis.fetch;
+  globalThis.fetch = transport;
+  let reponse: Response;
+  try {
+    reponse = await handler(requete({ 'x-worker-secret': SECRET }));
+  } finally {
+    globalThis.fetch = original;
+  }
+  assert.equal(reponse.status, 200);
+  const bilan = (await reponse.json()) as Record<string, number>;
+  assert.equal(bilan['recues'], 1);
+  assert.equal(bilan['recuesMaj'], 0);
+  assert.ok(
+    vu.includes('GET /v1.beta/invoices'),
+    'La reception doit interroger le partenaire en direction=in',
+  );
+  assert.equal(battements.length, 1);
+  assert.equal(battements[0]!['received'], 1);
+});
+
+/*
+  Miroir du test « une transmission en attente n'est jamais deposee d'office » :
+  une organisation qui n'a jamais eu son acces reception CONFIRME (sonde reelle
+  faite par `superpdp-connection`) ne doit jamais etre interrogee pour ca —
+  ni `pending_verification`, ni `not_requested` (le defaut) ne suffisent.
+*/
+Deno.test('sans reception confirmee, l’ordonnanceur n’interroge jamais direction=in', async () => {
+  const { handler, vu, battements } = banc({
+    recuesEntrantes: [{ id: 555, events: [] }],
+  });
+  const bilan = (await (await handler(requete({ 'x-worker-secret': SECRET }))).json()) as Record<
+    string,
+    number
+  >;
+  assert.equal(bilan['recues'], 0);
+  assert.equal(bilan['echecs'], 0);
+  assert.equal(vu.filter((appel) => appel === 'GET /v1.beta/invoices').length, 0);
+  assert.equal(battements[0]!['received'], 0);
 });

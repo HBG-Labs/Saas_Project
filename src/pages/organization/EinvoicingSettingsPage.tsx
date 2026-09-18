@@ -336,7 +336,11 @@ export default function EinvoicingSettingsPage() {
       />
       <OrganizationNavTabs />
       {organization && (
-        <ProviderConnectionCard organizationId={organization.id} canManage={canManageConnection} />
+        <ProviderConnectionCard
+          organizationId={organization.id}
+          canManage={canManageConnection}
+          registrationNumber={data?.registration_number ?? null}
+        />
       )}
       <div className="border-primary/20 bg-primary-subtle relative flex flex-col gap-4 overflow-hidden rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="bg-primary/10 pointer-events-none absolute -top-12 -right-8 size-32 rounded-full blur-3xl" />

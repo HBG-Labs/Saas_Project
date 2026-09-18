@@ -4,11 +4,14 @@ import { messageDeLaFonction, supabase, unwrapMaybe } from '@/services/supabase'
 import type { EinvoicingProviderConnection } from '@/types/domain';
 
 const connectionColumns =
-  'organization_id,provider_code,status,provider_company_id,provider_environment,company_verification_status,user_identity_verification_status,connected_at,last_verified_at,last_error_code,last_error_message,created_at,updated_at';
+  'organization_id,provider_code,status,provider_company_id,provider_environment,company_verification_status,user_identity_verification_status,connected_at,last_verified_at,last_error_code,last_error_message,reception_status,reception_activated_at,reception_last_checked_at,reception_last_error_code,reception_last_error_message,created_at,updated_at';
 
 const actionResponse = z.object({
   status: z.string().optional(),
   environment: z.enum(['sandbox', 'production']).nullable().optional(),
+  receptionStatus: z
+    .enum(['not_requested', 'pending_verification', 'active', 'failed'])
+    .optional(),
 });
 const readinessResponse = z.object({
   configured: z.boolean(),
@@ -54,14 +57,14 @@ export async function getEinvoicingProviderConnection(
 
 async function invokeConnection(
   organizationId: string,
-  action: 'readiness' | 'start' | 'verify' | 'disconnect',
+  action: 'readiness' | 'start' | 'activate_reception' | 'verify' | 'disconnect',
 ) {
   const response = await supabase.functions.invoke<unknown>('superpdp-connection', {
     headers: await authenticatedFunctionHeaders(),
     body: {
       organizationId,
       action,
-      ...(action === 'start'
+      ...(action === 'start' || action === 'activate_reception'
         ? { returnUrl: `${window.location.origin}/organisation/facturation-electronique` }
         : {}),
     },
@@ -81,6 +84,21 @@ export async function getSuperPdpReadiness(organizationId: string) {
 
 export async function startSuperPdpConnection(organizationId: string): Promise<string> {
   const parsed = startResponse.safeParse(await invokeConnection(organizationId, 'start'));
+  if (!parsed.success) throw new Error('Le service n’a pas retourné de lien d’autorisation.');
+  const url = new URL(parsed.data.url);
+  if (url.origin !== 'https://api.superpdp.tech' || url.pathname !== '/oauth2/authorize')
+    throw new Error('Le lien d’autorisation SUPER PDP est invalide.');
+  return url.toString();
+}
+
+/**
+ * Demande explicite d'activation de la réception (scope `send_and_receive`).
+ * Distincte de `startSuperPdpConnection` : celle-ci exige déjà une connexion
+ * d'émission active (l'Edge Function refuse sinon, 409) et pose
+ * `reception_status = pending_verification` avant la redirection.
+ */
+export async function activateSuperPdpReception(organizationId: string): Promise<string> {
+  const parsed = startResponse.safeParse(await invokeConnection(organizationId, 'activate_reception'));
   if (!parsed.success) throw new Error('Le service n’a pas retourné de lien d’autorisation.');
   const url = new URL(parsed.data.url);
   if (url.origin !== 'https://api.superpdp.tech' || url.pathname !== '/oauth2/authorize')

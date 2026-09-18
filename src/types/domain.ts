@@ -175,6 +175,11 @@ export type InvoiceTransmission = Tables<'invoice_transmissions'>;
 export type InvoiceTransmissionEvent = Tables<'invoice_transmission_events'>;
 export type EinvoicingProviderConnection = Tables<'einvoicing_provider_connections'>;
 
+/** Facture fournisseur reçue via SUPER PDP (Phase 3/4 réception). */
+export type ReceivedInvoice = Tables<'received_invoices'>;
+export type ReceivedInvoiceEvent = Tables<'received_invoice_events'>;
+export type ReceivedInvoiceDocument = Tables<'received_invoice_documents'>;
+
 /**
  * Ventilation de la TVA par taux — PLUSIEURS lignes par facture.
  *

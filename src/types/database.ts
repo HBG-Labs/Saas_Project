@@ -96,6 +96,12 @@ export type InvoiceTransmissionStatus =
 export type EinvoicingConnectionStatus =
   'pending_verification' | 'connected' | 'action_required' | 'disconnected';
 
+export type EinvoicingReceptionStatus =
+  'not_requested' | 'pending_verification' | 'active' | 'failed';
+
+/** Triage métier d'une facture reçue — seul champ modifiable côté client. */
+export type ReceivedInvoiceInternalStatus = 'new' | 'viewed' | 'archived' | 'disputed';
+
 /**
  * Nature du destinataire. `null` en base signifie « non renseigne » : la
  * validation le reclame avant emission, la saisie ne le bloque pas — un
@@ -2614,6 +2620,11 @@ export interface Database {
           last_verified_at: string | null;
           last_error_code: string | null;
           last_error_message: string | null;
+          reception_status: EinvoicingReceptionStatus;
+          reception_activated_at: string | null;
+          reception_last_checked_at: string | null;
+          reception_last_error_code: string | null;
+          reception_last_error_message: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -2635,6 +2646,11 @@ export interface Database {
           last_verified_at?: string | null;
           last_error_code?: string | null;
           last_error_message?: string | null;
+          reception_status?: EinvoicingReceptionStatus;
+          reception_activated_at?: string | null;
+          reception_last_checked_at?: string | null;
+          reception_last_error_code?: string | null;
+          reception_last_error_message?: string | null;
         };
         Update: {
           status?: EinvoicingConnectionStatus;
@@ -2652,6 +2668,11 @@ export interface Database {
           last_verified_at?: string | null;
           last_error_code?: string | null;
           last_error_message?: string | null;
+          reception_status?: EinvoicingReceptionStatus;
+          reception_activated_at?: string | null;
+          reception_last_checked_at?: string | null;
+          reception_last_error_code?: string | null;
+          reception_last_error_message?: string | null;
         };
         Relationships: [
           {
@@ -2807,6 +2828,136 @@ export interface Database {
             foreignKeyName: 'invoice_transmission_events_invoice_id_fkey';
             columns: ['invoice_id'];
             referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // =======================================================================
+      // Réception des factures électroniques fournisseurs (Phase 3, cf.
+      // 20260926090000_einvoicing_reception.sql) — miroir de l'émission
+      // ci-dessus, sens inverse. Seul `internal_status` est modifiable côté
+      // client (triage métier) ; tout le reste est écrit par le worker
+      // `service_role` en polling (`direction=in`, aucun webhook chez SUPER PDP).
+      // =======================================================================
+      received_invoices: {
+        Row: {
+          id: string;
+          organization_id: string;
+          provider_code: string;
+          provider_invoice_id: string;
+          internal_status: ReceivedInvoiceInternalStatus;
+          regulatory_status: InvoiceTransmissionStatus | null;
+          supplier_name: string | null;
+          supplier_siren: string | null;
+          supplier_identifier: string | null;
+          currency_code: string | null;
+          amount_without_vat: number | null;
+          amount_vat: number | null;
+          amount_with_vat: number | null;
+          issue_date: string | null;
+          payment_due_date: string | null;
+          received_at: string;
+          last_error_code: string | null;
+          last_error_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          provider_code?: string;
+          provider_invoice_id: string;
+          internal_status?: ReceivedInvoiceInternalStatus;
+          regulatory_status?: InvoiceTransmissionStatus | null;
+          supplier_name?: string | null;
+          supplier_siren?: string | null;
+          supplier_identifier?: string | null;
+          currency_code?: string | null;
+          amount_without_vat?: number | null;
+          amount_vat?: number | null;
+          amount_with_vat?: number | null;
+          issue_date?: string | null;
+          payment_due_date?: string | null;
+          received_at?: string;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        /** Seul `internal_status` est accordé en écriture côté client (GRANT colonne + RLS `invoice.manage`). */
+        Update: { internal_status?: ReceivedInvoiceInternalStatus };
+        Relationships: [
+          {
+            foreignKeyName: 'received_invoices_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      received_invoice_events: {
+        Row: {
+          id: string;
+          received_invoice_id: string;
+          organization_id: string;
+          source: 'provider' | 'administration';
+          event_type: string;
+          normalized_status: InvoiceTransmissionStatus | null;
+          provider_status_code: string | null;
+          provider_event_id: string | null;
+          message: string | null;
+          payload_sha256: string | null;
+          occurred_at: string;
+          recorded_at: string;
+        };
+        Insert: {
+          id?: string;
+          received_invoice_id: string;
+          organization_id: string;
+          source: 'provider' | 'administration';
+          event_type: string;
+          normalized_status?: InvoiceTransmissionStatus | null;
+          provider_status_code?: string | null;
+          provider_event_id?: string | null;
+          message?: string | null;
+          payload_sha256?: string | null;
+          occurred_at: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: 'received_invoice_events_received_invoice_id_fkey';
+            columns: ['received_invoice_id'];
+            referencedRelation: 'received_invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      received_invoice_documents: {
+        Row: {
+          received_invoice_id: string;
+          organization_id: string;
+          original_format: 'ubl' | 'cii' | 'factur_x';
+          object_path: string;
+          sha256: string;
+          byte_size: number;
+          created_at: string;
+        };
+        Insert: {
+          received_invoice_id: string;
+          organization_id: string;
+          original_format: 'ubl' | 'cii' | 'factur_x';
+          object_path: string;
+          sha256: string;
+          byte_size: number;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: 'received_invoice_documents_received_invoice_id_fkey';
+            columns: ['received_invoice_id'];
+            referencedRelation: 'received_invoices';
             referencedColumns: ['id'];
           },
         ];

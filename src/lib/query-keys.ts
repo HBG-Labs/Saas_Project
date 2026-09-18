@@ -183,6 +183,10 @@ export const qk = {
     providerReadiness: (organizationId: string) =>
       [...qk.einvoicing.all, 'provider-readiness', organizationId] as const,
     transmission: (invoiceId: string) => [...qk.einvoicing.all, 'transmission', invoiceId] as const,
+    receivedInvoices: (organizationId: string, filters?: unknown) =>
+      [...qk.einvoicing.all, 'received', organizationId, 'list', filters ?? null] as const,
+    receivedInvoiceDetail: (receivedInvoiceId: string) =>
+      [...qk.einvoicing.all, 'received', 'detail', receivedInvoiceId] as const,
   },
 
   // ------------------------------------------------------------------- achats

@@ -159,19 +159,31 @@ export async function decryptSecret(value: string, base64Key: string, context: s
   return new TextDecoder().decode(plaintext);
 }
 
+/**
+ * Valeur confirmée le 26/09/2026, de première main sur l'écran de consentement
+ * SUPER PDP (pas dans leur spec OpenAPI — ce paramètre appartient à la page
+ * d'autorisation OAuth, hors du spec REST) : `send_and_receive` fait
+ * apparaître explicitement « envoyer ET recevoir » dans le texte d'accord
+ * formel, et coche l'inscription à l'annuaire pour la réception. `send` seul
+ * (l'ancienne valeur, toujours utilisée par défaut ci-dessous) ne demande que
+ * l'émission.
+ */
+export type SuperPdpAuthorizationScope = 'send' | 'send_and_receive';
+
 export function buildSuperPdpAuthorizationUrl(input: {
   clientId: string;
   redirectUri: string;
   state: string;
   loginHint?: string;
   siren?: string;
+  scope?: SuperPdpAuthorizationScope;
 }) {
   const url = new URL('/oauth2/authorize', SUPERPDP_API_URL);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('client_id', input.clientId);
   url.searchParams.set('redirect_uri', input.redirectUri);
   url.searchParams.set('state', input.state);
-  url.searchParams.set('superpdp_send_and_receive', 'send');
+  url.searchParams.set('superpdp_send_and_receive', input.scope ?? 'send');
   if (input.loginHint) url.searchParams.set('login_hint', input.loginHint);
   if (input.siren) {
     url.searchParams.set('superpdp_company_number', input.siren);

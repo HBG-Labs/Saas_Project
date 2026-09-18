@@ -96,6 +96,7 @@ jobs:
         run: |
           deno test \
             supabase/functions/_shared/superpdp-transmission.test.ts \
+            supabase/functions/_shared/superpdp-reception.test.ts \
             supabase/functions/_shared/meta-capi.test.ts \
             supabase/functions/_shared/email-confirme.test.ts \
             supabase/functions/_shared/email.test.ts \

@@ -417,6 +417,16 @@ export const routes: RouteObject[] = [
                             path: ROUTE_PATTERNS.invoiceDetail,
                             lazy: lazyPage(() => import('@/pages/invoices/InvoiceDetailPage')),
                           },
+                          {
+                            path: ROUTES.receivedInvoices,
+                            lazy: lazyPage(() => import('@/pages/invoices/ReceivedInvoicesPage')),
+                          },
+                          {
+                            path: ROUTE_PATTERNS.receivedInvoiceDetail,
+                            lazy: lazyPage(
+                              () => import('@/pages/invoices/ReceivedInvoiceDetailPage'),
+                            ),
+                          },
                         ],
                       },
                     ],

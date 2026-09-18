@@ -8,6 +8,7 @@ import {
   revokeSuperPdpToken,
   sha256Hex,
   superPdpJson,
+  type SuperPdpAuthorizationScope,
   type SuperPdpCompany,
   type SuperPdpSession,
 } from '../../../src/features/einvoicing/provider/superpdp-contract.ts';
@@ -79,7 +80,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return json({ error: 'Requete illisible.' }, 400);
   }
   if (
-    !['readiness', 'start', 'verify', 'disconnect'].includes(String(body.action)) ||
+    !['readiness', 'start', 'activate_reception', 'verify', 'disconnect'].includes(
+      String(body.action),
+    ) ||
     typeof body.organizationId !== 'string' ||
     !/^[0-9a-f-]{36}$/i.test(body.organizationId)
   )
@@ -126,7 +129,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       });
     }
     const config = serverConfig();
-    if (body.action === 'start') {
+    if (body.action === 'start' || body.action === 'activate_reception') {
       const returnUrl = safeReturnUrl(body.returnUrl);
       if (!returnUrl) return json({ error: 'Adresse de retour invalide.' }, 400);
       const state = randomOAuthState();
@@ -154,6 +157,27 @@ Deno.serve(async (request: Request): Promise<Response> => {
         const digits = organization?.registration_number?.replace(/\D/g, '') ?? '';
         if (digits.length >= 9) siren = digits.slice(0, 9);
       }
+      const scope: SuperPdpAuthorizationScope =
+        body.action === 'activate_reception' ? 'send_and_receive' : 'send';
+      if (body.action === 'activate_reception') {
+        // Posé AVANT la redirection : `verify` (au retour) ne sonde
+        // `direction=in` que pour une organisation qui vient de le demander
+        // explicitement — jamais en arrière-plan pour une connexion `send` seule.
+        // Une UPDATE sans ligne correspondante n'affecte rien SANS lever
+        // d'erreur (comportement normal de Postgres) : le nombre de lignes
+        // modifiées est donc vérifié explicitement, pas supposé.
+        const { data: pending, error: pendingError } = await admin
+          .from('einvoicing_provider_connections')
+          .update({ reception_status: 'pending_verification' })
+          .eq('organization_id', body.organizationId)
+          .select('organization_id');
+        if (pendingError) throw pendingError;
+        if (!pending?.length)
+          return json(
+            { error: 'Connectez d’abord SUPER PDP pour l’émission avant d’activer la réception.' },
+            409,
+          );
+      }
       const redirectUri = `${url}/functions/v1/superpdp-oauth-callback`;
       return json({
         url: buildSuperPdpAuthorizationUrl({
@@ -161,6 +185,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
           redirectUri,
           state,
           siren,
+          scope,
         }),
       });
     }
@@ -171,7 +196,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       // le type des colonnes du littéral. Derrière un helper, il retombe sur
       // `GenericStringError` et le typage de la connexion est perdu.
       .select(
-        'organization_id,provider_code,status,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type',
+        'organization_id,provider_code,status,reception_status,provider_environment,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type',
       )
       .eq('organization_id', body.organizationId)
       .maybeSingle();
@@ -259,6 +284,36 @@ Deno.serve(async (request: Request): Promise<Response> => {
       : companyMismatch
         ? `L’entreprise connectée sur SUPER PDP (${connectedSiren ?? 'identifiant inconnu'}) ne correspond pas à l’organisation REZO360 (${expectedSiren}).`
         : null;
+    // Sondage de la réception : SUPER PDP n'expose nulle part le scope
+    // accordé (`GET /v1.beta/oauth2_sessions/me` n'a pas ce champ, vérifié
+    // contre le spec OpenAPI) — la seule façon de savoir si `send_and_receive`
+    // a bien été accordé est d'essayer l'appel réel. Seulement quand
+    // `reception_status` vaut `pending_verification` : pas de sondage
+    // silencieux sur chaque `verify` d'une connexion qui n'a jamais demandé
+    // la réception.
+    let receptionStatus = connection.reception_status as
+      | 'not_requested'
+      | 'pending_verification'
+      | 'active'
+      | 'failed';
+    let receptionErrorCode: string | null = null;
+    let receptionErrorMessage: string | null = null;
+    let receptionActivatedAt: string | null = null;
+    if (finalStatus === 'connected' && receptionStatus === 'pending_verification') {
+      try {
+        await superPdpJson('/v1.beta/invoices?direction=in&limit=1', accessToken);
+        receptionStatus = 'active';
+        receptionActivatedAt = new Date().toISOString();
+      } catch (receptionError) {
+        receptionStatus = 'failed';
+        receptionErrorCode = 'reception_scope_refused';
+        receptionErrorMessage =
+          receptionError instanceof Error
+            ? receptionError.message
+            : 'SUPER PDP a refusé l’accès à la réception.';
+      }
+    }
+
     const { error } = await admin
       .from('einvoicing_provider_connections')
       .update({
@@ -271,10 +326,20 @@ Deno.serve(async (request: Request): Promise<Response> => {
         last_verified_at: new Date().toISOString(),
         last_error_code: errorCode,
         last_error_message: errorMessage,
+        reception_status: receptionStatus,
+        ...(receptionActivatedAt ? { reception_activated_at: receptionActivatedAt } : {}),
+        reception_last_checked_at:
+          receptionStatus === 'pending_verification' ? null : new Date().toISOString(),
+        reception_last_error_code: receptionErrorCode,
+        reception_last_error_message: receptionErrorMessage,
       })
       .eq('organization_id', body.organizationId);
     if (error) throw error;
-    return json({ status: finalStatus, environment: company?.env ?? null });
+    return json({
+      status: finalStatus,
+      environment: company?.env ?? null,
+      receptionStatus,
+    });
   } catch (error) {
     console.error('superpdp connection failed', error instanceof Error ? error.name : 'unknown');
     return json(

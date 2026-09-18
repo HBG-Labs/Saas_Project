@@ -15,6 +15,7 @@ import {
   syncEvents,
   type TransmissionRow,
 } from '../_shared/superpdp-transmission.ts';
+import { syncIncomingInvoices } from '../_shared/superpdp-reception.ts';
 
 /**
  * Ordonnanceur des transmissions SUPER PDP.
@@ -41,7 +42,7 @@ const LOT_REPRISE = 10;
 const BUDGET_MS = 50_000;
 
 const COLONNES_CONNEXION =
-  'organization_id,provider_code,status,provider_environment,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type';
+  'organization_id,provider_code,status,reception_status,provider_environment,access_token_ciphertext,refresh_token_ciphertext,access_token_expires_at,token_type';
 
 export interface WorkerConfig {
   url: string;
@@ -85,7 +86,14 @@ export function createWorkerHandler(config: WorkerConfig) {
     const maintenant = config.now ?? (() => new Date());
     const debut = maintenant().getTime();
     const reste = () => maintenant().getTime() - debut < BUDGET_MS;
-    const bilan = { organisations: 0, synchronisees: 0, reprises: 0, echecs: 0 };
+    const bilan = {
+      organisations: 0,
+      synchronisees: 0,
+      reprises: 0,
+      echecs: 0,
+      recues: 0,
+      recuesMaj: 0,
+    };
 
     let partenaire: SuperPdpServerConfig;
     try {
@@ -203,6 +211,23 @@ export function createWorkerHandler(config: WorkerConfig) {
           bilan.echecs += 1;
         }
       }
+
+      // Reception : uniquement les organisations dont l'activation a ete
+      // effectivement CONFIRMEE (sonde reelle faite par `superpdp-connection`,
+      // jamais deduite ici). Pas de file dediee a lire au prealable : le
+      // curseur vit dans `received_invoices` elle-meme (cf. superpdp-reception.ts).
+      if (connexion.reception_status === 'active' && reste()) {
+        try {
+          const recu = await syncIncomingInvoices(admin, organisation, accessToken, debut + BUDGET_MS);
+          bilan.recues += recu.created;
+          bilan.recuesMaj += recu.updated;
+          bilan.echecs += recu.errors;
+        } catch (error) {
+          // Une organisation en echec de reception ne prive pas les autres.
+          bilan.echecs += 1;
+          console.warn('superpdp worker: reception', errorMessage(error).slice(0, 200));
+        }
+      }
     }
 
     // Battement de coeur. Sans lui, un ordonnanceur muet est indiscernable d'un
@@ -215,6 +240,8 @@ export function createWorkerHandler(config: WorkerConfig) {
         synchronized: bilan.synchronisees,
         retried: bilan.reprises,
         failures: bilan.echecs,
+        received: bilan.recues,
+        received_updated: bilan.recuesMaj,
         duration_ms: maintenant().getTime() - debut,
       });
       if (error) throw error;

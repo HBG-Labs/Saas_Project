@@ -99,6 +99,9 @@ export const ROUTES = {
   quoteDetail: (quoteId: string) => `/devis/${quoteId}`,
   invoices: '/factures',
   invoiceDetail: (invoiceId: string) => `/factures/${invoiceId}`,
+  /** Factures fournisseurs reçues via SUPER PDP (Phase 4 réception) — section distincte de l'émission. */
+  receivedInvoices: '/factures/recues',
+  receivedInvoiceDetail: (receivedInvoiceId: string) => `/factures/recues/${receivedInvoiceId}`,
   documents: '/bibliotheque',
   notes: '/bloc-notes',
   reports: '/comptes-rendus',
@@ -148,6 +151,7 @@ export const ROUTE_PATTERNS = {
   interventionReport: '/interventions/:interventionId/rapport',
   quoteDetail: '/devis/:quoteId',
   invoiceDetail: '/factures/:invoiceId',
+  receivedInvoiceDetail: '/factures/recues/:receivedInvoiceId',
   tutorial: '/tutoriels/:tutorialSlug',
   prospect: '/admin/prospection/:siren',
 } as const;

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { toEuros, useInvoices } from '@/features/invoices';
 import { useCurrentOrganization } from '@/features/organizations';
-import { formatInvoiceDate } from '@/features/einvoicing';
+import { formatInvoiceDate, InvoicesSectionTabs } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
 
@@ -61,6 +61,7 @@ export default function InvoicesPage() {
           </Button>
         }
       />
+      <InvoicesSectionTabs />
 
       {invoicesQuery.isError ? (
         <ErrorState error={invoicesQuery.error} onRetry={() => void invoicesQuery.refetch()} />

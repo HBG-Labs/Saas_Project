@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  activateSuperPdpReception,
   getSuperPdpReadiness,
   startSuperPdpConnection,
   submitInvoiceToSuperPdp,
@@ -68,6 +69,28 @@ describe('API de raccordement SUPER PDP', () => {
       error: null,
     });
     await expect(startSuperPdpConnection('org-1')).rejects.toThrow('invalide');
+  });
+
+  it('l’activation de la réception passe par la même page OAuth officielle, une action distincte', async () => {
+    invoke.mockResolvedValue({
+      data: { url: 'https://api.superpdp.tech/oauth2/authorize?state=abc' },
+      error: null,
+    });
+    await expect(activateSuperPdpReception('org-1')).resolves.toContain('api.superpdp.tech');
+    expect(invoke).toHaveBeenCalledWith('superpdp-connection', {
+      headers: { Authorization: 'Bearer fresh-token' },
+      body: {
+        organizationId: 'org-1',
+        action: 'activate_reception',
+        returnUrl: `${window.location.origin}/organisation/facturation-electronique`,
+      },
+    });
+
+    invoke.mockResolvedValue({
+      data: { url: 'https://example.org/oauth2/authorize?state=abc' },
+      error: null,
+    });
+    await expect(activateSuperPdpReception('org-1')).rejects.toThrow('invalide');
   });
 
   it('sépare explicitement le dépôt de la synchronisation', async () => {

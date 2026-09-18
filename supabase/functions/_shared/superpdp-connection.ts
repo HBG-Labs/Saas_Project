@@ -15,6 +15,8 @@ export interface SuperPdpConnectionRow {
   refresh_token_ciphertext: string | null;
   access_token_expires_at: string | null;
   token_type: string | null;
+  /** Optionnelle : absente des lectures qui ne la sélectionnent pas (ex. avant Phase 3 réception). */
+  reception_status?: 'not_requested' | 'pending_verification' | 'active' | 'failed';
 }
 
 export interface SuperPdpServerConfig {

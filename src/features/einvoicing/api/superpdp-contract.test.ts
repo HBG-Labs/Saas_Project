@@ -32,6 +32,27 @@ describe('contrat SUPER PDP partagé avec les fonctions Edge', () => {
     expect(url.toString()).not.toContain('client_secret');
   });
 
+  it('demande le scope réception (`send_and_receive`) explicitement, jamais par défaut', () => {
+    const withoutScope = new URL(
+      buildSuperPdpAuthorizationUrl({
+        clientId: 'client-public',
+        redirectUri: 'https://project.supabase.co/functions/v1/superpdp-oauth-callback',
+        state: 'state-secret',
+      }),
+    );
+    expect(withoutScope.searchParams.get('superpdp_send_and_receive')).toBe('send');
+
+    const withReception = new URL(
+      buildSuperPdpAuthorizationUrl({
+        clientId: 'client-public',
+        redirectUri: 'https://project.supabase.co/functions/v1/superpdp-oauth-callback',
+        state: 'state-secret',
+        scope: 'send_and_receive',
+      }),
+    );
+    expect(withReception.searchParams.get('superpdp_send_and_receive')).toBe('send_and_receive');
+  });
+
   it('chiffre les jetons avec un contexte propre à l’organisation', async () => {
     const key = btoa(String.fromCharCode(...Array.from({ length: 32 }, (_, index) => index)));
     const encrypted = await encryptSecret('refresh-token', key, 'org-a:superpdp');
