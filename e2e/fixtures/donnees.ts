@@ -19,6 +19,13 @@ export const UTILISATEUR_ID = '22222222-2222-4222-8222-222222222222';
 export const TECHNICIEN_ID = '33333333-3333-4333-8333-333333333333';
 export const CLIENT_ID = '44444444-4444-4444-8444-444444444444';
 export const MISSION_ID = '55555555-5555-4555-8555-555555555555';
+/**
+ * Identifiant de la LIGNE d'appartenance, pas de l'utilisateur.
+ *
+ * `MissionDetailPage` compare `mission.assigned_user_id` à `membership.id` :
+ * confondre les deux ferait croire qu'un intervenant n'est jamais affecté.
+ */
+export const MEMBRE_ID = '77777777-7777-4777-8777-777777777777';
 export const INTERVENTION_ID = '66666666-6666-4666-8666-666666666666';
 
 /** Rôles de l'organisation, tels que `rbac.ts` les connaît. */
@@ -85,7 +92,7 @@ export function donneesPour(role: RoleTest) {
 
     organization_members: [
       {
-        id: '77777777-7777-4777-8777-777777777777',
+        id: MEMBRE_ID,
         organization_id: ORGANISATION_ID,
         user_id: profil.id,
         role,
@@ -153,6 +160,34 @@ export function donneesPour(role: RoleTest) {
         customer_id: CLIENT_ID,
         site_id: null,
         intervention_type_id: null,
+        category_id: null,
+        /*
+          TOUTES les colonnes de `public.missions`, même vides.
+
+          PostgREST renvoie toujours la colonne, à `null`. L'interface s'appuie
+          dessus : `mission.address_line1 !== null && mission.address_line1.trim()`
+          plante sur `undefined`. Une fixture partielle ne se voit pas à la
+          lecture — elle se voit en écran d'erreur.
+        */
+        // Types élargis : un parcours doit pouvoir affecter la mission sans que
+        // TypeScript fige la colonne sur le littéral `null` du jeu de référence.
+        assigned_user_id: null as string | null,
+        assigned_team_id: null as string | null,
+        actual_start: null,
+        actual_end: null,
+        location_label: 'Résidence Les Alizés — bât. C',
+        address_line1: '12 rue des Flamboyants',
+        address_line2: null,
+        postal_code: '97233',
+        city: 'Schœlcher',
+        country: 'FR',
+        latitude: null,
+        longitude: null,
+        customer_name: 'SCI Les Alizés',
+        customer_contact: null,
+        customer_phone: null,
+        customer_email: null,
+        notes: null,
         scheduled_start: '2026-09-19T11:30:00.000Z',
         scheduled_end: '2026-09-19T15:00:00.000Z',
         created_by: UTILISATEUR_ID,
