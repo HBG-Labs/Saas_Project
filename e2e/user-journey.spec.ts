@@ -11,6 +11,23 @@ import { expect, test } from '@playwright/test';
  */
 test.describe('Parcours utilisateur complet', () => {
   test.beforeEach(async ({ page }) => {
+    /*
+      FILET : aucune requête ne doit sortir.
+
+      Ce parcours ne simulait que `signup`, `token` et `profiles`. Tout le
+      reste — à commencer par `organizations` — partait réellement sur le
+      réseau. En local, où le serveur de développement lit `.env.local`, cela
+      visait la BASE DE PRODUCTION, et c'est cette réponse réelle qui faisait
+      passer le test.
+
+      Enregistré EN PREMIER : Playwright donne la priorité aux routes déclarées
+      ENSUITE, donc les interceptions spécifiques ci-dessous continuent de
+      primer sur ce filet.
+    */
+    await page.route('**/rest/v1/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+
     // Interception et mock déterministe des requêtes d'authentification Supabase
     await page.route('**/auth/v1/signup*', async (route) => {
       await route.fulfill({
