@@ -219,8 +219,7 @@ export function ProviderConnectionCard({
             {(status === 'disconnected' || status === 'action_required') && authorizationUrl && (
               <Button
                 asChild
-                variant="secondary"
-                className="w-full border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 sm:w-auto dark:border-emerald-500 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500"
+                className="w-full sm:w-auto"
               >
                 <a href={authorizationUrl}>
                   <ExternalLink className="size-4" aria-hidden="true" />
@@ -338,8 +337,7 @@ export function ProviderConnectionCard({
                   receptionAuthorizationUrl && (
                     <Button
                       asChild
-                      variant="secondary"
-                      className="w-full border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 sm:w-auto dark:border-emerald-500 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500"
+                      className="w-full sm:w-auto"
                     >
                       <a href={receptionAuthorizationUrl}>
                         <ExternalLink className="size-4" aria-hidden="true" />

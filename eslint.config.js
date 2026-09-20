@@ -25,6 +25,7 @@ export default tseslint.config(
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
+      'demo-output/**',
       'supabase/**',
       '.codex/**',
       '.claude/**',
@@ -197,12 +198,130 @@ export default tseslint.config(
     },
   },
 
+  /*
+    -------------------------------------------------- jetons de design
+    LA DETTE EST GELÉE, PUIS RÉSORBÉE — ELLE NE PEUT PLUS AUGMENTER.
+
+    Trois écritures contournent le design system et cassent le thème sombre
+    comme la future identité : une couleur hexadécimale en dur, une classe de
+    la palette brute de Tailwind (`bg-blue-600`), une taille de texte
+    arbitraire (`text-[9px]`, sous le plancher de lisibilité).
+
+    Mesuré au moment de poser cette règle : 550 hex, 411 classes de palette,
+    36 tailles arbitraires. Les corriger toutes d'un coup toucherait 40
+    fichiers sans filet ; la règle est donc active PARTOUT, et la liste
+    ci-dessous énumère les fichiers qui en sont exemptés.
+
+    Deux natures d'exemption, à ne pas confondre :
+
+      LÉGITIME — la couleur y est une donnée, pas une décision de style :
+      code couleur fibre, charte d'un tiers, canevas, écran avant CSS. Ces
+      lignes restent.
+
+      DETTE — du style écrit à la main. Ces lignes disparaissent à mesure que
+      les écrans sont repris. Retirer une entrée et voir ESLint rester vert,
+      c'est la dette qui recule.
+
+    Une nouvelle entrée dans cette liste doit se justifier en revue. Un
+    fichier neuf n'y entre pas.
+  */
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/test/**',
+
+      // ---- LÉGITIME : la couleur est une donnée, pas un choix de style ----
+      // Codes couleurs normalisés : la teinte EST l'information.
+      'src/tools/fiber-color-code/**',
+      'src/tools/copper-color-code/**',
+      // Source de la palette : c'est ici que les valeurs sont censées vivre.
+      'src/features/theme/**',
+      // S'exécute avant que la moindre feuille de style soit chargée.
+      'src/app/boot-failure.ts',
+      // Charte de marque imposée par le fournisseur d'identité.
+      'src/features/auth/components/GoogleAuthButton.tsx',
+      // API de cartes tierces : leurs styles n'acceptent que des couleurs concrètes.
+      'src/features/map/**',
+      'src/features/geo/**',
+      // Outils qui peignent une surface : lampe, canevas de signature.
+      'src/features/tools/field/flashlight/**',
+      'src/features/interventions/components/SignaturePadModal.tsx',
+
+      // ---- DETTE : à résorber écran par écran, cette liste doit maigrir ----
+      'src/components/layout/PublicLayout.tsx',
+      'src/components/layout/Sidebar.tsx',
+      'src/components/marketing/Categories.tsx',
+      'src/components/marketing/Faq.tsx',
+      'src/components/marketing/Hero.tsx',
+      'src/components/marketing/Pricing.tsx',
+      'src/components/pricing/PricingSimulator.tsx',
+      'src/features/ai/components/AiChatBox.tsx',
+      'src/features/ai/components/AiSearchHistoryDrawer.tsx',
+      'src/features/client-portal/components/CustomerMessagingPanel.tsx',
+      'src/features/interventions/components/InterventionPdfModal.tsx',
+      'src/features/metiers-tools/components/MetierToolCard.tsx',
+      'src/features/metiers-tools/components/MetierToolRunner.tsx',
+      'src/features/metiers-tools/registry.ts',
+      'src/features/notifications/components/NotificationBell.tsx',
+      'src/features/planning/components/PublicHolidaysTab.tsx',
+      'src/features/portal/components/PortalLayout.tsx',
+      'src/features/stock/types/stock.types.ts',
+      'src/features/tools/components/ToolReferences.tsx',
+      'src/features/tools/field/compass/**',
+      'src/features/tools/field/voice-recorder/**',
+      'src/pages/LandingPage.tsx',
+      'src/pages/PricingPage.tsx',
+      'src/pages/ProfilePage.tsx',
+      'src/pages/analytics/AnalyticsPage.tsx',
+      'src/pages/invoices/InvoiceDetailPage.tsx',
+      'src/pages/metiers/MetierToolPage.tsx',
+      'src/pages/organization/BillingPage.tsx',
+      'src/pages/planning/PlanningPage.tsx',
+      'src/pages/portal/PortalHomePage.tsx',
+      'src/pages/portal/PortalLoginPage.tsx',
+      'src/pages/portal/PortalMessagesPage.tsx',
+      'src/pages/quotes/QuoteDetailPage.tsx',
+      'src/pages/quotes/QuotesPage.tsx',
+      'src/pages/training/TutorialDetailPage.tsx',
+      'src/pages/training/TutorialsPage.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{6}/]',
+          message:
+            'Couleur hexadécimale en dur : elle ignore le thème sombre et la future identité. Utilisez un jeton sémantique (text-foreground, bg-surface, border-border…). Si la couleur est une DONNÉE (code couleur, charte tierce, canevas), ajoutez le fichier aux exemptions légitimes d’eslint.config.js, avec sa raison.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{6}/]',
+          message:
+            'Couleur hexadécimale en dur dans un gabarit : même règle que pour une chaîne littérale.',
+        },
+        {
+          selector:
+            'Literal[value=/\\b(bg|text|border|ring|from|via|to)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]{2,3}\\b/]',
+          message:
+            'Classe de la palette brute de Tailwind : elle ne suit ni le thème sombre ni les thèmes personnalisés. Utilisez un jeton sémantique (bg-primary, text-success, border-border…).',
+        },
+        {
+          selector: 'Literal[value=/text-\\[[0-9]+px\\]/]',
+          message:
+            'Taille de texte arbitraire : l’échelle typographique existe (text-3xs à text-5xl) et garantit le plancher de lisibilité. En dessous de 12 px, le texte est illisible pour une part réelle des utilisateurs.',
+        },
+      ],
+    },
+  },
+
   // ------------------------------------------------------------- tests
   {
     files: [
       'src/**/*.{test,spec}.{ts,tsx}',
       'src/test/**/*.{ts,tsx}',
       'e2e/**/*.{test,spec}.{ts,tsx}',
+      'demo/**/*.{test,spec}.{ts,tsx}',
+      'demo/helpers/**/*.{ts,tsx}',
     ],
     languageOptions: { globals: { ...globals.node } },
     rules: {
