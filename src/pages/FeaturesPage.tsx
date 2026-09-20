@@ -8,8 +8,11 @@ import {
   PackageSearch,
   Receipt,
   ShieldCheck,
+  Mic,
+  NotebookPen,
   Smartphone,
   Sparkles,
+  Timer,
   UsersRound,
   Wrench,
 } from 'lucide-react';
@@ -138,8 +141,37 @@ const FEATURES_LIST = [
       // n'écrit aucune donnée métier. C'est un argument de confiance rare, et
       // il vaut mieux l'énoncer que de le laisser deviner.
       'Posez une question sur vos données ou vos documents et obtenez une réponse, plutôt que d’ouvrir cinq écrans. L’assistant fonctionne en lecture seule : il peut vous conduire au bon endroit, mais ne crée, ne modifie et ne supprime jamais rien.',
-    badge: 'À partir de Starter',
+    // Miroir de `PLAN_FEATURES.ai_assistant` : Starter a perdu l'accès le
+    // 02/09/2026. Une page qui dit « Starter » vend ce que la base refuse.
+    badge: 'À partir de Pro',
     benefit: 'Vous restez seul à décider de ce qui change.',
+  },
+  {
+    icon: NotebookPen,
+    title: 'Workspace',
+    subtitle: 'Vos pages, à vous et à l’équipe',
+    description:
+      'Des pages en arbre, des espaces partagés et un espace personnel, des modèles (réunion, compte rendu de chantier, procédure), la recherche dans le contenu, et l’assistant IA qui lit la page ouverte pour la résumer ou y rédiger.',
+    badge: 'Toutes formules',
+    benefit: 'Ce qui se disait à l’oral et se perdait est écrit, retrouvé, partagé.',
+  },
+  {
+    icon: Mic,
+    title: 'Enregistrement vocal',
+    subtitle: 'Parlez, la page s’écrit',
+    description:
+      'Enregistrez une réunion ou un point de chantier depuis une page : la transcription et un résumé (points clés, décisions, actions) sont écrits dans la page en tâche de fond. L’audio est effacé après 30 jours ; le texte reste.',
+    badge: 'À partir de Pro',
+    benefit: 'Un compte rendu de réunion sans personne pour le taper.',
+  },
+  {
+    icon: Timer,
+    title: 'Feuille d’heures',
+    subtitle: 'Journées, semaines, mois — calculés',
+    description:
+      'Le temps d’intervention et le temps hors intervention (trajet, atelier, formation) donnent des journées et des semaines comparées au contrat, puis un mois que le responsable clôture et exporte pour la paie.',
+    badge: 'À partir de Starter',
+    benefit: 'La paie ne se recompte plus intervention par intervention.',
   },
   {
     icon: PackageSearch,

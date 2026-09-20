@@ -394,3 +394,71 @@ la liste des points laissés ouverts pour Harry.
 
 Ce qui compte comme « terminé » : lint sans exemption, typecheck, tests,
 E2E, build — exécutés, pas supposés.
+
+## 14. Livré depuis la passation — à intégrer dans les écrans (phase 6)
+
+Tout ce qui suit est en production côté base, API et hooks, **sans écran**
+ou avec un écran provisoire à remplacer. Les hooks sont la seule porte : la
+RLS, les quotas et les règles sont décidés en base, l'écran affiche et
+demande. Rien ici n'impose une forme.
+
+### 14.1 Gestion — feuille d'heures (`src/features/timesheet`)
+
+| Ce que l'écran montre | Hook / fonction |
+|---|---|
+| Chronomètre hors intervention (trajet, atelier, formation, autre) — un seul chronomètre par personne, toutes tables confondues ; démarrer un trajet ferme le chronomètre d'intervention et inversement | `useOpenWorkTime(memberId)`, `useStartWorkTime()`, `useStopWorkTime()` |
+| Journées (minutes intervention / hors intervention / total, congé) découpées à minuit dans le fuseau de l'entreprise | `useTimesheetDays(orgId, { from, to, memberId? })` |
+| Semaines ISO comparées au contrat (`weekly_hours` org, surcharge membre), dépassement en minutes — jamais une paie | `useTimesheetWeeks(...)` |
+| Le mois complet (un enregistrement par membre actif et par jour, congé, mois clos) ; export CSV côté client | `useTimesheetMonth(orgId, 'AAAA-MM-JJ')`, `buildTimesheetCsv(rows, members)` |
+| Correction par qui gère (horaires explicites, tracé dans l'audit) | `useDeclareWorkTime()`, `useUpdateWorkTime()`, `useDeleteWorkTime()` |
+| Clôture mensuelle (mois écoulé seulement, refuse un chronomètre ouvert), réouverture journalisée, historique | `useTimesheetClosures()`, `useCloseTimesheetMonth()`, `useReopenTimesheetMonth()` |
+
+Permissions : `timesheet.view_all` / `timesheet.manage` (chef d'équipe et
+au-dessus). Chacun voit la sienne sans permission. Réglages : `weekly_hours`
+sur l'organisation et sur le membre.
+
+### 14.2 Workspace v2 (`src/features/workspace`) — écran provisoire `/workspace/pages` à REMPLACER
+
+| Ce que l'écran montre | Hook / fonction |
+|---|---|
+| Espace personnel (« Mes pages »), créé à la première visite, visible de soi seul — même de qui gère | `usePersonalSpace(orgId)`, `isPersonalSpace(space)` |
+| Récentes (50 gardées), favoris | `useRecentPages(orgId)`, `useTouchPage()` à l'ouverture, `useFavorites(orgId)`, `useToggleFavorite()` |
+| Icône et couverture de page (bucket privé, URL signée) | `useSetPageIcon()`, `useUploadPageCover()`, `useRemovePageCover()`, `useCoverUrl(coverPath)` |
+| Modèles système (5) et d'entreprise, création depuis un modèle, « enregistrer comme modèle » | `useTemplates(orgId)`, `useCreatePageFromTemplate()`, `useSaveAsTemplate()` |
+| Recherche plein texte française (mots, "expression", -exclu), avec extrait surligné « » | `useSearchPages(orgId, query)` |
+| Assistant IA attaché à la page (résumer, répondre, rédiger), ouvert à qui écrit (`ai.workspace`) | `useAiAssistant({ pageId })` puis `textToTiptapDocument(réponse)` pour insérer / créer une sous-page |
+| Révisions (une par changement de titre ou de contenu, survivent à la page) | `usePageRevisions(pageId)` |
+
+L'éditeur riche (TipTap) reste à faire : le contenu est un document TipTap
+JSON (`workspace_pages.content`) ; `search_text` en est le texte extrait par
+la base. Enregistrement par `useSavePage` avec l'`updated_at` lu à
+l'ouverture — la base refuse si la page a changé (`serialization_failure`) :
+l'écran recharge et l'annonce, il n'écrase pas.
+
+### 14.3 Enregistrement vocal (`src/features/workspace`, bloc provisoire dans l'éditeur)
+
+| Ce que l'écran montre | Hook / fonction |
+|---|---|
+| Quota de minutes du mois (consommées, plafond, reste) | `useTranscriptionQuota(orgId)` |
+| Consentement **obligatoire** avant d'enregistrer (« les participants sont informés ») | `createRecording({ consentConfirmed: true, ... })` refuse sinon |
+| Enregistrer (MediaRecorder, opus 48 kbit/s, 60 min / 25 Mo max), déposer | `useCreateRecording()` — ligne, fichier, `submit` en trois temps, gérés par la fonction |
+| États : envoi → en attente → transcription en cours → transcrit / échec (motif) ; la page se recharge quand le texte arrive | `useRecordings(pageId)` (se relit toutes les 5 s tant qu'un enregistrement est en cours), `RECORDING_STATUS_LABELS` |
+| Lecture de l'audio (30 jours), suppression | `useRecordingAudioUrl(recording)`, `useDeleteRecording()` |
+
+Ce que fait la base, pas l'écran : écrire le résumé (points clés, décisions,
+actions) puis la transcription **dans la page**, sous un titre « <titre> —
+<date> » ; effacer l'audio à 30 jours.
+
+### 14.4 Notifications actives (réglages)
+
+`NotificationsSettingsTab` porte désormais `notify_report_review` ; les
+e-mails partent côté serveur (affectation, congé, compte rendu). L'écran ne
+fait qu'exposer les quatre réglages `notify_*`. Le SMS n'existe pas : ne pas
+le réintroduire.
+
+### 14.5 Tarifs et fonctionnalités
+
+La matrice de la page Tarifs vit dans `src/config/pricing-comparison.ts`,
+dérivée des entitlements pour les quotas (test `pricing-comparison.test.ts`).
+Une refonte de la page Tarifs consomme `COMPARISON_FEATURES` ; elle ne
+réécrit pas les cellules.
