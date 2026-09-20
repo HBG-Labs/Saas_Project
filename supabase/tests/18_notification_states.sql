@@ -19,85 +19,25 @@
 begin;
 set local search_path = pg_temp, public;
 
-create temporary table t_ids (k text primary key, v uuid);
+-- @inclure communs/organisation-abonnee.sql
+
 insert into t_ids (k, v) values
   ('owner',       '00000000-0000-4000-8000-000000180001'),
   ('technicien',  '00000000-0000-4000-8000-000000180002'),
   ('autre_owner', '00000000-0000-4000-8000-000000180003');
-grant select on t_ids to authenticated;
-
-create function pg_temp.uid(p_key text) returns uuid
-language sql stable as $$ select v from pg_temp.t_ids where k = p_key $$;
-
-create function pg_temp.login(p_key text) returns void
-language plpgsql as $$
-begin
-  perform set_config('request.jwt.claims',
-    json_build_object('sub', pg_temp.uid(p_key), 'email', p_key || '@test.local', 'role', 'authenticated')::text, true);
-end;
-$$;
-
-create function pg_temp.ok(p_condition boolean, p_label text) returns void
-language plpgsql as $$
-begin
-  if p_condition is not true then
-    raise exception 'ECHEC : % (condition %)', p_label, coalesce(p_condition::text, 'NULL') using errcode = 'assert_failure';
-  end if;
-  raise notice '  OK  %', p_label;
-end;
-$$;
-
-create function pg_temp.refuses(p_sql text, p_label text) returns void
-language plpgsql as $$
-begin
-  execute p_sql;
-  raise exception 'ECHEC : % (l''instruction a ete ACCEPTEE)', p_label using errcode = 'assert_failure';
-exception
-  when assert_failure then raise;
-  when others then raise notice '  OK  % (refuse : %)', p_label, left(sqlerrm, 90);
-end;
-$$;
-
-insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-                        raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-select '00000000-0000-0000-0000-000000000000', v, 'authenticated', 'authenticated', k || '@test.local',
-       '$2a$10$testtesttesttesttesttesttesttesttesttesttesttesttestte', now(),
-       '{"provider":"email","providers":["email"]}'::jsonb, json_build_object('display_name', k)::jsonb, now(), now()
-from t_ids;
+select pg_temp.creer_comptes();
 
 -- -----------------------------------------------------------------------------
 -- Fixture : une organisation avec un propriétaire et un technicien ; une
 -- seconde organisation, étrangère, pour l'isolation.
 -- -----------------------------------------------------------------------------
-select pg_temp.login('owner'); set local role authenticated;
-insert into public.organizations (slug, name, created_by) values ('notif-states-test', 'Notif Test', pg_temp.uid('owner'));
-reset role;
-
-select pg_temp.login('autre_owner'); set local role authenticated;
-insert into public.organizations (slug, name, created_by) values ('notif-states-autre', 'Autre Org', pg_temp.uid('autre_owner'));
-reset role;
-
 create temporary table t_ctx (org_id uuid, autre_org_id uuid);
 grant select on t_ctx to authenticated;
 insert into t_ctx (org_id, autre_org_id)
-values (
-  (select id from public.organizations where slug = 'notif-states-test'),
-  (select id from public.organizations where slug = 'notif-states-autre')
-);
+values (pg_temp.organisation_abonnee('notif-states-test', 'Notif Test', 'owner'),
+        pg_temp.organisation_abonnee('notif-states-autre', 'Autre Org', 'autre_owner'));
 
--- Sans abonnement, `app.enforce_member_quota` limite une organisation Gratuite
--- à un seul membre : le technicien ne pourrait pas être ajouté. C'est
--- l'omission qui a fait échouer la première exécution de cette suite.
-delete from public.subscriptions where organization_id in (select org_id from t_ctx union select autre_org_id from t_ctx);
-insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
-select org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx
-union all
-select autre_org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx;
-
--- Les propriétaires sont rattachés par `organizations_create_owner` ; le
--- technicien s'ajoute.
-insert into public.organization_members (organization_id, user_id, role, status)
-select org_id, pg_temp.uid('technicien'), 'technician'::public.org_role, 'active'::public.member_status from t_ctx;
+select pg_temp.ajouter_membre(org_id, 'technicien', 'technician') from t_ctx;
 
 -- =============================================================================
 do $$ begin raise notice '=== PARTIE 1 — écrire son propre état ==='; end $$;

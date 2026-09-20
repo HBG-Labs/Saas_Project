@@ -25,92 +25,29 @@
 begin;
 set local search_path = pg_temp, public;
 
-create temporary table t_ids (k text primary key, v uuid);
+-- @inclure communs/organisation-abonnee.sql
+
 insert into t_ids (k, v) values
   ('patron',      '00000000-0000-4000-8000-000000190001'),
   ('gestion',     '00000000-0000-4000-8000-000000190002'),   -- manager : invoice.manage
   ('chef',        '00000000-0000-4000-8000-000000190003'),   -- team_leader : invoice.view seulement
   ('technicien',  '00000000-0000-4000-8000-000000190004'),   -- ni l'un ni l'autre
   ('patron_b',    '00000000-0000-4000-8000-000000190005');   -- autre organisation
-grant select on t_ids to authenticated;
-
-create function pg_temp.uid(p_key text) returns uuid
-language sql stable as $$ select v from pg_temp.t_ids where k = p_key $$;
-
-create function pg_temp.login(p_key text) returns void
-language plpgsql as $$
-begin
-  perform set_config('request.jwt.claims',
-    json_build_object('sub', pg_temp.uid(p_key), 'email', p_key || '@test.local', 'role', 'authenticated')::text, true);
-end;
-$$;
-
-create function pg_temp.ok(p_condition boolean, p_label text) returns void
-language plpgsql as $$
-begin
-  if p_condition is not true then
-    raise exception 'ECHEC : % (condition %)', p_label, coalesce(p_condition::text, 'NULL') using errcode = 'assert_failure';
-  end if;
-  raise notice '  OK  %', p_label;
-end;
-$$;
-
-create function pg_temp.refuses(p_sql text, p_label text) returns void
-language plpgsql as $$
-begin
-  execute p_sql;
-  raise exception 'ECHEC : % (l''instruction a ete ACCEPTEE)', p_label using errcode = 'assert_failure';
-exception
-  when assert_failure then raise;
-  when others then raise notice '  OK  % (refuse : %)', p_label, left(sqlerrm, 90);
-end;
-$$;
-
-insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-                        raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-select '00000000-0000-0000-0000-000000000000', v, 'authenticated', 'authenticated', k || '@test.local',
-       '$2a$10$testtesttesttesttesttesttesttesttesttesttesttesttestte', now(),
-       '{"provider":"email","providers":["email"]}'::jsonb, json_build_object('display_name', k)::jsonb, now(), now()
-from t_ids;
+select pg_temp.creer_comptes();
 
 -- -----------------------------------------------------------------------------
--- Fixture : deux entreprises abonnées (sans abonnement, `can_use_pro_module`
--- refuse tout et `enforce_member_quota` limite à un membre), quatre rôles.
+-- Fixture : deux entreprises abonnées, quatre rôles dans la première.
 -- -----------------------------------------------------------------------------
-select pg_temp.login('patron'); set local role authenticated;
-insert into public.organizations (slug, name, created_by, industry)
-values ('reglements-a', 'Reglements A', pg_temp.uid('patron'), 'fiber_telecom');
-reset role;
-
-select pg_temp.login('patron_b'); set local role authenticated;
-insert into public.organizations (slug, name, created_by, industry)
-values ('reglements-b', 'Reglements B', pg_temp.uid('patron_b'), 'hvac');
-reset role;
-
 create temporary table t_ctx (org_id uuid, autre_org_id uuid, inv uuid, inv_legacy uuid, avoir uuid, brouillon uuid);
 -- `update` aussi : la fixture remplit ce contexte sous le role authenticated.
 grant select, update on t_ctx to authenticated;
 insert into t_ctx (org_id, autre_org_id)
-values ((select id from public.organizations where slug = 'reglements-a'),
-        (select id from public.organizations where slug = 'reglements-b'));
+values (pg_temp.organisation_abonnee('reglements-a', 'Reglements A', 'patron'),
+        pg_temp.organisation_abonnee('reglements-b', 'Reglements B', 'patron_b'));
 
-delete from public.subscriptions where organization_id in (select org_id from t_ctx union select autre_org_id from t_ctx);
-insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
-select org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx
-union all
-select autre_org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx;
-
-insert into public.organization_members (organization_id, user_id, role, status)
-select org_id, pg_temp.uid('gestion'),    'manager'::public.org_role,     'active'::public.member_status from t_ctx
-union all
-select org_id, pg_temp.uid('chef'),       'team_leader'::public.org_role, 'active'::public.member_status from t_ctx
-union all
-select org_id, pg_temp.uid('technicien'), 'technician'::public.org_role,  'active'::public.member_status from t_ctx;
-
-update public.organizations set legal_form = 'SARL', share_capital_cents = 100000, registration_number = '12345678900012',
-  vat_regime = 'reel_normal', vat_number = 'FR12345678901', address_line1 = '1 rue du Test', postal_code = '97200',
-  city = 'Fort-de-France', country = 'FR'
-where slug in ('reglements-a', 'reglements-b');
+select pg_temp.ajouter_membre(org_id, 'gestion', 'manager') from t_ctx;
+select pg_temp.ajouter_membre(org_id, 'chef', 'team_leader') from t_ctx;
+select pg_temp.ajouter_membre(org_id, 'technicien', 'technician') from t_ctx;
 
 -- Une facture complète : un article à 100,00 € HT, TVA 20 % → total 120,00 €.
 create function pg_temp.facture_emise(p_org uuid, p_titre text) returns uuid language plpgsql as $$

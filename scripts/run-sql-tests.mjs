@@ -15,11 +15,14 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import { execSync } from 'node:child_process';
-import { readdirSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const TESTS_DIR = 'supabase/tests';
 
+// Seuls les fichiers à la racine sont des suites : `communs/` porte les socles
+// inclus, `fixtures/` des jeux de données à lancer à la main.
 const suites = readdirSync(TESTS_DIR)
   .filter((name) => name.endsWith('.sql'))
   .sort();
@@ -29,10 +32,44 @@ if (suites.length === 0) {
   process.exit(1);
 }
 
+/**
+ * Assemble une suite : chaque ligne `-- @inclure <chemin>` est remplacée par
+ * le contenu du fichier désigné, relatif à `supabase/tests/`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POURQUOI ASSEMBLER PLUTÔT QUE FAIRE CONFIANCE À LA COPIE
+ *
+ * `supabase db query --file` envoie un fichier, sans include d'aucune sorte.
+ * Chaque suite recopiait donc son socle — comptes, aides, organisation,
+ * abonnement — et deux suites de suite ont échoué avant leur première
+ * assertion pour une ligne perdue dans cette copie. Le socle vit maintenant
+ * dans `communs/`, une fois, et la suite reste lisible seule : la directive
+ * dit ce qu'elle reçoit.
+ *
+ * L'inclusion est à un seul niveau, volontairement : un socle qui en inclut
+ * un autre finirait par cacher ce qu'une suite reçoit vraiment.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+function assembler(suite) {
+  return readFileSync(join(TESTS_DIR, suite), 'utf8')
+    .split('\n')
+    .map((ligne) => {
+      const directive = /^--\s*@inclure\s+(\S+)\s*$/.exec(ligne);
+      if (directive === null) return ligne;
+      const inclus = readFileSync(join(TESTS_DIR, directive[1]), 'utf8');
+      return `-- ┌── inclus : ${directive[1]}\n${inclus}\n-- └── fin de ${directive[1]}`;
+    })
+    .join('\n');
+}
+
+const dossierTemporaire = mkdtempSync(join(tmpdir(), 'rezo360-sql-'));
 let failed = 0;
 
 for (const suite of suites) {
   process.stdout.write(`\n▶ ${suite}\n`);
+
+  const fichier = join(dossierTemporaire, suite);
+  writeFileSync(fichier, assembler(suite));
 
   try {
     // `execSync` plutôt que `execFileSync(..., { shell: true })` : la seconde
@@ -41,7 +78,7 @@ for (const suite of suites) {
     // dépôt, mais un avertissement qu'on apprend à ignorer finit par en
     // masquer un vrai.
     const output = execSync(
-      `npx supabase db query --linked --file "${join(TESTS_DIR, suite)}"`,
+      `npx supabase db query --linked --file "${fichier}"`,
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
     );
 
@@ -63,6 +100,8 @@ for (const suite of suites) {
     failed += 1;
   }
 }
+
+rmSync(dossierTemporaire, { recursive: true, force: true });
 
 if (failed > 0) {
   console.error(`\n${String(failed)} suite(s) en échec sur ${String(suites.length)}.`);
