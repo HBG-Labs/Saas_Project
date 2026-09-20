@@ -8,6 +8,7 @@ export { Button, type ButtonProps } from './Button';
 export { buttonVariants } from './button-variants';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './Card';
 export { Checkbox, type CheckboxProps } from './Checkbox';
+export { DataView } from './DataView';
 export {
   Dropdown,
   DropdownCheckboxItem,
@@ -28,7 +29,19 @@ export {
 export { ListSkeleton, Skeleton, ToolCardSkeleton } from './Skeleton';
 export { MetricCard, type MetricCardProps } from './MetricCard';
 export { Switch, type SwitchProps } from './Switch';
+export {
+  Table,
+  TableAmountCell,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeaderCell,
+  TableHeaderRow,
+  TableRow,
+} from './Table';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';
+export { Toolbar } from './Toolbar';
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { UserAvatar, type UserAvatarProps } from './UserAvatar';

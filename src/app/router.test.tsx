@@ -140,6 +140,27 @@ describe('routing', () => {
     expect(await screen.findByRole('heading', { name: /outil introuvable/i })).toBeInTheDocument();
   });
 
+  it('sert la galerie du système de design en développement', async () => {
+    /*
+      La route est conditionnée par `import.meta.env.DEV`, que Vitest met à
+      `true`. Vérifier qu'elle rend bien la galerie, et pas la page 404,
+      prouve deux choses d'un coup : la route est placée AVANT l'attrape-tout
+      `*`, et la page monte réellement.
+
+      Son absence en production est vérifiée autrement — en cherchant la page
+      dans le paquet compilé, puisqu'ici la branche est toujours prise.
+    */
+    renderAt('/_design');
+
+    expect(
+      await screen.findByRole('heading', { name: /galerie du système de design/i, level: 1 }),
+    ).toBeInTheDocument();
+
+    // Les deux rendus de `DataView` sortent de la même liste. jsdom n'applique
+    // pas les points de rupture : les deux sont donc montés.
+    expect(screen.getAllByText('Nexans Câbles')).toHaveLength(2);
+  });
+
   it('conserve la navigation principale sur toutes les pages', async () => {
     renderAt('/tools');
 

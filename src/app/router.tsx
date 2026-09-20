@@ -85,7 +85,10 @@ export const routes: RouteObject[] = [
             path: ROUTE_PATTERNS.portalMission,
             lazy: lazyPage(() => import('@/pages/portal/PortalMissionDetailPage')),
           },
-          { path: ROUTES.portalQuotes, lazy: lazyPage(() => import('@/pages/portal/PortalQuotesPage')) },
+          {
+            path: ROUTES.portalQuotes,
+            lazy: lazyPage(() => import('@/pages/portal/PortalQuotesPage')),
+          },
           {
             path: ROUTE_PATTERNS.portalQuote,
             lazy: lazyPage(() => import('@/pages/portal/PortalQuoteDetailPage')),
@@ -510,14 +513,18 @@ export const routes: RouteObject[] = [
                     lazy: lazyPage(() => import('@/pages/organization/EinvoicingSettingsPage')),
                   },
                   {
-                    element: <RequirePlan feature={FEATURES.clientPortal} label="Le portail client" />,
+                    element: (
+                      <RequirePlan feature={FEATURES.clientPortal} label="Le portail client" />
+                    ),
                     children: [
                       {
                         element: <RequirePermission permission={PERMISSIONS.clientPortalManage} />,
                         children: [
                           {
                             path: ROUTES.organizationClientPortal,
-                            lazy: lazyPage(() => import('@/pages/organization/ClientPortalSettingsPage')),
+                            lazy: lazyPage(
+                              () => import('@/pages/organization/ClientPortalSettingsPage'),
+                            ),
                           },
                         ],
                       },
@@ -615,6 +622,20 @@ export const routes: RouteObject[] = [
               { path: ROUTES.settings, lazy: lazyPage(() => import('@/pages/SettingsPage')) },
             ],
           },
+
+          /*
+            La galerie du système de design, en développement seulement.
+
+            `import.meta.env.DEV` vaut littéralement `false` après compilation :
+            la branche disparaît, et avec elle l'import dynamique de la page.
+            Rien de tout cela n'atteint la production — ni la route, ni le code.
+
+            Elle est placée AVANT le `*`, sinon la route attrape-tout la
+            précéderait et la galerie afficherait la page 404.
+          */
+          ...(import.meta.env.DEV
+            ? [{ path: '/_design', lazy: lazyPage(() => import('@/pages/dev/DesignGalleryPage')) }]
+            : []),
 
           { path: '*', lazy: lazyPage(() => import('@/pages/NotFoundPage')) },
         ],
