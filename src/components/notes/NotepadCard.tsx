@@ -1,3 +1,5 @@
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { SelectField } from '@/components/ui/SelectField';
 import {
   BookOpen,
@@ -56,8 +58,6 @@ const CATEGORY_VARIANTS: Record<NoteCategory, 'success' | 'error' | 'info' | 'wa
   memo: 'warning',
 };
 
-
-
 /** Ligne de base → forme manipulée par l'éditeur. */
 function toNoteFile(note: Note): NoteFile {
   return {
@@ -102,10 +102,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
   const [notes, setNotes] = useState<NoteFile[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string>('');
 
-  const remoteNotes = useMemo(
-    () => (notesQuery.data ?? []).map(toNoteFile),
-    [notesQuery.data],
-  );
+  const remoteNotes = useMemo(() => (notesQuery.data ?? []).map(toNoteFile), [notesQuery.data]);
 
   // Une frappe en cours ne doit pas être écrasée par la réponse d'une requête
   // partie avant elle. Tant qu'une sauvegarde est en attente, on ne resynchronise
@@ -119,6 +116,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
 
   const [selectedCategory, setSelectedCategory] = useState<NoteCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [listOpen, setListOpen] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
   const [copied, signalerCopied] = useEphemeralFlag();
@@ -197,9 +195,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
 
     setNotes((prev) =>
       prev.map((n) =>
-        n.id === activeNote.id
-          ? { ...n, title: newTitle, updatedAt: new Date().toISOString() }
-          : n,
+        n.id === activeNote.id ? { ...n, title: newTitle, updatedAt: new Date().toISOString() } : n,
       ),
     );
     setLastSavedTime('Modification en cours…');
@@ -264,9 +260,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
 
     setNotes((prev) =>
       prev.map((n) =>
-        n.id === activeNote.id
-          ? { ...n, category, updatedAt: new Date().toISOString() }
-          : n,
+        n.id === activeNote.id ? { ...n, category, updatedAt: new Date().toISOString() } : n,
       ),
     );
     updateNoteMutation.mutate(
@@ -295,7 +289,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
 
   if (notesQuery.isPending) {
     return (
-      <Card className="overflow-hidden border-border/80 shadow-md">
+      <Card className="workspace-notepad border-border overflow-hidden shadow-none">
         <CardContent className="space-y-3 p-6">
           <Skeleton className="h-9 w-56" />
           <Skeleton className="h-48 w-full" />
@@ -305,17 +299,17 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
   }
 
   return (
-    <Card className="overflow-hidden border-border/80 shadow-md">
-      <CardHeader className="bg-surface-sunken/40 border-b border-border/60 pb-4">
+    <Card className="workspace-notepad border-border overflow-hidden shadow-none">
+      <CardHeader className="bg-surface border-border border-b pb-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-xl">
               <BookOpen className="size-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-bold text-foreground">
-                  Bloc-notes {isTechnician ? 'Technicien Terrain' : 'Entreprise & Pilotage'}
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-foreground text-base font-bold">
+                  {isTechnician ? 'Mes notes de terrain' : 'Mes notes personnelles'}
                 </CardTitle>
                 <Badge variant="neutral" className="text-2xs font-semibold">
                   {notes.length} fichier{notes.length > 1 ? 's' : ''}
@@ -334,7 +328,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
             variant="primary"
             size="sm"
             onClick={handleCreateNote}
-            className="gap-1.5 shadow-sm"
+            className="gap-1.5"
           >
             <FilePlus className="size-4" />
             Nouvelle note
@@ -343,19 +337,38 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
       </CardHeader>
 
       <CardContent className="p-0">
-        <div className="grid min-h-[440px] lg:grid-cols-12">
+        <div className="border-border border-b p-3 lg:hidden">
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            aria-expanded={listOpen}
+            aria-controls="note-list"
+            onClick={() => setListOpen(!listOpen)}
+          >
+            {listOpen ? 'Masquer la liste des notes' : 'Afficher la liste des notes'}
+          </Button>
+        </div>
+        <div className="grid min-h-[440px] lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
           {/* Sidebar des fichiers de notes */}
-          <div className="border-b border-border/60 bg-surface-sunken/20 lg:col-span-4 lg:border-r lg:border-b-0">
+          <div
+            id="note-list"
+            className={
+              'border-border bg-surface border-b lg:block lg:border-r lg:border-b-0 ' +
+              (listOpen ? '' : 'hidden')
+            }
+          >
             {/* Search Bar & Category Filters */}
-            <div className="p-3 space-y-2 border-b border-border/40">
+            <div className="border-border/40 space-y-2 border-b p-3">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Rechercher une note..."
+                  aria-label="Rechercher une note"
+                  placeholder="Rechercher une note…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-border/60 bg-surface py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden"
+                  className="atelier-field h-touch sm:h-field border-border-strong bg-surface text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-sm border pr-3 pl-8 text-base focus-visible:ring-2 focus-visible:outline-none sm:text-sm"
                 />
               </div>
 
@@ -363,10 +376,11 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
               <div className="flex flex-wrap items-center gap-1 pt-1">
                 <button
                   type="button"
+                  aria-pressed={selectedCategory === 'all'}
                   onClick={() => setSelectedCategory('all')}
-                  className={`rounded-md px-2 py-0.5 text-3xs font-semibold transition-colors ${
+                  className={`atelier-note-filter rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
                     selectedCategory === 'all'
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-nav-selected text-nav-foreground'
                       : 'bg-surface hover:bg-surface-hover text-muted-foreground'
                   }`}
                 >
@@ -378,10 +392,11 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                     <button
                       key={cat}
                       type="button"
+                      aria-pressed={selectedCategory === cat}
                       onClick={() => setSelectedCategory(cat)}
-                      className={`rounded-md px-2 py-0.5 text-3xs font-semibold transition-colors ${
+                      className={`atelier-note-filter rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
                         selectedCategory === cat
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-nav-selected text-nav-foreground'
                           : 'bg-surface hover:bg-surface-hover text-muted-foreground'
                       }`}
                     >
@@ -393,9 +408,9 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
             </div>
 
             {/* List of files */}
-            <div className="max-h-[450px] overflow-y-auto p-2 space-y-1">
+            <div className="max-h-72 space-y-1 overflow-y-auto p-2 lg:max-h-[580px]">
               {sortedNotes.length === 0 ? (
-                <div className="p-6 text-center text-xs text-muted-foreground">
+                <div className="text-muted-foreground p-6 text-center text-xs">
                   Aucune note trouvée.
                 </div>
               ) : (
@@ -408,22 +423,26 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                       key={note.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setActiveNoteId(note.id)}
+                      onClick={() => {
+                        setActiveNoteId(note.id);
+                        setListOpen(false);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           if (e.target === e.currentTarget) {
                             e.preventDefault();
                             setActiveNoteId(note.id);
+                            setListOpen(false);
                           }
                         }
                       }}
-                      className={`group relative flex items-center justify-between rounded-xl p-2.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary ${
+                      className={`group focus-visible:ring-primary relative flex cursor-pointer flex-wrap items-center justify-between gap-y-2 rounded-lg p-2.5 transition-colors focus-visible:ring-2 ${
                         isActive
-                          ? 'bg-primary/10 text-primary border border-primary/30 font-medium shadow-2xs'
+                          ? 'bg-nav-selected/40 text-nav-foreground border border-transparent font-medium'
                           : 'hover:bg-surface-hover text-foreground border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                      <div className="flex min-w-0 flex-1 basis-full items-center gap-2.5">
                         <FileText
                           className={`size-4 shrink-0 ${
                             isActive ? 'text-primary' : 'text-muted-foreground'
@@ -440,43 +459,39 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                               if (e.key === 'Escape') setEditingTitleId(null);
                             }}
                             ref={(input) => input?.focus()}
-                            className="w-full rounded border border-primary bg-surface px-1.5 py-0.5 text-xs text-foreground outline-hidden"
+                            className="border-primary bg-surface text-foreground w-full rounded border px-1.5 py-0.5 text-xs outline-hidden"
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="truncate text-xs font-semibold">
-                                {note.title}
-                              </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="truncate text-sm font-semibold">{note.title}</span>
                               {note.isPinned && (
-                                <Pin className="size-3 shrink-0 text-warning fill-amber-500/20" />
+                                <Pin className="text-warning fill-warning/20 size-3 shrink-0" />
                               )}
                               {note.category && (
                                 <Badge
                                   variant={CATEGORY_VARIANTS[note.category]}
-                                  className="text-3xs py-0 px-1.5 font-bold"
+                                  className="text-3xs px-1.5 py-0 font-bold"
                                 >
                                   {CATEGORY_LABELS[note.category]}
                                 </Badge>
                               )}
                             </div>
-                            <p className="truncate text-subtle-foreground text-2xs mt-0.5">
-                              {note.content.trim()
-                                ? note.content.slice(0, 45)
-                                : 'Note vide...'}
+                            <p className="text-subtle-foreground text-2xs mt-0.5 truncate">
+                              {note.content.trim() ? note.content.slice(0, 45) : 'Note vide...'}
                             </p>
                           </div>
                         )}
                       </div>
 
                       {/* Action buttons on hover/active */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="ml-auto flex items-center gap-1">
                         <button
                           type="button"
                           onClick={(e) => handleTogglePin(note.id, e)}
                           title={note.isPinned ? 'Détacher' : 'Épingler'}
-                          className="rounded p-1 text-muted-foreground hover:text-warning hover:bg-surface"
+                          className="atelier-note-action text-muted-foreground hover:text-warning hover:bg-surface inline-flex items-center justify-center rounded-full p-1"
                         >
                           <Pin className="size-3.5" />
                         </button>
@@ -484,7 +499,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                           type="button"
                           onClick={(e) => handleStartRename(note, e)}
                           title="Renommer"
-                          className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-surface"
+                          className="atelier-note-action text-muted-foreground hover:text-foreground hover:bg-surface inline-flex items-center justify-center rounded-full p-1"
                         >
                           <Edit3 className="size-3.5" />
                         </button>
@@ -492,7 +507,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                           type="button"
                           onClick={(e) => handleDeleteNote(note.id, e)}
                           title="Supprimer"
-                          className="rounded p-1 text-muted-foreground hover:text-error hover:bg-surface"
+                          className="atelier-note-action text-muted-foreground hover:text-error hover:bg-surface inline-flex items-center justify-center rounded-full p-1"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -505,34 +520,34 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
           </div>
 
           {/* Éditeur de la note active */}
-          <div className="flex flex-col lg:col-span-8 bg-surface">
+          <div className="bg-surface flex min-w-0 flex-col">
             {activeNote ? (
               <>
                 {/* Header Editor Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 p-3.5 bg-surface-sunken/10">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative flex items-center flex-1 max-w-md">
+                <div className="border-border/40 bg-surface-sunken/10 flex flex-wrap items-center justify-between gap-3 border-b p-3.5">
+                  <div className="flex min-w-0 flex-1 basis-full flex-wrap items-center gap-3 xl:basis-64">
+                    <div className="relative flex min-w-0 flex-1 basis-full items-center">
                       <input
                         type="text"
                         value={activeNote.title}
                         onChange={(e) => handleUpdateTitle(e.target.value)}
-                        placeholder="Nom du fichier / Titre de la note..."
-                        className="w-full rounded-lg border border-border/60 hover:border-primary/80 focus:border-primary bg-surface px-3 py-1.5 text-sm font-bold text-foreground outline-hidden transition-all shadow-2xs"
+                        aria-label="Titre de la note"
+                        placeholder="Titre de la note…"
+                        className="atelier-field h-touch sm:h-field border-border-strong bg-surface text-foreground focus-visible:ring-ring w-full rounded-sm border px-3 text-base font-bold focus-visible:ring-2 focus-visible:outline-none"
                         title="Modifier le nom du fichier"
                       />
                     </div>
 
                     {/* Selector Category */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Tag className="size-3.5 text-muted-foreground" />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Tag className="text-muted-foreground size-3.5" />
                       <SelectField
+                        aria-label="Catégorie de la note"
                         value={activeNote.category ?? ''}
                         onChange={(e) =>
-                          handleUpdateCategory(
-                            (e.target.value as NoteCategory) || undefined,
-                          )
+                          handleUpdateCategory((e.target.value as NoteCategory) || undefined)
                         }
-                        className="rounded-lg border border-border/60 bg-surface px-2 py-1 text-2xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
+                        className="border-border/60 bg-surface text-2xs text-foreground focus:border-primary rounded-lg border px-2 py-1 font-semibold focus:outline-hidden"
                       >
                         <option value="">Sans catégorie</option>
                         <option value="technique">Technique</option>
@@ -543,8 +558,11 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-subtle-foreground text-2xs flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      role="status"
+                      className="text-muted-foreground flex items-center gap-1 text-xs"
+                    >
                       <Clock className="size-3" />
                       {lastSavedTime}
                     </span>
@@ -557,7 +575,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                       title="Copier le contenu"
                     >
                       {copied ? (
-                        <Check className="size-3.5 text-success" />
+                        <Check className="text-success size-3.5" />
                       ) : (
                         <Copy className="size-3.5" />
                       )}
@@ -589,6 +607,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                 {/* Textarea Editor */}
                 <div className="relative flex-1 p-4">
                   <textarea
+                    aria-label="Contenu de la note"
                     value={activeNote.content}
                     onChange={(e) => handleUpdateContent(e.target.value)}
                     placeholder={
@@ -596,27 +615,34 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                         ? "Saisissez ici vos mémos d'intervention, relevés de mesures, codes d'accès..."
                         : "Saisissez ici vos consignes d'équipe, notes stratégiques, relances clients..."
                     }
-                    className="h-full min-h-[300px] w-full resize-none bg-transparent text-xs text-foreground placeholder:text-muted-foreground leading-relaxed focus:outline-hidden font-mono"
+                    className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-[360px] w-full resize-y rounded-sm bg-transparent p-2 text-base leading-loose focus-visible:ring-2 focus-visible:outline-none"
                   />
                 </div>
 
                 {/* Footer status bar */}
-                <div className="flex items-center justify-between border-t border-border/40 p-2.5 px-4 bg-surface-sunken/20 text-subtle-foreground text-2xs">
+                <div className="border-border text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t p-3 px-4 text-xs">
                   <div className="flex items-center gap-3">
-                    <span>{wordCount} mot{wordCount > 1 ? 's' : ''}</span>
+                    <span>
+                      {wordCount} mot{wordCount > 1 ? 's' : ''}
+                    </span>
                     <span>•</span>
-                    <span>{charCount} caractère{charCount > 1 ? 's' : ''}</span>
+                    <span>
+                      {charCount} caractère{charCount > 1 ? 's' : ''}
+                    </span>
                   </div>
-                  <span className="flex items-center gap-1 text-success font-medium">
+                  <span className="text-success flex items-center gap-1 font-medium">
                     <Sparkles className="size-3" />
                     Sauvegarde automatique activée
                   </span>
                 </div>
               </>
             ) : (
-              <div className="flex h-full items-center justify-center p-8 text-muted-foreground text-xs">
-                Sélectionnez ou créez une note pour commencer.
-              </div>
+              <EmptyState
+                illustration={<AtelierIllustration subject="notes" />}
+                title="Gardez une idée sous la main"
+                description="Créez votre première note pour retrouver vos mémos et consignes personnelles."
+                className="h-full"
+              />
             )}
           </div>
         </div>
