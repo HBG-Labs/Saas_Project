@@ -4138,6 +4138,8 @@ export interface Database {
           notify_maintenance_due: boolean;
           notify_stock_low: boolean;
           notify_leave_requests: boolean;
+          /** E-mail quand un compte rendu est à contrôler, ou renvoyé — 20261004090000. */
+          notify_report_review: boolean;
           sms_urgent_alerts: boolean;
           traffic_layer: boolean;
           vehicle_type: string;
@@ -4151,6 +4153,7 @@ export interface Database {
           notify_maintenance_due?: boolean;
           notify_stock_low?: boolean;
           notify_leave_requests?: boolean;
+          notify_report_review?: boolean;
           sms_urgent_alerts?: boolean;
           traffic_layer?: boolean;
           vehicle_type?: string;
@@ -4163,6 +4166,7 @@ export interface Database {
           notify_maintenance_due?: boolean;
           notify_stock_low?: boolean;
           notify_leave_requests?: boolean;
+          notify_report_review?: boolean;
           sms_urgent_alerts?: boolean;
           traffic_layer?: boolean;
           vehicle_type?: string;

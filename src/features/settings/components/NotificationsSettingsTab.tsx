@@ -69,11 +69,14 @@ export function NotificationsSettingsTab({ onSaved }: { onSaved?: () => void }) 
           />
 
           <Switch
-            className="border-border bg-surface-sunken/50 flex-row-reverse items-center justify-between rounded-xl border p-3"
-            label="Alertes SMS d'urgence — bientôt disponible"
-            description="Le canal SMS sera activé lorsqu'un fournisseur d'envoi aura été configuré."
-            checked={false}
-            disabled
+            className="border-border bg-surface-raised flex-row-reverse items-center justify-between rounded-xl border p-3"
+            label="Comptes rendus d'intervention"
+            description="E-mail quand un compte rendu est à contrôler, ou vous est renvoyé pour correction."
+            checked={preferences.notify_report_review}
+            onCheckedChange={(val) => {
+              updatePreference('notify_report_review', val);
+              onSaved?.();
+            }}
           />
         </CardContent>
       </Card>

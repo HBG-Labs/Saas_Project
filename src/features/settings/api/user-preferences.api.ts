@@ -6,6 +6,8 @@ export interface UserPreferences {
   notify_maintenance_due: boolean;
   notify_stock_low: boolean;
   notify_leave_requests: boolean;
+  /** Compte rendu à contrôler (contrôleur) ou renvoyé (technicien). */
+  notify_report_review: boolean;
   sms_urgent_alerts: boolean;
   traffic_layer: boolean;
   vehicle_type: string;
@@ -17,6 +19,7 @@ export const DEFAULT_USER_PREFERENCES: Omit<UserPreferences, 'user_id'> = {
   notify_maintenance_due: true,
   notify_stock_low: true,
   notify_leave_requests: true,
+  notify_report_review: true,
   sms_urgent_alerts: false,
   traffic_layer: true,
   vehicle_type: 'van',
@@ -41,6 +44,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     notify_maintenance_due: row.notify_maintenance_due,
     notify_stock_low: row.notify_stock_low,
     notify_leave_requests: row.notify_leave_requests,
+    notify_report_review: row.notify_report_review,
     sms_urgent_alerts: row.sms_urgent_alerts,
     traffic_layer: row.traffic_layer,
     vehicle_type: row.vehicle_type,
@@ -58,7 +62,11 @@ export async function upsertUserPreferences(
   };
 
   const updated = await unwrap(
-    supabase.from('user_preferences').upsert(payload, { onConflict: 'user_id' }).select('*').single(),
+    supabase
+      .from('user_preferences')
+      .upsert(payload, { onConflict: 'user_id' })
+      .select('*')
+      .single(),
   );
 
   return {
@@ -67,6 +75,7 @@ export async function upsertUserPreferences(
     notify_maintenance_due: updated.notify_maintenance_due,
     notify_stock_low: updated.notify_stock_low,
     notify_leave_requests: updated.notify_leave_requests,
+    notify_report_review: updated.notify_report_review,
     sms_urgent_alerts: updated.sms_urgent_alerts,
     traffic_layer: updated.traffic_layer,
     vehicle_type: updated.vehicle_type,
