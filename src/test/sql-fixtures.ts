@@ -29,6 +29,7 @@ import clientPortalSocleSql from '../../supabase/migrations/20260913054246_porta
 import workspaceSql from '../../supabase/migrations/20260929090000_workspace.sql?raw';
 import feuilleHeuresSql from '../../supabase/migrations/20261002090000_feuille_heures.sql?raw';
 import workspaceV2Sql from '../../supabase/migrations/20261003090000_workspace_v2.sql?raw';
+import enregistrementsVocauxSql from '../../supabase/migrations/20261005090000_enregistrements_vocaux.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -87,6 +88,7 @@ const MIGRATIONS: Record<string, string> = {
   workspace: workspaceSql,
   feuilleHeures: feuilleHeuresSql,
   workspaceV2: workspaceV2Sql,
+  enregistrementsVocaux: enregistrementsVocauxSql,
 };
 
 export const MIGRATION_FILES = {
@@ -121,6 +123,7 @@ export const MIGRATION_FILES = {
   workspace: 'workspace',
   feuilleHeures: 'feuilleHeures',
   workspaceV2: 'workspaceV2',
+  enregistrementsVocaux: 'enregistrementsVocaux',
 } as const;
 
 /**

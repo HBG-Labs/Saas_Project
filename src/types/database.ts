@@ -88,6 +88,8 @@ export type RecurringOccurrenceStatus = 'created' | 'skipped';
 export type CustomerCreditOrigin = 'credit_note' | 'overpayment';
 /** Temps hors intervention — 20261002090000_feuille_heures.sql */
 export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
+/** Enregistrement vocal — 20261005090000_enregistrements_vocaux.sql */
+export type WorkspaceRecordingStatus = 'uploading' | 'pending' | 'processing' | 'done' | 'failed';
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
 export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
@@ -4106,6 +4108,61 @@ export interface Database {
         ];
       };
 
+      /**
+       * Un enregistrement vocal attaché à une page — 20261005090000_enregistrements_vocaux.sql.
+       * Naît `uploading` (la ligne d'abord, le fichier ensuite, `submit_workspace_recording`
+       * enfin) ; la transcription et le résumé sont écrits DANS LA PAGE par la base.
+       * L'audio est effacé après 30 jours (`audio_deleted_at`).
+       */
+      workspace_recordings: {
+        Row: {
+          id: string;
+          organization_id: string;
+          page_id: string;
+          created_by: string | null;
+          title: string;
+          /** `<org>/<page>/<fichier>` dans le bucket privé `workspace-audio`. */
+          audio_path: string;
+          mime_type: string;
+          size_bytes: number | null;
+          duration_seconds: number;
+          language: string;
+          status: WorkspaceRecordingStatus;
+          transcript: string | null;
+          summary: string | null;
+          error: string | null;
+          consent_confirmed_at: string;
+          attempts: number;
+          next_attempt_at: string;
+          locked_at: string | null;
+          transcribed_at: string | null;
+          audio_deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          page_id: string;
+          title?: string;
+          audio_path: string;
+          mime_type: string;
+          size_bytes?: number | null;
+          duration_seconds: number;
+          language?: string;
+          consent_confirmed_at: string;
+        };
+        Update: {
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_recordings_page_id_fkey';
+            columns: ['page_id'];
+            referencedRelation: 'workspace_pages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       /** Page épinglée par la personne connectée. `user_id` et `organization_id` posés par trigger. */
       workspace_favorites: {
         Row: {
@@ -5303,6 +5360,21 @@ export interface Database {
           p_title?: string | null;
         };
         Returns: Database['public']['Tables']['workspace_pages']['Row'];
+      };
+      /** Le fichier est déposé : la transcription peut partir (auteur seul). */
+      submit_workspace_recording: {
+        Args: { p_recording_id: string; p_size_bytes?: number | null };
+        Returns: Database['public']['Tables']['workspace_recordings']['Row'];
+      };
+      /** Minutes de transcription du mois : consommées, plafond, reste. Membres seulement. */
+      transcription_quota_status: {
+        Args: { p_organization_id: string };
+        Returns: {
+          used_minutes: number;
+          limit_minutes: number | null;
+          remaining_minutes: number | null;
+          unlimited: boolean;
+        }[];
       };
       /** Recherche plein texte (français) dans les pages visibles. Syntaxe « web ». */
       search_workspace_pages: {

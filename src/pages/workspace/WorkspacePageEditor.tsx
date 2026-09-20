@@ -25,6 +25,8 @@ import {
   type WorkspacePage,
 } from '@/features/workspace';
 
+import { WorkspaceRecorder } from './WorkspaceRecorder';
+
 /*
   ÉCHAFAUDAGE — éditeur provisoire.
 
@@ -235,6 +237,8 @@ function PageForm({
           </div>
         </CardContent>
       </Card>
+
+      {canAi ? <WorkspaceRecorder page={loaded} /> : null}
 
       {canAi ? (
         <Card>

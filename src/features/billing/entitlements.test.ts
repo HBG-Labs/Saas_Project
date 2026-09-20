@@ -255,6 +255,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.organizationDocuments,
       MIGRATION_FILES.clientPortalSocle,
       MIGRATION_FILES.workspace,
+      MIGRATION_FILES.enregistrementsVocaux,
     ],
     'plan_features',
   );

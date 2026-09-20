@@ -5,6 +5,7 @@ import type {
   TablesInsert,
   TablesUpdate,
   TiptapDocument,
+  WorkspaceRecordingStatus,
 } from '@/types/database';
 
 /**
@@ -516,4 +517,155 @@ export function textToTiptapDocument(markdown: string): TiptapDocument {
   }
   flushList();
   return { type: 'doc', content };
+}
+
+// ─── Enregistrements vocaux ──────────────────────────────────────────────────
+//
+// 20261005090000_enregistrements_vocaux.sql. Trois temps, dans cet ordre : la
+// LIGNE d'abord (la base vérifie le quota, le consentement, la page), le
+// FICHIER ensuite (la règle du bucket exige la ligne), `submit` enfin. La
+// transcription et le résumé arrivent en tâche de fond, ÉCRITS DANS LA PAGE
+// par la base : le client rafraîchit la page quand le statut passe à `done`.
+
+export type WorkspaceRecording = Tables<'workspace_recordings'>;
+export type TranscriptionQuota =
+  Database['public']['Functions']['transcription_quota_status']['Returns'][number];
+
+export const AUDIO_BUCKET = 'workspace-audio';
+/** Miroir de la limite du bucket et de l'API de transcription (25 Mo). */
+export const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
+export const AUDIO_MAX_SECONDS = 3600;
+
+export const RECORDING_STATUS_LABELS: Record<WorkspaceRecordingStatus, string> = {
+  uploading: "Envoi de l'audio",
+  pending: 'En attente de transcription',
+  processing: 'Transcription en cours',
+  done: 'Transcrit',
+  failed: 'Échec',
+};
+
+export async function listRecordings(pageId: string): Promise<WorkspaceRecording[]> {
+  return unwrap(
+    supabase
+      .from('workspace_recordings')
+      .select('*')
+      .eq('page_id', pageId)
+      .order('created_at', { ascending: false }),
+  );
+}
+
+export async function getTranscriptionQuota(
+  organizationId: string,
+): Promise<TranscriptionQuota | null> {
+  const rows = await unwrap(
+    supabase.rpc('transcription_quota_status', { p_organization_id: organizationId }),
+  );
+  return rows[0] ?? null;
+}
+
+export interface CreateRecordingInput {
+  page: Pick<WorkspacePage, 'id' | 'organization_id'>;
+  audio: Blob;
+  durationSeconds: number;
+  title?: string;
+  language?: string;
+  /** La personne confirme que les participants sont informés (RGPD). */
+  consentConfirmed: boolean;
+}
+
+function extensionFor(mime: string): string {
+  if (mime.includes('webm')) return 'webm';
+  if (mime.includes('ogg')) return 'ogg';
+  if (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac')) return 'm4a';
+  if (mime.includes('mpeg')) return 'mp3';
+  if (mime.includes('wav')) return 'wav';
+  return 'webm';
+}
+
+/**
+ * Déclare, dépose, soumet. Si le dépôt échoue, la ligne est retirée : une
+ * ligne `uploading` sans fichier n'attendrait rien.
+ */
+export async function createRecording(input: CreateRecordingInput): Promise<WorkspaceRecording> {
+  if (!input.consentConfirmed) {
+    throw new Error('Confirmez que les personnes enregistrées sont informées.');
+  }
+  if (input.audio.size > AUDIO_MAX_BYTES) {
+    throw new Error('Enregistrement trop lourd (25 Mo au plus).');
+  }
+  const mime = input.audio.type.split(';')[0] || 'audio/webm';
+  const id = crypto.randomUUID();
+  const path = `${input.page.organization_id}/${input.page.id}/${id}.${extensionFor(mime)}`;
+
+  const row = await unwrap(
+    supabase
+      .from('workspace_recordings')
+      .insert({
+        page_id: input.page.id,
+        audio_path: path,
+        mime_type: mime,
+        size_bytes: input.audio.size,
+        duration_seconds: Math.max(
+          1,
+          Math.min(AUDIO_MAX_SECONDS, Math.round(input.durationSeconds)),
+        ),
+        consent_confirmed_at: new Date().toISOString(),
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.language !== undefined ? { language: input.language } : {}),
+      })
+      .select('*')
+      .single(),
+  );
+
+  const { error: uploadError } = await supabase.storage
+    .from(AUDIO_BUCKET)
+    .upload(path, input.audio, { contentType: mime, upsert: false });
+  if (uploadError) {
+    await supabase.from('workspace_recordings').delete().eq('id', row.id);
+    throw uploadError;
+  }
+
+  return unwrap(
+    supabase.rpc('submit_workspace_recording', {
+      p_recording_id: row.id,
+      p_size_bytes: input.audio.size,
+    }),
+  );
+}
+
+export async function renameRecording(
+  recordingId: string,
+  title: string,
+): Promise<WorkspaceRecording> {
+  return unwrap(
+    supabase
+      .from('workspace_recordings')
+      .update({ title })
+      .eq('id', recordingId)
+      .select('*')
+      .single(),
+  );
+}
+
+/** Supprime la ligne et le fichier. La transcription déjà écrite dans la page y reste. */
+export async function deleteRecording(
+  recording: Pick<WorkspaceRecording, 'id' | 'audio_path' | 'audio_deleted_at'>,
+): Promise<void> {
+  if (!recording.audio_deleted_at) {
+    await supabase.storage.from(AUDIO_BUCKET).remove([recording.audio_path]);
+  }
+  await unwrap(supabase.from('workspace_recordings').delete().eq('id', recording.id).select('id'));
+}
+
+/** URL signée de l'audio — `null` s'il a été effacé (30 jours). */
+export async function getRecordingAudioUrl(
+  recording: Pick<WorkspaceRecording, 'audio_path' | 'audio_deleted_at'>,
+  expiresInSeconds = 3600,
+): Promise<string | null> {
+  if (recording.audio_deleted_at) return null;
+  const { data, error } = await supabase.storage
+    .from(AUDIO_BUCKET)
+    .createSignedUrl(recording.audio_path, expiresInSeconds);
+  if (error) throw error;
+  return data.signedUrl;
 }

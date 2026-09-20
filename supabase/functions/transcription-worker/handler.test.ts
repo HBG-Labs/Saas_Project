@@ -1,0 +1,190 @@
+import { assertEquals } from 'jsr:@std/assert@1';
+
+import { TranscriptionRejected } from '../_shared/transcription.ts';
+import {
+  createTranscriptionWorkerHandler,
+  type ClaimedRecording,
+  type TranscriptionWorkerConfig,
+} from './handler.ts';
+
+/*
+  Aucun réseau : le client Supabase répond depuis la mémoire ; stockage et
+  fournisseur sont injectés. Ce qui est vérifié : le secret ; la réservation
+  refusée donne « quota » sans télécharger ; le chemin nominal donne « done »
+  avec texte et résumé ; un refus définitif donne « rejected », une panne
+  « error » ; la purge supprime le fichier PUIS marque ; le battement compte.
+*/
+
+const SECRET = 'transcription-secret';
+
+function request(secret = SECRET): Request {
+  return new Request('https://worker.local', {
+    method: 'POST',
+    headers: { 'x-worker-secret': secret },
+  });
+}
+
+function enregistrement(partial: Partial<ClaimedRecording>): ClaimedRecording {
+  return {
+    id: crypto.randomUUID(),
+    organization_id: 'org-1',
+    page_id: 'page-1',
+    created_by: 'u-1',
+    title: 'Réunion',
+    audio_path: 'org-1/page-1/a.webm',
+    mime_type: 'audio/webm',
+    duration_seconds: 90,
+    language: 'fr',
+    attempts: 0,
+    created_at: '2026-09-20T10:00:00Z',
+    ...partial,
+  };
+}
+
+function fakeSupabase(
+  claimed: ClaimedRecording[],
+  options: { reserved?: boolean; purges?: Array<{ id: string; audio_path: string }> } = {},
+) {
+  const results: Array<Record<string, unknown>> = [];
+  const marked: string[] = [];
+  const heartbeats: Array<Record<string, unknown>> = [];
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
+    const ok = (payload: unknown, status = 200) =>
+      new Response(JSON.stringify(payload), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    if (url.includes('/rpc/claim_workspace_recordings')) return ok(claimed);
+    if (url.includes('/rpc/reserve_transcription_minutes')) {
+      return ok({ reserved: options.reserved ?? true, reserved_minutes: 2, remaining_after: 118 });
+    }
+    if (url.includes('/rpc/record_workspace_recording_result')) {
+      results.push(body);
+      return ok(null);
+    }
+    if (url.includes('/rpc/claim_workspace_audio_purges')) return ok(options.purges ?? []);
+    if (url.includes('/rpc/mark_workspace_audio_deleted')) {
+      marked.push(String(body.p_id));
+      return ok(null);
+    }
+    if (url.includes('/transcription_worker_runs')) {
+      heartbeats.push(body);
+      return ok([], 201);
+    }
+    return ok({}, 404);
+  };
+  return { fetchImpl, results, marked, heartbeats };
+}
+
+function config(partial: Partial<TranscriptionWorkerConfig>): TranscriptionWorkerConfig {
+  return {
+    url: 'https://project.supabase.co',
+    serviceRoleKey: 'service-role',
+    secret: SECRET,
+    downloadAudio: () => Promise.resolve(new Blob(['audio'], { type: 'audio/webm' })),
+    removeAudio: () => Promise.resolve(),
+    transcribe: () => Promise.resolve('Bonjour à tous. On pose le boîtier jeudi.'),
+    summarize: () => Promise.resolve('## Décisions\n- Poser le boîtier jeudi'),
+    ...partial,
+  };
+}
+
+Deno.test('un mauvais secret est refusé', async () => {
+  const fake = fakeSupabase([enregistrement({})]);
+  const response = await createTranscriptionWorkerHandler(config({ fetch: fake.fetchImpl }))(
+    request('faux'),
+  );
+  assertEquals(response.status, 401);
+  assertEquals(fake.results.length, 0);
+});
+
+Deno.test('chemin nominal : texte et résumé rendus à la base', async () => {
+  const fake = fakeSupabase([enregistrement({ id: 'r-1' })]);
+  const response = await createTranscriptionWorkerHandler(config({ fetch: fake.fetchImpl }))(
+    request(),
+  );
+  assertEquals(response.status, 200);
+  assertEquals(fake.results[0], {
+    p_id: 'r-1',
+    p_outcome: 'done',
+    p_transcript: 'Bonjour à tous. On pose le boîtier jeudi.',
+    p_summary: '## Décisions\n- Poser le boîtier jeudi',
+    p_error: null,
+  });
+  assertEquals(fake.heartbeats[0]?.done, 1);
+});
+
+Deno.test('quota refusé : rien n’est téléchargé, « quota » est rendu', async () => {
+  let telechargements = 0;
+  const fake = fakeSupabase([enregistrement({ id: 'r-2' })], { reserved: false });
+  await createTranscriptionWorkerHandler(
+    config({
+      fetch: fake.fetchImpl,
+      downloadAudio: () => {
+        telechargements += 1;
+        return Promise.resolve(new Blob());
+      },
+    }),
+  )(request());
+  assertEquals(telechargements, 0);
+  assertEquals(fake.results[0]?.p_outcome, 'quota');
+});
+
+Deno.test(
+  'refus définitif → rejected ; panne → error ; résumé absent n’empêche pas done',
+  async () => {
+    const fake = fakeSupabase([
+      enregistrement({ id: 'a' }),
+      enregistrement({ id: 'b' }),
+      enregistrement({ id: 'c' }),
+    ]);
+    let appel = 0;
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        transcribe: () => {
+          appel += 1;
+          if (appel === 1) return Promise.reject(new TranscriptionRejected('Fichier illisible'));
+          if (appel === 2) return Promise.reject(new Error('OpenAI 503'));
+          return Promise.resolve('Texte.');
+        },
+        summarize: () => Promise.resolve(null),
+      }),
+    )(request());
+    assertEquals(fake.results[0]?.p_outcome, 'rejected');
+    assertEquals(fake.results[0]?.p_error, 'Fichier illisible');
+    assertEquals(fake.results[1]?.p_outcome, 'error');
+    assertEquals(fake.results[1]?.p_error, 'OpenAI 503');
+    assertEquals(fake.results[2]?.p_outcome, 'done');
+    assertEquals(fake.results[2]?.p_summary, null);
+    assertEquals(fake.heartbeats[0]?.failed, 2);
+  },
+);
+
+Deno.test(
+  'la purge supprime le fichier puis marque ; un échec de suppression ne marque pas',
+  async () => {
+    const supprimes: string[] = [];
+    const fake = fakeSupabase([], {
+      purges: [
+        { id: 'p-1', audio_path: 'org/page/vieux.webm' },
+        { id: 'p-2', audio_path: 'org/page/casse.webm' },
+      ],
+    });
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        removeAudio: (paths) => {
+          if (paths[0]?.includes('casse')) return Promise.reject(new Error('Storage 500'));
+          supprimes.push(...paths);
+          return Promise.resolve();
+        },
+      }),
+    )(request());
+    assertEquals(supprimes, ['org/page/vieux.webm']);
+    assertEquals(fake.marked, ['p-1']);
+    assertEquals(fake.heartbeats[0]?.purged, 1);
+  },
+);

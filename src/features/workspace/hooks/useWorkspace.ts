@@ -36,8 +36,16 @@ import {
   touchPage,
   updateTemplate,
   uploadPageCover,
+  createRecording,
+  deleteRecording,
+  getRecordingAudioUrl,
+  getTranscriptionQuota,
+  listRecordings,
+  renameRecording,
+  type CreateRecordingInput,
   type SavePageInput,
   type TaskFilters,
+  type WorkspaceRecording,
 } from '../api/workspace.api';
 
 /**
@@ -406,5 +414,90 @@ export function useSearchPages(organizationId: string | null, query: string) {
     queryFn: () => searchPages(organizationId ?? '', trimmed),
     enabled: organizationId !== null && trimmed.length >= 2,
     staleTime: 30_000,
+  });
+}
+
+// ─── Enregistrements vocaux ──────────────────────────────────────────────────
+//
+// Tant qu'un enregistrement est en attente ou en cours, la liste se relit
+// toutes les cinq secondes ; quand l'un passe à `done`, la PAGE est relue :
+// c'est la base qui y a écrit la transcription et le résumé.
+
+export function useRecordings(pageId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: qk.workspace.recordings(pageId ?? 'none'),
+    queryFn: async () => {
+      const rows = await listRecordings(pageId ?? '');
+      const cached = queryClient.getQueryData<WorkspaceRecording[]>(
+        qk.workspace.recordings(pageId ?? 'none'),
+      );
+      const nouveauxTermines = rows.some(
+        (r) => r.status === 'done' && cached?.find((c) => c.id === r.id)?.status !== 'done',
+      );
+      if (nouveauxTermines && pageId) {
+        await queryClient.invalidateQueries({ queryKey: qk.workspace.page(pageId) });
+      }
+      return rows;
+    },
+    enabled: pageId !== undefined,
+    refetchInterval: (query) =>
+      query.state.data?.some((r) => r.status === 'pending' || r.status === 'processing')
+        ? 5_000
+        : false,
+  });
+}
+
+export function useTranscriptionQuota(organizationId: string | null) {
+  return useQuery({
+    queryKey: [...qk.workspace.all, organizationId ?? 'none', 'transcription-quota'],
+    queryFn: () => getTranscriptionQuota(organizationId ?? ''),
+    enabled: organizationId !== null,
+    staleTime: 60_000,
+  });
+}
+
+export function useCreateRecording() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateRecordingInput) => createRecording(input),
+    onSuccess: async (recording) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) }),
+        queryClient.invalidateQueries({
+          queryKey: [...qk.workspace.all, recording.organization_id, 'transcription-quota'],
+        }),
+      ]);
+    },
+  });
+}
+
+export function useRenameRecording() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ recordingId, title }: { recordingId: string; title: string }) =>
+      renameRecording(recordingId, title),
+    onSuccess: async (recording) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
+    },
+  });
+}
+
+export function useDeleteRecording() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (recording: WorkspaceRecording) => deleteRecording(recording),
+    onSuccess: async (_result, recording) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
+    },
+  });
+}
+
+export function useRecordingAudioUrl(recording: WorkspaceRecording | null) {
+  return useQuery({
+    queryKey: [...qk.workspace.all, 'recording', recording?.id ?? 'none', 'audio'],
+    queryFn: () => (recording ? getRecordingAudioUrl(recording) : Promise.resolve(null)),
+    enabled: recording !== null && recording.audio_deleted_at === null,
+    staleTime: 50 * 60_000,
   });
 }

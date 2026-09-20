@@ -500,3 +500,9 @@ verify_jwt = false
 # functions/README-NOTIFICATIONS.md.
 [functions.notification-worker]
 verify_jwt = false
+
+# Transcription et résumé des enregistrements vocaux, purge de l'audio à 30
+# jours ; réveillé chaque minute par pg_cron quand il y a du travail. Voir
+# functions/README-TRANSCRIPTION.md.
+[functions.transcription-worker]
+verify_jwt = false

@@ -192,6 +192,7 @@ export const qk = {
       [...qk.workspace.all, organizationId, 'templates'] as const,
     search: (organizationId: string, query: string) =>
       [...qk.workspace.all, organizationId, 'search', query] as const,
+    recordings: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'recordings'] as const,
   },
 
   // ----------------------------------------------------------- feuille d'heures

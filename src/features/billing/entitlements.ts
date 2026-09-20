@@ -55,6 +55,13 @@ export const FEATURES = {
    * c'est une ligne ici et une migration — pas un contournement.
    */
   workspace: 'workspace',
+  /**
+   * Minutes de transcription vocale par mois —
+   * supabase/migrations/20261005090000_enregistrements_vocaux.sql. Distinct du
+   * quota `ai_assistant` (des requêtes) : une minute d'audio n'a pas le coût
+   * d'une question. `0` pour Starter, pas de ligne pour Free (absence = refus).
+   */
+  aiTranscriptionMinutes: 'ai_transcription_minutes',
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -102,6 +109,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     // seulement) — distinct de « n'a jamais été inclus ».
     ai_assistant: 0,
     workspace: null,
+    ai_transcription_minutes: 0,
   },
 
   pro: {
@@ -127,6 +135,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     client_portal: null,
     ai_assistant: 100,
     workspace: null,
+    ai_transcription_minutes: 120,
   },
 
   business: {
@@ -156,6 +165,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     planning: null,
     ai_assistant: 300,
     workspace: null,
+    ai_transcription_minutes: 600,
   },
 
   enterprise: {
@@ -185,6 +195,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     planning: null,
     ai_assistant: 1000,
     workspace: null,
+    ai_transcription_minutes: 3000,
   },
 };
 
