@@ -53,8 +53,8 @@ export default function SettingsPage() {
         description="Personnalisez votre interface, vos options cartographiques, vos alertes et vos accès de sécurité."
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <div className="relative lg:sticky lg:top-4">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="relative min-w-0 lg:sticky lg:top-4">
           <nav
             className="no-scrollbar border-border lg:bg-surface-raised flex gap-1.5 overflow-x-auto border-b pr-8 pb-2 lg:flex-col lg:overflow-visible lg:rounded-xl lg:border lg:p-2 lg:shadow-xs"
             aria-label="Catégories de paramètres"

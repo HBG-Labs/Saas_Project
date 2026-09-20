@@ -2,6 +2,51 @@ import { expect, test } from '@playwright/test';
 
 import { installeSupabase } from '../fixtures/supabase';
 
+test('les neuf couleurs restent entièrement accessibles dans les paramètres', async ({
+  page,
+  isMobile,
+}) => {
+  await page.setViewportSize({ width: isMobile ? 375 : 1280, height: 900 });
+  await installeSupabase(page, { role: 'owner' });
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+  // La racine masquait le débordement : vérifier les commandes elles-mêmes.
+  for (const label of [
+    'Automatique (Atelier)',
+    'Bleu Marine / Nuit',
+    'Bleu Cobalt Tech',
+    'Violet Digital',
+    'Vert Émeraude',
+    'Rouge Rubis',
+    'Ambre & Or Chaud',
+    'Rose Fuchsia',
+    'Cyan & Océan',
+  ]) {
+    const button = page.getByRole('button', { name: label, exact: true });
+    const geometry = await button.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        viewport: innerWidth,
+        clipped: element.scrollWidth - element.clientWidth,
+      };
+    });
+    expect(geometry.left, label).toBeGreaterThanOrEqual(0);
+    expect(geometry.right, label).toBeLessThanOrEqual(geometry.viewport);
+    expect(geometry.clipped, label).toBeLessThanOrEqual(1);
+  }
+
+  const cyan = page.getByRole('button', { name: 'Cyan & Océan', exact: true });
+  await cyan.click();
+  await expect(cyan).toHaveAttribute('aria-pressed', 'true');
+  const categories = page.getByRole('navigation', { name: 'Catégories de paramètres' });
+  const security = categories.getByRole('button', { name: 'Sécurité & Accès' });
+  await security.click();
+  await expect(security).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('les neuf couleurs se choisissent, recolorent les commandes et persistent', async ({
   page,
   isMobile,

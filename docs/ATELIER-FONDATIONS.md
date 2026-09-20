@@ -41,4 +41,6 @@ Les tests de palette couvrent les six surfaces existantes et les nouveaux couple
 
 `e2e/parcours/11-couleurs.spec.ts` vérifie les neuf choix, leur effet visible sur les commandes, les cibles tactiles, la persistance, les sélections de navigation, le passage en mode nuit et la réinitialisation.
 
+La revue visuelle d’intégration a révélé une grille de Paramètres trop large sur téléphone. Une colonne mobile explicite et une largeur minimale nulle sur la navigation évitent que les commandes soient coupées. Le test mesure désormais les bornes de chacun des neuf boutons, car la largeur du document seule masquait le défaut. Il a échoué sur le build précédent (bouton Cobalt à 521 px pour un écran de 375 px) avant correction.
+
 Après revue du lot A : B Gestion ; C Workspace ; D Finance ; E transversal ; F vérification finale. Chaque lot garde ses propres tests, contrôle visuel ordinateur/mobile et validation avant le suivant.
