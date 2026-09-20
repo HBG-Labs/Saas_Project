@@ -179,6 +179,26 @@ describe('Sidebar — univers', () => {
     expect(screen.getByText('Ventes & facturation')).toBeInTheDocument();
   });
 
+  it('permet de changer d’univers au clavier avec la barre repliée', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Sidebar collapsed />, { route: '/missions' });
+    const trigger = screen.getByRole('button', { name: /Changer d'univers : Gestion/ });
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('menuitem', { name: 'Finance' }));
+    expect(screen.getByRole('button', { name: /Changer d'univers : Finance/ })).toHaveFocus();
+    expect(screen.getByRole('link', { name: 'Devis & Chiffrage' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Missions' })).not.toBeInTheDocument();
+    expect(localStorage.getItem('rezo360-universe')).toBe('finance');
+  });
+
+  it('ne propose pas le menu replié à la navigation technicien sans univers', () => {
+    useVisibleNavGroups.mockReturnValue(TENANT_GROUPS);
+    renderWithProviders(<Sidebar collapsed />, { route: '/dashboard' });
+    expect(screen.queryByRole('button', { name: /Changer d'univers/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Tableau de bord' })).toBeInTheDocument();
+  });
+
   it('ne montre aucun sélecteur quand les sections n’ont pas d’univers', () => {
     // La barre technicien ne déclare aucun univers : il n'y a rien à choisir,
     // et toutes ses sections restent affichées.

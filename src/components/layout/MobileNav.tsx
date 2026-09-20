@@ -27,11 +27,11 @@ export function MobileNav() {
     <nav
       aria-label="Navigation rapide"
       className={cn(
-        'bg-surface/95 border-border fixed inset-x-0 bottom-0 z-40 border-t shadow-lg backdrop-blur-md',
+        'bg-surface border-border fixed inset-x-0 bottom-0 z-40 border-t',
         'safe-bottom md:hidden',
       )}
     >
-      <ul className="flex items-stretch">
+      <ul className="flex items-stretch gap-1 px-2 py-1">
         {visibleNav.map((item) => {
           const Icon = NAV_ICONS[item.icon] ?? FALLBACK_NAV_ICON;
 
@@ -46,7 +46,7 @@ export function MobileNav() {
                     'min-h-touch relative flex flex-col items-center justify-center gap-0.5 px-1 py-1.5',
                     'text-3xs xs:text-2xs font-medium transition-colors duration-[120ms]',
                     isActive
-                      ? 'text-primary font-bold'
+                      ? 'bg-nav-selected text-nav-foreground rounded-full font-bold'
                       : 'text-muted-foreground hover:text-foreground',
                   )
                 }
@@ -56,7 +56,7 @@ export function MobileNav() {
                     <Icon
                       className={cn(
                         'size-5 shrink-0 transition-transform',
-                        isActive ? 'text-primary' : 'text-muted-foreground',
+                        isActive ? 'text-nav-foreground' : 'text-muted-foreground',
                         isActive && 'scale-110',
                       )}
                       aria-hidden="true"

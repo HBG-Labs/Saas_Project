@@ -126,10 +126,11 @@ export function MobileDrawer({
     const shouldClose = offsetX < -drawerWidth * 0.22 || offsetX / elapsed < -0.3;
 
     if (shouldClose) {
-      drawerRef.current.style.transition = 'transform 200ms cubic-bezier(0.32, 0.72, 0, 1)';
+      const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200;
+      drawerRef.current.style.transition = `transform ${duration}ms cubic-bezier(0.32, 0.72, 0, 1)`;
       drawerRef.current.style.transform = 'translateX(-100%)';
       if (backdropRef.current) {
-        backdropRef.current.style.transition = 'opacity 200ms ease';
+        backdropRef.current.style.transition = `opacity ${duration}ms ease`;
         backdropRef.current.style.opacity = '0';
       }
 
@@ -139,7 +140,7 @@ export function MobileDrawer({
         // L'haptique est un bonus et certains navigateurs la refusent.
       }
 
-      window.setTimeout(onClose, 200);
+      window.setTimeout(onClose, duration);
     } else {
       resetTouchStyles();
     }

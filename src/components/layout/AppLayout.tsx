@@ -6,12 +6,7 @@ import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { PwaInstallBanner } from '@/components/feedback/PwaInstallPrompt';
 import { usePwaInstall } from '@/components/feedback/usePwaInstall';
 import { Button } from '@/components/ui/Button';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownLabel,
-  DropdownSeparator,
-} from '@/components/ui/Dropdown';
+import { Dropdown, DropdownItem, DropdownLabel, DropdownSeparator } from '@/components/ui/Dropdown';
 import { Kbd } from '@/components/ui/Kbd';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ROUTES } from '@/config/routes';
@@ -69,7 +64,9 @@ export function AppLayout() {
   const sessionInconnue = status === 'loading';
   const displayName = displayNameOf(user);
 
-  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -153,7 +150,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="bg-background text-foreground min-h-dvh">
+    <div className="atelier-shell bg-background text-foreground min-h-dvh">
       <a
         href="#contenu-principal"
         className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
@@ -162,7 +159,7 @@ export function AppLayout() {
       </a>
 
       {/* ---------------------------------------------------- BARRE SUPÉRIEURE (HEADER) */}
-      <header className="border-border bg-surface/95 fixed inset-x-0 top-0 z-30 h-14 border-b backdrop-blur-md">
+      <header className="border-border bg-surface h-app-header fixed inset-x-0 top-0 z-30 border-b">
         {/*
           Trois zones, dont une seule est élastique.
 
@@ -174,12 +171,12 @@ export function AppLayout() {
           descendre sous la largeur de son contenu), et les actions ne se
           compriment jamais — ce sont des cibles tactiles.
         */}
-        <div className="flex h-14 items-center gap-1 px-3 sm:gap-3 sm:px-4">
+        <div className="h-app-header flex items-center gap-1 px-3 sm:gap-3 sm:px-4">
           <div className="flex min-w-0 shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -ml-1 flex size-touch shrink-0 items-center justify-center rounded-lg sm:size-9 lg:hidden cursor-pointer"
+              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground atelier-icon-control size-touch -ml-1 flex shrink-0 cursor-pointer items-center justify-center rounded-lg sm:size-9 lg:hidden"
               aria-label="Ouvrir le menu"
             >
               <Menu className="size-5" aria-hidden="true" />
@@ -217,7 +214,7 @@ export function AppLayout() {
           <button
             type="button"
             onClick={openCommandBar}
-            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground ml-auto flex size-touch shrink-0 items-center justify-center rounded-lg transition-colors sm:size-9 md:hidden"
+            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground atelier-icon-control size-touch ml-auto flex shrink-0 items-center justify-center rounded-lg transition-colors sm:size-9 md:hidden"
             aria-label="Rechercher"
           >
             <Search className="size-5" aria-hidden="true" />
@@ -237,8 +234,8 @@ export function AppLayout() {
           {/* Actions utilisateur et thème */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {!isOnline && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 text-3xs font-bold text-warning border border-warning/30">
-                <span className="size-1.5 rounded-full bg-warning animate-ping" />
+              <span className="bg-warning/10 text-3xs text-warning border-warning/30 hidden items-center gap-1.5 rounded-full border px-2.5 py-1 font-bold sm:inline-flex">
+                <span className="bg-warning size-1.5 animate-ping rounded-full" />
                 Mode Hors-ligne (PWA)
               </span>
             )}
@@ -250,7 +247,7 @@ export function AppLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="ring-border hover:ring-border-strong flex size-touch items-center justify-center rounded-full ring-2 transition-all sm:size-9 cursor-pointer overflow-hidden"
+                    className="ring-border hover:ring-border-strong atelier-icon-control size-touch flex cursor-pointer items-center justify-center overflow-hidden rounded-full ring-2 transition-all sm:size-9"
                     aria-label="Menu du compte"
                   >
                     <UserAvatar avatarId={avatarId} name={displayName} size="sm" />
@@ -322,8 +319,8 @@ export function AppLayout() {
       {/* ---------------------------------------------------- BARRE LATÉRALE DESKTOP */}
       <aside
         className={cn(
-          'border-border bg-surface fixed inset-y-0 top-14 left-0 z-20 hidden border-r transition-all duration-200 lg:block',
-          sidebarCollapsed ? 'w-16' : 'w-60',
+          'border-border bg-surface top-app-header fixed inset-y-0 left-0 z-20 hidden border-r transition-all duration-200 lg:block',
+          sidebarCollapsed ? 'w-sidebar-rail' : 'w-sidebar',
         )}
       >
         <Sidebar
@@ -339,8 +336,10 @@ export function AppLayout() {
         // Le bas ne réserve de la place que là où la navigation basse existe :
         // elle disparaît à `md`, où 80 px de vide n'avaient plus de raison
         // d'être. `safe-x` écarte le contenu des bords arrondis en paysage.
-        className={`safe-x px-4 pt-[4.5rem] pb-24 transition-all duration-200 sm:px-6 md:pb-10 lg:px-8 ${
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+        className={`safe-x px-4 pt-[5rem] pb-24 transition-all duration-200 sm:px-6 md:pb-10 lg:px-7 ${
+          sidebarCollapsed
+            ? 'lg:pl-[calc(var(--spacing-sidebar-rail)+1.75rem)]'
+            : 'lg:pl-[calc(var(--spacing-sidebar)+1.75rem)]'
         }`}
       >
         <div className={cn('mx-auto space-y-4', isTrainingPage ? 'max-w-none' : 'max-w-7xl')}>
@@ -355,8 +354,8 @@ export function AppLayout() {
           */}
           <EmailConfirmationBanner />
           {!isOnline && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 text-warning border border-warning/30 text-xs font-semibold animate-in fade-in">
-              <WifiOff className="size-4 shrink-0 text-warning" />
+            <div className="bg-warning/10 text-warning border-warning/30 animate-in fade-in flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold">
+              <WifiOff className="text-warning size-4 shrink-0" />
               <span>
                 <strong>Mode hors connexion.</strong> Les pages déjà ouvertes restent accessibles.
                 Les brouillons de compte rendu sont conservés sur cet appareil et pourront être
@@ -386,7 +385,6 @@ export function AppLayout() {
 
       {/* Navigation basse mobile */}
       <MobileNav />
-
     </div>
   );
 }

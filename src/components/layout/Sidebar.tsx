@@ -1,6 +1,8 @@
 import {
   Briefcase,
   Building2,
+  Check,
+  Layers3,
   ChevronDown,
   Lock,
   PanelLeftClose,
@@ -9,6 +11,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
+import { Dropdown, DropdownItem, DropdownLabel } from '@/components/ui/Dropdown';
 import { SegmentedControl, type SegmentedOption } from '@/components/ui/SegmentedControl';
 import {
   ACCOUNT_NAV,
@@ -27,22 +30,13 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
-/*
-  Couleur des icônes, par groupe.
-
-  Neuf groupes portaient neuf couleurs Tailwind écrites en dur — bleu, vert,
-  ambre, violet, cyan… Aucune ne venait de la palette, aucune ne suivait le
-  thème sombre, et l'ensemble faisait de la barre latérale l'endroit le plus
-  bariolé de l'application, alors qu'elle est ce qu'on voit sur chaque écran.
-
-  Une seule couleur porte l'identité : le bleu REZO. La seule exception est
-  l'administration plateforme, en rouge parce qu'elle EST une zone réservée —
-  la couleur y dit quelque chose, elle ne décore pas.
-*/
+/* Les repères portent le rôle du groupe ; les liens gardent une encre lisible. */
 const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
   'platform-admin': 'text-error',
+  achats: 'bg-purchase-marker text-purchase-marker-foreground rounded-full',
+  resources: 'bg-workspace-selected text-workspace-foreground rounded-full',
 };
-const SIDEBAR_GROUP_ICON_COLOR_DEFAULT = 'text-primary';
+const SIDEBAR_GROUP_ICON_COLOR_DEFAULT = 'text-nav-text';
 
 /**
  * Le dernier univers choisi à la main.
@@ -183,12 +177,14 @@ function SidebarLink({
         onClick={onNavigate}
         title={collapsed || item.locked ? libelleAccessible : undefined}
         className={cn(
-          'group relative flex min-h-9 items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium',
-          'transition-all duration-150',
+          'atelier-nav-link group min-h-control relative flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium',
+          'transition-colors duration-150',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-          collapsed ? 'mx-auto size-9 justify-center px-0' : 'w-full pr-3 pl-7',
+          collapsed
+            ? 'atelier-icon-control size-control mx-auto justify-center px-0'
+            : 'w-full pr-3 pl-4',
           isActive
-            ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+            ? 'bg-nav-selected text-nav-foreground font-bold'
             : item.locked
               ? // Atténué, jamais effacé : le contraste reste au-dessus du seuil
                 // de lecture, sans quoi on n'aurait fait que cacher l'entrée
@@ -200,8 +196,10 @@ function SidebarLink({
         <Icon
           className={cn(
             'size-4 shrink-0 transition-transform group-hover:scale-105',
-            iconColor,
-            isActive && 'text-primary-foreground',
+            item.to === ROUTES.quotes
+              ? 'bg-quote-marker text-quote-marker-foreground rounded-full'
+              : iconColor,
+            isActive && 'text-nav-foreground',
           )}
           aria-hidden="true"
         />
@@ -216,7 +214,7 @@ function SidebarLink({
                 // se pose en pastille dans l'angle plutôt qu'à côté du libellé,
                 // qui est alors masqué.
                 collapsed ? 'bg-surface absolute -top-0.5 -right-0.5 rounded-full' : 'ml-auto',
-                isActive ? 'text-primary-foreground' : 'text-subtle-foreground',
+                isActive ? 'text-nav-foreground' : 'text-subtle-foreground',
               )}
               aria-hidden="true"
             />
@@ -258,7 +256,7 @@ function CollapsibleSidebarSection({
             n'apportaient rien qu'une graisse et une couleur atténuée ne disent
             déjà — et elles se lisent moins vite.
           */
-          className="text-muted-foreground hover:text-foreground hover:bg-surface-hover/60 group text-2xs flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-semibold transition-colors select-none"
+          className="atelier-nav-section text-muted-foreground hover:text-foreground hover:bg-surface-hover group text-2xs flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-semibold transition-colors select-none"
           aria-expanded={isOpen}
         >
           <div className="flex items-center gap-2 truncate">
@@ -284,7 +282,7 @@ function CollapsibleSidebarSection({
           type="button"
           onClick={onToggle}
           className={cn(
-            'group mx-auto flex size-9 cursor-pointer items-center justify-center rounded-xl transition-all',
+            'atelier-icon-control group size-control mx-auto flex cursor-pointer items-center justify-center rounded-full transition-all',
             isOpen
               ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -308,8 +306,10 @@ function CollapsibleSidebarSection({
 
       {/* Contenu déroulant accordéon contrôlé par isOpen */}
       <div
+        inert={!isOpen}
+        aria-hidden={!isOpen}
         className={cn(
-          'overflow-hidden transition-all duration-200',
+          'atelier-section-content overflow-hidden transition-all duration-200',
           !isOpen ? 'pointer-events-none max-h-0 opacity-0' : 'max-h-[600px] opacity-100',
         )}
       >
@@ -468,9 +468,10 @@ export function Sidebar({
   return (
     <nav
       aria-label="Navigation principale"
+      data-universe={activeUniverse}
       className={cn(
-        'bg-surface border-border flex h-full w-full flex-col justify-between transition-all duration-200',
-        isCollapsed ? 'px-2 py-3' : 'p-3',
+        'atelier-sidebar bg-surface border-border flex h-full w-full flex-col justify-between transition-all duration-200',
+        isCollapsed ? 'px-2 py-3' : 'px-3 py-4',
         className,
       )}
     >
@@ -507,7 +508,7 @@ export function Sidebar({
               type="button"
               onClick={handleToggle}
               className={cn(
-                'text-muted-foreground hover:bg-surface-hover hover:text-foreground shrink-0 cursor-pointer rounded-lg p-1.5 transition-colors',
+                'atelier-icon-control text-muted-foreground hover:bg-surface-hover hover:text-foreground shrink-0 cursor-pointer rounded-full p-1.5 transition-colors',
                 isCollapsed && 'mx-auto',
               )}
               title={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
@@ -538,16 +539,40 @@ export function Sidebar({
           Replié, la barre est trop étroite pour trois libellés ; l'univers
           courant reste celui d'avant le repli.
         */}
-        {universesPresent.length >= 2 && !isCollapsed && activeUniverse !== undefined ? (
-          <SegmentedControl
-            options={UNIVERSE_OPTIONS.filter((option) =>
-              universesPresent.some((u) => u.id === option.value),
-            )}
-            value={activeUniverse}
-            onValueChange={handleChooseUniverse}
-            label="Univers"
-            className="[&>*]:text-2xs w-full [&>*]:min-w-0 [&>*]:flex-1 [&>*]:px-1"
-          />
+        {universesPresent.length >= 2 && activeUniverse !== undefined ? (
+          isCollapsed ? (
+            <Dropdown
+              side="right"
+              align="start"
+              trigger={
+                <button
+                  type="button"
+                  aria-label={`Changer d'univers : ${UNIVERSES.find((u) => u.id === activeUniverse)?.label ?? ''}`}
+                  className="atelier-icon-control bg-nav-selected text-nav-foreground size-control mx-auto flex items-center justify-center rounded-full"
+                >
+                  <Layers3 className="size-4" aria-hidden="true" />
+                </button>
+              }
+            >
+              <DropdownLabel>Univers</DropdownLabel>
+              {universesPresent.map((universe) => (
+                <DropdownItem key={universe.id} onSelect={() => handleChooseUniverse(universe.id)}>
+                  <span className="flex-1">{universe.label}</span>
+                  {universe.id === activeUniverse ? <Check aria-hidden="true" /> : null}
+                </DropdownItem>
+              ))}
+            </Dropdown>
+          ) : (
+            <SegmentedControl
+              options={UNIVERSE_OPTIONS.filter((option) =>
+                universesPresent.some((u) => u.id === option.value),
+              )}
+              value={activeUniverse}
+              onValueChange={handleChooseUniverse}
+              label="Univers"
+              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground w-full justify-between [&>*]:min-w-0 [&>*]:flex-auto [&>*]:px-1 [&>*]:text-3xs"
+            />
+          )
         ) : null}
 
         {/* Sections de navigation accordéon (un seul volet ouvert à la fois) */}
@@ -591,7 +616,7 @@ export function Sidebar({
         ) : null}
       </div>
 
-      <div className="border-border border-t pt-2">
+      <div className="atelier-account border-border border-t pt-2">
         <CollapsibleSidebarSection
           group={accountGroup}
           collapsed={isCollapsed}
