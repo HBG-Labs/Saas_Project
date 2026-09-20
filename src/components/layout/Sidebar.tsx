@@ -64,9 +64,20 @@ function storeUniverse(universe: Universe): void {
   }
 }
 
+/*
+  Une icône par univers, et le libellé TOUJOURS visible.
+
+  `SegmentedControl` masque ses libellés sous 640 px et ne garde que l'icône —
+  un choix juste pour une barre d'outils étroite. Ici, sans icône, le sélecteur
+  affichait sur téléphone un bloc bleu vide (signalé le 20/09/2026). L'icône
+  comble le contrat du composant ; le libellé est rétabli par le `className`
+  du sélecteur, parce que « Gestion / Finance / Workspace » ne se devinent pas
+  à trois pictogrammes.
+*/
 const UNIVERSE_OPTIONS: readonly SegmentedOption<Universe>[] = UNIVERSES.map((u) => ({
   value: u.id,
   label: u.label,
+  icon: NAV_ICONS[u.icon] ?? FALLBACK_NAV_ICON,
 }));
 
 interface SidebarProps {
@@ -570,7 +581,7 @@ export function Sidebar({
               value={activeUniverse}
               onValueChange={handleChooseUniverse}
               label="Univers"
-              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground w-full justify-between [&>*]:min-w-0 [&>*]:flex-auto [&>*]:px-1 [&>*]:text-3xs"
+              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground [&>*]:text-3xs w-full justify-between [&_span.hidden]:inline [&_span.sr-only]:hidden [&>*]:min-w-0 [&>*]:flex-auto [&>*]:px-1"
             />
           )
         ) : null}
