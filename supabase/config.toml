@@ -494,3 +494,9 @@ verify_jwt = false
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Notifications actives (affectation, congé, compte rendu), réveillées chaque
+# minute par pg_cron quand la file a du travail. Voir
+# functions/README-NOTIFICATIONS.md.
+[functions.notification-worker]
+verify_jwt = false
