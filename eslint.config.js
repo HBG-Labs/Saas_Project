@@ -249,8 +249,6 @@ export default tseslint.config(
       'src/features/interventions/components/SignaturePadModal.tsx',
 
       // ---- DETTE : à résorber écran par écran, cette liste doit maigrir ----
-      'src/components/layout/PublicLayout.tsx',
-      'src/components/layout/Sidebar.tsx',
       'src/components/marketing/Categories.tsx',
       'src/components/marketing/Faq.tsx',
       'src/components/marketing/Hero.tsx',

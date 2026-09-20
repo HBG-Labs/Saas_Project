@@ -24,17 +24,22 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
+/*
+  Couleur des icônes, par groupe.
+
+  Neuf groupes portaient neuf couleurs Tailwind écrites en dur — bleu, vert,
+  ambre, violet, cyan… Aucune ne venait de la palette, aucune ne suivait le
+  thème sombre, et l'ensemble faisait de la barre latérale l'endroit le plus
+  bariolé de l'application, alors qu'elle est ce qu'on voit sur chaque écran.
+
+  Une seule couleur porte l'identité : le bleu REZO. La seule exception est
+  l'administration plateforme, en rouge parce qu'elle EST une zone réservée —
+  la couleur y dit quelque chose, elle ne décore pas.
+*/
 const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
-  interventions: 'text-[#2563EB]',
-  stock: 'text-[#10B981]',
-  achats: 'text-[#F59E0B]',
-  administration: 'text-[#7C3AED]',
-  outils: 'text-[#0891B2]',
-  'outils-metiers': 'text-[#1D4ED8]',
-  resources: 'text-[#0F766E]',
-  account: 'text-[#4F46E5]',
-  'platform-admin': 'text-[#DC2626]',
+  'platform-admin': 'text-error',
 };
+const SIDEBAR_GROUP_ICON_COLOR_DEFAULT = 'text-primary';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -97,7 +102,9 @@ function SidebarLink({
       return currentFullPath === item.to;
     }
     if (item.to === ROUTES.tools) {
-      return location.pathname === ROUTES.tools && (!location.search || location.search === '?cat=all');
+      return (
+        location.pathname === ROUTES.tools && (!location.search || location.search === '?cat=all')
+      );
     }
     if (item.to === ROUTES.metiers) {
       return location.pathname === ROUTES.metiers;
@@ -106,12 +113,17 @@ function SidebarLink({
       return location.pathname === ROUTES.dashboard;
     }
     if (item.to === ROUTES.organization) {
-      return location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew;
+      return (
+        location.pathname === ROUTES.organization || location.pathname === ROUTES.organizationNew
+      );
     }
     if (item.to === ROUTES.stock) {
       return location.pathname === ROUTES.stock;
     }
-    return location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'));
+    return (
+      location.pathname === item.to ||
+      (item.to !== '/' && location.pathname.startsWith(item.to + '/'))
+    );
   })();
 
   /*
@@ -140,7 +152,7 @@ function SidebarLink({
           'group relative flex min-h-9 items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium',
           'transition-all duration-150',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-          collapsed ? 'justify-center px-0 size-9 mx-auto' : 'w-full pl-7 pr-3',
+          collapsed ? 'mx-auto size-9 justify-center px-0' : 'w-full pr-3 pl-7',
           isActive
             ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
             : item.locked
@@ -169,9 +181,7 @@ function SidebarLink({
                 // Replié, l'icône de section occupe déjà la case : le cadenas
                 // se pose en pastille dans l'angle plutôt qu'à côté du libellé,
                 // qui est alors masqué.
-                collapsed
-                  ? 'absolute -top-0.5 -right-0.5 rounded-full bg-surface'
-                  : 'ml-auto',
+                collapsed ? 'bg-surface absolute -top-0.5 -right-0.5 rounded-full' : 'ml-auto',
                 isActive ? 'text-primary-foreground' : 'text-subtle-foreground',
               )}
               aria-hidden="true"
@@ -214,18 +224,23 @@ function CollapsibleSidebarSection({
             n'apportaient rien qu'une graisse et une couleur atténuée ne disent
             déjà — et elles se lisent moins vite.
           */
-          className="text-muted-foreground hover:text-foreground hover:bg-surface-hover/60 group flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-2xs font-semibold transition-colors select-none"
+          className="text-muted-foreground hover:text-foreground hover:bg-surface-hover/60 group text-2xs flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-semibold transition-colors select-none"
           aria-expanded={isOpen}
         >
           <div className="flex items-center gap-2 truncate">
             {Icon && (
-              <Icon className={cn('size-3.5 shrink-0', SIDEBAR_GROUP_ICON_COLORS[group.id])} />
+              <Icon
+                className={cn(
+                  'size-3.5 shrink-0',
+                  SIDEBAR_GROUP_ICON_COLORS[group.id] ?? SIDEBAR_GROUP_ICON_COLOR_DEFAULT,
+                )}
+              />
             )}
             <span className="truncate">{group.label}</span>
           </div>
           <ChevronDown
             className={cn(
-              'size-3.5 text-muted-foreground group-hover:text-foreground transition-transform duration-200 shrink-0',
+              'text-muted-foreground group-hover:text-foreground size-3.5 shrink-0 transition-transform duration-200',
               !isOpen && '-rotate-90',
             )}
           />
@@ -235,7 +250,7 @@ function CollapsibleSidebarSection({
           type="button"
           onClick={onToggle}
           className={cn(
-            'flex size-9 mx-auto items-center justify-center rounded-xl transition-all cursor-pointer group',
+            'group mx-auto flex size-9 cursor-pointer items-center justify-center rounded-xl transition-all',
             isOpen
               ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -248,11 +263,11 @@ function CollapsibleSidebarSection({
             <Icon
               className={cn(
                 'size-4 shrink-0 transition-transform group-hover:scale-110',
-                SIDEBAR_GROUP_ICON_COLORS[group.id],
+                SIDEBAR_GROUP_ICON_COLORS[group.id] ?? SIDEBAR_GROUP_ICON_COLOR_DEFAULT,
               )}
             />
           ) : (
-            <div className="size-2 rounded-full bg-border group-hover:bg-primary" />
+            <div className="bg-border group-hover:bg-primary size-2 rounded-full" />
           )}
         </button>
       )}
@@ -260,8 +275,8 @@ function CollapsibleSidebarSection({
       {/* Contenu déroulant accordéon contrôlé par isOpen */}
       <div
         className={cn(
-          'transition-all duration-200 overflow-hidden',
-          !isOpen ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[600px] opacity-100',
+          'overflow-hidden transition-all duration-200',
+          !isOpen ? 'pointer-events-none max-h-0 opacity-0' : 'max-h-[600px] opacity-100',
         )}
       >
         <ul className="space-y-1">{children}</ul>
@@ -298,7 +313,12 @@ export function Sidebar({
   // d'organisation, d'aucun métier, d'aucun abonnement — seulement du statut
   // d'administrateur plateforme, invisible au système de permissions tenant.
   const platformAdminGroup: NavGroup | null = isPlatformAdmin
-    ? { id: 'platform-admin', label: 'Administration REZO360', icon: 'radar', items: PLATFORM_ADMIN_NAV }
+    ? {
+        id: 'platform-admin',
+        label: 'Administration REZO360',
+        icon: 'radar',
+        items: PLATFORM_ADMIN_NAV,
+      }
     : null;
 
   // Sans organisation, `resolvedTenantGroups` (Interventions, Stock, Achats…)
@@ -309,7 +329,11 @@ export function Sidebar({
   // sidebar sans jamais passer par la redirection « Créer votre entreprise »
   // — il ne doit voir QUE le volet plateforme.
   const tenantGroups = organization ? resolvedTenantGroups : [];
-  const allGroups = [...tenantGroups, ...(platformAdminGroup ? [platformAdminGroup] : []), accountGroup];
+  const allGroups = [
+    ...tenantGroups,
+    ...(platformAdminGroup ? [platformAdminGroup] : []),
+    accountGroup,
+  ];
   const currentFullPath = location.pathname + location.search;
 
   // Un seul volet ouvert à la fois : celui qui contient la page courante.
@@ -354,12 +378,12 @@ export function Sidebar({
     <nav
       aria-label="Navigation principale"
       className={cn(
-        'flex h-full w-full flex-col justify-between transition-all duration-200 bg-surface border-border',
+        'bg-surface border-border flex h-full w-full flex-col justify-between transition-all duration-200',
         isCollapsed ? 'px-2 py-3' : 'p-3',
         className,
       )}
     >
-      <div className="space-y-3 overflow-y-auto overflow-x-hidden pr-0.5">
+      <div className="space-y-3 overflow-x-hidden overflow-y-auto pr-0.5">
         {/* En-tête Organisation & Métier */}
         <div
           className={cn(
@@ -371,16 +395,16 @@ export function Sidebar({
             <NavLink
               to={ROUTES.organization}
               onClick={onNavigate}
-              className="min-w-0 pr-2 block rounded-lg p-1 -m-1 hover:bg-surface-hover/80 transition-colors group cursor-pointer"
+              className="hover:bg-surface-hover/80 group -m-1 block min-w-0 cursor-pointer rounded-lg p-1 pr-2 transition-colors"
               title="Paramètres de l'entreprise (modifier nom et secteur d'activité)"
             >
-              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                <Building2 className="size-3.5 text-primary shrink-0" />
+              <div className="text-foreground group-hover:text-primary flex items-center gap-1.5 truncate text-xs font-bold transition-colors">
+                <Building2 className="text-primary size-3.5 shrink-0" />
                 <span className="truncate">{organization?.name ?? 'REZO360'}</span>
               </div>
               {organization && isResolved && industryLabel ? (
-                <div className="mt-0.5 flex items-center gap-1 text-2xs text-muted-foreground group-hover:text-foreground/80 transition-colors truncate">
-                  <Briefcase className="size-3 text-subtle-foreground shrink-0" />
+                <div className="text-2xs text-muted-foreground group-hover:text-foreground/80 mt-0.5 flex items-center gap-1 truncate transition-colors">
+                  <Briefcase className="text-subtle-foreground size-3 shrink-0" />
                   <span className="truncate">{industryLabel}</span>
                 </div>
               ) : null}
@@ -392,7 +416,7 @@ export function Sidebar({
               type="button"
               onClick={handleToggle}
               className={cn(
-                'rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0',
+                'text-muted-foreground hover:bg-surface-hover hover:text-foreground shrink-0 cursor-pointer rounded-lg p-1.5 transition-colors',
                 isCollapsed && 'mx-auto',
               )}
               title={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
@@ -408,7 +432,7 @@ export function Sidebar({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors cursor-pointer shrink-0"
+              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground shrink-0 cursor-pointer rounded-lg p-1.5 transition-colors"
               title="Fermer le menu"
               aria-label="Fermer le menu"
             >
@@ -432,7 +456,7 @@ export function Sidebar({
                 item={item}
                 collapsed={isCollapsed}
                 onNavigate={onNavigate}
-                iconColor={SIDEBAR_GROUP_ICON_COLORS[group.id]}
+                iconColor={SIDEBAR_GROUP_ICON_COLORS[group.id] ?? SIDEBAR_GROUP_ICON_COLOR_DEFAULT}
               />
             ))}
           </CollapsibleSidebarSection>
@@ -458,7 +482,7 @@ export function Sidebar({
         ) : null}
       </div>
 
-      <div className="pt-2 border-t border-border">
+      <div className="border-border border-t pt-2">
         <CollapsibleSidebarSection
           group={accountGroup}
           collapsed={isCollapsed}
@@ -472,7 +496,7 @@ export function Sidebar({
               item={{ ...item, locked: false }}
               collapsed={isCollapsed}
               onNavigate={onNavigate}
-              iconColor={SIDEBAR_GROUP_ICON_COLORS.account}
+              iconColor={SIDEBAR_GROUP_ICON_COLOR_DEFAULT}
             />
           ))}
         </CollapsibleSidebarSection>
