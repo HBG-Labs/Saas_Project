@@ -19,11 +19,47 @@ export interface NavItem {
   vocabulary?: { term: 'worker' | 'job' | 'visit'; plural?: boolean };
 }
 
+/**
+ * Les trois univers du produit : Gestion, Finance, Workspace.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * UNE COUCHE DE NAVIGATION, PAS UNE ARCHITECTURE
+ *
+ * Un univers ne possède aucune route. Il RANGE des sections existantes : la
+ * barre latérale n'en montre qu'un à la fois, plus les sections transversales.
+ * Aucune URL ne change, aucun lien profond ne casse, aucun favori ne se perd —
+ * `/devis` reste `/devis`, il est simplement classé sous Finance.
+ *
+ * L'univers ne restreint rien non plus : `useVisibleNavGroups` décide seul de
+ * ce qu'une personne voit, selon sa formule et son rôle. L'univers décide
+ * seulement DANS QUEL VOLET cela apparaît. Tout ce qui était atteignable
+ * avant l'est après, dans un univers ou en transversal.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export type Universe = 'gestion' | 'finance' | 'workspace';
+
+export interface UniverseDefinition {
+  id: Universe;
+  label: string;
+  icon: string;
+}
+
+export const UNIVERSES: readonly UniverseDefinition[] = [
+  { id: 'gestion', label: 'Gestion', icon: 'clipboard' },
+  { id: 'finance', label: 'Finance', icon: 'calculator' },
+  { id: 'workspace', label: 'Workspace', icon: 'file-text' },
+];
+
 export interface NavGroup {
   id: string;
   label: string;
   icon?: string;
   items: readonly NavItem[];
+  /**
+   * L'univers qui range cette section. Absent = transversale : visible dans
+   * les trois, parce qu'on en a besoin depuis n'importe où (outils, compte).
+   */
+  universe?: Universe;
 }
 
 /**
@@ -53,19 +89,6 @@ export const ROOT_NAV: readonly NavItem[] = [
 
 export const INTERVENTIONS_NAV: readonly NavItem[] = [
   { to: ROUTES.dashboard, label: 'Tableau de bord', icon: 'dashboard', primary: true },
-  {
-    // `feature: 'ai_assistant'` — sans elle, l'entrée s'affichait pour tout le
-    // monde, sans cadenas, sur une destination que Free et Starter n'ont pas :
-    // le clic menait tout droit au mur « Mettre à niveau » sans que rien ne
-    // l'ait annoncé. `permission: 'ai.use'`, elle, RETIRE l'entrée (pas de
-    // cadenas) pour qui n'est pas propriétaire : ce n'est pas une histoire de
-    // formule, personne d'autre n'y aura jamais accès.
-    to: ROUTES.aiAssistant,
-    label: 'Assistant IA',
-    icon: 'sparkles',
-    feature: 'ai_assistant',
-    permission: 'ai.use',
-  },
   {
     to: ROUTES.missions,
     label: 'Missions',
@@ -108,8 +131,25 @@ export const INTERVENTIONS_NAV: readonly NavItem[] = [
 
 export const TOOLS_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Catalogue Universel', icon: 'wrench', primary: true },
-  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   { to: `${ROUTES.tools}?tab=favorites`, label: 'Outils Favoris', icon: 'star' },
+  /*
+    L'assistant vivait dans « Interventions ». Il est transversal : on lui
+    pose une question depuis un devis comme depuis un chantier. Le ranger sous
+    Gestion l'aurait rendu invisible depuis Finance et Workspace.
+  */
+  {
+    // `feature: 'ai_assistant'` — sans elle, l'entrée s'affichait pour tout le
+    // monde, sans cadenas, sur une destination que Free et Starter n'ont pas :
+    // le clic menait tout droit au mur « Mettre à niveau » sans que rien ne
+    // l'ait annoncé. `permission: 'ai.use'`, elle, RETIRE l'entrée (pas de
+    // cadenas) pour qui n'est pas propriétaire : ce n'est pas une histoire de
+    // formule, personne d'autre n'y aura jamais accès.
+    to: ROUTES.aiAssistant,
+    label: 'Assistant IA',
+    icon: 'sparkles',
+    feature: 'ai_assistant',
+    permission: 'ai.use',
+  },
 ];
 
 export const METIERS_TOOLS_NAV: readonly NavItem[] = [
@@ -157,6 +197,9 @@ export const LIBRARY_NAV: readonly NavItem[] = [
 ];
 
 export const RESOURCES_NAV: readonly NavItem[] = [
+  // Le bloc-notes était rangé dans la boîte à outils. C'est un espace où l'on
+  // écrit, pas un instrument : il ouvre l'univers Workspace.
+  { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   ...LIBRARY_NAV,
   { to: ROUTES.tutorials, label: 'Tutoriels & Formation', icon: 'book', primary: true },
 ];
@@ -196,6 +239,16 @@ export const ACHATS_NAV: readonly NavItem[] = [
     primary: true,
   },
   { to: ROUTES.suppliers, label: 'Fournisseurs', icon: 'store', feature: 'purchases' },
+];
+
+/*
+  Devis et factures quittent « Achats & Devis ».
+
+  Les quatre entrées vivaient sous un même en-tête, qui nommait deux d'entre
+  elles et taisait les deux autres. Sous Finance, la coupe est celle de
+  l'argent : ce qui entre (ventes) et ce qui sort (achats).
+*/
+export const VENTES_NAV: readonly NavItem[] = [
   { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator', feature: 'quotes' },
   /*
     `feature` ET `permission`, et les deux ne font pas la même chose.
@@ -304,11 +357,40 @@ export const PLATFORM_ADMIN_NAV: readonly NavItem[] = [
 ];
 
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
-  { id: 'interventions', label: 'Interventions', icon: 'clipboard', items: INTERVENTIONS_NAV },
-  { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV },
-  { id: 'achats', label: 'Achats & Devis', icon: 'calculator', items: ACHATS_NAV },
-  { id: 'administration', label: 'Administration', icon: 'settings', items: ADMINISTRATION_NAV },
-  { id: 'resources', label: 'Documents & formation', icon: 'book', items: RESOURCES_NAV },
+  // ── Gestion : le terrain, le matériel, l'équipe ──────────────────────────
+  {
+    id: 'interventions',
+    label: 'Interventions',
+    icon: 'clipboard',
+    items: INTERVENTIONS_NAV,
+    universe: 'gestion',
+  },
+  { id: 'stock', label: 'Stock', icon: 'package', items: STOCK_NAV, universe: 'gestion' },
+  {
+    id: 'administration',
+    label: 'Administration',
+    icon: 'settings',
+    items: ADMINISTRATION_NAV,
+    universe: 'gestion',
+  },
+  // ── Finance : ce qui entre, ce qui sort ──────────────────────────────────
+  {
+    id: 'ventes',
+    label: 'Ventes & facturation',
+    icon: 'file-text',
+    items: VENTES_NAV,
+    universe: 'finance',
+  },
+  { id: 'achats', label: 'Achats', icon: 'shopping-cart', items: ACHATS_NAV, universe: 'finance' },
+  // ── Workspace : ce qu'on écrit, ce qu'on lit ─────────────────────────────
+  {
+    id: 'resources',
+    label: 'Documents & formation',
+    icon: 'book',
+    items: RESOURCES_NAV,
+    universe: 'workspace',
+  },
+  // ── Transversal : depuis n'importe où ────────────────────────────────────
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: ALL_TOOLS_NAV },
 ];
 
@@ -319,7 +401,7 @@ export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...METIERS_TOOLS_NAV,
 ];
 
-export const GESTION_NAV: readonly NavItem[] = [...STOCK_NAV, ...ACHATS_NAV];
+export const GESTION_NAV: readonly NavItem[] = [...STOCK_NAV, ...ACHATS_NAV, ...VENTES_NAV];
 
 export const TOOLS_CATEGORIES_NAV: readonly NavItem[] = [
   { to: ROUTES.tools, label: 'Boîte à outils universelle', icon: 'wrench', primary: true },
@@ -330,6 +412,7 @@ export const APP_NAV: readonly NavItem[] = [...ROOT_NAV, ...TOOLS_CATEGORIES_NAV
 export const ORGANIZATION_NAV: readonly NavItem[] = [
   ...INTERVENTIONS_NAV,
   ...STOCK_NAV,
+  ...VENTES_NAV,
   ...ACHATS_NAV,
   ...ADMINISTRATION_NAV,
   ...TOOLS_NAV,

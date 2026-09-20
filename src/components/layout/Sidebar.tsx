@@ -9,12 +9,15 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
+import { SegmentedControl, type SegmentedOption } from '@/components/ui/SegmentedControl';
 import {
   ACCOUNT_NAV,
   PLATFORM_ADMIN_NAV,
   SIDEBAR_GROUPS,
+  UNIVERSES,
   type NavGroup,
   type ResolvedNavItem,
+  type Universe,
 } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useCurrentIndustry } from '@/features/industries';
@@ -40,6 +43,37 @@ const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
   'platform-admin': 'text-error',
 };
 const SIDEBAR_GROUP_ICON_COLOR_DEFAULT = 'text-primary';
+
+/**
+ * Le dernier univers choisi à la main.
+ *
+ * Ne sert que sur une page transversale (outils, compte, tableau de bord) :
+ * une page qui appartient à un univers l'impose. Sans cette mémoire, ouvrir
+ * la boîte à outils depuis Finance ramènerait la barre sur Gestion.
+ */
+const UNIVERSE_STORAGE_KEY = 'rezo360-universe';
+
+function readStoredUniverse(): Universe | null {
+  try {
+    const stored = localStorage.getItem(UNIVERSE_STORAGE_KEY);
+    return UNIVERSES.some((u) => u.id === stored) ? (stored as Universe) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeUniverse(universe: Universe): void {
+  try {
+    localStorage.setItem(UNIVERSE_STORAGE_KEY, universe);
+  } catch {
+    // Stockage inaccessible
+  }
+}
+
+const UNIVERSE_OPTIONS: readonly SegmentedOption<Universe>[] = UNIVERSES.map((u) => ({
+  value: u.id,
+  label: u.label,
+}));
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -329,17 +363,74 @@ export function Sidebar({
   // sidebar sans jamais passer par la redirection « Créer votre entreprise »
   // — il ne doit voir QUE le volet plateforme.
   const tenantGroups = organization ? resolvedTenantGroups : [];
+  const currentFullPath = location.pathname + location.search;
+
+  /*
+    L'UNIVERS ACTIF, ET QUI LE DÉCIDE
+
+    Trois sources, dans cet ordre :
+
+    1. Un choix fait à la main SUR CETTE PAGE. Comme pour le repli des volets,
+       il ne vaut que pour le chemin où il a été fait — sinon cliquer sur
+       « Finance » depuis /missions ne servirait à rien, la page ramenant
+       aussitôt sur Gestion (voir 2).
+
+    2. La page courante. Si elle appartient à une section rangée dans un
+       univers, cet univers s'impose : un lien profond vers /devis, un favori,
+       un retour arrière atterrissent dans le bon volet sans rien demander.
+
+    3. Le dernier choix mémorisé, puis le premier univers disponible. Ce n'est
+       le cas que sur une page transversale, qui n'appartient à personne.
+
+    Déduit au rendu, jamais posé par un effet : un effet peindrait d'abord le
+    mauvais univers, puis le corrigerait une image plus tard.
+  */
+  const universesPresent = UNIVERSES.filter((u) =>
+    tenantGroups.some((group) => group.universe === u.id),
+  );
+  const [manualUniverse, setManualUniverse] = useState<{
+    path: string;
+    universe: Universe;
+  } | null>(null);
+  const [storedUniverse] = useState<Universe | null>(readStoredUniverse);
+
+  const routeUniverse = tenantGroups.find(
+    (group) =>
+      group.universe !== undefined && isGroupActive(group, location.pathname, location.search),
+  )?.universe;
+
+  const activeUniverse: Universe | undefined =
+    manualUniverse?.path === currentFullPath
+      ? manualUniverse.universe
+      : (routeUniverse ??
+        (universesPresent.some((u) => u.id === storedUniverse) ? storedUniverse : null) ??
+        universesPresent[0]?.id);
+
+  const handleChooseUniverse = (universe: Universe) => {
+    setManualUniverse({ path: currentFullPath, universe });
+    storeUniverse(universe);
+  };
+
+  /*
+    L'univers filtre l'AFFICHAGE, jamais l'accès. `tenantGroups` a déjà été
+    passé par la formule et les permissions ; ce qui reste ici est ce que la
+    personne a le droit de voir, rangé. Une section sans univers est
+    transversale et reste toujours à l'écran.
+  */
+  const shownGroups = tenantGroups.filter(
+    (group) => group.universe === undefined || group.universe === activeUniverse,
+  );
+
   const allGroups = [
-    ...tenantGroups,
+    ...shownGroups,
     ...(platformAdminGroup ? [platformAdminGroup] : []),
     accountGroup,
   ];
-  const currentFullPath = location.pathname + location.search;
 
   // Un seul volet ouvert à la fois : celui qui contient la page courante.
   const activeGroupId =
     allGroups.find((g) => isGroupActive(g, location.pathname, location.search))?.id ??
-    tenantGroups[0]?.id ??
+    shownGroups[0]?.id ??
     'interventions';
 
   // Le repli manuel ne vaut QUE pour la page où il a été fait. Mémoriser le
@@ -441,8 +532,26 @@ export function Sidebar({
           ) : null}
         </div>
 
+        {/*
+          Le sélecteur d'univers. Deux univers au moins, sinon il n'y a rien à
+          choisir — la barre technicien n'en déclare aucun et ne le montre pas.
+          Replié, la barre est trop étroite pour trois libellés ; l'univers
+          courant reste celui d'avant le repli.
+        */}
+        {universesPresent.length >= 2 && !isCollapsed && activeUniverse !== undefined ? (
+          <SegmentedControl
+            options={UNIVERSE_OPTIONS.filter((option) =>
+              universesPresent.some((u) => u.id === option.value),
+            )}
+            value={activeUniverse}
+            onValueChange={handleChooseUniverse}
+            label="Univers"
+            className="[&>*]:text-2xs w-full [&>*]:min-w-0 [&>*]:flex-1 [&>*]:px-1"
+          />
+        ) : null}
+
         {/* Sections de navigation accordéon (un seul volet ouvert à la fois) */}
-        {tenantGroups.map((group) => (
+        {shownGroups.map((group) => (
           <CollapsibleSidebarSection
             key={group.id}
             group={group}

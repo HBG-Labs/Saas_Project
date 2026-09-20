@@ -10,6 +10,7 @@ import {
   MOBILE_NAV_SIZE,
   ORGANIZATION_NAV,
   SIDEBAR_GROUPS,
+  UNIVERSES,
   type NavItem,
 } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
@@ -216,6 +217,58 @@ describe('sections de la barre latérale', () => {
       expect(labels, `la section « ${group.label} » contient une entrée du même nom`).not.toContain(
         group.label,
       );
+    }
+  });
+});
+
+describe('univers', () => {
+  /*
+    Les univers sont une COUCHE DE NAVIGATION : ils rangent les sections, ils
+    ne possèdent aucune route et ne restreignent rien. Ces tests tiennent les
+    deux promesses faites en les introduisant — aucune URL ne change, aucune
+    destination ne disparaît — et la troisième, qui découle des deux autres :
+    ce dont on a besoin depuis n'importe où reste visible depuis n'importe où.
+  */
+
+  it('donne au moins une section à chacun des trois univers', () => {
+    // Un univers vide serait un onglet qui n'ouvre sur rien.
+    for (const universe of UNIVERSES) {
+      const sections = SIDEBAR_GROUPS.filter((group) => group.universe === universe.id);
+      expect(sections.length, `l'univers « ${universe.label} » est vide`).toBeGreaterThan(0);
+    }
+  });
+
+  it('ne range une section que dans un univers qui existe', () => {
+    // Le type l'interdit déjà ; ce test survit à un `as` malheureux.
+    const connus = new Set<string>(UNIVERSES.map((u) => u.id));
+    for (const group of SIDEBAR_GROUPS) {
+      if (group.universe === undefined) continue;
+      expect(connus.has(group.universe), `« ${group.label} » vise un univers inconnu`).toBe(true);
+    }
+  });
+
+  it('garde la boîte à outils et l’assistant hors de tout univers', () => {
+    /*
+      Un technicien cherche un outil depuis un devis comme depuis un chantier ;
+      on pose une question à l'assistant depuis n'importe quel écran. Les
+      ranger dans un univers les ferait disparaître des deux autres — c'est le
+      seul moyen par lequel les univers pourraient retirer un accès, et ce test
+      le ferme.
+    */
+    const transversales = SIDEBAR_GROUPS.filter((group) => group.universe === undefined);
+    const destinations = new Set(transversales.flatMap((g) => g.items).map((i) => i.to));
+
+    expect(destinations).toContain(ROUTES.tools);
+    expect(destinations).toContain(ROUTES.metiers);
+    expect(destinations).toContain(ROUTES.aiAssistant);
+  });
+
+  it('ne fait disparaître aucune destination d’organisation', () => {
+    // La promesse D6 : tout ce qui était atteignable l'est encore, dans un
+    // univers ou en transversal. `ORGANIZATION_NAV` est la liste de référence.
+    const atteignables = new Set(SIDEBAR_GROUPS.flatMap((g) => g.items).map((i) => i.to));
+    for (const item of ORGANIZATION_NAV) {
+      expect(atteignables, `« ${item.label} » n'est plus dans aucune section`).toContain(item.to);
     }
   });
 });
