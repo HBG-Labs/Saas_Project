@@ -259,7 +259,7 @@ function CollapsibleSidebarSection({
           className="atelier-nav-section text-muted-foreground hover:text-foreground hover:bg-surface-hover group text-2xs flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 font-semibold transition-colors select-none"
           aria-expanded={isOpen}
         >
-          <div className="flex items-center gap-2 truncate">
+          <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
             {Icon && (
               <Icon
                 className={cn(
@@ -268,7 +268,7 @@ function CollapsibleSidebarSection({
                 )}
               />
             )}
-            <span className="truncate">{group.label}</span>
+            <span className="min-w-0 leading-4 whitespace-normal">{group.label}</span>
           </div>
           <ChevronDown
             className={cn(
