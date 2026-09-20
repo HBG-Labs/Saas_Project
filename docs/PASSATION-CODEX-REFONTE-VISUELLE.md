@@ -261,10 +261,9 @@ nouvelle restriction (D6).
 - Les migrations et `npm run test:sql` sont exécutés par Claude Code, après
   autorisation de Harry. Pas par Codex.
 
-Migration en attente au moment de cette passation :
-`20260927090000_notification_states.sql` (état lu/écarté des
-notifications). Le front la précède sans risque — repli `localStorage` si
-la table manque.
+Dernière migration appliquée (20/09/2026) : `20260927090000_notification_states.sql`
+(état lu/écarté des notifications). 166 migrations, toutes appliquées ;
+le dépôt et la base sont alignés.
 
 ---
 
@@ -297,7 +296,7 @@ paiements de Finance sont en phases ultérieures — ne les invente pas).
 | Trois modes d'affichage | Jour, Nuit, Contraste élevé — couleurs libres, exigences d'accessibilité maintenues. |
 | Pas de nouvelles restrictions d'accès | Droits contractuels préservés. |
 | Mobile : PWA prioritaire, natif préservé | Compatible Android/iOS à venir. |
-| Densité adaptée par univers, identité commune | Gestion reste dense — un tableau de douze lignes vaut mieux qu'une carte qui en montre trois. |
+| **D8 — densité, reconfirmée le 20/09/2026** | L'univers Gestion conserve une densité d'information adaptée aux professionnels de terrain. Un tableau de douze lignes vaut mieux qu'une carte qui en montre trois. Ce n'est pas négociable dans les trois directions. |
 
 ---
 
