@@ -17,9 +17,15 @@ import {
   replaceInvoiceItems,
   updateInvoice,
   saveInvoiceDraft,
+  listInvoicePayments,
+  getInvoiceBalance,
+  recordPayment,
+  updateInvoicePayment,
+  deleteInvoicePayment,
   type CreateInvoiceInput,
   type InvoiceFilters,
   type InvoiceLineInput,
+  type RecordPaymentInput,
 } from '../api/invoices.api';
 
 /**
@@ -166,6 +172,70 @@ export function useDeleteInvoice() {
 
   return useMutation({
     mutationFn: deleteInvoice,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Règlements (D4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useInvoicePayments(invoiceId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.invoices.detail(invoiceId ?? 'none'), 'payments'],
+    queryFn: () => listInvoicePayments(invoiceId ?? ''),
+    enabled: invoiceId !== undefined,
+  });
+}
+
+export function useInvoiceBalance(invoiceId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.invoices.detail(invoiceId ?? 'none'), 'balance'],
+    queryFn: () => getInvoiceBalance(invoiceId ?? ''),
+    enabled: invoiceId !== undefined,
+  });
+}
+
+/*
+  Un règlement change trois choses à la fois : la liste des règlements, le
+  solde (vue), et le statut de la facture (trigger). L'invalidation large de
+  `qk.invoices.all` couvre les trois — voir l'en-tête de ce fichier.
+*/
+export function useRecordPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: RecordPaymentInput) => recordPayment(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
+export function useUpdateInvoicePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      paymentId,
+      patch,
+    }: {
+      paymentId: string;
+      patch: TablesUpdate<'invoice_payments'>;
+    }) => updateInvoicePayment(paymentId, patch),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+    },
+  });
+}
+
+export function useDeleteInvoicePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (paymentId: string) => deleteInvoicePayment(paymentId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
     },

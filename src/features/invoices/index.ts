@@ -23,9 +23,18 @@ export {
   updateInvoice,
   saveInvoiceDraft,
   STATUTS_FIGES,
+  PAYMENT_METHOD_LABELS,
+  listInvoicePayments,
+  getInvoiceBalance,
+  recordPayment,
+  updateInvoicePayment,
+  deleteInvoicePayment,
   type CreateInvoiceInput,
   type InvoiceFilters,
   type InvoiceLineInput,
+  type InvoicePayment,
+  type InvoiceBalance,
+  type RecordPaymentInput,
 } from './api/invoices.api';
 
 export {
@@ -38,6 +47,11 @@ export {
   useReplaceInvoiceItems,
   useUpdateInvoice,
   useSaveInvoiceDraft,
+  useInvoicePayments,
+  useInvoiceBalance,
+  useRecordPayment,
+  useUpdateInvoicePayment,
+  useDeleteInvoicePayment,
 } from './hooks/useInvoices';
 
 export { InvoiceDraftEditor } from './components/InvoiceDraftEditor';

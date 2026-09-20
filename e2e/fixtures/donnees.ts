@@ -357,6 +357,7 @@ export function facture(surcharge: Record<string, unknown> = {}) {
     site_name: null,
     currency: 'EUR',
     status: 'draft',
+    status_before_payment: null,
     issued_at: null as string | null,
     due_date: '2026-10-19',
     payment_terms: 'Paiement à 30 jours',

@@ -19,6 +19,7 @@ export const completeInvoice = (): InvoiceWithItems => ({
   updated_at: '2026-09-03T14:00:00Z',
   reference: 'FAC-2026-00001',
   document_type: 'invoice',
+  status_before_payment: null,
   status: 'issued',
   issued_at: '2026-09-03T14:00:00Z',
   due_date: '2026-10-03',

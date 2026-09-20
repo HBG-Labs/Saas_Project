@@ -40,6 +40,7 @@ import {
   useDeleteInvoice,
   useInvoice,
   useIssueInvoice,
+  useRecordPayment,
   useUpdateInvoice,
 } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
@@ -92,6 +93,7 @@ export default function InvoiceDetailPage() {
   const invoice = invoiceQuery.data ?? null;
 
   const updateInvoice = useUpdateInvoice(invoiceId ?? '');
+  const recordPayment = useRecordPayment();
   const issueInvoice = useIssueInvoice(invoiceId ?? '');
   const deleteInvoice = useDeleteInvoice();
 
@@ -334,18 +336,26 @@ export default function InvoiceDetailPage() {
           )}
 
           {/*
-            « Marquer comme payée » est une DÉCLARATION de l'utilisateur, pas un
-            constat de REZO360 : aucun encaissement n'est rapproché ici. Le
-            libellé le dit, et rien dans cette page n'affiche « impayée » — on
-            ne prête pas à un client un défaut de paiement qu'on n'a pas
-            constaté.
+            « Marquer comme payée » ENREGISTRE UN RÈGLEMENT du reste dû
+            (`record_payment`, sans montant) : depuis D4, le statut « payée »
+            suit les encaissements et ne se pose plus à la main — la base le
+            refuse. Aucun rapprochement bancaire n'est fait pour autant : c'est
+            toujours une déclaration de l'utilisateur, mais elle laisse une
+            ligne dans le livre, datée et signée.
+
+            L'avoir garde l'interrupteur : son « payé » signifie « remboursé ou
+            imputé », et le remboursement n'est pas modélisé.
           */}
           <Button
             variant="outline"
             size="sm"
             className="border-success/40 text-success hover:bg-success/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
-            disabled={updateInvoice.isPending}
-            onClick={() => updateInvoice.mutate({ status: 'paid' })}
+            disabled={updateInvoice.isPending || recordPayment.isPending}
+            onClick={() =>
+              estAvoir
+                ? updateInvoice.mutate({ status: 'paid' })
+                : recordPayment.mutate({ invoiceId: invoice.id })
+            }
           >
             <CheckCircle2 className="size-3.5" aria-hidden="true" />
             {estAvoir ? 'Marquer comme remboursé / imputé' : 'Marquer comme payée'}

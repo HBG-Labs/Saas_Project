@@ -82,6 +82,7 @@ export type QuoteReminderStatus = 'pending' | 'sent' | 'skipped' | 'failed';
 export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
 
 export type InvoiceDocumentType = 'invoice' | 'credit_note';
+export type PaymentMethod = 'transfer' | 'check' | 'card' | 'cash' | 'direct_debit' | 'other';
 
 export type InvoiceTransmissionStatus =
   | 'queued'
@@ -2422,6 +2423,58 @@ export interface Database {
       // =======================================================================
       // Factures
       // =======================================================================
+      /**
+       * Un encaissement sur une facture de vente (D4). Le solde n'est jamais
+       * stocké : voir la vue `invoice_balances`. `status = 'paid'` suit ces
+       * lignes par trigger ; il ne se pose plus à la main.
+       */
+      invoice_payments: {
+        Row: {
+          id: string;
+          organization_id: string;
+          invoice_id: string;
+          amount_cents: number;
+          paid_on: string;
+          method: PaymentMethod;
+          reference: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          invoice_id: string;
+          amount_cents: number;
+          paid_on?: string;
+          method?: PaymentMethod;
+          reference?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          amount_cents?: number;
+          paid_on?: string;
+          method?: PaymentMethod;
+          reference?: string | null;
+          note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_payments_invoice_id_fkey';
+            columns: ['invoice_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoice_payments_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       invoices: {
         Row: {
           id: string;
@@ -2462,6 +2515,8 @@ export interface Database {
           site_name: string | null;
           currency: string;
           status: InvoiceStatus;
+          /** Posé par la base quand les règlements soldent la facture. NULL = payée avant le suivi. */
+          status_before_payment: InvoiceStatus | null;
           issued_at: string | null;
           due_date: string | null;
           payment_terms: string | null;
@@ -4313,6 +4368,31 @@ export interface Database {
       };
 
       /**
+       * Le solde d'une facture de vente, calculé depuis ses règlements. Les
+       * avoirs n'y figurent pas. `remaining_cents` vaut 0 dès que la facture
+       * n'est plus « émise » ou « envoyée » ; `settled_without_ledger` signale
+       * une facture payée avant le suivi des règlements.
+       */
+      invoice_balances: {
+        Row: {
+          invoice_id: string;
+          organization_id: string;
+          status: InvoiceStatus;
+          document_type: InvoiceDocumentType;
+          due_date: string | null;
+          total_cents: number;
+          paid_cents: number;
+          remaining_cents: number;
+          payment_count: number;
+          last_paid_on: string | null;
+          settled_without_ledger: boolean;
+          partially_paid: boolean;
+          overdue: boolean;
+        };
+        Relationships: [];
+      };
+
+      /**
        * Ventilation de la TVA par taux, exigee par EN 16931 : plusieurs lignes
        * par facture. L'arrondi se fait sur la somme des bases d'un meme taux,
        * jamais ligne a ligne — sommer des lignes arrondies ferait deriver le
@@ -4440,6 +4520,21 @@ export interface Database {
       issue_invoice: {
         Args: { p_invoice_id: string; p_expected_updated_at: string };
         Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      /**
+       * Le seul chemin pour encaisser. `p_amount_cents` absent = ce qui manque
+       * au livre (total − encaissé) : c'est « Marquer payée ».
+       */
+      record_payment: {
+        Args: {
+          p_invoice_id: string;
+          p_amount_cents?: number | null;
+          p_paid_on?: string;
+          p_method?: PaymentMethod;
+          p_reference?: string | null;
+          p_note?: string | null;
+        };
+        Returns: Database['public']['Tables']['invoice_payments']['Row'];
       };
       /**
        * Enregistre un mouvement et met à jour la quantité, dans la même
@@ -4693,6 +4788,7 @@ export interface Database {
       organization_status: OrganizationStatus;
       invitation_status: InvitationStatus;
       subscription_status: SubscriptionStatus;
+      payment_method: PaymentMethod;
       team_member_role: TeamMemberRole;
       mission_status: MissionStatus;
       mission_priority: MissionPriority;

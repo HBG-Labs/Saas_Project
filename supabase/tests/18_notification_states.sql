@@ -85,6 +85,15 @@ values (
   (select id from public.organizations where slug = 'notif-states-autre')
 );
 
+-- Sans abonnement, `app.enforce_member_quota` limite une organisation Gratuite
+-- à un seul membre : le technicien ne pourrait pas être ajouté. C'est
+-- l'omission qui a fait échouer la première exécution de cette suite.
+delete from public.subscriptions where organization_id in (select org_id from t_ctx union select autre_org_id from t_ctx);
+insert into public.subscriptions (organization_id, plan_code, status, current_period_end)
+select org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx
+union all
+select autre_org_id, 'pro', 'active'::public.subscription_status, now() + interval '30 days' from t_ctx;
+
 -- Les propriétaires sont rattachés par `organizations_create_owner` ; le
 -- technicien s'ajoute.
 insert into public.organization_members (organization_id, user_id, role, status)

@@ -5,6 +5,8 @@ import type {
   CustomerType,
   Database,
   InvoiceStatus,
+  PaymentMethod,
+  Tables,
   TablesInsert,
   TablesUpdate,
   VatCategory,
@@ -563,4 +565,79 @@ export async function createInvoiceFromQuote(input: {
     ...(quote.notes !== null ? { notes: quote.notes } : {}),
     items: lignes,
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Règlements (D4)
+//
+// Le solde n'est jamais calculé ici : il vient de la vue `invoice_balances`,
+// et le statut « payée » suit les règlements par trigger. Le client enregistre,
+// corrige, supprime ; il ne décide pas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type InvoicePayment = Tables<'invoice_payments'>;
+export type InvoiceBalance = Database['public']['Views']['invoice_balances']['Row'];
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  transfer: 'Virement',
+  check: 'Chèque',
+  card: 'Carte',
+  cash: 'Espèces',
+  direct_debit: 'Prélèvement',
+  other: 'Autre',
+};
+
+export interface RecordPaymentInput {
+  invoiceId: string;
+  /** Absent : ce qui manque au livre (total − encaissé). C'est « Marquer payée ». */
+  amountCents?: number;
+  /** AAAA-MM-JJ. Absent : aujourd'hui. */
+  paidOn?: string;
+  method?: PaymentMethod;
+  reference?: string;
+  note?: string;
+}
+
+export async function listInvoicePayments(invoiceId: string): Promise<InvoicePayment[]> {
+  return unwrap(
+    supabase
+      .from('invoice_payments')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('paid_on', { ascending: false })
+      .order('created_at', { ascending: false }),
+  );
+}
+
+/** `null` pour un avoir, un brouillon invisible, ou une base sans la vue. */
+export async function getInvoiceBalance(invoiceId: string): Promise<InvoiceBalance | null> {
+  return unwrapMaybe(
+    supabase.from('invoice_balances').select('*').eq('invoice_id', invoiceId).maybeSingle(),
+  );
+}
+
+export async function recordPayment(input: RecordPaymentInput): Promise<InvoicePayment> {
+  return unwrap(
+    supabase.rpc('record_payment', {
+      p_invoice_id: input.invoiceId,
+      ...(input.amountCents !== undefined ? { p_amount_cents: input.amountCents } : {}),
+      ...(input.paidOn !== undefined ? { p_paid_on: input.paidOn } : {}),
+      ...(input.method !== undefined ? { p_method: input.method } : {}),
+      ...(input.reference !== undefined ? { p_reference: input.reference } : {}),
+      ...(input.note !== undefined ? { p_note: input.note } : {}),
+    }),
+  );
+}
+
+export async function updateInvoicePayment(
+  paymentId: string,
+  patch: TablesUpdate<'invoice_payments'>,
+): Promise<InvoicePayment> {
+  return unwrap(
+    supabase.from('invoice_payments').update(patch).eq('id', paymentId).select('*').single(),
+  );
+}
+
+export async function deleteInvoicePayment(paymentId: string): Promise<void> {
+  await unwrap(supabase.from('invoice_payments').delete().eq('id', paymentId).select('id'));
 }
