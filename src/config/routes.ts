@@ -104,6 +104,9 @@ export const ROUTES = {
   receivedInvoiceDetail: (receivedInvoiceId: string) => `/factures/recues/${receivedInvoiceId}`,
   documents: '/bibliotheque',
   notes: '/bloc-notes',
+  /** Échafaudage Workspace v2 — écran provisoire, remplacé par les écrans de Codex. */
+  workspacePages: '/workspace/pages',
+  workspacePage: (pageId: string) => `/workspace/pages/${pageId}`,
   reports: '/comptes-rendus',
   profile: '/profile',
   settings: '/settings',
@@ -145,6 +148,7 @@ export const ROUTE_PATTERNS = {
   portalQuote: '/portail/devis/:quoteId',
   invitation: '/invitations/:token',
   customer: '/clients/:customerId',
+  workspacePage: '/workspace/pages/:pageId',
   team: '/equipes/:teamId',
   mission: '/missions/:missionId',
   intervention: '/interventions/:interventionId',

@@ -234,6 +234,24 @@ export const routes: RouteObject[] = [
                     ],
                   },
                   {
+                    element: <RequirePlan feature={FEATURES.workspace} label="Le Workspace" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.workspaceView} />,
+                        children: [
+                          {
+                            path: ROUTES.workspacePages,
+                            lazy: lazyPage(() => import('@/pages/workspace/WorkspacePagesPage')),
+                          },
+                          {
+                            path: ROUTE_PATTERNS.workspacePage,
+                            lazy: lazyPage(() => import('@/pages/workspace/WorkspacePagesPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     element: <RequirePlan feature={FEATURES.customers} label="Le module Clients" />,
                     children: [
                       {

@@ -199,6 +199,17 @@ export const LIBRARY_NAV: readonly NavItem[] = [
 export const RESOURCES_NAV: readonly NavItem[] = [
   // Le bloc-notes était rangé dans la boîte à outils. C'est un espace où l'on
   // écrit, pas un instrument : il ouvre l'univers Workspace.
+  // Échafaudage Workspace v2 : les pages, l'espace personnel, les modèles, la
+  // recherche et l'IA sur une page — sans direction artistique, en attendant
+  // les écrans de Codex.
+  {
+    to: ROUTES.workspacePages,
+    label: 'Pages',
+    icon: 'file-text',
+    permission: 'workspace.view',
+    feature: 'workspace',
+    primary: true,
+  },
   { to: ROUTES.notes, label: 'Bloc-notes', icon: 'file-text' },
   ...LIBRARY_NAV,
   { to: ROUTES.tutorials, label: 'Tutoriels & Formation', icon: 'book', primary: true },
