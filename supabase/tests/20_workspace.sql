@@ -202,6 +202,18 @@ do $$ declare v_page uuid; v_avant timestamptz; begin
   update public.workspace_pages set title = 'Compte rendu (relu)' where id = v_page;
   perform pg_temp.login('technicien'); set local role authenticated;
 
+  /*
+    LIMITE DU BANC D'ESSAI : `now()` est fige pour toute la transaction, et
+    cette suite n'en a qu'une. La modification du patron recoit donc le MEME
+    `updated_at` que la lecture d'avant, et le garde ne verrait aucune
+    difference. En production, chaque requete est sa propre transaction.
+
+    On represente donc la lecture anterieure par un horodatage explicitement
+    plus ancien : c'est la logique du garde (« distinct → refus ») qui est
+    testee, avec les valeurs qu'il verrait entre deux vraies sessions.
+  */
+  v_avant := v_avant - interval '1 second';
+
   perform pg_temp.refuses(
     format($q$select public.save_workspace_page(%L, %L, 'Ma version', '{"type":"doc","content":[]}'::jsonb)$q$, v_page, v_avant),
     'enregistrer avec un updated_at perime est refuse : quelqu''un d''autre a modifie la page');
