@@ -99,6 +99,10 @@ export const PERMISSIONS = {
   workspaceEdit: 'workspace.edit',
   workspaceManage: 'workspace.manage',
 
+  /** Feuille d'heures — supabase/migrations/20261002090000_feuille_heures.sql */
+  timesheetViewAll: 'timesheet.view_all',
+  timesheetManage: 'timesheet.manage',
+
   // Portail client — supabase/migrations/20260913054246_portail_client_socle.sql
   clientPortalView: 'client_portal.view',
   clientMessageSend: 'client_message.send',
@@ -198,6 +202,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.view',
     'workspace.edit',
     'workspace.manage',
+    'timesheet.view_all',
+    'timesheet.manage',
   ],
 
   admin: [
@@ -253,6 +259,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.view',
     'workspace.edit',
     'workspace.manage',
+    'timesheet.view_all',
+    'timesheet.manage',
   ],
 
   manager: [
@@ -304,6 +312,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.view',
     'workspace.edit',
     'workspace.manage',
+    'timesheet.view_all',
+    'timesheet.manage',
   ],
 
   team_leader: [
@@ -345,6 +355,8 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.view',
     'workspace.edit',
     'workspace.manage',
+    'timesheet.view_all',
+    'timesheet.manage',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte

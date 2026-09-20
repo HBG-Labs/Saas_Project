@@ -127,6 +127,17 @@ describe('moindre privilège', () => {
     expect(roleHasPermission('team_leader', PERMISSIONS.leaveApprove)).toBe(false);
   });
 
+  it("confie la feuille d'heures au chef d'équipe, jamais au salarié", () => {
+    // Arbitrage F (20/09/2026) : voir et clôturer la feuille d'heures des
+    // autres commence au chef d'équipe. Chacun voit la sienne sans permission —
+    // c'est un droit du salarié, décidé par identité dans la policy.
+    for (const role of ORG_ROLES) {
+      const expected = ['owner', 'admin', 'manager', 'team_leader'].includes(role);
+      expect(roleHasPermission(role, PERMISSIONS.timesheetViewAll)).toBe(expected);
+      expect(roleHasPermission(role, PERMISSIONS.timesheetManage)).toBe(expected);
+    }
+  });
+
   it("ne donne pas la vue globale des missions au chef d'équipe", () => {
     // Il voit les missions de SES équipes — décidé par appartenance dans la
     // policy, pas par une permission générale.
@@ -213,6 +224,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.organizationDocuments,
       MIGRATION_FILES.clientPortalSocle,
       MIGRATION_FILES.workspace,
+      MIGRATION_FILES.feuilleHeures,
     ],
     'role_permissions',
   );

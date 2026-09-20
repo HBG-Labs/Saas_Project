@@ -185,6 +185,22 @@ export const qk = {
     tasks: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'tasks'] as const,
   },
 
+  // ----------------------------------------------------------- feuille d'heures
+  timesheet: {
+    all: ['timesheet'] as const,
+    openEntry: (memberId: string) => [...qk.timesheet.all, 'member', memberId, 'open'] as const,
+    entries: (organizationId: string, filters?: unknown) =>
+      [...qk.timesheet.all, organizationId, 'entries', filters ?? null] as const,
+    days: (organizationId: string, range: unknown) =>
+      [...qk.timesheet.all, organizationId, 'days', range] as const,
+    weeks: (organizationId: string, range: unknown) =>
+      [...qk.timesheet.all, organizationId, 'weeks', range] as const,
+    month: (organizationId: string, month: string) =>
+      [...qk.timesheet.all, organizationId, 'month', month] as const,
+    closures: (organizationId: string, filters?: unknown) =>
+      [...qk.timesheet.all, organizationId, 'closures', filters ?? null] as const,
+  },
+
   einvoicing: {
     all: ['einvoicing'] as const,
     connection: (organizationId: string) =>

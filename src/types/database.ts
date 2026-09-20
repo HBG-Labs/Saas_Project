@@ -86,6 +86,8 @@ export type PaymentMethod = 'transfer' | 'check' | 'card' | 'cash' | 'direct_deb
 export type WorkspaceTaskStatus = 'todo' | 'in_progress' | 'done';
 export type RecurringOccurrenceStatus = 'created' | 'skipped';
 export type CustomerCreditOrigin = 'credit_note' | 'overpayment';
+/** Temps hors intervention — 20261002090000_feuille_heures.sql */
+export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
 export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
@@ -585,6 +587,8 @@ export interface Database {
           created_by: string | null;
           /** Fuseau IANA, sert aux heures des récurrences. */
           timezone: string;
+          /** Durée hebdomadaire contractuelle par défaut (35). Surchargeable par membre. */
+          weekly_hours: number;
           created_at: string;
           updated_at: string;
         };
@@ -620,6 +624,7 @@ export interface Database {
         };
         Update: {
           timezone?: string;
+          weekly_hours?: number;
           name?: string;
           holiday_territory?: string;
           legal_name?: string | null;
@@ -661,6 +666,8 @@ export interface Database {
           phone: string | null;
           invited_by: string | null;
           joined_at: string | null;
+          /** Durée hebdomadaire de ce membre (temps partiel). `null` = celle de l'organisation. */
+          weekly_hours: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -674,6 +681,7 @@ export interface Database {
           phone?: string | null;
           invited_by?: string | null;
           joined_at?: string | null;
+          weekly_hours?: number | null;
         };
         Update: {
           role?: OrgRole;
@@ -681,6 +689,7 @@ export interface Database {
           job_title?: string | null;
           phone?: string | null;
           joined_at?: string | null;
+          weekly_hours?: number | null;
         };
         Relationships: [
           {
@@ -3916,6 +3925,105 @@ export interface Database {
           },
         ];
       };
+
+      // -----------------------------------------------------------------------
+      // Feuille d'heures — 20261002090000_feuille_heures.sql
+      // -----------------------------------------------------------------------
+
+      /**
+       * Temps hors intervention : trajet, atelier, formation, autre. Mêmes
+       * règles que les segments d'intervention : pour soi-même le serveur pose
+       * l'heure (tout horodatage fourni est ignoré), un segment clos est
+       * immuable, pas de suppression. Qui porte `timesheet.manage` peut poser
+       * des horaires explicites, corriger et supprimer — tracé dans l'audit.
+       * `organization_id` et `member_user_id` sont dérivés du membre par trigger.
+       */
+      work_time_entries: {
+        Row: {
+          id: string;
+          organization_id: string;
+          member_id: string;
+          member_user_id: string;
+          kind: WorkTimeKind;
+          started_at: string;
+          ended_at: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          member_id: string;
+          kind?: WorkTimeKind;
+          /** Ignoré sans `timesheet.manage`. */
+          started_at?: string;
+          /** Ignoré sans `timesheet.manage`. */
+          ended_at?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          member_id?: string;
+          kind?: WorkTimeKind;
+          started_at?: string;
+          ended_at?: string | null;
+          note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'work_time_entries_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'work_time_entries_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /**
+       * Un mois clos pour un membre, avec l'instantané de ses totaux. Lecture
+       * seule côté client : s'écrit par `close_timesheet_month` et
+       * `reopen_timesheet_month`. Une clôture rouverte reste en historique
+       * (`reopened_at` posé) ; une seule est active par membre et par mois.
+       */
+      timesheet_closures: {
+        Row: {
+          id: string;
+          organization_id: string;
+          member_id: string;
+          /** Premier jour du mois clos, AAAA-MM-01. */
+          month: string;
+          intervention_minutes: number;
+          other_minutes: number;
+          total_minutes: number;
+          leave_days: number;
+          note: string | null;
+          closed_by: string | null;
+          closed_at: string;
+          reopened_by: string | null;
+          reopened_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'timesheet_closures_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'timesheet_closures_member_id_fkey';
+            columns: ['member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_preferences: {
         Row: {
           user_id: string;
@@ -4756,6 +4864,50 @@ export interface Database {
       };
 
       /**
+       * Une journée de travail par membre, calculée : segments d'intervention
+       * (`work` clos) et temps hors intervention, découpés à minuit dans le
+       * fuseau de l'organisation. Un segment ouvert ne compte pas. Seules les
+       * journées avec du temps existent ; `timesheet_month` donne le calendrier
+       * complet. Chacun voit les siennes, `timesheet.view_all` voit tout.
+       */
+      timesheet_days: {
+        Row: {
+          organization_id: string;
+          member_id: string;
+          /** AAAA-MM-JJ, dans le fuseau de l'organisation. */
+          day: string;
+          intervention_minutes: number;
+          other_minutes: number;
+          total_minutes: number;
+          /** Un congé validé couvre ce jour. */
+          on_leave: boolean;
+        };
+        Relationships: [];
+      };
+
+      /**
+       * La semaine ISO (lundi) par membre, comparée au contrat
+       * (`organization_members.weekly_hours`, sinon `organizations.weekly_hours`).
+       * Le dépassement est une durée, pas une paie : aucune majoration ici.
+       */
+      timesheet_weeks: {
+        Row: {
+          organization_id: string;
+          member_id: string;
+          /** Le lundi, AAAA-MM-JJ. */
+          week_start: string;
+          intervention_minutes: number;
+          other_minutes: number;
+          total_minutes: number;
+          contract_minutes: number;
+          overtime_minutes: number;
+          /** Jours travaillés de la semaine qui tombent aussi sur un congé validé. */
+          leave_days_touched: number;
+        };
+        Relationships: [];
+      };
+
+      /**
        * Ventilation de la TVA par taux, exigee par EN 16931 : plusieurs lignes
        * par facture. L'arrondi se fait sur la somme des bases d'un meme taux,
        * jamais ligne a ligne — sommer des lignes arrondies ferait deriver le
@@ -4959,6 +5111,62 @@ export interface Database {
           p_content: TiptapDocument;
         };
         Returns: Database['public']['Tables']['workspace_pages']['Row'];
+      };
+
+      // -----------------------------------------------------------------------
+      // Feuille d'heures — 20261002090000_feuille_heures.sql
+      // -----------------------------------------------------------------------
+
+      /**
+       * Le mois complet, un enregistrement par membre actif et par jour —
+       * travaillé, vide ou en congé. Chacun n'obtient que les siens sans
+       * `timesheet.view_all`. C'est la source de l'export : le fichier se
+       * fabrique côté client.
+       */
+      timesheet_month: {
+        Args: { p_organization_id: string; p_month: string };
+        Returns: {
+          member_id: string;
+          day: string;
+          intervention_minutes: number;
+          other_minutes: number;
+          total_minutes: number;
+          on_leave: boolean;
+          leave_type: LeaveType | null;
+          closed: boolean;
+        }[];
+      };
+      /**
+       * Fige le mois d'un membre (`timesheet.manage`) : refuse le mois en
+       * cours, un chronomètre encore ouvert sur le mois, une clôture déjà
+       * active. Journalisé.
+       */
+      close_timesheet_month: {
+        Args: {
+          p_organization_id: string;
+          p_member_id: string;
+          p_month: string;
+          p_note?: string | null;
+        };
+        Returns: Database['public']['Tables']['timesheet_closures']['Row'];
+      };
+      /** Rouvre une clôture (`timesheet.manage`). Journalisé ; la clôture reste en historique. */
+      reopen_timesheet_month: {
+        Args: { p_closure_id: string; p_note?: string | null };
+        Returns: Database['public']['Tables']['timesheet_closures']['Row'];
+      };
+      /**
+       * Ferme tout chronomètre du compte (intervention comprise) et ouvre un
+       * temps hors intervention. Le pendant de `switch_intervention_time_entry`.
+       */
+      start_work_time: {
+        Args: { p_organization_id: string; p_kind: WorkTimeKind; p_note?: string | null };
+        Returns: Database['public']['Tables']['work_time_entries']['Row'];
+      };
+      /** Ferme le temps hors intervention en cours du compte ; `null` s'il n'y en avait pas. */
+      stop_work_time: {
+        Args: Record<string, never>;
+        Returns: Database['public']['Tables']['work_time_entries']['Row'] | null;
       };
       /**
        * Enregistre un mouvement et met à jour la quantité, dans la même
@@ -5216,6 +5424,7 @@ export interface Database {
       workspace_task_status: WorkspaceTaskStatus;
       recurring_occurrence_status: RecurringOccurrenceStatus;
       customer_credit_origin: CustomerCreditOrigin;
+      work_time_kind: WorkTimeKind;
       workspace_task_priority: WorkspaceTaskPriority;
       team_member_role: TeamMemberRole;
       mission_status: MissionStatus;
