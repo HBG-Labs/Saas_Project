@@ -2,7 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { COMPACT_STORAGE_KEY, PRESET_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
+import { ACCENT_COLORS } from './accent-colors';
+import {
+  ACCENT_STORAGE_KEY,
+  COMPACT_STORAGE_KEY,
+  PRESET_STORAGE_KEY,
+  THEME_STORAGE_KEY,
+} from './theme-context';
 import { ThemeProvider } from './ThemeProvider';
 import { useTheme } from './useTheme';
 
@@ -77,10 +83,10 @@ function Probe() {
       <button
         type="button"
         onClick={() => {
-          setAccentColor('purple');
+          setAccentColor('encre');
         }}
       >
-        Accent Violet
+        Accent Encre
       </button>
       <button
         type="button"
@@ -261,12 +267,69 @@ describe('ThemeProvider', () => {
     await user.click(screen.getByRole('button', { name: 'Contraste' }));
     expect(screen.getByTestId('preset')).toHaveTextContent('contraste-eleve');
 
-    await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
-    expect(screen.getByTestId('accent')).toHaveTextContent('purple');
+    await user.click(screen.getByRole('button', { name: 'Accent Encre' }));
+    expect(screen.getByTestId('accent')).toHaveTextContent('encre');
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.getByTestId('preset')).toHaveTextContent('default');
     expect(screen.getByTestId('accent')).toHaveTextContent('auto');
+  });
+
+  it('migre un accent retiré vers sa nuance, sans remise à zéro', () => {
+    // Les neuf accents de couleur sont devenus neuf nuances de bleu. Sans table
+    // de correspondance, `readStoredAccent` retombe sur `auto` : la personne qui
+    // avait choisi « Violet Digital » perdrait son réglage au prochain
+    // chargement, sans que rien ne l'explique.
+    localStorage.setItem(ACCENT_STORAGE_KEY, 'purple');
+    mockSystemDark(false);
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('accent')).toHaveTextContent('encre');
+  });
+
+  it('retombe sur « auto » pour un accent qui n’a jamais existé', () => {
+    // Le repli doit rester, mais ne couvrir QUE les valeurs qu'on n'a jamais
+    // écrites — sinon la migration ci-dessus ne servirait à rien.
+    localStorage.setItem(ACCENT_STORAGE_KEY, 'chartreuse');
+    mockSystemDark(false);
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('accent')).toHaveTextContent('auto');
+  });
+
+  it('sert à « Contraste élevé » son propre jeu d’accent, et non celui du clair', async () => {
+    /*
+      L'accent est appliqué APRÈS le preset, donc il l'écrase. Tant qu'il n'avait
+      que deux jeux, personnaliser « Contraste élevé » y posait le bleu du thème
+      clair : le thème d'accessibilité retombait au contraste ordinaire, sans
+      erreur ni avertissement.
+    */
+    mockSystemDark(false);
+    const user = userEvent.setup();
+    const encre = ACCENT_COLORS.find((a) => a.id === 'encre');
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Contraste' }));
+    await user.click(screen.getByRole('button', { name: 'Accent Encre' }));
+
+    const applique = document.documentElement.style.getPropertyValue('--primary');
+    expect(applique).toBe(encre?.contrastVariables['--primary']);
+    expect(applique).not.toBe(encre?.lightVariables['--primary']);
   });
 
   it('permet d’activer et de persister le mode compact haute densité', async () => {
@@ -312,5 +375,3 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('theme')).toHaveTextContent('light');
   });
 });
-
-

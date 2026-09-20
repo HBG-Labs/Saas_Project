@@ -10,7 +10,7 @@ import {
   type Theme,
   type ThemeContextValue,
 } from './theme-context';
-import { ACCENT_COLORS, type AccentColorId } from './accent-colors';
+import { ACCENT_COLORS, ACCENTS_RETIRES, type AccentColorId } from './accent-colors';
 import { applyBrowserBarColor } from './theme-script';
 import {
   DEFAULT_THEME_PRESET,
@@ -38,6 +38,12 @@ import {
  */
 const PRESET_CLAIR: ThemePresetId = 'default';
 const PRESET_SOMBRE: ThemePresetId = 'atelier-nuit';
+
+/**
+ * Le thème d'accessibilité. Nommé ici parce que l'accent doit le reconnaître
+ * pour lui servir son propre jeu de variables — voir `contrastVariables`.
+ */
+const PRESET_CONTRASTE: ThemePresetId = 'contraste-eleve';
 
 function readStoredPreset(): ThemePresetId {
   try {
@@ -72,6 +78,17 @@ function readStoredAccent(): AccentColorId {
   try {
     const stored = localStorage.getItem(ACCENT_STORAGE_KEY) as AccentColorId | null;
     if (stored && ACCENT_COLORS.some((a) => a.id === stored)) return stored;
+
+    /*
+      Accent retiré : on ramène vers la nuance qui lui correspond.
+
+      Sans cette table, le repli sur `auto` ci-dessous s'appliquerait à toutes
+      les personnes qui avaient choisi un accent — le réglage disparaîtrait au
+      prochain chargement, en silence. Le repli ne doit couvrir que les valeurs
+      qu'on n'a jamais écrites.
+    */
+    const remplacante = stored === null ? undefined : ACCENTS_RETIRES[stored];
+    if (remplacante !== undefined) return remplacante;
   } catch {
     // Stockage inaccessible
   }
@@ -118,6 +135,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     ACCENT_COLORS.forEach((a) => {
       Object.keys(a.lightVariables).forEach((k) => allCssVarKeys.add(k));
       Object.keys(a.darkVariables).forEach((k) => allCssVarKeys.add(k));
+      Object.keys(a.contrastVariables).forEach((k) => allCssVarKeys.add(k));
     });
 
     allCssVarKeys.forEach((key) => {
@@ -133,7 +151,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (accentColor !== 'auto') {
       const accent = ACCENT_COLORS.find((a) => a.id === accentColor);
       if (accent) {
-        const accentVars = resolvedTheme === 'dark' ? accent.darkVariables : accent.lightVariables;
+        /*
+          L'accent est posé APRÈS le preset, donc il l'écrase. « Contraste
+          élevé » a besoin de son propre jeu : lui servir celui du thème clair
+          ramènerait le bleu renforcé au contraste ordinaire, et le thème
+          d'accessibilité perdrait sa raison d'être dès qu'on le personnalise.
+        */
+        const accentVars =
+          preset === PRESET_CONTRASTE
+            ? accent.contrastVariables
+            : resolvedTheme === 'dark'
+              ? accent.darkVariables
+              : accent.lightVariables;
         Object.entries(accentVars).forEach(([key, val]) => {
           root.style.setProperty(key, val);
         });
@@ -232,4 +261,3 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return <ThemeContext value={value}>{children}</ThemeContext>;
 }
-
