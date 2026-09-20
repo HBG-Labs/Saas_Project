@@ -8,8 +8,22 @@ import { cn } from '@/lib/cn';
  * La surface et un filet suffisent à regrouper le contenu. L'ombre est réservée
  * aux commandes et aux panneaux superposés, plutôt que répétée sur chaque carte.
  */
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('bg-surface border-border rounded-lg border', className)} {...props} />;
+export function Card({
+  className,
+  variant = 'surface',
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { variant?: 'surface' | 'section' }) {
+  return (
+    <div
+      className={cn(
+        variant === 'section'
+          ? 'border-border border-b'
+          : 'bg-surface border-border rounded-lg border',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

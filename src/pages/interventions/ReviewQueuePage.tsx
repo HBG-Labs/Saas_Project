@@ -115,7 +115,7 @@ export default function ReviewQueuePage() {
       )}
 
       {/* Barre de stats & recherche */}
-      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-2xl border p-3.5 shadow-xs sm:flex-row sm:items-center sm:p-4">
+      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-lg border p-3.5 sm:flex-row sm:items-center sm:p-4">
         <div className="text-2xs flex flex-wrap items-center gap-2 font-semibold">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
             <ClipboardCheck className="size-4" aria-hidden="true" />
@@ -182,7 +182,7 @@ export default function ReviewQueuePage() {
         <ul className="space-y-3">
           {list.map((report) => (
             <li key={report.id}>
-              <Card className="hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 overflow-hidden transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5">
+              <Card className="hover:border-primary/25 focus-within:border-primary/30 overflow-hidden transition-colors motion-reduce:hover:translate-y-0">
                 <CardContent className="space-y-4 p-4 sm:p-5">
                   {/*
                     La carte se nomme.

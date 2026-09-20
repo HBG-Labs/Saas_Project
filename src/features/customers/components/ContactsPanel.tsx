@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Pencil, Phone, Star, Trash2, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -70,7 +70,7 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
           description="Enregistrez qui appeler sur place, et son rôle : c’est ce que le technicien cherchera en premier."
         />
       ) : (
-        <ul className="divide-border divide-y">
+        <ul className="border-border bg-surface divide-border divide-y rounded-lg border px-4">
           {list.map((contact) => {
             const fullName = [contact.first_name, contact.last_name]
               .filter((part) => part !== null && part !== '')
@@ -95,13 +95,19 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
 
                 <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
                   {contact.phone !== null && contact.phone !== '' ? (
-                    <a href={`tel:${contact.phone}`} className="hover:text-foreground flex items-center gap-1">
+                    <a
+                      href={`tel:${contact.phone}`}
+                      className="hover:text-primary min-h-touch flex min-w-0 items-center gap-2 break-all"
+                    >
                       <Phone className="size-3.5" aria-hidden="true" />
                       {contact.phone}
                     </a>
                   ) : null}
                   {contact.email !== null && contact.email !== '' ? (
-                    <a href={`mailto:${contact.email}`} className="hover:text-foreground flex items-center gap-1">
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="hover:text-primary min-h-touch flex min-w-0 items-center gap-2 break-all"
+                    >
                       <Mail className="size-3.5" aria-hidden="true" />
                       {contact.email}
                     </a>
@@ -175,6 +181,7 @@ function ContactFormDialog({
   /** Fourni : édition. Absent : création. */
   contact?: CustomerContact;
 }) {
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const createContact = useCreateContact(customerId);
@@ -237,16 +244,29 @@ function ContactFormDialog({
 
   return (
     <Modal
+      presentation="drawer"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter'}
+          </Button>
+        </div>
+      }
       open={open}
       onOpenChange={setOpen}
       title={isEdit ? 'Modifier l’interlocuteur' : 'Nouvel interlocuteur'}
       trigger={
         isEdit ? (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Modifier ${contact.last_name}`}
-          >
+          <Button variant="ghost" size="icon-sm" aria-label={`Modifier ${contact.last_name}`}>
             <Pencil className="size-4" />
           </Button>
         ) : (
@@ -257,7 +277,7 @@ function ContactFormDialog({
         )
       }
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError error={submitError} />
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -278,32 +298,13 @@ function ContactFormDialog({
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Téléphone"
-            type="tel"
-            {...register('phone')}
-          />
+          <Input label="Téléphone" type="tel" {...register('phone')} />
           <Input
             label="Adresse e-mail"
             type="email"
             {...(errors.email?.message ? { error: errors.email.message } : {})}
             {...register('email')}
           />
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter'}
-          </Button>
         </div>
       </form>
     </Modal>

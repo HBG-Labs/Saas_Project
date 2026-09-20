@@ -68,7 +68,7 @@ export function OwnerDashboard() {
 
   const sieges = useSeatBilling(organizationId);
   const members = useMembers(organizationId);
-  const missions = useMissions(organizationId, { limit: 6 });
+  const missions = useMissions(organizationId, { limit: 12 });
   const missionStatusCounts = useMissionStatusCounts(organizationId);
   const pendingReports = useReportsPendingReview(organizationId);
   const teams = useTeams(organizationId);
@@ -92,12 +92,12 @@ export function OwnerDashboard() {
   ];
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-8">
       {/* ------------------------------------------------------------ EN-TÊTE */}
       <PageHeader
         title="Tableau de bord"
         description={`${organization?.name ?? 'Votre entreprise'} — effectifs, ${jobPlural.toLowerCase()} et contrôle qualité.`}
-        className="mb-0"
+        className="mb-0 sm:flex-col xl:flex-row"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {organizationId ? (
@@ -137,8 +137,9 @@ export function OwnerDashboard() {
       <FirstStepsCard />
 
       {/* ------------------------------------------------------ 1. CE QUI ATTEND */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4">
         <MetricCard
+          layout="strip"
           label="Comptes rendus à valider"
           value={pendingReports.isPending || pendingReports.isError ? '—' : pendingReportsCount}
           icon={ClipboardCheck}
@@ -158,6 +159,7 @@ export function OwnerDashboard() {
           }
         />
         <MetricCard
+          layout="strip"
           label={jobPlural}
           value={missionStatusCounts.isPending || missionStatusCounts.isError ? '—' : missionCount}
           icon={ClipboardList}
@@ -165,6 +167,7 @@ export function OwnerDashboard() {
           actionLabel="Voir"
         />
         <MetricCard
+          layout="strip"
           label="Équipes de terrain"
           value={teams.isPending || teams.isError ? '—' : teamList.length}
           icon={UsersRound}
@@ -172,6 +175,7 @@ export function OwnerDashboard() {
           actionLabel="Organiser"
         />
         <MetricCard
+          layout="strip"
           label={workerPlural}
           value={members.isPending || members.isError ? '—' : activeMembersCount}
           icon={Users}
@@ -188,8 +192,8 @@ export function OwnerDashboard() {
       </div>
 
       {/* ------------------------------------------ 2. LE TRAVAIL ET SON HISTOIRE */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
           <CardHeader className="border-border flex flex-row items-center justify-between border-b">
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="text-primary size-4.5" aria-hidden="true" />
@@ -233,7 +237,7 @@ export function OwnerDashboard() {
                   <li key={m.id}>
                     <Link
                       to={ROUTES.mission(m.id)}
-                      className="hover:bg-surface-hover -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors"
+                      className="hover:bg-surface-hover -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2">
@@ -279,7 +283,7 @@ export function OwnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="self-start">
           <CardHeader className="border-border border-b">
             <CardTitle className="flex items-center gap-2">
               <Activity className="text-primary size-4.5" aria-hidden="true" />
@@ -343,7 +347,7 @@ export function OwnerDashboard() {
             <Link
               key={to}
               to={to}
-              className="group border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised flex min-w-0 items-center gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+              className="group border-border hover:bg-surface-hover flex min-w-0 items-center gap-3 border-b py-3 transition-colors"
             >
               <span className="bg-primary-subtle text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
                 <Icon className="size-4.5" aria-hidden="true" />

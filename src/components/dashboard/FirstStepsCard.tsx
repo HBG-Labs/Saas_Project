@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Circle } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
 import { FEATURES, useOrganizationEntitlements } from '@/features/billing';
@@ -140,85 +141,61 @@ export function FirstStepsCard() {
   const prochaine = etapes.find((e) => !e.fait);
 
   return (
-    <Card className="border-primary/30 bg-primary/[0.03]">
-      <CardContent className="space-y-4 p-5 sm:p-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div>
-            <h2 className="text-foreground text-base font-bold">Vos premiers pas</h2>
-            <p className="text-muted-foreground text-xs">
-              Cinq étapes jusqu’au premier compte rendu validé — le moment où l’outil montre ce
-              qu’il sait faire.
-            </p>
-          </div>
+    <Card>
+      <CardContent className="space-y-3 p-4 sm:p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-foreground text-sm font-bold">Vos premiers pas</h2>
           <span className="text-primary text-xs font-bold tabular-nums">
             {faites} / {etapes.length}
           </span>
         </div>
-
-        <div className="bg-surface-sunken h-1.5 w-full overflow-hidden rounded-full">
-          <div
-            className="bg-primary h-full rounded-full transition-all duration-500"
-            style={{ width: `${String((faites / etapes.length) * 100)}%` }}
-          />
-        </div>
-
-        <ol className="space-y-1.5">
-          {etapes.map((etape) => {
-            const estProchaine = etape.id === prochaine?.id;
-
-            return (
-              <li
-                key={etape.id}
-                className={cn(
-                  'flex items-start gap-3 rounded-xl border p-3 transition-colors',
-                  estProchaine ? 'border-primary/40 bg-surface shadow-2xs' : 'border-transparent',
-                  etape.fait && 'opacity-55',
-                )}
-              >
+        {prochaine && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-foreground text-sm font-semibold">{prochaine.titre}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{prochaine.detail}</p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0 self-start">
+              <Link to={prochaine.lien}>
+                {prochaine.action}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        )}
+        <details className="group border-border border-t pt-2">
+          <summary className="text-primary min-h-touch flex cursor-pointer items-center text-xs font-semibold sm:min-h-8">
+            Voir les cinq étapes
+          </summary>
+          <ol className="grid gap-3 pt-3 sm:grid-cols-2 xl:grid-cols-5">
+            {etapes.map((etape) => (
+              <li key={etape.id} className="flex items-start gap-2 text-sm">
                 <span
                   className={cn(
                     'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border',
                     etape.fait
-                      ? 'border-success/40 bg-success/15 text-success'
+                      ? 'border-success/40 bg-success-subtle text-success'
                       : 'border-border text-muted-foreground',
                   )}
                 >
                   {etape.fait ? (
-                    <Check className="size-3" />
+                    <Check className="size-3" aria-label="Terminée" />
                   ) : (
-                    <Circle className="size-1.5 fill-current" />
+                    <Circle className="size-1.5 fill-current" aria-label="À faire" />
                   )}
                 </span>
-
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      'text-foreground text-sm font-semibold',
-                      etape.fait && 'line-through',
-                    )}
-                  >
-                    {etape.titre}
-                  </p>
-                  {/* Le détail n'apparaît que sur l'étape en cours : cinq
-                      explications d'un coup transforment un guide en pavé. */}
-                  {estProchaine ? (
-                    <p className="text-muted-foreground mt-0.5 text-xs">{etape.detail}</p>
-                  ) : null}
-                </div>
-
-                {estProchaine ? (
-                  <Link
-                    to={etape.lien}
-                    className="text-primary hover:bg-primary/10 inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors"
-                  >
-                    {etape.action}
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                ) : null}
+                <span
+                  className={cn(
+                    'text-foreground',
+                    etape.fait && 'text-muted-foreground line-through',
+                  )}
+                >
+                  {etape.titre}
+                </span>
               </li>
-            );
-          })}
-        </ol>
+            ))}
+          </ol>
+        </details>
       </CardContent>
     </Card>
   );

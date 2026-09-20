@@ -11,7 +11,12 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
-import { exportMissionsToCsv, MissionsNavTabs, MissionStatusBadge, useMissions } from '@/features/missions';
+import {
+  exportMissionsToCsv,
+  MissionsNavTabs,
+  MissionStatusBadge,
+  useMissions,
+} from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -95,7 +100,7 @@ export default function ArchivedMissionsPage() {
               disabled={list.length === 0}
               title="Exporter les dossiers en fichier CSV"
             >
-              <Download className="size-3.5 mr-1" />
+              <Download className="mr-1 size-3.5" />
               Exporter CSV
             </Button>
 
@@ -168,7 +173,7 @@ export default function ArchivedMissionsPage() {
             {list.length} dossier{list.length > 1 ? 's' : ''} {active?.label.toLowerCase()}
           </p>
 
-          <ul className="space-y-2">
+          <ul className="border-border bg-surface divide-border divide-y rounded-lg border">
             {list.map((mission) => {
               // `actual_end` est la fin réelle des travaux, posée au passage en
               // `completed`. Une mission annulée n'en a pas — on retombe alors
@@ -178,9 +183,9 @@ export default function ArchivedMissionsPage() {
 
               return (
                 <li key={mission.id}>
-                  <Card className="transition-colors hover:border-primary/40">
+                  <Card className="hover:bg-surface-hover rounded-none border-0 bg-transparent transition-colors">
                     <CardContent className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3.5">
-                      <Badge variant="outline" className="font-mono text-2xs">
+                      <Badge variant="outline" className="text-2xs font-mono">
                         {mission.reference}
                       </Badge>
 
@@ -208,9 +213,7 @@ export default function ArchivedMissionsPage() {
                         ) : null}
 
                         <span className="font-mono tabular-nums">
-                          {endedAt !== null
-                            ? new Date(endedAt).toLocaleDateString('fr-FR')
-                            : '—'}
+                          {endedAt !== null ? new Date(endedAt).toLocaleDateString('fr-FR') : '—'}
                         </span>
                       </div>
                     </CardContent>

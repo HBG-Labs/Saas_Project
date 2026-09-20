@@ -112,6 +112,7 @@ export function NewLeaveModal({
 
   return (
     <Modal
+      presentation="drawer"
       open={open}
       onOpenChange={onOpenChange}
       title="Poser un congé ou une absence"

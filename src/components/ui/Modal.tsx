@@ -15,6 +15,7 @@ export interface ModalProps {
   children?: ReactNode;
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  presentation?: 'dialog' | 'drawer';
   className?: string;
   /** Masque le titre visuellement tout en le conservant pour les lecteurs d'écran. */
   hideTitle?: boolean;
@@ -50,6 +51,7 @@ export function Modal({
   children,
   footer,
   size = 'md',
+  presentation = 'dialog',
   className,
   hideTitle = false,
 }: ModalProps) {
@@ -76,18 +78,25 @@ export function Modal({
         <Dialog.Content
           className={cn(
             'bg-surface-raised border-border shadow-modal fixed z-50 flex flex-col',
-            'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl border-t',
-            'sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)]',
-            'sm:max-h-[calc(100dvh-4rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border',
-            'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom',
-            'sm:data-[state=open]:zoom-in-95',
-            SIZES[size],
+            presentation === 'drawer'
+              ? 'atelier-form-drawer'
+              : [
+                  'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl border-t',
+                  'sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[calc(100vw-2rem)]',
+                  'sm:max-h-[calc(100dvh-4rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border',
+                  'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom',
+                  'sm:data-[state=open]:zoom-in-95',
+                  SIZES[size],
+                ],
             className,
           )}
         >
           {/* Poignée : dit que l'objet vient du bas et qu'il s'y renvoie. */}
           <div
-            className="bg-border-strong mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full sm:hidden"
+            className={cn(
+              'bg-border-strong mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full sm:hidden',
+              presentation === 'drawer' && 'hidden',
+            )}
             aria-hidden="true"
           />
 
@@ -104,7 +113,7 @@ export function Modal({
             </div>
 
             <Dialog.Close
-              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground -mt-1 -mr-1 flex size-touch shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
+              className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch -mt-1 -mr-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
               aria-label="Fermer"
             >
               <X className="size-4" aria-hidden="true" />

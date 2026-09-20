@@ -80,9 +80,7 @@ function getEventDisplayTitle(event: PlanningCalendarEvent): string {
 
   if (title && !/^\d+(?:[.,]\d+)?$/.test(title)) return title;
 
-  return event.type === 'recurring_task'
-    ? 'Tâche sans intitulé'
-    : 'Intervention sans intitulé';
+  return event.type === 'recurring_task' ? 'Tâche sans intitulé' : 'Intervention sans intitulé';
 }
 
 /** Calcule le numéro de semaine ISO */
@@ -107,7 +105,9 @@ export function PlanningCalendarView({
   onNewMissionAtDate,
 }: PlanningCalendarViewProps) {
   // Vue active (Mois par défaut)
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(() =>
+    window.matchMedia('(max-width: 639px)').matches ? 'list' : 'month',
+  );
 
   // Date de référence (initialisée sur la date du jour réelle)
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
@@ -190,10 +190,7 @@ export function PlanningCalendarView({
       if (selectedTechFilter !== 'all' && l.technicianId !== selectedTechFilter) return false;
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase().trim();
-        return (
-          l.technicianName.toLowerCase().includes(q) ||
-          l.reason.toLowerCase().includes(q)
-        );
+        return l.technicianName.toLowerCase().includes(q) || l.reason.toLowerCase().includes(q);
       }
       return true;
     });
@@ -217,22 +214,25 @@ export function PlanningCalendarView({
   // pas figurer dans ses dépendances sans invalider le calcul en permanence —
   // d'où l'avertissement, et un recalcul complet de la grille à chaque frappe
   // dans la recherche.
-  const getActivitiesForDay = useCallback((dateStr: string) => {
-    const dayEvents = filteredEvents.filter(
-      (e) => e.date === dateStr && e.type !== 'holiday' && e.type !== 'leave',
-    );
-    const dayHolidays = filteredHolidays.filter((h) => h.date === dateStr);
-    const dayLeaves = filteredLeaves.filter(
-      (l) => dateStr >= l.startDate && dateStr <= l.endDate,
-    );
+  const getActivitiesForDay = useCallback(
+    (dateStr: string) => {
+      const dayEvents = filteredEvents.filter(
+        (e) => e.date === dateStr && e.type !== 'holiday' && e.type !== 'leave',
+      );
+      const dayHolidays = filteredHolidays.filter((h) => h.date === dateStr);
+      const dayLeaves = filteredLeaves.filter(
+        (l) => dateStr >= l.startDate && dateStr <= l.endDate,
+      );
 
-    return {
-      events: dayEvents,
-      holidays: dayHolidays,
-      leaves: dayLeaves,
-      totalCount: dayEvents.length + dayHolidays.length + dayLeaves.length,
-    };
-  }, [filteredEvents, filteredHolidays, filteredLeaves]);
+      return {
+        events: dayEvents,
+        holidays: dayHolidays,
+        leaves: dayLeaves,
+        totalCount: dayEvents.length + dayHolidays.length + dayLeaves.length,
+      };
+    },
+    [filteredEvents, filteredHolidays, filteredLeaves],
+  );
 
   // 2. Calcul des jours pour la vue Mois
   const monthDaysGrid = useMemo(() => {
@@ -326,7 +326,9 @@ export function PlanningCalendarView({
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         const dateStr = `${y}-${m}-${day}`;
-        if (dateStr.startsWith(`${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`)) {
+        if (
+          dateStr.startsWith(`${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`)
+        ) {
           datesSet.add(dateStr);
         }
       }
@@ -338,7 +340,14 @@ export function PlanningCalendarView({
       dateStr,
       ...getActivitiesForDay(dateStr),
     }));
-  }, [filteredEvents, filteredHolidays, filteredLeaves, currentYear, currentMonthIndex, getActivitiesForDay]);
+  }, [
+    filteredEvents,
+    filteredHolidays,
+    filteredLeaves,
+    currentYear,
+    currentMonthIndex,
+    getActivitiesForDay,
+  ]);
 
   const todayStr = useMemo(() => {
     const now = new Date();
@@ -371,20 +380,20 @@ export function PlanningCalendarView({
   const totalHolidaysCount = filteredHolidays.length;
 
   return (
-    <div className="space-y-4">
+    <div className="gestion-calendar space-y-4">
       {/* ─────────────────────────────────────────────────────────────
           1. HEADER TOOLBAR (Navigation, Vues, Filtres)
       ───────────────────────────────────────────────────────────── */}
-      <div className="bg-surface p-3.5 sm:p-4 rounded-2xl border border-border shadow-xs space-y-3">
+      <div className="bg-surface border-border space-y-3 rounded-lg border p-3.5 sm:p-4">
         {/* Ligne Supérieure : Navigation + Switcher de Vues */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           {/* Navigation Date */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-surface-subtle p-1 rounded-xl border border-border">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="bg-surface-subtle border-border flex items-center rounded-lg border p-1">
               <button
                 type="button"
                 onClick={handlePrev}
-                className="size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
+                className="size-touch text-muted-foreground hover:text-foreground hover:bg-surface flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-auto sm:p-1.5"
                 title="Période précédente"
                 aria-label="Période précédente"
               >
@@ -393,7 +402,7 @@ export function PlanningCalendarView({
               <button
                 type="button"
                 onClick={handleNext}
-                className="size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
+                className="size-touch text-muted-foreground hover:text-foreground hover:bg-surface flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-auto sm:p-1.5"
                 title="Période suivante"
                 aria-label="Période suivante"
               >
@@ -401,7 +410,7 @@ export function PlanningCalendarView({
               </button>
             </div>
 
-            <h2 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight min-w-[200px]">
+            <h2 className="text-foreground min-w-[200px] text-base font-extrabold tracking-tight sm:text-lg">
               {periodTitle}
             </h2>
 
@@ -409,21 +418,22 @@ export function PlanningCalendarView({
               size="sm"
               variant="outline"
               onClick={handleToday}
-              className="text-xs h-8 font-semibold cursor-pointer"
+              className="h-8 cursor-pointer text-xs font-semibold"
             >
               Aujourd'hui
             </Button>
           </div>
 
           {/* Switcher de Vues (Mois / Semaine / Agenda) */}
-          <div className="flex items-center bg-surface-subtle p-1 rounded-xl border border-border self-start sm:self-auto">
+          <div className="bg-surface-subtle border-border flex items-center self-start rounded-lg border p-1 sm:self-auto">
             <button
               type="button"
               onClick={() => setViewMode('month')}
+              aria-pressed={viewMode === 'month'}
               className={cn(
-                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:min-h-0',
                 viewMode === 'month'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  ? 'bg-nav-selected text-nav-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
               )}
             >
@@ -434,10 +444,11 @@ export function PlanningCalendarView({
             <button
               type="button"
               onClick={() => setViewMode('week')}
+              aria-pressed={viewMode === 'week'}
               className={cn(
-                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:min-h-0',
                 viewMode === 'week'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  ? 'bg-nav-selected text-nav-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
               )}
             >
@@ -448,10 +459,11 @@ export function PlanningCalendarView({
             <button
               type="button"
               onClick={() => setViewMode('list')}
+              aria-pressed={viewMode === 'list'}
               className={cn(
-                'min-h-touch sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'min-h-touch flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:min-h-0',
                 viewMode === 'list'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  ? 'bg-nav-selected text-nav-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-surface',
               )}
             >
@@ -462,22 +474,24 @@ export function PlanningCalendarView({
         </div>
 
         {/* Ligne Inférieure : Filtres (Recherche, Technicien, Type) */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-border/60 flex-wrap">
+        <div className="border-border/60 flex flex-col flex-wrap items-stretch justify-between gap-2.5 border-t pt-2 sm:flex-row sm:items-center">
           {/* Recherche rapide */}
           <div className="relative w-full min-w-0 flex-1 sm:min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2" />
             <input
               type="text"
+              aria-label="Rechercher dans le planning"
               placeholder="Rechercher mission, client, lieu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 rounded-xl border border-border bg-surface text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden"
+              className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus:border-primary h-8 w-full rounded-lg border pr-3 pl-8 text-xs focus:outline-hidden"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                aria-label="Effacer la recherche"
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer text-xs"
               >
                 ✕
               </button>
@@ -487,11 +501,12 @@ export function PlanningCalendarView({
           {/* Filtre Technicien */}
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <div className="flex min-w-0 items-center gap-1.5">
-              <User className="size-3.5 text-muted-foreground hidden sm:inline" />
+              <User className="text-muted-foreground hidden size-3.5 sm:inline" />
               <SelectField
+                aria-label="Filtrer par technicien"
                 value={selectedTechFilter}
                 onChange={(e) => setSelectedTechFilter(e.target.value)}
-                className="h-8 w-full min-w-0 rounded-xl border border-border bg-surface px-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden sm:w-auto"
+                className="border-border bg-surface text-foreground focus:border-primary h-8 w-full min-w-0 rounded-lg border px-2.5 text-xs font-semibold focus:outline-hidden sm:w-auto"
               >
                 <option value="all">Tous les techniciens</option>
                 {members.map((member) => (
@@ -503,14 +518,15 @@ export function PlanningCalendarView({
             </div>
 
             {/* Filtre Type d'Activité */}
-            <div className="grid w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-surface-subtle p-0.5 sm:flex sm:w-auto">
+            <div className="border-border bg-surface-subtle grid w-full grid-cols-3 items-center gap-1 rounded-lg border p-0.5 sm:flex sm:w-auto">
               <button
                 type="button"
                 onClick={() => setActivityTypeFilter('all')}
+                aria-pressed={activityTypeFilter === 'all'}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch text-3xs inline-flex cursor-pointer items-center justify-center rounded-lg px-2 py-1 font-bold transition-colors sm:min-h-0',
                   activityTypeFilter === 'all'
-                    ? 'bg-surface text-foreground shadow-2xs font-extrabold'
+                    ? 'bg-surface text-foreground font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -519,26 +535,28 @@ export function PlanningCalendarView({
               <button
                 type="button"
                 onClick={() => setActivityTypeFilter('intervention')}
+                aria-pressed={activityTypeFilter === 'intervention'}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch text-3xs inline-flex cursor-pointer items-center justify-center rounded-lg px-2 py-1 font-bold transition-colors sm:min-h-0',
                   activityTypeFilter === 'intervention'
                     ? 'bg-success/20 text-success font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                🛠️ Missions
+                Missions
               </button>
               <button
                 type="button"
                 onClick={() => setActivityTypeFilter('leave')}
+                aria-pressed={activityTypeFilter === 'leave'}
                 className={cn(
-                  'min-h-touch sm:min-h-0 inline-flex items-center justify-center px-2 py-1 rounded-lg text-3xs font-bold transition-colors cursor-pointer',
+                  'min-h-touch text-3xs inline-flex cursor-pointer items-center justify-center rounded-lg px-2 py-1 font-bold transition-colors sm:min-h-0',
                   activityTypeFilter === 'leave'
                     ? 'bg-warning/20 text-warning font-extrabold'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                🌴 Congés
+                Congés
               </button>
             </div>
           </div>
@@ -548,23 +566,23 @@ export function PlanningCalendarView({
       {/* ─────────────────────────────────────────────────────────────
           2. COLOR LEGEND & STATS BAR
       ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-surface rounded-xl border border-border text-3xs sm:text-2xs font-semibold flex-wrap">
-        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+      <div className="bg-surface border-border text-3xs sm:text-2xs flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-2 font-semibold">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <span className="text-muted-foreground">Légende :</span>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-success" />
+            <span className="bg-success size-2.5 rounded-full" />
             <span className="text-foreground">Intervention ({totalMissionsCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-warning" />
+            <span className="bg-warning size-2.5 rounded-full" />
             <span className="text-foreground">Congé validé ({totalLeavesCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-error" />
+            <span className="bg-error size-2.5 rounded-full" />
             <span className="text-foreground">Jour férié ({totalHolidaysCount})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-primary" />
+            <span className="bg-primary size-2.5 rounded-full" />
             <span className="text-foreground">Tâche récurrente</span>
           </div>
         </div>
@@ -574,7 +592,7 @@ export function PlanningCalendarView({
             size="sm"
             variant="ghost"
             onClick={() => onNewMissionAtDate(todayStr)}
-            className="text-3xs h-6 px-2 text-primary hover:bg-primary/10 gap-1 cursor-pointer"
+            className="text-3xs text-primary hover:bg-primary/10 h-6 cursor-pointer gap-1 px-2"
           >
             <Plus className="size-3" />
             <span>Planifier aujourd'hui</span>
@@ -586,19 +604,23 @@ export function PlanningCalendarView({
           3. VUE MOIS (Month Grid)
       ───────────────────────────────────────────────────────────── */}
       {viewMode === 'month' && (
-        <div className="bg-surface rounded-2xl border border-border shadow-xs overflow-hidden">
+        <div className="bg-surface border-border overflow-hidden rounded-lg border">
           {/* Days Header */}
-          <div className="grid grid-cols-7 border-b border-border bg-surface-subtle/50 text-center text-xs font-bold text-muted-foreground py-2.5">
+          <div className="border-border bg-surface-subtle/50 text-muted-foreground grid grid-cols-7 border-b py-2.5 text-center text-xs font-bold">
             {DAYS_SHORT_FR.map((day) => (
               <div key={day}>{day}</div>
             ))}
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 divide-x divide-y divide-border/60">
+          <div className="divide-border/60 grid grid-cols-7 divide-x divide-y">
             {monthDaysGrid.map(({ dateStr, dayNum, isCurrentMonth }) => {
-              const { events: dayEvents, holidays: dayHolidays, leaves: dayLeaves, totalCount } =
-                getActivitiesForDay(dateStr);
+              const {
+                events: dayEvents,
+                holidays: dayHolidays,
+                leaves: dayLeaves,
+                totalCount,
+              } = getActivitiesForDay(dateStr);
               const isToday = dateStr === todayStr;
               const isSelected = detailDay === dateStr;
 
@@ -615,10 +637,10 @@ export function PlanningCalendarView({
                   onClick={() => setDetailDay(dateStr)}
                   onKeyDown={activateOnKey(() => setDetailDay(dateStr))}
                   className={cn(
-                    'min-h-[105px] sm:min-h-[130px] p-1.5 sm:p-2 transition-colors flex flex-col justify-between cursor-pointer group text-left relative',
+                    'group relative flex min-h-[105px] cursor-pointer flex-col justify-between p-1.5 text-left transition-colors sm:min-h-[130px] sm:p-2',
                     !isCurrentMonth && 'bg-surface-subtle/40 opacity-45',
-                    isToday && 'bg-primary/5 ring-1 ring-primary/40',
-                    isSelected && 'bg-surface-hover/70 ring-2 ring-primary/60',
+                    isToday && 'bg-primary/5 ring-primary/40 ring-1',
+                    isSelected && 'bg-surface-hover/70 ring-primary/60 ring-2',
                     'hover:bg-surface-hover/50',
                   )}
                 >
@@ -626,9 +648,9 @@ export function PlanningCalendarView({
                   <div className="flex items-center justify-between">
                     <span
                       className={cn(
-                        'size-6 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                        'flex size-6 items-center justify-center rounded-full text-xs font-bold transition-all',
                         isToday
-                          ? 'bg-primary text-primary-foreground shadow-xs'
+                          ? 'bg-nav-selected text-nav-foreground'
                           : isCurrentMonth
                             ? 'text-foreground group-hover:text-primary'
                             : 'text-muted-foreground',
@@ -655,7 +677,7 @@ export function PlanningCalendarView({
                           calendrier était donc impossible au doigt — trente
                           fois par mois affiché.
                         */
-                        className="size-touch text-primary hover:bg-primary/10 flex items-center justify-center rounded-md transition-opacity cursor-pointer sm:size-5 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="size-touch text-primary hover:bg-primary/10 flex cursor-pointer items-center justify-center rounded-md transition-opacity sm:size-5 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Planifier une mission le ${dateStr}`}
                         title={`Planifier une mission le ${dateStr}`}
                       >
@@ -665,15 +687,15 @@ export function PlanningCalendarView({
                   </div>
 
                   {/* Event Pills inside Day Cell */}
-                  <div className="space-y-1 my-1 overflow-hidden">
+                  <div className="my-1 space-y-1 overflow-hidden">
                     {/* Holidays */}
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="px-1.5 py-0.5 rounded-md bg-error/15 border border-error/30 text-error sm:text-3xs font-semibold truncate flex items-center gap-1"
+                        className="bg-error/15 border-error/30 text-error sm:text-3xs flex items-center gap-1 truncate rounded-md border px-1.5 py-0.5 font-semibold"
                         title={`Jour férié : ${holiday.name}`}
                       >
-                        <span className="size-1.5 rounded-full bg-error shrink-0" />
+                        <span className="bg-error size-1.5 shrink-0 rounded-full" />
                         <span className="truncate">{holiday.name}</span>
                       </div>
                     ))}
@@ -682,10 +704,10 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="px-1.5 py-0.5 rounded-md bg-warning/15 border border-warning/30 text-warning sm:text-3xs font-semibold truncate flex items-center gap-1"
+                        className="bg-warning/15 border-warning/30 text-warning sm:text-3xs flex items-center gap-1 truncate rounded-md border px-1.5 py-0.5 font-semibold"
                         title={`Congé : ${leave.technicianName} (${leave.type === 'rtt' ? 'RTT' : 'Congé payé'})`}
                       >
-                        <Palmtree className="size-2.5 shrink-0 text-warning" />
+                        <Palmtree className="text-warning size-2.5 shrink-0" />
                         <span className="truncate">
                           [{leave.technicianInitials}] {leave.technicianName}
                         </span>
@@ -697,7 +719,7 @@ export function PlanningCalendarView({
                       <div
                         key={evt.id}
                         className={cn(
-                          'px-1.5 py-0.5 rounded-md sm:text-3xs font-semibold truncate flex items-center gap-1 border',
+                          'sm:text-3xs flex items-center gap-1 truncate rounded-md border px-1.5 py-0.5 font-semibold',
                           evt.type === 'recurring_task'
                             ? 'bg-primary/15 border-primary/30 text-primary'
                             : 'bg-success/15 border-success/30 text-success',
@@ -707,7 +729,7 @@ export function PlanningCalendarView({
                         <Wrench className="size-2.5 shrink-0 opacity-80" />
                         <span className="truncate">
                           {evt.startTime && (
-                            <span className="font-mono opacity-85 mr-0.5">{evt.startTime}</span>
+                            <span className="mr-0.5 font-mono opacity-85">{evt.startTime}</span>
                           )}
                           {evt.technicianInitials ? `[${evt.technicianInitials}] ` : ''}
                           {getEventDisplayTitle(evt)}
@@ -717,7 +739,7 @@ export function PlanningCalendarView({
 
                     {/* Plus d'activités */}
                     {remainingCount > 0 && (
-                      <div className="text-muted-foreground font-bold px-1">
+                      <div className="text-muted-foreground px-1 font-bold">
                         +{remainingCount} autre{remainingCount > 1 ? 's' : ''}…
                       </div>
                     )}
@@ -738,33 +760,35 @@ export function PlanningCalendarView({
           4. VUE SEMAINE (Week Grid / Columns)
       ───────────────────────────────────────────────────────────── */}
       {viewMode === 'week' && (
-        <div className="bg-surface rounded-2xl border border-border shadow-xs overflow-hidden">
+        <div className="bg-surface border-border overflow-hidden rounded-lg border">
           {/* Grille 7 colonnes pour les 7 jours de la semaine */}
-          <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border">
+          <div className="divide-border grid grid-cols-1 divide-y md:grid-cols-7 md:divide-x md:divide-y-0">
             {weekDays.map(({ dateStr, dayNum, dayName }) => {
-              const { events: dayEvents, holidays: dayHolidays, leaves: dayLeaves, totalCount } =
-                getActivitiesForDay(dateStr);
+              const {
+                events: dayEvents,
+                holidays: dayHolidays,
+                leaves: dayLeaves,
+                totalCount,
+              } = getActivitiesForDay(dateStr);
               const isToday = dateStr === todayStr;
 
               return (
-                <div key={dateStr} className="flex flex-col min-h-[350px]">
+                <div key={dateStr} className="flex min-h-[350px] flex-col">
                   {/* Colonne Header */}
                   <div
                     className={cn(
-                      'p-3 border-b border-border text-center flex md:flex-col items-center justify-between md:justify-center gap-1',
+                      'border-border flex items-center justify-between gap-1 border-b p-3 text-center md:flex-col md:justify-center',
                       isToday ? 'bg-primary/10' : 'bg-surface-subtle/50',
                     )}
                   >
                     <div className="flex items-center gap-2 md:flex-col">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      <span className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
                         {dayName.slice(0, 3)}
                       </span>
                       <span
                         className={cn(
-                          'size-7 rounded-full flex items-center justify-center text-sm font-extrabold',
-                          isToday
-                            ? 'bg-primary text-primary-foreground shadow-xs'
-                            : 'text-foreground',
+                          'flex size-7 items-center justify-center rounded-full text-sm font-extrabold',
+                          isToday ? 'bg-nav-selected text-nav-foreground' : 'text-foreground',
                         )}
                       >
                         {dayNum}
@@ -781,7 +805,8 @@ export function PlanningCalendarView({
                         <button
                           type="button"
                           onClick={() => onNewMissionAtDate(dateStr)}
-                          className="size-6 rounded-md hover:bg-surface text-primary flex items-center justify-center cursor-pointer"
+                          aria-label={'Ajouter une mission le ' + formatFullDateFR(dateStr)}
+                          className="hover:bg-surface text-primary flex size-6 cursor-pointer items-center justify-center rounded-md"
                           title="Planifier une intervention"
                         >
                           <Plus className="size-3.5" />
@@ -791,15 +816,15 @@ export function PlanningCalendarView({
                   </div>
 
                   {/* Cartes d'activités de la journée */}
-                  <div className="p-2 space-y-2 flex-1 overflow-y-auto">
+                  <div className="flex-1 space-y-2 overflow-y-auto p-2">
                     {/* Fériés */}
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="p-2 rounded-xl bg-error/15 border border-error/30 text-error text-3xs font-semibold"
+                        className="bg-error/15 border-error/30 text-error text-3xs rounded-lg border p-2 font-semibold"
                       >
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Flag className="size-3 text-error" />
+                          <Flag className="text-error size-3" />
                           <span>{holiday.name}</span>
                         </div>
                       </div>
@@ -809,10 +834,10 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="p-2 rounded-xl bg-warning/15 border border-warning/30 text-warning text-3xs space-y-1"
+                        className="bg-warning/15 border-warning/30 text-warning text-3xs space-y-1 rounded-lg border p-2"
                       >
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Palmtree className="size-3 text-warning" />
+                          <Palmtree className="text-warning size-3" />
                           <span>{leave.technicianName}</span>
                         </div>
                         <p className="text-muted-foreground">
@@ -829,10 +854,10 @@ export function PlanningCalendarView({
                         tabIndex={0}
                         onClick={() => setDetailDay(dateStr)}
                         onKeyDown={activateOnKey(() => setDetailDay(dateStr))}
-                        className="p-2.5 rounded-xl bg-surface border border-border/80 hover:border-primary/50 shadow-2xs hover:shadow-xs transition-all cursor-pointer space-y-1.5 group"
+                        className="bg-surface border-border/80 hover:border-primary/50 group cursor-pointer space-y-1.5 rounded-lg border p-2.5 transition-all hover:shadow-xs"
                       >
                         <div className="flex items-center justify-between gap-1">
-                          <span className="font-mono font-extrabold text-primary">
+                          <span className="text-primary font-mono font-extrabold">
                             {evt.startTime ?? 'Journée'}
                           </span>
                           {evt.technicianInitials && (
@@ -842,25 +867,25 @@ export function PlanningCalendarView({
                           )}
                         </div>
 
-                        <h4 className="text-xs font-bold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                        <h4 className="text-foreground group-hover:text-primary line-clamp-2 text-xs leading-tight font-bold transition-colors">
                           {getEventDisplayTitle(evt)}
                         </h4>
 
                         {evt.clientName && (
-                          <p className="text-3xs text-muted-foreground font-medium truncate">
+                          <p className="text-3xs text-muted-foreground truncate font-medium">
                             🏢 {evt.clientName}
                           </p>
                         )}
 
                         {evt.address && (
-                          <p className="text-muted-foreground truncate flex items-center gap-1">
+                          <p className="text-muted-foreground flex items-center gap-1 truncate">
                             <MapPin className="size-2.5 shrink-0 opacity-70" />
                             <span>{evt.address}</span>
                           </p>
                         )}
 
                         {/* Actions rapides */}
-                        <div className="flex items-center gap-1 pt-1 border-t border-border/40">
+                        <div className="border-border/40 flex items-center gap-1 border-t pt-1">
                           {evt.latitude && evt.longitude && (
                             <button
                               type="button"
@@ -872,7 +897,7 @@ export function PlanningCalendarView({
                                   ...(evt.address ? { address: evt.address } : {}),
                                 });
                               }}
-                              className="p-1 rounded hover:bg-surface-subtle text-primary flex items-center gap-1 cursor-pointer"
+                              className="hover:bg-surface-subtle text-primary flex cursor-pointer items-center gap-1 rounded p-1"
                               title="Lancer l'itinéraire GPS"
                             >
                               <Navigation className="size-2.5" />
@@ -883,7 +908,7 @@ export function PlanningCalendarView({
                             <Link
                               to={ROUTES.mission(evt.missionId)}
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground flex items-center gap-1 ml-auto"
+                              className="hover:bg-surface-subtle text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 rounded p-1"
                               title="Voir la mission"
                             >
                               <Eye className="size-2.5" />
@@ -895,7 +920,7 @@ export function PlanningCalendarView({
                     ))}
 
                     {totalCount === 0 && (
-                      <div className="text-center py-6 text-muted-foreground/50 text-3xs">
+                      <div className="text-muted-foreground/50 text-3xs py-6 text-center">
                         Aucune activité
                       </div>
                     )}
@@ -913,8 +938,8 @@ export function PlanningCalendarView({
       {viewMode === 'list' && (
         <div className="space-y-4">
           {agendaGroupedDays.length === 0 ? (
-            <div className="p-8 text-center bg-surface rounded-2xl border border-border text-muted-foreground space-y-2">
-              <CalendarRange className="size-8 mx-auto opacity-40 text-muted-foreground" />
+            <div className="bg-surface border-border text-muted-foreground space-y-2 rounded-lg border p-8 text-center">
+              <CalendarRange className="text-muted-foreground mx-auto size-8 opacity-40" />
               <p className="text-sm font-semibold">Aucune activité trouvée pour cette période</p>
               <p className="text-xs">Modifiez vos filtres ou planifiez une nouvelle mission.</p>
             </div>
@@ -933,14 +958,14 @@ export function PlanningCalendarView({
                   <div
                     key={dateStr}
                     className={cn(
-                      'bg-surface rounded-2xl border shadow-xs overflow-hidden transition-all',
-                      isToday ? 'border-primary/50 ring-1 ring-primary/30' : 'border-border',
+                      'bg-surface overflow-hidden rounded-lg border transition-all',
+                      isToday ? 'border-primary/50 ring-primary/30 ring-1' : 'border-border',
                     )}
                   >
                     {/* Header Journée */}
                     <div
                       className={cn(
-                        'p-3 sm:p-4 border-b flex items-center justify-between gap-3',
+                        'flex items-center justify-between gap-3 border-b p-3 sm:p-4',
                         isToday
                           ? 'bg-primary/5 border-primary/20'
                           : 'bg-surface-subtle/50 border-border',
@@ -949,16 +974,16 @@ export function PlanningCalendarView({
                       <div className="flex items-center gap-2.5">
                         <span
                           className={cn(
-                            'size-8 rounded-xl flex items-center justify-center text-xs font-extrabold',
+                            'flex size-8 items-center justify-center rounded-lg text-xs font-extrabold',
                             isToday
-                              ? 'bg-primary text-primary-foreground shadow-xs'
-                              : 'bg-surface border border-border text-foreground',
+                              ? 'bg-nav-selected text-nav-foreground'
+                              : 'bg-surface border-border text-foreground border',
                           )}
                         >
                           {dateStr.split('-')[2]}
                         </span>
                         <div>
-                          <h3 className="text-xs sm:text-sm font-bold text-foreground">
+                          <h3 className="text-foreground text-xs font-bold sm:text-sm">
                             {formatFullDateFR(dateStr)}
                           </h3>
                           <p className="text-3xs text-muted-foreground">
@@ -973,23 +998,23 @@ export function PlanningCalendarView({
                           size="sm"
                           variant="outline"
                           onClick={() => onNewMissionAtDate(dateStr)}
-                          className="text-3xs h-7 px-2.5 gap-1 cursor-pointer"
+                          className="text-3xs h-7 cursor-pointer gap-1 px-2.5"
                         >
-                          <Plus className="size-3 text-primary" />
+                          <Plus className="text-primary size-3" />
                           <span className="hidden sm:inline">Ajouter</span>
                         </Button>
                       )}
                     </div>
 
                     {/* Cartes d'activités de la journée */}
-                    <div className="p-3 sm:p-4 space-y-3">
+                    <div className="space-y-3 p-3 sm:p-4">
                       {/* Jours Fériés */}
                       {dayHolidays.map((holiday) => (
                         <div
                           key={holiday.name}
-                          className="p-3 rounded-xl bg-error/10 border border-error/30 text-error flex items-center gap-2"
+                          className="bg-error/10 border-error/30 text-error flex items-center gap-2 rounded-lg border p-3"
                         >
-                          <Flag className="size-4 text-error shrink-0" />
+                          <Flag className="text-error size-4 shrink-0" />
                           <div>
                             <p className="text-xs font-bold">{holiday.name}</p>
                             <p className="text-3xs text-muted-foreground">Jour férié officiel</p>
@@ -1001,10 +1026,10 @@ export function PlanningCalendarView({
                       {dayLeaves.map((leave) => (
                         <div
                           key={leave.id}
-                          className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning flex items-center justify-between gap-3"
+                          className="bg-warning/10 border-warning/30 text-warning flex items-center justify-between gap-3 rounded-lg border p-3"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="size-7 rounded-lg bg-warning/20 flex items-center justify-center text-warning">
+                            <div className="bg-warning/20 text-warning flex size-7 items-center justify-center rounded-lg">
                               <Palmtree className="size-4" />
                             </div>
                             <div>
@@ -1025,18 +1050,18 @@ export function PlanningCalendarView({
                       {dayEvents.map((evt) => (
                         <div
                           key={evt.id}
-                          className="p-3.5 sm:p-4 rounded-xl bg-surface-subtle/50 border border-border hover:border-primary/40 transition-all space-y-3"
+                          className="bg-surface-subtle/50 border-border hover:border-primary/40 space-y-3 rounded-lg border p-3.5 transition-all sm:p-4"
                         >
                           {/* Haut de carte : Horaires, Réf, Technicien */}
-                          <div className="flex items-start justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-primary font-mono text-3xs font-bold flex items-center gap-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="bg-primary/10 border-primary/20 text-primary text-3xs flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono font-bold">
                                 <Clock className="size-2.5" />
                                 <span>{evt.time ?? 'Horaire non précisé'}</span>
                               </span>
 
                               {evt.reference && (
-                                <span className="font-mono text-3xs font-bold text-foreground">
+                                <span className="text-3xs text-foreground font-mono font-bold">
                                   {evt.reference}
                                 </span>
                               )}
@@ -1052,14 +1077,21 @@ export function PlanningCalendarView({
                                   }
                                   className="px-1.5 py-0 font-bold"
                                 >
-                                  {evt.priority}
+                                  {
+                                    {
+                                      low: 'Basse',
+                                      medium: 'Normale',
+                                      high: 'Haute',
+                                      urgent: 'Urgente',
+                                    }[evt.priority]
+                                  }
                                 </Badge>
                               )}
                             </div>
 
                             {evt.technicianName && (
-                              <div className="flex items-center gap-1 text-3xs text-muted-foreground font-semibold">
-                                <User className="size-3 text-primary" />
+                              <div className="text-3xs text-muted-foreground flex items-center gap-1 font-semibold">
+                                <User className="text-primary size-3" />
                                 <span>{evt.technicianName}</span>
                               </div>
                             )}
@@ -1067,30 +1099,30 @@ export function PlanningCalendarView({
 
                           {/* Corps : Titre, Client, Adresse */}
                           <div>
-                            <h4 className="text-sm font-bold text-foreground">
+                            <h4 className="text-foreground text-sm font-bold">
                               {getEventDisplayTitle(evt)}
                             </h4>
                             {evt.clientName && (
-                              <p className="text-xs font-semibold text-primary/90 mt-0.5">
+                              <p className="text-primary/90 mt-0.5 text-xs font-semibold">
                                 🏢 {evt.clientName}
                               </p>
                             )}
                             {evt.address && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                                <MapPin className="size-3 shrink-0 text-muted-foreground/70" />
+                              <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+                                <MapPin className="text-muted-foreground/70 size-3 shrink-0" />
                                 <span>{evt.address}</span>
                               </p>
                             )}
                             {evt.phone && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                <Phone className="size-3 shrink-0 text-muted-foreground/70" />
+                              <p className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">
+                                <Phone className="text-muted-foreground/70 size-3 shrink-0" />
                                 <span>{evt.phone}</span>
                               </p>
                             )}
                           </div>
 
                           {/* Actions : Itinéraire, Fiche, Appel */}
-                          <div className="flex items-center gap-2 pt-2 border-t border-border/50 flex-wrap">
+                          <div className="border-border/50 flex flex-wrap items-center gap-2 border-t pt-2">
                             {evt.latitude && evt.longitude && (
                               <Button
                                 type="button"
@@ -1103,7 +1135,7 @@ export function PlanningCalendarView({
                                     ...(evt.address ? { address: evt.address } : {}),
                                   })
                                 }
-                                className="text-3xs h-7 px-3 gap-1.5 cursor-pointer"
+                                className="text-3xs h-7 cursor-pointer gap-1.5 px-3"
                                 title="Lancer le guidage GPS vers cette intervention"
                               >
                                 <Navigation className="size-3" />
@@ -1116,10 +1148,10 @@ export function PlanningCalendarView({
                                 asChild
                                 variant="outline"
                                 size="sm"
-                                className="text-3xs h-7 px-3 gap-1.5"
+                                className="text-3xs h-7 gap-1.5 px-3"
                               >
                                 <Link to={ROUTES.mission(evt.missionId)}>
-                                  <Eye className="size-3 text-primary" />
+                                  <Eye className="text-primary size-3" />
                                   <span>Voir la mission</span>
                                 </Link>
                               </Button>
@@ -1130,10 +1162,10 @@ export function PlanningCalendarView({
                                 asChild
                                 variant="ghost"
                                 size="sm"
-                                className="text-3xs h-7 px-2 text-muted-foreground hover:text-foreground ml-auto"
+                                className="text-3xs text-muted-foreground hover:text-foreground ml-auto h-7 px-2"
                               >
                                 <a href={`tel:${evt.phone}`}>
-                                  <Phone className="size-3 text-success" />
+                                  <Phone className="text-success size-3" />
                                   <span className="hidden sm:inline">Appeler</span>
                                 </a>
                               </Button>
@@ -1155,6 +1187,7 @@ export function PlanningCalendarView({
       ───────────────────────────────────────────────────────────── */}
       {detailDay && (
         <Modal
+          presentation="drawer"
           open={Boolean(detailDay)}
           onOpenChange={(open) => {
             if (!open) setDetailDay(null);
@@ -1172,10 +1205,10 @@ export function PlanningCalendarView({
             } = getActivitiesForDay(detailDay);
 
             return (
-              <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
                 {/* Actions en haut de modal */}
-                <div className="flex items-center justify-between gap-2 p-3 bg-surface-subtle rounded-xl border border-border">
-                  <span className="text-xs font-bold text-foreground">
+                <div className="bg-surface-subtle border-border flex items-center justify-between gap-2 rounded-lg border p-3">
+                  <span className="text-foreground text-xs font-bold">
                     {totalCount} activité{totalCount > 1 ? 's' : ''} au planning
                   </span>
                   {canCreateMission && onNewMissionAtDate && (
@@ -1187,7 +1220,7 @@ export function PlanningCalendarView({
                         setDetailDay(null);
                         onNewMissionAtDate(targetDate);
                       }}
-                      className="text-xs h-7 gap-1 cursor-pointer"
+                      className="h-7 cursor-pointer gap-1 text-xs"
                     >
                       <Plus className="size-3" />
                       <span>Planifier à cette date</span>
@@ -1196,8 +1229,8 @@ export function PlanningCalendarView({
                 </div>
 
                 {totalCount === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground space-y-2">
-                    <CalendarIcon className="size-8 mx-auto opacity-30" />
+                  <div className="text-muted-foreground space-y-2 py-12 text-center">
+                    <CalendarIcon className="mx-auto size-8 opacity-30" />
                     <p className="text-xs font-semibold">Aucune activité enregistrée ce jour</p>
                   </div>
                 ) : (
@@ -1206,9 +1239,9 @@ export function PlanningCalendarView({
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="p-3 rounded-xl bg-error/10 border border-error/30 text-error flex items-center gap-2"
+                        className="bg-error/10 border-error/30 text-error flex items-center gap-2 rounded-lg border p-3"
                       >
-                        <Flag className="size-4 text-error shrink-0" />
+                        <Flag className="text-error size-4 shrink-0" />
                         <div>
                           <p className="text-xs font-bold">{holiday.name}</p>
                           <p className="text-3xs text-muted-foreground">Jour férié</p>
@@ -1220,10 +1253,10 @@ export function PlanningCalendarView({
                     {dayLeaves.map((leave) => (
                       <div
                         key={leave.id}
-                        className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-warning flex items-center justify-between gap-2"
+                        className="bg-warning/10 border-warning/30 text-warning flex items-center justify-between gap-2 rounded-lg border p-3"
                       >
                         <div className="flex items-center gap-2">
-                          <Palmtree className="size-4 text-warning" />
+                          <Palmtree className="text-warning size-4" />
                           <div>
                             <p className="text-xs font-bold">{leave.technicianName}</p>
                             <p className="text-3xs text-muted-foreground">
@@ -1241,39 +1274,39 @@ export function PlanningCalendarView({
                     {dayEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="p-3 rounded-xl bg-surface border border-border space-y-2 shadow-2xs"
+                        className="bg-surface border-border space-y-2 rounded-lg border p-3"
                       >
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-mono text-3xs font-bold flex items-center gap-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="bg-primary/10 text-primary text-3xs flex items-center gap-1 rounded-md px-2 py-0.5 font-mono font-bold">
                             <Clock className="size-2.5" />
                             <span>{evt.time ?? 'Horaire non précisé'}</span>
                           </span>
                           {evt.technicianName && (
-                            <span className="text-3xs font-semibold text-muted-foreground flex items-center gap-1">
-                              <User className="size-2.5 text-primary" />
+                            <span className="text-3xs text-muted-foreground flex items-center gap-1 font-semibold">
+                              <User className="text-primary size-2.5" />
                               {evt.technicianName}
                             </span>
                           )}
                         </div>
 
                         <div>
-                          <h4 className="text-xs font-bold text-foreground">
+                          <h4 className="text-foreground text-xs font-bold">
                             {getEventDisplayTitle(evt)}
                           </h4>
                           {evt.clientName && (
-                            <p className="text-xs text-primary font-semibold mt-0.5">
+                            <p className="text-primary mt-0.5 text-xs font-semibold">
                               🏢 {evt.clientName}
                             </p>
                           )}
                           {evt.address && (
-                            <p className="text-3xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <p className="text-3xs text-muted-foreground mt-0.5 flex items-center gap-1">
                               <MapPin className="size-2.5 opacity-70" />
                               {evt.address}
                             </p>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                        <div className="border-border/50 flex items-center gap-2 border-t pt-2">
                           {evt.latitude && evt.longitude && (
                             <Button
                               type="button"
@@ -1286,7 +1319,7 @@ export function PlanningCalendarView({
                                   ...(evt.address ? { address: evt.address } : {}),
                                 });
                               }}
-                              className="text-3xs h-7 px-2.5 gap-1 cursor-pointer"
+                              className="text-3xs h-7 cursor-pointer gap-1 px-2.5"
                             >
                               <Navigation className="size-2.5" />
                               <span>🧭 Itinéraire</span>
@@ -1297,10 +1330,10 @@ export function PlanningCalendarView({
                               asChild
                               variant="outline"
                               size="sm"
-                              className="text-3xs h-7 px-2.5 gap-1"
+                              className="text-3xs h-7 gap-1 px-2.5"
                             >
                               <Link to={ROUTES.mission(evt.missionId)}>
-                                <Eye className="size-2.5 text-primary" />
+                                <Eye className="text-primary size-2.5" />
                                 <span>Fiche</span>
                               </Link>
                             </Button>

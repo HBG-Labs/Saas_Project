@@ -80,6 +80,7 @@ export default function MissionsListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        className="sm:flex-col xl:flex-row"
         title={jobPlural}
         description={
           canViewAll
@@ -134,7 +135,7 @@ export default function MissionsListPage() {
       <MissionsNavTabs />
 
       {/* Bannière de guidage pour les comptes-rendus terrain */}
-      <div className="border-primary/20 bg-primary/5 text-foreground flex items-center justify-between gap-3 rounded-xl border p-3.5 text-xs">
+      <div className="border-border text-muted-foreground flex items-center gap-3 border-b pb-4 text-sm">
         <div className="flex items-center gap-2.5">
           <FileText className="text-primary size-4 shrink-0" />
           <span>
@@ -212,7 +213,10 @@ export default function MissionsListPage() {
         </div>
       ) : (
         /* Liste opérationnelle : l'information utile avant les actions. */
-        <div className="space-y-3">
+        <div
+          aria-label="Liste des missions"
+          className="border-border bg-surface divide-border divide-y overflow-hidden rounded-lg border"
+        >
           {list.map((mission) => {
             const hasLocation =
               (mission.latitude !== null && mission.longitude !== null) ||
@@ -223,10 +227,10 @@ export default function MissionsListPage() {
             return (
               <div
                 key={mission.id}
-                className="bg-surface border-border/80 hover:border-primary/30 hover:shadow-raised group space-y-3 rounded-xl border p-3.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4"
+                className="hover:bg-surface-hover group grid min-w-0 gap-3 p-4 transition-colors xl:grid-cols-[minmax(0,1fr)_13rem_9rem] xl:items-center xl:gap-5 xl:py-3"
               >
                 {/* Ligne 1 : Badges, Réf, Date & Statut */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 xl:order-2 xl:flex-col xl:items-start">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className="text-2xs font-mono font-bold">
                       {mission.reference}
@@ -248,7 +252,7 @@ export default function MissionsListPage() {
                     )}
                   </div>
 
-                  <span className="text-muted-foreground font-mono text-xs font-semibold tabular-nums">
+                  <span className="text-muted-foreground text-xs font-semibold tabular-nums">
                     {mission.scheduled_start !== null
                       ? new Date(mission.scheduled_start).toLocaleDateString('fr-FR', {
                           day: '2-digit',
@@ -260,7 +264,7 @@ export default function MissionsListPage() {
                 </div>
 
                 {/* Ligne 2 : Titre & Client */}
-                <div>
+                <div className="min-w-0 xl:order-1">
                   <Link
                     to={ROUTES.mission(mission.id)}
                     className="text-foreground group-hover:text-primary block text-sm font-bold transition-colors sm:text-base"
@@ -296,7 +300,7 @@ export default function MissionsListPage() {
                 </div>
 
                 {/* Ligne 3 : Actions rapides */}
-                <div className="border-border/50 flex flex-wrap items-center gap-2 border-t pt-2">
+                <div className="border-border flex flex-wrap items-center gap-2 border-t pt-2 xl:order-3 xl:border-t-0 xl:pt-0">
                   {hasLocation && (
                     <Button
                       type="button"
@@ -315,11 +319,11 @@ export default function MissionsListPage() {
                           });
                         }
                       }}
-                      className="text-3xs h-11 cursor-pointer gap-1.5 px-2.5 sm:h-7"
+                      className="gap-1.5 px-3 xl:w-9 xl:px-0"
                       title="Lancer l'itinéraire GPS"
                     >
                       <Navigation className="size-3.5" aria-hidden="true" />
-                      <span>Itinéraire</span>
+                      <span className="xl:sr-only">Itinéraire</span>
                     </Button>
                   )}
 
@@ -327,11 +331,11 @@ export default function MissionsListPage() {
                     asChild
                     variant="outline"
                     size="sm"
-                    className="text-3xs h-11 gap-1.5 px-3 sm:h-7"
+                    className="gap-1.5 px-3 xl:w-9 xl:px-0"
                   >
-                    <Link to={ROUTES.mission(mission.id)}>
+                    <Link to={ROUTES.mission(mission.id)} title="Voir la fiche">
                       <Eye className="text-primary size-3" />
-                      <span>Voir la fiche</span>
+                      <span className="xl:sr-only">Voir la fiche</span>
                     </Link>
                   </Button>
 
@@ -340,11 +344,11 @@ export default function MissionsListPage() {
                       asChild
                       variant="ghost"
                       size="sm"
-                      className="text-3xs text-muted-foreground hover:text-foreground ml-auto h-11 px-2.5 sm:h-7"
+                      className="text-muted-foreground hover:text-foreground px-3 xl:w-9 xl:px-0"
                     >
-                      <a href={`tel:${mission.customer_phone}`}>
+                      <a href={`tel:${mission.customer_phone}`} title="Appeler le client">
                         <Phone className="text-success mr-1 size-3" />
-                        Appeler
+                        <span className="xl:sr-only">Appeler</span>
                       </a>
                     </Button>
                   )}

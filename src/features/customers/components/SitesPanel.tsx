@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Archive, KeyRound, MapPin, Pencil, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -62,9 +62,9 @@ export function SitesPanel({ customerId, organizationId, canEdit }: SitesPanelPr
           description="Un site porte l’adresse, les coordonnées GPS et les consignes d’accès. Une mission créée depuis un site en hérite automatiquement."
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className="border-border bg-surface divide-border divide-y rounded-lg border">
           {list.map((site) => (
-            <li key={site.id} className="border-border rounded-lg border p-3">
+            <li key={site.id} className="p-4">
               <div className="flex flex-wrap items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -117,7 +117,10 @@ export function SitesPanel({ customerId, organizationId, canEdit }: SitesPanelPr
               */}
               {site.access_notes !== null && site.access_notes !== '' ? (
                 <div className="bg-surface-sunken mt-2 flex gap-2 rounded-md p-2">
-                  <KeyRound className="text-muted-foreground mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                  <KeyRound
+                    className="text-muted-foreground mt-0.5 size-3.5 shrink-0"
+                    aria-hidden="true"
+                  />
                   <p className="text-muted-foreground text-xs whitespace-pre-line">
                     {site.access_notes}
                   </p>
@@ -149,6 +152,7 @@ function SiteFormDialog({
   /** Fourni : édition. Absent : création. */
   site?: Site;
 }) {
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
@@ -187,7 +191,9 @@ function SiteFormDialog({
       let finalLng = coords?.longitude ?? null;
 
       if (finalLat === null && values.addressLine1 && (values.city || values.postalCode)) {
-        const fullAddress = [values.addressLine1, values.postalCode, values.city].filter(Boolean).join(' ');
+        const fullAddress = [values.addressLine1, values.postalCode, values.city]
+          .filter(Boolean)
+          .join(' ');
         const matches = await forwardGeocode(fullAddress);
         if (matches.length > 0 && matches[0]) {
           finalLat = matches[0].latitude;
@@ -249,6 +255,23 @@ function SiteFormDialog({
 
   return (
     <Modal
+      presentation="drawer"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter le site'}
+          </Button>
+        </div>
+      }
       open={open}
       onOpenChange={setOpen}
       title={isEdit ? 'Modifier le site' : 'Nouveau site d’intervention'}
@@ -265,7 +288,7 @@ function SiteFormDialog({
         )
       }
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError error={submitError} />
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -286,14 +309,15 @@ function SiteFormDialog({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">Adresse du site</span>
+            <span className="text-foreground text-xs font-semibold">Adresse du site</span>
             <MapLocationPickerDialog
               initialLatitude={site?.latitude ?? undefined}
               initialLongitude={site?.longitude ?? undefined}
               initialAddress={initialAddress}
               onSelectLocation={(loc) => {
                 setCoords({ latitude: loc.latitude, longitude: loc.longitude });
-                if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
+                if (loc.addressLine1)
+                  setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
                 if (loc.postalCode) setValue('postalCode', loc.postalCode, { shouldDirty: true });
                 if (loc.city) setValue('city', loc.city, { shouldDirty: true });
                 if (loc.country) setValue('country', loc.country, { shouldDirty: true });
@@ -320,21 +344,6 @@ function SiteFormDialog({
           hint="Codes, horaires, consignes de sécurité. C’est ce que le technicien lira sur place."
           {...register('accessNotes')}
         />
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter le site'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

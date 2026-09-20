@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
@@ -26,6 +26,7 @@ export interface MissionEditDialogProps {
 }
 
 export function MissionEditDialog({ mission, organizationId }: MissionEditDialogProps) {
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [priority, setPriority] = useState<MissionPriority>(mission.priority);
@@ -89,8 +90,7 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
         // en base, alors qu'`undefined` le laisserait inchangé.
         description: description === undefined || description === '' ? null : description,
         notes: notes === undefined || notes === '' ? null : notes,
-        location_label:
-          locationLabel === undefined || locationLabel === '' ? null : locationLabel,
+        location_label: locationLabel === undefined || locationLabel === '' ? null : locationLabel,
         scheduled_start: toIsoOrUndefined(values.scheduledStart) ?? null,
         scheduled_end: toIsoOrUndefined(values.scheduledEnd) ?? null,
         customer_id: customerId,
@@ -107,6 +107,23 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
 
   return (
     <Modal
+      presentation="drawer"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+        </div>
+      }
       open={open}
       onOpenChange={setOpen}
       size="lg"
@@ -119,7 +136,7 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
         </Button>
       }
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError error={submitError} />
 
         <MissionFormFields
@@ -134,23 +151,10 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
           onCustomerChange={setCustomerId}
           siteId={siteId}
           onSiteChange={setSiteId}
-          onLocationSelect={(loc) => setCoords({ latitude: loc.latitude, longitude: loc.longitude })}
+          onLocationSelect={(loc) =>
+            setCoords({ latitude: loc.latitude, longitude: loc.longitude })
+          }
         />
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

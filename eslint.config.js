@@ -275,7 +275,6 @@ export default tseslint.config(
       'src/pages/invoices/InvoiceDetailPage.tsx',
       'src/pages/metiers/MetierToolPage.tsx',
       'src/pages/organization/BillingPage.tsx',
-      'src/pages/planning/PlanningPage.tsx',
       'src/pages/portal/PortalHomePage.tsx',
       'src/pages/portal/PortalLoginPage.tsx',
       'src/pages/portal/PortalMessagesPage.tsx',

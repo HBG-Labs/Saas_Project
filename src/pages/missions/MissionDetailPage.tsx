@@ -267,7 +267,7 @@ export default function MissionDetailPage() {
 
             {canDelete ? (
               <>
-                <div className="h-4 w-px bg-border mx-1" aria-hidden="true" />
+                <div className="bg-border mx-1 h-4 w-px" aria-hidden="true" />
                 <Button
                   variant="danger-outline"
                   size="sm"
@@ -305,7 +305,8 @@ export default function MissionDetailPage() {
                   }
                 >
                   <p className="text-muted-foreground text-sm">
-                    Cette action est irréversible. La mission et son historique seront définitivement retirés de votre entreprise.
+                    Cette action est irréversible. La mission et son historique seront
+                    définitivement retirés de votre entreprise.
                   </p>
                 </Modal>
               </>
@@ -316,7 +317,7 @@ export default function MissionDetailPage() {
 
       <section
         aria-labelledby="mission-progress-title"
-        className="border-primary/20 bg-primary-subtle/35 grid gap-4 rounded-xl border p-4 shadow-xs sm:p-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-center"
+        className="border-primary/20 bg-primary-subtle/35 grid gap-4 rounded-xl border p-4 sm:p-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-center"
       >
         <div>
           <p
@@ -344,10 +345,10 @@ export default function MissionDetailPage() {
       {data.site?.access_notes !== null && data.site?.access_notes !== undefined ? (
         <section
           aria-labelledby="mission-access-title"
-          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4 shadow-xs"
+          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4"
         >
           <span
-            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            className="bg-surface text-warning border-warning-border flex size-10 shrink-0 items-center justify-center rounded-lg border"
             aria-hidden="true"
           >
             <KeyRound className="size-5" />
@@ -368,7 +369,7 @@ export default function MissionDetailPage() {
         états avançait mais aucune intervention n'existait — le chronomètre et
         le compte rendu restaient inatteignables.
       */}
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Interventions</CardTitle>
         </CardHeader>
@@ -383,7 +384,7 @@ export default function MissionDetailPage() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card variant="section">
           <CardHeader>
             <CardTitle>Lieu et client</CardTitle>
           </CardHeader>
@@ -435,13 +436,15 @@ export default function MissionDetailPage() {
             ) : null}
 
             {data.latitude != null && data.longitude != null && (
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-subtle border border-border/80 text-3xs font-mono text-muted-foreground">
-                <MapPin className="size-3 text-primary shrink-0" />
-                <span>GPS : {Number(data.latitude).toFixed(6)}, {Number(data.longitude).toFixed(6)}</span>
+              <div className="bg-surface-subtle border-border/80 text-3xs text-muted-foreground flex items-center gap-1.5 rounded-lg border p-2 font-mono">
+                <MapPin className="text-primary size-3 shrink-0" />
+                <span>
+                  GPS : {Number(data.latitude).toFixed(6)}, {Number(data.longitude).toFixed(6)}
+                </span>
               </div>
             )}
 
-            <div className="pt-2 space-y-2 border-t border-border">
+            <div className="border-border space-y-2 border-t pt-2">
               {/* 1. Bouton Itinéraire */}
               <NavigationButton
                 destination={{
@@ -454,7 +457,7 @@ export default function MissionDetailPage() {
                 label="Itinéraire vers le chantier"
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {/* 2. Bouton Localiser le chantier (GPS smartphone) */}
                 <LocateMissionButton
                   missionId={data.id}
@@ -481,10 +484,10 @@ export default function MissionDetailPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="w-full justify-center text-xs gap-1.5"
+                      className="w-full justify-center gap-1.5 text-xs"
                       title="Choisir ou ajuster le repère en cliquant sur la carte"
                     >
-                      <MapPin className="size-3.5 text-primary" />
+                      <MapPin className="text-primary size-3.5" />
                       <span>Pointer sur la carte</span>
                     </Button>
                   }
@@ -494,7 +497,7 @@ export default function MissionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="section">
           <CardHeader>
             <CardTitle>Affectation</CardTitle>
           </CardHeader>
@@ -526,7 +529,7 @@ export default function MissionDetailPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-xs">Début prévu</p>
-                <p className="text-foreground font-mono text-xs tabular-nums">
+                <p className="text-foreground text-sm tabular-nums">
                   {data.scheduled_start !== null
                     ? new Date(data.scheduled_start).toLocaleString('fr-FR')
                     : '—'}
@@ -534,7 +537,7 @@ export default function MissionDetailPage() {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Début réel</p>
-                <p className="text-foreground font-mono text-xs tabular-nums">
+                <p className="text-foreground text-sm tabular-nums">
                   {data.actual_start !== null
                     ? new Date(data.actual_start).toLocaleString('fr-FR')
                     : '—'}
@@ -545,7 +548,7 @@ export default function MissionDetailPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Historique des affectations</CardTitle>
         </CardHeader>
@@ -638,7 +641,7 @@ export default function MissionDetailPage() {
                       </div>
                       <time
                         dateTime={assignment.assigned_at}
-                        className="text-subtle-foreground mt-0.5 block font-mono text-xs tabular-nums"
+                        className="text-subtle-foreground mt-0.5 block text-sm tabular-nums"
                       >
                         Affectée le {new Date(assignment.assigned_at).toLocaleString('fr-FR')}
                       </time>
@@ -657,7 +660,7 @@ export default function MissionDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Historique des états</CardTitle>
         </CardHeader>

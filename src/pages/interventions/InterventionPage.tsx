@@ -111,7 +111,7 @@ export default function InterventionPage() {
   const canTrack = membership !== null && data.technician_id === membership.id;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={data.mission_id !== null ? ROUTES.mission(data.mission_id) : ROUTES.missions}>
           <ArrowLeft className="size-4" />
@@ -146,11 +146,9 @@ export default function InterventionPage() {
       />
 
       {/* Le chronomètre EN PREMIER : c'est la raison d'ouvrir cet écran. */}
-      <Card className="border-primary/25 bg-primary-subtle/20 shadow-raised">
+      <Card className="border-primary/25 bg-primary-subtle/35">
         <CardContent className="pt-6">
-          <p className="text-primary mb-3 text-3xs font-bold tracking-[0.14em] uppercase">
-            Action terrain
-          </p>
+          <p className="text-primary mb-3 text-sm font-semibold">Action terrain</p>
           <InterventionTimer
             interventionId={interventionId}
             entries={timeEntries.data ?? []}
@@ -165,10 +163,10 @@ export default function InterventionPage() {
       mission.data?.site?.access_notes !== undefined ? (
         <section
           aria-labelledby="intervention-access-title"
-          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4 shadow-xs"
+          className="border-warning-border bg-warning-subtle flex items-start gap-3 rounded-xl border p-4"
         >
           <span
-            className="bg-surface text-warning flex size-10 shrink-0 items-center justify-center rounded-lg border border-warning-border"
+            className="bg-surface text-warning border-warning-border flex size-10 shrink-0 items-center justify-center rounded-lg border"
             aria-hidden="true"
           >
             <KeyRound className="size-5" />
@@ -189,7 +187,7 @@ export default function InterventionPage() {
         partant, souvent depuis le véhicule. Le laisser accessible seulement par
         l'URL le rendrait introuvable.
       */}
-      <Card>
+      <Card variant="section">
         <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
           <div>
             <p className="text-foreground text-sm font-medium">Compte rendu</p>
@@ -232,7 +230,7 @@ export default function InterventionPage() {
       </Card>
 
       {mission.data !== null && mission.data !== undefined ? (
-        <Card>
+        <Card variant="section">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Badge variant="outline">{mission.data.reference}</Badge>
@@ -352,7 +350,7 @@ export default function InterventionPage() {
         canEdit={canTrack && data.status !== 'completed'}
       />
 
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Photos & Justificatifs terrain</CardTitle>
         </CardHeader>
@@ -370,7 +368,7 @@ export default function InterventionPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Relevé du temps</CardTitle>
         </CardHeader>
@@ -452,7 +450,7 @@ function InterventionNotes({
 
   if (!canEdit) {
     return saved === '' ? null : (
-      <Card>
+      <Card variant="section">
         <CardHeader>
           <CardTitle>Notes de terrain</CardTitle>
         </CardHeader>
@@ -464,7 +462,7 @@ function InterventionNotes({
   }
 
   return (
-    <Card>
+    <Card variant="section">
       <CardHeader>
         <CardTitle>Notes de terrain</CardTitle>
       </CardHeader>

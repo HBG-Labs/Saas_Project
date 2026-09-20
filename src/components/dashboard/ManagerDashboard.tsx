@@ -23,7 +23,7 @@ export function ManagerDashboard() {
   const jobPlural = useLabel('job', true);
   const jobSingular = useLabel('job');
 
-  const missions = useMissions(organizationId, { limit: 5 });
+  const missions = useMissions(organizationId, { limit: 12 });
   const missionStatusCounts = useMissionStatusCounts(organizationId);
   const pendingReports = useReportsPendingReview(organizationId);
   const teams = useTeams(organizationId);
@@ -37,7 +37,7 @@ export function ManagerDashboard() {
   const teamList = teams.data ?? [];
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-8">
       <PageHeader
         title="Tableau de bord"
         description={`${organization?.name ?? 'Votre périmètre'} — ${jobPlural.toLowerCase()} attribuées, revue des comptes rendus et suivi des équipes.`}
@@ -53,8 +53,9 @@ export function ManagerDashboard() {
       />
 
       {/* Ce qui attend une action d'abord, le volume ensuite. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="border-border bg-surface grid grid-cols-1 overflow-hidden rounded-lg border sm:grid-cols-3">
         <MetricCard
+          layout="strip"
           label="Comptes rendus à contrôler"
           value={pendingReports.isPending || pendingReports.isError ? '—' : pendingReportsCount}
           icon={ClipboardCheck}
@@ -74,6 +75,7 @@ export function ManagerDashboard() {
           }
         />
         <MetricCard
+          layout="strip"
           label={`${jobPlural} du périmètre`}
           value={missionStatusCounts.isPending || missionStatusCounts.isError ? '—' : missionCount}
           icon={ClipboardList}
@@ -81,6 +83,7 @@ export function ManagerDashboard() {
           actionLabel="Voir"
         />
         <MetricCard
+          layout="strip"
           label="Mes équipes"
           value={teams.isPending || teams.isError ? '—' : teamList.length}
           icon={UsersRound}
@@ -125,7 +128,7 @@ export function ManagerDashboard() {
                 <li key={m.id}>
                   <Link
                     to={ROUTES.mission(m.id)}
-                    className="hover:bg-surface-hover min-h-touch -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors sm:min-h-0"
+                    className="hover:bg-surface-hover min-h-touch -mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors sm:min-h-0"
                   >
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2">

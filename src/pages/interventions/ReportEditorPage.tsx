@@ -281,7 +281,7 @@ export default function ReportEditorPage() {
       ) : null}
 
       {report === null ? (
-        <Card>
+        <Card variant="section">
           <CardContent className="space-y-3 pt-6">
             <p className="text-muted-foreground text-sm">
               Aucun compte rendu n’a encore été ouvert pour cette intervention.
@@ -305,7 +305,7 @@ export default function ReportEditorPage() {
         </Card>
       ) : (
         <>
-          <Card>
+          <Card variant="section">
             <CardHeader>
               <CardTitle>Travaux réalisés</CardTitle>
             </CardHeader>
@@ -383,7 +383,7 @@ export default function ReportEditorPage() {
             />
           ) : null}
 
-          <Card>
+          <Card variant="section">
             <CardHeader>
               <CardTitle>Photos et documents</CardTitle>
             </CardHeader>
@@ -402,7 +402,7 @@ export default function ReportEditorPage() {
           </Card>
 
           {/* ✍️ Signatures électroniques */}
-          <Card>
+          <Card variant="section">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="text-primary size-4" />
@@ -446,7 +446,7 @@ export default function ReportEditorPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsTechSignOpen(true)}
-                      className="h-11 cursor-pointer gap-1 self-start text-xs sm:h-7"
+                      className="cursor-pointer gap-1 self-start"
                     >
                       <Pen className="size-3" />
                       <span>{report.technician_signature_path ? 'Modifier' : 'Signer'}</span>
@@ -489,7 +489,7 @@ export default function ReportEditorPage() {
                       variant="primary"
                       size="sm"
                       onClick={() => setIsCustomerSignOpen(true)}
-                      className="h-11 cursor-pointer gap-1 self-start text-xs sm:h-7"
+                      className="cursor-pointer gap-1 self-start"
                     >
                       <Pen className="size-3" />
                       <span>
@@ -505,7 +505,7 @@ export default function ReportEditorPage() {
           </Card>
 
           {isEditable ? (
-            <Card>
+            <Card variant="section">
               <CardContent className="space-y-3 pt-6">
                 <p className="text-muted-foreground text-xs">
                   Une fois soumis, le compte rendu part au contrôle et n’est plus modifiable — sauf

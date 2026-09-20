@@ -7,7 +7,8 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { DataView } from '@/components/ui/DataView';
+import { TableCell, TableHeaderCell } from '@/components/ui/Table';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -164,79 +165,97 @@ export default function CustomersListPage() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((customer) => (
-            <Link
-              key={customer.id}
-              to={ROUTES.customer(customer.id)}
-              /*
-                `min-w-0` N'EST PAS DÉCORATIF ICI.
-
-                Un élément de grille a `min-width: auto` : il REFUSE de se
-                réduire sous la largeur minimale de son contenu. Le nom du
-                client est en `nowrap` (il est tronqué) et le badge de
-                référence est `shrink-0` : la largeur minimale dépasse donc la
-                colonne, et c'est la COLONNE qui cède.
-
-                Mesuré sur iPhone SE avec « Tricatel — FICTIF SUPER PDP » : la
-                carte allait de 16 à 381 px pour un écran de 375, quand sa
-                grille s'arrêtait à 359. Elle débordait par la droite.
-
-                Le `min-w-0` posé plus bas sur la rangée interne ne suffit pas —
-                vérifié : il ne change rien. C'est ici, sur l'élément de grille
-                lui-même, que la contrainte doit être levée.
-              */
-              className="group focus-visible:ring-primary block min-w-0 rounded-xl focus-visible:ring-2 focus-visible:outline-none"
-            >
-              <Card className="border-border/80 group-hover:border-primary/30 group-hover:shadow-raised h-full cursor-pointer shadow-xs transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
-                <CardContent className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
-                        <Building2 className="size-4.5" aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-foreground group-hover:text-primary block truncate text-sm font-bold transition-colors">
-                          {customer.name}
-                        </span>
-                        {customer.legal_name ? (
-                          <span className="text-muted-foreground block truncate text-xs">
-                            {customer.legal_name}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="shrink-0 font-mono text-xs">
-                      {customer.reference}
-                    </Badge>
-                  </div>
-
-                  <div className="border-border/60 space-y-2 border-t pt-3 text-xs">
-                    <p className="text-muted-foreground flex items-center gap-1.5 truncate">
-                      <MapPin
-                        className="text-subtle-foreground size-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      {[customer.postal_code, customer.city]
-                        .filter((part) => part !== null && part !== '')
-                        .join(' ') || 'Ville non renseignée'}
-                    </p>
-
-                    {customer.phone !== null && customer.phone !== '' ? (
-                      <p className="text-muted-foreground flex items-center gap-1.5 font-mono">
-                        <Phone
-                          className="text-subtle-foreground size-3.5 shrink-0"
-                          aria-hidden="true"
-                        />
-                        {customer.phone}
-                      </p>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <DataView
+          items={list}
+          getKey={(customer) => customer.id}
+          label="Liste des clients"
+          breakpoint="lg"
+          columnCount={4}
+          head={
+            <>
+              <TableHeaderCell>Client</TableHeaderCell>
+              <TableHeaderCell>Référence</TableHeaderCell>
+              <TableHeaderCell>Ville</TableHeaderCell>
+              <TableHeaderCell>Contact</TableHeaderCell>
+            </>
+          }
+          empty={{ title: 'Aucun client', description: 'Les clients apparaîtront ici.' }}
+          renderRow={(customer) => (
+            <>
+              <TableCell className="py-2.5">
+                <Link
+                  className="text-foreground hover:text-primary block py-1 text-sm font-bold"
+                  to={ROUTES.customer(customer.id)}
+                >
+                  {customer.name}
+                </Link>
+                {customer.legal_name && customer.legal_name !== customer.name && (
+                  <span className="text-muted-foreground">{customer.legal_name}</span>
+                )}
+              </TableCell>
+              <TableCell className="py-2.5">
+                <span className="text-muted-foreground tabular-nums">{customer.reference}</span>
+              </TableCell>
+              <TableCell className="py-2.5">
+                {[customer.postal_code, customer.city].filter(Boolean).join(' ') ||
+                  'Non renseignée'}
+              </TableCell>
+              <TableCell className="py-2.5">
+                <div className="space-y-1">
+                  {customer.phone && (
+                    <a className="hover:text-primary block" href={'tel:' + customer.phone}>
+                      {customer.phone}
+                    </a>
+                  )}
+                  {customer.email && (
+                    <a
+                      className="hover:text-primary block break-all"
+                      href={'mailto:' + customer.email}
+                    >
+                      {customer.email}
+                    </a>
+                  )}
+                  {!customer.phone && !customer.email && (
+                    <span className="text-muted-foreground">Non renseigné</span>
+                  )}
+                </div>
+              </TableCell>
+            </>
+          )}
+          renderCard={(customer) => (
+            <>
+              <Link className="group block min-w-0" to={ROUTES.customer(customer.id)}>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-foreground group-hover:text-primary min-w-0 text-base font-bold break-words">
+                    {customer.name}
+                  </span>
+                  <Badge variant="outline" className="shrink-0">
+                    {customer.reference}
+                  </Badge>
+                </div>
+                {customer.legal_name && customer.legal_name !== customer.name && (
+                  <p className="text-muted-foreground mt-1 text-sm">{customer.legal_name}</p>
+                )}
+                <p className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
+                  <MapPin className="size-4 shrink-0" aria-hidden="true" />
+                  {[customer.postal_code, customer.city].filter(Boolean).join(' ') ||
+                    'Ville non renseignée'}
+                </p>
+                <span className="text-primary min-h-touch mt-2 inline-flex items-center text-sm font-semibold">
+                  Ouvrir la fiche →
+                </span>
+              </Link>
+              {customer.phone && (
+                <Button asChild variant="outline" size="sm">
+                  <a href={'tel:' + customer.phone}>
+                    <Phone className="size-4" aria-hidden="true" />
+                    {customer.phone}
+                  </a>
+                </Button>
+              )}
+            </>
+          )}
+        />
       )}
     </div>
   );
