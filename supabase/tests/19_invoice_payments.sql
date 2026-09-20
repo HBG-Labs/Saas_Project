@@ -88,7 +88,8 @@ values ('reglements-b', 'Reglements B', pg_temp.uid('patron_b'), 'hvac');
 reset role;
 
 create temporary table t_ctx (org_id uuid, autre_org_id uuid, inv uuid, inv_legacy uuid, avoir uuid, brouillon uuid);
-grant select on t_ctx to authenticated;
+-- `update` aussi : la fixture remplit ce contexte sous le role authenticated.
+grant select, update on t_ctx to authenticated;
 insert into t_ctx (org_id, autre_org_id)
 values ((select id from public.organizations where slug = 'reglements-a'),
         (select id from public.organizations where slug = 'reglements-b'));

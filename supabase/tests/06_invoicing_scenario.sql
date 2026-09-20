@@ -305,10 +305,17 @@ begin
 
   -- Ce qui DOIT rester possible : faire vivre le document.
   update public.invoices set status = 'sent' where id = v_inv;
-  update public.invoices set status = 'paid' where id = v_inv;
+  -- « Payee » ne se pose plus a la main depuis D4 (20260928090000) : le statut
+  -- suit les reglements. Le chemin est record_payment ; sans montant, il
+  -- encaisse le reste du. L'ecriture directe est refusee — et c'est verifie.
+  perform pg_temp.refuses(
+    format($sql$ update public.invoices set status = 'paid' where id = %L $sql$, v_inv),
+    'Poser « payee » a la main est refuse : le statut suit les reglements'
+  );
+  perform public.record_payment(v_inv);
   perform pg_temp.ok(
     (select status from public.invoices where id = v_inv) = 'paid',
-    'Le statut, lui, continue d''evoluer');
+    'Le statut, lui, continue d''evoluer — par un reglement');
 end
 $$;
 
