@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { listNotificationStates, upsertNotificationStates } from '../api/notification-states.api';
 
@@ -65,6 +65,23 @@ function ecrireLocal(cle: string, valeurs: ReadonlySet<string>): void {
     localStorage.setItem(cle, JSON.stringify(Array.from(valeurs)));
   } catch {
     // Stockage inaccessible
+  }
+}
+
+function lireDrapeau(cle: string): boolean {
+  try {
+    return localStorage.getItem(cle) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function poserDrapeau(cle: string): void {
+  try {
+    localStorage.setItem(cle, '1');
+  } catch {
+    // Stockage inaccessible : la reprise se rejouera, ce qui reste sans danger
+    // tant que l'application ne supprime jamais de ligne.
   }
 }
 
@@ -174,31 +191,47 @@ export function useNotificationStates(userId: string | null, organizationId: str
   );
 
   /*
-    LA REPRISE, UNE FOIS PAR COMPTE ET PAR ORGANISATION
+    LA REPRISE, UNE FOIS PAR COMPTE ET PAR ORGANISATION — ET UNE FOIS POUR DE BON
 
     Au premier chargement réussi, ce que le navigateur savait et que la base
     ignore lui est envoyé. Effet légitime : c'est une synchronisation vers un
     système externe, déclenchée par l'arrivée d'une donnée.
 
+    « Une fois » est mémorisé dans le navigateur, pas seulement dans ce rendu.
+    Sinon chaque rechargement rejouerait la reprise, et un état retiré côté
+    base reviendrait depuis le miroir — l'inverse de ce qu'on veut : après la
+    reprise, c'est la base qui fait foi, le miroir ne remonte plus rien.
+
     La date posée est « maintenant » : celle de la lecture d'origine n'a jamais
     été mémorisée, et une date approximative vaut mieux qu'un état perdu.
   */
-  const reprisesFaites = useRef(new Set<string>());
+  const cleReprise = `rezo360_notifications_reprise_${userId ?? 'anonymous'}_${organizationId ?? ''}`;
   useEffect(() => {
     if (!serveurDisponible || userId === null || organizationId === null) return;
-    const marque = `${userId}:${organizationId}`;
-    if (reprisesFaites.current.has(marque)) return;
-    reprisesFaites.current.add(marque);
+    if (lireDrapeau(cleReprise)) return;
 
     const distant = query.data ?? VIDE;
     const luesLocales = Array.from(lireLocal(cleLue)).filter((k) => !distant.readIds.has(k));
     const ecarteesLocales = Array.from(lireLocal(cleEcartee)).filter(
       (k) => !distant.dismissedIds.has(k),
     );
+
+    // Posé AVANT l'envoi : si celui-ci échoue, on ne rejoue pas à l'infini —
+    // le repli local couvre déjà ce cas, comme avant la migration.
+    poserDrapeau(cleReprise);
     if (luesLocales.length === 0 && ecarteesLocales.length === 0) return;
 
     mutate({ lues: luesLocales, ecartees: ecarteesLocales, precedent: distant });
-  }, [serveurDisponible, userId, organizationId, query.data, cleLue, cleEcartee, mutate]);
+  }, [
+    serveurDisponible,
+    userId,
+    organizationId,
+    query.data,
+    cleLue,
+    cleEcartee,
+    cleReprise,
+    mutate,
+  ]);
 
   return {
     readIds: etats.readIds,

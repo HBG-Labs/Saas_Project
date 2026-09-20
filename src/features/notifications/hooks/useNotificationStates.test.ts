@@ -163,6 +163,51 @@ describe('useNotificationStates', () => {
     expect(api.upsertNotificationStates).toHaveBeenCalledTimes(1);
   });
 
+  it('ne rejoue jamais la reprise, même après un rechargement', async () => {
+    /*
+      Le cas qui rendrait la reprise NON idempotente : un état retiré côté
+      base, encore présent dans le miroir. Un rechargement (nouvelle instance
+      du hook) ne doit pas le réinjecter — après la reprise, la base fait foi.
+    */
+    localStorage.setItem(`rezo360_read_notifications_${USER}`, JSON.stringify(['leave_pending_1']));
+    api.listNotificationStates.mockResolvedValue([]);
+
+    const premier = monter();
+    await waitFor(() => expect(api.upsertNotificationStates).toHaveBeenCalledTimes(1));
+    premier.unmount();
+
+    // « Rechargement » : la base a retiré la ligne, le miroir l'a encore.
+    api.listNotificationStates.mockResolvedValue([]);
+    const second = monter();
+    await waitFor(() => expect(second.result.current.synchronise).toBe(true));
+
+    expect(api.upsertNotificationStates).toHaveBeenCalledTimes(1);
+    expect(second.result.current.readIds.has('leave_pending_1')).toBe(false);
+  });
+
+  it('garde l’état sur cet appareil quand la base refuse l’écriture', async () => {
+    /*
+      Supabase indisponible au moment du clic. L'écriture échoue, le cache
+      optimiste est annulé, la relecture échoue à son tour — et c'est alors le
+      miroir local qui fait foi : la notification reste lue ici, comme avant
+      la migration. Rien ne se perd, rien ne clignote.
+    */
+    api.listNotificationStates.mockResolvedValueOnce([]);
+    const { result } = monter();
+    await waitFor(() => expect(result.current.synchronise).toBe(true));
+
+    api.upsertNotificationStates.mockRejectedValue(new Error('fetch failed'));
+    api.listNotificationStates.mockRejectedValue(new Error('fetch failed'));
+
+    act(() => {
+      result.current.marquerLues(['report_review_9']);
+    });
+
+    await waitFor(() => expect(api.upsertNotificationStates).toHaveBeenCalled());
+    await waitFor(() => expect(result.current.synchronise).toBe(false));
+    expect(result.current.readIds.has('report_review_9')).toBe(true);
+  });
+
   it('ne parle pas à la base sans organisation', () => {
     const { result } = renderHook(() => useNotificationStates(USER, null), { wrapper });
 
