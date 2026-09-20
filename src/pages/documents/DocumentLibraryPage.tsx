@@ -1,6 +1,7 @@
 import { FolderOpen, FolderPlus, Plus, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { useToast } from '@/components/feedback/toast-context';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -149,9 +150,10 @@ export default function DocumentLibraryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-atelier space-y-5">
       <PageHeader
         title="Bibliothèque"
+        className="sm:flex-col xl:flex-row"
         description="Centralisez les documents techniques, procédures, plans et notices utiles à votre organisation."
         actions={
           canManage ? (
@@ -180,7 +182,7 @@ export default function DocumentLibraryPage() {
 
       <section
         aria-label="Rechercher et filtrer les documents"
-        className="border-border/80 bg-surface space-y-3 rounded-2xl border p-3 shadow-xs sm:p-4"
+        className="border-border space-y-3 border-b pb-4"
       >
         <Input
           label="Rechercher"
@@ -203,12 +205,17 @@ export default function DocumentLibraryPage() {
           onChange={(event) => changerFiltre(() => setSearch(event.target.value))}
         />
 
-        <div className="no-scrollbar -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
+        <div className="flex flex-wrap items-center gap-2 pb-0.5">
           {FILTRES_FAMILLE.map((option) => (
             <Button
               key={option.valeur}
               size="sm"
-              variant={famille === option.valeur ? 'primary' : 'outline'}
+              variant="ghost"
+              className={
+                famille === option.valeur
+                  ? 'bg-nav-selected text-nav-foreground'
+                  : 'text-muted-foreground'
+              }
               aria-pressed={famille === option.valeur}
               onClick={() => changerFiltre(() => setFamille(option.valeur))}
             >
@@ -260,6 +267,7 @@ export default function DocumentLibraryPage() {
         sousDossiers.length > 0 ? null : (
           <EmptyState
             icon={FolderOpen}
+            illustration={filtreActif ? undefined : <AtelierIllustration subject="library" />}
             title={filtreActif ? 'Aucun document ne correspond' : 'Aucun document ici'}
             description={
               filtreActif

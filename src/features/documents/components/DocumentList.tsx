@@ -130,7 +130,7 @@ export function DocumentList({
           <button
             type="button"
             aria-label={`Actions pour ${document.name}`}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:w-9"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none pointer-fine:sm:h-9 pointer-fine:sm:w-9"
           >
             <MoreHorizontal className="h-4 w-4" aria-hidden />
           </button>
@@ -175,7 +175,7 @@ export function DocumentList({
   return (
     <>
       {/* Téléphone : cartes compactes. */}
-      <ul className="space-y-2.5 md:hidden">
+      <ul className="divide-border border-border bg-surface divide-y rounded-xl border lg:hidden">
         {documents.map((document) => {
           const apparence = APPARENCE[familleDeDocument(document.mime_type)];
           const Icone = apparence.icone;
@@ -183,7 +183,7 @@ export function DocumentList({
           return (
             <li
               key={document.id}
-              className="border-border/80 bg-card hover:border-primary/30 hover:shadow-raised flex items-start gap-3 rounded-2xl border p-3.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+              className="hover:bg-surface-hover flex items-start gap-3 p-3.5 transition-colors"
             >
               <span className="bg-surface-sunken flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
                 <Icone className={`h-5 w-5 ${apparence.couleur}`} aria-hidden />
@@ -222,12 +222,12 @@ export function DocumentList({
       {/* Écran large : tableau. */}
       {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- la liste horizontale doit être défilable au clavier */}
       <div
-        className="border-border/80 bg-card focus-visible:ring-ring hidden overflow-x-auto rounded-2xl border shadow-xs focus-visible:ring-2 focus-visible:outline-none md:block"
+        className="border-border bg-surface focus-visible:ring-ring hidden overflow-x-auto rounded-xl border focus-visible:ring-2 focus-visible:outline-none lg:block"
         role="region"
         aria-label="Liste des documents"
         tabIndex={0}
       >
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[680px] text-sm">
           <thead className="bg-surface-raised/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Nom</th>
@@ -247,7 +247,7 @@ export function DocumentList({
               const dossier = nomDossier(document.folder_id);
               return (
                 <tr key={document.id} className="hover:bg-surface-hover transition-colors">
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-2.5">
                     <button
                       type="button"
                       onClick={() => onOpen(document)}
@@ -262,7 +262,7 @@ export function DocumentList({
                       </p>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-2.5">
                     <span className="inline-flex flex-wrap items-center gap-1">
                       <Badge variant={apparence.badge}>{apparence.libelle}</Badge>
                       {portee(document) !== null && (
@@ -273,15 +273,15 @@ export function DocumentList({
                       )}
                     </span>
                   </td>
-                  <td className="text-muted-foreground px-4 py-3">
+                  <td className="text-muted-foreground px-4 py-2.5 whitespace-nowrap">
                     {formaterTaille(document.file_size)}
                   </td>
                   {showFolderColumn && (
-                    <td className="text-muted-foreground px-4 py-3">
+                    <td className="text-muted-foreground px-4 py-2.5 whitespace-nowrap">
                       {dossier ?? <span className="opacity-60">—</span>}
                     </td>
                   )}
-                  <td className="text-muted-foreground px-4 py-3">
+                  <td className="text-muted-foreground px-4 py-2.5 whitespace-nowrap">
                     {dateCourte(document.created_at)}
                   </td>
                   <td className="px-4 py-3 text-right">{menu(document)}</td>

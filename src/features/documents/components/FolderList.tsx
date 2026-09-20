@@ -165,7 +165,7 @@ export function FolderGrid({
           return (
             <li
               key={dossier.id}
-              className="border-border/80 bg-card hover:border-primary/30 hover:shadow-raised group flex items-center gap-2 rounded-2xl border p-2.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+              className="border-border bg-surface hover:bg-surface-hover group flex items-center gap-2 rounded-xl border p-2.5 transition-colors"
             >
               <button
                 type="button"
@@ -179,8 +179,8 @@ export function FolderGrid({
                   d'un fichier partageaient le même gris et le même trait, et
                   l'œil devait lire pour savoir sur quoi il allait cliquer.
                 */}
-                <span className="bg-primary-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-                  <Folder className="text-primary fill-primary/15 h-5 w-5" aria-hidden />
+                <span className="bg-info-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                  <Folder className="text-info fill-info/15 h-5 w-5" aria-hidden />
                 </span>
                 <span className="min-w-0">
                   <span className="text-foreground block truncate text-sm font-medium">
@@ -205,7 +205,7 @@ export function FolderGrid({
                     <button
                       type="button"
                       aria-label={`Actions pour le dossier ${dossier.name}`}
-                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:w-9"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none pointer-fine:sm:h-9 pointer-fine:sm:w-9"
                     >
                       <MoreHorizontal className="h-4 w-4" aria-hidden />
                     </button>
