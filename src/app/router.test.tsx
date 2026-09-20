@@ -64,7 +64,7 @@ describe('routing', () => {
       await screen.findByRole(
         'heading',
         {
-          name: /maîtrisez votre activité/i,
+          name: /tutoriels & formation/i,
           level: 1,
         },
         { timeout: 5000 },
@@ -114,19 +114,16 @@ describe('routing', () => {
     // Prospect Radar (module interne) : `ProtectedRoute` doit déjà bloquer
     // avant même que `RequirePlatformAdmin` n'entre en jeu.
     '/admin/prospection',
-  ])(
-    'protège la route privée %s',
-    async (path) => {
-      const router = renderAt(path);
+  ])('protège la route privée %s', async (path) => {
+    const router = renderAt(path);
 
-      await waitFor(
-        () => {
-          expect(router.state.location.pathname).toBe('/login');
-        },
-        { timeout: 4000 },
-      );
-    },
-  );
+    await waitFor(
+      () => {
+        expect(router.state.location.pathname).toBe('/login');
+      },
+      { timeout: 4000 },
+    );
+  });
 
   it('affiche la page 404 sur une URL inconnue', async () => {
     renderAt('/cette-page-nexiste-pas');
