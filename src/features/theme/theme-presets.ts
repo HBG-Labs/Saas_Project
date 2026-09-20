@@ -65,7 +65,7 @@ export const DEFAULT_THEME_PRESET: ThemePreset = {
   preview: {
     primary: '#1b44c8',
     surface: '#ffffff',
-    background: '#eef2f5',
+    background: '#fbfaf8',
   },
   variables: {},
   /*

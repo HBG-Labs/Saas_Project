@@ -10,7 +10,7 @@ import { COMPACT_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
 
   `theme-presets.test.ts` compare desormais ces deux valeurs aux blocs CSS.
 */
-export const BROWSER_BAR_COLOR = { light: '#eef2f5', dark: '#0e1b36' } as const;
+export const BROWSER_BAR_COLOR = { light: '#fbfaf8', dark: '#0e1b36' } as const;
 
 /**
  * Teinte la barre du navigateur mobile d'après le thème RÉELLEMENT appliqué.
@@ -57,11 +57,13 @@ export function applyStoredTheme(): void {
 
     const storedCompact = localStorage.getItem(COMPACT_STORAGE_KEY) === 'true';
     document.documentElement.classList.toggle('compact-mode', storedCompact);
-    document.documentElement.setAttribute('data-density', storedCompact ? 'compact' : 'comfortable');
+    document.documentElement.setAttribute(
+      'data-density',
+      storedCompact ? 'compact' : 'comfortable',
+    );
   } catch {
     // localStorage peut être inaccessible (mode privé strict, iframe cloisonnée).
     // Les styles par défaut restent utilisables : on n'interrompt pas le
     // démarrage de l'application pour une préférence d'affichage.
   }
 }
-

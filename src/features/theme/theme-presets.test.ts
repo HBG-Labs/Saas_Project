@@ -82,7 +82,7 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
     // des verdicts, puisqu'il serait vert.
     expect(Object.keys(clair).length).toBeGreaterThan(20);
     expect(Object.keys(sombre).length).toBeGreaterThan(20);
-    expect(clair['--background']).toBe('#eef2f5');
+    expect(clair['--background']).toBe('#fbfaf8');
     expect(sombre['--background']).toBe('#0e1b36');
   });
 

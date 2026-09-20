@@ -29,28 +29,62 @@
   :root,
   .theme-jour-verrouille {
     /* --- ATELIER JOUR ----------------------------------------------------
-       Fond papier légèrement bleuté, encre ardoise, bleu de tracé technique.
-       Le fond clair n'est pas une préférence esthétique : l'application se lit
-       dehors, en plein jour, à bout de bras.
+       Neutre papier, encre noire, bleu de tracé technique. Le fond clair n'est
+       pas une préférence esthétique : l'application se lit dehors, en plein
+       jour, à bout de bras.
 
        Le orange « haute visibilité » (--warning) est le seul signal chaud de
        la palette. Il est réservé à ce qui demande une action — s'il apparaît
        en décoration, il ne veut plus rien dire.
-       -------------------------------------------------------------------- */
-    --background: #eef2f5;
+
+       ─────────────────────────────────────────────────────────────────────
+       LE NEUTRE EST CHAUD, ET IL EST CONSTRUIT
+
+       Les neutres étaient gris-bleu (#eef2f5, #d8e0e7, #0e1720). La direction
+       « Papier » les remplace par une famille chaude posée sur une seule
+       teinte OKLCH (84,6°) à très bas chroma : toutes les surfaces et toutes
+       les encres en descendent, donc aucune ne jure avec une autre.
+
+       Chaque valeur a été RÉSOLUE, pas choisie à l'œil. Le ratio de contraste
+       de chaque encre a été vérifié contre les CINQ surfaces, pas seulement
+       contre le blanc — c'est sur la surface creusée que les textes faibles
+       passent sous le seuil, et c'est la surface qu'on ne pense jamais à
+       tester.
+
+       Deux contraintes ont dessiné la rampe :
+
+       - `--border-strong` borde les champs, les sélecteurs et les cases à
+         cocher. WCAG 1.4.11 lui impose 3:1 contre la surface. L'ancienne
+         valeur tenait 1,76:1 — la bordure de chaque champ de l'application
+         était sous le seuil, sans que rien ne le signale.
+
+       - `--surface-sunken` est calée sur `--success`, le plus clair des
+         textes sémantiques : c'est lui qui décide jusqu'où la surface peut
+         être creusée avant qu'un libellé vert n'y devienne illisible.
+       ───────────────────────────────────────────────────────────────────── */
+    --background: #fbfaf8;
     --surface: #ffffff;
     --surface-raised: #ffffff;
-    --surface-sunken: #e6ecf1;
-    --surface-subtle: #f6f8fa;
-    --surface-hover: #e9eff4;
+    --surface-sunken: #f1eee9;
+    --surface-subtle: #f7f5f2;
+    --surface-hover: #f4f2ed;
 
-    --border: #d8e0e7;
-    --border-strong: #b8c5cf;
+    /* Filet décoratif : sépare, ne délimite pas un contrôle. */
+    --border: #ece9e3;
+    /* 3,14:1 au pire (sur la surface creusée). Seuil WCAG 1.4.11 : 3:1. */
+    --border-strong: #89867e;
 
-    --foreground: #0e1720;
-    --muted-foreground: #46545f;
-    /* 4,94:1 sur blanc : reste discret sans passer sous WCAG AA. */
-    --subtle-foreground: #65727c;
+    --foreground: #1a1a18;
+    /* 5,92:1 au pire. */
+    --muted-foreground: #5e5a54;
+    /*
+      L'encre secondaire de la direction « Papier ». Elle sert ici de niveau le
+      plus faible : à 5,38:1 sur blanc, elle ne laisse pas la place à un
+      troisième cran sous elle qui tiendrait encore 4,5:1 sur la surface
+      creusée. `--muted-foreground` a donc été creusé au-dessus d'elle plutôt
+      que l'inverse. 4,65:1 au pire.
+    */
+    --subtle-foreground: #6e6a63;
 
     --primary: #1b44c8;
     --primary-hover: #163aac;
@@ -116,13 +150,25 @@
     --surface-subtle: #121a34;
     --surface-hover: #1f2f5e;
 
+    /* Filet décoratif : sépare, ne délimite pas un contrôle. */
     --border: #243566;
-    --border-strong: #324880;
+    /*
+      Borde les champs, les sélecteurs et les cases à cocher : WCAG 1.4.11 lui
+      impose 3:1. L'ancienne valeur (#324880) tenait 1,46:1 sur la surface la
+      plus claire — la bordure de chaque champ du thème sombre était très loin
+      sous le seuil. 3,14:1 au pire désormais.
+    */
+    --border-strong: #637cb9;
 
     --foreground: #f0f4ff;
     --muted-foreground: #8fa3c8;
-    /* Lisible aussi sur les surfaces marine élevées (4,93:1 minimum). */
-    --subtle-foreground: #7b90b3;
+    /*
+      L'ancienne valeur (#7b90b3) était annoncée à 4,93:1, mesurée contre
+      `--surface` seulement. Contre `--surface-hover`, la plus claire des six,
+      elle tombait à 3,99:1. Le commentaire était juste, la surface testée ne
+      l'était pas. 4,58:1 au pire désormais.
+    */
+    --subtle-foreground: #869bbf;
 
     --primary: #7fa0ff;
     --primary-hover: #9db6ff;
