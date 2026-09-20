@@ -3855,6 +3855,8 @@ export interface Database {
           id: string;
           organization_id: string;
           page_id: string;
+          /** L'espace de la page au moment de l'archivage ; `null` = antérieur aux espaces personnels (partagé). */
+          space_id: string | null;
           title: string;
           content: TiptapDocument;
           authored_by: string | null;

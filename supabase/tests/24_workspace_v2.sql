@@ -124,6 +124,25 @@ select pg_temp.ok((select count(*) from public.workspace_page_revisions where pa
   'le chef ne voit pas la revision d''une page privee');
 reset role;
 
+-- Une page privée supprimée : ses révisions restent, lisibles de son
+-- propriétaire seul (correctif 20261003091500).
+select pg_temp.login('tech_a'); set local role authenticated;
+do $$ declare p uuid; begin
+  insert into public.workspace_pages (space_id, title) select perso_a, 'Brouillon a jeter' from t_ctx returning id into p;
+  update public.workspace_pages set title = 'Brouillon a jeter (v2)' where id = p;
+  delete from public.workspace_pages where id = p;
+  perform pg_temp.ok((select count(*) from public.workspace_page_revisions where page_id = p) = 2,
+    'les revisions d''une page privee supprimee restent lisibles de son proprietaire');
+  perform pg_temp.ok((select bool_and(space_id = (select perso_a from t_ctx)) from public.workspace_page_revisions where page_id = p),
+    'chaque revision porte son espace');
+  update t_ctx set page_modele = p;
+end $$;
+reset role;
+select pg_temp.login('chef'); set local role authenticated;
+select pg_temp.ok((select count(*) from public.workspace_page_revisions where page_id = (select page_modele from t_ctx)) = 0,
+  'le chef ne voit pas les revisions d''une page privee supprimee');
+reset role;
+
 -- Départ de tech_b (qui a aussi un espace) : archivé, pas supprimé.
 select pg_temp.login('tech_b'); set local role authenticated;
 select public.ensure_personal_workspace_space((select org_id from t_ctx));
