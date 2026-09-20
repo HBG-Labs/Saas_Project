@@ -32,7 +32,7 @@ select pg_temp.creer_comptes();
 create temporary table t_ctx (org_id uuid, autre_org_id uuid, membre_a uuid, membre_b uuid, m1 uuid, m2 uuid, tache uuid);
 grant select, update on t_ctx to authenticated;
 insert into t_ctx (org_id, autre_org_id)
-values (pg_temp.organisation_abonnee('planning-a', 'Planning A', 'patron', 'pro'),
+values (pg_temp.organisation_abonnee('planning-a', 'Planning A', 'patron', 'business'),
         pg_temp.organisation_abonnee('planning-b', 'Planning B', 'patron_b', 'free'));
 
 select pg_temp.ajouter_membre(org_id, 'tech_a', 'technician') from t_ctx;
@@ -57,9 +57,16 @@ end $$;
 do $$ begin raise notice '=== PARTIE 1 — le congé validé est un mur ==='; end $$;
 -- =============================================================================
 
--- Congé validé de tech_a du 5 au 7 octobre, posé hors RLS.
-insert into public.leave_requests (organization_id, member_id, type, start_date, end_date, days_count, status)
-select org_id, membre_a, 'paid_leave', date '2026-10-05', date '2026-10-07', 3, 'approved' from t_ctx;
+-- Congé de tech_a du 5 au 7 octobre : déposé par lui (une demande naît en
+-- attente, par son titulaire), validé par le patron (leave.approve, jamais
+-- sur soi-même) — les règles d'`enforce_leave_decision`.
+select pg_temp.login('tech_a'); set local role authenticated;
+insert into public.leave_requests (organization_id, member_id, type, start_date, end_date, days_count)
+select org_id, membre_a, 'paid_leave', date '2026-10-05', date '2026-10-07', 3 from t_ctx;
+reset role;
+select pg_temp.login('patron'); set local role authenticated;
+update public.leave_requests set status = 'approved' where member_id = (select membre_a from t_ctx);
+reset role;
 
 select pg_temp.login('patron'); set local role authenticated;
 do $$ declare v uuid; begin
@@ -140,21 +147,29 @@ reset role;
 do $$ begin raise notice '=== PARTIE 4 — valider un conge sur une mission affectee ==='; end $$;
 -- =============================================================================
 
+-- tech_b est affecte sur m1 le 6/10. Il demande un RTT ce jour-la.
+select pg_temp.login('tech_b'); set local role authenticated;
+insert into public.leave_requests (organization_id, member_id, type, start_date, end_date, days_count)
+select org_id, membre_b, 'rtt', date '2026-10-06', date '2026-10-06', 1 from t_ctx;
+reset role;
+do $$ begin perform pg_temp.ok(true, 'la demande est deposee : demander n''est pas valider'); end $$;
+
+select pg_temp.login('patron'); set local role authenticated;
 do $$ declare v_leave uuid; begin
-  -- tech_b est affecte sur m1 le 6/10. Un conge du 6 au 6 demande, puis valide.
-  insert into public.leave_requests (organization_id, member_id, type, start_date, end_date, days_count, status)
-  select org_id, membre_b, 'rtt', date '2026-10-06', date '2026-10-06', 1, 'pending' from t_ctx returning id into v_leave;
-  perform pg_temp.ok(true, 'la demande est deposee : demander n''est pas valider');
+  select id into v_leave from public.leave_requests where member_id = (select membre_b from t_ctx);
 
   perform pg_temp.refuses(
     format($q$update public.leave_requests set status = 'approved' where id = %L$q$, v_leave),
     'la valider est refuse tant que la mission est affectee a cette personne');
 
-  -- tech_a est lui-meme en conge ce jour-la : on libere la mission.
-  update public.missions set assigned_user_id = null where id = (select m1 from t_ctx);
+  -- tech_b est sur DEUX missions ce jour-la (m1, et m2 depuis la partie 2) :
+  -- le garde l'a rappele — on libere les deux. tech_a etant lui-meme en
+  -- conge, on ne reaffecte personne.
+  update public.missions set assigned_user_id = null where id in (select m1 from t_ctx union select m2 from t_ctx);
   update public.leave_requests set status = 'approved' where id = v_leave;
-  perform pg_temp.ok(true, 'la mission liberee, le conge se valide');
+  perform pg_temp.ok(true, 'les missions liberees, le conge se valide');
 end $$;
+reset role;
 
 -- =============================================================================
 do $$ begin raise notice '=== PARTIE 5 — le generateur ==='; end $$;
@@ -167,29 +182,36 @@ do $$ declare v uuid; begin
   update t_ctx set tache = v;
 end $$;
 
-do $$ declare r record; m public.missions; begin
+do $$ declare r record; v_m public.missions; begin
   select * into r from app.generate_recurring_missions(14);
-  perform pg_temp.ok(r.created = 1 and r.skipped = 0, 'une tache echue dans l''horizon : une mission creee');
+  -- Le generateur est GLOBAL : sur la base liee, d'autres organisations ont
+  -- leurs propres taches echues (creees puis annulees avec la transaction).
+  -- On ne compte donc que la notre.
+  perform pg_temp.ok(r.created >= 1,
+    format('une tache echue dans l''horizon : au moins une mission creee (created=%s skipped=%s)', r.created, r.skipped));
+  perform pg_temp.ok(
+    (select count(*) = 1 from public.recurring_task_occurrences where recurring_task_id = (select tache from t_ctx) and status = 'created'),
+    'la notre a exactement une occurrence, creee');
 
-  select m.* into m from public.missions m
+  select m.* into v_m from public.missions m
   join public.recurring_task_occurrences o on o.mission_id = m.id
   where o.recurring_task_id = (select tache from t_ctx);
-  perform pg_temp.ok(m.status = 'assigned' and m.assigned_user_id = (select membre_a from t_ctx),
+  perform pg_temp.ok(v_m.status = 'assigned' and v_m.assigned_user_id = (select membre_a from t_ctx),
     'affectee au technicien de la tache');
   perform pg_temp.ok(
-    (m.scheduled_start at time zone 'America/Martinique')::time = time '08:00'
-      and m.scheduled_end - m.scheduled_start = interval '90 minutes',
+    (v_m.scheduled_start at time zone 'America/Martinique')::time = time '08:00'
+      and v_m.scheduled_end - v_m.scheduled_start = interval '90 minutes',
     'a 08:00 heure de Martinique, pour la duree estimee');
   perform pg_temp.ok(
-    exists (select 1 from public.mission_assignments a where a.mission_id = m.id and a.member_id = (select membre_a from t_ctx)),
+    exists (select 1 from public.mission_assignments a where a.mission_id = v_m.id and a.member_id = (select membre_a from t_ctx)),
     'avec sa ligne d''affectation, comme depuis l''ecran');
   perform pg_temp.ok(
     (select next_date = current_date + 3 + interval '1 month' and generated_count = 1 and last_generated_on = current_date + 3
        from public.recurring_tasks where id = (select tache from t_ctx)),
     'la date avance d''un mois, le compteur aussi');
 
-  select * into r from app.generate_recurring_missions(14);
-  perform pg_temp.ok(r.created = 0 and r.skipped = 0, 'repasser ne cree rien : la prochaine date est hors horizon');
+  perform app.generate_recurring_missions(14);
+  perform pg_temp.ok(true, 'repasser : la prochaine date de notre tache est hors horizon');
   perform pg_temp.ok(
     (select count(*) = 1 from public.recurring_task_occurrences where recurring_task_id = (select tache from t_ctx)),
     'et une seule occurrence existe');
