@@ -2,7 +2,6 @@ import { Mic, Square, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/Checkbox';
 import {
   AUDIO_MAX_SECONDS,
@@ -16,13 +15,7 @@ import {
   type WorkspaceRecording,
 } from '@/features/workspace';
 
-/*
-  ÉCHAFAUDAGE — l'enregistreur brut.
-
-  Il existe pour voir fonctionner la chaîne : micro → bucket → worker →
-  transcription et résumé écrits dans la page. Pas de forme d'onde, pas de
-  pause, pas de design : l'enregistreur définitif vient avec Codex.
-*/
+/* Présentation Atelier ; la capture, le consentement et les quotas existants sont conservés. */
 
 function formatSeconds(total: number): string {
   const m = Math.floor(total / 60);
@@ -42,9 +35,9 @@ function RecordingRow({ recording }: { recording: WorkspaceRecording }) {
   const audio = useRecordingAudioUrl(recording);
   const remove = useDeleteRecording();
   return (
-    <li className="flex flex-wrap items-center gap-2 text-sm">
+    <li className="border-border flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 text-sm last:border-0">
       <span className="font-medium">{recording.title}</span>
-      <span className="text-muted-foreground text-xs">
+      <span className="text-muted-foreground text-sm leading-relaxed">
         {formatSeconds(recording.duration_seconds)} · {RECORDING_STATUS_LABELS[recording.status]}
         {recording.status === 'failed' && recording.error ? ` — ${recording.error}` : ''}
         {recording.audio_deleted_at ? ' · audio effacé (30 jours)' : ''}
@@ -53,7 +46,7 @@ function RecordingRow({ recording }: { recording: WorkspaceRecording }) {
         // La transcription, écrite dans la page, tient lieu de sous-titres :
         // l'audio n'est que la source, effacée après 30 jours.
         // eslint-disable-next-line jsx-a11y/media-has-caption
-        <audio controls src={audio.data} className="h-8 max-w-[240px]" />
+        <audio controls src={audio.data} className="h-11 w-full max-w-64" />
       ) : null}
       <Button
         type="button"
@@ -150,10 +143,13 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
     consent && !recording && !create.isPending && (quota.data?.unlimited || (remaining ?? 0) > 0);
 
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
+    <section
+      className="border-border bg-surface overflow-hidden rounded-xl border"
+      aria-label="Enregistrement vocal"
+    >
+      <div className="space-y-4 p-4 sm:p-6">
         <p className="flex items-center gap-2 text-sm font-medium">
-          <Mic className="size-4" aria-hidden /> Enregistrement vocal (enregistreur provisoire)
+          <Mic className="size-4" aria-hidden /> Enregistrement vocal
         </p>
         <p className="text-muted-foreground text-xs">
           {quota.data
@@ -193,7 +189,7 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
             ))}
           </ul>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

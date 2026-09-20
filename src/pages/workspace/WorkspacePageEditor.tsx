@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
@@ -141,16 +140,16 @@ function PageForm({
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-3 p-4">
+    <div className="workspace-editor min-w-0 space-y-5">
+      <section className="border-border bg-surface overflow-hidden rounded-xl border">
+        <div className="space-y-4 p-4 sm:p-6">
           <div className="flex flex-wrap items-end gap-2">
             <Input
               label="Icône"
               className="w-20"
               value={icon}
               maxLength={40}
-              placeholder="🔧"
+              placeholder="Page"
               disabled={!canEdit}
               onChange={(e) => setIconValue(e.target.value)}
               onBlur={() => {
@@ -163,7 +162,7 @@ function PageForm({
                 }
               }}
             />
-            <div className="min-w-[200px] flex-1">
+            <div className="min-w-0 flex-1 basis-48">
               <Input
                 label="Titre"
                 value={title}
@@ -188,15 +187,16 @@ function PageForm({
           </div>
 
           <Textarea
-            label="Contenu (texte, éditeur provisoire)"
-            rows={16}
+            label="Contenu de la page"
+            className="workspace-page-text"
+            rows={8}
             value={text}
             disabled={!canEdit}
             onChange={(e) => setText(e.target.value)}
-            hint="# titre, - liste, 1. liste numérotée, paragraphes séparés par une ligne vide."
+            hint="Édition texte : # titre, - liste, 1. liste numérotée. Les autres mises en forme ne sont pas prises en charge."
           />
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="border-border flex flex-wrap items-center gap-2 border-t pt-4">
             {canEdit ? (
               <Button type="button" onClick={() => void handleSave()} isLoading={save.isPending}>
                 Enregistrer
@@ -230,19 +230,23 @@ function PageForm({
                 <Trash2 aria-hidden /> Supprimer
               </Button>
             ) : null}
-            {message ? <span className="text-muted-foreground text-xs">{message}</span> : null}
+            {message ? (
+              <span role="status" className="text-muted-foreground text-sm">
+                {message}
+              </span>
+            ) : null}
             <span className="text-muted-foreground ml-auto text-xs">
               Modifiée le {new Date(loadedAt).toLocaleString('fr-FR')}
             </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {canAi ? <WorkspaceRecorder page={loaded} /> : null}
 
       {canAi ? (
-        <Card>
-          <CardContent className="space-y-3 p-4">
+        <section className="border-border bg-surface overflow-hidden rounded-xl border">
+          <div className="space-y-4 p-4 sm:p-6">
             <p className="flex items-center gap-2 text-sm font-medium">
               <Sparkles className="size-4" aria-hidden /> Assistant sur cette page
             </p>
@@ -261,7 +265,7 @@ function PageForm({
                 .map((m) => (
                   <div
                     key={m.id}
-                    className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
+                    className={`rounded-lg px-3 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap ${
                       m.role === 'user' ? 'bg-surface-sunken' : 'bg-surface-hover'
                     }`}
                   >
@@ -269,8 +273,8 @@ function PageForm({
                   </div>
                 ))}
             </div>
-            <div className="flex gap-2">
-              <div className="flex-1">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="min-w-0 flex-1">
                 <Input
                   aria-label="Question à l'assistant"
                   placeholder="Résume cette page… / Rédige une section sur…"
@@ -318,8 +322,8 @@ function PageForm({
                 </Button>
               </div>
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       ) : null}
     </div>
   );

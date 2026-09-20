@@ -1,12 +1,12 @@
-import { FileText, Plus, Search, Star } from 'lucide-react';
+import { BookOpen, ChevronDown, FileText, Plus, Search, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -30,21 +30,16 @@ import { useDocumentTitle } from '@/lib/use-document-title';
 
 import { WorkspacePageEditor } from './WorkspacePageEditor';
 
-/*
-  ÉCHAFAUDAGE — pas un livrable.
-
-  Cet écran existe pour VOIR FONCTIONNER le socle Workspace v2 (espace
-  personnel, récentes, favoris, modèles, recherche, IA sur une page) avant que
-  Codex ne livre les écrans de la direction artistique retenue. Composants
-  existants, aucune décision de design : tout ici a vocation à être remplacé.
-*/
+/* Le lot visuel conserve les hooks, les permissions et le parcours de création v2. */
 
 function SpacePages({
   space,
   activePageId,
+  onSelect,
 }: {
   space: WorkspaceSpace;
   activePageId: string | undefined;
+  onSelect: () => void;
 }) {
   const { data: pages = [], isLoading } = usePages(space.id);
 
@@ -77,9 +72,11 @@ function SpacePages({
         <li key={page.id}>
           <Link
             to={ROUTES.workspacePage(page.id)}
+            onClick={onSelect}
+            aria-current={page.id === activePageId ? 'page' : undefined}
             style={{ paddingLeft: `${String(8 + depth * 14)}px` }}
-            className={`hover:bg-surface-hover flex items-center gap-2 rounded-md py-1.5 pr-2 text-sm ${
-              page.id === activePageId ? 'bg-surface-sunken font-medium' : ''
+            className={`hover:bg-surface-hover flex min-h-11 items-center gap-2 rounded-lg py-2 pr-2 text-sm lg:min-h-9 ${
+              page.id === activePageId ? 'bg-nav-selected text-nav-foreground font-bold' : ''
             }`}
           >
             <span className="w-5 shrink-0 text-center">
@@ -111,6 +108,7 @@ export default function WorkspacePagesPage() {
   const createFromTemplate = useCreatePageFromTemplate();
 
   const [query, setQuery] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
   const search = useSearchPages(organizationId, query);
   const [targetSpaceId, setTargetSpaceId] = useState<string>('');
   const [templateId, setTemplateId] = useState<string>('');
@@ -138,6 +136,7 @@ export default function WorkspacePagesPage() {
   const handleNewPage = async () => {
     if (!effectiveSpaceId) return;
     const page = await createPage.mutateAsync({ spaceId: effectiveSpaceId });
+    setBrowserOpen(false);
     await navigate(ROUTES.workspacePage(page.id));
   };
 
@@ -147,20 +146,37 @@ export default function WorkspacePagesPage() {
       templateId,
       spaceId: effectiveSpaceId,
     });
+    setBrowserOpen(false);
     await navigate(ROUTES.workspacePage(page.id));
   };
 
   if (spaces.isError) return <ErrorState error={spaces.error} title="Workspace indisponible" />;
 
   return (
-    <div className="space-y-4">
+    <div className="workspace-atelier space-y-5">
       <PageHeader
         title="Pages"
-        description="Écran provisoire : le socle du Workspace, sans direction artistique. Les écrans définitifs viendront avec Codex."
+        description="Vos idées, vos comptes rendus et les connaissances de votre équipe, réunis au même endroit."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
-        <aside className="space-y-4">
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full justify-between lg:hidden"
+        aria-expanded={browserOpen}
+        aria-controls="workspace-browser"
+        onClick={() => setBrowserOpen(!browserOpen)}
+      >
+        <BookOpen aria-hidden /> Espaces et pages <ChevronDown aria-hidden />
+      </Button>
+      <div className="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[256px_minmax(0,1fr)]">
+        <aside
+          id="workspace-browser"
+          aria-label="Espaces et pages"
+          className={
+            'workspace-browser min-w-0 space-y-5 lg:block ' + (browserOpen ? '' : 'hidden')
+          }
+        >
           <Input
             aria-label="Rechercher dans les pages"
             placeholder="Rechercher…"
@@ -169,8 +185,8 @@ export default function WorkspacePagesPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
           {query.trim().length >= 2 ? (
-            <Card>
-              <CardContent className="space-y-1 p-3">
+            <div className="border-border border-b pb-4">
+              <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">Résultats</p>
                 {search.isLoading ? <ListSkeleton rows={2} /> : null}
                 {search.data?.length === 0 ? (
@@ -179,8 +195,9 @@ export default function WorkspacePagesPage() {
                 {(search.data ?? []).map((hit) => (
                   <Link
                     key={hit.id}
+                    onClick={() => setBrowserOpen(false)}
                     to={ROUTES.workspacePage(hit.id)}
-                    className="hover:bg-surface-hover block rounded-md px-2 py-1.5 text-sm"
+                    className="hover:bg-surface-hover block min-h-11 rounded-lg px-2 py-2 text-sm lg:min-h-9"
                   >
                     <span className="font-medium">
                       {hit.icon ? `${hit.icon} ` : ''}
@@ -191,13 +208,13 @@ export default function WorkspacePagesPage() {
                     </span>
                   </Link>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : null}
 
           {canEdit ? (
-            <Card>
-              <CardContent className="space-y-2 p-3">
+            <div className="border-border border-b pb-4">
+              <div className="space-y-3">
                 <Select
                   aria-label="Espace de destination"
                   value={effectiveSpaceId}
@@ -219,10 +236,10 @@ export default function WorkspacePagesPage() {
                 <div className="flex gap-2">
                   <Select
                     aria-label="Modèle"
+                    placeholder="Depuis un modèle…"
                     value={templateId}
                     onValueChange={setTemplateId}
                     options={[
-                      { value: '', label: 'Depuis un modèle…' },
                       ...(templates.data ?? []).map((t) => ({
                         value: t.id,
                         label: `${t.name}${t.organization_id ? '' : ' (système)'}`,
@@ -239,70 +256,93 @@ export default function WorkspacePagesPage() {
                     Créer
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : null}
 
           {(recents.data?.length ?? 0) > 0 ? (
-            <Card>
-              <CardContent className="space-y-1 p-3">
+            <div className="border-border border-b pb-4">
+              <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">Récentes</p>
                 {(recents.data ?? []).map((r) => (
                   <Link
                     key={r.page.id}
+                    onClick={() => setBrowserOpen(false)}
                     to={ROUTES.workspacePage(r.page.id)}
-                    className="hover:bg-surface-hover block truncate rounded-md px-2 py-1.5 text-sm"
+                    className="hover:bg-surface-hover block min-h-11 truncate rounded-lg px-2 py-2 text-sm lg:min-h-9"
                   >
                     {r.page.icon ? `${r.page.icon} ` : ''}
                     {r.page.title}
                   </Link>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : null}
 
           {(favorites.data?.length ?? 0) > 0 ? (
-            <Card>
-              <CardContent className="space-y-1 p-3">
+            <div className="border-border border-b pb-4">
+              <div className="space-y-1">
                 <p className="text-muted-foreground flex items-center gap-1 text-xs font-medium uppercase">
                   <Star className="size-3" aria-hidden /> Favoris
                 </p>
                 {(favorites.data ?? []).map((f) => (
                   <Link
                     key={f.page_id}
+                    onClick={() => setBrowserOpen(false)}
                     to={ROUTES.workspacePage(f.page_id)}
-                    className="hover:bg-surface-hover block truncate rounded-md px-2 py-1.5 text-sm"
+                    className="hover:bg-surface-hover block min-h-11 truncate rounded-lg px-2 py-2 text-sm lg:min-h-9"
                   >
                     {pagesById.get(f.page_id)?.title ?? 'Page'}
                   </Link>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : null}
 
           {spaces.isLoading ? <ListSkeleton rows={3} /> : null}
           {allSpaces.map((space) => (
-            <Card key={space.id}>
-              <CardContent className="space-y-1 p-3">
+            <div key={space.id}>
+              <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">
                   {space.icon ? `${space.icon} ` : ''}
                   {space.name}
                   {isPersonalSpace(space) ? ' · personnel' : ''}
                 </p>
-                <SpacePages space={space} activePageId={pageId} />
-              </CardContent>
-            </Card>
+                <SpacePages
+                  space={space}
+                  activePageId={pageId}
+                  onSelect={() => setBrowserOpen(false)}
+                />
+              </div>
+            </div>
           ))}
         </aside>
 
-        <section>
+        <section aria-label="Page de travail" className="min-w-0">
           {pageId ? (
             <WorkspacePageEditor key={pageId} pageId={pageId} organizationId={organizationId} />
           ) : (
             <EmptyState
-              icon={FileText}
-              title="Choisissez une page"
-              description="Ou créez-en une, vide ou depuis un modèle."
+              illustration={<AtelierIllustration subject="pages" />}
+              title="Un espace pour vos idées"
+              description={
+                canEdit
+                  ? 'Retrouvez une page dans vos espaces, ou commencez une nouvelle page à partir de vos idées ou d’un modèle.'
+                  : 'Retrouvez les pages de votre équipe dans vos espaces.'
+              }
+              className="border-border min-h-96 border lg:min-h-[520px]"
+              action={
+                canEdit ? (
+                  <Button
+                    type="button"
+                    onClick={() => void handleNewPage()}
+                    disabled={!effectiveSpaceId}
+                    isLoading={createPage.isPending}
+                  >
+                    <Plus aria-hidden /> Nouvelle page
+                  </Button>
+                ) : undefined
+              }
             />
           )}
         </section>
