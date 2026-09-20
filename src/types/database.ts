@@ -3763,6 +3763,8 @@ export interface Database {
           icon: string | null;
           position: number;
           created_by: string | null;
+          /** Posé = espace personnel de ce membre, visible de lui seul (`ensure_personal_workspace_space`). */
+          owner_member_id: string | null;
           archived_at: string | null;
           created_at: string;
           updated_at: string;
@@ -3804,6 +3806,12 @@ export interface Database {
           created_by: string | null;
           updated_by: string | null;
           archived_at: string | null;
+          /** Emoji ou nom d'icône, 40 caractères. */
+          icon: string | null;
+          /** Chemin dans le bucket privé `workspace-covers` : `<org>/<page>/<fichier>`. */
+          cover_path: string | null;
+          /** Texte extrait du JSON TipTap par la base, dans l'ordre du document. Lecture seule. */
+          search_text: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3815,6 +3823,8 @@ export interface Database {
           title?: string;
           content?: TiptapDocument;
           position?: number;
+          icon?: string | null;
+          cover_path?: string | null;
         };
         Update: {
           parent_page_id?: string | null;
@@ -3822,6 +3832,8 @@ export interface Database {
           content?: TiptapDocument;
           position?: number;
           archived_at?: string | null;
+          icon?: string | null;
+          cover_path?: string | null;
         };
         Relationships: [
           {
@@ -4020,6 +4032,99 @@ export interface Database {
             foreignKeyName: 'timesheet_closures_member_id_fkey';
             columns: ['member_id'];
             referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      // -----------------------------------------------------------------------
+      // Workspace v2 — 20261003090000_workspace_v2.sql
+      // -----------------------------------------------------------------------
+
+      /** Modèle de page : système (`organization_id` null) ou d'entreprise (`workspace.manage`). */
+      workspace_templates: {
+        Row: {
+          id: string;
+          organization_id: string | null;
+          name: string;
+          description: string | null;
+          icon: string | null;
+          category: string;
+          content: TiptapDocument;
+          position: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          icon?: string | null;
+          category?: string;
+          content: TiptapDocument;
+          position?: number;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          icon?: string | null;
+          category?: string;
+          content?: TiptapDocument;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_templates_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /** Dernière ouverture d'une page par la personne connectée. Écrit par `touch_workspace_page`. */
+      workspace_page_visits: {
+        Row: {
+          user_id: string;
+          page_id: string;
+          organization_id: string;
+          visited_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_page_visits_page_id_fkey';
+            columns: ['page_id'];
+            referencedRelation: 'workspace_pages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      /** Page épinglée par la personne connectée. `user_id` et `organization_id` posés par trigger. */
+      workspace_favorites: {
+        Row: {
+          user_id: string;
+          page_id: string;
+          organization_id: string;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          page_id: string;
+          position?: number;
+        };
+        Update: {
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_favorites_page_id_fkey';
+            columns: ['page_id'];
+            referencedRelation: 'workspace_pages';
             referencedColumns: ['id'];
           },
         ];
@@ -5167,6 +5272,45 @@ export interface Database {
       stop_work_time: {
         Args: Record<string, never>;
         Returns: Database['public']['Tables']['work_time_entries']['Row'] | null;
+      };
+
+      // -----------------------------------------------------------------------
+      // Workspace v2 — 20261003090000_workspace_v2.sql
+      // -----------------------------------------------------------------------
+
+      /** Mon espace personnel, créé à la première demande, rouvert s'il était archivé. */
+      ensure_personal_workspace_space: {
+        Args: { p_organization_id: string };
+        Returns: Database['public']['Tables']['workspace_spaces']['Row'];
+      };
+      /** J'ai ouvert cette page (récentes, 50 au plus). Refusé sur une page invisible. */
+      touch_workspace_page: {
+        Args: { p_page_id: string };
+        Returns: undefined;
+      };
+      /** Une page à partir d'un modèle (titre, icône, contenu). RLS d'édition appliquée. */
+      create_page_from_template: {
+        Args: {
+          p_template_id: string;
+          p_space_id: string;
+          p_parent_page_id?: string | null;
+          p_title?: string | null;
+        };
+        Returns: Database['public']['Tables']['workspace_pages']['Row'];
+      };
+      /** Recherche plein texte (français) dans les pages visibles. Syntaxe « web ». */
+      search_workspace_pages: {
+        Args: { p_organization_id: string; p_query: string; p_limit?: number };
+        Returns: {
+          id: string;
+          space_id: string;
+          title: string;
+          icon: string | null;
+          /** Extrait avec « » autour des mots trouvés. */
+          snippet: string;
+          rank: number;
+          updated_at: string;
+        }[];
       };
       /**
        * Enregistre un mouvement et met à jour la quantité, dans la même

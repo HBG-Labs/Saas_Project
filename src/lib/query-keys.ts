@@ -183,6 +183,15 @@ export const qk = {
     page: (pageId: string) => [...qk.workspace.all, 'page', pageId] as const,
     revisions: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'revisions'] as const,
     tasks: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'tasks'] as const,
+    personalSpace: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'personal-space'] as const,
+    recents: (organizationId: string) => [...qk.workspace.all, organizationId, 'recents'] as const,
+    favorites: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'favorites'] as const,
+    templates: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'templates'] as const,
+    search: (organizationId: string, query: string) =>
+      [...qk.workspace.all, organizationId, 'search', query] as const,
   },
 
   // ----------------------------------------------------------- feuille d'heures

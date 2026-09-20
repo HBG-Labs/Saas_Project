@@ -81,7 +81,9 @@ describe('moindre privilège', () => {
     // `workspace.view` et `workspace.edit` (phase 4, arbitrage D) ne sont pas
     // de la gestion non plus : écrire dans une page d'équipe ou cocher une
     // tâche, c'est travailler. Créer ou archiver un ESPACE, en revanche, reste
-    // au chef d'équipe — `workspace.manage` n'est pas ici.
+    // au chef d'équipe — `workspace.manage` n'est pas ici. `ai.workspace`
+    // (Workspace v2, option F.2) suit `workspace.edit` : l'IA sur une page
+    // qu'on écrit fait partie de l'écriture.
     expect(ROLE_PERMISSIONS.employee).toEqual([
       'organization.view',
       'member.view',
@@ -89,6 +91,7 @@ describe('moindre privilège', () => {
       'document.view',
       'workspace.view',
       'workspace.edit',
+      'ai.workspace',
     ]);
 
     // Le principe, lui, ne dépend pas de l'ordre de cette liste : hors congé
@@ -97,7 +100,7 @@ describe('moindre privilège', () => {
     const ecritures = ROLE_PERMISSIONS.employee.filter(
       (permission) => !permission.endsWith('.view'),
     );
-    expect(ecritures).toEqual(['leave.request', 'workspace.edit']);
+    expect(ecritures).toEqual(['leave.request', 'workspace.edit', 'ai.workspace']);
   });
 
   it("réserve l'usage de l'Assistant IA au propriétaire", () => {
@@ -107,6 +110,17 @@ describe('moindre privilège', () => {
     // administrer les documents reste distinct d'interroger l'assistant.
     for (const role of ORG_ROLES) {
       expect(roleHasPermission(role, PERMISSIONS.aiUse)).toBe(role === 'owner');
+    }
+  });
+
+  it("ouvre l'IA du Workspace à qui écrit dans le Workspace", () => {
+    // Arbitrage F option 2 (20/09/2026) : une conversation attachée à une
+    // page relève de `ai.workspace`, ouverte à tous les rôles qui portent
+    // `workspace.edit`. `ai.use` (conversation générale) reste au propriétaire.
+    for (const role of ORG_ROLES) {
+      expect(roleHasPermission(role, PERMISSIONS.aiWorkspace)).toBe(
+        roleHasPermission(role, PERMISSIONS.workspaceEdit),
+      );
     }
   });
 
@@ -225,6 +239,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.clientPortalSocle,
       MIGRATION_FILES.workspace,
       MIGRATION_FILES.feuilleHeures,
+      MIGRATION_FILES.workspaceV2,
     ],
     'role_permissions',
   );

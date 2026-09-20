@@ -7,6 +7,11 @@ export interface ValidAiRequest {
   organizationId: string;
   query: string;
   conversationId?: string;
+  /**
+   * Une page du Workspace : la conversation lui est attachée, l'assistant la
+   * lit, et la permission exigée devient `ai.workspace` au lieu de `ai.use`.
+   */
+  pageId?: string;
 }
 
 export type AiRequestValidation =
@@ -19,7 +24,7 @@ export function validateAiRequest(value: unknown): AiRequestValidation {
   }
 
   const body = value as Record<string, unknown>;
-  const allowedKeys = new Set(['organizationId', 'query', 'conversationId']);
+  const allowedKeys = new Set(['organizationId', 'query', 'conversationId', 'pageId']);
   if (Object.keys(body).some((key) => !allowedKeys.has(key))) {
     return { ok: false, message: 'Le corps contient des champs non autorisés.' };
   }
@@ -46,12 +51,20 @@ export function validateAiRequest(value: unknown): AiRequestValidation {
     return { ok: false, message: 'Identifiant de conversation invalide.' };
   }
 
+  if (
+    body.pageId !== undefined &&
+    (typeof body.pageId !== 'string' || !UUID_PATTERN.test(body.pageId))
+  ) {
+    return { ok: false, message: 'Identifiant de page invalide.' };
+  }
+
   return {
     ok: true,
     value: {
       organizationId: body.organizationId,
       query,
       ...(typeof body.conversationId === 'string' ? { conversationId: body.conversationId } : {}),
+      ...(typeof body.pageId === 'string' ? { pageId: body.pageId } : {}),
     },
   };
 }

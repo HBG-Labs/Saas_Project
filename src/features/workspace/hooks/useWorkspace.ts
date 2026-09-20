@@ -20,6 +20,22 @@ import {
   savePage,
   updateSpace,
   updateTask,
+  addFavorite,
+  createPageFromTemplate,
+  deleteTemplate,
+  ensurePersonalSpace,
+  getCoverUrl,
+  listFavorites,
+  listRecentPages,
+  listTemplates,
+  removeFavorite,
+  removePageCover,
+  saveAsTemplate,
+  searchPages,
+  setPageIcon,
+  touchPage,
+  updateTemplate,
+  uploadPageCover,
   type SavePageInput,
   type TaskFilters,
 } from '../api/workspace.api';
@@ -205,5 +221,190 @@ export function useDeleteTask() {
     onSuccess: async (_result, { spaceId }) => {
       await queryClient.invalidateQueries({ queryKey: qk.workspace.tasks(spaceId) });
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace v2
+//
+// Les récentes et les favoris sont PAR PERSONNE : ils s'invalident seuls, pas
+// avec les listes de pages. Une page créée depuis un modèle invalide son
+// espace, comme une page ordinaire.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function usePersonalSpace(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.personalSpace(organizationId ?? 'none'),
+    queryFn: () => ensurePersonalSpace(organizationId ?? ''),
+    enabled: organizationId !== null,
+    // Créé une fois pour toutes : inutile de le redemander à chaque écran.
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useRecentPages(organizationId: string | null, limit = 12) {
+  return useQuery({
+    queryKey: [...qk.workspace.recents(organizationId ?? 'none'), limit],
+    queryFn: () => listRecentPages(organizationId ?? '', limit),
+    enabled: organizationId !== null,
+  });
+}
+
+/** À l'ouverture d'une page : la marque récente, puis rafraîchit la liste. */
+export function useTouchPage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ pageId }: { pageId: string; organizationId: string }) => touchPage(pageId),
+    onSuccess: async (_result, { organizationId }) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recents(organizationId) });
+    },
+  });
+}
+
+export function useFavorites(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.favorites(organizationId ?? 'none'),
+    queryFn: () => listFavorites(organizationId ?? ''),
+    enabled: organizationId !== null,
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      pageId,
+      favorite,
+    }: {
+      pageId: string;
+      favorite: boolean;
+      organizationId: string;
+    }) => (favorite ? addFavorite(pageId).then(() => undefined) : removeFavorite(pageId)),
+    onSuccess: async (_result, { organizationId }) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.favorites(organizationId) });
+    },
+  });
+}
+
+export function useSetPageIcon() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ pageId, icon }: { pageId: string; icon: string | null }) =>
+      setPageIcon(pageId, icon),
+    onSuccess: async (page) => {
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) }),
+        queryClient.invalidateQueries({ queryKey: qk.workspace.recents(page.organization_id) }),
+      ]);
+    },
+  });
+}
+
+export function useUploadPageCover() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ page, file }: { page: Parameters<typeof uploadPageCover>[0]; file: File }) =>
+      uploadPageCover(page, file),
+    onSuccess: async (page) => {
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recents(page.organization_id) });
+    },
+  });
+}
+
+export function useRemovePageCover() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (page: Parameters<typeof removePageCover>[0]) => removePageCover(page),
+    onSuccess: async (page) => {
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recents(page.organization_id) });
+    },
+  });
+}
+
+/** URL signée d'une couverture, gardée le temps de sa validité. */
+export function useCoverUrl(coverPath: string | null | undefined) {
+  return useQuery({
+    queryKey: [...qk.workspace.all, 'cover', coverPath ?? 'none'],
+    queryFn: () => getCoverUrl(coverPath ?? ''),
+    enabled: typeof coverPath === 'string' && coverPath.length > 0,
+    staleTime: 50 * 60_000,
+  });
+}
+
+export function useTemplates(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.templates(organizationId ?? 'none'),
+    queryFn: () => listTemplates(organizationId ?? ''),
+    enabled: organizationId !== null,
+  });
+}
+
+export function useCreatePageFromTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof createPageFromTemplate>[0]) =>
+      createPageFromTemplate(input),
+    onSuccess: async (page) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) });
+    },
+  });
+}
+
+export function useSaveAsTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof saveAsTemplate>[0]) => saveAsTemplate(input),
+    onSuccess: async (template) => {
+      if (template.organization_id) {
+        await queryClient.invalidateQueries({
+          queryKey: qk.workspace.templates(template.organization_id),
+        });
+      }
+    },
+  });
+}
+
+export function useUpdateTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      patch,
+    }: {
+      templateId: string;
+      patch: TablesUpdate<'workspace_templates'>;
+    }) => updateTemplate(templateId, patch),
+    onSuccess: async (template) => {
+      if (template.organization_id) {
+        await queryClient.invalidateQueries({
+          queryKey: qk.workspace.templates(template.organization_id),
+        });
+      }
+    },
+  });
+}
+
+export function useDeleteTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ templateId }: { templateId: string; organizationId: string }) =>
+      deleteTemplate(templateId),
+    onSuccess: async (_result, { organizationId }) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.templates(organizationId) });
+    },
+  });
+}
+
+/** Recherche à la frappe : vide sans texte, et rien n'est gardé longtemps. */
+export function useSearchPages(organizationId: string | null, query: string) {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: qk.workspace.search(organizationId ?? 'none', trimmed),
+    queryFn: () => searchPages(organizationId ?? '', trimmed),
+    enabled: organizationId !== null && trimmed.length >= 2,
+    staleTime: 30_000,
   });
 }

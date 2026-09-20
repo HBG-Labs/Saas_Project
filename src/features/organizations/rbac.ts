@@ -89,6 +89,11 @@ export const PERMISSIONS = {
 
   aiUse: 'ai.use',
   aiManageDocuments: 'ai.manage_documents',
+  /**
+   * L'Assistant IA attaché à une page du Workspace — 20261003090000_workspace_v2.sql.
+   * Ouvert à qui écrit dans le Workspace, là où `ai.use` reste au propriétaire.
+   */
+  aiWorkspace: 'ai.workspace',
 
   documentView: 'document.view',
   documentManage: 'document.manage',
@@ -204,6 +209,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.manage',
     'timesheet.view_all',
     'timesheet.manage',
+    'ai.workspace',
   ],
 
   admin: [
@@ -261,6 +267,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.manage',
     'timesheet.view_all',
     'timesheet.manage',
+    'ai.workspace',
   ],
 
   manager: [
@@ -314,6 +321,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.manage',
     'timesheet.view_all',
     'timesheet.manage',
+    'ai.workspace',
   ],
 
   team_leader: [
@@ -357,6 +365,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'workspace.manage',
     'timesheet.view_all',
     'timesheet.manage',
+    'ai.workspace',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -397,6 +406,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     // pas un espace d'équipe : il édite, il ne gère pas.
     'workspace.view',
     'workspace.edit',
+    'ai.workspace',
   ],
 
   employee: [
@@ -406,6 +416,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'document.view',
     'workspace.view',
     'workspace.edit',
+    'ai.workspace',
   ],
 };
 

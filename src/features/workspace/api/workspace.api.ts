@@ -1,5 +1,11 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { Tables, TablesInsert, TablesUpdate, TiptapDocument } from '@/types/database';
+import type {
+  Database,
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+  TiptapDocument,
+} from '@/types/database';
 
 /**
  * Accès au Workspace : espaces, pages, tâches.
@@ -214,4 +220,300 @@ export async function updateTask(
 
 export async function deleteTask(taskId: string): Promise<void> {
   await unwrap(supabase.from('workspace_tasks').delete().eq('id', taskId).select('id'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace v2 — 20261003090000_workspace_v2.sql
+//
+// Espace personnel, récentes, favoris, couverture, modèles, recherche. Tout ce
+// qui touche à la visibilité (une page privée ne se voit que de son
+// propriétaire) est décidé par la base ; le client demande, la base filtre.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type WorkspaceTemplate = Tables<'workspace_templates'>;
+export type WorkspaceFavorite = Tables<'workspace_favorites'>;
+export type WorkspaceSearchHit =
+  Database['public']['Functions']['search_workspace_pages']['Returns'][number];
+
+/** Une page récente, telle que l'écran la liste : la visite et la page. */
+export interface WorkspaceRecentPage {
+  visited_at: string;
+  page: Pick<WorkspacePage, 'id' | 'space_id' | 'title' | 'icon' | 'cover_path' | 'updated_at'>;
+}
+
+export const COVERS_BUCKET = 'workspace-covers';
+/** Miroir de la limite du bucket, pour l'expérience — la base décide. */
+export const COVER_MAX_BYTES = 5 * 1024 * 1024;
+export const COVER_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+// ─── L'espace personnel ──────────────────────────────────────────────────────
+
+/** Mon espace personnel dans cette organisation — créé s'il n'existe pas. */
+export async function ensurePersonalSpace(organizationId: string): Promise<WorkspaceSpace> {
+  return unwrap(
+    supabase.rpc('ensure_personal_workspace_space', { p_organization_id: organizationId }),
+  );
+}
+
+/** Un espace est personnel s'il porte un propriétaire. */
+export function isPersonalSpace(space: Pick<WorkspaceSpace, 'owner_member_id'>): boolean {
+  return space.owner_member_id !== null;
+}
+
+// ─── Récentes et favoris ─────────────────────────────────────────────────────
+
+/** J'ai ouvert cette page. À appeler à l'ouverture, pas à chaque rendu. */
+export async function touchPage(pageId: string): Promise<void> {
+  await unwrap(supabase.rpc('touch_workspace_page', { p_page_id: pageId }));
+}
+
+export async function listRecentPages(
+  organizationId: string,
+  limit = 12,
+): Promise<WorkspaceRecentPage[]> {
+  const rows = await unwrap(
+    supabase
+      .from('workspace_page_visits')
+      .select(
+        'visited_at, page:workspace_pages!inner(id, space_id, title, icon, cover_path, updated_at, archived_at)',
+      )
+      .eq('organization_id', organizationId)
+      .is('page.archived_at', null)
+      .order('visited_at', { ascending: false })
+      .limit(limit),
+  );
+  return rows.map((row) => {
+    const { archived_at: _archived, ...page } = row.page;
+    return { visited_at: row.visited_at, page };
+  });
+}
+
+export async function listFavorites(organizationId: string): Promise<WorkspaceFavorite[]> {
+  return unwrap(
+    supabase
+      .from('workspace_favorites')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .order('position')
+      .order('created_at'),
+  );
+}
+
+export async function addFavorite(pageId: string, position = 0): Promise<WorkspaceFavorite> {
+  return unwrap(
+    supabase.from('workspace_favorites').insert({ page_id: pageId, position }).select('*').single(),
+  );
+}
+
+export async function removeFavorite(pageId: string): Promise<void> {
+  await unwrap(
+    supabase.from('workspace_favorites').delete().eq('page_id', pageId).select('page_id'),
+  );
+}
+
+// ─── Icône et couverture ─────────────────────────────────────────────────────
+
+export async function setPageIcon(pageId: string, icon: string | null): Promise<WorkspacePage> {
+  return unwrap(
+    supabase.from('workspace_pages').update({ icon }).eq('id', pageId).select('*').single(),
+  );
+}
+
+/**
+ * Téléverse une couverture et l'attache à la page. Le chemin porte
+ * l'organisation puis la page : c'est ce que les règles du bucket lisent.
+ * L'ancienne couverture, s'il y en avait une, est retirée.
+ */
+export async function uploadPageCover(
+  page: Pick<WorkspacePage, 'id' | 'organization_id' | 'cover_path'>,
+  file: File,
+): Promise<WorkspacePage> {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const path = `${page.organization_id}/${page.id}/${crypto.randomUUID()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from(COVERS_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) throw uploadError;
+
+  const updated = await unwrap(
+    supabase
+      .from('workspace_pages')
+      .update({ cover_path: path })
+      .eq('id', page.id)
+      .select('*')
+      .single(),
+  );
+  if (page.cover_path) {
+    // L'ancienne image ne bloque rien si sa suppression échoue : on ne fait
+    // pas échouer un changement de couverture réussi pour un fichier orphelin.
+    await supabase.storage.from(COVERS_BUCKET).remove([page.cover_path]);
+  }
+  return updated;
+}
+
+export async function removePageCover(
+  page: Pick<WorkspacePage, 'id' | 'cover_path'>,
+): Promise<WorkspacePage> {
+  const updated = await unwrap(
+    supabase
+      .from('workspace_pages')
+      .update({ cover_path: null })
+      .eq('id', page.id)
+      .select('*')
+      .single(),
+  );
+  if (page.cover_path) await supabase.storage.from(COVERS_BUCKET).remove([page.cover_path]);
+  return updated;
+}
+
+/** URL signée d'une couverture — le bucket est privé. */
+export async function getCoverUrl(coverPath: string, expiresInSeconds = 3600): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(COVERS_BUCKET)
+    .createSignedUrl(coverPath, expiresInSeconds);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+// ─── Les modèles ─────────────────────────────────────────────────────────────
+
+/** Les modèles système (organisation nulle) et ceux de l'organisation. */
+export async function listTemplates(organizationId: string): Promise<WorkspaceTemplate[]> {
+  return unwrap(
+    supabase
+      .from('workspace_templates')
+      .select('*')
+      .or(`organization_id.is.null,organization_id.eq.${organizationId}`)
+      .order('category')
+      .order('position')
+      .order('name'),
+  );
+}
+
+export async function createPageFromTemplate(input: {
+  templateId: string;
+  spaceId: string;
+  parentPageId?: string | null;
+  title?: string;
+}): Promise<WorkspacePage> {
+  return unwrap(
+    supabase.rpc('create_page_from_template', {
+      p_template_id: input.templateId,
+      p_space_id: input.spaceId,
+      ...(input.parentPageId !== undefined ? { p_parent_page_id: input.parentPageId } : {}),
+      ...(input.title !== undefined ? { p_title: input.title } : {}),
+    }),
+  );
+}
+
+/** « Enregistrer cette page comme modèle » — `workspace.manage`. */
+export async function saveAsTemplate(input: {
+  organizationId: string;
+  page: Pick<WorkspacePage, 'title' | 'content' | 'icon'>;
+  name?: string;
+  description?: string;
+  category?: string;
+}): Promise<WorkspaceTemplate> {
+  return unwrap(
+    supabase
+      .from('workspace_templates')
+      .insert({
+        organization_id: input.organizationId,
+        name: input.name ?? input.page.title,
+        content: input.page.content,
+        icon: input.page.icon,
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.category !== undefined ? { category: input.category } : {}),
+      })
+      .select('*')
+      .single(),
+  );
+}
+
+export async function updateTemplate(
+  templateId: string,
+  patch: TablesUpdate<'workspace_templates'>,
+): Promise<WorkspaceTemplate> {
+  return unwrap(
+    supabase.from('workspace_templates').update(patch).eq('id', templateId).select('*').single(),
+  );
+}
+
+export async function deleteTemplate(templateId: string): Promise<void> {
+  await unwrap(supabase.from('workspace_templates').delete().eq('id', templateId).select('id'));
+}
+
+// ─── La recherche ────────────────────────────────────────────────────────────
+
+/** Plein texte en français, syntaxe « web » (mots, "expression", -exclu). */
+export async function searchPages(
+  organizationId: string,
+  query: string,
+  limit = 20,
+): Promise<WorkspaceSearchHit[]> {
+  const trimmed = query.trim();
+  if (trimmed.length === 0) return [];
+  return unwrap(
+    supabase.rpc('search_workspace_pages', {
+      p_organization_id: organizationId,
+      p_query: trimmed,
+      p_limit: limit,
+    }),
+  );
+}
+
+// ─── Depuis la discussion IA ─────────────────────────────────────────────────
+
+/**
+ * Un texte de l'assistant (Markdown simple) en document TipTap minimal :
+ * titres `#`, listes `-`/`1.`, paragraphes. Assez pour « rédiger dans cette
+ * page » et « créer une page depuis la discussion » sans dépendre de
+ * l'éditeur ; l'éditeur reprend ensuite la main sur ce qu'il affiche.
+ */
+export function textToTiptapDocument(markdown: string): TiptapDocument {
+  const content: NonNullable<TiptapDocument['content']> = [];
+  let list: { type: 'bulletList' | 'orderedList'; items: string[] } | null = null;
+  const flushList = () => {
+    if (!list) return;
+    content.push({
+      type: list.type,
+      content: list.items.map((item) => ({
+        type: 'listItem',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: item }] }],
+      })),
+    });
+    list = null;
+  };
+
+  for (const rawLine of markdown.replace(/\r\n/g, '\n').split('\n')) {
+    const line = rawLine.trim();
+    if (line.length === 0) {
+      flushList();
+      continue;
+    }
+    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (heading) {
+      flushList();
+      content.push({
+        type: 'heading',
+        attrs: { level: heading[1]?.length ?? 1 },
+        content: [{ type: 'text', text: heading[2] ?? '' }],
+      });
+      continue;
+    }
+    const bullet = /^[-*•]\s+(.*)$/.exec(line);
+    const numbered = /^\d+[.)]\s+(.*)$/.exec(line);
+    if (bullet || numbered) {
+      const type = bullet ? 'bulletList' : 'orderedList';
+      const text = (bullet ?? numbered)?.[1] ?? '';
+      if (list && list.type !== type) flushList();
+      list ??= { type, items: [] };
+      list.items.push(text);
+      continue;
+    }
+    flushList();
+    content.push({ type: 'paragraph', content: [{ type: 'text', text: line }] });
+  }
+  flushList();
+  return { type: 'doc', content };
 }

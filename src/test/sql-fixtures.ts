@@ -28,6 +28,7 @@ import industriesMechanicsTransportSql from '../../supabase/migrations/202609111
 import clientPortalSocleSql from '../../supabase/migrations/20260913054246_portail_client_socle.sql?raw';
 import workspaceSql from '../../supabase/migrations/20260929090000_workspace.sql?raw';
 import feuilleHeuresSql from '../../supabase/migrations/20261002090000_feuille_heures.sql?raw';
+import workspaceV2Sql from '../../supabase/migrations/20261003090000_workspace_v2.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -85,6 +86,7 @@ const MIGRATIONS: Record<string, string> = {
   clientPortalSocle: clientPortalSocleSql,
   workspace: workspaceSql,
   feuilleHeures: feuilleHeuresSql,
+  workspaceV2: workspaceV2Sql,
 };
 
 export const MIGRATION_FILES = {
@@ -118,6 +120,7 @@ export const MIGRATION_FILES = {
   clientPortalSocle: 'clientPortalSocle',
   workspace: 'workspace',
   feuilleHeures: 'feuilleHeures',
+  workspaceV2: 'workspaceV2',
 } as const;
 
 /**

@@ -228,11 +228,13 @@ export async function reserveAiUsage(
   admin: SupabaseClient,
   organizationId: string,
   userId: string,
+  scope: 'general' | 'workspace' = 'general',
 ): Promise<AiQuotaReservation | null> {
   const { data, error } = await admin
     .rpc('reserve_ai_usage', {
       p_organization_id: organizationId,
       p_user_id: userId,
+      p_scope: scope,
     })
     .maybeSingle();
 
@@ -445,7 +447,7 @@ export async function requireAiAccess(params: {
   admin: SupabaseClient;
   jwt: string;
   organizationId: string;
-  permission: 'ai.use' | 'ai.manage_documents';
+  permission: 'ai.use' | 'ai.manage_documents' | 'ai.workspace';
 }): Promise<{ context: AiAccessContext } | { error: Response }> {
   const { data: authData, error: authError } = await params.admin.auth.getUser(params.jwt);
   if (authError || !authData?.user) {

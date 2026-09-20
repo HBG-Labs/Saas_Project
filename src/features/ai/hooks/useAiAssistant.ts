@@ -22,7 +22,17 @@ const INITIAL_GREETING: AiMessage = {
   timestamp: new Date().toISOString(),
 };
 
-export function useAiAssistant() {
+export interface UseAiAssistantOptions {
+  /**
+   * Attache la conversation à une page du Workspace : l'assistant la lit
+   * (résumer, répondre, rédiger pour elle). Changer de page repart d'une
+   * conversation vierge — une conversation ne change pas de contexte.
+   */
+  pageId?: string;
+}
+
+export function useAiAssistant(options: UseAiAssistantOptions = {}) {
+  const { pageId } = options;
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? 'default-org';
   const navigate = useNavigate();
@@ -38,6 +48,12 @@ export function useAiAssistant() {
   // Conversation serveur reprise d'un message à l'autre — `undefined` tant
   // qu'aucun échange n'a encore créé de ligne côté base.
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
+  const [conversationPageId, setConversationPageId] = useState<string | undefined>(pageId);
+  if (conversationPageId !== pageId) {
+    setConversationPageId(pageId);
+    setConversationId(undefined);
+    setMessages([INITIAL_GREETING]);
+  }
 
   const {
     history: searchHistory,
@@ -69,6 +85,7 @@ export function useAiAssistant() {
           organizationId,
           query: trimmed,
           ...(conversationId ? { conversationId } : {}),
+          ...(pageId ? { pageId } : {}),
         });
 
         const assistantMsg: AiMessage = {
@@ -92,7 +109,7 @@ export function useAiAssistant() {
         setIsGenerating(false);
       }
     },
-    [addSearchEntry, conversationId, isGenerating, isQuotaExceeded, organizationId],
+    [addSearchEntry, conversationId, isGenerating, isQuotaExceeded, organizationId, pageId],
   );
 
   const executeAction = useCallback(

@@ -38,3 +38,12 @@ Deno.test('validateAiRequest refuse les identifiants et questions abusifs', () =
     false,
   );
 });
+
+Deno.test('validateAiRequest accepte une page du Workspace, et seulement un UUID', () => {
+  const pageId = '00000000-0000-4000-8000-000000000010';
+  assertEquals(validateAiRequest({ organizationId, query: 'Résume', pageId }), {
+    ok: true,
+    value: { organizationId, query: 'Résume', pageId },
+  });
+  assertEquals(validateAiRequest({ organizationId, query: 'Résume', pageId: 'page-1' }).ok, false);
+});

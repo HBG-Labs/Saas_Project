@@ -68,6 +68,12 @@ export async function sendAiQuery(params: {
   query: string;
   /** Reprend une conversation déjà commencée — absent au premier message. */
   conversationId?: string;
+  /**
+   * Une page du Workspace : la conversation lui est attachée, l'assistant la
+   * lit, et la permission exigée devient `ai.workspace` (ouverte à qui écrit
+   * dans le Workspace) au lieu de `ai.use`.
+   */
+  pageId?: string;
 }): Promise<AiQueryResult> {
   try {
     const response: {
@@ -91,6 +97,7 @@ export async function sendAiQuery(params: {
         // Le transmettre depuis le navigateur permettrait de forger de faux
         // messages assistant et gonflerait chaque requête au fil du chat.
         ...(params.conversationId ? { conversationId: params.conversationId } : {}),
+        ...(params.pageId ? { pageId: params.pageId } : {}),
       },
     });
 
