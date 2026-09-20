@@ -6,7 +6,6 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
@@ -66,49 +65,45 @@ export default function TeamsListPage() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="border-border bg-surface divide-border divide-y overflow-hidden rounded-lg border">
           {list.map((team) => (
             <Link
               key={team.id}
               to={ROUTES.team(team.id)}
-              className="group focus-visible:ring-primary block min-w-0 rounded-xl focus-visible:ring-2 focus-visible:outline-none"
+              className="group focus-visible:ring-primary hover:bg-surface-hover block min-w-0 px-4 py-4 transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-5"
             >
-              <Card className="border-border/80 group-hover:border-primary/30 group-hover:shadow-raised h-full cursor-pointer shadow-xs transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
-                <CardContent className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="bg-primary-subtle text-primary relative flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
-                        <UsersRound className="size-4.5" aria-hidden="true" />
-                        <span
-                          aria-hidden="true"
-                          className="border-surface absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2"
-                          style={{
-                            backgroundColor: team.color ?? 'var(--color-border-strong)',
-                          }}
-                        />
-                      </span>
-                      <span className="text-foreground group-hover:text-primary truncate text-sm font-bold transition-colors">
-                        {team.name}
-                      </span>
-                    </div>
-                    {team.status === 'archived' ? (
-                      <Badge variant="warning" className="shrink-0">
-                        Archivée
-                      </Badge>
-                    ) : null}
+              <div className="grid items-center gap-3 md:grid-cols-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="bg-primary-subtle text-primary relative flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
+                      <UsersRound className="size-4.5" aria-hidden="true" />
+                      <span
+                        aria-hidden="true"
+                        className="border-surface absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2"
+                        style={{
+                          backgroundColor: team.color ?? 'var(--color-border-strong)',
+                        }}
+                      />
+                    </span>
+                    <span className="text-foreground group-hover:text-primary truncate text-sm font-bold transition-colors">
+                      {team.name}
+                    </span>
                   </div>
+                  {team.status === 'archived' ? (
+                    <Badge variant="warning" className="shrink-0">
+                      Archivée
+                    </Badge>
+                  ) : null}
+                </div>
 
-                  {team.description !== null && team.description !== '' ? (
-                    <p className="text-muted-foreground border-border/60 line-clamp-2 min-h-12 border-t pt-3 text-sm leading-relaxed">
-                      {team.description}
-                    </p>
-                  ) : (
-                    <p className="text-subtle-foreground border-border/60 min-h-12 border-t pt-3 text-sm italic">
-                      Aucune description
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                {team.description !== null && team.description !== '' ? (
+                  <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                    {team.description}
+                  </p>
+                ) : (
+                  <p className="text-subtle-foreground text-sm italic">Aucune description</p>
+                )}
+              </div>
             </Link>
           ))}
         </div>

@@ -71,9 +71,9 @@ export function TechnicianDashboard() {
   ];
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-8">
       {/* Header Technicien : un espace identifiable sans devenir une carte KPI. */}
-      <div className="border-border/80 bg-surface before:bg-primary relative overflow-hidden rounded-2xl border p-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 sm:p-6">
+      <div className="border-border border-b pb-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="bg-primary-subtle text-primary border-primary/20 rounded-lg border px-2.5 py-1 text-xs font-semibold">
             Espace {workerSingular.toLowerCase()} terrain
@@ -160,7 +160,7 @@ export function TechnicianDashboard() {
             <div className="space-y-4">
               <Link
                 to={ROUTES.mission(nextMission.id)}
-                className="border-primary/25 bg-primary-subtle/35 hover:border-primary/45 group hover:shadow-raised block rounded-xl border p-4 transition-[background-color,border-color,box-shadow] sm:p-5"
+                className="border-primary/25 bg-primary-subtle/35 hover:bg-primary-subtle group block rounded-lg border-l-4 p-4 transition-colors sm:p-5"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge variant="outline" className="bg-surface text-2xs shrink-0 font-mono">
@@ -250,12 +250,12 @@ export function TechnicianDashboard() {
           </Button>
         </div>
 
-        <div className="xs:grid-cols-2 grid grid-cols-1 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
           {quickAccess.map(({ to, title, description, icon: Icon }) => (
             <Link
               key={to}
               to={to}
-              className="group border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised flex min-h-24 items-center gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 lg:flex-col lg:items-start"
+              className="group border-border hover:bg-surface-hover min-h-touch flex items-center gap-3 border-b py-3 transition-colors"
             >
               <span className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
                 <Icon className="size-5" aria-hidden="true" />

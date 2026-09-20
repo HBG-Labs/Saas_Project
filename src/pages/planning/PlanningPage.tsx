@@ -252,11 +252,11 @@ export default function PlanningPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 pb-10">
+    <div className="gestion-planning mx-auto max-w-7xl space-y-4 pb-10">
       <PageHeader
         title="Planning & congés"
         description="Planifiez les interventions, suivez les absences et anticipez les échéances récurrentes."
-        className="mb-4"
+        className="mb-4 sm:flex-col xl:flex-row"
         actions={
           <>
             {can(PERMISSIONS.missionCreate) && (
@@ -308,7 +308,7 @@ export default function PlanningPage() {
         <div
           role="status"
           aria-live="polite"
-          className="border-success-border bg-success-subtle text-success animate-in fade-in slide-in-from-top-2 flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold motion-reduce:animate-none"
+          className="border-success-border bg-success-subtle text-success animate-in fade-in slide-in-from-top-2 flex items-center gap-2 rounded-full border p-3 text-xs font-semibold motion-reduce:animate-none"
         >
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{notification}</span>
@@ -325,9 +325,9 @@ export default function PlanningPage() {
           onClick={() => setActiveTab('calendar')}
           aria-pressed={activeTab === 'calendar'}
           className={cn(
-            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'calendar'
-              ? 'bg-primary text-primary-foreground shadow-xs'
+              ? 'bg-nav-selected text-nav-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
@@ -341,9 +341,9 @@ export default function PlanningPage() {
           onClick={() => setActiveTab('leaves')}
           aria-pressed={activeTab === 'leaves'}
           className={cn(
-            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'leaves'
-              ? 'bg-primary text-primary-foreground shadow-xs'
+              ? 'bg-nav-selected text-nav-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
@@ -353,8 +353,10 @@ export default function PlanningPage() {
           {pendingLeavesCount > 0 && (
             <span
               className={cn(
-                'sm:text-3xs flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-extrabold sm:size-5',
-                activeTab === 'leaves' ? 'text-primary bg-white' : 'bg-warning text-white',
+                'sm:text-3xs flex size-4 shrink-0 items-center justify-center rounded-full text-xs font-extrabold sm:size-5',
+                activeTab === 'leaves'
+                  ? 'bg-surface text-foreground'
+                  : 'bg-warning-subtle text-warning',
               )}
             >
               {pendingLeavesCount}
@@ -367,9 +369,9 @@ export default function PlanningPage() {
           onClick={() => setActiveTab('recurring')}
           aria-pressed={activeTab === 'recurring'}
           className={cn(
-            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'recurring'
-              ? 'bg-primary text-primary-foreground shadow-xs'
+              ? 'bg-nav-selected text-nav-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >
@@ -383,9 +385,9 @@ export default function PlanningPage() {
           onClick={() => setActiveTab('holidays')}
           aria-pressed={activeTab === 'holidays'}
           className={cn(
-            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
+            'focus-visible:ring-ring min-h-touch inline-flex flex-1 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5 sm:text-xs',
             activeTab === 'holidays'
-              ? 'bg-primary text-primary-foreground shadow-xs'
+              ? 'bg-nav-selected text-nav-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-surface',
           )}
         >

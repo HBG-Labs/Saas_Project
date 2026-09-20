@@ -147,20 +147,10 @@ export default function CustomerDetailPage() {
         </section>
       ) : null}
 
-      <div className="border-border bg-surface-subtle flex flex-wrap items-center gap-2 rounded-xl border p-3 text-xs">
-        <Badge variant={manquesFacturation.length === 0 ? 'success' : 'warning'}>
-          Données de facturation : {manquesFacturation.length === 0 ? 'renseignées' : 'à compléter'}
-        </Badge>
-        {manquesFacturation.length > 0 && (
-          <span className="text-muted-foreground">
-            {manquesFacturation.map((manque) => manque.message).join(' · ')}
-          </span>
-        )}
-      </div>
       {/* Identité du client : le nom et les actions avant les données secondaires. */}
-      <Card className="border-border/80 shadow-raised overflow-hidden">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <Card className="rounded-none border-0 bg-transparent">
+        <CardContent className="p-0 sm:p-0">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-start gap-4">
               <span className="bg-primary-subtle text-primary hidden size-12 shrink-0 items-center justify-center rounded-2xl sm:flex">
                 <Building2 className="size-6" aria-hidden="true" />
@@ -193,7 +183,7 @@ export default function CustomerDetailPage() {
                   ) : null}
 
                   {data.phone ? (
-                    <span className="flex items-center gap-1.5 font-mono">
+                    <span className="flex items-center gap-1.5 tabular-nums">
                       <Phone className="text-subtle-foreground size-3.5" aria-hidden="true" />
                       {data.phone}
                     </span>
@@ -213,7 +203,7 @@ export default function CustomerDetailPage() {
             </div>
 
             {/* Action Toolbar */}
-            <div className="border-border flex flex-wrap items-center gap-2 border-t pt-2 lg:border-0 lg:pt-0">
+            <div className="border-border flex flex-wrap items-center gap-2 border-t pt-2 xl:border-0 xl:pt-0">
               {canEdit && organizationId !== null ? (
                 <CustomerFormDialog
                   organizationId={organizationId}
@@ -275,6 +265,17 @@ export default function CustomerDetailPage() {
         </CardContent>
       </Card>
 
+      <div className="border-border bg-surface-subtle flex flex-wrap items-center gap-2 rounded-xl border p-3 text-xs">
+        <Badge variant={manquesFacturation.length === 0 ? 'success' : 'warning'}>
+          Données de facturation : {manquesFacturation.length === 0 ? 'renseignées' : 'à compléter'}
+        </Badge>
+        {manquesFacturation.length > 0 && (
+          <span className="text-muted-foreground">
+            {manquesFacturation.map((manque) => manque.message).join(' · ')}
+          </span>
+        )}
+      </div>
+
       <Modal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
@@ -323,17 +324,17 @@ export default function CustomerDetailPage() {
         </TabsList>
 
         <TabsContent value="fiche" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="border-border bg-surface grid gap-6 rounded-lg border p-4 sm:p-5 md:grid-cols-2">
             {/* Coordonnées */}
-            <Card className="overflow-hidden">
-              <CardHeader className="border-border border-b">
+            <Card className="overflow-hidden rounded-none border-0 bg-transparent">
+              <CardHeader className="border-border border-b px-0 pt-0 pb-4 sm:px-0 sm:pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="text-primary size-4.5" aria-hidden="true" />
                   Coordonnées et contact
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 pt-5">
-                <dl className="grid gap-3 text-sm">
+              <CardContent className="space-y-4 px-0 pt-4 sm:px-0 sm:pt-4">
+                <dl className="divide-border grid divide-y text-sm">
                   <Field
                     label="Téléphone"
                     value={data.phone}
@@ -357,15 +358,15 @@ export default function CustomerDetailPage() {
             </Card>
 
             {/* Informations légales */}
-            <Card className="overflow-hidden">
-              <CardHeader className="border-border border-b">
+            <Card className="overflow-hidden rounded-none border-0 bg-transparent">
+              <CardHeader className="border-border border-b px-0 pt-0 pb-4 sm:px-0 sm:pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="text-primary size-4.5" aria-hidden="true" />
                   Informations légales et fiscales
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 pt-5">
-                <dl className="grid gap-3 text-sm">
+              <CardContent className="space-y-4 px-0 pt-4 sm:px-0 sm:pt-4">
+                <dl className="divide-border grid divide-y text-sm">
                   <Field label="Raison sociale" value={data.legal_name} />
                   <Field label="SIRET / SIREN" value={data.registration_number} />
                   <Field label="N° de TVA Intracommunautaire" value={data.vat_number} />
@@ -377,14 +378,14 @@ export default function CustomerDetailPage() {
 
           {/* Notes */}
           {data.notes !== null && data.notes !== '' ? (
-            <Card className="overflow-hidden">
-              <CardHeader className="border-border border-b">
+            <Card className="overflow-hidden rounded-none border-0 bg-transparent">
+              <CardHeader className="border-border border-b px-0 pt-0 pb-4 sm:px-0 sm:pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="text-primary size-4.5" aria-hidden="true" />
                   Notes et remarques
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 pt-5">
+              <CardContent className="space-y-2 px-0 pt-4 sm:px-0 sm:pt-4">
                 <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                   {data.notes}
                 </p>
@@ -437,9 +438,9 @@ function Field({
   icon?: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="grid gap-1 py-3 lg:grid-cols-[10rem_1fr] lg:gap-4">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="text-foreground flex items-center gap-1.5">
+      <dd className="text-foreground flex min-w-0 items-start gap-1.5 [overflow-wrap:anywhere] break-words">
         {value !== null && value !== '' ? (
           <>
             {icon}
@@ -488,8 +489,8 @@ function CustomerHistory({ customerId }: { customerId: string }) {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="border-border border-b">
+    <Card className="overflow-hidden rounded-none border-0 bg-transparent">
+      <CardHeader className="border-border border-b px-0 pt-0 pb-4 sm:px-0 sm:pt-0">
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="text-primary size-4.5" aria-hidden="true" />
           Historique des missions

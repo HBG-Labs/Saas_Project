@@ -23,6 +23,7 @@ export interface MetricCardProps {
    */
   attention?: boolean;
   className?: string;
+  layout?: 'card' | 'strip';
 }
 
 /**
@@ -58,6 +59,7 @@ export function MetricCard({
   actionLabel,
   attention = false,
   className,
+  layout = 'card',
 }: MetricCardProps) {
   return (
     <Link
@@ -68,6 +70,8 @@ export function MetricCard({
         attention
           ? 'border-warning-border bg-warning-subtle before:bg-warning'
           : 'border-border/80 hover:border-primary/30 before:bg-primary/70',
+        layout === 'strip' &&
+          'border-border hover:bg-surface-hover rounded-none border-0 border-r bg-transparent p-4 shadow-none before:hidden hover:translate-y-0 hover:shadow-none sm:p-5',
         className,
       )}
     >

@@ -70,7 +70,7 @@ export function TeamMembersPanel({ team, organizationMembers, canAssign }: TeamM
           description="Ajoutez des membres de l’entreprise pour pouvoir affecter des missions à cette équipe."
         />
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="divide-border divide-y">
           {members.map((entry) => {
             const name = memberDisplayName(entry.member);
             const isLead = entry.role === 'lead';
@@ -78,7 +78,7 @@ export function TeamMembersPanel({ team, organizationMembers, canAssign }: TeamM
             return (
               <li
                 key={entry.id}
-                className="border-border bg-surface-raised hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 flex flex-col gap-3 rounded-xl border p-3.5 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:flex-row sm:items-center sm:p-4 sm:hover:-translate-y-0.5"
+                className="hover:bg-surface-hover focus-within:bg-surface-hover flex flex-col gap-3 px-1 py-4 transition-colors sm:flex-row sm:items-center sm:px-2"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <UserAvatar

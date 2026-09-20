@@ -129,7 +129,7 @@ export default function ReportsHubPage() {
       />
 
       {/* Selecteur de mission/intervention */}
-      <Card className="border-border/80 overflow-hidden shadow-xs">
+      <Card className="border-border/80 overflow-hidden">
         <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-3 border-b sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
@@ -173,10 +173,10 @@ export default function ReportsHubPage() {
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedInterventionId(item.id)}
-                    className={`focus-visible:ring-primary cursor-pointer rounded-xl border p-3.5 text-left transition-[border-color,background-color,box-shadow,transform] focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0 ${
+                    className={`focus-visible:ring-primary cursor-pointer rounded-xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0 ${
                       isSelected
-                        ? 'border-primary bg-primary/10 font-semibold shadow-xs'
-                        : 'border-border bg-surface hover:border-primary/35 hover:shadow-raised sm:hover:-translate-y-0.5'
+                        ? 'border-primary bg-primary/10 font-semibold'
+                        : 'border-border bg-surface hover:border-primary/35'
                     }`}
                   >
                     <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
@@ -213,7 +213,7 @@ export default function ReportsHubPage() {
                 <Link
                   key={m.id}
                   to={ROUTES.mission(m.id)}
-                  className="border-border bg-surface hover:border-primary/35 hover:shadow-raised focus-visible:ring-primary block rounded-xl border p-3.5 text-left transition-[border-color,box-shadow,transform] focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5"
+                  className="border-border bg-surface hover:border-primary/35 focus-visible:ring-primary block rounded-xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
                 >
                   <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
                     <span className="text-foreground font-mono font-bold">{m.reference}</span>
@@ -285,7 +285,7 @@ export default function ReportsHubPage() {
             </Card>
           ) : (
             <>
-              <Card className="border-border/80 overflow-hidden shadow-xs">
+              <Card className="border-border/80 overflow-hidden">
                 <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-3 border-b sm:flex-row sm:items-center">
                   <CardTitle>Nature des travaux réalisés</CardTitle>
                   {isEditable && (
@@ -351,7 +351,7 @@ export default function ReportsHubPage() {
               </Card>
 
               {/* Photos du terrain & pièces jointes */}
-              <Card className="border-border/80 overflow-hidden shadow-xs">
+              <Card className="border-border/80 overflow-hidden">
                 <CardHeader className="border-border bg-surface-sunken/35 border-b">
                   <CardTitle>Photos du chantier & documents</CardTitle>
                 </CardHeader>
@@ -370,7 +370,7 @@ export default function ReportsHubPage() {
               </Card>
 
               {isEditable ? (
-                <Card className="border-primary/30 from-primary/[0.08] via-surface to-surface overflow-hidden bg-gradient-to-br shadow-xs">
+                <Card className="border-primary/30 bg-primary-subtle overflow-hidden">
                   <CardContent className="space-y-3 pt-6">
                     <div className="space-y-1">
                       <p className="text-foreground flex items-center gap-2 text-sm font-bold">

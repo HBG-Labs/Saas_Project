@@ -82,7 +82,7 @@ export function MemberRow({
   };
 
   return (
-    <li className="border-border bg-surface-raised hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 flex flex-col gap-4 rounded-xl border p-3.5 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:flex-row sm:items-center sm:justify-between sm:p-4 sm:hover:-translate-y-0.5">
+    <li className="hover:bg-surface-hover focus-within:bg-surface-hover flex flex-col gap-4 px-1 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-2">
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <UserAvatar
           avatarId={member.profile?.avatar_id ?? null}

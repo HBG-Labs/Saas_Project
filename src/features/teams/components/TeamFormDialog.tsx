@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
@@ -32,6 +32,7 @@ export interface TeamFormDialogProps {
  * avec le catalogue d'outils et le seed SQL.
  */
 export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialogProps) {
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [slugEdited, setSlugEdited] = useState(false);
@@ -115,6 +116,23 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
 
   return (
     <Modal
+      presentation="drawer"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer l’équipe'}
+          </Button>
+        </div>
+      }
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
@@ -126,7 +144,7 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
               'Une équipe regroupe des membres de l’entreprise pour recevoir des missions.',
           })}
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError error={submitError} />
 
         <Input
@@ -182,21 +200,6 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
           {...(errors.color?.message ? { error: errors.color.message } : {})}
           {...register('color')}
         />
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer l’équipe'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

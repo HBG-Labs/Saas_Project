@@ -160,12 +160,14 @@ export default function MissionCreatePage() {
               onAssignedMemberChange={setAssignedMemberId}
               interventionTypeId={interventionTypeId}
               onInterventionTypeChange={setInterventionTypeId}
-              onLocationSelect={(loc) => setCoords({ latitude: loc.latitude, longitude: loc.longitude })}
+              onLocationSelect={(loc) =>
+                setCoords({ latitude: loc.latitude, longitude: loc.longitude })
+              }
             />
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2">
+        <div className="border-border bg-surface safe-bottom sticky bottom-0 z-10 flex flex-wrap justify-end gap-2 border-t py-3">
           <Button asChild variant="outline">
             <Link to={ROUTES.missions}>Annuler</Link>
           </Button>

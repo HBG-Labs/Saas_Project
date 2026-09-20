@@ -96,6 +96,7 @@ export function NewEventModal({
 
   return (
     <Modal
+      presentation="drawer"
       open={open}
       onOpenChange={onOpenChange}
       title="Planifier une mission"

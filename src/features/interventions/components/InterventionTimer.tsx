@@ -94,7 +94,7 @@ export function InterventionTimer({
           Plus gros sur téléphone que sur écran de bureau : c'est là qu'on le
           lit à bout de bras, une main occupée par autre chose.
         */}
-        <span className="text-foreground font-mono text-4xl tabular-nums sm:text-3xl">
+        <span className="text-foreground text-4xl font-semibold tabular-nums sm:text-3xl">
           {formatDuration(total)}
         </span>
         {isWorking ? <Badge variant="success">En cours</Badge> : null}

@@ -95,6 +95,7 @@ export default function MembersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        className="sm:flex-col xl:flex-row"
         title={`Équipe & ${workerLabelPlural}`}
         description={`Gestion des ${workerLabelPlural.toLowerCase()}, des rôles et des accès aux interventions de l’entreprise.`}
         actions={
@@ -123,7 +124,7 @@ export default function MembersPage() {
       <TeamsNavTabs memberCount={activeMembers.length} />
 
       {includedSeats !== null ? (
-        <Card className="border-primary/20 from-primary-subtle/55 via-surface to-surface overflow-hidden bg-gradient-to-br">
+        <Card className="border-primary/20 bg-primary-subtle overflow-hidden">
           <CardContent className="pt-6">
             {/* Les mêmes chiffres que la facture : les comptes FACTURABLES, et
                 les sièges que la formule comprend. La barre montrait auparavant
@@ -165,7 +166,7 @@ export default function MembersPage() {
               description="Invitez vos collègues pour leur confier des missions et suivre leurs interventions."
             />
           ) : (
-            <ul className="space-y-2.5">
+            <ul className="divide-border divide-y">
               {activeMembers.map((member) => (
                 <MemberRow
                   key={member.id}
@@ -223,7 +224,7 @@ export default function MembersPage() {
                 {(invitations.data ?? []).map((invitation) => (
                   <li
                     key={invitation.id}
-                    className="border-border bg-surface-raised hover:border-primary/25 hover:shadow-raised focus-within:border-primary/30 space-y-3 rounded-xl border p-3.5 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:p-4 sm:hover:-translate-y-0.5"
+                    className="hover:bg-surface-hover focus-within:bg-surface-hover space-y-3 px-1 py-4 transition-colors sm:px-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">

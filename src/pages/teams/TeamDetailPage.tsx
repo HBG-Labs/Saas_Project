@@ -203,11 +203,11 @@ export default function TeamDetailPage() {
         }
       />
 
-      <Card className="overflow-hidden">
-        <CardHeader className="border-border bg-surface-sunken/35 border-b">
+      <Card className="overflow-hidden" variant="section">
+        <CardHeader className="border-border border-b">
           <div className="flex items-center gap-3">
             <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-white"
               style={{ backgroundColor: data.color ?? 'var(--color-primary)' }}
             >
               <Users className="size-4.5" aria-hidden="true" />

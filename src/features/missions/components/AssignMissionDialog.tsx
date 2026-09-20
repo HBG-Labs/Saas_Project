@@ -69,6 +69,7 @@ export function AssignMissionDialog({
 
   return (
     <Modal
+      presentation="drawer"
       open={open}
       onOpenChange={setOpen}
       title="Affecter la mission"

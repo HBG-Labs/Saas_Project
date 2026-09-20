@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
@@ -37,6 +37,7 @@ export interface CustomerFormDialogProps {
  * n'aura jamais.
  */
 export function CustomerFormDialog({ organizationId, customer, trigger }: CustomerFormDialogProps) {
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -203,10 +204,27 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
 
   return (
     <Modal
+      presentation="drawer"
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
       size="lg"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer le client'}
+          </Button>
+        </div>
+      }
       title={isEdit ? 'Modifier le client' : 'Nouveau client'}
       {...(isEdit
         ? {}
@@ -215,7 +233,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
               'Seul le nom est requis. Les coordonnées peuvent être complétées plus tard.',
           })}
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form id={formId} onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError error={submitError} />
 
         <FormSection
@@ -250,7 +268,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
             )}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3">
             <Input
               label="Adresse e-mail"
               type="email"
@@ -268,7 +286,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
         >
           <Input label="Raison sociale" {...register('legalName')} />
 
-        {/*
+          {/*
           LE SIRET N'ÉTAIT SAISISSABLE NULLE PART.
 
           `registrationNumber` figurait déjà dans le schéma de validation et
@@ -282,23 +300,23 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
           aucune facture ne peut partir vers ce client.
         */}
           <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="SIRET / SIREN"
-            placeholder="123 456 789 00012"
-            hint="Pour une entreprise française : SIREN de 9 chiffres ou SIRET de 14 chiffres."
-            {...(registrationIssue ? { error: registrationIssue } : {})}
-            {...(errors.registrationNumber?.message
-              ? { error: errors.registrationNumber.message }
-              : {})}
-            {...register('registrationNumber')}
-          />
-          <Input
-            label="N° TVA intracommunautaire"
-            placeholder="FR12345678901"
-            {...(vatIssue ? { error: vatIssue } : {})}
-            {...(errors.vatNumber?.message ? { error: errors.vatNumber.message } : {})}
-            {...register('vatNumber')}
-          />
+            <Input
+              label="SIRET / SIREN"
+              placeholder="123 456 789 00012"
+              hint="Pour une entreprise française : SIREN de 9 chiffres ou SIRET de 14 chiffres."
+              {...(registrationIssue ? { error: registrationIssue } : {})}
+              {...(errors.registrationNumber?.message
+                ? { error: errors.registrationNumber.message }
+                : {})}
+              {...register('registrationNumber')}
+            />
+            <Input
+              label="N° TVA intracommunautaire"
+              placeholder="FR12345678901"
+              {...(vatIssue ? { error: vatIssue } : {})}
+              {...(errors.vatNumber?.message ? { error: errors.vatNumber.message } : {})}
+              {...register('vatNumber')}
+            />
           </div>
           {(registrationIssue || vatIssue) && (
             <p className="text-muted-foreground text-xs">
@@ -322,8 +340,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
                   setCoords({ latitude: loc.latitude, longitude: loc.longitude });
                   if (loc.addressLine1)
                     setValue('addressLine1', loc.addressLine1, { shouldDirty: true });
-                  if (loc.postalCode)
-                    setValue('postalCode', loc.postalCode, { shouldDirty: true });
+                  if (loc.postalCode) setValue('postalCode', loc.postalCode, { shouldDirty: true });
                   if (loc.city) setValue('city', loc.city, { shouldDirty: true });
                   if (loc.country) setValue('country', loc.country, { shouldDirty: true });
                 }}
@@ -332,7 +349,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
             <Input placeholder="Numéro et libellé de voie" {...register('addressLine1')} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3">
             <Input label="Code postal" {...register('postalCode')} />
             <Input label="Ville" {...register('city')} />
             <Input
@@ -356,21 +373,6 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
             {...register('notes')}
           />
         </FormSection>
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer le client'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );
@@ -404,19 +406,19 @@ function FormSection({
     <details
       open={expanded}
       onToggle={(event) => setExpanded(event.currentTarget.open)}
-      className="group border-border bg-surface-subtle/55 rounded-xl border"
+      className="group border-border border-b"
     >
-      <summary className="focus-visible:ring-ring/30 flex min-h-touch cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+      <summary className="focus-visible:ring-ring/30 min-h-touch flex cursor-pointer list-none items-center justify-between gap-3 rounded-md py-3 focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <span className="block text-sm font-bold text-foreground">{title}</span>
-          <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>
+          <span className="text-foreground block text-sm font-bold">{title}</span>
+          <span className="text-muted-foreground mt-0.5 block text-xs">{description}</span>
         </span>
         <ChevronDown
-          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+          className="text-muted-foreground size-4 shrink-0 transition-transform duration-150 group-open:rotate-180"
           aria-hidden="true"
         />
       </summary>
-      <div className="border-border space-y-4 border-t px-4 py-4">{children}</div>
+      <div className="space-y-4 pt-2 pb-5">{children}</div>
     </details>
   );
 }
