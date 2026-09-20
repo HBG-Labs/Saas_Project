@@ -83,6 +83,10 @@ export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
 
 export type InvoiceDocumentType = 'invoice' | 'credit_note';
 export type PaymentMethod = 'transfer' | 'check' | 'card' | 'cash' | 'direct_debit' | 'other';
+export type WorkspaceTaskStatus = 'todo' | 'in_progress' | 'done';
+export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
+/** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
+export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
 
 export type InvoiceTransmissionStatus =
   | 'queued'
@@ -167,13 +171,7 @@ export type ClientConversationInitiator = 'organization' | 'client';
 export type ClientMessageDirection = 'outbound' | 'inbound';
 export type ClientMessageChannel = 'portal' | 'email';
 export type ClientMessageStatus =
-  | 'queued'
-  | 'sent'
-  | 'delivered'
-  | 'failed'
-  | 'bounced'
-  | 'complained'
-  | 'received';
+  'queued' | 'sent' | 'delivered' | 'failed' | 'bounced' | 'complained' | 'received';
 
 /** Résultat de `portal_my_context()`. */
 export interface PortalContext {
@@ -235,7 +233,12 @@ export interface PortalMissionDetail {
   postal_code: string | null;
   city: string | null;
   site_name: string | null;
-  interventions: Array<{ id: string; status: string; start_time: string | null; end_time: string | null }>;
+  interventions: Array<{
+    id: string;
+    status: string;
+    start_time: string | null;
+    end_time: string | null;
+  }>;
   /** Uniquement un rapport approuvé, sans observations internes. */
   report: {
     work_description: string | null;
@@ -3589,6 +3592,182 @@ export interface Database {
           },
         ];
       };
+      /**
+       * Workspace v1 — supabase/migrations/20260929090000_workspace.sql.
+       * `organization_id` des pages et des tâches est posé par trigger depuis
+       * l'espace : le client ne l'envoie pas, il ne pourrait que se tromper.
+       */
+      workspace_spaces: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          icon: string | null;
+          position: number;
+          created_by: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          icon?: string | null;
+          position?: number;
+          created_by?: string | null;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          icon?: string | null;
+          position?: number;
+          archived_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_spaces_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      workspace_pages: {
+        Row: {
+          id: string;
+          organization_id: string;
+          space_id: string;
+          parent_page_id: string | null;
+          title: string;
+          content: TiptapDocument;
+          position: number;
+          created_by: string | null;
+          updated_by: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string;
+          space_id: string;
+          parent_page_id?: string | null;
+          title?: string;
+          content?: TiptapDocument;
+          position?: number;
+        };
+        Update: {
+          parent_page_id?: string | null;
+          title?: string;
+          content?: TiptapDocument;
+          position?: number;
+          archived_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_pages_space_id_fkey';
+            columns: ['space_id'];
+            referencedRelation: 'workspace_spaces';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'workspace_pages_parent_page_id_fkey';
+            columns: ['parent_page_id'];
+            referencedRelation: 'workspace_pages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      workspace_page_revisions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          page_id: string;
+          title: string;
+          content: TiptapDocument;
+          authored_by: string | null;
+          authored_at: string;
+          replaced_by: string | null;
+          replaced_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      workspace_tasks: {
+        Row: {
+          id: string;
+          organization_id: string;
+          space_id: string;
+          page_id: string | null;
+          mission_id: string | null;
+          title: string;
+          description: string | null;
+          status: WorkspaceTaskStatus;
+          priority: WorkspaceTaskPriority;
+          assignee_member_id: string | null;
+          due_date: string | null;
+          position: number;
+          completed_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string;
+          space_id: string;
+          page_id?: string | null;
+          mission_id?: string | null;
+          title: string;
+          description?: string | null;
+          status?: WorkspaceTaskStatus;
+          priority?: WorkspaceTaskPriority;
+          assignee_member_id?: string | null;
+          due_date?: string | null;
+          position?: number;
+        };
+        Update: {
+          page_id?: string | null;
+          mission_id?: string | null;
+          title?: string;
+          description?: string | null;
+          status?: WorkspaceTaskStatus;
+          priority?: WorkspaceTaskPriority;
+          assignee_member_id?: string | null;
+          due_date?: string | null;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_tasks_space_id_fkey';
+            columns: ['space_id'];
+            referencedRelation: 'workspace_spaces';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'workspace_tasks_page_id_fkey';
+            columns: ['page_id'];
+            referencedRelation: 'workspace_pages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'workspace_tasks_mission_id_fkey';
+            columns: ['mission_id'];
+            referencedRelation: 'missions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'workspace_tasks_assignee_member_id_fkey';
+            columns: ['assignee_member_id'];
+            referencedRelation: 'organization_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_preferences: {
         Row: {
           user_id: string;
@@ -3742,7 +3921,9 @@ export interface Database {
           display_name?: string | null;
           visible_document_categories?: string[];
         };
-        Update: Partial<Omit<Database['public']['Tables']['client_portal_settings']['Insert'], 'organization_id'>>;
+        Update: Partial<
+          Omit<Database['public']['Tables']['client_portal_settings']['Insert'], 'organization_id'>
+        >;
         Relationships: [
           {
             foreignKeyName: 'client_portal_settings_organization_id_fkey';
@@ -4537,6 +4718,19 @@ export interface Database {
         Returns: Database['public']['Tables']['invoice_payments']['Row'];
       };
       /**
+       * Enregistre une page — dernier enregistré gagne, avec garde : refusé
+       * (`serialization_failure`) si `updated_at` a changé depuis l'ouverture.
+       */
+      save_workspace_page: {
+        Args: {
+          p_page_id: string;
+          p_expected_updated_at: string;
+          p_title: string;
+          p_content: TiptapDocument;
+        };
+        Returns: Database['public']['Tables']['workspace_pages']['Row'];
+      };
+      /**
        * Enregistre un mouvement et met à jour la quantité, dans la même
        * transaction.
        *
@@ -4789,6 +4983,8 @@ export interface Database {
       invitation_status: InvitationStatus;
       subscription_status: SubscriptionStatus;
       payment_method: PaymentMethod;
+      workspace_task_status: WorkspaceTaskStatus;
+      workspace_task_priority: WorkspaceTaskPriority;
       team_member_role: TeamMemberRole;
       mission_status: MissionStatus;
       mission_priority: MissionPriority;

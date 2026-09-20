@@ -77,19 +77,27 @@ describe('moindre privilège', () => {
     // la bibliothèque porte les procédures et les consignes de sécurité, que
     // l'employé doit pouvoir lire. Déposer et supprimer restent fermés —
     // `document.manage` s'arrête au chef d'équipe, `document.delete` au manager.
+    //
+    // `workspace.view` et `workspace.edit` (phase 4, arbitrage D) ne sont pas
+    // de la gestion non plus : écrire dans une page d'équipe ou cocher une
+    // tâche, c'est travailler. Créer ou archiver un ESPACE, en revanche, reste
+    // au chef d'équipe — `workspace.manage` n'est pas ici.
     expect(ROLE_PERMISSIONS.employee).toEqual([
       'organization.view',
       'member.view',
       'leave.request',
       'document.view',
+      'workspace.view',
+      'workspace.edit',
     ]);
 
-    // Le principe, lui, ne dépend pas de l'ordre de cette liste : hors congé,
-    // l'employé ne peut qu'observer.
+    // Le principe, lui, ne dépend pas de l'ordre de cette liste : hors congé
+    // et hors espace de travail, l'employé ne peut qu'observer. Aucune écriture
+    // de GESTION — client, mission, stock, devis, facture — ne lui est ouverte.
     const ecritures = ROLE_PERMISSIONS.employee.filter(
       (permission) => !permission.endsWith('.view'),
     );
-    expect(ecritures).toEqual(['leave.request']);
+    expect(ecritures).toEqual(['leave.request', 'workspace.edit']);
   });
 
   it("réserve l'usage de l'Assistant IA au propriétaire", () => {
@@ -204,6 +212,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.invoices,
       MIGRATION_FILES.organizationDocuments,
       MIGRATION_FILES.clientPortalSocle,
+      MIGRATION_FILES.workspace,
     ],
     'role_permissions',
   );

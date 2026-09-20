@@ -94,6 +94,11 @@ export const PERMISSIONS = {
   documentManage: 'document.manage',
   documentDelete: 'document.delete',
 
+  /** Workspace — supabase/migrations/20260929090000_workspace.sql */
+  workspaceView: 'workspace.view',
+  workspaceEdit: 'workspace.edit',
+  workspaceManage: 'workspace.manage',
+
   // Portail client — supabase/migrations/20260913054246_portail_client_socle.sql
   clientPortalView: 'client_portal.view',
   clientMessageSend: 'client_message.send',
@@ -190,6 +195,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'client_message.send',
     'client_content.share',
     'client_portal.manage',
+    'workspace.view',
+    'workspace.edit',
+    'workspace.manage',
   ],
 
   admin: [
@@ -242,6 +250,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'client_message.send',
     'client_content.share',
     'client_portal.manage',
+    'workspace.view',
+    'workspace.edit',
+    'workspace.manage',
   ],
 
   manager: [
@@ -290,6 +301,9 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'client_message.send',
     'client_content.share',
     'client_portal.manage',
+    'workspace.view',
+    'workspace.edit',
+    'workspace.manage',
   ],
 
   team_leader: [
@@ -327,6 +341,10 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'client_portal.view',
     'client_message.send',
     'client_content.share',
+    // Le chef d'équipe ouvre et ferme les espaces de son équipe.
+    'workspace.view',
+    'workspace.edit',
+    'workspace.manage',
   ],
 
   // Aucune permission de contrôle : un technicien ne valide jamais un compte
@@ -363,9 +381,20 @@ export const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     'document.view',
     'client_portal.view',
     'client_content.share',
+    // Un espace d'équipe où la moitié de l'équipe ne peut qu'observer n'est
+    // pas un espace d'équipe : il édite, il ne gère pas.
+    'workspace.view',
+    'workspace.edit',
   ],
 
-  employee: ['organization.view', 'member.view', 'leave.request', 'document.view'],
+  employee: [
+    'organization.view',
+    'member.view',
+    'leave.request',
+    'document.view',
+    'workspace.view',
+    'workspace.edit',
+  ],
 };
 
 export function roleHasPermission(role: OrgRole | null, permission: Permission): boolean {
