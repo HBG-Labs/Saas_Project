@@ -222,7 +222,10 @@ export function DateTimeInput({
         type: 'text',
         value: nextValue,
       } as HTMLInputElement;
-      onChange?.({ target: eventTarget, currentTarget: eventTarget } as ChangeEvent<HTMLInputElement>);
+      onChange?.({
+        target: eventTarget,
+        currentTarget: eventTarget,
+      } as ChangeEvent<HTMLInputElement>);
     }
   };
 
@@ -318,7 +321,7 @@ export function DateTimeInput({
             aria-describedby={describedBy}
             data-invalid={error ? true : undefined}
             className={cn(
-              'bg-surface text-foreground h-touch flex w-full items-center gap-2 rounded-md border px-3 text-left text-sm sm:h-9',
+              'bg-surface text-foreground atelier-field h-touch sm:h-field flex w-full items-center gap-2 rounded-sm border px-3 text-left text-base sm:text-sm',
               'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error ? 'border-error' : 'border-border-strong',

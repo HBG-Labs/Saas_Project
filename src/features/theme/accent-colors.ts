@@ -5,7 +5,7 @@
  * POURQUOI NEUF BLEUS
  *
  * Une couleur d'accent surcharge `--primary` : c'est elle qu'on voit sur chaque
- * bouton d'action, chaque lien, chaque anneau de focus. Tant que le choix allait
+ * lien et chaque anneau de focus. Tant que le choix allait
  * du vert au rose, choisir un accent ne personnalisait pas REZO360 — cela le
  * remplaçait. Le bleu de la marque n'était plus reconnaissable à l'écran.
  *

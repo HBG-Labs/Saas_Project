@@ -25,7 +25,7 @@ export function PageHeader({ title, description, actions, className }: PageHeade
       )}
     >
       <div className="min-w-0">
-        <h1 className="text-foreground text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
+        <h1 className="text-foreground text-page-title-mobile sm:text-page-title leading-tight font-bold tracking-tight">
           {title}
         </h1>
         {description ? (
@@ -35,17 +35,9 @@ export function PageHeader({ title, description, actions, className }: PageHeade
         ) : null}
       </div>
 
-      {/*
-        Les actions se partagent la largeur sur téléphone.
-
-        Un bouton de 90 px aligné à gauche sous un titre pleine largeur se
-        cherche ; étiré, il devient la suite naturelle du regard et une cible
-        que le pouce ne peut pas manquer.
-      */}
+      {/* Actions à largeur de libellé, également sur téléphone. */}
       {actions ? (
-        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
-          {actions}
-        </div>
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">{actions}</div>
       ) : null}
     </div>
   );

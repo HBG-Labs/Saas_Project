@@ -12,7 +12,7 @@ import { cva } from 'class-variance-authority';
  */
 export const buttonVariants = cva(
   [
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap cursor-pointer select-none',
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-bold atelier-control whitespace-nowrap cursor-pointer select-none',
     'transition-[color,background-color,border-color,box-shadow,transform] duration-[120ms] ease-out-expo active:scale-[0.98] motion-reduce:transform-none',
     'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_*]:pointer-events-none',
@@ -21,28 +21,24 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active',
-        secondary: 'bg-surface-hover text-foreground hover:bg-border active:bg-border-strong',
+          'bg-action text-action-foreground hover:bg-action-hover active:bg-action-active shadow-raised',
+        secondary:
+          'border border-border bg-surface text-action-text shadow-raised hover:bg-surface-hover active:bg-surface-sunken',
         outline:
-          'border border-border-strong bg-surface text-foreground hover:bg-surface-hover active:bg-border',
+          'border border-border bg-surface text-action-text shadow-raised hover:bg-surface-hover active:bg-surface-sunken',
         ghost: 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
         danger: 'bg-error text-error-foreground hover:bg-error/90 active:bg-error/80 shadow-xs',
         'danger-outline':
           'border border-error-border bg-error-subtle text-error hover:border-error hover:bg-error/15 active:bg-error/20 shadow-xs font-medium',
         link: 'text-primary underline-offset-4 hover:underline',
       },
-      /*
-        Deux hauteurs par taille : 40 px sur les écrans étroits pour alléger
-        l'interface sans rendre les commandes délicates à viser, puis une
-        densité adaptée au pointeur à partir de `sm`. Les actions `lg` restent
-        à 44 px pour conserver une hiérarchie claire.
-      */
+      /* 34 px au pointeur, 44 px au doigt ; la taille ne dépend pas du zoom de densité. */
       size: {
-        sm: 'h-11 px-3 text-xs sm:h-8 [&_svg]:size-3.5',
-        md: 'h-11 px-3.5 text-sm sm:h-9 sm:px-4 [&_svg]:size-4',
-        lg: 'h-11 px-5 text-sm [&_svg]:size-4',
-        icon: 'size-11 sm:size-9 [&_svg]:size-4',
-        'icon-sm': 'size-11 sm:size-8 [&_svg]:size-3.5',
+        sm: 'min-h-control px-3 text-xs [&_svg]:size-3.5',
+        md: 'min-h-control px-[15px] text-xs [&_svg]:size-4',
+        lg: 'min-h-touch px-5 text-sm [&_svg]:size-4',
+        icon: 'atelier-icon-control size-control [&_svg]:size-4',
+        'icon-sm': 'atelier-icon-control size-control [&_svg]:size-3.5',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

@@ -5,17 +5,11 @@ import { cn } from '@/lib/cn';
 /**
  * Conteneur de contenu.
  *
- * En thème clair l'élévation vient de l'ombre, en thème sombre de la clarté de
- * surface : une ombre noire sur fond sombre est invisible. Les deux traitements
- * cohabitent dans les mêmes classes via les tokens.
+ * La surface et un filet suffisent à regrouper le contenu. L'ombre est réservée
+ * aux commandes et aux panneaux superposés, plutôt que répétée sur chaque carte.
  */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn('bg-surface border-border shadow-xs rounded-xl border', className)}
-      {...props}
-    />
-  );
+  return <div className={cn('bg-surface border-border rounded-lg border', className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

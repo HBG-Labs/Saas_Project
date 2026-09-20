@@ -101,7 +101,7 @@ export function PublicLayout() {
   return (
     <div
       className={cn(
-        'bg-background text-foreground flex min-h-dvh flex-col',
+        'public-shell bg-background text-foreground flex min-h-dvh flex-col',
         pageEnClair && 'theme-jour-verrouille',
       )}
     >

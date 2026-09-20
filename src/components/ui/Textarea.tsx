@@ -49,7 +49,7 @@ export function Textarea({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : hint ? hintId : undefined}
         className={cn(
-          'bg-surface text-foreground placeholder:text-subtle-foreground w-full rounded-md border px-3 py-2 text-sm',
+          'bg-surface text-foreground placeholder:text-subtle-foreground atelier-field min-h-24 w-full rounded-sm border px-3 py-2 text-base sm:text-sm',
           'transition-colors duration-[120ms]',
           'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',

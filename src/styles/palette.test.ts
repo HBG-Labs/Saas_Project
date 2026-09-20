@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CONTRASTE_ELEVE_PRESET } from '@/features/theme/theme-presets';
+
 /**
  * Le contraste de la palette, mesuré sur TOUTES les surfaces.
  *
@@ -119,6 +121,25 @@ const THEMES = [
   [':root,', 'Atelier Jour'],
   ['.dark {', 'Atelier Nuit'],
 ] as const;
+
+describe.each([
+  ['Jour', lireBloc(':root,', 'Jour'), 4.5],
+  ['Nuit', lireBloc('.dark {', 'Nuit'), 4.5],
+  ['Contraste élevé', CONTRASTE_ELEVE_PRESET.variables, 7],
+] as const)('Atelier — aplats colorés %s', (nom, v, seuil) => {
+  it.each([
+    ['--action', '--action-foreground'],
+    ['--action-hover', '--action-foreground'],
+    ['--action-active', '--action-foreground'],
+    ['--nav-selected', '--nav-foreground'],
+    ['--workspace-selected', '--workspace-foreground'],
+    ['--settings-selected', '--settings-foreground'],
+  ])('%s garde une encre lisible', (fond, encre) => {
+    expect(v[fond], `${nom} ${fond}`).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(v[encre], `${nom} ${encre}`).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(contraste(v[fond] ?? '', v[encre] ?? '')).toBeGreaterThanOrEqual(seuil);
+  });
+});
 
 describe.each(THEMES)('palette — %s', (selecteur, nom) => {
   const v = lireBloc(selecteur, nom);

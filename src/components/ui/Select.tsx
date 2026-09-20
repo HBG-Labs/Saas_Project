@@ -76,7 +76,7 @@ export function Select({
       value={option.value}
       {...definedProps({ disabled: option.disabled })}
       className={cn(
-        'flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none',
+        'atelier-menu-item flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none',
         'data-[highlighted]:bg-surface-hover',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       )}
@@ -114,7 +114,7 @@ export function Select({
             // déjà cette règle. Le déclencheur était figé à `h-9` : 36 px, soit
             // sous la cible tactile de WCAG 2.5.5 sur un champ que l'on ouvre
             // en permanence dans les filtres de liste.
-            'bg-surface text-foreground h-touch flex w-full items-center justify-between gap-2 rounded-md border px-3 text-sm sm:h-9',
+            'bg-surface text-foreground atelier-field h-touch sm:h-field flex w-full items-center justify-between gap-2 rounded-sm border px-3 text-base sm:text-sm',
             'transition-colors duration-[120ms]',
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',

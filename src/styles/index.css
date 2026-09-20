@@ -6,6 +6,14 @@
 @import '@fontsource-variable/jetbrains-mono';
 @import '@fontsource-variable/caveat';
 
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-latin-variable.woff2') format('woff2');
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
@@ -28,63 +36,27 @@
   */
   :root,
   .theme-jour-verrouille {
-    /* --- ATELIER JOUR ----------------------------------------------------
-       Neutre papier, encre noire, bleu de tracé technique. Le fond clair n'est
-       pas une préférence esthétique : l'application se lit dehors, en plein
-       jour, à bout de bras.
-
-       Le orange « haute visibilité » (--warning) est le seul signal chaud de
-       la palette. Il est réservé à ce qui demande une action — s'il apparaît
-       en décoration, il ne veut plus rien dire.
-
-       ─────────────────────────────────────────────────────────────────────
-       LE NEUTRE EST CHAUD, ET IL EST CONSTRUIT
-
-       Les neutres étaient gris-bleu (#eef2f5, #d8e0e7, #0e1720). La direction
-       « Papier » les remplace par une famille chaude posée sur une seule
-       teinte OKLCH (84,6°) à très bas chroma : toutes les surfaces et toutes
-       les encres en descendent, donc aucune ne jure avec une autre.
-
-       Chaque valeur a été RÉSOLUE, pas choisie à l'œil. Le ratio de contraste
-       de chaque encre a été vérifié contre les CINQ surfaces, pas seulement
-       contre le blanc — c'est sur la surface creusée que les textes faibles
-       passent sous le seuil, et c'est la surface qu'on ne pense jamais à
-       tester.
-
-       Deux contraintes ont dessiné la rampe :
-
-       - `--border-strong` borde les champs, les sélecteurs et les cases à
-         cocher. WCAG 1.4.11 lui impose 3:1 contre la surface. L'ancienne
-         valeur tenait 1,76:1 — la bordure de chaque champ de l'application
-         était sous le seuil, sans que rien ne le signale.
-
-       - `--surface-sunken` est calée sur `--success`, le plus clair des
-         textes sémantiques : c'est lui qui décide jusqu'où la surface peut
-         être creusée avant qu'un libellé vert n'y devienne illisible.
-       ───────────────────────────────────────────────────────────────────── */
-    --background: #fbfaf8;
+    /* Atelier validé : surfaces lumineuses, encre bleutée, actions vertes.
+       Les aplats d'action et de navigation ont leur propre encre sombre :
+       le blanc sur le vert Tiime n'atteint pas 4,5:1. Les liens et le focus
+       conservent les neuf nuances de bleu REZO, indépendantes des actions. */
+    --background: #f7f8fa;
     --surface: #ffffff;
     --surface-raised: #ffffff;
-    --surface-sunken: #f1eee9;
-    --surface-subtle: #f7f5f2;
-    --surface-hover: #f4f2ed;
+    --surface-sunken: #eef1f5;
+    --surface-subtle: #f7f8fa;
+    --surface-hover: #f0f2f6;
 
     /* Filet décoratif : sépare, ne délimite pas un contrôle. */
-    --border: #ece9e3;
-    /* 3,14:1 au pire (sur la surface creusée). Seuil WCAG 1.4.11 : 3:1. */
-    --border-strong: #89867e;
+    --border: #e2e6ec;
+    /* Bordure vérifiée à 3:1 minimum sur les six surfaces. Seuil WCAG 1.4.11 : 3:1. */
+    --border-strong: #7a8799;
 
-    --foreground: #1a1a18;
-    /* 5,92:1 au pire. */
-    --muted-foreground: #5e5a54;
-    /*
-      L'encre secondaire de la direction « Papier ». Elle sert ici de niveau le
-      plus faible : à 5,38:1 sur blanc, elle ne laisse pas la place à un
-      troisième cran sous elle qui tiendrait encore 4,5:1 sur la surface
-      creusée. `--muted-foreground` a donc été creusé au-dessus d'elle plutôt
-      que l'inverse. 4,65:1 au pire.
-    */
-    --subtle-foreground: #6e6a63;
+    --foreground: #243247;
+    /* Texte secondaire vérifié à 4,5:1 minimum sur les six surfaces. */
+    --muted-foreground: #5b677a;
+    /* Même niveau lisible pour les métadonnées et les aides. */
+    --subtle-foreground: #5b677a;
 
     --primary: #1b44c8;
     --primary-hover: #163aac;
@@ -134,6 +106,24 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+
+    --action: #31c366;
+    --action-hover: #2eb760;
+    --action-active: #2db45e;
+    --action-foreground: #103b24;
+    --action-text: #18783e;
+    --nav-selected: #7d86f9;
+    --nav-foreground: #172351;
+    --nav-subtle: #eff0ff;
+    --nav-text: #44519d;
+    --workspace-selected: #7cd1f4;
+    --workspace-foreground: #234c5c;
+    --settings-selected: #445f83;
+    --settings-foreground: #ffffff;
+    --quote-marker: #ffba3f;
+    --quote-marker-foreground: #543700;
+    --purchase-marker: #e66976;
+    --purchase-marker-foreground: #40151d;
 
     color-scheme: light;
   }
@@ -216,6 +206,24 @@
     --shadow-overlay: 0 8px 20px -4px rgb(0 0 0 / 0.55);
     --shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.65);
 
+    --action: #51d68a;
+    --action-hover: #65df9b;
+    --action-active: #41c47a;
+    --action-foreground: #103b24;
+    --action-text: #92ddbd;
+    --nav-selected: #7d86f9;
+    --nav-foreground: #172351;
+    --nav-subtle: #293050;
+    --nav-text: #b8bfff;
+    --workspace-selected: #7cd1f4;
+    --workspace-foreground: #234c5c;
+    --settings-selected: #acc1de;
+    --settings-foreground: #172351;
+    --quote-marker: #ffba3f;
+    --quote-marker-foreground: #543700;
+    --purchase-marker: #e66976;
+    --purchase-marker-foreground: #40151d;
+
     color-scheme: dark;
   }
 }
@@ -268,50 +276,35 @@
   --color-info-border: var(--info-border);
 
   --color-ring: var(--ring);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-active: var(--action-active);
+  --color-action-foreground: var(--action-foreground);
+  --color-action-text: var(--action-text);
+  --color-nav-selected: var(--nav-selected);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-subtle: var(--nav-subtle);
+  --color-nav-text: var(--nav-text);
+  --color-workspace-selected: var(--workspace-selected);
+  --color-workspace-foreground: var(--workspace-foreground);
+  --color-settings-selected: var(--settings-selected);
+  --color-settings-foreground: var(--settings-foreground);
+  --color-quote-marker: var(--quote-marker);
+  --color-quote-marker-foreground: var(--quote-marker-foreground);
+  --color-purchase-marker: var(--purchase-marker);
+  --color-purchase-marker-foreground: var(--purchase-marker-foreground);
+  --spacing-control: 2.125rem;
+  --spacing-field: 2.25rem;
+  --spacing-sidebar: 13.25rem;
+  --spacing-sidebar-rail: 4.25rem;
+  --spacing-app-header: 3.75rem;
+  --text-page-title: 1.8125rem;
+  --text-page-title-mobile: 1.5625rem;
 
-  /*
-    Trois familles, trois rôles distincts.
-
-    `--font-display` : Archivo, une grotesque industrielle proche de la
-    signalétique de chantier. Elle donne du caractère aux titres sans jouer au
-    terminal — c'est exactement ce que faisait l'ancienne direction avec du
-    monospace partout.
-
-    `--font-sans` : IBM Plex Sans, d'origine ingénierie, nette à petite taille.
-    C'est la contrainte réelle ici : du texte lu dehors, à bout de bras. Plus
-    Jakarta Sans portait une rondeur « startup » qui ne disait rien du métier,
-    et Inter n'était chargée que comme repli — une famille téléchargée pour
-    rien.
-
-    `--font-mono` : JetBrains Mono, conservée. IBM Plex Mono n'existe pas en
-    variable ; sa version statique multi-graisses pèserait plus lourd pour un
-    gain de cohérence marginal sur des références et des mesures.
-
-    `--font-hand` : Caveat, pour les annotations manuscrites.
-
-    AUTO-HÉBERGÉE, ET C'EST TOUT L'INTÉRÊT. Ces annotations employaient une
-    pile système — « Segoe Print », « Bradley Hand », « Comic Sans MS ». Segoe
-    Print n'existe que sous Windows, Bradley Hand que sous Apple, et Comic Sans
-    nulle part sous Android : le générique `cursive` y retombe sur la police
-    normale.
-
-    Autrement dit, l'effet manuscrit disparaissait purement et simplement pour
-    une large part du trafic mobile — celui, précisément, qu'on achète en
-    publicité. Une police servie avec la page rend identiquement partout.
-
-    Caveat plutôt qu'une autre : lisible à petite taille, couvre les accents
-    français, et reste adulte là où Comic Sans faisait scolaire.
-
-    Les paquets fontsource déclarent les familles sous un nom suffixé
-    « Variable ». Le nom sans suffixe reste en second : il couvre une police
-    éventuellement installée sur le poste.
-  */
-  --font-display:
-    'Archivo Variable', 'Archivo', 'IBM Plex Sans Variable', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', sans-serif;
-  --font-sans:
-    'IBM Plex Sans Variable', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, sans-serif;
+  /* Nunito : interface validée ; IBM Plex : logotype existant uniquement. */
+  --font-display: 'Nunito', 'Segoe UI', sans-serif;
+  --font-sans: 'Nunito', 'Segoe UI', sans-serif;
+  --font-brand: 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-hand: 'Caveat Variable', 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
 
@@ -619,14 +612,16 @@
   @keyframes nx-enter {
     from {
       opacity: var(--nx-enter-opacity, 1);
-      transform: translate3d(0, var(--nx-enter-y, 0), 0) scale(var(--nx-enter-scale, 1));
+      transform: translate3d(var(--nx-enter-x, 0), var(--nx-enter-y, 0), 0)
+        scale(var(--nx-enter-scale, 1));
     }
   }
 
   @keyframes nx-exit {
     to {
       opacity: var(--nx-exit-opacity, 1);
-      transform: translate3d(0, var(--nx-exit-y, 0), 0) scale(var(--nx-exit-scale, 1));
+      transform: translate3d(var(--nx-exit-x, 0), var(--nx-exit-y, 0), 0)
+        scale(var(--nx-exit-scale, 1));
     }
   }
 
@@ -717,3 +712,155 @@ html.compact-mode {
    `animate-spin-slow` (déclaré dans `@theme`) reste en place : lui est
    réellement utilisé, pour l'indicateur de synchronisation.
    ============================================================================= */
+
+/* La vitrine conserve sa palette et ses familles ; elle ne fait pas partie du lot A. */
+@layer base {
+  .theme-jour-verrouille {
+    --background: #fbfaf8;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-sunken: #f1eee9;
+    --surface-subtle: #f7f5f2;
+    --surface-hover: #f4f2ed;
+
+    /* Filet décoratif : sépare, ne délimite pas un contrôle. */
+    --border: #ece9e3;
+    /* 3,14:1 au pire (sur la surface creusée). Seuil WCAG 1.4.11 : 3:1. */
+    --border-strong: #89867e;
+
+    --foreground: #1a1a18;
+    /* 5,92:1 au pire. */
+    --muted-foreground: #5e5a54;
+    /*
+      L'encre secondaire de la direction « Papier ». Elle sert ici de niveau le
+      plus faible : à 5,38:1 sur blanc, elle ne laisse pas la place à un
+      troisième cran sous elle qui tiendrait encore 4,5:1 sur la surface
+      creusée. `--muted-foreground` a donc été creusé au-dessus d'elle plutôt
+      que l'inverse. 4,65:1 au pire.
+    */
+    --subtle-foreground: #6e6a63;
+
+    --primary: #1b44c8;
+    --primary-hover: #163aac;
+    --primary-active: #12308f;
+    --primary-foreground: #ffffff;
+    --primary-subtle: #e4e9fb;
+
+    /* Signaux de marque des surfaces marketing « cockpit opérationnel ». */
+    --brand-night: #0a1b43;
+    --brand-blue: #1b44c8;
+    --signal-cyan: #39cede;
+    --signal-orange: #f97316;
+    --signal-lime: #b9f442;
+
+    --accent: #0f62c4;
+    --accent-foreground: #ffffff;
+    --accent-subtle: #e1ecfa;
+
+    --success: #0f7a54;
+    --success-subtle: #e0f2ea;
+    --success-border: #a8d8c4;
+    --success-foreground: #ffffff;
+
+    /* 4,76:1 sur le fond warning-subtle pour le texte de petite taille. */
+    --warning: #a35500;
+    --warning-subtle: #fbeedc;
+    --warning-border: #efc188;
+    --warning-foreground: #ffffff;
+
+    --error: #b32d19;
+    --error-subtle: #fae6e2;
+    --error-border: #edb0a5;
+    --error-foreground: #ffffff;
+
+    --info: #1b44c8;
+    --info-subtle: #e4e9fb;
+    --info-border: #b9c6f2;
+
+    --ring: #1b44c8;
+
+    /* Trois niveaux d'élévation, teintés à l'encre plutôt qu'au noir pur. */
+    --shadow-raised: 0 1px 2px rgb(14 23 32 / 0.06), 0 2px 6px -2px rgb(14 23 32 / 0.08);
+    --shadow-overlay: 0 4px 12px -2px rgb(14 23 32 / 0.1), 0 12px 28px -8px rgb(14 23 32 / 0.12);
+    --shadow-modal: 0 8px 24px -4px rgb(14 23 32 / 0.14), 0 24px 48px -12px rgb(14 23 32 / 0.18);
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+  .public-shell,
+  .theme-jour-verrouille {
+    --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif;
+    --font-display: 'Archivo Variable', 'Archivo', sans-serif;
+    --action: var(--primary);
+    --action-hover: var(--primary-hover);
+    --action-active: var(--primary-active);
+    --action-foreground: var(--primary-foreground);
+    --action-text: var(--primary);
+    font-family: var(--font-sans);
+  }
+}
+
+/* Commandes compactes au pointeur, confortables au doigt, même en densité compacte. */
+/* Hors des layers : le minimum tactile doit gagner même contre les anciens h-8. */
+.atelier-nav-link {
+  min-height: 34px;
+}
+.atelier-nav-section {
+  min-height: 34px;
+}
+.atelier-section-content[aria-hidden='true'] {
+  visibility: hidden;
+}
+.atelier-sidebar[data-universe='workspace'] {
+  --nav-selected: var(--workspace-selected);
+  --nav-foreground: var(--workspace-foreground);
+}
+.atelier-account {
+  --nav-selected: var(--settings-selected);
+  --nav-foreground: var(--settings-foreground);
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .atelier-control,
+  input.atelier-field,
+  button.atelier-field,
+  .atelier-nav-link,
+  .atelier-nav-section,
+  .atelier-menu-item {
+    min-height: 44px;
+  }
+  .atelier-icon-control {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .atelier-field {
+    font-size: 16px;
+  }
+}
+
+/* Mouvements courts : les panneaux latéraux utilisent aussi l'axe horizontal. */
+@layer utilities {
+  .slide-in-from-left {
+    --nx-enter-x: -100%;
+  }
+  .slide-out-to-left {
+    --nx-exit-x: -100%;
+  }
+  .fade-in-0 {
+    --nx-enter-opacity: 0;
+  }
+  .fade-out-0 {
+    --nx-exit-opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

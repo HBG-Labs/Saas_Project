@@ -54,7 +54,7 @@ export function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        'border-border bg-surface flex items-center gap-1 rounded-lg border p-1 shadow-xs',
+        'border-border bg-surface flex items-center gap-1 rounded-full border p-1',
         className,
       )}
     >
@@ -72,17 +72,17 @@ export function SegmentedControl<T extends string>({
               onValueChange(option.value);
             }}
             className={cn(
-              'focus-visible:ring-ring min-h-touch flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none sm:py-1.5',
+              'focus-visible:ring-ring atelier-control min-h-touch flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none sm:py-1.5',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',
             )}
           >
             {Icon ? <Icon className="size-4 shrink-0" aria-hidden="true" /> : null}
-            <span className="hidden sm:inline">{option.label}</span>
+            <span className={cn(Icon && 'hidden sm:inline')}>{option.label}</span>
             {/* Sous `sm` le libellé est masqué : sans cela le bouton n'aurait
                 aucun nom accessible, l'icône étant décorative. */}
-            <span className="sr-only sm:hidden">{option.label}</span>
+            {Icon ? <span className="sr-only sm:hidden">{option.label}</span> : null}
           </button>
         );
       })}

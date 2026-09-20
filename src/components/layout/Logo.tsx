@@ -23,7 +23,7 @@ export function Logo({
     <Link
       to={to}
       className={cn(
-        'text-foreground inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
+        'text-foreground font-brand inline-flex items-center gap-2 rounded-md font-semibold tracking-tight',
         'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
         className,
       )}
@@ -32,7 +32,7 @@ export function Logo({
         <img
           src="/icon-192.png"
           alt="REZO360"
-          className="size-6 sm:size-7 shrink-0 rounded-lg shadow-2xs"
+          className="size-6 shrink-0 rounded-lg shadow-2xs sm:size-7"
           width="28"
           height="28"
         />
