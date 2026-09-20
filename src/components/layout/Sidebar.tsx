@@ -581,7 +581,7 @@ export function Sidebar({
               value={activeUniverse}
               onValueChange={handleChooseUniverse}
               label="Univers"
-              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground [&>*]:text-3xs w-full justify-between [&_span.hidden]:inline [&_span.sr-only]:hidden [&>*]:min-w-0 [&>*]:flex-auto [&>*]:px-1"
+              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground [&>*]:text-3xs w-full justify-between [&_span.hidden]:inline [&_span.sr-only]:hidden [&>*]:min-w-0 [&>*]:flex-auto [&>*]:flex-col [&>*]:gap-1 [&>*]:px-1 [&>*]:py-2"
             />
           )
         ) : null}

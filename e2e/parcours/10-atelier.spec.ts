@@ -51,7 +51,9 @@ test.describe('Atelier — fondations validées', () => {
     if (isMobile) {
       await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
       const finance = page.getByRole('radio', { name: 'Finance', exact: true });
-      await expect(finance).toHaveText('Finance');
+      // Le contrôle contient aussi un libellé masqué pour les lecteurs d’écran.
+      // Vérifier le texte affiché, le nom accessible étant déjà ciblé ci-dessus.
+      await expect(finance).toHaveText('Finance', { useInnerText: true });
       await finance.click();
     } else {
       await page.getByRole('button', { name: 'Toggle Sidebar', exact: true }).click();
