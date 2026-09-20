@@ -3,6 +3,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useNotifications } from './useNotifications';
 
+/*
+  L'état lu / écarté est remplacé par une version en mémoire : cette suite
+  vérifie la DÉRIVATION des notifications (qui en reçoit une, avec quel texte,
+  vers quel lien), pas leur persistance. Celle-ci a sa propre suite,
+  `useNotificationStates.test.ts`, qui parle à la base.
+*/
+vi.mock('./useNotificationStates', async () => {
+  const { useState, useCallback } = await import('react');
+  return {
+    useNotificationStates: () => {
+      const [readIds, setReadIds] = useState<ReadonlySet<string>>(new Set());
+      const [dismissedIds, setDismissedIds] = useState<ReadonlySet<string>>(new Set());
+      return {
+        readIds,
+        dismissedIds,
+        synchronise: true,
+        marquerLues: useCallback((cles: readonly string[]) => {
+          setReadIds((prev) => new Set([...prev, ...cles]));
+        }, []),
+        ecarter: useCallback((cle: string) => {
+          setDismissedIds((prev) => new Set([...prev, cle]));
+        }, []),
+      };
+    },
+  };
+});
+
 vi.mock('@/features/auth', () => ({
   useAuth: () => ({
     user: { id: 'user_123', email: 'test@example.com' },
@@ -141,7 +168,16 @@ describe('useNotifications', () => {
         contact: { id: 'c1', first_name: 'Jean', last_name: 'Client', email: 'jean@example.com' },
         customer: { id: 'cust_1', name: 'TRICATEL' },
       },
-      { id: 'conv_2', customer_id: 'cust_1', subject: 'Lu', unread_count: 0, last_message_at: null, created_at: '2026-09-01T00:00:00Z', contact: null, customer: null },
+      {
+        id: 'conv_2',
+        customer_id: 'cust_1',
+        subject: 'Lu',
+        unread_count: 0,
+        last_message_at: null,
+        created_at: '2026-09-01T00:00:00Z',
+        contact: null,
+        customer: null,
+      },
     ];
     const { result } = renderHook(() => useNotifications());
 

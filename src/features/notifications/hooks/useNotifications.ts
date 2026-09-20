@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
@@ -20,36 +20,7 @@ import { useStock } from '@/features/stock';
 
 import type { AppNotification } from '../types/notifications.types';
 
-function getReadStorageKey(userId: string | null | undefined): string {
-  if (!userId) return 'rezo360_read_notifications_anonymous';
-  return `rezo360_read_notifications_${userId}`;
-}
-
-function getDismissedStorageKey(userId: string | null | undefined): string {
-  if (!userId) return 'rezo360_dismissed_notifications_anonymous';
-  return `rezo360_dismissed_notifications_${userId}`;
-}
-
-function readStoredSet(key: string): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return new Set();
-    const parsed: unknown = JSON.parse(raw);
-    return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function persistSet(key: string, set: Set<string>): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(key, JSON.stringify(Array.from(set)));
-  } catch {
-    // Ignore localStorage errors
-  }
-}
+import { useNotificationStates } from './useNotificationStates';
 
 export function useNotifications() {
   const { user } = useAuth();
@@ -62,28 +33,14 @@ export function useNotifications() {
   const isManagerOrOwner =
     can(PERMISSIONS.leaveApprove) || role === 'owner' || role === 'admin' || role === 'manager';
 
-  const readKey = getReadStorageKey(userId);
-  const dismissedKey = getDismissedStorageKey(userId);
-
-  const [readIds, setReadIds] = useState<Set<string>>(() => readStoredSet(readKey));
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => readStoredSet(dismissedKey));
-
   /*
-    Changement de compte : les notifications lues et écartées doivent repartir de
-    celles du nouvel utilisateur, jamais rester sur celles du précédent.
-
-    C'est le patron « ajuster un état quand une prop change » : la remise à
-    niveau se fait PENDANT le rendu, pas dans un effet. Dans un effet, React
-    peignait d'abord les marqueurs de l'ancien compte, puis le remplaçait au
-    rendu suivant — un rendu en cascade, et un instant où l'écran affichait les
-    données de quelqu'un d'autre.
+    L'état lu / écarté vient de la base — et suit la personne d'un appareil à
+    l'autre. Le changement de compte n'a plus rien à remettre à niveau ici :
+    la clé de requête porte l'utilisateur et l'organisation, React Query
+    change de cache tout seul.
   */
-  const [cleLue, setCleLue] = useState(readKey);
-  if (cleLue !== readKey) {
-    setCleLue(readKey);
-    setReadIds(readStoredSet(readKey));
-    setDismissedIds(readStoredSet(dismissedKey));
-  }
+  const etats = useNotificationStates(userId, organizationId);
+  const { readIds, dismissedIds } = etats;
 
   // Queries
   const membersQuery = useMembers(organizationId);
@@ -96,16 +53,16 @@ export function useNotifications() {
   const pendingReportsQuery = useReportsPendingReview(isManagerOrOwner ? organizationId : null);
   const { lowStockArticles } = useStock(organizationId);
   const missionsQuery = useMissions(organizationId, { limit: 20 });
-  const equipmentQuery = useEquipmentList(
-    can(PERMISSIONS.equipmentView) ? organizationId : null,
-  );
+  const equipmentQuery = useEquipmentList(can(PERMISSIONS.equipmentView) ? organizationId : null);
   // Messages clients non lus : la requête ne part que si la formule et la
   // permission le permettent — sinon elle ne renverrait rien de toute façon.
   const portal = useClientPortalAccess();
   const conversationsQuery = useClientConversations(organizationId, undefined, portal.canView);
   // Réponses aux devis depuis le portail : la date `client_responded_at` n'est
   // posée que par `portal_respond_quote`, jamais par l'entreprise.
-  const quotesQuery = useQuotes(portal.canView && can(PERMISSIONS.quoteView) ? organizationId : null);
+  const quotesQuery = useQuotes(
+    portal.canView && can(PERMISSIONS.quoteView) ? organizationId : null,
+  );
 
   // Génération des notifications d'activité
   const notifications = useMemo(() => {
@@ -116,7 +73,7 @@ export function useNotifications() {
     for (const leave of preferences.notify_leave_requests ? leaves : []) {
       const isMyLeave = Boolean(
         (leave.member?.user_id && leave.member.user_id === userId) ||
-          (currentMember?.id && leave.member_id === currentMember.id),
+        (currentMember?.id && leave.member_id === currentMember.id),
       );
 
       // Pour les managers/dirigeants : congés en attente des équipes
@@ -242,7 +199,9 @@ export function useNotifications() {
       const contactName =
         contact === null
           ? 'Un client'
-          : [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.email || 'Un client';
+          : [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+            contact.email ||
+            'Un client';
       list.push({
         id,
         type: 'client_message',
@@ -312,37 +271,20 @@ export function useNotifications() {
 
   const markAsRead = useCallback(
     (id: string) => {
-      setReadIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        persistSet(readKey, next);
-        return next;
-      });
+      etats.marquerLues([id]);
     },
-    [readKey],
+    [etats],
   );
 
   const markAllAsRead = useCallback(() => {
-    setReadIds((prev) => {
-      const next = new Set(prev);
-      for (const n of notifications) {
-        next.add(n.id);
-      }
-      persistSet(readKey, next);
-      return next;
-    });
-  }, [notifications, readKey]);
+    etats.marquerLues(notifications.filter((n) => !n.read).map((n) => n.id));
+  }, [etats, notifications]);
 
   const dismissNotification = useCallback(
     (id: string) => {
-      setDismissedIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        persistSet(dismissedKey, next);
-        return next;
-      });
+      etats.ecarter(id);
     },
-    [dismissedKey],
+    [etats],
   );
 
   return {

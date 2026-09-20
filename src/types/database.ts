@@ -3495,6 +3495,45 @@ export interface Database {
         ];
       };
 
+      notification_states: {
+        Row: {
+          user_id: string;
+          organization_id: string;
+          notification_key: string;
+          read_at: string | null;
+          dismissed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          organization_id: string;
+          notification_key: string;
+          read_at?: string | null;
+          dismissed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          read_at?: string | null;
+          dismissed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_states_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'notification_states_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_preferences: {
         Row: {
           user_id: string;
