@@ -176,6 +176,15 @@ export const qk = {
     detail: (invoiceId: string) => [...qk.invoices.all, 'detail', invoiceId] as const,
   },
 
+  workspace: {
+    all: ['workspace'] as const,
+    spaces: (organizationId: string) => [...qk.workspace.all, organizationId, 'spaces'] as const,
+    pages: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'pages'] as const,
+    page: (pageId: string) => [...qk.workspace.all, 'page', pageId] as const,
+    revisions: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'revisions'] as const,
+    tasks: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'tasks'] as const,
+  },
+
   einvoicing: {
     all: ['einvoicing'] as const,
     connection: (organizationId: string) =>
@@ -312,8 +321,10 @@ export const qk = {
     list: (filters?: unknown) => [...qk.prospecting.all, 'list', filters ?? null] as const,
     detail: (siren: string) => [...qk.prospecting.all, 'detail', siren] as const,
     dueFollowups: () => [...qk.prospecting.all, 'due-followups'] as const,
-    messageTemplate: (sectorId: string) => [...qk.prospecting.all, 'message-template', sectorId] as const,
-    organizationSearch: (query: string) => [...qk.prospecting.all, 'organization-search', query] as const,
+    messageTemplate: (sectorId: string) =>
+      [...qk.prospecting.all, 'message-template', sectorId] as const,
+    organizationSearch: (query: string) =>
+      [...qk.prospecting.all, 'organization-search', query] as const,
     analytics: (from: string | null, to: string | null) =>
       [...qk.prospecting.all, 'analytics', from ?? 'none', to ?? 'none'] as const,
   },
@@ -321,10 +332,12 @@ export const qk = {
   // ---------------------------------------------------------- portail client
   clientPortal: {
     all: ['client-portal'] as const,
-    settings: (organizationId: string) => [...qk.clientPortal.all, organizationId, 'settings'] as const,
+    settings: (organizationId: string) =>
+      [...qk.clientPortal.all, organizationId, 'settings'] as const,
     conversations: (organizationId: string, customerId?: string) =>
       [...qk.clientPortal.all, organizationId, 'conversations', customerId ?? 'all'] as const,
-    messages: (conversationId: string) => [...qk.clientPortal.all, 'messages', conversationId] as const,
+    messages: (conversationId: string) =>
+      [...qk.clientPortal.all, 'messages', conversationId] as const,
     unread: (organizationId: string) => [...qk.clientPortal.all, organizationId, 'unread'] as const,
     documentShares: (organizationId: string) =>
       [...qk.clientPortal.all, organizationId, 'document-shares'] as const,

@@ -48,6 +48,13 @@ export const FEATURES = {
   invoicing: 'invoicing',
   planning: 'planning',
   aiAssistant: 'ai_assistant',
+  /**
+   * Espaces, pages, tâches — supabase/migrations/20260929090000_workspace.sql.
+   * Accordée aux CINQ formules : la clé existe et le gating est en place, sans
+   * qu'aucune restriction ne s'applique (D6). Le jour où une formule la perd,
+   * c'est une ligne ici et une migration — pas un contournement.
+   */
+  workspace: 'workspace',
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -74,6 +81,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     customers: 3,
     missions: 5,
     interventions: 10,
+    workspace: null,
   },
 
   starter: {
@@ -93,6 +101,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     // lui retire explicitement (décision du 02/09/2026, Pro et au-dessus
     // seulement) — distinct de « n'a jamais été inclus ».
     ai_assistant: 0,
+    workspace: null,
   },
 
   pro: {
@@ -117,6 +126,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     documents: null,
     client_portal: null,
     ai_assistant: 100,
+    workspace: null,
   },
 
   business: {
@@ -145,6 +155,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     invoicing: null,
     planning: null,
     ai_assistant: 300,
+    workspace: null,
   },
 
   enterprise: {
@@ -173,6 +184,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     invoicing: null,
     planning: null,
     ai_assistant: 1000,
+    workspace: null,
   },
 };
 
