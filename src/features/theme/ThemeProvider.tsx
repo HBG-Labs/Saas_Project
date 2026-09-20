@@ -12,7 +12,12 @@ import {
 } from './theme-context';
 import { ACCENT_COLORS, type AccentColorId } from './accent-colors';
 import { applyBrowserBarColor } from './theme-script';
-import { DEFAULT_THEME_PRESET, THEME_PRESETS, type ThemePresetId } from './theme-presets';
+import {
+  DEFAULT_THEME_PRESET,
+  THEME_PRESETS,
+  THEMES_RETIRES,
+  type ThemePresetId,
+} from './theme-presets';
 
 /**
  * Les deux ambiances signature, celles que le basculeur Clair / Sombre atteint.
@@ -38,6 +43,17 @@ function readStoredPreset(): ThemePresetId {
   try {
     const stored = localStorage.getItem(PRESET_STORAGE_KEY) as ThemePresetId | null;
     if (stored && THEME_PRESETS.some((p) => p.id === stored)) return stored;
+
+    /*
+      Thème retiré : on ramène vers l'ambiance signature de SON mode.
+
+      Le choix ne vit que dans le navigateur — rien en base, donc rien à
+      migrer côté serveur. Mais sans cette table, quelqu'un qui travaillait en
+      « Dracula » ou « OLED Carbone » se retrouverait en CLAIR au prochain
+      chargement, sans que rien ne l'explique.
+    */
+    const remplacant = stored === null ? undefined : THEMES_RETIRES[stored];
+    if (remplacant !== undefined) return remplacant;
 
     // Repli pour les installations antérieures à `PRESET_STORAGE_KEY`, qui
     // n'ont conservé qu'un mode. On les ramène sur les ambiances signature —

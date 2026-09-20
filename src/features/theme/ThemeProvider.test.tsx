@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { COMPACT_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
+import { COMPACT_STORAGE_KEY, PRESET_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
 import { ThemeProvider } from './ThemeProvider';
 import { useTheme } from './useTheme';
 
@@ -69,10 +69,10 @@ function Probe() {
       <button
         type="button"
         onClick={() => {
-          setPreset('luxury');
+          setPreset('contraste-eleve');
         }}
       >
-        Luxe
+        Contraste
       </button>
       <button
         type="button"
@@ -139,6 +139,44 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('compact')).toHaveTextContent('false');
     expect(document.documentElement).not.toHaveClass('dark');
     expect(document.documentElement).not.toHaveClass('compact-mode');
+  });
+
+  it('ramène un thème retiré vers l’ambiance signature de son mode', () => {
+    /*
+      Douze thèmes sont passés à trois. Le choix ne vivant que dans le
+      navigateur, personne ne peut le corriger à distance : c'est au
+      chargement suivant que la préférence doit être rattrapée.
+
+      Un utilisateur en « Dracula » travaillait en SOMBRE. Le renvoyer vers le
+      thème clair par défaut serait un changement brutal et inexplicable de sa
+      part ; il atterrit donc sur Atelier Nuit.
+    */
+    mockSystemDark(false);
+    localStorage.setItem(PRESET_STORAGE_KEY, 'dracula');
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('preset')).toHaveTextContent('atelier-nuit');
+    expect(screen.getByTestId('resolved')).toHaveTextContent('dark');
+    expect(document.documentElement).toHaveClass('dark');
+  });
+
+  it('ramène un thème clair retiré vers Atelier Jour', () => {
+    mockSystemDark(true);
+    localStorage.setItem(PRESET_STORAGE_KEY, 'arctic');
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('preset')).toHaveTextContent('default');
+    expect(document.documentElement).not.toHaveClass('dark');
   });
 
   it('applique et persiste un choix explicite', async () => {
@@ -220,8 +258,8 @@ describe('ThemeProvider', () => {
       </ThemeProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Luxe' }));
-    expect(screen.getByTestId('preset')).toHaveTextContent('luxury');
+    await user.click(screen.getByRole('button', { name: 'Contraste' }));
+    expect(screen.getByTestId('preset')).toHaveTextContent('contraste-eleve');
 
     await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
     expect(screen.getByTestId('accent')).toHaveTextContent('purple');

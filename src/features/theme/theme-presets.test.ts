@@ -3,7 +3,12 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { ATELIER_NUIT_PRESET, DEFAULT_THEME_PRESET, THEME_PRESETS } from './theme-presets';
+import {
+  ATELIER_NUIT_PRESET,
+  DEFAULT_THEME_PRESET,
+  THEME_PRESETS,
+  THEMES_RETIRES,
+} from './theme-presets';
 import { BROWSER_BAR_COLOR } from './theme-script';
 
 /**
@@ -81,37 +86,60 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
     expect(sombre['--background']).toBe('#0e1b36');
   });
 
-  it('« Atelier Nuit » déclare exactement les valeurs du bloc `.dark`', () => {
-    for (const [nom, valeur] of Object.entries(ATELIER_NUIT_PRESET.variables)) {
-      expect(
-        valeur.toLowerCase(),
-        `« ${nom} » vaut ${valeur} dans le préréglage et ${sombre[nom]} dans .dark — ` +
-          `le préréglage gagne, la valeur CSS ne sert à rien`,
-      ).toBe((sombre[nom] ?? '').toLowerCase());
-    }
+  it('les thèmes signature ne redéclarent aucune variable', () => {
+    /*
+      L'INVARIANT S'EST INVERSÉ, ET C'EST UN PROGRÈS.
+
+      Ces valeurs étaient recopiées ici à l'identique des blocs `:root` et
+      `.dark`, et deux tests vérifiaient qu'elles ne divergeaient pas. Une
+      garantie utile, mais qui surveillait un problème au lieu de le
+      supprimer : le préréglage posant ses variables EN STYLE INLINE sur
+      `<html>`, il l'emportait sur la feuille de style.
+
+      Il n'y a plus qu'une source. Les tests d'égalité passeraient désormais à
+      vide — sur un objet sans clé, `for...of` ne boucle pas et n'affirme
+      rien. Ils sont donc remplacés par ce qu'il faut réellement tenir.
+    */
+    expect(Object.keys(DEFAULT_THEME_PRESET.variables)).toEqual([]);
+    expect(Object.keys(ATELIER_NUIT_PRESET.variables)).toEqual([]);
   });
 
-  it('« Atelier Jour » déclare exactement les valeurs du bloc clair', () => {
-    for (const [nom, valeur] of Object.entries(DEFAULT_THEME_PRESET.variables)) {
-      expect(
-        valeur.toLowerCase(),
-        `« ${nom} » vaut ${valeur} dans le préréglage et ${clair[nom]} dans :root`,
-      ).toBe((clair[nom] ?? '').toLowerCase());
+  it('le contraste élevé, lui, déclare bien ses variables', () => {
+    // Seul thème à s'écarter volontairement de la feuille : s'il n'appliquait
+    // rien, il serait identique au thème clair sans que rien ne le signale.
+    const contraste = THEME_PRESETS.find((p) => p.id === 'contraste-eleve');
+    expect(contraste).toBeDefined();
+    expect(Object.keys(contraste?.variables ?? {}).length).toBeGreaterThan(10);
+  });
+
+  it('chaque thème retiré ramène vers une ambiance qui existe', () => {
+    /*
+      Le choix de thème ne vit que dans le navigateur. Sans cette table, le
+      repli générique enverrait vers le thème CLAIR quelqu'un qui travaillait
+      en sombre — au prochain chargement, et sans explication.
+    */
+    const retenus = new Set(THEME_PRESETS.map((preset) => preset.id));
+    for (const [retire, cible] of Object.entries(THEMES_RETIRES)) {
+      expect(retenus.has(retire as never), `« ${retire} » ne doit plus être proposé`).toBe(false);
+      expect(retenus.has(cible), `« ${retire} » pointe vers « ${cible} », inexistant`).toBe(true);
     }
   });
 
   it('n’annonce pas dans l’aperçu une couleur qu’il n’applique pas', () => {
     // L'aperçu est la pastille du sélecteur de thème. Mentir dessus fait
     // choisir un thème sur une couleur qu'on ne verra jamais.
-    for (const preset of [DEFAULT_THEME_PRESET, ATELIER_NUIT_PRESET]) {
+    for (const preset of THEME_PRESETS) {
       const variables = preset.variables as Record<string, string | undefined>;
+      // Sans variables propres, le thème rend ce que dit la feuille de style :
+      // c'est donc à elle que l'aperçu doit correspondre.
+      const source = preset.baseMode === 'dark' ? sombre : clair;
 
-      expect(preset.preview.background.toLowerCase(), `aperçu de « ${preset.label} »`).toBe(
-        (variables['--background'] ?? '').toLowerCase(),
-      );
-      expect(preset.preview.surface.toLowerCase(), `aperçu de « ${preset.label} »`).toBe(
-        (variables['--surface'] ?? '').toLowerCase(),
-      );
+      for (const nom of ['background', 'surface'] as const) {
+        const applique = variables[`--${nom}`] ?? source[`--${nom}`] ?? '';
+        expect(preset.preview[nom].toLowerCase(), `aperçu « ${nom} » de « ${preset.label} »`).toBe(
+          applique.toLowerCase(),
+        );
+      }
     }
   });
 
