@@ -22,6 +22,18 @@ import {
   recordPayment,
   updateInvoicePayment,
   deleteInvoicePayment,
+  listCustomerCredits,
+  getCustomerAccount,
+  listCreditAllocations,
+  listCreditRefunds,
+  listInvoiceAllocations,
+  allocateCredit,
+  deleteCreditAllocation,
+  refundCredit,
+  updateCreditRefund,
+  deleteCreditRefund,
+  type AllocateCreditInput,
+  type RefundCreditInput,
   type CreateInvoiceInput,
   type InvoiceFilters,
   type InvoiceLineInput,
@@ -239,5 +251,104 @@ export function useDeleteInvoicePayment() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Le compte client
+//
+// Une imputation touche un crédit ET une facture (solde, statut) ; un
+// remboursement touche un crédit et son avoir. L'invalidation large de
+// `qk.invoices.all` couvre tout ce qui en dépend — comme pour les règlements.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useCustomerCredits(customerId: string | undefined, onlyOpen = false) {
+  return useQuery({
+    queryKey: [...qk.invoices.all, 'customer', customerId ?? 'none', 'credits', onlyOpen],
+    queryFn: () => listCustomerCredits(customerId ?? '', { onlyOpen }),
+    enabled: customerId !== undefined,
+  });
+}
+
+export function useCustomerAccount(customerId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.invoices.all, 'customer', customerId ?? 'none', 'account'],
+    queryFn: () => getCustomerAccount(customerId ?? ''),
+    enabled: customerId !== undefined,
+  });
+}
+
+export function useCreditMovements(creditId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.invoices.all, 'credit', creditId ?? 'none', 'movements'],
+    queryFn: async () => {
+      const [allocations, refunds] = await Promise.all([
+        listCreditAllocations(creditId ?? ''),
+        listCreditRefunds(creditId ?? ''),
+      ]);
+      return { allocations, refunds };
+    },
+    enabled: creditId !== undefined,
+  });
+}
+
+export function useInvoiceAllocations(invoiceId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.invoices.detail(invoiceId ?? 'none'), 'allocations'],
+    queryFn: () => listInvoiceAllocations(invoiceId ?? ''),
+    enabled: invoiceId !== undefined,
+  });
+}
+
+function useInvalidateInvoices() {
+  const queryClient = useQueryClient();
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.invoices.all });
+  };
+}
+
+export function useAllocateCredit() {
+  const invalidate = useInvalidateInvoices();
+  return useMutation({
+    mutationFn: (input: AllocateCreditInput) => allocateCredit(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteCreditAllocation() {
+  const invalidate = useInvalidateInvoices();
+  return useMutation({
+    mutationFn: (allocationId: string) => deleteCreditAllocation(allocationId),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRefundCredit() {
+  const invalidate = useInvalidateInvoices();
+  return useMutation({
+    mutationFn: (input: RefundCreditInput) => refundCredit(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateCreditRefund() {
+  const invalidate = useInvalidateInvoices();
+  return useMutation({
+    mutationFn: ({
+      refundId,
+      patch,
+    }: {
+      refundId: string;
+      patch: TablesUpdate<'credit_refunds'>;
+    }) => updateCreditRefund(refundId, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteCreditRefund() {
+  const invalidate = useInvalidateInvoices();
+  return useMutation({
+    mutationFn: (refundId: string) => deleteCreditRefund(refundId),
+    onSuccess: invalidate,
   });
 }

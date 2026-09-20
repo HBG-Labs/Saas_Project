@@ -589,13 +589,20 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 
 export interface RecordPaymentInput {
   invoiceId: string;
-  /** Absent : ce qui manque au livre (total − encaissé). C'est « Marquer payée ». */
+  /** Absent : ce qui manque au livre (total − encaissé − imputé). C'est « Marquer payée ». */
   amountCents?: number;
   /** AAAA-MM-JJ. Absent : aujourd'hui. */
   paidOn?: string;
   method?: PaymentMethod;
   reference?: string;
   note?: string;
+  /**
+   * Le règlement dépasse le reste dû, et la personne a confirmé : la facture
+   * encaisse son reste dû, l'excédent est porté au crédit du client (fiche
+   * rattachée exigée). Sans confirmation, la base refuse — à l'écran de
+   * demander avant.
+   */
+  acceptOverpayment?: boolean;
 }
 
 export async function listInvoicePayments(invoiceId: string): Promise<InvoicePayment[]> {
@@ -625,6 +632,7 @@ export async function recordPayment(input: RecordPaymentInput): Promise<InvoiceP
       ...(input.method !== undefined ? { p_method: input.method } : {}),
       ...(input.reference !== undefined ? { p_reference: input.reference } : {}),
       ...(input.note !== undefined ? { p_note: input.note } : {}),
+      ...(input.acceptOverpayment ? { p_accept_overpayment: true } : {}),
     }),
   );
 }
@@ -640,4 +648,133 @@ export async function updateInvoicePayment(
 
 export async function deleteInvoicePayment(paymentId: string): Promise<void> {
   await unwrap(supabase.from('invoice_payments').delete().eq('id', paymentId).select('id'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Le compte client — 20261001090000_compte_client.sql
+//
+// Un crédit naît d'un avoir émis ou d'un trop-perçu accepté ; il se consomme
+// par imputation sur une facture du même client, ou par remboursement. Tout
+// est calculé côté base ; le client lit et enregistre des mouvements.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type CustomerCredit = Tables<'customer_credits'>;
+export type CustomerCreditBalance = Database['public']['Views']['customer_credit_balances']['Row'];
+export type CreditAllocation = Tables<'credit_allocations'>;
+export type CreditRefund = Tables<'credit_refunds'>;
+export type CustomerAccount = Database['public']['Views']['customer_accounts']['Row'];
+
+export const CREDIT_ORIGIN_LABELS: Record<CustomerCredit['origin'], string> = {
+  credit_note: 'Avoir',
+  overpayment: 'Trop-perçu',
+};
+
+/** Les crédits d'un client, avec leur solde. `onlyOpen` : ceux qui ont encore un reste. */
+export async function listCustomerCredits(
+  customerId: string,
+  options: { onlyOpen?: boolean } = {},
+): Promise<CustomerCreditBalance[]> {
+  let query = supabase
+    .from('customer_credit_balances')
+    .select('*')
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false });
+  if (options.onlyOpen) query = query.gt('remaining_cents', 0);
+  return unwrap(query);
+}
+
+export async function getCustomerAccount(customerId: string): Promise<CustomerAccount | null> {
+  return unwrapMaybe(
+    supabase.from('customer_accounts').select('*').eq('customer_id', customerId).maybeSingle(),
+  );
+}
+
+export async function listCreditAllocations(creditId: string): Promise<CreditAllocation[]> {
+  return unwrap(
+    supabase
+      .from('credit_allocations')
+      .select('*')
+      .eq('credit_id', creditId)
+      .order('allocated_on', { ascending: false }),
+  );
+}
+
+export async function listCreditRefunds(creditId: string): Promise<CreditRefund[]> {
+  return unwrap(
+    supabase
+      .from('credit_refunds')
+      .select('*')
+      .eq('credit_id', creditId)
+      .order('paid_on', { ascending: false }),
+  );
+}
+
+/** Les imputations reçues par une facture. */
+export async function listInvoiceAllocations(invoiceId: string): Promise<CreditAllocation[]> {
+  return unwrap(
+    supabase
+      .from('credit_allocations')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('allocated_on', { ascending: false }),
+  );
+}
+
+export interface AllocateCreditInput {
+  creditId: string;
+  invoiceId: string;
+  /** Absent : le plus petit des deux restes (crédit, facture). */
+  amountCents?: number;
+  allocatedOn?: string;
+}
+
+export async function allocateCredit(input: AllocateCreditInput): Promise<CreditAllocation> {
+  return unwrap(
+    supabase.rpc('allocate_credit', {
+      p_credit_id: input.creditId,
+      p_invoice_id: input.invoiceId,
+      ...(input.amountCents !== undefined ? { p_amount_cents: input.amountCents } : {}),
+      ...(input.allocatedOn !== undefined ? { p_allocated_on: input.allocatedOn } : {}),
+    }),
+  );
+}
+
+export async function deleteCreditAllocation(allocationId: string): Promise<void> {
+  await unwrap(supabase.from('credit_allocations').delete().eq('id', allocationId).select('id'));
+}
+
+export interface RefundCreditInput {
+  creditId: string;
+  /** Absent : tout le reste. */
+  amountCents?: number;
+  paidOn?: string;
+  method?: PaymentMethod;
+  reference?: string;
+  note?: string;
+}
+
+export async function refundCredit(input: RefundCreditInput): Promise<CreditRefund> {
+  return unwrap(
+    supabase.rpc('refund_credit', {
+      p_credit_id: input.creditId,
+      ...(input.amountCents !== undefined ? { p_amount_cents: input.amountCents } : {}),
+      ...(input.paidOn !== undefined ? { p_paid_on: input.paidOn } : {}),
+      ...(input.method !== undefined ? { p_method: input.method } : {}),
+      ...(input.reference !== undefined ? { p_reference: input.reference } : {}),
+      ...(input.note !== undefined ? { p_note: input.note } : {}),
+    }),
+  );
+}
+
+export async function updateCreditRefund(
+  refundId: string,
+  patch: TablesUpdate<'credit_refunds'>,
+): Promise<CreditRefund> {
+  return unwrap(
+    supabase.from('credit_refunds').update(patch).eq('id', refundId).select('*').single(),
+  );
+}
+
+export async function deleteCreditRefund(refundId: string): Promise<void> {
+  await unwrap(supabase.from('credit_refunds').delete().eq('id', refundId).select('id'));
 }

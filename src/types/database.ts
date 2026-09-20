@@ -85,6 +85,7 @@ export type InvoiceDocumentType = 'invoice' | 'credit_note';
 export type PaymentMethod = 'transfer' | 'check' | 'card' | 'cash' | 'direct_debit' | 'other';
 export type WorkspaceTaskStatus = 'todo' | 'in_progress' | 'done';
 export type RecurringOccurrenceStatus = 'created' | 'skipped';
+export type CustomerCreditOrigin = 'credit_note' | 'overpayment';
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
 export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
@@ -2439,6 +2440,114 @@ export interface Database {
        * stocké : voir la vue `invoice_balances`. `status = 'paid'` suit ces
        * lignes par trigger ; il ne se pose plus à la main.
        */
+      /**
+       * Le compte client — 20261001090000_compte_client.sql. Un crédit naît
+       * d'un avoir émis (trigger) ou d'un trop-perçu accepté (record_payment) :
+       * jamais inséré par le client. Son solde : `customer_credit_balances`.
+       */
+      customer_credits: {
+        Row: {
+          id: string;
+          organization_id: string;
+          customer_id: string;
+          origin: CustomerCreditOrigin;
+          credit_note_id: string | null;
+          payment_id: string | null;
+          amount_cents: number;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: { note?: string | null };
+        Relationships: [
+          {
+            foreignKeyName: 'customer_credits_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'customer_credits_credit_note_id_fkey';
+            columns: ['credit_note_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      credit_allocations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          credit_id: string;
+          invoice_id: string;
+          amount_cents: number;
+          allocated_on: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          organization_id?: string;
+          credit_id: string;
+          invoice_id: string;
+          amount_cents: number;
+          allocated_on?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'credit_allocations_credit_id_fkey';
+            columns: ['credit_id'];
+            referencedRelation: 'customer_credits';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'credit_allocations_invoice_id_fkey';
+            columns: ['invoice_id'];
+            referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      credit_refunds: {
+        Row: {
+          id: string;
+          organization_id: string;
+          credit_id: string;
+          amount_cents: number;
+          paid_on: string;
+          method: PaymentMethod;
+          reference: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id?: string;
+          credit_id: string;
+          amount_cents: number;
+          paid_on?: string;
+          method?: PaymentMethod;
+          reference?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          amount_cents?: number;
+          paid_on?: string;
+          method?: PaymentMethod;
+          reference?: string | null;
+          note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'credit_refunds_credit_id_fkey';
+            columns: ['credit_id'];
+            referencedRelation: 'customer_credits';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       invoice_payments: {
         Row: {
           id: string;
@@ -4608,6 +4717,40 @@ export interface Database {
           settled_without_ledger: boolean;
           partially_paid: boolean;
           overdue: boolean;
+          /** Imputations de crédits client. Le reste dû les déduit. */
+          allocated_cents: number;
+        };
+        Relationships: [];
+      };
+
+      /** Le solde d'un crédit client, calculé. */
+      customer_credit_balances: {
+        Row: {
+          credit_id: string;
+          organization_id: string;
+          customer_id: string;
+          origin: CustomerCreditOrigin;
+          credit_note_id: string | null;
+          amount_cents: number;
+          allocated_cents: number;
+          refunded_cents: number;
+          remaining_cents: number;
+          settled: boolean;
+          created_at: string;
+        };
+        Relationships: [];
+      };
+
+      /** L'encours par client : ce qu'il doit, ce qu'on lui doit. */
+      customer_accounts: {
+        Row: {
+          customer_id: string;
+          organization_id: string;
+          invoiced_cents: number;
+          outstanding_cents: number;
+          overdue_cents: number;
+          credits_remaining_cents: number;
+          net_position_cents: number;
         };
         Relationships: [];
       };
@@ -4753,8 +4896,32 @@ export interface Database {
           p_method?: PaymentMethod;
           p_reference?: string | null;
           p_note?: string | null;
+          /** Porte l'excédent au crédit du client (fiche rattachée exigée). Sans lui : refus. */
+          p_accept_overpayment?: boolean;
         };
         Returns: Database['public']['Tables']['invoice_payments']['Row'];
+      };
+      /** Imputer un crédit sur une facture du même client. Sans montant : le plus petit des deux restes. */
+      allocate_credit: {
+        Args: {
+          p_credit_id: string;
+          p_invoice_id: string;
+          p_amount_cents?: number | null;
+          p_allocated_on?: string;
+        };
+        Returns: Database['public']['Tables']['credit_allocations']['Row'];
+      };
+      /** Rembourser un crédit. Sans montant : tout le reste. */
+      refund_credit: {
+        Args: {
+          p_credit_id: string;
+          p_amount_cents?: number | null;
+          p_paid_on?: string;
+          p_method?: PaymentMethod;
+          p_reference?: string | null;
+          p_note?: string | null;
+        };
+        Returns: Database['public']['Tables']['credit_refunds']['Row'];
       };
       /**
        * Enregistre une page — dernier enregistré gagne, avec garde : refusé
@@ -5048,6 +5215,7 @@ export interface Database {
       payment_method: PaymentMethod;
       workspace_task_status: WorkspaceTaskStatus;
       recurring_occurrence_status: RecurringOccurrenceStatus;
+      customer_credit_origin: CustomerCreditOrigin;
       workspace_task_priority: WorkspaceTaskPriority;
       team_member_role: TeamMemberRole;
       mission_status: MissionStatus;

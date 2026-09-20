@@ -19,7 +19,8 @@ const SERVICE_UNITS = new Set(['h', 'heure', 'heures', 'j', 'jour', 'jours']);
 export function suggestedOperationType(
   lines: readonly { unit: string }[],
 ): InvoiceOperationType | null {
-  return lines.length > 0 && lines.every((line) => SERVICE_UNITS.has(line.unit.trim().toLowerCase()))
+  return lines.length > 0 &&
+    lines.every((line) => SERVICE_UNITS.has(line.unit.trim().toLowerCase()))
     ? 'services'
     : null;
 }
