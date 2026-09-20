@@ -17,6 +17,7 @@ playwright-report/
 test-results/
 blob-report/
 .playwright/
+/demo-output/
 
 # Plateformes d'hébergement — identifiants de projet, non versionnés.
 .vercel/
@@ -78,3 +79,5 @@ pnpm-debug.log*
 Thumbs.db
 desktop.ini
 
+# Build dedie aux parcours E2E (origine Supabase factice figee a la compilation)
+dist-e2e/

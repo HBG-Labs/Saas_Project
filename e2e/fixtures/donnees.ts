@@ -27,6 +27,8 @@ export const MISSION_ID = '55555555-5555-4555-8555-555555555555';
  */
 export const MEMBRE_ID = '77777777-7777-4777-8777-777777777777';
 export const INTERVENTION_ID = '66666666-6666-4666-8666-666666666666';
+export const DEVIS_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+export const FACTURE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 
 /** Rôles de l'organisation, tels que `rbac.ts` les connaît. */
 export type RoleTest = 'owner' | 'admin' | 'manager' | 'team_leader' | 'technician' | 'employee';
@@ -252,7 +254,18 @@ export function donneesPour(role: RoleTest) {
     intervention_time_entries: vide(),
 
     invoices: vide(),
+    invoice_items: vide(),
+    // Vues de totaux : les montants ne vivent PAS dans la table. Les omettre
+    // afficherait « — » partout sans qu'aucune erreur ne le signale.
+    invoice_totals: vide(),
+    invoice_vat_breakdown: vide(),
     quotes: vide(),
+    quote_items: vide(),
+    quote_totals: vide(),
+    mission_status_events: vide(),
+    mission_assignments: vide(),
+    intervention_attachments: vide(),
+    sites: vide(),
     teams: vide(),
     notes: vide(),
     favorites: vide(),
@@ -268,3 +281,135 @@ export function donneesPour(role: RoleTest) {
 }
 
 export type DonneesTest = ReturnType<typeof donneesPour>;
+
+/**
+ * Un devis, toutes colonnes de `public.quotes`.
+ *
+ * Les montants ne sont pas ici : ils vivent dans la vue `quote_totals`, que
+ * l'application lit séparément. Les oublier donnerait un devis à 0 € sans
+ * qu'aucune erreur ne le signale.
+ */
+export function devis(surcharge: Record<string, unknown> = {}) {
+  return {
+    id: DEVIS_ID,
+    organization_id: ORGANISATION_ID,
+    reference: 'DV-2026-0087',
+    title: 'Raccordement bâtiment C',
+    customer_id: CLIENT_ID,
+    site_id: null,
+    customer_name: 'SCI Les Alizés',
+    site_name: null,
+    vat_rate: 8.5,
+    status: 'draft',
+    notes: null,
+    valid_until: '2026-10-19',
+    created_by: UTILISATEUR_ID,
+    created_at: '2026-09-15T09:00:00.000Z',
+    updated_at: '2026-09-15T09:00:00.000Z',
+    client_responded_at: null,
+    sent_at: null,
+    reminders_enabled: true,
+    // Embarqué par `select('*, items:quote_items(*)')` : `[...quote.items]`
+    // plante sur un embed absent, et l'erreur reste piegee dans React Query.
+    items: vide(),
+    ...surcharge,
+  };
+}
+
+export function devisTotaux(surcharge: Record<string, unknown> = {}) {
+  return {
+    quote_id: DEVIS_ID,
+    organization_id: ORGANISATION_ID,
+    subtotal_cents: 398156,
+    vat_cents: 33844,
+    total_cents: 432000,
+    ...surcharge,
+  };
+}
+
+/**
+ * Une facture, toutes colonnes de `public.invoices`.
+ *
+ * L'instantané du vendeur ET du destinataire est figé à l'émission : ces
+ * colonnes ne sont pas décoratives, la validation réglementaire les lit.
+ */
+export function facture(surcharge: Record<string, unknown> = {}) {
+  return {
+    id: FACTURE_ID,
+    organization_id: ORGANISATION_ID,
+    reference: 'FA-2026-0118',
+    document_type: 'invoice',
+    corrects_invoice_id: null,
+    title: 'Raccordement bâtiment C',
+    customer_id: CLIENT_ID,
+    site_id: null,
+    quote_id: null,
+    customer_name: 'SCI Les Alizés',
+    customer_legal_name: 'SCI Les Alizés',
+    customer_registration_number: '85232291500018',
+    customer_vat_number: 'FR12852322915',
+    customer_address_line1: '12 rue des Flamboyants',
+    customer_address_line2: null,
+    customer_postal_code: '97233',
+    customer_city: 'Schœlcher',
+    customer_country: 'FR',
+    customer_type: 'company',
+    site_name: null,
+    currency: 'EUR',
+    status: 'draft',
+    issued_at: null as string | null,
+    due_date: '2026-10-19',
+    payment_terms: 'Paiement à 30 jours',
+    payment_method: null,
+    notes: null,
+    created_by: UTILISATEUR_ID,
+    created_at: '2026-09-18T09:00:00.000Z',
+    updated_at: '2026-09-18T09:00:00.000Z',
+    seller_name: 'HBG Labs',
+    seller_legal_name: 'HBG Labs SAS',
+    seller_registration_number: '10919844000017',
+    seller_vat_number: 'FR18000000002',
+    seller_legal_form: 'SAS',
+    seller_ape_code: null,
+    seller_share_capital_cents: null,
+    seller_rcs_city: null,
+    seller_address_line1: '12 rue des Flamboyants',
+    seller_address_line2: null,
+    seller_postal_code: '97233',
+    seller_city: 'Schœlcher',
+    seller_country: 'FR',
+    seller_iban: null,
+    seller_bic: null,
+    seller_vat_regime: 'reel_normal',
+    service_date: '2026-09-19',
+    operation_type: 'services',
+    buyer_reference: null,
+    purchase_order_reference: null,
+    delivery_address_line1: null,
+    delivery_address_line2: null,
+    delivery_postal_code: null,
+    delivery_city: null,
+    delivery_country: null,
+    early_payment_terms: null,
+    late_payment_terms: null,
+    vat_on_debits: false,
+    credit_note_reason: null,
+    corrected_invoice_reference: null,
+    corrected_invoice_issued_at: null,
+    credit_note_scope: null,
+    // Embarqué par `select('*, items:invoice_items(*)')` sur la fiche.
+    items: vide(),
+    ...surcharge,
+  };
+}
+
+export function factureTotaux(surcharge: Record<string, unknown> = {}) {
+  return {
+    invoice_id: FACTURE_ID,
+    organization_id: ORGANISATION_ID,
+    subtotal_cents: 398156,
+    vat_cents: 33844,
+    total_cents: 432000,
+    ...surcharge,
+  };
+}

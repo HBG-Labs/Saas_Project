@@ -53,11 +53,24 @@ export default defineConfig({
 
   webServer: {
     /*
-      Port dédié (5174), distinct du 5173 du développement courant : les
-      parcours ne doivent ni entrer en collision avec le serveur ouvert à côté,
-      ni risquer de le réutiliser — il pointe, lui, vers la base réelle.
+      UN BUILD, PAS LE SERVEUR DE DÉVELOPPEMENT.
+
+      Vite compile chaque route à la première visite. Sur les écrans
+      authentifiés, qui tirent beaucoup de modules, cela dépassait 25 s — les
+      mêmes assertions passant ensuite en 2 s. Étirer les délais n'aurait fait
+      que masquer le problème et ralentir chaque échec réel.
+
+      Le build prend une dizaine de secondes UNE fois, puis tous les parcours
+      sont rapides et déterministes. Bonus : ils s'exécutent sur le bundle
+      réellement livré, pas sur une variante de développement.
+
+      `dist-e2e` plutôt que `dist` : les variables `VITE_*` sont figées à la
+      compilation, et un build portant une origine Supabase factice ne doit
+      jamais pouvoir être déployé par erreur.
+
+      Port dédié, distinct de la plage 5173-5174 du développement courant.
     */
-    command: `npm run dev -- --port ${E2E_PORT} --strictPort`,
+    command: `npm run build -- --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${E2E_PORT} --strictPort`,
     url: E2E_URL,
     /*
       JAMAIS le serveur de développement déjà ouvert.
