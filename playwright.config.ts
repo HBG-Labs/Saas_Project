@@ -16,9 +16,18 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   expect: {
-    // Le premier chargement d'une route lazy peut inclure la compilation Vite
-    // à froid, particulièrement sur les runners CI et les mobiles émulés.
-    timeout: 15_000,
+    /*
+      Le premier chargement d'une route lazy inclut la compilation Vite à
+      froid. Sur les écrans authentifiés, qui tirent beaucoup plus de modules
+      que la vitrine, 15 s ne suffisaient pas : deux parcours d'intervention
+      échouaient à 27 s pendant que les mêmes assertions passaient en 4 s une
+      fois le serveur chaud — un faux rouge, aussi trompeur qu'un faux vert.
+
+      Piste si cela redevient gênant : servir un build de production plutôt que
+      le serveur de développement. Le build prend ~7 s et supprime toute
+      compilation à la demande.
+    */
+    timeout: 25_000,
   },
 
   use: {

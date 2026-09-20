@@ -43,6 +43,16 @@ export const PROFILS: Record<RoleTest, { id: string; nom: string; email: string 
 const MAINTENANT = '2026-09-19T08:00:00.000Z';
 
 /**
+ * Table vide, mais typée.
+ *
+ * `[]` seul s'infère en `never[]` : un parcours qui veut y poser une ligne se
+ * fait alors refuser par TypeScript, sans que le message dise pourquoi. Chaque
+ * table absente du jeu de référence passe donc par ici.
+ */
+const vide = <T = Record<string, unknown>,>(): T[] => [];
+
+
+/**
  * Construit le jeu de tables pour un rôle donné.
  *
  * Le rôle ne change QUE la ligne `organization_members` : c'est elle que
@@ -211,33 +221,49 @@ export function donneesPour(role: RoleTest) {
       },
     ],
 
+    /*
+      Colonnes relevées sur `public.interventions`.
+
+      `technician_id` porte l'identifiant de l'APPARTENANCE, pas celui du
+      compte : `InterventionPage` calcule `canTrack` en le comparant à
+      `membership.id`. S'y tromper ferait disparaître le chronomètre sans
+      qu'aucun test ne l'explique.
+    */
     interventions: [
       {
         id: INTERVENTION_ID,
-        organization_id: ORGANISATION_ID,
         mission_id: MISSION_ID,
+        organization_id: ORGANISATION_ID,
+        technician_id: MEMBRE_ID,
         status: 'in_progress',
-        assignee_id: TECHNICIEN_ID,
         start_time: '2026-09-19T09:48:00.000Z',
-        end_time: null,
+        end_time: null as string | null,
+        start_latitude: null,
+        start_longitude: null,
+        notes: null,
         created_at: MAINTENANT,
         updated_at: MAINTENANT,
+        // Embarqués par `select('*, report:…(*), attachments:…(*)')`.
+        report: null as Record<string, unknown> | null,
+        attachments: [] as Record<string, unknown>[],
       },
     ],
 
-    invoices: [],
-    quotes: [],
-    teams: [],
-    notes: [],
-    favorites: [],
-    tool_history: [],
-    audit_logs: [],
-    leave_requests: [],
-    stock_consumables: [],
-    equipment: [],
-    organization_documents: [],
-    received_invoices: [],
-    einvoicing_provider_connections: [],
+    intervention_time_entries: vide(),
+
+    invoices: vide(),
+    quotes: vide(),
+    teams: vide(),
+    notes: vide(),
+    favorites: vide(),
+    tool_history: vide(),
+    audit_logs: vide(),
+    leave_requests: vide(),
+    stock_consumables: vide(),
+    equipment: vide(),
+    organization_documents: vide(),
+    received_invoices: vide(),
+    einvoicing_provider_connections: vide(),
   } satisfies Record<string, unknown[]>;
 }
 
