@@ -280,8 +280,6 @@ export default tseslint.config(
       'src/pages/portal/PortalMessagesPage.tsx',
       'src/pages/quotes/QuoteDetailPage.tsx',
       'src/pages/quotes/QuotesPage.tsx',
-      'src/pages/training/TutorialDetailPage.tsx',
-      'src/pages/training/TutorialsPage.tsx',
     ],
     rules: {
       'no-restricted-syntax': [
