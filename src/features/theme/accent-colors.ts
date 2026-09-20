@@ -1,81 +1,59 @@
 /**
- * Les neuf nuances d'accent — neuf bleus, et non neuf couleurs.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI NEUF BLEUS
- *
- * Une couleur d'accent surcharge `--primary` : c'est elle qu'on voit sur chaque
- * lien et chaque anneau de focus. Tant que le choix allait
- * du vert au rose, choisir un accent ne personnalisait pas REZO360 — cela le
- * remplaçait. Le bleu de la marque n'était plus reconnaissable à l'écran.
- *
- * Les neuf nuances sont donc posées sur un même arc de TEINTE autour du bleu
- * REZO `#1b44c8` (OKLCH H 265°) : quatre plus froides, quatre plus profondes.
- * À chaque étape, la luminosité a été recalculée pour retrouver exactement le
- * contraste du bleu REZO. Une nuance change la teinte, jamais le poids — l'écart
- * de contraste entre la plus froide et la plus profonde est de 0,06 point.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI UN TROISIÈME JEU DE VARIABLES
- *
- * `ThemeProvider` applique l'accent APRÈS le preset. Avec deux jeux seulement,
- * choisir un accent dans « Contraste élevé » écrasait le bleu renforcé du thème
- * par celui du thème clair : le thème d'accessibilité perdait son accessibilité
- * dès qu'on le personnalisait, sans que rien ne le signale.
- *
- * `contrastVariables` tient le niveau du preset (≈ 11:1 contre blanc).
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * CE QU'UNE NUANCE NE TOUCHE PAS
- *
- * Uniquement les six variables ci-dessous. Succès, avertissement, erreur et
- * information restent ceux de la feuille de styles : une couleur qui porte un
- * sens ne se personnalise pas.
- * ─────────────────────────────────────────────────────────────────────────────
+ * Les neuf choix historiques, rétablis à la demande de Harry.
+ * Source : accent-colors.ts avant c1de617. Les pastilles et les familles de
+ * couleurs sont conservées ; les tons de texte sont ajustés pour rester lisibles
+ * sur les surfaces Atelier. Les statuts métier ne sont jamais personnalisés.
  */
-
 export type AccentColorId =
-  'auto' | 'ardoise' | 'acier' | 'azur' | 'cobalt' | 'outremer' | 'indigo' | 'saphir' | 'encre';
+  'auto' | 'navy' | 'blue' | 'purple' | 'green' | 'red' | 'amber' | 'pink' | 'cyan';
 
 export interface AccentColor {
   id: AccentColorId;
   label: string;
-  /** Pastille du sélecteur. Pour `auto`, le bleu REZO lui-même. */
   hex: string;
   isAuto?: boolean;
   lightVariables: Record<string, string>;
   darkVariables: Record<string, string>;
-  /** Jeu dédié à « Contraste élevé ». Vide pour `auto`, qui laisse le preset. */
   contrastVariables: Record<string, string>;
 }
 
-/**
- * Anciens accents, et la nuance qui les remplace.
- *
- * Le choix ne vit que dans le navigateur. Sans cette table, `readStoredAccent`
- * retombe sur `auto` dès que l'identifiant lui est inconnu : tout le monde
- * perdrait son réglage d'un chargement à l'autre, sans explication.
- *
- * La correspondance est injective — deux anciens accents ne tombent jamais sur
- * la même nuance, pour que chacun garde un choix distinct. Trois reprises sont
- * littérales (cyan → la plus froide, blue → Cobalt, purple → la plus profonde) ;
- * les cinq autres suivent l'ordre de la série.
- */
+/** Reprise inverse des nuances bleues, sans perdre les préférences enregistrées. */
 export const ACCENTS_RETIRES: Readonly<Record<string, AccentColorId>> = {
-  cyan: 'ardoise',
-  navy: 'acier',
-  green: 'azur',
-  blue: 'cobalt',
-  amber: 'outremer',
-  red: 'indigo',
-  pink: 'saphir',
-  purple: 'encre',
+  ardoise: 'cyan',
+  acier: 'navy',
+  azur: 'green',
+  cobalt: 'blue',
+  outremer: 'amber',
+  indigo: 'red',
+  saphir: 'pink',
+  encre: 'purple',
 };
 
-export const ACCENT_COLORS: readonly AccentColor[] = [
+/** Une couleur choisie doit aussi repeindre les nouvelles commandes Atelier. */
+function commandes(variables: Record<string, string>): Record<string, string> {
+  if (!variables['--primary']) return variables;
+  return {
+    ...variables,
+    '--action': variables['--primary'],
+    '--action-hover': variables['--primary-hover']!,
+    '--action-active': variables['--primary-active']!,
+    '--action-foreground': variables['--primary-foreground']!,
+    '--action-text': variables['--primary'],
+    '--nav-selected': variables['--primary'],
+    '--nav-foreground': variables['--primary-foreground']!,
+    '--nav-subtle': variables['--primary-subtle']!,
+    '--nav-text': variables['--primary'],
+    '--workspace-selected': variables['--primary'],
+    '--workspace-foreground': variables['--primary-foreground']!,
+    '--settings-selected': variables['--primary'],
+    '--settings-foreground': variables['--primary-foreground']!,
+  };
+}
+
+const COULEURS_HISTORIQUES: readonly AccentColor[] = [
   {
     id: 'auto',
-    label: 'Bleu REZO (automatique)',
+    label: 'Automatique (Atelier)',
     hex: '#1b44c8',
     isAuto: true,
     lightVariables: {},
@@ -83,235 +61,242 @@ export const ACCENT_COLORS: readonly AccentColor[] = [
     contrastVariables: {},
   },
   {
-    id: 'ardoise',
-    label: 'Bleu Ardoise',
-    hex: '#00539a',
+    id: 'navy',
+    label: 'Bleu Marine / Nuit',
+    hex: '#1e3a8a',
     lightVariables: {
-      '--primary': '#00539a',
-      '--primary-hover': '#004785',
-      '--primary-active': '#003a70',
+      '--primary': '#1e3a8a',
+      '--primary-hover': '#172554',
+      '--primary-active': '#1e40af',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e0ebf6',
-      '--ring': '#00539a',
+      '--primary-subtle': '#dbeafe',
+      '--ring': '#1e3a8a',
     },
     darkVariables: {
-      '--primary': '#6ea7e7',
-      '--primary-hover': '#90bced',
-      '--primary-active': '#4d91da',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#14304d',
-      '--ring': '#6ea7e7',
+      '--primary': '#60a5fa',
+      '--primary-hover': '#93c5fd',
+      '--primary-active': '#3b82f6',
+      '--primary-foreground': '#0f172a',
+      '--primary-subtle': '#172554',
+      '--ring': '#60a5fa',
     },
     contrastVariables: {
-      '--primary': '#003c73',
-      '--primary-hover': '#003262',
-      '--primary-active': '#002a54',
+      '--primary': '#172554',
+      '--primary-hover': '#10203f',
+      '--primary-active': '#0c182f',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e8f1fb',
-      '--ring': '#003c73',
+      '--primary-subtle': '#dbeafe',
+      '--ring': '#172554',
     },
   },
   {
-    id: 'acier',
-    label: 'Bleu Acier',
-    hex: '#0050a6',
+    id: 'blue',
+    label: 'Bleu Cobalt Tech',
+    hex: '#2563eb',
     lightVariables: {
-      '--primary': '#0050a6',
-      '--primary-hover': '#004490',
-      '--primary-active': '#003879',
+      '--primary': '#2563eb',
+      '--primary-hover': '#1d4ed8',
+      '--primary-active': '#1e40af',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e0eaf8',
-      '--ring': '#0050a6',
+      '--primary-subtle': '#eff6ff',
+      '--ring': '#2563eb',
     },
     darkVariables: {
-      '--primary': '#6fa6f0',
-      '--primary-hover': '#91bbf3',
-      '--primary-active': '#4e8fe4',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#152f51',
-      '--ring': '#6fa6f0',
+      '--primary': '#60a5fa',
+      '--primary-hover': '#93c5fd',
+      '--primary-active': '#3b82f6',
+      '--primary-foreground': '#0f172a',
+      '--primary-subtle': '#1e293b',
+      '--ring': '#60a5fa',
     },
     contrastVariables: {
-      '--primary': '#003a7d',
-      '--primary-hover': '#00306b',
-      '--primary-active': '#00285c',
+      '--primary': '#1e40af',
+      '--primary-hover': '#172f81',
+      '--primary-active': '#10235f',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e8f1fc',
-      '--ring': '#003a7d',
+      '--primary-subtle': '#eff6ff',
+      '--ring': '#1e40af',
     },
   },
   {
-    id: 'azur',
-    label: 'Bleu Azur',
-    hex: '#004db4',
+    id: 'purple',
+    label: 'Violet Digital',
+    hex: '#8b5cf6',
     lightVariables: {
-      '--primary': '#004db4',
-      '--primary-hover': '#00419c',
-      '--primary-active': '#003584',
+      '--primary': '#7c3aed',
+      '--primary-hover': '#6d28d9',
+      '--primary-active': '#5b21b6',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e0eafa',
-      '--ring': '#004db4',
+      '--primary-subtle': '#f5f3ff',
+      '--ring': '#7c3aed',
     },
     darkVariables: {
-      '--primary': '#6fa5f8',
-      '--primary-hover': '#91baf9',
-      '--primary-active': '#508ded',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#162e55',
-      '--ring': '#6fa5f8',
+      '--primary': '#a78bfa',
+      '--primary-hover': '#c4b5fd',
+      '--primary-active': '#9b72f8',
+      '--primary-foreground': '#0f172a',
+      '--primary-subtle': '#2e1065',
+      '--ring': '#a78bfa',
     },
     contrastVariables: {
-      '--primary': '#003787',
-      '--primary-hover': '#002e75',
-      '--primary-active': '#002665',
+      '--primary': '#5b21b6',
+      '--primary-hover': '#4c1d95',
+      '--primary-active': '#3b1675',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e8f1fe',
-      '--ring': '#003787',
+      '--primary-subtle': '#f5f3ff',
+      '--ring': '#5b21b6',
     },
   },
   {
-    id: 'cobalt',
-    label: 'Bleu Cobalt',
-    hex: '#0146c7',
+    id: 'green',
+    label: 'Vert Émeraude',
+    hex: '#10b981',
     lightVariables: {
-      '--primary': '#0146c7',
-      '--primary-hover': '#023cab',
-      '--primary-active': '#03328e',
+      '--primary': '#147a3b',
+      '--primary-hover': '#166534',
+      '--primary-active': '#14532d',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e1eafb',
-      '--ring': '#0146c7',
+      '--primary-subtle': '#f0fdf4',
+      '--ring': '#147a3b',
     },
     darkVariables: {
-      '--primary': '#72a3fe',
-      '--primary-hover': '#92b9fe',
-      '--primary-active': '#548bf4',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#172d58',
-      '--ring': '#72a3fe',
+      '--primary': '#34d399',
+      '--primary-hover': '#6ee7b7',
+      '--primary-active': '#10b981',
+      '--primary-foreground': '#052e16',
+      '--primary-subtle': '#064e3b',
+      '--ring': '#34d399',
     },
     contrastVariables: {
-      '--primary': '#00319a',
-      '--primary-hover': '#002885',
-      '--primary-active': '#002074',
+      '--primary': '#14532d',
+      '--primary-hover': '#104425',
+      '--primary-active': '#0b321a',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e9f1ff',
-      '--ring': '#00319a',
+      '--primary-subtle': '#f0fdf4',
+      '--ring': '#14532d',
     },
   },
   {
-    id: 'outremer',
-    label: 'Bleu Outremer',
-    hex: '#2d41c9',
+    id: 'red',
+    label: 'Rouge Rubis',
+    hex: '#ef4444',
     lightVariables: {
-      '--primary': '#2d41c9',
-      '--primary-hover': '#2537ad',
-      '--primary-active': '#1e2e8f',
+      '--primary': '#c92323',
+      '--primary-hover': '#b91c1c',
+      '--primary-active': '#991b1b',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e3e9fb',
-      '--ring': '#2d41c9',
+      '--primary-subtle': '#fef2f2',
+      '--ring': '#c92323',
     },
     darkVariables: {
-      '--primary': '#81a0ff',
-      '--primary-hover': '#9db6ff',
-      '--primary-active': '#6787f5',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#1f2c58',
-      '--ring': '#81a0ff',
+      '--primary': '#f87171',
+      '--primary-hover': '#fca5a5',
+      '--primary-active': '#ef4444',
+      '--primary-foreground': '#290707',
+      '--primary-subtle': '#450a0a',
+      '--ring': '#f87171',
     },
     contrastVariables: {
-      '--primary': '#1e2b9f',
-      '--primary-hover': '#18228b',
-      '--primary-active': '#131b79',
+      '--primary': '#8b1818',
+      '--primary-hover': '#7f1d1d',
+      '--primary-active': '#601616',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#eaf0ff',
-      '--ring': '#1e2b9f',
+      '--primary-subtle': '#fef2f2',
+      '--ring': '#8b1818',
     },
   },
   {
-    id: 'indigo',
-    label: 'Bleu Indigo',
-    hex: '#363fc9',
+    id: 'amber',
+    label: 'Ambre & Or Chaud',
+    hex: '#d97706',
     lightVariables: {
-      '--primary': '#363fc9',
-      '--primary-hover': '#2e36ad',
-      '--primary-active': '#252c90',
+      '--primary': '#ad5009',
+      '--primary-hover': '#92400e',
+      '--primary-active': '#78350f',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e4e9fb',
-      '--ring': '#363fc9',
+      '--primary-subtle': '#fffbeb',
+      '--ring': '#ad5009',
     },
     darkVariables: {
-      '--primary': '#879eff',
-      '--primary-hover': '#a1b5ff',
-      '--primary-active': '#6e85f5',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#222b58',
-      '--ring': '#879eff',
+      '--primary': '#fbbf24',
+      '--primary-hover': '#fcd34d',
+      '--primary-active': '#f59e0b',
+      '--primary-foreground': '#451a03',
+      '--primary-subtle': '#451a03',
+      '--ring': '#fbbf24',
     },
     contrastVariables: {
-      '--primary': '#26299f',
-      '--primary-hover': '#1f208b',
-      '--primary-active': '#191979',
+      '--primary': '#78350f',
+      '--primary-hover': '#652c0c',
+      '--primary-active': '#4b2008',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#ebf0ff',
-      '--ring': '#26299f',
+      '--primary-subtle': '#fffbeb',
+      '--ring': '#78350f',
     },
   },
   {
-    id: 'saphir',
-    label: 'Bleu Saphir',
-    hex: '#3f3dc8',
+    id: 'pink',
+    label: 'Rose Fuchsia',
+    hex: '#ec4899',
     lightVariables: {
-      '--primary': '#3f3dc8',
-      '--primary-hover': '#3534ac',
-      '--primary-active': '#2b2b8f',
+      '--primary': '#c8226d',
+      '--primary-hover': '#be185d',
+      '--primary-active': '#9d174d',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e5e9fb',
-      '--ring': '#3f3dc8',
+      '--primary-subtle': '#fdf2f8',
+      '--ring': '#c8226d',
     },
     darkVariables: {
-      '--primary': '#8c9dff',
-      '--primary-hover': '#a5b4ff',
-      '--primary-active': '#7584f5',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#252b58',
-      '--ring': '#8c9dff',
+      '--primary': '#f472b6',
+      '--primary-hover': '#f9a8d4',
+      '--primary-active': '#ec4899',
+      '--primary-foreground': '#330518',
+      '--primary-subtle': '#500724',
+      '--ring': '#f472b6',
     },
     contrastVariables: {
-      '--primary': '#2d279f',
-      '--primary-hover': '#251e8b',
-      '--primary-active': '#1f1779',
+      '--primary': '#831843',
+      '--primary-hover': '#651133',
+      '--primary-active': '#4b0b25',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#ecf0ff',
-      '--ring': '#2d279f',
+      '--primary-subtle': '#fdf2f8',
+      '--ring': '#831843',
     },
   },
   {
-    id: 'encre',
-    label: 'Bleu Encre',
-    hex: '#463ac8',
+    id: 'cyan',
+    label: 'Cyan & Océan',
+    hex: '#06b6d4',
     lightVariables: {
-      '--primary': '#463ac8',
-      '--primary-hover': '#3b32ac',
-      '--primary-active': '#31298f',
+      '--primary': '#0e7490',
+      '--primary-hover': '#155e75',
+      '--primary-active': '#164e63',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#e5e9fb',
-      '--ring': '#463ac8',
+      '--primary-subtle': '#ecfeff',
+      '--ring': '#0e7490',
     },
     darkVariables: {
-      '--primary': '#929bff',
-      '--primary-hover': '#a9b3ff',
-      '--primary-active': '#7b82f5',
-      '--primary-foreground': '#0e1b36',
-      '--primary-subtle': '#272a58',
-      '--ring': '#929bff',
+      '--primary': '#22d3ee',
+      '--primary-hover': '#67e8f9',
+      '--primary-active': '#06b6d4',
+      '--primary-foreground': '#083344',
+      '--primary-subtle': '#083344',
+      '--ring': '#22d3ee',
     },
     contrastVariables: {
-      '--primary': '#33259e',
-      '--primary-hover': '#2b1c8b',
-      '--primary-active': '#241579',
+      '--primary': '#164e63',
+      '--primary-hover': '#103b4b',
+      '--primary-active': '#0c2b38',
       '--primary-foreground': '#ffffff',
-      '--primary-subtle': '#edefff',
-      '--ring': '#33259e',
+      '--primary-subtle': '#ecfeff',
+      '--ring': '#164e63',
     },
   },
-] as const;
+];
+
+export const ACCENT_COLORS: readonly AccentColor[] = COULEURS_HISTORIQUES.map((color) => ({
+  ...color,
+  lightVariables: commandes(color.lightVariables),
+  darkVariables: commandes(color.darkVariables),
+  contrastVariables: commandes(color.contrastVariables),
+}));

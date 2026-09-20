@@ -127,6 +127,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyBrowserBarColor(resolvedTheme === 'dark');
     root.classList.toggle('compact-mode', compactMode);
     root.setAttribute('data-theme', preset);
+    root.setAttribute('data-accent', accentColor);
     root.setAttribute('data-density', compactMode ? 'compact' : 'comfortable');
 
     // 2. Nettoyer les variables personnalisées précédentes

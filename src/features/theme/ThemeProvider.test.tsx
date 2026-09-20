@@ -83,10 +83,10 @@ function Probe() {
       <button
         type="button"
         onClick={() => {
-          setAccentColor('encre');
+          setAccentColor('purple');
         }}
       >
-        Accent Encre
+        Accent Violet
       </button>
       <button
         type="button"
@@ -267,29 +267,50 @@ describe('ThemeProvider', () => {
     await user.click(screen.getByRole('button', { name: 'Contraste' }));
     expect(screen.getByTestId('preset')).toHaveTextContent('contraste-eleve');
 
-    await user.click(screen.getByRole('button', { name: 'Accent Encre' }));
-    expect(screen.getByTestId('accent')).toHaveTextContent('encre');
+    await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
+    expect(screen.getByTestId('accent')).toHaveTextContent('purple');
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.getByTestId('preset')).toHaveTextContent('default');
     expect(screen.getByTestId('accent')).toHaveTextContent('auto');
   });
 
-  it('migre un accent retiré vers sa nuance, sans remise à zéro', () => {
-    // Les neuf accents de couleur sont devenus neuf nuances de bleu. Sans table
-    // de correspondance, `readStoredAccent` retombe sur `auto` : la personne qui
-    // avait choisi « Violet Digital » perdrait son réglage au prochain
-    // chargement, sans que rien ne l'explique.
-    localStorage.setItem(ACCENT_STORAGE_KEY, 'purple');
+  it.each(['purple', 'encre'])('restaure le violet enregistré sous %s', (stored) => {
+    localStorage.setItem(ACCENT_STORAGE_KEY, stored);
     mockSystemDark(false);
-
     render(
       <ThemeProvider>
         <Probe />
       </ThemeProvider>,
     );
+    expect(screen.getByTestId('accent')).toHaveTextContent('purple');
+    expect(document.documentElement.style.getPropertyValue('--action')).toBe('#7c3aed');
+    expect(document.documentElement.style.getPropertyValue('--nav-selected')).toBe('#7c3aed');
+  });
 
-    expect(screen.getByTestId('accent')).toHaveTextContent('encre');
+  it('persiste la couleur, la décline en sombre et nettoie les surcharges au reset', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
+    expect(localStorage.getItem(ACCENT_STORAGE_KEY)).toBe('purple');
+    expect(document.documentElement.style.getPropertyValue('--action')).toBe('#7c3aed');
+    await user.click(screen.getByRole('button', { name: 'Sombre' }));
+    expect(document.documentElement.style.getPropertyValue('--action')).toBe('#a78bfa');
+    expect(document.documentElement.style.getPropertyValue('--workspace-selected')).toBe('#a78bfa');
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    for (const key of [
+      '--action',
+      '--nav-selected',
+      '--workspace-selected',
+      '--settings-selected',
+    ]) {
+      expect(document.documentElement.style.getPropertyValue(key)).toBe('');
+    }
+    expect(localStorage.getItem(ACCENT_STORAGE_KEY)).toBeNull();
   });
 
   it('retombe sur « auto » pour un accent qui n’a jamais existé', () => {
@@ -316,7 +337,7 @@ describe('ThemeProvider', () => {
     */
     mockSystemDark(false);
     const user = userEvent.setup();
-    const encre = ACCENT_COLORS.find((a) => a.id === 'encre');
+    const violet = ACCENT_COLORS.find((a) => a.id === 'purple');
 
     render(
       <ThemeProvider>
@@ -325,11 +346,11 @@ describe('ThemeProvider', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Contraste' }));
-    await user.click(screen.getByRole('button', { name: 'Accent Encre' }));
+    await user.click(screen.getByRole('button', { name: 'Accent Violet' }));
 
     const applique = document.documentElement.style.getPropertyValue('--primary');
-    expect(applique).toBe(encre?.contrastVariables['--primary']);
-    expect(applique).not.toBe(encre?.lightVariables['--primary']);
+    expect(applique).toBe(violet?.contrastVariables['--primary']);
+    expect(applique).not.toBe(violet?.lightVariables['--primary']);
   });
 
   it('permet d’activer et de persister le mode compact haute densité', async () => {
