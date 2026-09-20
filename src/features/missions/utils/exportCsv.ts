@@ -30,9 +30,7 @@ export function exportMissionsToCsv(
     const address = (m.address_line1 ?? m.location_label ?? '').replace(/"/g, '""');
     const status = MISSION_STATUS_LABELS[m.status] ?? m.status;
     const priority = m.priority;
-    const start = m.scheduled_start
-      ? new Date(m.scheduled_start).toLocaleString('fr-FR')
-      : '';
+    const start = m.scheduled_start ? new Date(m.scheduled_start).toLocaleString('fr-FR') : '';
     const end = m.actual_end
       ? new Date(m.actual_end).toLocaleString('fr-FR')
       : m.scheduled_end

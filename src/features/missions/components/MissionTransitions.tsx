@@ -70,16 +70,16 @@ export function MissionTransitions({ mission, role, isAssignee }: MissionTransit
     if (mission.status === 'accepted' && isAssignee) {
       return (
         <p className="text-muted-foreground text-xs">
-          Mission acceptée. Utilisez «&nbsp;Démarrer une intervention&nbsp;» ci-dessous : le
-          relevé du temps et le compte rendu s’ouvrent en même temps.
+          Mission acceptée. Utilisez «&nbsp;Démarrer une intervention&nbsp;» ci-dessous : le relevé
+          du temps et le compte rendu s’ouvrent en même temps.
         </p>
       );
     }
 
     return (
       <p className="text-muted-foreground text-xs">
-        Aucune action disponible à ce stade — soit la mission est close, soit elle attend
-        quelqu’un d’autre.
+        Aucune action disponible à ce stade — soit la mission est close, soit elle attend quelqu’un
+        d’autre.
       </p>
     );
   }

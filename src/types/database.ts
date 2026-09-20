@@ -84,6 +84,7 @@ export type InvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'cancelled';
 export type InvoiceDocumentType = 'invoice' | 'credit_note';
 export type PaymentMethod = 'transfer' | 'check' | 'card' | 'cash' | 'direct_debit' | 'other';
 export type WorkspaceTaskStatus = 'todo' | 'in_progress' | 'done';
+export type RecurringOccurrenceStatus = 'created' | 'skipped';
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
 export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
@@ -581,6 +582,8 @@ export interface Database {
           /** Cache maintenu par trigger depuis `subscriptions`. Lecture seule. */
           plan_code: string | null;
           created_by: string | null;
+          /** Fuseau IANA, sert aux heures des récurrences. */
+          timezone: string;
           created_at: string;
           updated_at: string;
         };
@@ -615,6 +618,7 @@ export interface Database {
           created_by: string;
         };
         Update: {
+          timezone?: string;
           name?: string;
           holiday_territory?: string;
           legal_name?: string | null;
@@ -1343,6 +1347,8 @@ export interface Database {
           assigned_user_id: string | null;
           scheduled_start: string | null;
           scheduled_end: string | null;
+          /** Chevauchement avec une autre mission du même technicien vu et accepté. */
+          schedule_conflict_acknowledged: boolean;
           actual_start: string | null;
           actual_end: string | null;
           location_label: string | null;
@@ -1378,6 +1384,7 @@ export interface Database {
           assigned_user_id?: string | null;
           scheduled_start?: string | null;
           scheduled_end?: string | null;
+          schedule_conflict_acknowledged?: boolean;
           location_label?: string | null;
           address_line1?: string | null;
           address_line2?: string | null;
@@ -1408,6 +1415,7 @@ export interface Database {
           assigned_user_id?: string | null;
           scheduled_start?: string | null;
           scheduled_end?: string | null;
+          schedule_conflict_acknowledged?: boolean;
           location_label?: string | null;
           address_line1?: string | null;
           address_line2?: string | null;
@@ -3435,6 +3443,35 @@ export interface Database {
         ];
       };
 
+      /** Trace de chaque passage du générateur de récurrences — 20260930090000_gestion_planning.sql */
+      recurring_task_occurrences: {
+        Row: {
+          id: string;
+          organization_id: string;
+          recurring_task_id: string;
+          occurrence_date: string;
+          status: RecurringOccurrenceStatus;
+          mission_id: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'recurring_task_occurrences_recurring_task_id_fkey';
+            columns: ['recurring_task_id'];
+            referencedRelation: 'recurring_tasks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'recurring_task_occurrences_mission_id_fkey';
+            columns: ['mission_id'];
+            referencedRelation: 'missions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       recurring_tasks: {
         Row: {
           id: string;
@@ -3449,6 +3486,8 @@ export interface Database {
           estimated_minutes: number | null;
           notes: string | null;
           is_active: boolean;
+          last_generated_on: string | null;
+          generated_count: number;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -4721,6 +4760,30 @@ export interface Database {
        * Enregistre une page — dernier enregistré gagne, avec garde : refusé
        * (`serialization_failure`) si `updated_at` a changé depuis l'ouverture.
        */
+      /** Ce qui gêne l'affectation d'un membre sur une fenêtre : missions occupantes, congés validés. */
+      mission_conflicts: {
+        Args: {
+          p_member_id: string;
+          p_start: string;
+          p_end: string | null;
+          p_exclude_mission_id?: string | null;
+        };
+        Returns: {
+          kind: 'mission' | 'leave';
+          mission_id: string | null;
+          reference: string | null;
+          title: string | null;
+          starts_at: string;
+          ends_at: string | null;
+          leave_id: string | null;
+          leave_type: LeaveType | null;
+        }[];
+      };
+      /** Lance le générateur de récurrences pour une organisation (planning.manage). */
+      run_recurring_tasks: {
+        Args: { p_organization_id: string; p_horizon_days?: number };
+        Returns: { created: number; skipped: number }[];
+      };
       save_workspace_page: {
         Args: {
           p_page_id: string;
@@ -4984,6 +5047,7 @@ export interface Database {
       subscription_status: SubscriptionStatus;
       payment_method: PaymentMethod;
       workspace_task_status: WorkspaceTaskStatus;
+      recurring_occurrence_status: RecurringOccurrenceStatus;
       workspace_task_priority: WorkspaceTaskPriority;
       team_member_role: TeamMemberRole;
       mission_status: MissionStatus;

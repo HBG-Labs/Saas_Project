@@ -89,8 +89,7 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
         // en base, alors qu'`undefined` le laisserait inchangé.
         description: description === undefined || description === '' ? null : description,
         notes: notes === undefined || notes === '' ? null : notes,
-        location_label:
-          locationLabel === undefined || locationLabel === '' ? null : locationLabel,
+        location_label: locationLabel === undefined || locationLabel === '' ? null : locationLabel,
         scheduled_start: toIsoOrUndefined(values.scheduledStart) ?? null,
         scheduled_end: toIsoOrUndefined(values.scheduledEnd) ?? null,
         customer_id: customerId,
@@ -134,7 +133,9 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
           onCustomerChange={setCustomerId}
           siteId={siteId}
           onSiteChange={setSiteId}
-          onLocationSelect={(loc) => setCoords({ latitude: loc.latitude, longitude: loc.longitude })}
+          onLocationSelect={(loc) =>
+            setCoords({ latitude: loc.latitude, longitude: loc.longitude })
+          }
         />
 
         <div className="flex justify-end gap-2">

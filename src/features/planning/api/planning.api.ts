@@ -264,10 +264,7 @@ export async function upsertLeaveBalance(
   };
 
   await unwrap(
-    supabase
-      .from('leave_balances')
-      .upsert(payload, { onConflict: 'member_id,year' })
-      .select('id'),
+    supabase.from('leave_balances').upsert(payload, { onConflict: 'member_id,year' }).select('id'),
   );
 
   return listLeaveBalances(input.organizationId, input.year);
@@ -284,9 +281,7 @@ const RECURRING_SELECT = `
   )
 ` as const;
 
-export async function listRecurringTasks(
-  organizationId: string,
-): Promise<RecurringTaskWithRefs[]> {
+export async function listRecurringTasks(organizationId: string): Promise<RecurringTaskWithRefs[]> {
   return unwrap(
     supabase
       .from('recurring_tasks')
@@ -334,9 +329,37 @@ export async function updateRecurringTask(
   taskId: string,
   patch: TablesUpdate<'recurring_tasks'>,
 ): Promise<RecurringTaskRow> {
-  return unwrap(supabase.from('recurring_tasks').update(patch).eq('id', taskId).select('*').single());
+  return unwrap(
+    supabase.from('recurring_tasks').update(patch).eq('id', taskId).select('*').single(),
+  );
 }
 
 export async function deleteRecurringTask(taskId: string): Promise<void> {
   await unwrap(supabase.from('recurring_tasks').delete().eq('id', taskId).select('id'));
+}
+
+// ─── Récurrences : la trace, et la main ──────────────────────────────────────
+
+/** Chaque passage du générateur sur une tâche : mission créée, ou ignorée et pourquoi. */
+export async function listRecurringOccurrences(taskId: string) {
+  return unwrap(
+    supabase
+      .from('recurring_task_occurrences')
+      .select('*')
+      .eq('recurring_task_id', taskId)
+      .order('occurrence_date', { ascending: false })
+      .limit(50),
+  );
+}
+
+/**
+ * Lance le générateur sans attendre la nuit — le responsable qui vient de
+ * créer une tâche et veut voir ses visites au planning. `planning.manage`
+ * requis, la base le vérifie.
+ */
+export async function runRecurringTasks(organizationId: string) {
+  const lignes = await unwrap(
+    supabase.rpc('run_recurring_tasks', { p_organization_id: organizationId }),
+  );
+  return lignes[0] ?? { created: 0, skipped: 0 };
 }

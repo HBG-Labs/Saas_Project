@@ -5,6 +5,7 @@ import type { MissionStatus, TablesUpdate } from '@/types/database';
 
 import {
   assignMission,
+  getMissionConflicts,
   changeMissionStatus,
   countMissionsByStatus,
   createMission,
@@ -29,10 +30,7 @@ export function useMissions(organizationId: string | null, filters: MissionFilte
 export function useMissionStatusCounts(organizationId: string | null) {
   return useQuery<Record<string, number>>({
     queryKey: [...qk.missions.all, organizationId ?? 'none', 'status-counts'],
-    queryFn: () =>
-      organizationId === null
-        ? {}
-        : countMissionsByStatus(organizationId),
+    queryFn: () => (organizationId === null ? {} : countMissionsByStatus(organizationId)),
     enabled: organizationId !== null,
     staleTime: 60_000,
   });
@@ -111,12 +109,45 @@ export function useUpdateMission(missionId: string) {
   });
 }
 
+/** Les conflits d'un membre sur une fenêtre, pour avertir avant d'affecter. */
+export function useMissionConflicts(input: {
+  memberId: string | null;
+  start: string | null;
+  end: string | null;
+  excludeMissionId?: string;
+}) {
+  return useQuery({
+    queryKey: [
+      ...qk.missions.all,
+      'conflicts',
+      input.memberId,
+      input.start,
+      input.end,
+      input.excludeMissionId ?? null,
+    ],
+    queryFn: () =>
+      getMissionConflicts({
+        memberId: input.memberId ?? '',
+        start: input.start ?? '',
+        end: input.end,
+        ...(input.excludeMissionId !== undefined
+          ? { excludeMissionId: input.excludeMissionId }
+          : {}),
+      }),
+    enabled: input.memberId !== null && input.start !== null,
+  });
+}
+
 export function useAssignMission(missionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { teamId?: string | null; memberId?: string | null; assignedBy: string }) =>
-      assignMission({ missionId, ...input }),
+    mutationFn: (input: {
+      teamId?: string | null;
+      memberId?: string | null;
+      assignedBy: string;
+      acknowledgeConflicts?: boolean;
+    }) => assignMission({ missionId, ...input }),
     onSuccess: async () => {
       // L'affectation change AUSSI le statut (`draft` → `assigned`) et écrit une
       // ligne d'historique : les trois vues du domaine sont concernées.

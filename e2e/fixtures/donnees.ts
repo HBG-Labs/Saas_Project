@@ -202,6 +202,7 @@ export function donneesPour(role: RoleTest) {
         notes: null,
         scheduled_start: '2026-09-19T11:30:00.000Z',
         scheduled_end: '2026-09-19T15:00:00.000Z',
+        schedule_conflict_acknowledged: false,
         created_by: UTILISATEUR_ID,
         created_at: MAINTENANT,
         updated_at: MAINTENANT,

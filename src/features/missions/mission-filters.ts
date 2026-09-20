@@ -89,8 +89,7 @@ export function toMissionQuery(filters: MissionListFilters): MissionFilters {
   const to = filters.to === '' ? undefined : endOfDay(filters.to);
 
   return {
-    status:
-      filters.status === ANY_STATUS ? ACTIVE_STATUSES : [filters.status as MissionStatus],
+    status: filters.status === ANY_STATUS ? ACTIVE_STATUSES : [filters.status as MissionStatus],
     ...(search !== '' ? { search } : {}),
     ...(filters.customerId !== ANY ? { customerId: filters.customerId } : {}),
     ...(filters.teamId !== ANY ? { teamId: filters.teamId } : {}),

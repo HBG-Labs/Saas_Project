@@ -11,6 +11,8 @@ import {
   listLeaveBalances,
   listLeaveRequests,
   listRecurringTasks,
+  listRecurringOccurrences,
+  runRecurringTasks,
   setLeaveStatus,
   updateRecurringTask,
   upsertLeaveBalance,
@@ -171,6 +173,29 @@ export function useDeleteRecurringTask() {
     mutationFn: (taskId: string) => deleteRecurringTask(taskId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.planning.all });
+    },
+  });
+}
+
+export function useRecurringOccurrences(taskId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.planning.all, 'recurring-task', taskId ?? 'none', 'occurrences'],
+    queryFn: () => listRecurringOccurrences(taskId ?? ''),
+    enabled: taskId !== undefined,
+  });
+}
+
+export function useRunRecurringTasks() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (organizationId: string) => runRecurringTasks(organizationId),
+    onSuccess: async () => {
+      // Des missions sont nées : le planning, les listes de missions et les
+      // tâches (date avancée, compteur) sont tous concernés.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.planning.all }),
+        queryClient.invalidateQueries({ queryKey: qk.missions.all }),
+      ]);
     },
   });
 }

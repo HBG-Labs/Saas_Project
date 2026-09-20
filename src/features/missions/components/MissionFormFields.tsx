@@ -1,9 +1,4 @@
-import type {
-  FieldErrors,
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormWatch,
-} from 'react-hook-form';
+import type { FieldErrors, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import type { ReactNode } from 'react';
 
 import { Input } from '@/components/ui/Input';
@@ -117,28 +112,28 @@ export function MissionFormFields({
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
-        {onInterventionTypeChange ? (
-          <Select
-            options={typeOptions}
-            value={interventionTypeId ?? ''}
-            onValueChange={(value) => onInterventionTypeChange(value === '' ? null : value)}
-            label="Nature de l'intervention"
-            hint="Détermine le formulaire de compte rendu."
-            disabled={typesQuery.isPending}
-          />
-        ) : null}
+          {onInterventionTypeChange ? (
+            <Select
+              options={typeOptions}
+              value={interventionTypeId ?? ''}
+              onValueChange={(value) => onInterventionTypeChange(value === '' ? null : value)}
+              label="Nature de l'intervention"
+              hint="Détermine le formulaire de compte rendu."
+              disabled={typesQuery.isPending}
+            />
+          ) : null}
 
-        <Select
-          options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
-            value,
-            label,
-          }))}
-          value={priority}
-          onValueChange={(value) => {
-            onPriorityChange(value as MissionPriority);
-          }}
-          label="Priorité"
-        />
+          <Select
+            options={Object.entries(MISSION_PRIORITY_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            value={priority}
+            onValueChange={(value) => {
+              onPriorityChange(value as MissionPriority);
+            }}
+            label="Priorité"
+          />
         </div>
       </FormSection>
 
@@ -159,7 +154,9 @@ export function MissionFormFields({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-foreground">Précision de lieu / Adresse</span>
+            <span className="text-foreground text-xs font-semibold">
+              Précision de lieu / Adresse
+            </span>
             {setValue && (
               <MapLocationPickerDialog
                 initialAddress={watch ? watch('locationLabel') : ''}
@@ -201,15 +198,15 @@ export function MissionFormFields({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-        {onAssignedTeamChange ? (
-          <Select
-            options={teamOptions}
-            value={assignedTeamId ?? ''}
-            onValueChange={(value) => onAssignedTeamChange(value === '' ? null : value)}
-            label="Affecter une équipe"
-            hint="L'équipe entière recevra la notification"
-          />
-        ) : null}
+          {onAssignedTeamChange ? (
+            <Select
+              options={teamOptions}
+              value={assignedTeamId ?? ''}
+              onValueChange={(value) => onAssignedTeamChange(value === '' ? null : value)}
+              label="Affecter une équipe"
+              hint="L'équipe entière recevra la notification"
+            />
+          ) : null}
 
           {onAssignedMemberChange ? (
             <Select
@@ -246,8 +243,8 @@ function FormSection({
     <fieldset className="border-border bg-surface-subtle/55 space-y-4 rounded-xl border p-4 sm:p-5">
       <legend className="sr-only">{title}</legend>
       <div>
-        <h2 className="text-sm font-bold text-foreground">{title}</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        <h2 className="text-foreground text-sm font-bold">{title}</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
       </div>
       {children}
     </fieldset>

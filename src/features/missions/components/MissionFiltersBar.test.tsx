@@ -36,12 +36,7 @@ describe('MissionFiltersBar', () => {
     };
 
     renderWithProviders(
-      <MissionFiltersBar
-        organizationId="org-1"
-        value={value}
-        onChange={onChange}
-        showAdvanced
-      />,
+      <MissionFiltersBar organizationId="org-1" value={value} onChange={onChange} showAdvanced />,
     );
 
     expect(screen.getByText('Recherche : Dupont')).toBeInTheDocument();

@@ -1,10 +1,5 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type {
-  MissionPriority,
-  MissionStatus,
-  TablesInsert,
-  TablesUpdate,
-} from '@/types/database';
+import type { MissionPriority, MissionStatus, TablesInsert, TablesUpdate } from '@/types/database';
 import type {
   Mission,
   MissionAssignment,
@@ -252,11 +247,41 @@ export async function updateMission(
  * ligne d'historique. Si la première est refusée, la seconde n'a pas lieu et
  * l'historique ne mentionne pas une affectation qui n'a pas eu lieu.
  */
+/**
+ * Ce qui gêne l'affectation d'un membre sur une fenêtre : ses missions qui
+ * occupent le créneau, ses congés validés. À montrer AVANT d'affecter ; la
+ * base refuse de toute façon (congé : toujours ; mission : sauf chevauchement
+ * reconnu). Voir 20260930090000_gestion_planning.sql.
+ */
+export async function getMissionConflicts(input: {
+  memberId: string;
+  start: string;
+  end: string | null;
+  excludeMissionId?: string;
+}) {
+  return unwrap(
+    supabase.rpc('mission_conflicts', {
+      p_member_id: input.memberId,
+      p_start: input.start,
+      p_end: input.end,
+      ...(input.excludeMissionId !== undefined
+        ? { p_exclude_mission_id: input.excludeMissionId }
+        : {}),
+    }),
+  );
+}
+
 export async function assignMission(input: {
   missionId: string;
   teamId?: string | null;
   memberId?: string | null;
   assignedBy: string;
+  /**
+   * Le chevauchement avec une autre mission du technicien a été montré et
+   * accepté. Sans lui, la base refuse l'affectation sur un créneau occupé.
+   * Un congé validé, lui, ne se force pas.
+   */
+  acknowledgeConflicts?: boolean;
 }): Promise<Mission> {
   const mission = await unwrap(
     supabase
@@ -265,6 +290,7 @@ export async function assignMission(input: {
         assigned_team_id: input.teamId ?? null,
         assigned_user_id: input.memberId ?? null,
         status: 'assigned',
+        ...(input.acknowledgeConflicts ? { schedule_conflict_acknowledged: true } : {}),
       })
       .eq('id', input.missionId)
       .select('*')

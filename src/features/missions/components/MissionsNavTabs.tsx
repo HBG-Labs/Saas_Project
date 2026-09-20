@@ -32,7 +32,7 @@ export function MissionsNavTabs({ pendingReviewCount = 0 }: MissionsNavTabsProps
   ];
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap border-b border-border pb-2.5 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
+    <div className="no-scrollbar border-border -mx-4 mb-5 flex items-center gap-1.5 overflow-x-auto scroll-smooth border-b px-4 pb-2.5 whitespace-nowrap sm:mx-0 sm:px-0">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -42,7 +42,7 @@ export function MissionsNavTabs({ pendingReviewCount = 0 }: MissionsNavTabsProps
             end
             className={({ isActive }) =>
               cn(
-                'min-h-touch sm:min-h-0 inline-flex flex-1 sm:flex-initial justify-center shrink-0 sm:shrink items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
+                'min-h-touch inline-flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98] sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
@@ -55,7 +55,7 @@ export function MissionsNavTabs({ pendingReviewCount = 0 }: MissionsNavTabsProps
             {tab.badge && (
               <span
                 className={cn(
-                  'ml-0.5 sm:ml-1 rounded-full px-1.5 py-0.5 text-3xs font-bold leading-none',
+                  'text-3xs ml-0.5 rounded-full px-1.5 py-0.5 leading-none font-bold sm:ml-1',
                   'bg-warning/20 text-warning dark:bg-warning/30',
                 )}
               >

@@ -62,11 +62,19 @@ export function MissionFiltersBar({
   }
 
   if (value.customerId !== ANY) {
-    activeChips.push({ key: 'customer', label: 'Client sélectionné', clear: () => set('customerId', ANY) });
+    activeChips.push({
+      key: 'customer',
+      label: 'Client sélectionné',
+      clear: () => set('customerId', ANY),
+    });
   }
 
   if (value.teamId !== ANY) {
-    activeChips.push({ key: 'team', label: 'Équipe sélectionnée', clear: () => set('teamId', ANY) });
+    activeChips.push({
+      key: 'team',
+      label: 'Équipe sélectionnée',
+      clear: () => set('teamId', ANY),
+    });
   }
 
   if (value.memberId !== ANY) {
@@ -155,7 +163,7 @@ export function MissionFiltersBar({
               key={chip.key}
               type="button"
               onClick={chip.clear}
-              className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/45 hover:bg-primary/15 focus-visible:ring-ring inline-flex min-h-touch cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-[color,background-color,border-color] focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
+              className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/45 hover:bg-primary/15 focus-visible:ring-ring min-h-touch inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-[color,background-color,border-color] focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
               aria-label={`Retirer le filtre « ${chip.label} »`}
             >
               <span className="max-w-56 truncate">{chip.label}</span>
