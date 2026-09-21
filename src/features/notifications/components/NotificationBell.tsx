@@ -103,11 +103,10 @@ export function NotificationBell() {
 
           {unreadCount > 0 ? (
             <span
-              className="bg-primary text-primary-foreground animate-in zoom-in-50 absolute -top-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full text-[10px] font-extrabold shadow-xs sm:size-4.5"
+              className="bg-primary text-primary-foreground text-3xs absolute -top-1 -right-1 z-10 flex size-5 items-center justify-center rounded-full font-extrabold shadow-xs"
               aria-hidden="true"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
-              <span className="bg-primary/40 absolute -inset-0.5 -z-10 animate-ping rounded-full motion-reduce:animate-none" />
             </span>
           ) : null}
         </button>
@@ -121,7 +120,7 @@ export function NotificationBell() {
           side="bottom"
           sideOffset={8}
           collisionPadding={12}
-          className="border-border bg-surface shadow-overlay data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-2 z-50 flex max-h-[calc(100dvh-5rem)] w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border duration-150 sm:w-96"
+          className="border-border bg-surface shadow-overlay data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-top-2 z-50 flex max-h-[calc(100dvh-5rem)] w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-lg border duration-150 sm:w-96"
         >
           {/* Header */}
           <div className="border-border bg-surface-sunken/40 flex items-center justify-between border-b p-3.5">
@@ -248,7 +247,7 @@ export function NotificationBell() {
                           >
                             {n.title}
                           </span>
-                          <span className="text-muted-foreground shrink-0 text-[10px] font-medium">
+                          <span className="text-3xs text-muted-foreground shrink-0 font-medium">
                             {relativeTime}
                           </span>
                         </span>

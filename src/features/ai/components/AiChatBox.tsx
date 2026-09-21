@@ -162,7 +162,7 @@ export function AiChatBox({
             <History className="text-primary size-3.5" />
             <span className="hidden sm:inline">Historique</span>
             {searchHistory.length > 0 && (
-              <span className="bg-primary/15 text-primary flex size-4 items-center justify-center rounded-full text-[10px] font-bold">
+              <span className="bg-primary/15 text-primary text-3xs flex size-5 items-center justify-center rounded-full font-bold">
                 {searchHistory.length}
               </span>
             )}
@@ -189,7 +189,7 @@ export function AiChatBox({
           {/* Dit une fois, en haut du fil, ce que les réponses répètent : rien
               de ce qui suit n'a été lu dans les données de l'organisation. */}
           {isQuotaExceeded ? (
-            <div className="border-error-border bg-error-subtle text-foreground flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs">
+            <div className="border-error-border bg-error-subtle text-foreground flex items-start gap-2.5 rounded-lg border p-3.5 text-xs">
               <TrendingUp className="text-error mt-0.5 size-4 shrink-0" />
               <div className="space-y-2">
                 <div>
@@ -209,7 +209,7 @@ export function AiChatBox({
             </div>
           ) : (
             isDegraded === true && (
-              <div className="border-warning/40 bg-warning-subtle text-foreground flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs">
+              <div className="border-warning/40 bg-warning-subtle text-foreground flex items-start gap-2.5 rounded-lg border p-3.5 text-xs">
                 <PlugZap className="text-warning mt-0.5 size-4 shrink-0" />
                 <div>
                   <p className="font-semibold">L’assistant n’est pas encore relié à vos données</p>
@@ -235,7 +235,7 @@ export function AiChatBox({
           )}
 
           {error && (
-            <div className="border-error-border bg-error-subtle text-error rounded-2xl border p-3.5 text-xs">
+            <div className="border-error-border bg-error-subtle text-error rounded-lg border p-3.5 text-xs">
               <p className="font-semibold">Erreur de traitement</p>
               <p className="mt-0.5">{error}</p>
             </div>
@@ -246,7 +246,7 @@ export function AiChatBox({
       </div>
 
       {/* Barre de recherche / saisie TOUJOURS visible (shrink-0 & fixée en bas) */}
-      <div className="from-background via-background/95 z-10 w-full shrink-0 bg-gradient-to-t to-transparent px-3 pt-2 pb-2 sm:px-4 sm:pb-3">
+      <div className="border-border bg-background/95 z-10 w-full shrink-0 border-t px-3 pt-2 pb-2 backdrop-blur-sm sm:px-4 sm:pb-3">
         <div className="mx-auto max-w-3xl space-y-2">
           {/* Suggestions rapides & Recherches récentes si début de discussion */}
           {messages.length <= 2 && (
@@ -298,7 +298,7 @@ export function AiChatBox({
           {/* Pilule de saisie flottante arrondie (adaptée au thème) */}
           <form
             onSubmit={handleSubmit}
-            className="group border-border bg-surface shadow-raised focus-within:border-primary focus-within:ring-primary/20 relative flex items-end gap-1.5 rounded-[26px] border p-1.5 pl-3 transition-[border-color,box-shadow] duration-200 focus-within:ring-2 sm:gap-2 sm:p-2 sm:pl-3"
+            className="group border-border bg-surface focus-within:border-primary focus-within:ring-primary/20 relative flex items-end gap-1.5 rounded-xl border p-1.5 pl-3 shadow-xs transition-[border-color,box-shadow] duration-200 focus-within:ring-2 sm:gap-2 sm:p-2 sm:pl-3"
           >
             {/* Champ de texte expansible */}
             <div className="relative flex-1 py-1">

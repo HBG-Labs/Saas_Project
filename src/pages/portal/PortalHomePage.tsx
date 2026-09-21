@@ -52,24 +52,22 @@ export default function PortalHomePage() {
 
   return (
     <div className="space-y-4">
-      {/* Bandeau d'accueil : la touche de couleur de la page, tout le reste est calme. */}
-      <section className="from-primary via-primary text-primary-foreground relative overflow-hidden rounded-2xl bg-gradient-to-br to-blue-500 p-4 shadow-md sm:p-5">
-        <div
-          className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10 blur-2xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-16 left-1/3 size-48 rounded-full bg-white/10 blur-3xl"
-          aria-hidden="true"
-        />
-        <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ring-1 ring-white/25">
+      <section
+        aria-labelledby="portal-welcome-title"
+        className="border-border bg-surface relative overflow-hidden rounded-lg border p-4 sm:p-5"
+      >
+        <span className="bg-primary absolute inset-y-0 left-0 w-1" aria-hidden="true" />
+        <p className="bg-primary-subtle text-primary text-3xs inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold tracking-wide uppercase">
           <Sparkles className="size-3" aria-hidden="true" />
           Espace client
         </p>
-        <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+        <h1
+          id="portal-welcome-title"
+          className="text-foreground mt-2 text-xl font-bold tracking-tight sm:text-2xl"
+        >
           Bonjour{context.contact_first_name ? ` ${context.contact_first_name}` : ''} 👋
         </h1>
-        <p className="mt-1 max-w-xl text-sm text-white/85">
+        <p className="text-muted-foreground mt-1 max-w-xl text-sm">
           Retrouvez ici tout ce que {context.organization_name} partage avec vous : interventions,
           devis, factures, documents et échanges — au même endroit, à jour.
         </p>
@@ -82,7 +80,7 @@ export default function PortalHomePage() {
           </h2>
           <p className="text-muted-foreground text-xs">Vos échéances et activités essentielles.</p>
         </div>
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="border-border bg-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border lg:grid-cols-4">
           {context.features.invoicing ? (
             <Kpi
               label={
@@ -237,7 +235,7 @@ function Kpi({
   return (
     <Link
       to={to}
-      className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring flex min-h-[4.75rem] items-center gap-2.5 rounded-xl border px-3 py-2.5 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
+      className="bg-surface hover:bg-surface-hover focus-visible:ring-ring flex min-h-[4.75rem] items-center gap-2.5 px-3 py-2.5 transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none"
     >
       <span
         className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}
@@ -279,10 +277,10 @@ function Section({
 }) {
   const empty = !query.isPending && !query.isError && (query.data?.length ?? 0) === 0;
   return (
-    <Card className="border-border/80 overflow-hidden rounded-2xl shadow-xs">
+    <Card className="border-border/80 overflow-hidden rounded-lg shadow-none">
       <CardHeader className="border-border/70 bg-surface-sunken/25 flex flex-row items-center justify-between space-y-0 border-b px-4 py-3">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <span className="bg-primary-subtle text-primary flex size-8 items-center justify-center rounded-xl">
+          <span className="bg-primary-subtle text-primary flex size-8 items-center justify-center rounded-lg">
             <Icon className="size-4" aria-hidden="true" />
           </span>
           {title}

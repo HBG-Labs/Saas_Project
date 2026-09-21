@@ -422,10 +422,10 @@ export default function BillingPage() {
                     }
                   }}
                   aria-current={isCurrent ? 'true' : undefined}
-                  className={`h-auto min-h-[112px] w-full flex-col items-start justify-center gap-2 rounded-xl p-4 text-left whitespace-normal transition-[border-color,background-color,box-shadow,transform] sm:h-auto ${
+                  className={`h-auto min-h-[112px] w-full flex-col items-start justify-center gap-2 rounded-lg p-4 text-left whitespace-normal transition-colors sm:h-auto ${
                     isCurrent
                       ? 'border-primary/60 bg-primary/[0.07] cursor-default shadow-xs disabled:opacity-100'
-                      : 'hover:border-primary/40 hover:bg-surface-hover hover:shadow-raised hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
+                      : 'hover:border-primary/40 hover:bg-surface-hover'
                   }`}
                 >
                   <div className="flex w-full items-center justify-between gap-2">
@@ -439,7 +439,7 @@ export default function BillingPage() {
                       ) : null}
                     </span>
                     {tier.popular && !isCurrent ? (
-                      <span className="border-primary/30 bg-primary/10 text-primary rounded-md border px-1.5 py-0.5 text-[10px] font-bold">
+                      <span className="border-primary/30 bg-primary/10 text-primary text-3xs rounded-md border px-1.5 py-0.5 font-bold">
                         Populaire
                       </span>
                     ) : null}

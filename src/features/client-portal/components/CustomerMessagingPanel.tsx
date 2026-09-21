@@ -42,7 +42,10 @@ export interface CustomerMessagingPanelProps {
   customerId: string;
 }
 
-const STATUS_LABELS: Record<ClientMessageStatus, { label: string; tone: 'muted' | 'success' | 'error' }> = {
+const STATUS_LABELS: Record<
+  ClientMessageStatus,
+  { label: string; tone: 'muted' | 'success' | 'error' }
+> = {
   queued: { label: 'En attente', tone: 'muted' },
   sent: { label: 'Envoyé', tone: 'muted' },
   delivered: { label: 'Distribué', tone: 'success' },
@@ -58,7 +61,11 @@ function dateHeure(iso: string): string {
 
 function nomContact(c: ClientConversationWithContact['contact']): string {
   if (c === null) return 'Contact';
-  return [c.first_name, c.last_name].filter((p) => p !== null && p !== '').join(' ') || c.email || 'Contact';
+  return (
+    [c.first_name, c.last_name].filter((p) => p !== null && p !== '').join(' ') ||
+    c.email ||
+    'Contact'
+  );
 }
 
 /**
@@ -67,7 +74,10 @@ function nomContact(c: ClientConversationWithContact['contact']): string {
  * Mobile d'abord : une seule colonne — la liste des conversations, puis le
  * fil quand on en ouvre une. Sur écran large, les deux côte à côte.
  */
-export function CustomerMessagingPanel({ organizationId, customerId }: CustomerMessagingPanelProps) {
+export function CustomerMessagingPanel({
+  organizationId,
+  customerId,
+}: CustomerMessagingPanelProps) {
   const access = useClientPortalAccess();
   const conversations = useClientConversations(organizationId, customerId, access.canView);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -92,15 +102,19 @@ export function CustomerMessagingPanel({ organizationId, customerId }: CustomerM
     <div className="space-y-4">
       {!access.isEnabled ? (
         <p className="border-warning-border bg-warning-subtle text-warning rounded-xl border p-3 text-xs">
-          Le portail client est désactivé pour votre entreprise : les messages envoyés partent par e-mail,
-          mais le client ne pourra pas consulter l’échange en ligne.
+          Le portail client est désactivé pour votre entreprise : les messages envoyés partent par
+          e-mail, mais le client ne pourra pas consulter l’échange en ligne.
         </p>
       ) : null}
 
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-foreground text-sm font-semibold">Conversations</h3>
         {access.canSend ? (
-          <SendToClientDialog customerId={customerId} trigger={<WriteToClientButton />} onSent={setSelectedId} />
+          <SendToClientDialog
+            customerId={customerId}
+            trigger={<WriteToClientButton />}
+            onSent={setSelectedId}
+          />
         ) : null}
       </div>
 
@@ -112,7 +126,12 @@ export function CustomerMessagingPanel({ organizationId, customerId }: CustomerM
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <ul className={cn('divide-border border-border divide-y rounded-xl border', selected !== null && 'hidden lg:block')}>
+          <ul
+            className={cn(
+              'divide-border border-border divide-y rounded-xl border',
+              selected !== null && 'hidden lg:block',
+            )}
+          >
             {list.map((conversation) => {
               const isActive = conversation.id === selectedId;
               return (
@@ -131,22 +150,32 @@ export function CustomerMessagingPanel({ organizationId, customerId }: CustomerM
                       <span
                         className={cn(
                           'truncate text-sm',
-                          conversation.unread_count > 0 ? 'text-foreground font-semibold' : 'text-foreground',
+                          conversation.unread_count > 0
+                            ? 'text-foreground font-semibold'
+                            : 'text-foreground',
                         )}
                       >
                         {conversation.subject}
                       </span>
                       {conversation.unread_count > 0 ? (
-                        <Badge variant="primary" aria-label={`${conversation.unread_count} non lu(s)`}>
+                        <Badge
+                          variant="primary"
+                          aria-label={`${conversation.unread_count} non lu(s)`}
+                        >
                           {conversation.unread_count}
                         </Badge>
                       ) : conversation.status === 'closed' ? (
-                        <Lock className="text-muted-foreground size-3.5 shrink-0" aria-label="Close" />
+                        <Lock
+                          className="text-muted-foreground size-3.5 shrink-0"
+                          aria-label="Close"
+                        />
                       ) : null}
                     </div>
                     <span className="text-muted-foreground truncate text-xs">
                       {nomContact(conversation.contact)}
-                      {conversation.last_message_at !== null ? ` · ${dateHeure(conversation.last_message_at)}` : ''}
+                      {conversation.last_message_at !== null
+                        ? ` · ${dateHeure(conversation.last_message_at)}`
+                        : ''}
                     </span>
                   </button>
                 </li>
@@ -220,7 +249,13 @@ function ConversationThread({
   return (
     <div className="border-border flex min-h-[24rem] flex-col rounded-xl border">
       <div className="border-border flex items-center gap-2 border-b px-3 py-2">
-        <Button variant="ghost" size="icon-sm" className="lg:hidden" onClick={onBack} aria-label="Retour aux conversations">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="lg:hidden"
+          onClick={onBack}
+          aria-label="Retour aux conversations"
+        >
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1">
@@ -269,10 +304,12 @@ function ConversationThread({
                 <div
                   className={cn(
                     'max-w-[85%] space-y-1 rounded-2xl px-3 py-2 text-sm sm:max-w-[75%]',
-                    mine ? 'bg-primary text-primary-foreground' : 'bg-surface-sunken text-foreground',
+                    mine
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-surface-sunken text-foreground',
                   )}
                 >
-                  <p className="whitespace-pre-wrap break-words">{message.body_text}</p>
+                  <p className="break-words whitespace-pre-wrap">{message.body_text}</p>
                   {message.attachments.length > 0 ? (
                     <ul className="space-y-1">
                       {message.attachments.map((piece) => (
@@ -280,11 +317,23 @@ function ConversationThread({
                       ))}
                     </ul>
                   ) : null}
-                  <p className={cn('flex items-center gap-1 text-[11px]', mine ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
-                    {message.channel === 'email' && !mine ? <Mail className="size-3" aria-label="Reçu par e-mail" /> : null}
+                  <p
+                    className={cn(
+                      'flex items-center gap-1 text-xs',
+                      mine ? 'text-primary-foreground/80' : 'text-muted-foreground',
+                    )}
+                  >
+                    {message.channel === 'email' && !mine ? (
+                      <Mail className="size-3" aria-label="Reçu par e-mail" />
+                    ) : null}
                     {dateHeure(message.created_at)}
                     {mine ? (
-                      <span className={cn('ml-1 inline-flex items-center gap-0.5', status.tone === 'error' && 'text-warning font-semibold')}>
+                      <span
+                        className={cn(
+                          'ml-1 inline-flex items-center gap-0.5',
+                          status.tone === 'error' && 'text-warning font-semibold',
+                        )}
+                      >
                         {status.tone === 'error' ? (
                           <AlertTriangle className="size-3" />
                         ) : message.status === 'delivered' ? (
@@ -297,7 +346,7 @@ function ConversationThread({
                     ) : null}
                   </p>
                   {mine && message.error !== null ? (
-                    <p className="text-primary-foreground/90 text-[11px] italic">{message.error}</p>
+                    <p className="text-primary-foreground/90 text-xs italic">{message.error}</p>
                   ) : null}
                 </div>
               </div>
@@ -317,7 +366,8 @@ function ConversationThread({
           <FormError error={sendError} />
           {lastOutcome === 'failed' ? (
             <p className="text-error text-xs" role="alert">
-              Le message est enregistré mais l’e-mail n’est pas parti. Le motif est affiché sous le message.
+              Le message est enregistré mais l’e-mail n’est pas parti. Le motif est affiché sous le
+              message.
             </p>
           ) : lastOutcome === 'sent' ? (
             <p className="text-success text-xs" role="status">
@@ -328,7 +378,9 @@ function ConversationThread({
             label="Votre message"
             hideLabel
             rows={3}
-            placeholder={isClosed ? 'Conversation close — rouvrez-la pour écrire.' : 'Écrire au client…'}
+            placeholder={
+              isClosed ? 'Conversation close — rouvrez-la pour écrire.' : 'Écrire au client…'
+            }
             value={draft}
             maxLength={20000}
             disabled={isClosed || send.isPending}
@@ -337,7 +389,11 @@ function ConversationThread({
             }}
           />
           <div className="flex justify-end">
-            <Button type="submit" size="sm" disabled={isClosed || send.isPending || draft.trim().length === 0}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isClosed || send.isPending || draft.trim().length === 0}
+            >
               <Send className="size-4" />
               {send.isPending ? 'Envoi…' : 'Envoyer'}
             </Button>
@@ -353,7 +409,10 @@ function AttachmentLink({ piece, light }: { piece: ClientMessageAttachment; ligh
     <li>
       <button
         type="button"
-        className={cn('inline-flex items-center gap-1 text-xs underline', light ? 'text-primary-foreground' : 'text-primary')}
+        className={cn(
+          'inline-flex items-center gap-1 text-xs underline',
+          light ? 'text-primary-foreground' : 'text-primary',
+        )}
         onClick={() => {
           void getMessageAttachmentUrl(piece.storage_path).then((url) => {
             if (url !== null) window.open(url, '_blank', 'noopener');

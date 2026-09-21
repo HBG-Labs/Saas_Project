@@ -57,7 +57,7 @@ export function AiSearchHistoryDrawer({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="data-[state=open]:animate-in data-[state=open]:fade-in fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" />
+        <Dialog.Overlay className="bg-foreground/40 data-[state=open]:animate-in data-[state=open]:fade-in fixed inset-0 z-50 backdrop-blur-xs" />
         <Dialog.Content className="border-border bg-surface text-foreground shadow-overlay data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-right fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-sm flex-col border-l focus-visible:outline-none">
           {/* En-tête du volet */}
           <div className="border-border flex items-center justify-between border-b p-4">
@@ -122,7 +122,7 @@ export function AiSearchHistoryDrawer({
               filteredHistory.map((item) => (
                 <div
                   key={item.id}
-                  className="group hover:border-border hover:bg-surface-hover relative flex items-center justify-between rounded-xl border border-transparent p-2.5 transition-[background-color,border-color]"
+                  className="group hover:border-border hover:bg-surface-hover relative flex items-center justify-between rounded-lg border border-transparent p-2.5 transition-[background-color,border-color]"
                 >
                   <button
                     type="button"
@@ -140,7 +140,7 @@ export function AiSearchHistoryDrawer({
                       <p className="text-foreground group-hover:text-primary line-clamp-2 text-xs font-medium transition-colors">
                         {item.query}
                       </p>
-                      <p className="text-muted-foreground mt-0.5 text-[10px]">
+                      <p className="text-3xs text-muted-foreground mt-0.5">
                         {formatRelativeTime(item.timestamp) || 'Récemment'}
                       </p>
                     </div>

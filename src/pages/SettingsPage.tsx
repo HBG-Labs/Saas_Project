@@ -56,7 +56,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <div className="relative min-w-0 lg:sticky lg:top-4">
           <nav
-            className="no-scrollbar border-border lg:bg-surface-raised flex gap-1.5 overflow-x-auto border-b pr-8 pb-2 lg:flex-col lg:overflow-visible lg:rounded-xl lg:border lg:p-2 lg:shadow-xs"
+            className="no-scrollbar border-border lg:bg-surface-raised flex gap-1.5 overflow-x-auto border-b pr-8 pb-2 lg:flex-col lg:overflow-visible lg:rounded-lg lg:border lg:p-2"
             aria-label="Catégories de paramètres"
           >
             {tabs.map((tab) => {
@@ -70,9 +70,9 @@ export default function SettingsPage() {
                   aria-pressed={isActive}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'min-h-touch flex shrink-0 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-[color,background-color,box-shadow] lg:w-full',
+                    'min-h-touch flex shrink-0 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors lg:w-full',
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-xs'
+                      ? 'bg-primary-subtle text-primary'
                       : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                   )}
                 >
@@ -86,7 +86,7 @@ export default function SettingsPage() {
             })}
           </nav>
 
-          <div className="from-background via-background/90 pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-end bg-gradient-to-l to-transparent pr-1 lg:hidden">
+          <div className="border-border bg-background/95 pointer-events-none absolute inset-y-0 right-0 flex w-9 items-center justify-end border-l pr-1 lg:hidden">
             <ChevronRight className="text-primary size-4" aria-hidden="true" />
           </div>
         </div>

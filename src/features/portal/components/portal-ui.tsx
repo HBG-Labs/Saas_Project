@@ -60,16 +60,13 @@ export function PortalPageHeader({
   }
 
   return (
-    <header className="border-border bg-surface relative mb-4 overflow-hidden rounded-2xl border p-4 shadow-xs sm:p-5">
-      <span
-        className="from-primary via-info to-accent absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r"
-        aria-hidden="true"
-      />
+    <header className="border-border bg-surface relative mb-4 overflow-hidden rounded-lg border p-4 sm:p-5">
+      <span className="bg-primary absolute inset-y-0 left-0 w-1" aria-hidden="true" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span
             className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-xl sm:size-12',
+              'flex size-11 shrink-0 items-center justify-center rounded-lg sm:size-12',
               HEADER_TONES[tone],
             )}
           >

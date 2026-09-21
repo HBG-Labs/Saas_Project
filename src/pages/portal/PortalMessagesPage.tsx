@@ -86,7 +86,7 @@ export default function PortalMessagesPage() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <ul
             className={cn(
-              'divide-border border-border bg-surface divide-y overflow-hidden rounded-2xl border shadow-xs',
+              'divide-border border-border bg-surface divide-y overflow-hidden rounded-lg border',
               selected !== null && 'hidden lg:block',
             )}
           >
@@ -146,7 +146,7 @@ export default function PortalMessagesPage() {
           </ul>
 
           {selected === null ? (
-            <div className="border-border bg-surface hidden min-h-[30rem] flex-col items-center justify-center rounded-2xl border p-8 text-center shadow-xs lg:flex">
+            <div className="border-border bg-surface hidden min-h-[30rem] flex-col items-center justify-center rounded-lg border p-8 text-center lg:flex">
               <span className="bg-accent-subtle text-accent flex size-12 items-center justify-center rounded-2xl">
                 <MessageSquare className="size-6" aria-hidden="true" />
               </span>
@@ -194,7 +194,7 @@ function Thread({
   const isClosed = conversation.status === 'closed';
 
   return (
-    <section className="border-border bg-surface flex h-[calc(100dvh-9.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border shadow-xs lg:h-[40rem]">
+    <section className="border-border bg-surface flex h-[calc(100dvh-9.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-lg border lg:h-[40rem]">
       <header className="border-border bg-surface-sunken/40 flex items-center gap-2 border-b px-3 py-2.5 sm:px-4">
         <Button
           variant="ghost"
@@ -256,7 +256,7 @@ function Thread({
                   )}
                 >
                   {!mine ? (
-                    <p className="text-muted-foreground text-[11px] font-semibold">
+                    <p className="text-muted-foreground text-xs font-semibold">
                       {organizationName}
                     </p>
                   ) : null}
@@ -278,7 +278,7 @@ function Thread({
                   ) : null}
                   <p
                     className={cn(
-                      'text-[11px]',
+                      'text-xs',
                       mine ? 'text-primary-foreground/80' : 'text-muted-foreground',
                     )}
                   >

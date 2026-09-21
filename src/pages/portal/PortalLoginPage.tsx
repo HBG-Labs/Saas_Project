@@ -76,26 +76,20 @@ export default function PortalLoginPage() {
         écran large. Il dit à quoi sert cet espace avant même de demander
         une adresse.
       */}
-      <aside className="from-primary via-primary text-primary-foreground relative overflow-hidden bg-gradient-to-br to-blue-500 px-6 py-8 lg:flex lg:w-[46%] lg:flex-col lg:justify-between lg:px-12 lg:py-14">
-        <div
-          className="pointer-events-none absolute -top-16 -right-16 size-64 rounded-full bg-white/10 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-10 size-72 rounded-full bg-white/10 blur-3xl"
-          aria-hidden="true"
-        />
-        <div className="relative">
-          <p className="text-xs font-semibold tracking-[0.2em] text-white/80 uppercase">REZO360</p>
+      <aside className="bg-primary text-primary-foreground px-6 py-8 lg:flex lg:w-[46%] lg:flex-col lg:justify-between lg:px-12 lg:py-14">
+        <div>
+          <p className="text-primary-foreground/80 text-xs font-semibold tracking-[0.2em] uppercase">
+            REZO360
+          </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight lg:text-4xl">
             Votre espace client
           </h2>
-          <p className="mt-2 max-w-md text-sm text-white/85 lg:text-base">
+          <p className="text-primary-foreground/85 mt-2 max-w-md text-sm lg:text-base">
             Suivez vos interventions, retrouvez vos devis et factures, et échangez avec votre
             prestataire — en toute sécurité, sans mot de passe à retenir.
           </p>
         </div>
-        <ul className="relative mt-6 hidden gap-3 lg:grid">
+        <ul className="border-primary-foreground/20 mt-8 hidden divide-y border-y lg:block">
           {[
             [
               Wrench,
@@ -110,14 +104,16 @@ export default function PortalLoginPage() {
             return (
               <li
                 key={titre as string}
-                className="flex items-start gap-3 rounded-xl bg-white/10 p-3 ring-1 ring-white/15"
+                className="border-primary-foreground/20 flex items-start gap-3 py-4"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/15">
+                <span className="bg-primary-foreground/15 flex size-9 shrink-0 items-center justify-center rounded-lg">
                   <I className="size-4" aria-hidden="true" />
                 </span>
                 <span>
                   <span className="block text-sm font-semibold">{titre as string}</span>
-                  <span className="block text-xs text-white/80">{texte as string}</span>
+                  <span className="text-primary-foreground/80 block text-xs">
+                    {texte as string}
+                  </span>
                 </span>
               </li>
             );
@@ -126,7 +122,7 @@ export default function PortalLoginPage() {
       </aside>
 
       <div className="flex flex-1 items-start justify-center px-4 py-6 sm:py-8 lg:items-center lg:px-12">
-        <Card className="w-full max-w-md rounded-2xl shadow-md">
+        <Card className="shadow-raised w-full max-w-md rounded-lg">
           <CardContent className="space-y-5 p-6 sm:p-8">
             <div className="space-y-1">
               <span className="bg-primary-subtle text-primary inline-flex size-10 items-center justify-center rounded-xl">

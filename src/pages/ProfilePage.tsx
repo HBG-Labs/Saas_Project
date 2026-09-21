@@ -374,10 +374,8 @@ export default function ProfilePage() {
         description="Gérez vos données professionnelles, vos habilitations techniques, votre matériel attribué et vos préférences d'intervention."
       />
 
-      <Card className="border-primary/20 bg-surface-raised text-foreground shadow-raised relative overflow-hidden p-4 sm:p-6">
-        <div className="bg-primary/5 pointer-events-none absolute -top-16 -right-12 size-44 rounded-full blur-3xl" />
-
-        <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+      <Card className="border-primary/20 bg-surface-raised text-foreground p-4 sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5 md:w-auto">
             <div className="group relative">
               <button
@@ -390,11 +388,11 @@ export default function ProfilePage() {
                   avatarId={avatarId}
                   name={profile.displayName}
                   size="lg"
-                  className="ring-primary/20 size-20 text-xl font-bold shadow-lg ring-4 transition-transform group-hover:scale-105"
+                  className="ring-primary/20 size-20 text-xl font-bold shadow-xs ring-4"
                 />
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                <div className="bg-foreground/75 text-background absolute inset-0 flex flex-col items-center justify-center rounded-full opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
                   <Camera className="size-5" />
-                  <span className="mt-0.5 text-[9px] font-bold">Modifier</span>
+                  <span className="text-3xs mt-0.5 font-bold">Modifier</span>
                 </div>
               </button>
             </div>
@@ -585,7 +583,7 @@ export default function ProfilePage() {
                     return (
                       <div
                         key={cert.id}
-                        className="border-border bg-surface-raised hover:border-primary/35 hover:shadow-raised flex items-start gap-3 rounded-xl border p-3 transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:hover:-translate-y-0.5"
+                        className="border-border bg-surface-raised hover:border-primary/35 flex items-start gap-3 rounded-lg border p-3 transition-colors"
                       >
                         {isElec ? (
                           <Zap className="text-warning mt-0.5 size-5 shrink-0" />

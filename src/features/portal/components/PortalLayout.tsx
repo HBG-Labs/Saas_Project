@@ -85,7 +85,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             variant === 'side' && 'transition-colors',
             isActive
               ? variant === 'side'
-                ? 'bg-primary text-primary-foreground shadow-sm'
+                ? 'bg-primary-subtle text-primary'
                 : 'text-primary'
               : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
           )
@@ -111,7 +111,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
             {badge !== null ? (
               <span
                 className={cn(
-                  'rounded-full px-1.5 text-[10px] leading-4 font-bold',
+                  'text-3xs rounded-full px-1.5 leading-4 font-bold',
                   variant === 'bottom'
                     ? 'bg-accent text-accent-foreground absolute top-1 right-1/4'
                     : isActive
@@ -138,12 +138,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         Aller au contenu principal
       </a>
 
-      {/*
-        En-tête aux couleurs de la marque : dégradé de `primary`, texte en
-        `primary-foreground` — identique en thème clair et sombre, et
-        immédiatement distinct de l'espace entreprise.
-      */}
-      <header className="from-primary via-primary text-primary-foreground sticky top-0 z-40 bg-gradient-to-r to-blue-500 shadow-md">
+      <header className="border-primary/25 bg-primary text-primary-foreground sticky top-0 z-40 border-b shadow-xs">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-16">
           <Link
             to={ROUTES.portal}
@@ -151,25 +146,25 @@ export function PortalLayout({ context }: { context: PortalContext }) {
           >
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm font-bold uppercase shadow-inner ring-1 ring-white/30"
+              className="bg-primary-foreground/15 ring-primary-foreground/30 flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold uppercase ring-1"
             >
               {initiales(context.organization_name)}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold">{context.organization_name}</span>
-              <span className="text-3xs block truncate text-white/80">
+              <span className="text-primary-foreground/80 text-3xs block truncate">
                 Espace client · {context.customer_name}
               </span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="hidden max-w-[16rem] truncate text-xs text-white/80 sm:inline">
+            <span className="text-primary-foreground/80 hidden max-w-[16rem] truncate text-xs sm:inline">
               {context.contact_email}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary-foreground hover:text-primary-foreground hover:bg-white/15"
+              className="text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/15"
               aria-label="Se déconnecter de l’espace client"
               onClick={() => {
                 void handleSignOut();
@@ -187,11 +182,11 @@ export function PortalLayout({ context }: { context: PortalContext }) {
           <div className="sticky top-24 space-y-3">
             <nav
               aria-label="Navigation du portail"
-              className="border-border bg-surface space-y-1 rounded-2xl border p-2 shadow-xs"
+              className="border-border bg-surface space-y-1 rounded-lg border p-2"
             >
               {items.map((item) => renderLink(item, 'side'))}
             </nav>
-            <div className="border-border bg-surface-subtle rounded-2xl border p-3">
+            <div className="border-border bg-surface-subtle rounded-lg border p-3">
               <p className="text-foreground text-xs font-semibold">Une question ?</p>
               <p className="text-muted-foreground text-3xs mt-1">
                 Écrivez à {context.organization_name} depuis la messagerie, ou répondez simplement à
@@ -211,7 +206,7 @@ export function PortalLayout({ context }: { context: PortalContext }) {
 
       <nav
         aria-label="Navigation du portail"
-        className="border-border bg-surface/95 safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur-sm md:hidden"
+        className="border-border bg-surface/95 safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t backdrop-blur-sm md:hidden"
       >
         {items.map((item) => renderLink(item, 'bottom'))}
       </nav>
