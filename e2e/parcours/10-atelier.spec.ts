@@ -33,7 +33,8 @@ test.describe('Atelier — fondations validées', () => {
         height: element.getBoundingClientRect().height,
         fontSize: getComputedStyle(element).fontSize,
       }));
-      expect(input.height).toBeGreaterThanOrEqual(isMobile ? 44 : 36);
+      expect(input.height).toBeGreaterThanOrEqual(isMobile ? 40 : 36);
+      if (isMobile) expect(input.height).toBeLessThanOrEqual(40);
       if (isMobile) expect(parseFloat(input.fontSize)).toBeGreaterThanOrEqual(16);
       await action.click();
       await expect(page.getByRole('dialog')).toBeVisible();

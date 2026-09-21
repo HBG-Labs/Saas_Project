@@ -134,7 +134,7 @@ test.describe('Transversal Atelier', () => {
       profileFields.map(async (field) => Math.round((await field.boundingBox())?.height ?? 0)),
     );
     expect(new Set(fieldHeights).size).toBe(1);
-    expect(fieldHeights[0]).toBe(isMobile ? 44 : 48);
+    expect(fieldHeights[0]).toBe(isMobile ? 40 : 44);
 
     await page.getByRole('button', { name: /Notifications d'activité/ }).click();
     await expect(page.getByLabel('Centre de notifications')).toBeVisible();

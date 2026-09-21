@@ -833,12 +833,17 @@ html.compact-mode {
 }
 @media (max-width: 767px), (pointer: coarse) {
   .atelier-control,
-  input.atelier-field,
-  button.atelier-field,
   .atelier-nav-link,
   .atelier-nav-section,
   .atelier-menu-item {
     min-height: 44px;
+  }
+  /* Les champs visuels restent plus fins que les boutons de navigation. Le
+     texte demeure à 16 px, donc iOS ne zoome pas à la prise de focus. */
+  input.atelier-field,
+  button.atelier-field {
+    height: 40px;
+    min-height: 40px;
   }
   .atelier-icon-control {
     min-width: 44px;
@@ -850,20 +855,19 @@ html.compact-mode {
 }
 
 /*
-   La fiche profil reste compacte sur mobile sans descendre sous la cible
-   tactile accessible de 44 px. Cette règle est hors des layers afin de
-   l'emporter sur la hauteur générique de `.atelier-field` sans modifier les
-   autres formulaires de l'application.
+   La fiche profil utilise les mêmes champs compacts que le reste du produit.
+   Cette règle est hors des layers afin de l'emporter sur les anciennes
+   hauteurs locales sans modifier la typographie de saisie.
 */
 input.profile-form-field {
-  height: 44px;
-  min-height: 44px;
+  height: 40px;
+  min-height: 40px;
 }
 
 @media (min-width: 640px) {
   input.profile-form-field {
-    height: 48px;
-    min-height: 48px;
+    height: 44px;
+    min-height: 44px;
   }
 }
 
