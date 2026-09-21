@@ -126,6 +126,21 @@ test.describe('Responsive', () => {
     await expect(page.getByRole('link', { name: 'Nouvelle mission', exact: true })).toHaveCount(1);
     await expect(page.getByText('Créer une première mission', { exact: true })).toHaveCount(0);
     await expect(page.getByText('CSV', { exact: true })).toHaveCount(0);
+
+    const createButton = page.getByRole('link', { name: 'Nouvelle mission', exact: true });
+    const missionsTab = page.locator('main .atelier-action-tab').first();
+    const [buttonBox, tabBox] = await Promise.all([
+      createButton.boundingBox(),
+      missionsTab.boundingBox(),
+    ]);
+    expect(buttonBox).not.toBeNull();
+    expect(tabBox).not.toBeNull();
+    const buttonToTabsGap = (tabBox?.y ?? 0) - ((buttonBox?.y ?? 0) + (buttonBox?.height ?? 0));
+    expect(
+      buttonToTabsGap,
+      'le bouton vert doit être décollé des onglets de 8 px',
+    ).toBeGreaterThanOrEqual(7.5);
+
     await expectVerticalFit(page, 'missions vides');
 
     await page.goto('/controle');

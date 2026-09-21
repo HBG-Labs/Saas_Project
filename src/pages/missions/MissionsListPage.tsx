@@ -81,7 +81,7 @@ export default function MissionsListPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
-        className="mb-0 sm:flex-col xl:flex-row"
+        className="mb-0 gap-2 sm:flex-col sm:gap-4 xl:flex-row"
         title={jobPlural}
         description={
           canViewAll
@@ -90,7 +90,7 @@ export default function MissionsListPage() {
         }
         actions={
           hasMissions || canCreate ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-0">
               {hasMissions ? (
                 <>
                   <Button
