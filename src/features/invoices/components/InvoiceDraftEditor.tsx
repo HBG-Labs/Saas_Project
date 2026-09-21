@@ -1,10 +1,11 @@
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileCheck2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { FormError } from '@/components/feedback/FormError';
+import { DocumentWizardStepper } from '@/components/finance/DocumentWizardStepper';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -74,9 +75,20 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 const nullable = (value: string) => value || null;
 
+const INVOICE_STEPS = [
+  { label: 'Client', description: 'Vérifiez l’identité et l’adresse du destinataire.' },
+  { label: 'Prestations', description: 'Décrivez l’opération, les lignes et leur TVA.' },
+  { label: 'Conditions', description: 'Complétez l’échéance et les modalités de règlement.' },
+  { label: 'Validation', description: 'Contrôlez la facture avant d’enregistrer le brouillon.' },
+] as const;
+
+const formatMoney = (value: number) =>
+  value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: () => void }) {
   const save = useSaveInvoiceDraft(invoice.id);
   const customer = useCustomer(invoice.customer_id ?? undefined);
+  const [currentStep, setCurrentStep] = useState(0);
   const needsOperationSuggestion =
     invoice.operation_type === null || invoice.operation_type === undefined;
   const needsEarlyPaymentSuggestion =
@@ -133,6 +145,23 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
     control,
     name: ['type', 'country', 'registrationNumber', 'vatNumber'],
   });
+  const customerName = useWatch({ control, name: 'name' });
+  const serviceDate = useWatch({ control, name: 'serviceDate' });
+  const operationType = useWatch({ control, name: 'operationType' });
+  const watchedItems = useWatch({ control, name: 'items' }) ?? [];
+  const totals = watchedItems.reduce(
+    (sum, item) => {
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.price) || 0;
+      const rate = Number(item.rate) || 0;
+      const lineTotal = quantity * unitPrice;
+      sum.excludingTax += lineTotal;
+      sum.vat += (lineTotal * rate) / 100;
+      return sum;
+    },
+    { excludingTax: 0, vat: 0 },
+  );
+  const totalIncludingTax = totals.excludingTax + totals.vat;
   const professional = customerType === 'company' || customerType === 'public_body';
   const registrationIssue = professional
     ? frenchRegistrationError(registrationNumber, country)
@@ -158,57 +187,90 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
       setValue(key, values[key], { shouldDirty: true });
     setRefreshed(true);
   }
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      await save.mutateAsync({
-        patch: {
-          customer_name: nullable(values.name),
-          customer_legal_name: nullable(values.legalName),
-          customer_type: values.type || null,
-          customer_registration_number: nullable(values.registrationNumber),
-          customer_vat_number: nullable(values.vatNumber),
-          customer_address_line1: nullable(values.address),
-          customer_address_line2: nullable(values.addressLine2),
-          customer_postal_code: nullable(values.postalCode),
-          customer_city: nullable(values.city),
-          customer_country: nullable(values.country),
-          service_date: nullable(values.serviceDate),
-          operation_type: values.operationType || null,
-          buyer_reference: nullable(values.buyerReference),
-          purchase_order_reference: nullable(values.purchaseOrderReference),
-          delivery_address_line1: nullable(values.deliveryAddress),
-          delivery_address_line2: nullable(values.deliveryAddressLine2),
-          delivery_postal_code: nullable(values.deliveryPostalCode),
-          delivery_city: nullable(values.deliveryCity),
-          delivery_country: nullable(values.deliveryCountry),
-          early_payment_terms: nullable(values.earlyPaymentTerms),
-          late_payment_terms: nullable(values.latePaymentTerms),
-          vat_on_debits: values.vatOnDebits === '' ? null : values.vatOnDebits === 'yes',
-          due_date: nullable(values.dueDate),
-          payment_terms: nullable(values.terms),
-          payment_method: nullable(values.method),
-        },
-        expectedUpdatedAt: invoice.updated_at,
-        items: values.items.map((item) => ({
-          description: item.description,
-          unit: item.unit,
-          quantity: Number(item.quantity),
-          priceEuros: Number(item.price),
-          vatRate: Number(item.rate),
-          vatCategory: item.category,
-          vatExemptionReason: item.exemption,
-        })),
-      });
-      onClose();
-    } catch {
-      /* L'erreur reste visible ; aucune saisie n'est effacée. */
-    }
-  });
+  const onSubmit = handleSubmit(
+    async (values) => {
+      try {
+        await save.mutateAsync({
+          patch: {
+            customer_name: nullable(values.name),
+            customer_legal_name: nullable(values.legalName),
+            customer_type: values.type || null,
+            customer_registration_number: nullable(values.registrationNumber),
+            customer_vat_number: nullable(values.vatNumber),
+            customer_address_line1: nullable(values.address),
+            customer_address_line2: nullable(values.addressLine2),
+            customer_postal_code: nullable(values.postalCode),
+            customer_city: nullable(values.city),
+            customer_country: nullable(values.country),
+            service_date: nullable(values.serviceDate),
+            operation_type: values.operationType || null,
+            buyer_reference: nullable(values.buyerReference),
+            purchase_order_reference: nullable(values.purchaseOrderReference),
+            delivery_address_line1: nullable(values.deliveryAddress),
+            delivery_address_line2: nullable(values.deliveryAddressLine2),
+            delivery_postal_code: nullable(values.deliveryPostalCode),
+            delivery_city: nullable(values.deliveryCity),
+            delivery_country: nullable(values.deliveryCountry),
+            early_payment_terms: nullable(values.earlyPaymentTerms),
+            late_payment_terms: nullable(values.latePaymentTerms),
+            vat_on_debits: values.vatOnDebits === '' ? null : values.vatOnDebits === 'yes',
+            due_date: nullable(values.dueDate),
+            payment_terms: nullable(values.terms),
+            payment_method: nullable(values.method),
+          },
+          expectedUpdatedAt: invoice.updated_at,
+          items: values.items.map((item) => ({
+            description: item.description,
+            unit: item.unit,
+            quantity: Number(item.quantity),
+            priceEuros: Number(item.price),
+            vatRate: Number(item.rate),
+            vatCategory: item.category,
+            vatExemptionReason: item.exemption,
+          })),
+        });
+        onClose();
+      } catch {
+        /* L'erreur reste visible ; aucune saisie n'est effacée. */
+      }
+    },
+    (formErrors) => {
+      const clientFields = [
+        'name',
+        'legalName',
+        'type',
+        'registrationNumber',
+        'vatNumber',
+        'address',
+        'addressLine2',
+        'postalCode',
+        'city',
+        'country',
+      ] as const;
+      const conditionFields = [
+        'earlyPaymentTerms',
+        'latePaymentTerms',
+        'dueDate',
+        'terms',
+        'method',
+      ] as const;
+
+      if (clientFields.some((field) => formErrors[field])) setCurrentStep(0);
+      else if (conditionFields.some((field) => formErrors[field])) setCurrentStep(2);
+      else setCurrentStep(1);
+    },
+  );
   const error = (name: keyof Values) =>
     errors[name]?.message ? { error: errors[name].message } : {};
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-6">
       <FormError error={save.error} />
+      <DocumentWizardStepper
+        steps={INVOICE_STEPS}
+        currentStep={currentStep}
+        onStepChange={setCurrentStep}
+        label="Correction de la facture"
+      />
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
         {hasSuggestions && (
           <p
@@ -219,7 +281,10 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             enregistrez le brouillon pour les conserver.
           </p>
         )}
-        <section className="space-y-4" aria-label="Destinataire de la facture">
+        <section
+          className={currentStep === 0 ? 'space-y-4' : 'hidden'}
+          aria-label="Destinataire de la facture"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-foreground text-sm font-semibold">Destinataire</h3>
             {invoice.customer_id && (
@@ -307,7 +372,10 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             <Input label="Pays" {...register('country')} {...error('country')} />
           </div>
         </section>
-        <section className="border-border space-y-4 border-t pt-5" aria-label="Opération facturée">
+        <section
+          className={currentStep === 1 ? 'space-y-4' : 'hidden'}
+          aria-label="Opération facturée"
+        >
           <h3 className="text-foreground text-sm font-semibold">Opération facturée</h3>
           <Input
             label="Date de prestation ou de livraison"
@@ -386,7 +454,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             </div>
           </details>
         </section>
-        <section className="border-border space-y-4 border-t pt-5" aria-label="Règlement">
+        <section className={currentStep === 2 ? 'space-y-4' : 'hidden'} aria-label="Règlement">
           <h3 className="text-foreground text-sm font-semibold">Règlement</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
@@ -417,7 +485,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
           />
         </section>
         <section
-          className="border-border space-y-4 border-t pt-5"
+          className={currentStep === 1 ? 'border-border space-y-4 border-t pt-5' : 'hidden'}
           aria-label="Lignes de la facture"
         >
           <h3 className="text-foreground text-sm font-semibold">Prestations et TVA</h3>
@@ -538,18 +606,121 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             Ajouter une prestation
           </Button>
         </section>
-      </fieldset>
-      <div className="border-border bg-surface-raised sticky bottom-0 flex justify-end gap-2 border-t py-3">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-          Annuler
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+
+        <section
+          className={currentStep === 3 ? 'space-y-4' : 'hidden'}
+          aria-label="Validation de la facture"
         >
-          {isSubmitting ? 'Enregistrement…' : 'Enregistrer le brouillon'}
-        </Button>
+          <div className="flex items-start gap-3">
+            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+              <FileCheck2 className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="text-foreground text-sm font-semibold">Vérification du brouillon</h3>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Revenez à une étape pour corriger une information avant l’enregistrement.
+              </p>
+            </div>
+          </div>
+
+          <div className="border-border bg-surface grid gap-3 rounded-xl border p-4 text-xs sm:grid-cols-2">
+            <div>
+              <p className="text-muted-foreground">Destinataire</p>
+              <p className="text-foreground mt-1 font-semibold">
+                {customerName.trim() || 'Non renseigné'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Date de prestation</p>
+              <p className="text-foreground mt-1 font-semibold">
+                {serviceDate || 'Non renseignée'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Nature de l’opération</p>
+              <p className="text-foreground mt-1 font-semibold">
+                {operationType === 'goods'
+                  ? 'Vente de biens'
+                  : operationType === 'services'
+                    ? 'Prestation de services'
+                    : operationType === 'mixed'
+                      ? 'Biens et services'
+                      : 'Non renseignée'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Prestations</p>
+              <p className="text-foreground mt-1 font-semibold">
+                {watchedItems.length} ligne{watchedItems.length > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+
+          <dl className="border-border bg-surface space-y-2 rounded-xl border p-4 text-sm">
+            <div className="text-muted-foreground flex items-center justify-between gap-4">
+              <dt>Total HT</dt>
+              <dd className="text-foreground font-semibold tabular-nums">
+                {formatMoney(totals.excludingTax)} €
+              </dd>
+            </div>
+            <div className="text-muted-foreground flex items-center justify-between gap-4">
+              <dt>TVA</dt>
+              <dd className="tabular-nums">{formatMoney(totals.vat)} €</dd>
+            </div>
+            <div className="border-border flex items-center justify-between gap-4 border-t pt-3">
+              <dt className="text-foreground font-bold">Total TTC</dt>
+              <dd className="text-primary text-lg font-bold tabular-nums">
+                {formatMoney(totalIncludingTax)} €
+              </dd>
+            </div>
+          </dl>
+
+          {(registrationIssue || vatIssue) && (
+            <p className="border-warning/30 bg-warning/10 text-foreground rounded-lg border px-3 py-2 text-xs">
+              Certains identifiants du client restent à vérifier avant l’émission. Le brouillon peut
+              néanmoins être enregistré.
+            </p>
+          )}
+        </section>
+      </fieldset>
+      <div className="border-border bg-surface-raised sticky bottom-0 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t px-5 py-3">
+        {currentStep > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCurrentStep((step) => step - 1)}
+            disabled={isSubmitting}
+            className="gap-1.5"
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+            Retour
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Annuler
+          </Button>
+        )}
+
+        {currentStep < INVOICE_STEPS.length - 1 ? (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => setCurrentStep((step) => step + 1)}
+            disabled={isSubmitting}
+            className="gap-1.5"
+          >
+            Continuer
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+          >
+            {isSubmitting ? 'Enregistrement…' : 'Enregistrer le brouillon'}
+          </Button>
+        )}
       </div>
     </form>
   );

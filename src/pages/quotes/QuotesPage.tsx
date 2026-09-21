@@ -2,6 +2,8 @@ import { SelectField } from '@/components/ui/SelectField';
 import { useRef, useState } from 'react';
 import {
   Calculator,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Trash2,
   FileText,
@@ -16,6 +18,7 @@ import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { DocumentWizardStepper } from '@/components/finance/DocumentWizardStepper';
 import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -62,6 +65,13 @@ const STANDARD_PRESETS: readonly { label: string; unit: string; priceEuros: numb
   { label: 'Mise en conformité & Contrôle sécurité', unit: 'Forfait', priceEuros: 180 },
   { label: 'Remplacement pièce d’usure / Composant', unit: 'Unité', priceEuros: 65 },
 ];
+
+const QUOTE_STEPS = [
+  { label: 'Client', description: 'Choisissez le client et le site d’intervention.' },
+  { label: 'Prestations', description: 'Ajoutez et chiffrez les prestations du devis.' },
+  { label: 'Conditions', description: 'Vérifiez la TVA et les modalités applicables.' },
+  { label: 'Validation', description: 'Contrôlez les montants avant l’enregistrement.' },
+] as const;
 
 export default function QuotesPage() {
   useDocumentTitle('Nouveau devis');
@@ -111,6 +121,15 @@ export default function QuotesPage() {
   const [submitError, setSubmitError] = useState<unknown>(null);
 
   const [items, setItems] = useState<QuoteLineItem[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const wizardRef = useRef<HTMLDivElement>(null);
+
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+    requestAnimationFrame(() =>
+      wizardRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }),
+    );
+  };
 
   /**
    * Compteur de lignes.
@@ -268,11 +287,20 @@ export default function QuotesPage() {
       />
       <SalesNavTabs />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div ref={wizardRef} className="scroll-mt-20">
+        <DocumentWizardStepper
+          steps={QUOTE_STEPS}
+          currentStep={currentStep}
+          onStepChange={goToStep}
+          label="Création du devis"
+        />
+      </div>
+
+      <div className="mx-auto max-w-4xl space-y-6">
         {/* Formulaire Chiffrage (2/3) */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-6">
           {/* Card Client & Site */}
-          <Card variant="section" className="pb-6">
+          <Card variant="section" className={cn('pb-6', currentStep !== 0 && 'hidden')}>
             <CardHeader className="px-0 pt-0 pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <Building className="text-primary size-4" />
@@ -312,7 +340,7 @@ export default function QuotesPage() {
           </Card>
 
           {/* Catalog Prestations Rapides */}
-          <Card variant="section" className="pb-6">
+          <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden')}>
             <CardHeader className="flex flex-col items-stretch gap-3 px-0 pt-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-muted-foreground flex min-w-0 items-start gap-2 text-xs font-bold tracking-wider uppercase sm:items-center">
                 <Sparkles className="text-warning mt-0.5 size-3.5 shrink-0 sm:mt-0" />
@@ -397,7 +425,7 @@ export default function QuotesPage() {
           </Card>
 
           {/* Lignes de devis */}
-          <Card variant="section" className="pb-6">
+          <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden')}>
             <CardHeader className="flex flex-row items-center justify-between px-0 pt-0 pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -531,8 +559,84 @@ export default function QuotesPage() {
           </Card>
         </div>
 
+        <Card variant="section" className={cn('pb-6', currentStep !== 2 && 'hidden')}>
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <FileText className="text-primary size-4" aria-hidden="true" />
+              Conditions du devis
+            </CardTitle>
+            <CardDescription>
+              Ces informations seront reprises sur le devis et dans son PDF.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 px-0 pt-0">
+            <div className="border-border bg-surface grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="quote-vat-rate"
+                  className="text-foreground block text-xs font-semibold"
+                >
+                  Taux de TVA
+                </label>
+                <div className="relative flex max-w-40 items-center">
+                  <input
+                    id="quote-vat-rate"
+                    type="text"
+                    inputMode="decimal"
+                    value={vatInput}
+                    onChange={(e) => setVatInput(e.target.value)}
+                    className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
+                  />
+                  <span className="text-muted-foreground absolute right-3 text-xs font-semibold">
+                    %
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { value: '8.5', label: '8,5 % Antilles' },
+                    { value: '20', label: '20 % Métropole' },
+                    { value: '0', label: '0 %' },
+                  ].map((rate) => (
+                    <button
+                      key={rate.value}
+                      type="button"
+                      onClick={() => setVatInput(rate.value)}
+                      className={cn(
+                        'min-h-touch cursor-pointer rounded-lg border px-2.5 text-xs transition-colors sm:min-h-8',
+                        vatInput === rate.value
+                          ? 'border-primary bg-primary/10 text-primary font-bold'
+                          : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      {rate.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <dl className="text-muted-foreground space-y-3 text-xs">
+                <div>
+                  <dt className="text-foreground font-semibold">Conditions d’acceptation</dt>
+                  <dd className="mt-1 leading-relaxed">
+                    {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-foreground font-semibold">Modalités de règlement</dt>
+                  <dd className="mt-1 leading-relaxed">
+                    {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Les textes par défaut se modifient dans les paramètres de l’entreprise.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Aperçu & Synthèse Financière (1/3) */}
-        <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+        <div className={cn('space-y-6', currentStep !== 3 && 'hidden')}>
           <Card className="border-primary/25 shadow-xs">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -556,62 +660,9 @@ export default function QuotesPage() {
                     {selectedSite?.name || siteName || '—'}
                   </strong>
                 </div>
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <div className="text-muted-foreground flex items-center justify-between">
-                    <span>Taux de TVA (%) :</span>
-                    <div className="relative flex w-24 items-center">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        aria-label="Taux de TVA, en pourcentage"
-                        value={vatInput}
-                        onChange={(e) => setVatInput(e.target.value)}
-                        className="border-border-strong bg-surface text-success focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border py-1 pr-6 pl-2 text-right text-xs font-bold focus:outline-none focus-visible:ring-2 sm:min-h-0"
-                      />
-                      <span className="text-2xs text-muted-foreground absolute right-2 font-semibold">
-                        %
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-3xs flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setVatInput('8.5')}
-                      className={cn(
-                        'min-h-touch shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
-                        vatRate === 8.5
-                          ? 'border-success/50 bg-success/10 text-success font-bold'
-                          : 'border-border text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      8.5% (Antilles)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVatInput('20')}
-                      className={cn(
-                        'min-h-touch shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
-                        vatRate === 20
-                          ? 'border-success/50 bg-success/10 text-success font-bold'
-                          : 'border-border text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      20% (Métro)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVatInput('0')}
-                      className={cn(
-                        'min-h-touch w-11 shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:w-auto sm:px-1.5 sm:py-0.5',
-                        vatRate === 0
-                          ? 'border-success/50 bg-success/10 text-success font-bold'
-                          : 'border-border text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      0%
-                    </button>
-                  </div>
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Taux de TVA :</span>
+                  <strong className="text-foreground">{vatRate} %</strong>
                 </div>
               </div>
 
@@ -632,20 +683,6 @@ export default function QuotesPage() {
 
               <div className="border-border space-y-2.5 border-t pt-4">
                 <FormError error={submitError} />
-
-                <Button
-                  variant="primary"
-                  onClick={handleSendQuote}
-                  disabled={createQuote.isPending}
-                  className="w-full cursor-pointer justify-center gap-2 font-semibold"
-                >
-                  <Send className="size-4" />
-                  {createQuote.isPending
-                    ? 'Enregistrement…'
-                    : savedReference !== null
-                      ? `Devis ${savedReference} enregistré`
-                      : 'Enregistrer le devis'}
-                </Button>
 
                 {/*
                   C'est précisément ce qui manquait : le devis était bien
@@ -673,6 +710,38 @@ export default function QuotesPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 -mx-4 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border">
+        {currentStep > 0 ? (
+          <Button variant="outline" onClick={() => goToStep(currentStep - 1)} className="gap-1.5">
+            <ChevronLeft className="size-4" aria-hidden="true" />
+            Retour
+          </Button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+
+        {currentStep < QUOTE_STEPS.length - 1 ? (
+          <Button variant="primary" onClick={() => goToStep(currentStep + 1)} className="gap-1.5">
+            Continuer
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            onClick={handleSendQuote}
+            disabled={createQuote.isPending}
+            className="gap-1.5"
+          >
+            <Send className="size-4" aria-hidden="true" />
+            {createQuote.isPending
+              ? 'Enregistrement…'
+              : savedReference !== null
+                ? `${savedReference} enregistré`
+                : 'Enregistrer le devis'}
+          </Button>
+        )}
       </div>
 
       {/* Modal création de prestation personnalisée */}

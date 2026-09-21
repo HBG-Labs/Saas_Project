@@ -26,6 +26,33 @@ import { installeSupabase } from '../fixtures/supabase';
  */
 
 test.describe('Devis', () => {
+  test('le nouveau devis mobile suit les quatre étapes sans perdre de rubrique', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await installeSupabase(page, { role: 'owner' });
+
+    await page.goto('/devis');
+    const main = page.getByRole('main');
+    await expect(main.getByRole('navigation', { name: 'Création du devis' })).toBeVisible();
+    await expect(main.getByText('Client et intervention')).toBeVisible();
+
+    await main.getByRole('button', { name: /Étape 2 sur 4 : Prestations/ }).click();
+    await expect(main.getByText('Catalogue de prestations')).toBeVisible();
+    await expect(main.getByText('Prestations et fournitures')).toBeVisible();
+
+    await main.getByRole('button', { name: /Étape 3 sur 4 : Conditions/ }).click();
+    await expect(main.getByText('Conditions du devis')).toBeVisible();
+    await expect(main.getByLabel('Taux de TVA')).toBeVisible();
+
+    await main.getByRole('button', { name: /Étape 4 sur 4 : Validation/ }).click();
+    await expect(main.getByText('Synthèse du devis')).toBeVisible();
+    await expect(main.getByRole('button', { name: 'Enregistrer le devis' })).toBeVisible();
+
+    const overflow = await main.evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
   test('un devis accepté propose d’être facturé', async ({ page }) => {
     await installeSupabase(page, {
       role: 'owner',
@@ -43,7 +70,10 @@ test.describe('Devis', () => {
   test('un devis encore en discussion ne propose pas de facturer', async ({ page }) => {
     await installeSupabase(page, {
       role: 'owner',
-      donnees: { quotes: [devis({ status: 'sent', sent_at: '2026-09-16T10:00:00.000Z' })], quote_totals: [devisTotaux()] },
+      donnees: {
+        quotes: [devis({ status: 'sent', sent_at: '2026-09-16T10:00:00.000Z' })],
+        quote_totals: [devisTotaux()],
+      },
     });
 
     await page.goto(`/devis/${DEVIS_ID}`);
@@ -104,6 +134,58 @@ test.describe('Factures', () => {
     await page.goto(`/factures/${FACTURE_ID}`);
 
     await expect(page.getByRole('button', { name: 'Émettre la facture' })).toBeVisible();
+  });
+
+  test('la correction mobile du brouillon conserve toutes les rubriques dans quatre étapes', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await installeSupabase(page, {
+      role: 'owner',
+      donnees: {
+        invoices: [
+          facture({
+            items: [
+              {
+                id: '77777777-7777-4777-8777-777777777777',
+                invoice_id: FACTURE_ID,
+                description: 'Installation électrique',
+                unit: 'forfait',
+                quantity: 1,
+                unit_price_cents: 25000,
+                vat_rate: 20,
+                vat_category: 'S',
+                vat_exemption_reason: null,
+              },
+            ],
+          }),
+        ],
+        invoice_totals: [factureTotaux()],
+      },
+    });
+
+    await page.goto(`/factures/${FACTURE_ID}`);
+    await page.getByRole('button', { name: 'Modifier le brouillon' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Corriger le brouillon' });
+    await expect(
+      dialog.getByRole('navigation', { name: 'Correction de la facture' }),
+    ).toBeVisible();
+    await expect(dialog.getByLabel('Nom du client')).toBeVisible();
+
+    await dialog.getByRole('button', { name: /Étape 2 sur 4 : Prestations/ }).click();
+    await expect(dialog.getByLabel('Date de prestation ou de livraison')).toBeVisible();
+    await expect(dialog.getByLabel('Description 1')).toBeVisible();
+
+    await dialog.getByRole('button', { name: /Étape 3 sur 4 : Conditions/ }).click();
+    await expect(dialog.getByLabel('Conditions d’escompte')).toBeVisible();
+
+    await dialog.getByRole('button', { name: /Étape 4 sur 4 : Validation/ }).click();
+    await expect(dialog.getByText('Vérification du brouillon')).toBeVisible();
+    await expect(dialog.getByText('300,00 €')).toBeVisible();
+
+    const overflow = await dialog.evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 
   /*

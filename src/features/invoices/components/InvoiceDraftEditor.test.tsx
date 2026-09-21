@@ -51,6 +51,8 @@ const invoice = {
 const close = vi.fn();
 const renderEditor = () =>
   render(<InvoiceDraftEditor invoice={invoice} open onOpenChange={close} />);
+const goToStep = (step: 'Client' | 'Prestations' | 'Conditions' | 'Validation') =>
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`: ${step}$`) }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -81,6 +83,7 @@ describe('correction d’un brouillon', () => {
     fireEvent.change(screen.getByLabelText('Nom du client'), {
       target: { value: 'Nom sur le brouillon en cours' },
     });
+    goToStep('Validation');
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer le brouillon' }));
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledWith(
@@ -116,6 +119,7 @@ describe('correction d’un brouillon', () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     const user = userEvent.setup();
     renderEditor();
+    goToStep('Prestations');
     await user.click(screen.getByRole('button', { name: 'Date de prestation ou de livraison' }));
     await user.click(screen.getByRole('button', { name: '02/09/2026' }));
     screen.getByRole('combobox', { name: 'Nature de l’opération' }).focus();
@@ -123,6 +127,7 @@ describe('correction d’un brouillon', () => {
     fireEvent.change(screen.getByLabelText('Conditions d’escompte'), {
       target: { value: 'Escompte : néant' },
     });
+    goToStep('Validation');
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer le brouillon' }));
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledWith(
@@ -139,6 +144,7 @@ describe('correction d’un brouillon', () => {
 
   it('propose les valeurs certaines et permet de les confirmer sans saisie artificielle', () => {
     renderEditor();
+    goToStep('Prestations');
     expect(screen.getByRole('combobox', { name: 'Nature de l’opération' })).toHaveTextContent(
       'Prestation de services',
     );
@@ -146,6 +152,7 @@ describe('correction d’un brouillon', () => {
       'Escompte pour paiement anticipé : néant.',
     );
     expect(screen.getByText(/Des valeurs sûres ont été proposées/)).toBeInTheDocument();
+    goToStep('Validation');
     expect(screen.getByRole('button', { name: 'Enregistrer le brouillon' })).toBeEnabled();
     expect(state.save).not.toHaveBeenCalled();
   });
@@ -155,6 +162,7 @@ describe('correction d’un brouillon', () => {
     fireEvent.change(screen.getByLabelText('Nom du client'), {
       target: { value: 'Nom corrigé' },
     });
+    goToStep('Validation');
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer le brouillon' }));
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledWith(
@@ -177,6 +185,7 @@ describe('correction d’un brouillon', () => {
     await user.click(screen.getByRole('button', { name: 'Reprendre la fiche client' }));
     expect(screen.getByLabelText('Nom du client')).toHaveValue('Fiche actuelle');
     expect(state.save).not.toHaveBeenCalled();
+    goToStep('Validation');
     await user.click(screen.getByRole('button', { name: 'Enregistrer le brouillon' }));
     await waitFor(() =>
       expect(state.save).toHaveBeenCalledWith(
@@ -196,6 +205,7 @@ describe('correction d’un brouillon', () => {
     fireEvent.change(screen.getByLabelText('Nom du client'), {
       target: { value: 'Nom sur le brouillon corrigé' },
     });
+    goToStep('Validation');
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer le brouillon' }));
     await waitFor(() => expect(state.save).toHaveBeenCalledTimes(1));
     expect(close).not.toHaveBeenCalled();
