@@ -16,6 +16,7 @@ import quotes from '@/assets/illustrations/quotes.svg';
 import reports from '@/assets/illustrations/reports.svg';
 import stock from '@/assets/illustrations/stock.svg';
 import teams from '@/assets/illustrations/teams.svg';
+import technicians from '@/assets/illustrations/technicians.svg';
 import vehicles from '@/assets/illustrations/vehicles.svg';
 import { cn } from '@/lib/cn';
 
@@ -38,6 +39,7 @@ const illustrations = {
   reports,
   stock,
   teams,
+  technicians,
   vehicles,
 };
 

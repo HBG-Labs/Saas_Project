@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Circle } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
@@ -51,6 +52,7 @@ interface Etape {
   detail: string;
   lien: string;
   action: string;
+  illustration: 'technicians' | 'customers' | 'missions' | 'teams' | 'reports';
 }
 
 export function FirstStepsCard() {
@@ -97,6 +99,7 @@ export function FirstStepsCard() {
         'Créez leur compte directement et remettez-leur les accès de vive voix — sans attendre un courriel.',
       lien: ROUTES.organizationMembers,
       action: 'Ajouter',
+      illustration: 'technicians',
     },
     {
       id: 'client',
@@ -105,6 +108,7 @@ export function FirstStepsCard() {
       detail: 'Avec son site d’intervention : c’est lui qui rattache un chantier à une adresse.',
       lien: ROUTES.customers,
       action: 'Créer une fiche',
+      illustration: 'customers',
     },
     {
       id: 'mission',
@@ -113,6 +117,7 @@ export function FirstStepsCard() {
       detail: 'Affectez-la à un intervenant : il la verra aussitôt sur son téléphone.',
       lien: ROUTES.missionNew,
       action: 'Créer',
+      illustration: 'missions',
     },
     {
       id: 'terrain',
@@ -122,6 +127,7 @@ export function FirstStepsCard() {
         'L’intervenant accepte, démarre, puis rédige son compte rendu. Vous suivez l’avancement sans appeler.',
       lien: ROUTES.missions,
       action: 'Suivre',
+      illustration: 'teams',
     },
     {
       id: 'validation',
@@ -131,6 +137,7 @@ export function FirstStepsCard() {
         'C’est le document que vous remettez au client. Personne ne valide le sien : la séparation est appliquée par le serveur.',
       lien: ROUTES.review,
       action: 'Ouvrir le contrôle',
+      illustration: 'reports',
     },
   ];
 
@@ -141,8 +148,8 @@ export function FirstStepsCard() {
   const prochaine = etapes.find((e) => !e.fait);
 
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4 sm:p-4">
+    <Card className="border-primary/20 bg-primary-subtle/25 overflow-hidden">
+      <CardContent className="space-y-2 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-foreground text-sm font-bold">Vos premiers pas</h2>
           <span className="text-primary text-xs font-bold tabular-nums">
@@ -150,26 +157,32 @@ export function FirstStepsCard() {
           </span>
         </div>
         {prochaine && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-foreground text-sm font-semibold">{prochaine.titre}</p>
-              <p className="text-muted-foreground mt-1 text-sm">{prochaine.detail}</p>
-            </div>
-            <Button asChild variant="outline" size="sm" className="shrink-0 self-start">
+          <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-0.5">
+            <span className="border-primary/15 bg-surface/80 row-span-2 flex size-14 items-center justify-center overflow-hidden rounded-2xl border">
+              <AtelierIllustration subject={prochaine.illustration} className="w-16 max-w-none" />
+            </span>
+            <p className="text-foreground min-w-0 text-sm font-semibold">{prochaine.titre}</p>
+            <Button asChild variant="outline" size="sm" className="row-span-2 shrink-0 self-center">
               <Link to={prochaine.lien}>
                 {prochaine.action}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
+            <p className="text-muted-foreground line-clamp-2 min-w-0 text-xs leading-relaxed">
+              {prochaine.detail}
+            </p>
           </div>
         )}
-        <details className="group border-border border-t pt-2">
+        <details className="group border-primary/15 border-t pt-1">
           <summary className="text-primary min-h-touch flex cursor-pointer items-center text-xs font-semibold sm:min-h-8">
             Voir les cinq étapes
           </summary>
-          <ol className="grid gap-3 pt-3 sm:grid-cols-2 xl:grid-cols-5">
+          <ol className="grid grid-cols-2 gap-x-3 gap-y-2 pt-2 sm:grid-cols-2 sm:pt-3 xl:grid-cols-5">
             {etapes.map((etape) => (
-              <li key={etape.id} className="flex items-start gap-2 text-sm">
+              <li
+                key={etape.id}
+                className="flex items-start gap-1.5 text-xs last:col-span-2 sm:gap-2 sm:text-sm sm:last:col-span-1"
+              >
                 <span
                   className={cn(
                     'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border',
@@ -186,7 +199,7 @@ export function FirstStepsCard() {
                 </span>
                 <span
                   className={cn(
-                    'text-foreground',
+                    'text-foreground leading-snug',
                     etape.fait && 'text-muted-foreground line-through',
                   )}
                 >

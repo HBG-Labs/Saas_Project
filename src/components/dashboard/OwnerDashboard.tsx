@@ -1,17 +1,16 @@
 import {
   Activity,
   ArrowRight,
-  Building2,
   ClipboardCheck,
   ClipboardList,
   MapPin,
   Plus,
-  Settings,
   Users,
   UsersRound,
 } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
@@ -32,6 +31,7 @@ import {
   useMembers,
 } from '@/features/organizations';
 import { useTeams } from '@/features/teams';
+import { cn } from '@/lib/cn';
 
 import { FirstStepsCard } from './FirstStepsCard';
 
@@ -85,21 +85,41 @@ export function OwnerDashboard() {
   const recentLogs = auditLogs.data ?? [];
 
   const raccourcis = [
-    { to: ROUTES.organizationMembers, label: workerPlural, sub: 'Membres et rôles', icon: Users },
-    { to: ROUTES.teams, label: 'Équipes', sub: 'Groupes de terrain', icon: UsersRound },
-    { to: ROUTES.customers, label: 'Clients', sub: 'Contacts et sites', icon: Building2 },
-    { to: ROUTES.organization, label: 'Paramètres', sub: 'Entreprise et métier', icon: Settings },
-  ];
+    {
+      to: ROUTES.organizationMembers,
+      label: workerPlural,
+      subject: 'technicians',
+      tone: 'border-primary/20 bg-primary-subtle/70',
+    },
+    {
+      to: ROUTES.teams,
+      label: 'Équipes',
+      subject: 'teams',
+      tone: 'border-success-border bg-success-subtle',
+    },
+    {
+      to: ROUTES.customers,
+      label: 'Clients',
+      subject: 'customers',
+      tone: 'border-warning-border bg-warning-subtle',
+    },
+    {
+      to: ROUTES.review,
+      label: 'Comptes rendus',
+      subject: 'reports',
+      tone: 'border-info-border bg-info-subtle',
+    },
+  ] as const;
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-4 pb-8 sm:space-y-6">
       {/* ------------------------------------------------------------ EN-TÊTE */}
       <PageHeader
         title="Tableau de bord"
         description={`${organization?.name ?? 'Votre entreprise'} — effectifs, ${jobPlural.toLowerCase()} et contrôle qualité.`}
-        className="mb-0 sm:flex-col xl:flex-row"
+        className="mb-2 gap-3 sm:mb-0 sm:flex-col xl:flex-row"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 pb-1 sm:flex sm:w-auto sm:flex-wrap sm:pb-0">
             {organizationId ? (
               <>
                 {/* Les mêmes valeurs que sur l'écran des membres : un raccourci
@@ -122,7 +142,7 @@ export function OwnerDashboard() {
               </>
             ) : null}
 
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="col-span-2 w-full sm:w-auto">
               <Link to={ROUTES.missionNew}>
                 <Plus className="size-4" aria-hidden="true" />
                 {formatNewNoun(jobSingular)}
@@ -137,9 +157,13 @@ export function OwnerDashboard() {
       <FirstStepsCard />
 
       {/* ------------------------------------------------------ 1. CE QUI ATTEND */}
-      <div className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4">
+      <section
+        aria-label="Indicateurs clés"
+        className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4"
+      >
         <MetricCard
           layout="strip"
+          compact
           label="Comptes rendus à valider"
           value={pendingReports.isPending || pendingReports.isError ? '—' : pendingReportsCount}
           icon={ClipboardCheck}
@@ -157,37 +181,84 @@ export function OwnerDashboard() {
                   ? { text: 'En attente', variant: 'warning' }
                   : { text: 'À jour', variant: 'success' }
           }
+          className="border-b lg:border-r lg:border-b-0"
         />
         <MetricCard
           layout="strip"
+          compact
           label={jobPlural}
           value={missionStatusCounts.isPending || missionStatusCounts.isError ? '—' : missionCount}
           icon={ClipboardList}
           to={ROUTES.missions}
           actionLabel="Voir"
+          className="border-r-0 border-b lg:border-r lg:border-b-0"
         />
         <MetricCard
           layout="strip"
+          compact
           label="Équipes de terrain"
           value={teams.isPending || teams.isError ? '—' : teamList.length}
           icon={UsersRound}
           to={ROUTES.teams}
           actionLabel="Organiser"
+          className="lg:border-r"
         />
         <MetricCard
           layout="strip"
+          compact
           label={workerPlural}
           value={members.isPending || members.isError ? '—' : activeMembersCount}
           icon={Users}
           to={ROUTES.organizationMembers}
           actionLabel="Gérer"
+          className="border-r-0"
           {...(members.isPending
             ? { badge: { text: 'Chargement', variant: 'neutral' as const } }
             : members.isError
               ? { badge: { text: 'Indisponible', variant: 'neutral' as const } }
               : {})}
         />
-      </div>
+      </section>
+
+      {/* Les raccourcis illustrés reprennent les visuels des états vides : le
+          dessin identifie le module avant même la lecture du libellé. */}
+      <section aria-labelledby="dashboard-quick-access-title">
+        <h2
+          id="dashboard-quick-access-title"
+          className="text-foreground mb-2 text-sm font-bold sm:mb-3"
+        >
+          Accès rapide
+        </h2>
+        <Card className="p-2 sm:p-3">
+          <nav
+            aria-label="Accès rapide du tableau de bord"
+            className="grid grid-cols-4 gap-1.5 sm:gap-3"
+          >
+            {raccourcis.map(({ to, label, subject, tone }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group focus-visible:ring-ring hover:bg-surface-hover flex min-w-0 flex-col items-center gap-1.5 rounded-xl px-0.5 py-1.5 text-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:px-2 sm:py-2"
+              >
+                <span
+                  className={cn(
+                    'flex size-14 items-center justify-center overflow-hidden rounded-2xl border sm:size-16',
+                    tone,
+                  )}
+                >
+                  <AtelierIllustration
+                    subject={subject}
+                    className="w-16 max-w-none transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100 sm:w-[4.5rem]"
+                  />
+                </span>
+                <span className="text-foreground line-clamp-2 text-xs leading-tight font-bold">
+                  {label}
+                </span>
+              </Link>
+            ))}
+          </nav>
+        </Card>
+      </section>
 
       {/* ------------------------------------------ 2. LE TRAVAIL ET SON HISTOIRE */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
@@ -216,8 +287,8 @@ export function OwnerDashboard() {
                 }}
               />
             ) : missionList.length === 0 ? (
-              <div className="text-muted-foreground flex flex-col items-center py-10 text-center">
-                <ClipboardList className="text-subtle-foreground mb-3 size-8" aria-hidden="true" />
+              <div className="text-muted-foreground flex flex-col items-center py-6 text-center sm:py-8">
+                <AtelierIllustration subject="missions" className="mb-1 w-28 sm:w-36" />
                 <p className="text-foreground text-sm font-medium">
                   {formatNoneNoun(jobSingular, 'enregistré')}
                 </p>
@@ -300,11 +371,8 @@ export function OwnerDashboard() {
                 }}
               />
             ) : recentLogs.length === 0 ? (
-              <div className="py-8 text-center">
-                <Activity
-                  className="text-subtle-foreground mx-auto mb-2 size-7"
-                  aria-hidden="true"
-                />
+              <div className="flex flex-col items-center py-6 text-center">
+                <AtelierIllustration subject="audit" className="mb-1 w-24 sm:w-28" />
                 <p className="text-muted-foreground text-sm">Aucune activité récente</p>
                 <p className="text-subtle-foreground mt-1 text-sm">
                   Les actions de vos équipes apparaîtront ici.
@@ -335,30 +403,6 @@ export function OwnerDashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* ------------------------------------------------------- 3. RACCOURCIS */}
-      <div>
-        <h2 className="text-foreground mb-3 text-sm font-semibold">Accès rapide</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {raccourcis.map(({ to, label, sub, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className="group border-border hover:bg-surface-hover flex min-w-0 items-center gap-3 border-b py-3 transition-colors"
-            >
-              <span className="bg-primary-subtle text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-                <Icon className="size-4.5" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="text-foreground block truncate text-sm font-semibold">
-                  {label}
-                </span>
-                <span className="text-muted-foreground block truncate text-sm">{sub}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   );

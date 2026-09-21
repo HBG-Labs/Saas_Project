@@ -148,6 +148,61 @@ test.describe('Responsive', () => {
     await expect(page.getByText('0 en attente de contrôle', { exact: true })).toHaveCount(0);
     await expectVerticalFit(page, 'rapports vides');
   });
+
+  test('le tableau de bord propriétaire garde ses quatre indicateurs au-dessus de la navigation', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Composition propre à la hauteur contrainte d’un téléphone');
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/dashboard');
+
+    const creation = page.getByRole('link', { name: 'Nouvelle mission', exact: true });
+    const titreGuide = page.getByText('Vos premiers pas', { exact: true });
+    const [creationBox, guideBox] = await Promise.all([
+      creation.boundingBox(),
+      titreGuide.evaluate((element) => {
+        const card = element.closest('div.rounded-lg');
+        const rect = card?.getBoundingClientRect();
+        return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null;
+      }),
+    ]);
+
+    expect(creationBox).not.toBeNull();
+    expect(guideBox).not.toBeNull();
+    const creationToGuideGap =
+      (guideBox?.y ?? 0) - ((creationBox?.y ?? 0) + (creationBox?.height ?? 0));
+    expect(
+      creationToGuideGap,
+      'le bouton vert doit respirer avant la carte des premiers pas',
+    ).toBeGreaterThanOrEqual(12);
+
+    const indicateurs = page.getByRole('region', { name: 'Indicateurs clés' });
+    await expect(indicateurs.getByText('Comptes rendus à valider', { exact: true })).toBeVisible();
+    await expect(indicateurs.getByText('Missions', { exact: true })).toBeVisible();
+    await expect(indicateurs.getByText('Équipes de terrain', { exact: true })).toBeVisible();
+    await expect(indicateurs.getByText('Intervenants', { exact: true })).toBeVisible();
+
+    const [indicateursBox, navigationBox] = await Promise.all([
+      indicateurs.boundingBox(),
+      page.getByRole('navigation', { name: 'Navigation rapide' }).boundingBox(),
+    ]);
+    expect(indicateursBox).not.toBeNull();
+    expect(navigationBox).not.toBeNull();
+    expect(
+      (indicateursBox?.y ?? 0) + (indicateursBox?.height ?? 0),
+      'les quatre indicateurs doivent rester visibles avant la navigation basse',
+    ).toBeLessThanOrEqual((navigationBox?.y ?? 0) + 1);
+
+    const raccourcis = page.getByRole('navigation', {
+      name: 'Accès rapide du tableau de bord',
+    });
+    await expect(raccourcis.getByRole('link')).toHaveCount(4);
+    await expect(raccourcis.locator('[data-atelier-illustration]')).toHaveCount(4);
+    await expect(raccourcis.locator('[data-atelier-illustration="technicians"]')).toHaveCount(1);
+  });
 });
 
 async function expectVerticalFit(page: import('@playwright/test').Page, label: string) {

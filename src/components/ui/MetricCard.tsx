@@ -24,6 +24,8 @@ export interface MetricCardProps {
   attention?: boolean;
   className?: string;
   layout?: 'card' | 'strip';
+  /** Réduit la hauteur des indicateurs lorsque plusieurs doivent rester visibles sur mobile. */
+  compact?: boolean;
 }
 
 /**
@@ -60,6 +62,7 @@ export function MetricCard({
   attention = false,
   className,
   layout = 'card',
+  compact = false,
 }: MetricCardProps) {
   return (
     <Link
@@ -72,6 +75,7 @@ export function MetricCard({
           : 'border-border/80 hover:border-primary/30 before:bg-primary/70',
         layout === 'strip' &&
           'border-border hover:bg-surface-hover rounded-none border-0 border-r bg-transparent p-3 shadow-none before:hidden hover:translate-y-0 hover:shadow-none sm:p-4',
+        compact && 'min-h-[6.75rem] gap-1.5 p-2.5 sm:min-h-0 sm:gap-3 sm:p-4',
         className,
       )}
     >
@@ -79,6 +83,7 @@ export function MetricCard({
         <span
           className={cn(
             'flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9',
+            compact && 'size-7 sm:size-9',
             attention ? 'bg-warning/15 text-warning' : 'bg-primary-subtle text-primary',
           )}
         >
@@ -88,11 +93,24 @@ export function MetricCard({
       </div>
 
       <div>
-        <p className="text-muted-foreground text-sm">{label}</p>
-        <div className="mt-0.5 flex items-baseline justify-between gap-3 sm:mt-1">
+        <p
+          className={cn(
+            'text-muted-foreground text-sm',
+            compact && 'text-xs leading-snug sm:text-sm',
+          )}
+        >
+          {label}
+        </p>
+        <div
+          className={cn(
+            'mt-0.5 flex items-baseline justify-between gap-3 sm:mt-1',
+            compact && 'mt-0 gap-2 sm:mt-1 sm:gap-3',
+          )}
+        >
           <span
             className={cn(
               'text-3xl font-bold tracking-tight tabular-nums',
+              compact && 'text-2xl sm:text-3xl',
               attention ? 'text-warning' : 'text-foreground',
             )}
           >
