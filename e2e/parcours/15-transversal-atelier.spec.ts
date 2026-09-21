@@ -106,8 +106,19 @@ test.describe('Transversal Atelier', () => {
     const companyCard = page.getByRole('link', { name: /Voir la société/ });
     const subscriptionCard = page.getByRole('link', { name: /Abonnement/ });
     await expect(companyCard).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-    expect((await companyCard.boundingBox())?.height).toBeGreaterThanOrEqual(112);
-    expect((await subscriptionCard.boundingBox())?.height).toBeGreaterThanOrEqual(96);
+    const isMobile = page.viewportSize()!.width < 640;
+    const companyCardHeight = Math.round((await companyCard.boundingBox())?.height ?? 0);
+    const subscriptionCardHeight = Math.round((await subscriptionCard.boundingBox())?.height ?? 0);
+    if (isMobile) {
+      expect(companyCardHeight).toBe(88);
+      expect(subscriptionCardHeight).toBe(80);
+      expect(
+        Math.round((await page.getByTestId('profile-hero').boundingBox())?.height ?? 0),
+      ).toBeLessThanOrEqual(300);
+    } else {
+      expect(companyCardHeight).toBeGreaterThanOrEqual(112);
+      expect(subscriptionCardHeight).toBeGreaterThanOrEqual(96);
+    }
 
     const profileFields = [
       page.getByLabel('Nom affiché / Prénom Nom'),
@@ -120,7 +131,7 @@ test.describe('Transversal Atelier', () => {
       profileFields.map(async (field) => Math.round((await field.boundingBox())?.height ?? 0)),
     );
     expect(new Set(fieldHeights).size).toBe(1);
-    expect(fieldHeights[0]).toBe(page.viewportSize()!.width < 640 ? 56 : 48);
+    expect(fieldHeights[0]).toBe(isMobile ? 44 : 48);
 
     await page.getByRole('button', { name: /Notifications d'activité/ }).click();
     await expect(page.getByLabel('Centre de notifications')).toBeVisible();

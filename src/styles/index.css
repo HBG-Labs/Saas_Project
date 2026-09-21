@@ -848,14 +848,14 @@ html.compact-mode {
 }
 
 /*
-   La fiche profil reprend des champs hauts et aérés, comme les cartes de
-   l'écran de référence. Cette règle est hors des layers afin de l'emporter sur
-   la hauteur compacte générique de `.atelier-field` sans modifier les autres
-   formulaires de l'application.
+   La fiche profil reste compacte sur mobile sans descendre sous la cible
+   tactile accessible de 44 px. Cette règle est hors des layers afin de
+   l'emporter sur la hauteur générique de `.atelier-field` sans modifier les
+   autres formulaires de l'application.
 */
 input.profile-form-field {
-  height: 56px;
-  min-height: 56px;
+  height: 44px;
+  min-height: 44px;
 }
 
 @media (min-width: 640px) {

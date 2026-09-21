@@ -72,10 +72,10 @@ export interface UserProfileData {
 }
 
 const PROFILE_CARD_CLASSNAME =
-  'border-border bg-surface overflow-hidden rounded-2xl shadow-[0_2px_10px_rgb(36_50_71/0.06)]';
+  'border-border bg-surface overflow-hidden rounded-xl shadow-[0_2px_10px_rgb(36_50_71/0.06)] sm:rounded-2xl';
 
 const PROFILE_FIELD_CLASSNAME =
-  'profile-form-field border-border bg-surface rounded-xl px-4 text-base shadow-none sm:text-sm';
+  'profile-form-field border-border bg-surface rounded-lg px-3 text-base shadow-none sm:rounded-xl sm:px-4 sm:text-sm';
 
 const PLAN_LABELS: Record<string, string> = {
   free: 'FREE',
@@ -385,9 +385,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 pb-10 sm:space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 pb-8 sm:space-y-6 sm:pb-10">
       <section aria-labelledby="profile-title" className="-mx-4 sm:mx-0">
-        <div className="from-nav-selected via-nav-selected to-primary relative overflow-hidden bg-gradient-to-br px-5 pt-8 pb-20 text-center sm:rounded-[2rem] sm:pt-10 sm:pb-24">
+        <div
+          data-testid="profile-hero"
+          className="from-nav-selected via-nav-selected to-primary relative overflow-hidden bg-gradient-to-br px-4 pt-4 pb-12 text-center sm:rounded-[2rem] sm:px-5 sm:pt-10 sm:pb-24"
+        >
           <div
             className="absolute -top-20 -right-14 size-56 rounded-full bg-white/10 blur-2xl"
             aria-hidden="true"
@@ -400,7 +403,7 @@ export default function ProfilePage() {
           <div className="relative mx-auto flex max-w-xl flex-col items-center">
             <h1
               id="profile-title"
-              className="mb-5 text-xs font-bold tracking-[0.18em] text-white/75 uppercase"
+              className="text-2xs mb-2 font-bold tracking-[0.18em] text-white/75 uppercase sm:mb-5 sm:text-xs"
             >
               Profil & Fiche Technicien
             </h1>
@@ -415,22 +418,22 @@ export default function ProfilePage() {
                   avatarId={avatarId}
                   name={profile.displayName}
                   size="xl"
-                  className="size-24 bg-white text-2xl font-bold shadow-[0_12px_30px_rgb(48_57_174/0.3)] ring-4 ring-white/75"
+                  className="size-16 bg-white text-lg font-bold shadow-[0_10px_24px_rgb(48_57_174/0.28)] ring-3 ring-white/75 sm:size-24 sm:text-2xl sm:shadow-[0_12px_30px_rgb(48_57_174/0.3)] sm:ring-4"
                 />
-                <span className="border-nav-selected bg-surface text-primary absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 shadow-md transition-transform group-hover:scale-105">
-                  <Camera className="size-4" aria-hidden="true" />
+                <span className="border-nav-selected bg-surface text-primary absolute right-0 bottom-0 flex size-7 items-center justify-center rounded-full border-2 shadow-md transition-transform group-hover:scale-105 sm:size-8">
+                  <Camera className="size-3.5 sm:size-4" aria-hidden="true" />
                 </span>
               </button>
             </div>
 
-            <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h2 className="mt-2 text-xl font-bold tracking-tight text-white sm:mt-5 sm:text-3xl">
               {profile.displayName}
             </h2>
-            <p className="mt-1.5 text-sm font-medium text-white/80">
+            <p className="mt-0.5 text-xs font-medium text-white/80 sm:mt-1.5 sm:text-sm">
               {role ? ROLE_LABELS[role] : 'Compte professionnel'}
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-white/85">
+            <div className="text-2xs mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-white/85 sm:mt-4 sm:gap-x-4 sm:gap-y-1.5 sm:text-xs">
               <span className="flex items-center gap-1.5">
                 <Briefcase className="size-3.5" aria-hidden="true" />
                 {profile.jobTitle || 'Fonction non renseignée'}
@@ -444,31 +447,31 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setIsAvatarModalOpen(true)}
-              className="mt-5 min-h-10 rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+              className="mt-2 min-h-9 rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:mt-5 sm:min-h-10 sm:px-5 sm:py-2 sm:text-sm"
             >
               Modifier mon avatar
             </button>
           </div>
         </div>
 
-        <div className="relative -mt-14 px-4 sm:px-8">
+        <div className="relative -mt-8 px-3 sm:-mt-14 sm:px-8">
           <Link
             to={organization ? ROUTES.organization : ROUTES.organizationNew}
-            className="border-border bg-surface focus-visible:ring-primary group flex min-h-28 items-center gap-4 rounded-2xl border p-4 shadow-[0_10px_28px_rgb(36_50_71/0.16)] transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none"
+            className="border-border bg-surface focus-visible:ring-primary group flex min-h-22 items-center gap-3 rounded-xl border p-3 shadow-[0_8px_22px_rgb(36_50_71/0.14)] transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none sm:min-h-28 sm:gap-4 sm:rounded-2xl sm:p-4 sm:shadow-[0_10px_28px_rgb(36_50_71/0.16)]"
             aria-label={organization ? `Voir la société ${organization.name}` : 'Créer ma société'}
           >
-            <span className="from-warning-subtle via-primary-subtle to-nav-selected text-primary flex size-18 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br sm:size-20">
+            <span className="from-warning-subtle via-primary-subtle to-nav-selected text-primary flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br sm:size-20">
               {organization?.logo_url ? (
                 <img src={organization.logo_url} alt="" className="size-full object-cover" />
               ) : (
-                <Building2 className="size-8" aria-hidden="true" />
+                <Building2 className="size-7 sm:size-8" aria-hidden="true" />
               )}
             </span>
             <span className="min-w-0 flex-1 text-left">
-              <span className="text-foreground block truncate text-lg font-bold">
+              <span className="text-foreground block truncate text-base font-bold sm:text-lg">
                 {organization?.name ?? 'Ma société'}
               </span>
-              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs sm:text-sm">
                 {organization ? 'Voir ma société' : 'Créer ma société'}
                 <ChevronRight
                   className="size-4 transition-transform group-hover:translate-x-0.5"
@@ -483,10 +486,10 @@ export default function ProfilePage() {
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <Link
           to={organization ? ROUTES.organizationBilling : ROUTES.pricing}
-          className="border-border bg-surface hover:border-nav-selected/60 focus-visible:ring-primary flex min-h-24 items-center gap-4 rounded-2xl border p-4 shadow-[0_2px_10px_rgb(36_50_71/0.06)] transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          className="border-border bg-surface hover:border-nav-selected/60 focus-visible:ring-primary flex min-h-20 items-center gap-3 rounded-xl border p-3 shadow-[0_2px_10px_rgb(36_50_71/0.06)] transition-colors focus-visible:ring-2 focus-visible:outline-none sm:min-h-24 sm:gap-4 sm:rounded-2xl sm:p-4"
         >
-          <span className="from-nav-selected to-primary flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm">
-            <Crown className="size-6" aria-hidden="true" />
+          <span className="from-nav-selected to-primary flex size-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm sm:size-14 sm:rounded-xl">
+            <Crown className="size-5 sm:size-6" aria-hidden="true" />
           </span>
           <span className="text-foreground min-w-0 flex-1 text-sm font-semibold">
             Abonnement {PLAN_LABELS[planCode] ?? planCode.toUpperCase()}
@@ -500,7 +503,7 @@ export default function ProfilePage() {
           isLoading={updateProfile.isPending}
           loadingLabel="Enregistrement du profil"
           leadingIcon={<Save />}
-          className="h-14 w-full rounded-2xl px-6 shadow-sm sm:h-auto sm:min-w-56"
+          className="h-11 w-full rounded-xl px-5 shadow-sm sm:h-auto sm:min-w-56 sm:rounded-2xl sm:px-6"
         >
           {updateProfile.isPending
             ? 'Enregistrement…'
@@ -515,9 +518,9 @@ export default function ProfilePage() {
       <div className="space-y-5 sm:space-y-6">
         {/* Card 1 : Coordonnées Professionnelles */}
         <Card className={PROFILE_CARD_CLASSNAME}>
-          <CardHeader className="border-border bg-surface-subtle border-b p-5">
+          <CardHeader className="border-border bg-surface-subtle border-b p-4 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl">
+              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg sm:size-12 sm:rounded-xl">
                 <User className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
@@ -529,8 +532,8 @@ export default function ProfilePage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-5 p-5 pt-5 [&_label]:mb-2 [&_label]:text-sm">
-            <div className="grid gap-5 sm:grid-cols-2">
+          <CardContent className="space-y-4 p-4 pt-4 sm:space-y-5 sm:p-5 sm:pt-5 [&_label]:mb-1.5 [&_label]:text-xs sm:[&_label]:mb-2 sm:[&_label]:text-sm">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
               <Input
                 label="Nom affiché / Prénom Nom"
                 className={PROFILE_FIELD_CLASSNAME}
@@ -551,7 +554,7 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
               <Input
                 id="profile-email-readonly"
                 label="Adresse e-mail du compte"
@@ -594,9 +597,9 @@ export default function ProfilePage() {
 
         {/* Card 2 : Habilitations, Sécurité & Matériel de Mesure */}
         <Card className={PROFILE_CARD_CLASSNAME}>
-          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-4 border-b p-5 sm:flex-row sm:items-center">
+          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-3 border-b p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="bg-warning/10 text-warning flex size-12 shrink-0 items-center justify-center rounded-xl">
+              <span className="bg-warning/10 text-warning flex size-10 shrink-0 items-center justify-center rounded-lg sm:size-12 sm:rounded-xl">
                 <HardHat className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
@@ -619,7 +622,7 @@ export default function ProfilePage() {
             </Button>
           </CardHeader>
 
-          <CardContent className="space-y-6 pt-5">
+          <CardContent className="space-y-5 pt-4 sm:space-y-6 sm:pt-5">
             {/* Habilitations */}
             <div>
               <h4 className="text-muted-foreground mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
@@ -728,9 +731,9 @@ export default function ProfilePage() {
 
         {/* Card 3 : Sécurité du Compte & Mot de Passe */}
         <Card className={PROFILE_CARD_CLASSNAME}>
-          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-4 border-b p-5 sm:flex-row sm:items-center">
+          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-3 border-b p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl">
+              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg sm:size-12 sm:rounded-xl">
                 <Lock className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
@@ -755,7 +758,7 @@ export default function ProfilePage() {
             </Button>
           </CardHeader>
 
-          <CardContent className="pt-5">
+          <CardContent className="pt-4 sm:pt-5">
             {passwordSuccess ? (
               <div
                 className="border-success/30 bg-success/10 text-success animate-in fade-in flex items-center gap-2 rounded-lg border p-3 text-xs"
