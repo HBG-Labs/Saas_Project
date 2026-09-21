@@ -82,5 +82,30 @@ test.describe('Responsive', () => {
         `entrée ${index} mesure ${Math.round(boite.width)}×${Math.round(boite.height)} px`,
       ).toBeGreaterThanOrEqual(40);
     }
+
+    const active = barre.getByRole('link', { name: 'Accueil' });
+    const inactive = barre.getByRole('link', { name: 'Missions' });
+    await expect(active).toHaveAttribute('aria-current', 'page');
+
+    const apparence = await active.evaluate(
+      (link, inactiveLink) => {
+        const activeIcon = link.querySelector('svg');
+        const inactiveIcon = inactiveLink?.querySelector('svg');
+        const label = link.querySelector('span');
+
+        return {
+          background: getComputedStyle(link).backgroundColor,
+          iconColor: activeIcon ? getComputedStyle(activeIcon).color : '',
+          inactiveIconColor: inactiveIcon ? getComputedStyle(inactiveIcon).color : '',
+          labelColor: label ? getComputedStyle(label).color : '',
+        };
+      },
+      await inactive.elementHandle(),
+    );
+
+    // L'état actif colore le dessin lui-même, sans capsule derrière le bouton.
+    expect(apparence.background).toBe('rgba(0, 0, 0, 0)');
+    expect(apparence.iconColor).not.toBe(apparence.inactiveIconColor);
+    expect(apparence.iconColor).not.toBe(apparence.labelColor);
   });
 });

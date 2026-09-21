@@ -43,10 +43,10 @@ export function MobileNav() {
                 className={({ isActive }) =>
                   cn(
                     // 44 px minimum : cible tactile WCAG 2.5.5.
-                    'min-h-touch relative flex flex-col items-center justify-center gap-0.5 px-1 py-1.5',
+                    'group min-h-touch focus-visible:ring-ring relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
                     'text-3xs xs:text-2xs font-medium transition-colors duration-[120ms]',
                     isActive
-                      ? 'bg-nav-selected text-nav-foreground rounded-full font-bold'
+                      ? 'text-foreground font-semibold'
                       : 'text-muted-foreground hover:text-foreground',
                   )
                 }
@@ -55,10 +55,12 @@ export function MobileNav() {
                   <>
                     <Icon
                       className={cn(
-                        'size-5 shrink-0 transition-transform',
-                        isActive ? 'text-nav-foreground' : 'text-muted-foreground',
-                        isActive && 'scale-110',
+                        'size-6 shrink-0 transition-[color,transform] duration-150',
+                        isActive
+                          ? 'text-nav-selected -translate-y-0.5'
+                          : 'text-muted-foreground group-hover:text-foreground',
                       )}
+                      strokeWidth={isActive ? 2.5 : 2}
                       aria-hidden="true"
                     />
                     <span className="w-full truncate text-center">{item.label}</span>

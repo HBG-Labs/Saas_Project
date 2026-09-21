@@ -25,6 +25,7 @@ const CONTEXTE_PORTAIL = {
 test.describe('Transversal Atelier', () => {
   test('le portail client conserve une navigation lisible et une entrée sans dégradé', async ({
     page,
+    viewport,
   }) => {
     await installeSupabase(page, {
       rpc: {
@@ -47,6 +48,33 @@ test.describe('Transversal Atelier', () => {
     expect(await welcome.evaluate((element) => getComputedStyle(element).backgroundImage)).toBe(
       'none',
     );
+
+    if ((viewport?.width ?? 0) < 768) {
+      const navigation = page
+        .getByRole('navigation', { name: 'Navigation du portail' })
+        .filter({ visible: true });
+      const active = navigation.getByRole('link', { name: 'Accueil' });
+      const inactive = navigation.getByRole('link', { name: 'Interventions' });
+      const apparence = await active.evaluate(
+        (link, inactiveLink) => {
+          const activeIcon = link.querySelector('svg');
+          const inactiveIcon = inactiveLink?.querySelector('svg');
+          const label = link.querySelector('span:last-of-type');
+
+          return {
+            background: getComputedStyle(link).backgroundColor,
+            iconColor: activeIcon ? getComputedStyle(activeIcon).color : '',
+            inactiveIconColor: inactiveIcon ? getComputedStyle(inactiveIcon).color : '',
+            labelColor: label ? getComputedStyle(label).color : '',
+          };
+        },
+        await inactive.elementHandle(),
+      );
+
+      expect(apparence.background).toBe('rgba(0, 0, 0, 0)');
+      expect(apparence.iconColor).not.toBe(apparence.inactiveIconColor);
+      expect(apparence.iconColor).not.toBe(apparence.labelColor);
+    }
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,

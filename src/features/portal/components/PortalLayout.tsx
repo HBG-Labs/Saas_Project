@@ -80,13 +80,13 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         className={({ isActive }) =>
           cn(
             variant === 'bottom'
-              ? 'min-h-touch text-3xs focus-visible:ring-primary relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-medium focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset'
+              ? 'group min-h-touch text-3xs focus-visible:ring-primary relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-medium focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset'
               : 'focus-visible:ring-primary relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none',
             variant === 'side' && 'transition-colors',
             isActive
               ? variant === 'side'
                 ? 'bg-primary-subtle text-primary'
-                : 'text-primary'
+                : 'text-foreground font-semibold'
               : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
           )
         }
@@ -94,13 +94,17 @@ export function PortalLayout({ context }: { context: PortalContext }) {
         {({ isActive }) => (
           <>
             {variant === 'bottom' ? (
-              <span
-                className={cn(
-                  'flex h-7 w-11 items-center justify-center rounded-full transition-colors',
-                  isActive && 'bg-primary-subtle',
-                )}
-              >
-                <Icon className="size-5" aria-hidden="true" />
+              <span className="flex h-7 w-11 items-center justify-center">
+                <Icon
+                  className={cn(
+                    'size-6 transition-[color,transform] duration-150',
+                    isActive
+                      ? 'text-primary -translate-y-0.5'
+                      : 'text-muted-foreground group-hover:text-foreground',
+                  )}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  aria-hidden="true"
+                />
               </span>
             ) : (
               <Icon className="size-4" aria-hidden="true" />
