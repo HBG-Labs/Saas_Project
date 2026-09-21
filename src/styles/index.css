@@ -847,6 +847,24 @@ html.compact-mode {
   }
 }
 
+/*
+   La fiche profil reprend des champs hauts et aérés, comme les cartes de
+   l'écran de référence. Cette règle est hors des layers afin de l'emporter sur
+   la hauteur compacte générique de `.atelier-field` sans modifier les autres
+   formulaires de l'application.
+*/
+input.profile-form-field {
+  height: 56px;
+  min-height: 56px;
+}
+
+@media (min-width: 640px) {
+  input.profile-form-field {
+    height: 48px;
+    min-height: 48px;
+  }
+}
+
 /* Mouvements courts : les panneaux latéraux utilisent aussi l'axe horizontal. */
 @layer utilities {
   .slide-in-from-left {

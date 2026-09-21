@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import {
   User,
   Mail,
@@ -6,17 +7,18 @@ import {
   Award,
   Wrench,
   MapPin,
-  Clock,
   Briefcase,
   Save,
   Zap,
   HardHat,
   Pencil,
+  Building2,
+  ChevronRight,
+  Crown,
   Plus,
   Trash2,
   Check,
   Camera,
-  Sparkles,
   Lock,
   KeyRound,
   Eye,
@@ -24,15 +26,15 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { ROUTES } from '@/config/routes';
 import { FormError } from '@/components/feedback/FormError';
 import { updatePassword, useAuth } from '@/features/auth';
+import { useOrganizationEntitlements } from '@/features/billing';
 import {
   ROLE_LABELS,
   updateOwnMemberContact,
@@ -44,7 +46,6 @@ import {
   useUpdateMyProfile,
   type FullProfile,
 } from '@/features/profile';
-import { formatDate } from '@/lib/format';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 export interface EquipmentItem {
@@ -69,6 +70,21 @@ export interface UserProfileData {
   certifications: CertificationItem[];
   equipments: EquipmentItem[];
 }
+
+const PROFILE_CARD_CLASSNAME =
+  'border-border bg-surface overflow-hidden rounded-2xl shadow-[0_2px_10px_rgb(36_50_71/0.06)]';
+
+const PROFILE_FIELD_CLASSNAME =
+  'profile-form-field border-border bg-surface rounded-xl px-4 text-base shadow-none sm:text-sm';
+
+const PLAN_LABELS: Record<string, string> = {
+  free: 'FREE',
+  starter: 'STARTER',
+  pro: 'PRO',
+  business: 'BUSINESS',
+  enterprise: 'ENTERPRISE',
+  ultimate: 'ENTERPRISE',
+};
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -142,7 +158,8 @@ function toFormProfile(
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { membership, role } = useCurrentOrganization();
+  const { organization, membership, role } = useCurrentOrganization();
+  const { planCode } = useOrganizationEntitlements(organization?.id ?? null);
   const profileQuery = useMyProfile();
   const updateProfile = useUpdateMyProfile();
 
@@ -368,99 +385,140 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-10">
-      <PageHeader
-        title="Profil & Fiche Technicien"
-        description="Gérez vos données professionnelles, vos habilitations techniques, votre matériel attribué et vos préférences d'intervention."
-      />
+    <div className="mx-auto max-w-3xl space-y-5 pb-10 sm:space-y-6">
+      <section aria-labelledby="profile-title" className="-mx-4 sm:mx-0">
+        <div className="from-nav-selected via-nav-selected to-primary relative overflow-hidden bg-gradient-to-br px-5 pt-8 pb-20 text-center sm:rounded-[2rem] sm:pt-10 sm:pb-24">
+          <div
+            className="absolute -top-20 -right-14 size-56 rounded-full bg-white/10 blur-2xl"
+            aria-hidden="true"
+          />
+          <div
+            className="bg-primary/35 absolute -bottom-24 -left-16 size-64 rounded-full blur-2xl"
+            aria-hidden="true"
+          />
 
-      <Card className="border-primary/20 bg-surface-raised text-foreground p-4 sm:p-6">
-        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5 md:w-auto">
+          <div className="relative mx-auto flex max-w-xl flex-col items-center">
+            <h1
+              id="profile-title"
+              className="mb-5 text-xs font-bold tracking-[0.18em] text-white/75 uppercase"
+            >
+              Profil & Fiche Technicien
+            </h1>
             <div className="group relative">
               <button
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
-                className="focus-visible:ring-primary/30 relative block cursor-pointer rounded-full focus-visible:ring-4 focus-visible:outline-none"
-                title="Changer de photo de profil"
+                className="relative block cursor-pointer rounded-full focus-visible:ring-4 focus-visible:ring-white/60 focus-visible:outline-none"
+                aria-label="Changer d'avatar"
               >
                 <UserAvatar
                   avatarId={avatarId}
                   name={profile.displayName}
-                  size="lg"
-                  className="ring-primary/20 size-20 text-xl font-bold shadow-xs ring-4"
+                  size="xl"
+                  className="size-24 bg-white text-2xl font-bold shadow-[0_12px_30px_rgb(48_57_174/0.3)] ring-4 ring-white/75"
                 />
-                <div className="bg-foreground/75 text-background absolute inset-0 flex flex-col items-center justify-center rounded-full opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-                  <Camera className="size-5" />
-                  <span className="text-3xs mt-0.5 font-bold">Modifier</span>
-                </div>
+                <span className="border-nav-selected bg-surface text-primary absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 shadow-md transition-transform group-hover:scale-105">
+                  <Camera className="size-4" aria-hidden="true" />
+                </span>
               </button>
             </div>
-            <div className="min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-foreground text-xl font-bold tracking-tight sm:text-2xl">
-                  {profile.displayName}
-                </h2>
-                <Badge
-                  variant="outline"
-                  className="border-primary/40 bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-semibold"
-                >
-                  {role ? ROLE_LABELS[role] : 'Compte Professionnel'}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
-                <Briefcase className="text-primary size-3.5" />
-                {profile.jobTitle || 'Fonction non renseignée'}
-              </p>
-              <div className="text-muted-foreground grid gap-1.5 pt-1 text-xs sm:flex sm:items-center sm:gap-4">
-                <span className="flex items-center gap-1">
-                  <MapPin className="text-muted-foreground size-3" />
-                  {profile.zone || 'Zone non renseignée'}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="text-muted-foreground size-3" />
-                  Membre depuis : {user?.created_at ? formatDate(user.created_at) : 'Compte actif'}
-                </span>
-              </div>
-            </div>
-          </div>
 
-          <div className="border-border flex w-full flex-col items-stretch gap-2 border-t pt-4 sm:flex-row md:w-auto md:flex-col md:items-stretch md:border-t-0 md:pt-0">
-            <Button
-              variant="outline"
+            <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              {profile.displayName}
+            </h2>
+            <p className="mt-1.5 text-sm font-medium text-white/80">
+              {role ? ROLE_LABELS[role] : 'Compte professionnel'}
+            </p>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-white/85">
+              <span className="flex items-center gap-1.5">
+                <Briefcase className="size-3.5" aria-hidden="true" />
+                {profile.jobTitle || 'Fonction non renseignée'}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MapPin className="size-3.5" aria-hidden="true" />
+                {profile.zone || 'Zone non renseignée'}
+              </span>
+            </div>
+
+            <button
+              type="button"
               onClick={() => setIsAvatarModalOpen(true)}
-              leadingIcon={<Sparkles />}
-              className="md:min-w-48"
+              className="mt-5 min-h-10 rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
             >
-              Changer d'avatar
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => handleSaveProfile(profile)}
-              isLoading={updateProfile.isPending}
-              loadingLabel="Enregistrement du profil"
-              leadingIcon={<Save />}
-              className="md:min-w-48"
-            >
-              {updateProfile.isPending
-                ? 'Enregistrement…'
-                : savedSuccess
-                  ? 'Enregistré !'
-                  : 'Sauvegarder le profil'}
-            </Button>
-            <FormError error={submitError} />
+              Modifier mon avatar
+            </button>
           </div>
         </div>
-      </Card>
+
+        <div className="relative -mt-14 px-4 sm:px-8">
+          <Link
+            to={organization ? ROUTES.organization : ROUTES.organizationNew}
+            className="border-border bg-surface focus-visible:ring-primary group flex min-h-28 items-center gap-4 rounded-2xl border p-4 shadow-[0_10px_28px_rgb(36_50_71/0.16)] transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none"
+            aria-label={organization ? `Voir la société ${organization.name}` : 'Créer ma société'}
+          >
+            <span className="from-warning-subtle via-primary-subtle to-nav-selected text-primary flex size-18 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br sm:size-20">
+              {organization?.logo_url ? (
+                <img src={organization.logo_url} alt="" className="size-full object-cover" />
+              ) : (
+                <Building2 className="size-8" aria-hidden="true" />
+              )}
+            </span>
+            <span className="min-w-0 flex-1 text-left">
+              <span className="text-foreground block truncate text-lg font-bold">
+                {organization?.name ?? 'Ma société'}
+              </span>
+              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+                {organization ? 'Voir ma société' : 'Créer ma société'}
+                <ChevronRight
+                  className="size-4 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </span>
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <Link
+          to={organization ? ROUTES.organizationBilling : ROUTES.pricing}
+          className="border-border bg-surface hover:border-nav-selected/60 focus-visible:ring-primary flex min-h-24 items-center gap-4 rounded-2xl border p-4 shadow-[0_2px_10px_rgb(36_50_71/0.06)] transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          <span className="from-nav-selected to-primary flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm">
+            <Crown className="size-6" aria-hidden="true" />
+          </span>
+          <span className="text-foreground min-w-0 flex-1 text-sm font-semibold">
+            Abonnement {PLAN_LABELS[planCode] ?? planCode.toUpperCase()}
+          </span>
+          <ChevronRight className="text-muted-foreground size-5" aria-hidden="true" />
+        </Link>
+
+        <Button
+          variant="primary"
+          onClick={() => handleSaveProfile(profile)}
+          isLoading={updateProfile.isPending}
+          loadingLabel="Enregistrement du profil"
+          leadingIcon={<Save />}
+          className="h-14 w-full rounded-2xl px-6 shadow-sm sm:h-auto sm:min-w-56"
+        >
+          {updateProfile.isPending
+            ? 'Enregistrement…'
+            : savedSuccess
+              ? 'Enregistré !'
+              : 'Sauvegarder le profil'}
+        </Button>
+      </div>
+      <FormError error={submitError} />
 
       {/* Sections du Profil (Empilées harmonieusement) */}
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Card 1 : Coordonnées Professionnelles */}
-        <Card className="overflow-hidden">
-          <CardHeader className="border-border bg-surface-sunken/35 border-b">
+        <Card className={PROFILE_CARD_CLASSNAME}>
+          <CardHeader className="border-border bg-surface-subtle border-b p-5">
             <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
-                <User className="size-4" />
+              <span className="bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl">
+                <User className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
                 <CardTitle>Informations & Coordonnées</CardTitle>
@@ -471,10 +529,11 @@ export default function ProfilePage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 pt-5">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="space-y-5 p-5 pt-5 [&_label]:mb-2 [&_label]:text-sm">
+            <div className="grid gap-5 sm:grid-cols-2">
               <Input
                 label="Nom affiché / Prénom Nom"
+                className={PROFILE_FIELD_CLASSNAME}
                 value={profile.displayName}
                 onChange={(e) => {
                   const updated = { ...profile, displayName: e.target.value };
@@ -483,6 +542,7 @@ export default function ProfilePage() {
               />
               <Input
                 label="Titre & Fonction Métier"
+                className={PROFILE_FIELD_CLASSNAME}
                 value={profile.jobTitle}
                 onChange={(e) => {
                   const updated = { ...profile, jobTitle: e.target.value };
@@ -491,7 +551,7 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               <Input
                 id="profile-email-readonly"
                 label="Adresse e-mail du compte"
@@ -504,11 +564,12 @@ export default function ProfilePage() {
                     Vérifiée
                   </span>
                 }
-                className="pr-20"
+                className={`${PROFILE_FIELD_CLASSNAME} pr-20 pl-11`}
               />
 
               <Input
                 label="Téléphone mobile direct"
+                className={PROFILE_FIELD_CLASSNAME}
                 value={profile.phone}
                 onChange={(e) => {
                   const updated = { ...profile, phone: e.target.value };
@@ -520,6 +581,7 @@ export default function ProfilePage() {
             <div>
               <Input
                 label="Secteur / Zone d'intervention privilégiée"
+                className={PROFILE_FIELD_CLASSNAME}
                 value={profile.zone}
                 onChange={(e) => {
                   const updated = { ...profile, zone: e.target.value };
@@ -531,11 +593,11 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card 2 : Habilitations, Sécurité & Matériel de Mesure */}
-        <Card className="overflow-hidden">
-          <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-4 border-b sm:flex-row sm:items-center">
+        <Card className={PROFILE_CARD_CLASSNAME}>
+          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-4 border-b p-5 sm:flex-row sm:items-center">
             <div className="flex items-start gap-3">
-              <span className="bg-warning/10 text-warning flex size-10 shrink-0 items-center justify-center rounded-lg">
-                <HardHat className="size-4" />
+              <span className="bg-warning/10 text-warning flex size-12 shrink-0 items-center justify-center rounded-xl">
+                <HardHat className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
                 <CardTitle>Habilitations & Matériel Attribué</CardTitle>
@@ -665,11 +727,11 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card 3 : Sécurité du Compte & Mot de Passe */}
-        <Card className="overflow-hidden">
-          <CardHeader className="border-border bg-surface-sunken/35 flex flex-col items-stretch justify-between gap-4 border-b sm:flex-row sm:items-center">
+        <Card className={PROFILE_CARD_CLASSNAME}>
+          <CardHeader className="border-border bg-surface-subtle flex flex-col items-stretch justify-between gap-4 border-b p-5 sm:flex-row sm:items-center">
             <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
-                <Lock className="size-4" />
+              <span className="bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl">
+                <Lock className="size-5" />
               </span>
               <div className="min-w-0 space-y-1">
                 <CardTitle>Sécurité du Compte & Mot de Passe</CardTitle>

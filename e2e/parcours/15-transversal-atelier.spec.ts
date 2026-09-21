@@ -102,6 +102,26 @@ test.describe('Transversal Atelier', () => {
 
     await expect(page.getByRole('heading', { name: 'Profil & Fiche Technicien' })).toBeVisible();
     await expect(page.getByRole('button', { name: "Changer d'avatar" })).toBeVisible();
+
+    const companyCard = page.getByRole('link', { name: /Voir la société/ });
+    const subscriptionCard = page.getByRole('link', { name: /Abonnement/ });
+    await expect(companyCard).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    expect((await companyCard.boundingBox())?.height).toBeGreaterThanOrEqual(112);
+    expect((await subscriptionCard.boundingBox())?.height).toBeGreaterThanOrEqual(96);
+
+    const profileFields = [
+      page.getByLabel('Nom affiché / Prénom Nom'),
+      page.getByLabel('Titre & Fonction Métier'),
+      page.getByLabel('Adresse e-mail du compte'),
+      page.getByLabel('Téléphone mobile direct'),
+      page.getByLabel("Secteur / Zone d'intervention privilégiée"),
+    ];
+    const fieldHeights = await Promise.all(
+      profileFields.map(async (field) => Math.round((await field.boundingBox())?.height ?? 0)),
+    );
+    expect(new Set(fieldHeights).size).toBe(1);
+    expect(fieldHeights[0]).toBe(page.viewportSize()!.width < 640 ? 56 : 48);
+
     await page.getByRole('button', { name: /Notifications d'activité/ }).click();
     await expect(page.getByLabel('Centre de notifications')).toBeVisible();
     await expect(page.getByText('Notifications', { exact: true })).toBeVisible();
