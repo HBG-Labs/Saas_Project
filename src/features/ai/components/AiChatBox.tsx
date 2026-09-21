@@ -155,7 +155,7 @@ export function AiChatBox({
             variant="ghost"
             size="sm"
             onClick={() => setIsHistoryDrawerOpen(true)}
-            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground relative h-11 shrink-0 gap-1.5 rounded-lg px-2 text-xs sm:h-7"
+            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground min-w-touch relative h-11 shrink-0 justify-center gap-1.5 rounded-lg px-2 text-xs sm:h-7 sm:min-w-0"
             title="Consulter l'historique des recherches"
             aria-label="Historique des recherches"
           >
@@ -174,7 +174,7 @@ export function AiChatBox({
             size="sm"
             onClick={onClear}
             disabled={isGenerating || messages.length <= 1}
-            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground h-11 shrink-0 rounded-lg px-2 text-xs sm:h-7"
+            className="text-muted-foreground hover:bg-surface-hover hover:text-foreground min-w-touch h-11 shrink-0 justify-center rounded-lg px-2 text-xs sm:h-7 sm:min-w-0"
             title="Réinitialiser la conversation"
           >
             <RotateCcw className="mr-1 size-3" />
@@ -314,7 +314,7 @@ export function AiChatBox({
                 }
                 rows={1}
                 disabled={isGenerating || isQuotaExceeded}
-                className="text-foreground placeholder:text-subtle-foreground max-h-[120px] w-full resize-none border-none bg-transparent p-0 text-xs leading-relaxed focus:ring-0 focus:outline-none sm:text-sm"
+                className="text-foreground placeholder:text-subtle-foreground max-h-[120px] min-h-10 w-full resize-none border-none bg-transparent p-0 py-2 text-xs leading-relaxed focus:ring-0 focus:outline-none sm:min-h-0 sm:py-0 sm:text-sm"
               />
             </div>
 

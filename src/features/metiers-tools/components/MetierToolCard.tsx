@@ -26,23 +26,24 @@ export function MetierToolCard({
   const { has } = useUserEntitlements();
   const isProUnlocked = has('pro_tools');
   const trade = getTrade(tool.tradeSlug);
-  const Icon: LucideIcon = NAV_ICONS[tool.icon] ?? (trade ? NAV_ICONS[trade.icon] : undefined) ?? FALLBACK_NAV_ICON;
+  const Icon: LucideIcon =
+    NAV_ICONS[tool.icon] ?? (trade ? NAV_ICONS[trade.icon] : undefined) ?? FALLBACK_NAV_ICON;
   const targetUrl = `/metiers/${tool.tradeSlug}/${tool.slug}`;
 
   if (variant === 'list') {
     return (
       <div
         className={cn(
-          'group bg-surface border-border shadow-2xs relative flex items-center justify-between rounded-xl border p-3 sm:p-3.5 gap-3',
-          'hover:border-primary/50 hover:shadow-xs transition-all duration-200',
+          'group bg-surface border-border relative flex items-center justify-between gap-3 rounded-lg border p-3 sm:p-3.5',
+          'hover:border-primary/50 transition-colors duration-200',
           'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
           className,
         )}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <span
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+              'flex size-9 shrink-0 items-center justify-center rounded-lg',
               trade?.badgeColor ?? 'bg-surface-raised text-muted-foreground',
             )}
           >
@@ -50,29 +51,29 @@ export function MetierToolCard({
           </span>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-              <h3 className="text-foreground font-bold text-sm tracking-tight">
+            <div className="mb-0.5 flex flex-wrap items-center gap-2">
+              <h3 className="text-foreground text-sm font-bold tracking-tight">
                 <Link
                   to={targetUrl}
-                  className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
+                  className="hover:text-primary transition-colors after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
                 >
                   {tool.title}
                 </Link>
               </h3>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-                  <Sparkles className="size-2.5 text-primary" />
+                <span className="border-primary/25 bg-primary-subtle text-primary text-3xs inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-bold tracking-wider uppercase">
+                  <Sparkles className="text-primary size-2.5" />
                   <span>PRO</span>
                 </span>
               )}
               {trade && (
-                <Badge variant="neutral" className="text-3xs px-2 py-0.2 shrink-0 font-semibold">
+                <Badge variant="neutral" className="text-3xs py-0.2 shrink-0 px-2 font-semibold">
                   {trade.shortName}
                 </Badge>
               )}
               <span
                 className={cn(
-                  'inline-flex items-center gap-1 text-3xs font-medium px-1.5 py-0.2 rounded',
+                  'text-3xs py-0.2 inline-flex items-center gap-1 rounded px-1.5 font-medium',
                   tool.reliabilityLevel === 'simple' && 'text-success bg-success/10',
                   tool.reliabilityLevel === 'indicative' && 'text-warning bg-warning/10',
                   tool.reliabilityLevel === 'pro_validation' && 'text-error bg-error/10',
@@ -93,7 +94,13 @@ export function MetierToolCard({
                     tool.reliabilityLevel === 'pro_validation' && 'bg-error',
                   )}
                 />
-                <span>{tool.reliabilityLevel === 'simple' ? 'Direct' : tool.reliabilityLevel === 'indicative' ? 'Indicatif' : 'Validation BE'}</span>
+                <span>
+                  {tool.reliabilityLevel === 'simple'
+                    ? 'Direct'
+                    : tool.reliabilityLevel === 'indicative'
+                      ? 'Indicatif'
+                      : 'Validation BE'}
+                </span>
               </span>
             </div>
             <p className="text-muted-foreground line-clamp-1 text-xs">
@@ -102,31 +109,36 @@ export function MetierToolCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 relative z-20">
+        <div className="relative z-20 flex shrink-0 items-center gap-2">
           {onToggleFavorite && (
             <button
               type="button"
               onClick={() => onToggleFavorite(tool.slug)}
               aria-pressed={isFavorite}
               aria-label={
-                isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
+                isFavorite
+                  ? `Retirer ${tool.title} des favoris`
+                  : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
                 // 44 px au doigt (WCAG 2.5.5), 32 px au pointeur : l'étoile
                 // faisait 32 px partout, soit une cible ratée une fois sur
                 // trois avec un gant.
-                'size-touch sm:size-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer',
+                'size-touch flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-8',
                 'hover:bg-surface-hover',
                 isFavorite ? 'text-warning' : 'text-subtle-foreground',
               )}
             >
-              <Star className={cn('size-4', isFavorite && 'fill-current text-warning')} aria-hidden="true" />
+              <Star
+                className={cn('size-4', isFavorite && 'text-warning fill-current')}
+                aria-hidden="true"
+              />
             </button>
           )}
 
           <Link
             to={targetUrl}
-            className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs transition-all hover:bg-primary-hover active:scale-95 cursor-pointer"
+            className="min-h-touch bg-primary text-primary-foreground hover:bg-primary-hover inline-flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95 sm:min-h-0"
           >
             <span>Lancer</span>
             <ChevronRight className="size-3.5" />
@@ -139,8 +151,8 @@ export function MetierToolCard({
   return (
     <div
       className={cn(
-        'group bg-surface border-border shadow-2xs relative flex flex-col justify-between rounded-xl border p-3.5 sm:p-4',
-        'hover:border-primary/40 hover:shadow-xs transition-all duration-200',
+        'group bg-surface border-border relative flex flex-col justify-between rounded-lg border p-3.5 sm:p-4',
+        'hover:border-primary/40 transition-colors duration-200',
         'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
         className,
       )}
@@ -149,14 +161,14 @@ export function MetierToolCard({
         <div className="flex items-start justify-between gap-2">
           <span
             className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+              'flex size-8 shrink-0 items-center justify-center rounded-lg',
               trade?.badgeColor ?? 'bg-surface-raised text-muted-foreground',
             )}
           >
             <Icon className="size-4" aria-hidden="true" />
           </span>
 
-          <div className="flex items-center gap-1.5 relative z-20">
+          <div className="relative z-20 flex items-center gap-1.5">
             <span
               className={cn(
                 'size-2 rounded-full',
@@ -178,32 +190,37 @@ export function MetierToolCard({
                 onClick={() => onToggleFavorite(tool.slug)}
                 aria-pressed={isFavorite}
                 aria-label={
-                  isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
+                  isFavorite
+                    ? `Retirer ${tool.title} des favoris`
+                    : `Ajouter ${tool.title} aux favoris`
                 }
                 className={cn(
-                  'flex size-7 items-center justify-center rounded-md transition-colors cursor-pointer',
+                  'flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors',
                   'hover:bg-surface-hover',
-                  isFavorite ? 'text-warning fill-amber-500' : 'text-subtle-foreground',
+                  isFavorite ? 'text-warning' : 'text-subtle-foreground',
                 )}
               >
-                <Star className={cn('size-3.5', isFavorite && 'fill-amber-500 text-warning')} aria-hidden="true" />
+                <Star
+                  className={cn('size-3.5', isFavorite && 'text-warning fill-current')}
+                  aria-hidden="true"
+                />
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <h3 className="text-foreground font-bold text-sm leading-snug">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <h3 className="text-foreground text-sm leading-snug font-bold">
             <Link
               to={targetUrl}
-              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
+              className="hover:text-primary transition-colors after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
             >
               {tool.title}
             </Link>
           </h3>
           {!isProUnlocked && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-              <Sparkles className="size-2.5 text-primary" />
+            <span className="border-primary/25 bg-primary-subtle text-primary text-3xs inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-bold tracking-wider uppercase">
+              <Sparkles className="text-primary size-2.5" />
               <span>PRO</span>
             </span>
           )}
@@ -213,9 +230,9 @@ export function MetierToolCard({
         </p>
       </div>
 
-      <div className="mt-3.5 pt-2.5 border-t border-border/50 flex items-center justify-between gap-2 text-xs">
+      <div className="border-border/50 mt-3.5 flex items-center justify-between gap-2 border-t pt-2.5 text-xs">
         {trade ? (
-          <Badge variant="neutral" className="text-3xs px-2 py-0.2">
+          <Badge variant="neutral" className="text-3xs py-0.2 px-2">
             {trade.shortName}
           </Badge>
         ) : (
@@ -224,7 +241,7 @@ export function MetierToolCard({
 
         <Link
           to={targetUrl}
-          className="relative z-20 text-primary font-bold flex items-center gap-0.5 text-xs hover:underline cursor-pointer"
+          className="text-primary relative z-20 flex cursor-pointer items-center gap-0.5 text-xs font-bold hover:underline"
         >
           <span>Lancer</span>
           <ChevronRight className="size-3" />

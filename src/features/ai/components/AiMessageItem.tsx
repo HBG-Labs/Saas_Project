@@ -184,7 +184,7 @@ export function AiMessageItem({ message, onExecuteAction, onRetry }: AiMessageIt
           type="button"
           onClick={() => setFeedback((prev) => (prev === 'like' ? null : 'like'))}
           className={cn(
-            'flex size-7 cursor-pointer items-center justify-center rounded-lg transition-colors',
+            'size-touch flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-7',
             feedback === 'like'
               ? 'text-primary bg-primary/10'
               : 'text-subtle-foreground hover:bg-surface-hover hover:text-foreground',
@@ -199,7 +199,7 @@ export function AiMessageItem({ message, onExecuteAction, onRetry }: AiMessageIt
           type="button"
           onClick={() => setFeedback((prev) => (prev === 'dislike' ? null : 'dislike'))}
           className={cn(
-            'flex size-7 cursor-pointer items-center justify-center rounded-lg transition-colors',
+            'size-touch flex cursor-pointer items-center justify-center rounded-lg transition-colors sm:size-7',
             feedback === 'dislike'
               ? 'text-error bg-error/10'
               : 'text-subtle-foreground hover:bg-surface-hover hover:text-foreground',

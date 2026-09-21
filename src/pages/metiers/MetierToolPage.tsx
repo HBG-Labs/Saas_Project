@@ -22,7 +22,9 @@ export default function MetierToolPage() {
   const isProUnlocked = has('pro_tools');
 
   useDocumentTitle(
-    tool ? `${tool.title} — ${trade?.shortName ?? 'Métiers'} REZO360` : 'Outil introuvable — REZO360',
+    tool
+      ? `${tool.title} — ${trade?.shortName ?? 'Métiers'} REZO360`
+      : 'Outil introuvable — REZO360',
   );
 
   const { isFavorite, toggleFavorite } = useMetierFavorites();
@@ -54,27 +56,33 @@ export default function MetierToolPage() {
   return (
     <>
       {/* Fil d'Ariane */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 flex-wrap">
-        <Link to="/metiers" className="hover:text-foreground transition-colors flex items-center gap-1">
+      <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-2 text-xs">
+        <Link
+          to="/metiers"
+          className="hover:text-foreground flex items-center gap-1 transition-colors"
+        >
           <ArrowLeft className="size-3.5" />
           <span>Outils Métiers</span>
         </Link>
         <span>/</span>
-        <Link to={`/metiers/${trade.slug}`} className="hover:text-foreground transition-colors font-medium">
+        <Link
+          to={`/metiers/${trade.slug}`}
+          className="hover:text-foreground font-medium transition-colors"
+        >
           {trade.name}
         </Link>
         <span>/</span>
-        <span className="text-foreground font-bold truncate max-w-[200px] sm:max-w-none">
+        <span className="text-foreground max-w-[200px] truncate font-bold sm:max-w-none">
           {tool.title}
         </span>
       </div>
 
       {/* En-tête de l'outil */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3.5">
           <span
             className={cn(
-              'flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-2xl shadow-2xs',
+              'flex size-11 shrink-0 items-center justify-center rounded-lg sm:size-12',
               trade.badgeColor,
             )}
             aria-hidden="true"
@@ -82,29 +90,29 @@ export default function MetierToolPage() {
             <Icon className="size-5 sm:size-6" />
           </span>
           <div>
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <Badge variant="neutral" className="text-3xs px-2 py-0.2 font-semibold">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <Badge variant="neutral" className="text-3xs py-0.2 px-2 font-semibold">
                 {trade.name}
               </Badge>
               {!isProUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/35 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary dark:text-primary shadow-[0_1px_4px_rgba(6,182,212,0.15)] backdrop-blur-xs">
-                  <Sparkles className="size-2.5 text-primary" />
+                <span className="border-primary/25 bg-primary-subtle text-primary text-3xs inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 font-bold tracking-wider uppercase">
+                  <Sparkles className="text-primary size-2.5" />
                   <span>Module Pro</span>
                 </span>
               )}
               {tool.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-block px-1.5 py-0.2 rounded text-3xs font-mono bg-surface-raised border border-border text-subtle-foreground"
+                  className="py-0.2 text-3xs bg-surface-raised border-border text-subtle-foreground inline-block rounded border px-1.5 font-mono"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+            <h1 className="text-foreground text-xl font-black tracking-tight sm:text-2xl">
               {tool.title}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-3xl leading-relaxed">
+            <p className="text-muted-foreground mt-1 max-w-3xl text-xs leading-relaxed sm:text-sm">
               {tool.description}
             </p>
           </div>
@@ -117,7 +125,7 @@ export default function MetierToolPage() {
           size="sm"
           onClick={() => toggleFavorite(tool.slug)}
           className={cn(
-            'gap-1.5 text-xs font-semibold cursor-pointer shrink-0 self-start sm:self-auto shadow-xs',
+            'shrink-0 cursor-pointer gap-1.5 self-start text-xs font-semibold shadow-xs sm:self-auto',
             fav && 'bg-warning hover:bg-warning border-warning text-foreground',
           )}
         >

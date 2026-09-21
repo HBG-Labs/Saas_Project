@@ -1,12 +1,4 @@
-import {
-  Check,
-  Compass,
-  Copy,
-  Lock,
-  MapPin,
-  RefreshCw,
-  Unlock,
-} from 'lucide-react';
+import { Check, Compass, Copy, Lock, MapPin, RefreshCw, Unlock } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -71,10 +63,7 @@ export default function CompassTool() {
   // Demande d'autorisation pour iOS 13+
   const requestOrientationPermission = useCallback(async () => {
     const orientationEvent = DeviceOrientationEvent as DeviceOrientationConstructorWithPermission;
-    if (
-      typeof window !== 'undefined' &&
-      typeof orientationEvent.requestPermission === 'function'
-    ) {
+    if (typeof window !== 'undefined' && typeof orientationEvent.requestPermission === 'function') {
       try {
         const response = await orientationEvent.requestPermission();
         if (response === 'granted') {
@@ -153,17 +142,19 @@ export default function CompassTool() {
   const headingDiff = lockedHeading !== null ? ((heading - lockedHeading + 540) % 360) - 180 : null;
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto min-w-0">
-      <Card className="border-border bg-surface shadow-2xs overflow-hidden min-w-0">
-        <CardHeader className="border-b border-border/70 p-3.5 sm:p-4 pb-3.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <div className="mx-auto max-w-4xl min-w-0 space-y-4 sm:space-y-6">
+      <Card className="border-border bg-surface min-w-0 overflow-hidden shadow-2xs">
+        <CardHeader className="border-border/70 border-b p-3.5 pb-3.5 sm:p-4">
+          <div className="flex min-w-0 flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
                 <Compass className="size-5" />
               </div>
               <div className="min-w-0">
-                <CardTitle className="text-sm sm:text-base font-bold truncate">Boussole Numérique & Azimut</CardTitle>
-                <p className="text-3xs sm:text-xs text-muted-foreground line-clamp-1">
+                <CardTitle className="truncate text-sm font-bold sm:text-base">
+                  Boussole Numérique & Azimut
+                </CardTitle>
+                <p className="text-3xs text-muted-foreground line-clamp-1 sm:text-xs">
                   Orientation magnétique, verrouillage de cap et GPS de chantier.
                 </p>
               </div>
@@ -174,25 +165,36 @@ export default function CompassTool() {
               variant={lockedHeading !== null ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setLockedHeading(lockedHeading !== null ? null : heading)}
-              className="gap-1.5 text-xs font-semibold self-start sm:self-auto shrink-0 h-8"
+              className="h-8 shrink-0 gap-1.5 self-start text-xs font-semibold sm:self-auto"
             >
-              {lockedHeading !== null ? <Unlock className="size-3.5" /> : <Lock className="size-3.5" />}
+              {lockedHeading !== null ? (
+                <Unlock className="size-3.5" />
+              ) : (
+                <Lock className="size-3.5" />
+              )}
               <span>{lockedHeading !== null ? 'Libérer cap' : 'Verrouiller cap'}</span>
             </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
+        <CardContent className="min-w-0 space-y-4 overflow-x-hidden p-3 sm:space-y-6 sm:p-6">
           {/* Alerte demande de permission iOS */}
           {hasOrientationSensor === null && !permissionRequested && (
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="bg-primary/10 border-primary/20 flex flex-col justify-between gap-3 rounded-xl border p-4 text-xs sm:flex-row sm:items-center">
               <div className="space-y-0.5">
-                <p className="font-bold text-foreground">Autorisation des capteurs requise sur mobile</p>
+                <p className="text-foreground font-bold">
+                  Autorisation des capteurs requise sur mobile
+                </p>
                 <p className="text-muted-foreground">
                   Cliquez sur activer pour autoriser le gyroscope et la boussole de votre appareil.
                 </p>
               </div>
-              <Button type="button" size="sm" onClick={requestOrientationPermission} className="text-xs shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                onClick={requestOrientationPermission}
+                className="shrink-0 text-xs"
+              >
                 Activer la boussole
               </Button>
             </div>
@@ -200,58 +202,76 @@ export default function CompassTool() {
 
           {/* Cadran Central de la Boussole */}
           <div className="flex flex-col items-center justify-center py-4">
-            <div className="relative size-64 sm:size-76 flex items-center justify-center">
+            <div className="relative flex size-64 items-center justify-center sm:size-76">
               {/* Repère supérieur fixe (flèche de visée) */}
               <div className="absolute -top-3 z-20 flex flex-col items-center">
-                <div className="size-0 border-x-8 border-x-transparent border-t-12 border-t-warning" />
+                <div className="border-t-warning size-0 border-x-8 border-t-12 border-x-transparent" />
               </div>
 
               {/* Cadran tournant gradué */}
               <div
-                className="relative size-full rounded-full border-4 border-border bg-surface-sunken shadow-2xl flex items-center justify-center transition-transform duration-100 ease-out"
+                className="border-border bg-surface-sunken relative flex size-full items-center justify-center rounded-full border-4 shadow-2xl transition-transform duration-100 ease-out"
                 style={{ transform: `rotate(${-heading}deg)` }}
               >
                 {/* Graduations circulaires */}
-                <div className="absolute inset-2 rounded-full border border-border" />
-                <div className="absolute inset-6 rounded-full border border-dashed border-border/80" />
+                <div className="border-border absolute inset-2 rounded-full border" />
+                <div className="border-border/80 absolute inset-6 rounded-full border border-dashed" />
 
                 {/* Points Cardinaux */}
-                <span className="absolute top-2.5 text-sm font-black text-red-500 tracking-wider">N</span>
-                <span className="absolute right-3.5 text-sm font-black text-muted-foreground tracking-wider">E</span>
-                <span className="absolute bottom-2.5 text-sm font-black text-muted-foreground tracking-wider">S</span>
-                <span className="absolute left-3.5 text-sm font-black text-muted-foreground tracking-wider">O</span>
+                <span className="text-error absolute top-2.5 text-sm font-black tracking-wider">
+                  N
+                </span>
+                <span className="text-muted-foreground absolute right-3.5 text-sm font-black tracking-wider">
+                  E
+                </span>
+                <span className="text-muted-foreground absolute bottom-2.5 text-sm font-black tracking-wider">
+                  S
+                </span>
+                <span className="text-muted-foreground absolute left-3.5 text-sm font-black tracking-wider">
+                  O
+                </span>
 
                 {/* Points Intercardinaux */}
-                <span className="absolute top-8 right-8 text-2xs font-bold text-muted-foreground">NE</span>
-                <span className="absolute bottom-8 right-8 text-2xs font-bold text-muted-foreground">SE</span>
-                <span className="absolute bottom-8 left-8 text-2xs font-bold text-muted-foreground">SO</span>
-                <span className="absolute top-8 left-8 text-2xs font-bold text-muted-foreground">NO</span>
+                <span className="text-2xs text-muted-foreground absolute top-8 right-8 font-bold">
+                  NE
+                </span>
+                <span className="text-2xs text-muted-foreground absolute right-8 bottom-8 font-bold">
+                  SE
+                </span>
+                <span className="text-2xs text-muted-foreground absolute bottom-8 left-8 font-bold">
+                  SO
+                </span>
+                <span className="text-2xs text-muted-foreground absolute top-8 left-8 font-bold">
+                  NO
+                </span>
 
                 {/* Rayons principaux */}
-                <div className="absolute h-full w-0.5 bg-slate-800/60" />
-                <div className="absolute w-full h-0.5 bg-slate-800/60" />
+                <div className="bg-foreground/60 absolute h-full w-0.5" />
+                <div className="bg-foreground/60 absolute h-0.5 w-full" />
 
                 {/* Aiguille Nord / Sud */}
-                <div className="absolute w-2 h-36 flex flex-col items-center justify-between pointer-events-none">
-                  <div className="w-0 h-0 border-x-6 border-x-transparent border-b-28 border-b-red-600 drop-shadow-md" />
-                  <div className="w-0 h-0 border-x-6 border-x-transparent border-t-28 border-t-slate-400 drop-shadow-md" />
+                <div className="pointer-events-none absolute flex h-36 w-2 flex-col items-center justify-between">
+                  <div className="h-0 w-0 border-x-6 border-b-28 border-x-transparent border-b-red-600 drop-shadow-md" />
+                  <div className="h-0 w-0 border-x-6 border-t-28 border-x-transparent border-t-slate-400 drop-shadow-md" />
                 </div>
               </div>
 
               {/* Centre du cadran avec Cap en Degrés */}
-              <div className="absolute z-10 flex flex-col items-center justify-center size-24 rounded-full bg-surface-sunken/90 backdrop-blur-md border border-border shadow-xl text-white">
+              <div className="bg-surface-sunken/90 border-border absolute z-10 flex size-24 flex-col items-center justify-center rounded-full border text-white shadow-xl backdrop-blur-md">
                 <span className="font-mono text-2xl font-black tracking-tight">{heading}°</span>
-                <span className="text-3xs uppercase font-bold text-muted-foreground">
+                <span className="text-3xs text-muted-foreground font-bold uppercase">
                   {getCardinalDirection(heading).split(' • ')[0]}
                 </span>
               </div>
             </div>
 
             {/* Direction Textuelle */}
-            <div className="mt-5 text-center space-y-1">
-              <p className="text-base font-extrabold text-foreground">{getCardinalDirection(heading)}</p>
+            <div className="mt-5 space-y-1 text-center">
+              <p className="text-foreground text-base font-extrabold">
+                {getCardinalDirection(heading)}
+              </p>
               {lockedHeading !== null && headingDiff !== null && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+                <div className="bg-warning/10 text-warning border-warning/20 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold">
                   <span>Cap cible : {lockedHeading}°</span>
                   <span>•</span>
                   <span>
@@ -268,12 +288,12 @@ export default function CompassTool() {
 
           {/* Simulateur / Ajustement manuel si aucun capteur */}
           {hasOrientationSensor === false && (
-            <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-2">
+            <div className="bg-surface-raised border-border space-y-2 rounded-xl border p-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-muted-foreground">
+                <span className="text-muted-foreground font-semibold">
                   Ajustement manuel (mode bureau sans gyroscope)
                 </span>
-                <span className="font-mono font-bold text-primary">{heading}°</span>
+                <span className="text-primary font-mono font-bold">{heading}°</span>
               </div>
               <input
                 type="range"
@@ -282,16 +302,16 @@ export default function CompassTool() {
                 value={heading}
                 onChange={(e) => setHeading(Number(e.target.value))}
                 aria-label="Cap manuel"
-                className="w-full accent-primary h-2 bg-surface rounded-lg cursor-pointer"
+                className="accent-primary bg-surface h-2 w-full cursor-pointer rounded-lg"
               />
             </div>
           )}
 
           {/* Informations GPS de Chantier */}
-          <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-3">
+          <div className="bg-surface-raised border-border space-y-3 rounded-xl border p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-foreground">
-                <MapPin className="size-4 text-primary" />
+              <div className="text-foreground flex items-center gap-2 text-xs font-bold tracking-wider uppercase">
+                <MapPin className="text-primary size-4" />
                 <span>Coordonnées GPS du site</span>
               </div>
               <div className="flex items-center gap-2">
@@ -300,7 +320,7 @@ export default function CompassTool() {
                   variant="outline"
                   size="sm"
                   onClick={fetchLocation}
-                  className="h-7 px-2 text-3xs font-semibold gap-1"
+                  className="text-3xs h-7 gap-1 px-2 font-semibold"
                 >
                   <RefreshCw className="size-3" />
                   Actualiser
@@ -311,9 +331,13 @@ export default function CompassTool() {
                     variant="outline"
                     size="sm"
                     onClick={copyCoordinates}
-                    className="h-7 px-2 text-3xs font-semibold gap-1"
+                    className="text-3xs h-7 gap-1 px-2 font-semibold"
                   >
-                    {copiedGps ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
+                    {copiedGps ? (
+                      <Check className="text-success size-3" />
+                    ) : (
+                      <Copy className="size-3" />
+                    )}
                     {copiedGps ? 'Copié' : 'Copier'}
                   </Button>
                 )}
@@ -321,30 +345,36 @@ export default function CompassTool() {
             </div>
 
             {coords.lat !== null && coords.lng !== null ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                <div className="p-2.5 rounded-lg bg-surface border border-border/80 text-xs">
-                  <span className="text-3xs text-muted-foreground font-semibold block">Latitude</span>
-                  <span className="font-mono font-bold text-foreground">{coords.lat}° N</span>
+              <div className="grid grid-cols-2 gap-2.5 pt-1 sm:grid-cols-4">
+                <div className="bg-surface border-border/80 rounded-lg border p-2.5 text-xs">
+                  <span className="text-3xs text-muted-foreground block font-semibold">
+                    Latitude
+                  </span>
+                  <span className="text-foreground font-mono font-bold">{coords.lat}° N</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-surface border border-border/80 text-xs">
-                  <span className="text-3xs text-muted-foreground font-semibold block">Longitude</span>
-                  <span className="font-mono font-bold text-foreground">{coords.lng}° E</span>
+                <div className="bg-surface border-border/80 rounded-lg border p-2.5 text-xs">
+                  <span className="text-3xs text-muted-foreground block font-semibold">
+                    Longitude
+                  </span>
+                  <span className="text-foreground font-mono font-bold">{coords.lng}° E</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-surface border border-border/80 text-xs">
-                  <span className="text-3xs text-muted-foreground font-semibold block">Altitude</span>
-                  <span className="font-mono font-bold text-foreground">
+                <div className="bg-surface border-border/80 rounded-lg border p-2.5 text-xs">
+                  <span className="text-3xs text-muted-foreground block font-semibold">
+                    Altitude
+                  </span>
+                  <span className="text-foreground font-mono font-bold">
                     {coords.alt !== null ? `${coords.alt} m` : 'N/A'}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-surface border border-border/80 text-xs">
-                  <span className="text-3xs text-muted-foreground font-semibold block">Précision GPS</span>
-                  <span className="font-mono font-bold text-success">
-                    ± {coords.accuracy} m
+                <div className="bg-surface border-border/80 rounded-lg border p-2.5 text-xs">
+                  <span className="text-3xs text-muted-foreground block font-semibold">
+                    Précision GPS
                   </span>
+                  <span className="text-success font-mono font-bold">± {coords.accuracy} m</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Recherche de position GPS en cours ou géolocalisation désactivée.
               </p>
             )}

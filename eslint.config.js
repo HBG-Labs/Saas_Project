@@ -244,9 +244,13 @@ export default tseslint.config(
       // API de cartes tierces : leurs styles n'acceptent que des couleurs concrètes.
       'src/features/map/**',
       'src/features/geo/**',
-      // Outils qui peignent une surface : lampe, canevas de signature.
+      // Outils qui peignent une surface : lampe, signature et visualiseur audio.
       'src/features/tools/field/flashlight/**',
       'src/features/interventions/components/SignaturePadModal.tsx',
+      'src/features/tools/field/voice-recorder/**',
+      // Sorties autonomes : feuille imprimable, export HTML et palette de séries.
+      'src/features/interventions/components/InterventionPdfModal.tsx',
+      'src/pages/analytics/AnalyticsPage.tsx',
 
       // ---- DETTE : à résorber écran par écran, cette liste doit maigrir ----
       'src/components/marketing/Categories.tsx',
@@ -254,19 +258,8 @@ export default tseslint.config(
       'src/components/marketing/Hero.tsx',
       'src/components/marketing/Pricing.tsx',
       'src/components/pricing/PricingSimulator.tsx',
-      'src/features/interventions/components/InterventionPdfModal.tsx',
-      'src/features/metiers-tools/components/MetierToolCard.tsx',
-      'src/features/metiers-tools/components/MetierToolRunner.tsx',
-      'src/features/metiers-tools/registry.ts',
-      'src/features/planning/components/PublicHolidaysTab.tsx',
-      'src/features/stock/types/stock.types.ts',
-      'src/features/tools/components/ToolReferences.tsx',
-      'src/features/tools/field/compass/**',
-      'src/features/tools/field/voice-recorder/**',
       'src/pages/LandingPage.tsx',
       'src/pages/PricingPage.tsx',
-      'src/pages/analytics/AnalyticsPage.tsx',
-      'src/pages/metiers/MetierToolPage.tsx',
     ],
     rules: {
       'no-restricted-syntax': [

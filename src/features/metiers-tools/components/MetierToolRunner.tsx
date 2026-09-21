@@ -98,14 +98,22 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
   // 3. Sauvegarde automatique dans l'historique quand le calcul est stabilisé (utilisateurs Pro)
   useEffect(() => {
-    if (isProUnlocked && output.primaryResult && output.primaryResult !== '0' && output.status !== 'danger') {
+    if (
+      isProUnlocked &&
+      output.primaryResult &&
+      output.primaryResult !== '0' &&
+      output.status !== 'danger'
+    ) {
       const timer = setTimeout(() => {
         addHistoryEntry({
           tradeSlug: tool.tradeSlug,
           toolSlug: tool.slug,
           toolTitle: tool.title,
           result: output.primaryResult,
-          summary: output.details.map((d) => `${d.label}: ${d.value}`).slice(0, 3).join(' • '),
+          summary: output.details
+            .map((d) => `${d.label}: ${d.value}`)
+            .slice(0, 3)
+            .join(' • '),
         });
       }, 1000);
       return () => {
@@ -162,36 +170,39 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* BANDEAU DE FIABILITÉ & NORME DE RÉFÉRENCE                    */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface border border-border text-xs shadow-2xs">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-bold text-2xs', reliability.bgClass)}>
+      <div className="bg-surface border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3.5 text-xs shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span
+            className={cn(
+              'text-2xs inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-bold',
+              reliability.bgClass,
+            )}
+          >
             <ShieldCheck className="size-3.5" />
             <span>{reliability.label}</span>
           </span>
 
           {tool.standardReference && (
-            <span className="inline-flex items-center gap-1.5 text-muted-foreground text-2xs bg-surface-raised px-2.5 py-1 rounded-lg border border-border/80">
-              <BookOpen className="size-3 text-primary" />
-              <span className="font-semibold text-foreground/90">Norme :</span>
+            <span className="text-muted-foreground text-2xs bg-surface-raised border-border/80 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1">
+              <BookOpen className="text-primary size-3" />
+              <span className="text-foreground/90 font-semibold">Norme :</span>
               <span>{tool.standardReference}</span>
             </span>
           )}
         </div>
 
-        <p className="text-3xs text-muted-foreground italic">
-          {reliability.description}
-        </p>
+        <p className="text-3xs text-muted-foreground italic">{reliability.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-12">
         {/* ───────────────────────────────────────────────────────────── */}
         {/* COLONNE GAUCHE (7 cols) : FORMULAIRE DE SAISIE                */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="lg:col-span-7 space-y-4">
-          <Card className="p-4 sm:p-5 rounded-2xl border-border bg-surface shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="space-y-4 lg:col-span-7">
+          <Card className="border-border bg-surface space-y-4 rounded-2xl p-4 shadow-xs sm:p-5">
+            <div className="border-border flex items-center justify-between border-b pb-3">
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                <h2 className="text-foreground text-sm font-bold tracking-wider uppercase">
                   Paramètres d’entrée
                 </h2>
                 <p className="text-2xs text-muted-foreground mt-0.5">
@@ -203,7 +214,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="gap-1.5 text-xs cursor-pointer h-8"
+                className="h-8 cursor-pointer gap-1.5 text-xs"
                 title="Réinitialiser aux valeurs par défaut"
               >
                 <RotateCcw className="size-3.5" />
@@ -220,7 +231,7 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                     <div key={field.id} className="space-y-1">
                       <label
                         htmlFor={field.id}
-                        className="block text-xs font-semibold text-foreground"
+                        className="text-foreground block text-xs font-semibold"
                       >
                         {field.label}
                       </label>
@@ -230,9 +241,9 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                           value={String(val)}
                           onChange={(e) => handleInputChange(field.id, e.target.value)}
                           className={cn(
-                            'w-full h-10 px-3 rounded-xl bg-surface border border-border text-foreground text-xs font-medium',
-                            'focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary',
-                            'transition-colors cursor-pointer',
+                            'bg-surface border-border text-foreground h-10 w-full rounded-xl border px-3 text-xs font-medium',
+                            'focus:ring-primary/40 focus:border-primary focus:ring-2 focus:outline-none',
+                            'cursor-pointer transition-colors',
                           )}
                         >
                           {field.options?.map((opt) => (
@@ -256,23 +267,23 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   return (
                     <div
                       key={field.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-border"
+                      className="bg-surface-raised border-border flex items-center justify-between rounded-xl border p-3"
                     >
                       <div>
-                        <span className="text-xs font-semibold text-foreground">{field.label}</span>
+                        <span className="text-foreground text-xs font-semibold">{field.label}</span>
                         {field.helpText && (
                           <p className="text-3xs text-muted-foreground mt-0.5">{field.helpText}</p>
                         )}
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex cursor-pointer items-center">
                         <span className="sr-only">{field.label}</span>
                         <input
                           type="checkbox"
                           checked={Boolean(val)}
                           onChange={(e) => handleInputChange(field.id, e.target.checked)}
-                          className="sr-only peer"
+                          className="peer sr-only"
                         />
-                        <div className="w-10 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary" />
+                        <div className="bg-border peer after:border-border peer-checked:bg-primary h-6 w-10 rounded-full peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white" />
                       </label>
                     </div>
                   );
@@ -283,12 +294,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                     <div className="flex items-center justify-between">
                       <label
                         htmlFor={field.id}
-                        className="block text-xs font-semibold text-foreground"
+                        className="text-foreground block text-xs font-semibold"
                       >
                         {field.label}
                       </label>
                       {field.unit && (
-                        <span className="text-3xs font-mono font-bold text-muted-foreground bg-surface-raised px-1.5 py-0.2 rounded border border-border">
+                        <span className="text-3xs text-muted-foreground bg-surface-raised py-0.2 border-border rounded border px-1.5 font-mono font-bold">
                           {field.unit}
                         </span>
                       )}
@@ -307,7 +318,9 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                       onChange={(e) =>
                         handleInputChange(
                           field.id,
-                          field.type === 'number' ? e.target.valueAsNumber || e.target.value : e.target.value,
+                          field.type === 'number'
+                            ? e.target.valueAsNumber || e.target.value
+                            : e.target.value,
                         )
                       }
                       className="font-mono text-xs"
@@ -325,19 +338,20 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
           </Card>
 
           {/* Hypothèses & Limites Techniques */}
-          {((tool.assumptions && tool.assumptions.length > 0) || (tool.limits && tool.limits.length > 0)) && (
-            <Card className="p-4 sm:p-5 rounded-2xl border-border bg-surface shadow-xs space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b border-border pb-2">
-                <CheckCircle2 className="size-3.5 text-primary" />
+          {((tool.assumptions && tool.assumptions.length > 0) ||
+            (tool.limits && tool.limits.length > 0)) && (
+            <Card className="border-border bg-surface space-y-3 rounded-2xl p-4 shadow-xs sm:p-5">
+              <h3 className="text-muted-foreground border-border flex items-center gap-1.5 border-b pb-2 text-xs font-bold tracking-wider uppercase">
+                <CheckCircle2 className="text-primary size-3.5" />
                 <span>Hypothèses de calcul & Limites d’application</span>
               </h3>
 
               {tool.assumptions && tool.assumptions.length > 0 && (
                 <div className="space-y-1.5">
-                  <span className="text-3xs font-bold uppercase tracking-wider text-foreground/80">
+                  <span className="text-3xs text-foreground/80 font-bold tracking-wider uppercase">
                     Hypothèses retenues :
                   </span>
-                  <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                  <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs">
                     {tool.assumptions.map((ass, i) => (
                       <li key={i} className="leading-relaxed">
                         {ass}
@@ -348,12 +362,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
               )}
 
               {tool.limits && tool.limits.length > 0 && (
-                <div className="space-y-1.5 pt-2 border-t border-border/50">
-                  <span className="text-3xs font-bold uppercase tracking-wider text-warning flex items-center gap-1">
+                <div className="border-border/50 space-y-1.5 border-t pt-2">
+                  <span className="text-3xs text-warning flex items-center gap-1 font-bold tracking-wider uppercase">
                     <AlertTriangle className="size-3" />
                     <span>Limites d’utilisation :</span>
                   </span>
-                  <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                  <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs">
                     {tool.limits.map((lim, i) => (
                       <li key={i} className="leading-relaxed">
                         {lim}
@@ -369,32 +383,32 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
         {/* ───────────────────────────────────────────────────────────── */}
         {/* COLONNE DROITE (5 cols) : RÉSULTATS, DÉTAILS & CONSEILS       */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="space-y-4 lg:col-span-5">
           {/* Encart Résultat Principal */}
           <Card
             className={cn(
-              'p-5 rounded-2xl border shadow-xs relative overflow-hidden transition-all duration-200',
+              'relative overflow-hidden rounded-lg border p-5 transition-colors duration-200',
               !isProUnlocked
-                ? 'border-primary/40 bg-gradient-to-br from-primary/10 via-surface to-surface-raised'
+                ? 'border-primary/40 bg-primary-subtle'
                 : output.status === 'danger'
                   ? 'border-error/50 bg-error/5'
                   : output.status === 'warning'
                     ? 'border-warning/50 bg-warning/5'
-                    : 'border-primary/40 bg-gradient-to-br from-primary/10 via-surface to-surface-raised',
+                    : 'border-primary/40 bg-primary-subtle',
             )}
           >
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-2xs font-extrabold uppercase tracking-wider text-primary">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-2xs text-primary font-extrabold tracking-wider uppercase">
                 {output.primaryLabel ?? 'Résultat principal'}
               </span>
               {!isProUnlocked ? (
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-gradient-to-r from-primary/10 via-primary/10 to-primary/10 px-2.5 py-1 text-3xs font-bold text-primary dark:text-primary hover:bg-primary/20 hover:border-primary/50 shadow-2xs transition-all cursor-pointer"
+                  className="border-primary/30 bg-surface text-primary hover:bg-surface-hover text-3xs inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 font-bold transition-colors"
                   title="Débloquer l'export et la copie avec les forfaits Pro"
                 >
-                  <Sparkles className="size-3 text-primary" />
+                  <Sparkles className="text-primary size-3" />
                   <span>Débloquer (Pro)</span>
                 </button>
               ) : (
@@ -403,12 +417,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
                   variant="outline"
                   size="sm"
                   onClick={handleCopySummary}
-                  className="h-7 px-2 text-3xs font-semibold gap-1 cursor-pointer bg-surface/80 hover:bg-surface"
+                  className="text-3xs bg-surface/80 hover:bg-surface h-7 cursor-pointer gap-1 px-2 font-semibold"
                   title="Copier le résumé complet"
                 >
                   {copied ? (
                     <>
-                      <Check className="size-3 text-success" />
+                      <Check className="text-success size-3" />
                       <span className="text-success font-bold">Copié !</span>
                     </>
                   ) : (
@@ -422,45 +436,44 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             </div>
 
             {!isProUnlocked ? (
-              <div className="my-3 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/10 via-surface/95 to-surface p-4 text-center shadow-xs backdrop-blur-xs space-y-3">
-                <div className="mx-auto flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/30 text-primary shadow-2xs">
-                  <Sparkles className="size-4.5 text-primary animate-pulse" />
+              <div className="border-primary/30 bg-surface my-3 space-y-3 rounded-lg border p-4 text-center">
+                <div className="bg-primary-subtle border-primary/30 text-primary mx-auto flex size-9 items-center justify-center rounded-lg border">
+                  <Sparkles className="text-primary size-4.5" />
                 </div>
 
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-3xs font-black tracking-wider uppercase text-primary dark:text-primary">
+                  <div className="bg-primary-subtle border-primary/30 text-primary text-3xs inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-bold tracking-wider uppercase">
                     <Lock className="size-2.5" />
                     <span>Calculateur Certifié Pro</span>
                   </div>
-                  <h4 className="text-xs font-bold text-foreground">
+                  <h4 className="text-foreground text-xs font-bold">
                     Résultat normé et fiches de calcul verrouillés
                   </h4>
-                  <p className="text-3xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                    Débloquez l’accès illimité aux 36 moteurs de calcul, aux exports PDF officiels et à l'historique d'équipe.
+                  <p className="text-3xs text-muted-foreground mx-auto max-w-xs leading-relaxed">
+                    Débloquez l’accès illimité aux 36 moteurs de calcul, aux exports PDF officiels
+                    et à l'historique d'équipe.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(true)}
-                  className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary to-primary p-[1px] shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/35 active:scale-[0.99] transition-all cursor-pointer"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-colors"
                 >
-                  <div className="flex items-center justify-center gap-2 rounded-[11px] bg-gradient-to-r from-primary via-primary to-primary px-3.5 py-2.5 text-xs font-bold text-white transition-all group-hover:brightness-105">
-                    <Sparkles className="size-3.5 text-primary group-hover:rotate-12 transition-transform" />
-                    <span>Débloquer l’accès Pro</span>
-                    <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase text-primary border border-white/10">
-                      Dès 39 €/m
-                    </span>
-                  </div>
+                  <Sparkles className="size-3.5" />
+                  <span>Débloquer l’accès Pro</span>
+                  <span className="bg-primary-foreground/15 border-primary-foreground/20 text-3xs rounded-md border px-1.5 py-0.5 font-bold tracking-wider uppercase">
+                    Dès 39 €/m
+                  </span>
                 </button>
               </div>
             ) : (
               <div className="my-2">
-                <div className="text-2xl sm:text-3xl font-mono font-black text-foreground tracking-tight">
+                <div className="text-foreground font-mono text-2xl font-black tracking-tight sm:text-3xl">
                   {output.primaryResult}
                 </div>
                 {output.primaryUnit && (
-                  <p className="text-xs font-semibold text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-1 text-xs font-semibold">
                     {output.primaryUnit}
                   </p>
                 )}
@@ -470,13 +483,13 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
             {isProUnlocked && output.statusMessage && (
               <div
                 className={cn(
-                  'mt-3 p-2.5 rounded-xl text-xs font-medium flex items-start gap-2',
+                  'mt-3 flex items-start gap-2 rounded-xl p-2.5 text-xs font-medium',
                   output.status === 'danger'
-                    ? 'bg-error/10 text-error border border-error/20'
-                    : 'bg-warning/10 text-warning-foreground border border-warning/20',
+                    ? 'bg-error/10 text-error border-error/20 border'
+                    : 'bg-warning/10 text-warning-foreground border-warning/20 border',
                 )}
               >
-                <HelpCircle className="size-4 shrink-0 mt-0.5" />
+                <HelpCircle className="mt-0.5 size-4 shrink-0" />
                 <span>{output.statusMessage}</span>
               </div>
             )}
@@ -484,33 +497,38 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
           {/* Détails du calcul */}
           {output.details && output.details.length > 0 && (
-            <Card className="p-4 sm:p-5 rounded-2xl border-border bg-surface shadow-xs space-y-2.5 relative overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <Card className="border-border bg-surface relative space-y-2.5 overflow-hidden rounded-lg p-4 shadow-none sm:p-5">
+              <div className="border-border flex items-center justify-between border-b pb-2">
+                <h3 className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
                   Détails & Grandeurs calculées
                 </h3>
                 {!isProUnlocked && (
-                  <span className="inline-flex items-center gap-1 text-3xs font-bold text-primary dark:text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/25">
+                  <span className="text-3xs text-primary dark:text-primary bg-primary/10 border-primary/25 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-bold">
                     <Lock className="size-2.5" />
                     <span>Inclus en Pro</span>
                   </span>
                 )}
               </div>
 
-              <div className={cn("divide-y divide-border/60", !isProUnlocked && "blur-[2.5px] select-none pointer-events-none opacity-50")}>
+              <div
+                className={cn(
+                  'divide-border/60 divide-y',
+                  !isProUnlocked && 'pointer-events-none opacity-50 blur-[2.5px] select-none',
+                )}
+              >
                 {output.details.map((row, idx) => (
                   <div
                     key={idx}
                     className={cn(
-                      'flex items-center justify-between py-2 text-xs gap-2',
+                      'flex items-center justify-between gap-2 py-2 text-xs',
                       row.highlight && 'font-bold',
                     )}
                   >
                     <span className="text-muted-foreground truncate">{row.label}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <span
                         className={cn(
-                          'font-mono text-foreground',
+                          'text-foreground font-mono',
                           row.highlight && 'text-primary font-extrabold',
                         )}
                       >
@@ -530,13 +548,13 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
               </div>
 
               {!isProUnlocked && (
-                <div className="absolute inset-x-0 bottom-0 top-10 flex flex-col items-center justify-center p-4 bg-surface/70 backdrop-blur-[2px]">
+                <div className="bg-surface/70 absolute inset-x-0 top-10 bottom-0 flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
                   <button
                     type="button"
                     onClick={() => setUpgradeModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/15 via-primary/15 to-primary/15 px-3.5 py-2 text-xs font-bold text-primary dark:text-primary shadow-sm hover:border-primary/60 hover:bg-primary/25 transition-all cursor-pointer backdrop-blur-xs"
+                    className="border-primary/40 bg-surface text-primary hover:border-primary/60 hover:bg-surface-hover inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-bold transition-colors"
                   >
-                    <Sparkles className="size-3.5 text-primary" />
+                    <Sparkles className="text-primary size-3.5" />
                     <span>Débloquer les grandeurs détaillées (Pro)</span>
                   </button>
                 </div>
@@ -546,12 +564,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
           {/* Formule & Explication Technique */}
           {output.formulaExplanation && (
-            <Card className="p-4 rounded-2xl border-border bg-surface-raised/60 shadow-xs space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                <Info className="size-3.5 text-primary" />
+            <Card className="border-border bg-surface-raised/60 space-y-1.5 rounded-lg p-4 shadow-none">
+              <div className="text-foreground flex items-center gap-1.5 text-xs font-bold">
+                <Info className="text-primary size-3.5" />
                 <span>Formule & Référence mathématique</span>
               </div>
-              <p className="text-xs font-mono text-muted-foreground leading-relaxed bg-surface p-2.5 rounded-lg border border-border/80">
+              <p className="text-muted-foreground bg-surface border-border/80 rounded-lg border p-2.5 font-mono text-xs leading-relaxed">
                 {output.formulaExplanation}
               </p>
             </Card>
@@ -559,12 +577,12 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
 
           {/* Conseils de terrain */}
           {output.advice && output.advice.length > 0 && (
-            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-warning">
+            <div className="bg-warning/10 border-warning/20 space-y-1.5 rounded-lg border p-4 text-xs">
+              <div className="text-warning flex items-center gap-1.5 font-bold">
                 <Lightbulb className="size-4 shrink-0" />
                 <span>Conseils de mise en œuvre</span>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
+              <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs">
                 {output.advice.map((adv, idx) => (
                   <li key={idx} className="leading-snug">
                     {adv}
@@ -575,13 +593,16 @@ export function MetierToolRunner({ tool }: MetierToolRunnerProps) {
           )}
 
           {/* Avertissement réglementaire & non-surpromesse */}
-          <div className="p-3.5 rounded-2xl bg-surface-raised border border-border text-3xs text-muted-foreground space-y-1 leading-relaxed">
-            <div className="flex items-center gap-1 font-bold text-foreground/90">
-              <AlertTriangle className="size-3 text-warning" />
+          <div className="bg-surface-raised border-border text-3xs text-muted-foreground space-y-1 rounded-2xl border p-3.5 leading-relaxed">
+            <div className="text-foreground/90 flex items-center gap-1 font-bold">
+              <AlertTriangle className="text-warning size-3" />
               <span>Avertissement & Règle de l’art</span>
             </div>
             <p>
-              Ce calculateur fournit une estimation technique d’aide au dimensionnement basée sur les normes en vigueur et les paramètres saisis. Il ne se substitue pas à une étude d’exécution réalisée par un bureau d’études certifié ni aux préconisations spécifiques des fabricants.
+              Ce calculateur fournit une estimation technique d’aide au dimensionnement basée sur
+              les normes en vigueur et les paramètres saisis. Il ne se substitue pas à une étude
+              d’exécution réalisée par un bureau d’études certifié ni aux préconisations spécifiques
+              des fabricants.
             </p>
           </div>
         </div>

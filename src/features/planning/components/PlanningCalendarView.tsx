@@ -998,7 +998,8 @@ export function PlanningCalendarView({
                           size="sm"
                           variant="outline"
                           onClick={() => onNewMissionAtDate(dateStr)}
-                          className="text-3xs h-7 cursor-pointer gap-1 px-2.5"
+                          aria-label={`Ajouter une mission le ${formatFullDateFR(dateStr)}`}
+                          className="text-3xs size-touch cursor-pointer gap-1 px-0 sm:h-7 sm:w-auto sm:px-2.5"
                         >
                           <Plus className="text-primary size-3" />
                           <span className="hidden sm:inline">Ajouter</span>

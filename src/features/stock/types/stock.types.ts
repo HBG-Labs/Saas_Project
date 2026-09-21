@@ -81,10 +81,10 @@ export const STOCK_MOVEMENT_TYPE_VARIANTS: Record<
   StockMovementType,
   { badge: 'success' | 'danger' | 'warning' | 'info'; color: string; sign: string }
 > = {
-  in: { badge: 'success', color: 'text-emerald-600 dark:text-emerald-400', sign: '+' },
-  out: { badge: 'danger', color: 'text-rose-600 dark:text-rose-400', sign: '-' },
-  transfer: { badge: 'info', color: 'text-blue-600 dark:text-blue-400', sign: '⇄' },
-  adjustment: { badge: 'warning', color: 'text-amber-600 dark:text-amber-400', sign: '±' },
+  in: { badge: 'success', color: 'text-success', sign: '+' },
+  out: { badge: 'danger', color: 'text-error', sign: '-' },
+  transfer: { badge: 'info', color: 'text-info', sign: '⇄' },
+  adjustment: { badge: 'warning', color: 'text-warning', sign: '±' },
 };
 
 export const COMMON_CONSUMABLE_CATEGORIES = [

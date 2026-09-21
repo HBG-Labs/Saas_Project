@@ -1,10 +1,5 @@
 export type TradeSlug =
-  | 'btp'
-  | 'plomberie'
-  | 'electricite'
-  | 'espaces-verts'
-  | 'fibre-optique'
-  | 'reseaux';
+  'btp' | 'plomberie' | 'electricite' | 'espaces-verts' | 'fibre-optique' | 'reseaux';
 
 export type ReliabilityLevel = 'simple' | 'indicative' | 'pro_validation';
 /**
@@ -21,8 +16,6 @@ export interface TradeDefinition {
   description: string;
   icon: string;
   badgeColor: string;
-  gradient?: string;
-  accentColor?: string;
   toolsCount: number;
   toolSlugs?: string[];
 }
