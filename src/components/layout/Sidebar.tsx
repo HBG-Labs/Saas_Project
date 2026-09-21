@@ -30,11 +30,10 @@ import { cn } from '@/lib/cn';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from './nav-icons';
 
-/* Les repères portent le rôle du groupe ; les liens gardent une encre lisible. */
+/* Les icônes de navigation restent filaires et unifiées ; seule l'administration
+   plateforme conserve sa couleur d'alerte sémantique. */
 const SIDEBAR_GROUP_ICON_COLORS: Record<string, string> = {
   'platform-admin': 'text-error',
-  achats: 'bg-purchase-marker text-purchase-marker-foreground rounded-full',
-  resources: 'bg-workspace-selected text-workspace-foreground rounded-full',
 };
 const SIDEBAR_GROUP_ICON_COLOR_DEFAULT = 'text-nav-text';
 
@@ -211,9 +210,7 @@ function SidebarLink({
         <Icon
           className={cn(
             'size-4 shrink-0 transition-transform group-hover:scale-105',
-            item.to === ROUTES.quotes
-              ? 'bg-quote-marker text-quote-marker-foreground rounded-full'
-              : iconColor,
+            iconColor,
             isActive && 'text-nav-selected',
           )}
           aria-hidden="true"

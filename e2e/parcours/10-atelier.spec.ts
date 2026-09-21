@@ -59,6 +59,10 @@ test.describe('Atelier — fondations validées', () => {
     const universes = navigation.getByRole('radiogroup', { name: 'Univers' });
     const underline = universes.locator('.segmented-underline-indicator');
     await expect(underline).toBeVisible();
+    const underlineFill = underline.locator('span');
+    const commonMenuColor = await underlineFill.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    );
 
     const activeMission = navigation.getByRole('link', { name: 'Missions', exact: true });
     await expect(activeMission).toHaveAttribute('aria-current', 'page');
@@ -70,6 +74,7 @@ test.describe('Atelier — fondations validées', () => {
     expect(activeRail.color).not.toBe('rgba(0, 0, 0, 0)');
 
     if (isMobile) {
+      const workspace = universes.getByRole('radio', { name: 'Workspace', exact: true });
       const finance = universes.getByRole('radio', { name: 'Finance', exact: true });
       // Le contrôle contient aussi un libellé masqué pour les lecteurs d’écran.
       // Vérifier le texte affiché, le nom accessible étant déjà ciblé ci-dessus.
@@ -77,11 +82,37 @@ test.describe('Atelier — fondations validées', () => {
       const initialTransform = await underline.evaluate(
         (element) => getComputedStyle(element).transform,
       );
+
+      await workspace.click();
+      await expect(workspace).toBeChecked();
+      await expect
+        .poll(() => underlineFill.evaluate((element) => getComputedStyle(element).backgroundColor))
+        .toBe(commonMenuColor);
+      const workspaceIconBackground = await navigation
+        .getByRole('link', { name: 'Pages', exact: true })
+        .locator('svg')
+        .evaluate((element) => getComputedStyle(element).backgroundColor);
+      expect(workspaceIconBackground).toBe('rgba(0, 0, 0, 0)');
+
       await finance.click();
       await expect(finance).toBeChecked();
       await expect
         .poll(() => underline.evaluate((element) => getComputedStyle(element).transform))
         .not.toBe(initialTransform);
+      await expect
+        .poll(() => underlineFill.evaluate((element) => getComputedStyle(element).backgroundColor))
+        .toBe(commonMenuColor);
+
+      const financeIcons = [
+        navigation.getByRole('link', { name: 'Devis & Chiffrage', exact: true }).locator('svg'),
+        navigation.getByRole('button', { name: 'Achats', exact: true }).locator('svg').first(),
+      ];
+      for (const icon of financeIcons) {
+        const iconBackground = await icon.evaluate(
+          (element) => getComputedStyle(element).backgroundColor,
+        );
+        expect(iconBackground).toBe('rgba(0, 0, 0, 0)');
+      }
     } else {
       await page.getByRole('button', { name: 'Toggle Sidebar', exact: true }).click();
       const trigger = page.getByRole('button', { name: /Changer d'univers : Gestion/ });

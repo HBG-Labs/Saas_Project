@@ -823,10 +823,6 @@ html.compact-mode {
 .atelier-section-content[aria-hidden='true'] {
   visibility: hidden;
 }
-.atelier-sidebar[data-universe='workspace'] {
-  --nav-selected: var(--workspace-selected);
-  --nav-foreground: var(--workspace-foreground);
-}
 .atelier-account {
   --nav-selected: var(--settings-selected);
   --nav-foreground: var(--settings-foreground);
