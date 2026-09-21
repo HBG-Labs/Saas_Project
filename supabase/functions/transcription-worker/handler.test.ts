@@ -91,6 +91,7 @@ function config(partial: Partial<TranscriptionWorkerConfig>): TranscriptionWorke
         text: 'Bonjour à tous. On pose le boîtier jeudi.',
         engine: 'gpt-4o-transcribe',
       }),
+    buildPrompt: ({ engine }) => Promise.resolve(engine === 'v2' ? 'Contexte v2' : undefined),
     summarize: () => Promise.resolve('## Décisions\n- Poser le boîtier jeudi'),
     ...partial,
   };
@@ -192,5 +193,34 @@ Deno.test(
     assertEquals(supprimes, ['org/page/vieux.webm']);
     assertEquals(fake.marked, ['p-1']);
     assertEquals(fake.heartbeats[0]?.purged, 1);
+  },
+);
+
+Deno.test(
+  'le moteur de l’organisation et son contexte sont transmis à la transcription',
+  async () => {
+    const recus: Array<{ engine: string; prompt: string | undefined }> = [];
+    const fake = fakeSupabase([
+      enregistrement({ id: 'l', stt_engine: 'legacy' }),
+      enregistrement({ id: 'v', stt_engine: 'v2' }),
+    ]);
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        transcribe: (_audio, _nom, _langue, engine, prompt) => {
+          recus.push({ engine, prompt });
+          return Promise.resolve({
+            text: 'x',
+            engine: engine === 'v2' ? 'gpt-transcribe' : 'gpt-4o-transcribe',
+          });
+        },
+      }),
+    )(request());
+    assertEquals(recus, [
+      { engine: 'legacy', prompt: undefined },
+      { engine: 'v2', prompt: 'Contexte v2' },
+    ]);
+    assertEquals(fake.results[0]?.p_engine, 'gpt-4o-transcribe');
+    assertEquals(fake.results[1]?.p_engine, 'gpt-transcribe');
   },
 );

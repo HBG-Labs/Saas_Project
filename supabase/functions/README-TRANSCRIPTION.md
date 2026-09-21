@@ -31,6 +31,23 @@ avec ce qui a été capté ; le retour du réseau relance ce qui attend. Sans
 IndexedDB (navigation privée), la capture fonctionne en mémoire et l'écran
 le dit. Le composant `WorkspaceRecorder` n'enregistre rien lui-même.
 
+## Le moteur par organisation (phase 5)
+
+`organizations.stt_engine` choisit la chaîne :
+
+| Flag | Chaîne | Contexte transmis à OpenAI |
+|---|---|---|
+| `legacy` (défaut) | `gpt-4o-transcribe` → `whisper-1` | aucun |
+| `v2` | `gpt-transcribe` (`languages: ['fr']`) → `gpt-4o-transcribe` → `whisper-1` (contexte coupé à 224 tokens) | une phrase de contexte : le glossaire du **secteur** de l'organisation (`_shared/stt-glossary.ts`, termes publics), puis — phase 6 — son dictionnaire (noms de clients, sites, techniciens qu'elle a choisis) |
+
+Le modèle qui a répondu est consigné dans `workspace_recordings.engine`.
+Basculer une organisation : `update organizations set stt_engine = 'v2' where id = …` ;
+revenir : `'legacy'`. Aucun déploiement.
+
+Ce qui part chez OpenAI en v2, en plus de l'audio : la phrase de contexte
+(≤ 1 500 caractères). Elle n'est jamais journalisée. Ajouter un secteur au
+glossaire de base = une entrée dans `GLOSSAIRE_PAR_SECTEUR`.
+
 ## Architecture
 
 ```

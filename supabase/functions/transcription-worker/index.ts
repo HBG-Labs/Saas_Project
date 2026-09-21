@@ -6,6 +6,7 @@ import {
   releaseAiUsage,
   reserveAiUsage,
 } from '../_shared/ai.ts';
+import { construirePromptStt } from '../_shared/stt-glossary.ts';
 import { summaryPrompt, summaryQuery, transcribeAudio } from '../_shared/transcription.ts';
 import { createTranscriptionWorkerHandler } from './handler.ts';
 
@@ -36,12 +37,22 @@ Deno.serve(
       const { error } = await storage.remove(paths);
       if (error) throw error;
     },
-    // Phase 4 : le flag est transmis et le moteur utilisé est consigné ;
-    // « v2 » ne diffère pas encore de « legacy » (phase 5 : nouveau moteur + glossaire).
-    transcribe: (audio, fileName, language, _engine) => {
+    transcribe: (audio, fileName, language, engine, prompt) => {
       if (!openaiApiKey)
         throw new Error('OPENAI_API_KEY absente : la transcription est impossible.');
-      return transcribeAudio({ apiKey: openaiApiKey, audio, fileName, language });
+      return transcribeAudio({ apiKey: openaiApiKey, audio, fileName, language, engine, prompt });
+    },
+    // Le contexte de la chaîne v2 : le glossaire du secteur de l'organisation.
+    // Le dictionnaire d'organisation s'y ajoutera (phase 6). Rien en legacy.
+    buildPrompt: async ({ admin, organizationId, engine }) => {
+      if (engine !== 'v2') return undefined;
+      const { data } = await admin
+        .from('organizations')
+        .select('industry')
+        .eq('id', organizationId)
+        .maybeSingle();
+      const industry = (data as { industry?: string | null } | null)?.industry ?? null;
+      return construirePromptStt({ industry });
     },
     // Le résumé compte une requête IA de l'organisation, réservée comme une
     // conversation Workspace ; sans quota ou sans clé, la transcription part

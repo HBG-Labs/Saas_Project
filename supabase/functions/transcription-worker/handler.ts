@@ -65,7 +65,18 @@ export interface TranscriptionWorkerConfig {
     fileName: string,
     language: string,
     engine: 'legacy' | 'v2',
+    prompt: string | undefined,
   ) => Promise<TranscriptionResult>;
+  /**
+   * La phrase de contexte pour une organisation (glossaire de son secteur,
+   * puis son dictionnaire — phase 6). `undefined` en legacy : pas de contexte.
+   * Jamais journalisée : elle peut porter des noms.
+   */
+  buildPrompt: (params: {
+    admin: SupabaseClient;
+    organizationId: string;
+    engine: 'legacy' | 'v2';
+  }) => Promise<string | undefined>;
   /**
    * Le résumé, DANS le quota IA de l'organisation : `null` si le quota est
    * épuisé ou le fournisseur indisponible — la transcription part sans
@@ -136,11 +147,18 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
           errorMessage = 'Quota de minutes de transcription épuisé pour ce mois.';
         } else {
           const audio = await config.downloadAudio(recording.audio_path);
+          const moteur = recording.stt_engine ?? 'legacy';
+          const prompt = await config.buildPrompt({
+            admin,
+            organizationId: recording.organization_id,
+            engine: moteur,
+          });
           const resultat = await config.transcribe(
             audio,
             fileNameFor(recording),
             recording.language,
-            recording.stt_engine ?? 'legacy',
+            moteur,
+            prompt,
           );
           transcript = resultat.text;
           engine = resultat.engine;
