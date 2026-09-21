@@ -15,6 +15,8 @@ export interface SegmentedControlProps<T extends string> {
   onValueChange: (value: T) => void;
   /** Nom du groupe pour les lecteurs d'écran, ex. « Mode d'affichage ». */
   label: string;
+  /** `underline` allège le contrôle et fait coulisser un trait sous le choix. */
+  variant?: 'pill' | 'underline';
   className?: string;
 }
 
@@ -47,17 +49,39 @@ export function SegmentedControl<T extends string>({
   value,
   onValueChange,
   label,
+  variant = 'pill',
   className,
 }: SegmentedControlProps<T>) {
+  const activeIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  );
+
   return (
     <div
       role="radiogroup"
       aria-label={label}
       className={cn(
-        'border-border bg-surface flex items-center gap-1 rounded-full border p-1',
+        'flex items-center',
+        variant === 'pill'
+          ? 'border-border bg-surface gap-1 rounded-full border p-1'
+          : 'border-border relative gap-0 border-b bg-transparent',
         className,
       )}
     >
+      {variant === 'underline' ? (
+        <span
+          aria-hidden="true"
+          className="segmented-underline-indicator pointer-events-none absolute -bottom-px left-0 h-[3px] transition-transform duration-200 ease-out motion-reduce:transition-none"
+          style={{
+            width: `calc(100% / ${options.length})`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+        >
+          <span className="bg-primary mx-3 block h-full rounded-t-full" />
+        </span>
+      ) : null}
+
       {options.map((option) => {
         const Icon = option.icon;
         const isActive = option.value === value;
@@ -72,10 +96,17 @@ export function SegmentedControl<T extends string>({
               onValueChange(option.value);
             }}
             className={cn(
-              'focus-visible:ring-ring atelier-control min-h-touch flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none sm:py-1.5',
-              isActive
+              'focus-visible:ring-ring atelier-control min-h-touch relative z-10 flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 text-xs transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none',
+              variant === 'pill'
+                ? 'rounded-full font-semibold sm:py-1.5'
+                : 'rounded-none bg-transparent py-2 font-medium shadow-none hover:bg-transparent sm:py-2',
+              isActive && variant === 'pill'
                 ? 'bg-primary text-primary-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground hover:bg-surface-hover',
+                : isActive
+                  ? 'text-primary'
+                  : variant === 'pill'
+                    ? 'text-muted-foreground hover:text-foreground hover:bg-surface-hover'
+                    : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {Icon ? <Icon className="size-4 shrink-0" aria-hidden="true" /> : null}

@@ -188,14 +188,18 @@ function SidebarLink({
         onClick={onNavigate}
         title={collapsed || item.locked ? libelleAccessible : undefined}
         className={cn(
-          'atelier-nav-link group min-h-control relative flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium',
-          'transition-colors duration-150',
+          'atelier-nav-link group min-h-control relative flex items-center gap-2 overflow-hidden rounded-lg px-3 py-1.5 text-sm font-medium',
+          'transition-[color,background-color] duration-150',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
           collapsed
             ? 'atelier-icon-control size-control mx-auto justify-center px-0'
             : 'w-full pr-3 pl-4',
           isActive
-            ? 'bg-nav-selected text-nav-foreground font-bold'
+            ? cn(
+                'bg-nav-selected/10 text-foreground font-semibold',
+                !collapsed &&
+                  'before:bg-nav-selected before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-r-full',
+              )
             : item.locked
               ? // Atténué, jamais effacé : le contraste reste au-dessus du seuil
                 // de lecture, sans quoi on n'aurait fait que cacher l'entrée
@@ -210,7 +214,7 @@ function SidebarLink({
             item.to === ROUTES.quotes
               ? 'bg-quote-marker text-quote-marker-foreground rounded-full'
               : iconColor,
-            isActive && 'text-nav-foreground',
+            isActive && 'text-nav-selected',
           )}
           aria-hidden="true"
         />
@@ -225,7 +229,7 @@ function SidebarLink({
                 // se pose en pastille dans l'angle plutôt qu'à côté du libellé,
                 // qui est alors masqué.
                 collapsed ? 'bg-surface absolute -top-0.5 -right-0.5 rounded-full' : 'ml-auto',
-                isActive ? 'text-nav-foreground' : 'text-subtle-foreground',
+                isActive ? 'text-foreground' : 'text-subtle-foreground',
               )}
               aria-hidden="true"
             />
@@ -581,7 +585,8 @@ export function Sidebar({
               value={activeUniverse}
               onValueChange={handleChooseUniverse}
               label="Univers"
-              className="[&>[aria-checked=true]]:bg-nav-selected [&>[aria-checked=true]]:text-nav-foreground [&>*]:text-3xs w-full justify-between [&_span.hidden]:inline [&_span.sr-only]:hidden [&>*]:min-w-0 [&>*]:flex-auto [&>*]:flex-col [&>*]:gap-1 [&>*]:px-1 [&>*]:py-2"
+              variant="underline"
+              className="[&>[aria-checked=true]]:text-nav-text [&>[aria-checked=true]_svg]:text-nav-selected [&>.segmented-underline-indicator>span]:bg-nav-selected [&>[role=radio]]:text-3xs w-full justify-between [&_span.hidden]:inline [&_span.sr-only]:hidden [&>[role=radio]]:min-w-0 [&>[role=radio]]:flex-auto [&>[role=radio]]:flex-col [&>[role=radio]]:gap-1 [&>[role=radio]]:px-1 [&>[role=radio]]:py-2"
             />
           )
         ) : null}

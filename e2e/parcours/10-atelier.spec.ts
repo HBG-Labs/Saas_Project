@@ -51,11 +51,37 @@ test.describe('Atelier — fondations validées', () => {
     await page.goto('/missions');
     if (isMobile) {
       await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
-      const finance = page.getByRole('radio', { name: 'Finance', exact: true });
+    }
+
+    const navigation = page
+      .getByRole('navigation', { name: 'Navigation principale' })
+      .filter({ visible: true });
+    const universes = navigation.getByRole('radiogroup', { name: 'Univers' });
+    const underline = universes.locator('.segmented-underline-indicator');
+    await expect(underline).toBeVisible();
+
+    const activeMission = navigation.getByRole('link', { name: 'Missions', exact: true });
+    await expect(activeMission).toHaveAttribute('aria-current', 'page');
+    const activeRail = await activeMission.evaluate((element) => {
+      const css = getComputedStyle(element, '::before');
+      return { width: css.width, color: css.backgroundColor };
+    });
+    expect(activeRail.width).toBe('3px');
+    expect(activeRail.color).not.toBe('rgba(0, 0, 0, 0)');
+
+    if (isMobile) {
+      const finance = universes.getByRole('radio', { name: 'Finance', exact: true });
       // Le contrôle contient aussi un libellé masqué pour les lecteurs d’écran.
       // Vérifier le texte affiché, le nom accessible étant déjà ciblé ci-dessus.
       await expect(finance).toHaveText('Finance', { useInnerText: true });
+      const initialTransform = await underline.evaluate(
+        (element) => getComputedStyle(element).transform,
+      );
       await finance.click();
+      await expect(finance).toBeChecked();
+      await expect
+        .poll(() => underline.evaluate((element) => getComputedStyle(element).transform))
+        .not.toBe(initialTransform);
     } else {
       await page.getByRole('button', { name: 'Toggle Sidebar', exact: true }).click();
       const trigger = page.getByRole('button', { name: /Changer d'univers : Gestion/ });
@@ -64,9 +90,6 @@ test.describe('Atelier — fondations validées', () => {
       await page.getByRole('menuitem', { name: 'Finance', exact: true }).click();
       await expect(page.getByRole('button', { name: /Changer d'univers : Finance/ })).toBeFocused();
     }
-    const navigation = page
-      .getByRole('navigation', { name: 'Navigation principale' })
-      .filter({ visible: true });
     await navigation.getByRole('link', { name: 'Factures', exact: true }).click();
     await expect(page).toHaveURL(/\/factures$/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
