@@ -81,3 +81,6 @@ desktop.ini
 
 # Build dedie aux parcours E2E (origine Supabase factice figee a la compilation)
 dist-e2e/
+
+# Corpus du benchmark STT : audio, références et résultats restent locaux
+benchmark/stt/

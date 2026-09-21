@@ -1,0 +1,10 @@
+{
+  "_commentaire": "Glossaire PILOTE du benchmark STT (test « + glossaire »). Aucune donnée réelle : les noms de clients, sites et personnes sont fictifs. Le dictionnaire par organisation viendra plus tard, en base, par organisation.",
+  "fibre_reseaux": ["PTO", "PBO", "PMZ", "PM", "DTI", "FTTH", "36FO", "12FO", "jarretière", "réflectométrie", "soudure fibre", "boîtier d'épissurage", "RJ45", "baie de brassage"],
+  "electricite": ["disjoncteur différentiel", "tableau électrique", "phase", "neutre", "terre", "NF C 15-100", "contacteur", "section de câble", "multimètre", "goulotte", "gaine ICTA"],
+  "climatisation_plomberie": ["VMC", "climatisation", "PAC", "compresseur", "fluide frigorigène", "groupe extérieur", "chauffe-eau"],
+  "gestion": ["devis", "facture", "intervention", "compte rendu", "SIRET", "TVA", "bon de commande"],
+  "lieux_fictifs": ["Le Lorrain", "Schœlcher", "Fort-de-France", "Cayenne", "Rémire-Montjoly", "Le Lamentin"],
+  "clients_fictifs": ["Caraïbe Télécom", "Résidence Les Alizés", "SARL Dubois Électricité", "Mairie du Robert"],
+  "personnes_fictives": ["Alice Martin", "Karim Benali", "Jean-Marc Lévy"]
+}

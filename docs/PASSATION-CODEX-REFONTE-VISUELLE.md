@@ -462,3 +462,16 @@ La matrice de la page Tarifs vit dans `src/config/pricing-comparison.ts`,
 dérivée des entitlements pour les quotas (test `pricing-comparison.test.ts`).
 Une refonte de la page Tarifs consomme `COMPARISON_FEATURES` ; elle ne
 réécrit pas les cellules.
+
+### 14.6 Enregistrement vocal — la capture appartient au hook, pas au composant
+
+Chantier en cours (phases validées le 21/09/2026) : `WorkspaceRecorder.tsx`
+reste une **couche de présentation**. Toute la mécanique — capture,
+pause/reprise, tranches, **sauvegarde locale avant envoi**, reprise après
+interruption, envoi reprenable, états — vit dans un hook
+`useAudioRecorder` (`src/features/workspace`). Le composant l'appelle ; il ne
+réimplémente ni `MediaRecorder`, ni `getUserMedia`, ni l'envoi. Les états
+que l'écran doit rendre (enregistrement → sauvegarde locale → envoyé ✓ →
+transcription en cours → transcrite ✓ → résumé en cours → terminé) et les
+vues finales (Résumé | Notes | Transcription) sont fournis par ce hook et
+les données du Workspace ; leur forme est à concevoir, mobile d'abord.
