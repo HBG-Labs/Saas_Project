@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
@@ -481,7 +482,7 @@ function CustomerHistory({ customerId }: { customerId: string }) {
   if (missions.length === 0) {
     return (
       <EmptyState
-        icon={ClipboardList}
+        illustration={<AtelierIllustration subject="missions" className="w-44" />}
         title="Aucune intervention"
         description="Les missions créées pour ce client apparaîtront ici, avec leur site, leur date et leur état."
       />

@@ -6,12 +6,12 @@ import {
   Lock,
   LockOpen,
   Mail,
-  MessageSquare,
   Paperclip,
   Send,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -120,7 +120,7 @@ export function CustomerMessagingPanel({
 
       {list.length === 0 ? (
         <EmptyState
-          icon={MessageSquare}
+          illustration={<AtelierIllustration subject="messages" />}
           title="Aucune conversation"
           description="Écrivez à un interlocuteur ayant accès au portail : il reçoit un e-mail et peut répondre directement, ou depuis son espace client."
         />

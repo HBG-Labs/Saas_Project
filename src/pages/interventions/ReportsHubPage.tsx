@@ -12,6 +12,8 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
@@ -158,12 +160,13 @@ export default function ReportsHubPage() {
                 Chargement des interventions et missions…
               </p>
             ) : interventionList.length === 0 && missionList.length === 0 ? (
-              <div className="border-border bg-surface-sunken/35 col-span-full rounded-xl border border-dashed p-5 text-center">
-                <p className="text-foreground text-sm font-semibold">Aucun chantier disponible</p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Les interventions apparaîtront ici dès qu’une mission aura démarré.
-                </p>
-              </div>
+              <EmptyState
+                illustration={<AtelierIllustration subject="missions" className="w-44" />}
+                title="Aucun chantier disponible"
+                description="Les interventions apparaîtront ici dès qu’une mission aura démarré."
+                size="sm"
+                className="col-span-full"
+              />
             ) : interventionList.length > 0 ? (
               interventionList.map((item) => {
                 const isSelected = item.id === activeInterventionId;

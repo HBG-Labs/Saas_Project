@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -295,7 +296,9 @@ export default function AuditLogPage() {
         ) : filteredList.length === 0 ? (
           <div className="p-8">
             <EmptyState
-              icon={ScrollText}
+              {...(hasActiveFilters
+                ? { icon: ScrollText }
+                : { illustration: <AtelierIllustration subject="audit" /> })}
               title={hasActiveFilters ? 'Aucun événement correspondant' : 'Journal vide'}
               description={
                 hasActiveFilters

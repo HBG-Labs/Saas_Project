@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import { Dialog } from 'radix-ui';
 import { Link, useSearchParams } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -734,7 +735,9 @@ export default function ToolsPage() {
             </div>
           ) : (
             <EmptyState
-              icon={activeTab === 'favorites' ? Star : Search}
+              {...(activeTab === 'favorites' && query.trim() === ''
+                ? { illustration: <AtelierIllustration subject="favorites" /> }
+                : { icon: activeTab === 'favorites' ? Star : Search })}
               title={activeTab === 'favorites' ? 'Aucun favori enregistré' : 'Aucun outil trouvé'}
               description={
                 activeTab === 'favorites'

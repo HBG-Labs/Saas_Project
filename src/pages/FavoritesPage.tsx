@@ -1,7 +1,7 @@
-import { Star } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -38,7 +38,9 @@ function resolveFavoriteTool(slug: string, dbTools: ToolWithCategory[] = []) {
       slug: universalTool.slug,
       title: universalTool.title,
       description: universalTool.description,
-      category: isCategorySlug(universalTool.category) ? universalTool.category : ('general' as const),
+      category: isCategorySlug(universalTool.category)
+        ? universalTool.category
+        : ('general' as const),
       icon: universalTool.icon ?? 'wrench',
     };
   }
@@ -77,7 +79,7 @@ export default function FavoritesPage() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="Favoris"
           description="Les outils que vous avez épinglés, accessibles en un clic."
@@ -110,7 +112,7 @@ export default function FavoritesPage() {
         />
       ) : favoriteCards.length === 0 ? (
         <EmptyState
-          icon={Star}
+          illustration={<AtelierIllustration subject="favorites" />}
           title="Aucun favori pour l’instant"
           description="Parcourez le catalogue et cliquez sur l’étoile d’un outil pour le retrouver ici, sur tous vos appareils."
           action={
@@ -124,7 +126,7 @@ export default function FavoritesPage() {
           className={cn(
             viewMode === 'grid'
               ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-              : 'space-y-2 w-full',
+              : 'w-full space-y-2',
           )}
         >
           {favoriteCards.map((tool) => (
@@ -141,4 +143,3 @@ export default function FavoritesPage() {
     </>
   );
 }
-

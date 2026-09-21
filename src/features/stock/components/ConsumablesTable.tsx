@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -69,6 +71,16 @@ export function ConsumablesTable({
     const cats = new Set(consumables.map((c) => c.category));
     return Array.from(cats);
   }, [consumables]);
+
+  if (consumables.length === 0) {
+    return (
+      <EmptyState
+        illustration={<AtelierIllustration subject="stock" />}
+        title="Votre stock est encore vide"
+        description="Créez un premier article pour suivre les quantités disponibles, les seuils et les mouvements."
+      />
+    );
+  }
 
   return (
     <Card className="border-border/80 bg-surface overflow-x-auto shadow-xs">

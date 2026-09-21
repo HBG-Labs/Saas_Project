@@ -2,6 +2,7 @@ import { Clock, RotateCcw, Sparkles, Star, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -85,26 +86,26 @@ export default function MetiersHomePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. EN-TÊTE PRINCIPAL                                          */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="🧰 Outils Métiers"
           description="Les outils techniques essentiels pour les professionnels du terrain."
           className="mb-0"
         />
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {/* Bouton Historique des calculs */}
           <Button
             type="button"
             variant={showHistory ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setShowHistory((v) => !v)}
-            className="gap-1.5 text-xs font-semibold cursor-pointer shadow-xs"
+            className="cursor-pointer gap-1.5 text-xs font-semibold shadow-xs"
           >
             <Clock className="size-4" />
             <span>Historique</span>
             {history.length > 0 && (
-              <span className="rounded-full bg-primary-foreground/20 px-1.5 py-0.2 text-3xs font-bold">
+              <span className="bg-primary-foreground/20 py-0.2 text-3xs rounded-full px-1.5 font-bold">
                 {history.length}
               </span>
             )}
@@ -121,11 +122,11 @@ export default function MetiersHomePage() {
 
       {/* Volet Historique déroulant */}
       {showHistory && (
-        <Card className="border-border bg-surface p-4 mb-6 space-y-3 shadow-md animate-in fade-in-50 duration-200">
-          <div className="flex items-center justify-between border-b border-border pb-2">
+        <Card className="border-border bg-surface animate-in fade-in-50 mb-6 space-y-3 p-4 shadow-md duration-200">
+          <div className="border-border flex items-center justify-between border-b pb-2">
             <div className="flex items-center gap-2">
-              <Clock className="size-4 text-primary" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              <Clock className="text-primary size-4" />
+              <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                 Derniers calculs métiers enregistrés
               </h2>
             </div>
@@ -133,7 +134,7 @@ export default function MetiersHomePage() {
               <button
                 type="button"
                 onClick={clearHistory}
-                className="text-3xs text-error hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                className="text-3xs text-error flex cursor-pointer items-center gap-1 font-semibold hover:underline"
               >
                 <RotateCcw className="size-3" />
                 <span>Vider l’historique</span>
@@ -142,31 +143,32 @@ export default function MetiersHomePage() {
           </div>
 
           {history.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              Aucun calcul métier récent. Utilisez les calculateurs ci-dessous pour enregistrer automatiquement vos résultats.
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              Aucun calcul métier récent. Utilisez les calculateurs ci-dessous pour enregistrer
+              automatiquement vos résultats.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+            <div className="grid max-h-72 grid-cols-1 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
               {history.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex flex-col justify-between p-3 rounded-xl bg-surface-raised border border-border text-xs gap-2"
+                  className="bg-surface-raised border-border flex flex-col justify-between gap-2 rounded-xl border p-3 text-xs"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-bold text-primary text-2xs uppercase tracking-wider truncate">
+                      <span className="text-primary text-2xs truncate font-bold tracking-wider uppercase">
                         {entry.toolTitle}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeHistoryEntry(entry.id)}
-                        className="text-muted-foreground hover:text-error text-xs px-1 cursor-pointer"
+                        className="text-muted-foreground hover:text-error cursor-pointer px-1 text-xs"
                         title="Supprimer"
                       >
                         ×
                       </button>
                     </div>
-                    <p className="font-mono font-extrabold text-foreground text-sm mt-1">
+                    <p className="text-foreground mt-1 font-mono text-sm font-extrabold">
                       {entry.result}
                     </p>
                     <p className="text-3xs text-muted-foreground mt-0.5 line-clamp-2">
@@ -174,7 +176,7 @@ export default function MetiersHomePage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-border/60 text-3xs text-subtle-foreground">
+                  <div className="border-border/60 text-3xs text-subtle-foreground flex items-center justify-between border-t pt-2">
                     <span>
                       {new Date(entry.timestamp).toLocaleTimeString('fr-FR', {
                         hour: '2-digit',
@@ -200,8 +202,8 @@ export default function MetiersHomePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {isBrowsingAll && (
         <div className="mb-8 space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="border-border flex items-center justify-between border-b pb-2">
+            <h2 className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
               Les 6 Spécialités Métiers
             </h2>
             <span className="text-3xs text-muted-foreground font-semibold">
@@ -209,7 +211,7 @@ export default function MetiersHomePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {TRADES.map((trade) => (
               <MetierTradeCard key={trade.slug} trade={trade} />
             ))}
@@ -243,10 +245,10 @@ export default function MetiersHomePage() {
           {/* Section Favoris si présents */}
           {favorites.length > 0 && (
             <section className="space-y-3">
-              <div className="flex items-center justify-between border-b border-border pb-1.5">
+              <div className="border-border flex items-center justify-between border-b pb-1.5">
                 <div className="flex items-center gap-2">
-                  <Star className="size-4 text-warning fill-amber-500" />
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  <Star className="text-warning size-4 fill-amber-500" />
+                  <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                     Vos Outils Métiers Favoris
                   </h2>
                 </div>
@@ -259,7 +261,7 @@ export default function MetiersHomePage() {
                 className={cn(
                   viewMode === 'grid'
                     ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                    : 'space-y-2 w-full',
+                    : 'w-full space-y-2',
                 )}
               >
                 {ALL_METIER_TOOLS.filter((t) => favorites.includes(t.slug)).map((tool) => (
@@ -281,12 +283,17 @@ export default function MetiersHomePage() {
 
             return (
               <section key={trade.slug} className="space-y-3">
-                <div className="flex items-center justify-between border-b border-border pb-1.5">
+                <div className="border-border flex items-center justify-between border-b pb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className={cn('flex size-6 items-center justify-center rounded-md text-xs font-bold', trade.badgeColor)}>
+                    <span
+                      className={cn(
+                        'flex size-6 items-center justify-center rounded-md text-xs font-bold',
+                        trade.badgeColor,
+                      )}
+                    >
                       {trade.shortName[0]}
                     </span>
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    <h2 className="text-foreground text-xs font-bold tracking-wider uppercase">
                       {trade.name}
                     </h2>
                   </div>
@@ -302,7 +309,7 @@ export default function MetiersHomePage() {
                   className={cn(
                     viewMode === 'grid'
                       ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                      : 'space-y-2 w-full',
+                      : 'w-full space-y-2',
                   )}
                 >
                   {tradeTools.map((tool) => (
@@ -322,10 +329,10 @@ export default function MetiersHomePage() {
       ) : (
         /* Affichage filtré ou recherché */
         <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
+          <div className="border-border flex items-center justify-between border-b pb-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              <h2 className="text-xs font-bold text-foreground">
+              <Sparkles className="text-primary size-4" />
+              <h2 className="text-foreground text-xs font-bold">
                 {query
                   ? `Résultats pour « ${query} »`
                   : activeTab === 'favorites'
@@ -344,7 +351,7 @@ export default function MetiersHomePage() {
                     setQuery('');
                     handleTabChange('all');
                   }}
-                  className="text-3xs text-primary hover:underline cursor-pointer font-semibold"
+                  className="text-3xs text-primary cursor-pointer font-semibold hover:underline"
                 >
                   Réinitialiser
                 </button>
@@ -357,7 +364,7 @@ export default function MetiersHomePage() {
               className={cn(
                 viewMode === 'grid'
                   ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  : 'space-y-2 w-full',
+                  : 'w-full space-y-2',
               )}
             >
               {filteredTools.map((tool) => (
@@ -372,8 +379,12 @@ export default function MetiersHomePage() {
             </div>
           ) : (
             <EmptyState
-              icon={activeTab === 'favorites' ? Star : Wrench}
-              title={activeTab === 'favorites' ? 'Aucun favori métier' : 'Aucun outil métier trouvé'}
+              {...(activeTab === 'favorites' && query.trim() === ''
+                ? { illustration: <AtelierIllustration subject="favorites" /> }
+                : { icon: activeTab === 'favorites' ? Star : Wrench })}
+              title={
+                activeTab === 'favorites' ? 'Aucun favori métier' : 'Aucun outil métier trouvé'
+              }
               description={
                 activeTab === 'favorites'
                   ? 'Cliquez sur l’étoile ⭐ d’un outil métier pour l’ajouter à vos favoris et le retrouver ici instantanément.'

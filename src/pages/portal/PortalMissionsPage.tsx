@@ -1,6 +1,7 @@
 import { ChevronRight, MapPin, Wrench } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
@@ -48,7 +49,7 @@ export default function PortalMissionsPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={Wrench}
+          illustration={<AtelierIllustration subject="missions" />}
           title="Aucune intervention"
           description="Vos interventions apparaîtront ici dès qu’elles seront planifiées."
         />

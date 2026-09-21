@@ -1,6 +1,7 @@
 import { AlertTriangle, UserMinus, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -65,7 +66,7 @@ export function TeamMembersPanel({ team, organizationMembers, canAssign }: TeamM
 
       {members.length === 0 ? (
         <EmptyState
-          icon={UserPlus}
+          illustration={<AtelierIllustration subject="teams" className="w-44" />}
           title="Équipe vide"
           description="Ajoutez des membres de l’entreprise pour pouvoir affecter des missions à cette équipe."
         />

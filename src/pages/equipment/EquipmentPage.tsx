@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -559,15 +561,34 @@ export default function EquipmentPage() {
           })
         )}
 
-        {!equipmentQuery.isPending && list.length === 0 && (
-          <Card className="text-muted-foreground p-8 text-center">
-            <p className="text-sm">
-              {totalCount === 0
-                ? 'Aucun équipement enregistré. Ajoutez votre premier appareil de mesure.'
-                : 'Aucun équipement ne correspond à votre recherche.'}
-            </p>
-          </Card>
-        )}
+        {!equipmentQuery.isPending &&
+          list.length === 0 &&
+          (totalCount === 0 ? (
+            <EmptyState
+              illustration={<AtelierIllustration subject="equipment" />}
+              title="Votre parc matériel est prêt à démarrer"
+              description="Ajoutez votre premier appareil de mesure pour suivre son affectation, son état et sa prochaine vérification."
+              {...(canManage
+                ? {
+                    action: (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsAddOpen(true)}
+                      >
+                        <Plus className="size-4" aria-hidden="true" />
+                        Ajouter un équipement
+                      </Button>
+                    ),
+                  }
+                : {})}
+            />
+          ) : (
+            <Card className="text-muted-foreground p-8 text-center">
+              <p className="text-sm">Aucun équipement ne correspond à votre recherche.</p>
+            </Card>
+          ))}
       </div>
 
       {/* Modal d'ajout de matériel */}

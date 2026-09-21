@@ -3,6 +3,8 @@ import { SelectField } from '@/components/ui/SelectField';
 import { Calendar, Edit2, Eye, Package, PackageCheck, Search, Send, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -208,6 +210,16 @@ export function PurchaseOrdersTable({
       </article>
     );
   };
+
+  if (orders.length === 0) {
+    return (
+      <EmptyState
+        illustration={<AtelierIllustration subject="purchases" />}
+        title="Aucune commande fournisseur"
+        description="Créez votre première commande pour préparer les achats et suivre les réceptions du chantier."
+      />
+    );
+  }
 
   return (
     <Card className="border-border/80 bg-surface overflow-hidden shadow-xs">

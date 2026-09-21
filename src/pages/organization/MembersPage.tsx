@@ -1,5 +1,6 @@
-import { Mail, Send, Users, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { FormError } from '@/components/feedback/FormError';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -161,7 +162,7 @@ export default function MembersPage() {
             />
           ) : activeMembers.length === 0 ? (
             <EmptyState
-              icon={Users}
+              illustration={<AtelierIllustration subject="teams" className="w-48" />}
               title="Aucun membre"
               description="Invitez vos collègues pour leur confier des missions et suivre leurs interventions."
             />
@@ -214,7 +215,7 @@ export default function MembersPage() {
               />
             ) : (invitations.data ?? []).length === 0 ? (
               <EmptyState
-                icon={Mail}
+                illustration={<AtelierIllustration subject="invitations" className="w-44" />}
                 size="sm"
                 title="Aucune invitation en attente"
                 description="Les invitations créées apparaissent ici jusqu’à leur acceptation ou leur expiration."

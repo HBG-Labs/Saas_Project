@@ -2,6 +2,7 @@ import { ArrowLeft, Lock, MessageSquare, Paperclip, Plus, Send } from 'lucide-re
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -74,7 +75,7 @@ export default function PortalMessagesPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={MessageSquare}
+          illustration={<AtelierIllustration subject="messages" />}
           title="Aucun échange pour le moment"
           description={
             context.allow_client_initiated

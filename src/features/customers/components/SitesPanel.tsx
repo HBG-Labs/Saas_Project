@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Archive, KeyRound, MapPin, Pencil, Plus } from 'lucide-react';
+import { Archive, KeyRound, Pencil, Plus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -57,7 +58,7 @@ export function SitesPanel({ customerId, organizationId, canEdit }: SitesPanelPr
 
       {list.length === 0 ? (
         <EmptyState
-          icon={MapPin}
+          illustration={<AtelierIllustration subject="customers" className="w-44" />}
           title="Aucun site d’intervention"
           description="Un site porte l’adresse, les coordonnées GPS et les consignes d’accès. Une mission créée depuis un site en hérite automatiquement."
         />

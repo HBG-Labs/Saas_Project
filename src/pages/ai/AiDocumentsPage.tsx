@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -161,7 +162,7 @@ export default function AiDocumentsPage() {
         </div>
       ) : documents.length === 0 ? (
         <EmptyState
-          icon={FileText}
+          illustration={<AtelierIllustration subject="library" />}
           title="Aucun document indexé"
           description="Déposez un premier PDF — guide technique, procédure, norme — pour que l’assistant puisse s’appuyer dessus et citer sa source dans ses réponses."
           action={

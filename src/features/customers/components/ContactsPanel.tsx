@@ -3,6 +3,7 @@ import { Mail, Pencil, Phone, Star, Trash2, UserPlus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -65,7 +66,7 @@ export function ContactsPanel({ customerId, organizationId, canEdit }: ContactsP
 
       {list.length === 0 ? (
         <EmptyState
-          icon={UserPlus}
+          illustration={<AtelierIllustration subject="customers" className="w-44" />}
           title="Aucun interlocuteur"
           description="Enregistrez qui appeler sur place, et son rôle : c’est ce que le technicien cherchera en premier."
         />

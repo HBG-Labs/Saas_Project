@@ -1,6 +1,7 @@
 import { ChevronRight, FileText } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Badge } from '@/components/ui/Badge';
@@ -50,7 +51,7 @@ export default function PortalQuotesPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={FileText}
+          illustration={<AtelierIllustration subject="quotes" />}
           title="Aucun devis"
           description="Les devis qui vous seront envoyés apparaîtront ici."
         />

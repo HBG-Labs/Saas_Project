@@ -1,5 +1,7 @@
 import { Clock, MapPin, User, Calendar, AlarmClock } from 'lucide-react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import type { RecurringTask } from '../types';
 
@@ -37,12 +39,12 @@ export function RecurringTasksTab({ tasks }: RecurringTasksTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-4 rounded-2xl border border-border shadow-xs">
+      <div className="bg-surface border-border flex flex-col justify-between gap-3 rounded-2xl border p-4 shadow-xs sm:flex-row sm:items-center">
         <div>
-          <h3 className="text-sm font-extrabold text-foreground">
+          <h3 className="text-foreground text-sm font-extrabold">
             Contrats de Maintenance & Tâches Récurrentes
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Automatisation des visites périodiques et des rappels clients avant échéance
           </p>
         </div>
@@ -51,7 +53,7 @@ export function RecurringTasksTab({ tasks }: RecurringTasksTabProps) {
             qui prétendrait envoyer des rappels : aucun service de notification
             n'est branché, et l'annoncer serait mentir à l'utilisateur. */}
         {dueSoon > 0 && (
-          <span className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1.5 rounded-lg shrink-0">
+          <span className="text-primary bg-primary/10 flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold">
             <AlarmClock className="size-3.5" />
             {dueSoon} échéance{dueSoon > 1 ? 's' : ''} sous 30 jours
           </span>
@@ -59,40 +61,42 @@ export function RecurringTasksTab({ tasks }: RecurringTasksTabProps) {
       </div>
 
       {tasks.length === 0 && (
-        <p className="text-xs text-muted-foreground bg-surface border border-border rounded-2xl p-6 text-center">
-          Aucun contrat de maintenance enregistré. Les visites périodiques ajoutées ici
-          rappelleront leur prochaine échéance.
-        </p>
+        <EmptyState
+          illustration={<AtelierIllustration subject="history" className="w-44" />}
+          title="Aucun contrat de maintenance"
+          description="Les visites périodiques ajoutées ici rappelleront leur prochaine échéance."
+          size="sm"
+        />
       )}
 
       {/* Grid of Recurring Tasks */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="p-4 rounded-2xl bg-surface border border-border shadow-xs hover:border-border-strong transition-all space-y-2.5"
+            className="bg-surface border-border hover:border-border-strong space-y-2.5 rounded-2xl border p-4 shadow-xs transition-all"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <Badge variant="primary" className="text-3xs font-mono mb-1">
+                <Badge variant="primary" className="text-3xs mb-1 font-mono">
                   {getFrequencyLabel(task.frequency)}
                 </Badge>
-                <h4 className="text-xs font-bold text-foreground">{task.title}</h4>
+                <h4 className="text-foreground text-xs font-bold">{task.title}</h4>
               </div>
-              <span className="text-xs font-bold text-primary flex items-center gap-1 shrink-0 bg-primary/10 px-2 py-0.5 rounded-md">
+              <span className="text-primary bg-primary/10 flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold">
                 <Calendar className="size-3" />
                 {task.nextDate}
               </span>
             </div>
 
-            <div className="text-xs space-y-1 text-muted-foreground pt-1 border-t border-border/60">
-              <p className="font-semibold text-foreground">{task.clientName}</p>
+            <div className="text-muted-foreground border-border/60 space-y-1 border-t pt-1 text-xs">
+              <p className="text-foreground font-semibold">{task.clientName}</p>
               <p className="text-3xs flex items-center gap-1 truncate">
                 <MapPin className="size-2.5 shrink-0" />
                 {task.clientAddress}
               </p>
-              <div className="flex items-center justify-between text-3xs pt-1">
-                <span className="flex items-center gap-1 font-semibold text-primary">
+              <div className="text-3xs flex items-center justify-between pt-1">
+                <span className="text-primary flex items-center gap-1 font-semibold">
                   <User className="size-2.5" />
                   {task.technicianName}
                 </span>

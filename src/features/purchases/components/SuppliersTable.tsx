@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -67,6 +69,16 @@ export function SuppliersTable({
     });
     return stats;
   }, [orders]);
+
+  if (suppliers.length === 0) {
+    return (
+      <EmptyState
+        illustration={<AtelierIllustration subject="customers" />}
+        title="Aucun fournisseur"
+        description="Ajoutez votre premier partenaire pour préparer des commandes et suivre les achats par fournisseur."
+      />
+    );
+  }
 
   return (
     <Card className="border-border/80 bg-surface overflow-x-auto shadow-xs">

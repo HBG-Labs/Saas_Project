@@ -1,6 +1,7 @@
-import { Plus, Users, UsersRound } from 'lucide-react';
+import { Plus, UsersRound } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -56,7 +57,7 @@ export default function TeamsListPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={Users}
+          illustration={<AtelierIllustration subject="teams" />}
           title="Aucune équipe"
           description={
             canCreate

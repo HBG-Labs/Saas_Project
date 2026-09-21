@@ -2,6 +2,7 @@ import { CheckCircle2, ClipboardCheck, FileText, Search, X, XCircle } from 'luci
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -177,7 +178,17 @@ export default function ReviewQueuePage() {
           }}
         />
       ) : list.length === 0 ? (
-        <EmptyState icon={ClipboardCheck} title="Rien à contrôler" description={emptyExplanation} />
+        <EmptyState
+          {...(rawList.length === 0
+            ? { illustration: <AtelierIllustration subject="reports" /> }
+            : { icon: ClipboardCheck })}
+          title={rawList.length === 0 ? 'Rien à contrôler' : 'Aucun résultat'}
+          description={
+            rawList.length === 0
+              ? emptyExplanation
+              : 'Aucun compte rendu ne correspond à cette recherche.'
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {list.map((report) => (

@@ -1,6 +1,8 @@
 import { AlertTriangle, Car, CheckCircle2, Download, Plus, Search, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +42,8 @@ export default function VehiclesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const hasActiveFilters =
+    searchQuery.trim() !== '' || statusFilter !== 'all' || typeFilter !== 'all';
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -303,43 +307,45 @@ export default function VehiclesPage() {
 
       {/* Liste des véhicules */}
       {filteredVehicles.length === 0 ? (
-        <div className="border-border bg-surface space-y-3 rounded-2xl border border-dashed px-4 py-12 text-center">
-          <div className="bg-surface-sunken text-muted-foreground mx-auto flex size-12 items-center justify-center rounded-2xl">
-            <Truck className="size-6" />
-          </div>
-          <h3 className="text-foreground text-sm font-bold">Aucun véhicule trouvé</h3>
-          <p className="text-muted-foreground mx-auto max-w-sm text-xs">
-            {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
+        <EmptyState
+          {...(hasActiveFilters
+            ? { icon: Truck }
+            : { illustration: <AtelierIllustration subject="vehicles" /> })}
+          title={hasActiveFilters ? 'Aucun véhicule trouvé' : 'Votre flotte commence ici'}
+          description={
+            hasActiveFilters
               ? 'Aucun véhicule ne correspond aux critères de recherche sélectionnés.'
-              : 'Commencez par ajouter votre premier véhicule d’intervention.'}
-          </p>
-          {searchQuery || statusFilter !== 'all' || typeFilter !== 'all' ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setStatusFilter('all');
-                setTypeFilter('all');
-              }}
-              className="min-h-touch sm:min-h-0"
-            >
-              Réinitialiser les filtres
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="min-h-touch gap-2 sm:min-h-0"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Ajouter le premier véhicule
-            </Button>
-          )}
-        </div>
+              : 'Ajoutez votre premier véhicule d’intervention pour suivre son affectation, sa disponibilité et son entretien.'
+          }
+          action={
+            hasActiveFilters ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                }}
+                className="min-h-touch sm:min-h-0"
+              >
+                Réinitialiser les filtres
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => setIsAddModalOpen(true)}
+                className="min-h-touch gap-2 sm:min-h-0"
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Ajouter le premier véhicule
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredVehicles.map((vehicle) => (

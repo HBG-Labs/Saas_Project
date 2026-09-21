@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -164,7 +165,9 @@ export default function MissionsListPage() {
       ) : list.length === 0 ? (
         <div className="space-y-4">
           <EmptyState
-            icon={ClipboardList}
+            {...(activeFilters > 0
+              ? { icon: ClipboardList }
+              : { illustration: <AtelierIllustration subject="missions" /> })}
             title={activeFilters > 0 ? 'Aucun résultat' : formatNoneNoun(jobSingular, 'en cours')}
             description={
               activeFilters > 0

@@ -2,6 +2,7 @@ import { Archive, Building2, Download, MapPin, Phone, Plus, Search } from 'lucid
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -141,7 +142,9 @@ export default function CustomersListPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={status === 'archived' ? Archive : Building2}
+          {...(search.trim() === '' && status !== 'archived'
+            ? { illustration: <AtelierIllustration subject="customers" /> }
+            : { icon: status === 'archived' ? Archive : Building2 })}
           title={
             search.trim() !== ''
               ? 'Aucun résultat'

@@ -1,6 +1,6 @@
-import { Clock } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -52,7 +52,7 @@ export default function HistoryPage() {
         />
       ) : entries.length === 0 ? (
         <EmptyState
-          icon={Clock}
+          illustration={<AtelierIllustration subject="history" />}
           title="Aucun outil consulté"
           description="Les outils que vous ouvrez apparaîtront ici, sur tous vos appareils."
           action={

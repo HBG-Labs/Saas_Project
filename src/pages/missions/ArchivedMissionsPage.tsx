@@ -2,6 +2,7 @@ import { Archive, Download, MapPin, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -159,7 +160,9 @@ export default function ArchivedMissionsPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={Archive}
+          {...(search.trim() === ''
+            ? { illustration: <AtelierIllustration subject="archives" /> }
+            : { icon: Archive })}
           title={search.trim() === '' ? 'Aucun dossier' : 'Aucun résultat'}
           description={
             search.trim() === ''

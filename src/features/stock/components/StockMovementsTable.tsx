@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -237,6 +239,16 @@ export function StockMovementsTable({
           ) : null}
         </div>
       </article>
+    );
+  }
+
+  if (movements.length === 0) {
+    return (
+      <EmptyState
+        illustration={<AtelierIllustration subject="stock" />}
+        title="Aucun mouvement de stock"
+        description="Les entrées, sorties, transferts et régularisations apparaîtront ici dès leur enregistrement."
+      />
     );
   }
 

@@ -1,5 +1,6 @@
 import { Receipt } from 'lucide-react';
 
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -64,7 +65,7 @@ export default function PortalInvoicesPage() {
         />
       ) : list.length === 0 ? (
         <EmptyState
-          icon={Receipt}
+          illustration={<AtelierIllustration subject="invoices" />}
           title="Aucune facture"
           description="Vos factures apparaîtront ici dès leur émission."
         />
