@@ -137,42 +137,44 @@
   }
 
   .dark {
-    /* --- ATELIER NUIT — Style cockpit REZO360 -------------------------
-       Fond bleu nuit profond, surfaces en marine élevé, accents lime.
-       Inspiré de la section Tarifs en mode sombre.
+    /* --- ATELIER NUIT — Bleu ardoise doux -----------------------------
+       Les anciennes surfaces descendaient presque jusqu'au noir et formaient
+       des aplats très lourds autour des cartes et des illustrations. Cette
+       gamme reste sombre, mais chaque niveau conserve une dominante bleue
+       visible et une élévation lisible, sans dégradé vers le noir.
        -------------------------------------------------------------------- */
-    --background: #0e1b36;
-    --surface: #162040;
-    --surface-raised: #1c2a52;
-    --surface-sunken: #0a1228;
-    --surface-subtle: #121a34;
-    --surface-hover: #1f2f5e;
+    --background: #1c2947;
+    --surface: #243150;
+    --surface-raised: #26324f;
+    --surface-sunken: #202c4a;
+    --surface-subtle: #222f4e;
+    --surface-hover: #26334f;
 
     /* Filet décoratif : sépare, ne délimite pas un contrôle. */
-    --border: #243566;
+    --border: #3b4c73;
     /*
       Borde les champs, les sélecteurs et les cases à cocher : WCAG 1.4.11 lui
       impose 3:1. L'ancienne valeur (#324880) tenait 1,46:1 sur la surface la
       plus claire — la bordure de chaque champ du thème sombre était très loin
       sous le seuil. 3,14:1 au pire désormais.
     */
-    --border-strong: #637cb9;
+    --border-strong: #7187b4;
 
-    --foreground: #f0f4ff;
-    --muted-foreground: #8fa3c8;
+    --foreground: #f7f8ff;
+    --muted-foreground: #b7c2da;
     /*
       L'ancienne valeur (#7b90b3) était annoncée à 4,93:1, mesurée contre
       `--surface` seulement. Contre `--surface-hover`, la plus claire des six,
       elle tombait à 3,99:1. Le commentaire était juste, la surface testée ne
       l'était pas. 4,58:1 au pire désormais.
     */
-    --subtle-foreground: #869bbf;
+    --subtle-foreground: #a9b6d0;
 
     --primary: #7fa0ff;
     --primary-hover: #9db6ff;
     --primary-active: #6288f5;
-    --primary-foreground: #0e1b36;
-    --primary-subtle: #1a2d58;
+    --primary-foreground: #17213b;
+    --primary-subtle: #293759;
 
     --brand-night: #0a1b43;
     --brand-blue: #1b44c8;
@@ -181,8 +183,8 @@
     --signal-lime: #b9f442;
 
     --accent: #6fb0f0;
-    --accent-foreground: #0e1b36;
-    --accent-subtle: #162d4a;
+    --accent-foreground: #17213b;
+    --accent-subtle: #29415c;
 
     /*
        En sombre, les couleurs sémantiques sont volontairement claires pour
@@ -190,29 +192,29 @@
        posé DESSUS, en aplat, doit être sombre.
     */
     --success: #3fc792;
-    --success-subtle: #0f2a21;
-    --success-border: #1f5c46;
+    --success-subtle: #25463d;
+    --success-border: #477766;
     --success-foreground: #08130f;
 
     --warning: #f0a340;
-    --warning-subtle: #2c2113;
-    --warning-border: #6b4a1c;
+    --warning-subtle: #4a3b29;
+    --warning-border: #7a613b;
     --warning-foreground: #1a1206;
 
-    --error: #ff7358;
-    --error-subtle: #2e1713;
-    --error-border: #7a2e20;
+    --error: #ff8977;
+    --error-subtle: #473035;
+    --error-border: #82515a;
     --error-foreground: #250c07;
 
     --info: #7fa0ff;
-    --info-subtle: #1a2d58;
-    --info-border: #33477a;
+    --info-subtle: #293759;
+    --info-border: #4c5f8b;
 
     --ring: #7fa0ff;
 
-    --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 2px 8px -2px rgb(0 0 0 / 0.4);
-    --shadow-overlay: 0 8px 20px -4px rgb(0 0 0 / 0.55);
-    --shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.65);
+    --shadow-raised: 0 1px 3px rgb(16 27 55 / 0.22), 0 6px 16px -8px rgb(16 27 55 / 0.32);
+    --shadow-overlay: 0 10px 26px -8px rgb(16 27 55 / 0.38);
+    --shadow-modal: 0 22px 48px -14px rgb(16 27 55 / 0.48);
 
     --action: #51d68a;
     --action-hover: #65df9b;
@@ -221,8 +223,8 @@
     --action-text: #92ddbd;
     --nav-selected: #7d86f9;
     --nav-foreground: #172351;
-    --nav-subtle: #293050;
-    --nav-text: #b8bfff;
+    --nav-subtle: #343d66;
+    --nav-text: #d1d5ff;
     --workspace-selected: #7cd1f4;
     --workspace-foreground: #234c5c;
     --settings-selected: #acc1de;

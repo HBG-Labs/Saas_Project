@@ -58,8 +58,10 @@ export function AtelierIllustration({
         className,
       )}
     >
-      <span className="bg-surface-sunken absolute inset-x-8 inset-y-5 -z-10 rounded-full" />
-      <span className="border-border absolute inset-x-5 inset-y-8 -z-10 rotate-12 rounded-full border" />
+      <span
+        data-atelier-orbit="true"
+        className="border-primary/20 absolute inset-x-5 inset-y-8 -z-10 rotate-12 rounded-full border"
+      />
       <img
         src={illustrations[subject]}
         alt=""

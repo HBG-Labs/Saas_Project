@@ -139,9 +139,8 @@ export function PublicLayout() {
 
             Ce n'est plus le cas. La barre porte maintenant `--surface`, une
             teinte distincte du fond de page. Le bloc existe deja a l'oeil ;
-            en sombre, l'ecart entre `#162040` et `#0e1b36` est si faible que
-            la barre flottait sans limite basse. La bordure ne coupe plus
-            rien, elle termine ce qui commencait deja.
+            en sombre, la bordure termine proprement la surface bleu ardoise
+            sans introduire une nouvelle bande sombre.
 
             L'en-tete applicatif (`AppLayout`) porte la sienne en permanence
             depuis toujours : les deux barres se comportent enfin pareil.

@@ -83,7 +83,7 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
     expect(Object.keys(clair).length).toBeGreaterThan(20);
     expect(Object.keys(sombre).length).toBeGreaterThan(20);
     expect(clair['--background']).toBe('#f7f8fa');
-    expect(sombre['--background']).toBe('#0e1b36');
+    expect(sombre['--background']).toBe('#1c2947');
   });
 
   it('les thèmes signature ne redéclarent aucune variable', () => {
@@ -102,6 +102,23 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
     */
     expect(Object.keys(DEFAULT_THEME_PRESET.variables)).toEqual([]);
     expect(Object.keys(ATELIER_NUIT_PRESET.variables)).toEqual([]);
+  });
+
+  it('Atelier Nuit reste bleu ardoise sans surface ni ombre noire', () => {
+    expect(
+      [
+        '--background',
+        '--surface',
+        '--surface-raised',
+        '--surface-sunken',
+        '--surface-subtle',
+        '--surface-hover',
+      ].map((token) => sombre[token]),
+    ).toEqual(['#1c2947', '#243150', '#26324f', '#202c4a', '#222f4e', '#26334f']);
+
+    for (const shadow of ['--shadow-raised', '--shadow-overlay', '--shadow-modal']) {
+      expect(sombre[shadow], shadow).not.toContain('0 0 0');
+    }
   });
 
   it('le contraste élevé, lui, déclare bien ses variables', () => {

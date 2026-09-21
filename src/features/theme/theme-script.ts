@@ -10,7 +10,7 @@ import { COMPACT_STORAGE_KEY, THEME_STORAGE_KEY } from './theme-context';
 
   `theme-presets.test.ts` compare desormais ces deux valeurs aux blocs CSS.
 */
-export const BROWSER_BAR_COLOR = { light: '#f7f8fa', dark: '#0e1b36' } as const;
+export const BROWSER_BAR_COLOR = { light: '#f7f8fa', dark: '#1c2947' } as const;
 
 /**
  * Teinte la barre du navigateur mobile d'après le thème RÉELLEMENT appliqué.

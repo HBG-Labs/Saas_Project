@@ -99,8 +99,8 @@ export const ATELIER_NUIT_PRESET: ThemePreset = {
   baseMode: 'dark',
   preview: {
     primary: '#7fa0ff',
-    surface: '#162040',
-    background: '#0e1b36',
+    surface: '#243150',
+    background: '#1c2947',
   },
   variables: {},
   // Vide pour la meme raison : le bloc `.dark` de `styles/index.css` fait foi.

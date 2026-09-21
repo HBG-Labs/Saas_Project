@@ -71,7 +71,7 @@ describe('couleurs historiques', () => {
     (_label, color) => {
       for (const [mode, surfaces, minimum] of [
         ['lightVariables', ['#ffffff', '#f7f8fa', '#eef1f5'], 4.5],
-        ['darkVariables', ['#0e1b36', '#162040', '#1c2a52', '#0a1228', '#121a34', '#1f2f5e'], 4.5],
+        ['darkVariables', ['#1c2947', '#243150', '#26324f', '#202c4a', '#222f4e', '#26334f'], 4.5],
         ['contrastVariables', ['#ffffff', '#f2f2f2', '#f7f7f7', '#e8e8e8'], 7],
       ] as const) {
         const v = color[mode];

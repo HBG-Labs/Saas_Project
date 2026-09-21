@@ -85,6 +85,24 @@ test.describe('Illustrations des premiers usages Atelier', () => {
     await expect(page.locator('[data-atelier-illustration="vehicles"]')).toHaveCount(0);
   });
 
+  test('les dessins restent transparents dans le thème sombre', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner', donnees: { customers: [] } });
+    await page.addInitScript(() => {
+      localStorage.setItem('rezo360-theme-preset', 'atelier-nuit');
+      localStorage.setItem('rezo360-theme', 'dark');
+    });
+    await page.goto('/clients');
+
+    const illustration = page.locator('[data-atelier-illustration="customers"]').first();
+    await expect(illustration).toBeVisible();
+    await expect(illustration).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(illustration.locator('[data-atelier-orbit="true"]')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+    await expect(illustration.locator(':scope > span')).toHaveCount(1);
+  });
+
   test('le portail client illustre aussi ses rubriques encore vides', async ({ page }) => {
     await installeSupabase(page, {
       rpc: {

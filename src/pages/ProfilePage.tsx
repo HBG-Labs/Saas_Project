@@ -460,7 +460,7 @@ export default function ProfilePage() {
             className="border-border bg-surface focus-visible:ring-primary group flex min-h-22 items-center gap-3 rounded-xl border p-3 shadow-[0_8px_22px_rgb(36_50_71/0.14)] transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none sm:min-h-28 sm:gap-4 sm:rounded-2xl sm:p-4 sm:shadow-[0_10px_28px_rgb(36_50_71/0.16)]"
             aria-label={organization ? `Voir la société ${organization.name}` : 'Créer ma société'}
           >
-            <span className="from-warning-subtle via-primary-subtle to-nav-selected text-primary flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br sm:size-20">
+            <span className="bg-primary-subtle text-primary flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full sm:size-20">
               {organization?.logo_url ? (
                 <img src={organization.logo_url} alt="" className="size-full object-cover" />
               ) : (
@@ -488,7 +488,7 @@ export default function ProfilePage() {
           to={organization ? ROUTES.organizationBilling : ROUTES.pricing}
           className="border-border bg-surface hover:border-nav-selected/60 focus-visible:ring-primary flex min-h-20 items-center gap-3 rounded-xl border p-3 shadow-[0_2px_10px_rgb(36_50_71/0.06)] transition-colors focus-visible:ring-2 focus-visible:outline-none sm:min-h-24 sm:gap-4 sm:rounded-2xl sm:p-4"
         >
-          <span className="from-nav-selected to-primary flex size-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm sm:size-14 sm:rounded-xl">
+          <span className="bg-nav-selected text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-lg shadow-sm sm:size-14 sm:rounded-xl">
             <Crown className="size-5 sm:size-6" aria-hidden="true" />
           </span>
           <span className="text-foreground min-w-0 flex-1 text-sm font-semibold">
