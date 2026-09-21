@@ -70,8 +70,51 @@ test.describe('Récupération PWA', () => {
       .toBe('v20260921');
 
     expect(stylesheetRequests).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+    await expect(page.locator('#rezo360-style-boot')).toBeHidden();
     await expect(
       page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
     ).toHaveCount(0);
+  });
+
+  test('le worker ignore un CSS empoisonné dans Cache Storage', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+
+    const poisonedCss = 'html { display: none !important; }';
+    await page.evaluate(async (css) => {
+      const stylesheet = document.querySelector<HTMLLinkElement>(
+        'link[rel="stylesheet"][href*="/assets/"]',
+      );
+      if (!stylesheet) throw new Error('Feuille principale introuvable');
+
+      const cache = await caches.open('rezo360-pwa-v6');
+      await cache.put(
+        stylesheet.href,
+        new Response(css, { headers: { 'content-type': 'text/css' } }),
+      );
+    }, poisonedCss);
+
+    await page.reload();
+
+    await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+    await expect(page.getByRole('link', { name: 'Commencer gratuitement' }).first()).toBeVisible();
+    expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain(
+      'Nunito',
+    );
+    expect(
+      await page.evaluate(async () => {
+        const stylesheet = document.querySelector<HTMLLinkElement>(
+          'link[rel="stylesheet"][href*="/assets/"]',
+        );
+        if (!stylesheet) return '';
+        const response = await (await caches.open('rezo360-pwa-v6')).match(stylesheet.href);
+        return response?.text();
+      }),
+    ).toBe(poisonedCss);
   });
 });

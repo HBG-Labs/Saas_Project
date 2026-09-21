@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   clearChunkLoadRecoveryGuard,
   installChunkLoadRecovery,
-  installStylesheetLoadRecovery,
   isChunkLoadError,
   recoverChunkLoadError,
 } from './chunk-load-recovery';
@@ -101,29 +100,5 @@ describe('récupération des modules différés', () => {
 
     await vi.waitFor(() => expect(prepareReload).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-  });
-
-  it('recharge une interface dont la feuille principale a échoué', async () => {
-    const storage = memoryStorage();
-    const reload = vi.fn();
-    const prepareReload = vi.fn();
-    const stylesheet = document.createElement('link');
-    stylesheet.rel = 'stylesheet';
-    stylesheet.href = '/assets/index-obsolete.css';
-    document.head.append(stylesheet);
-
-    const cleanup = installStylesheetLoadRecovery({
-      storage,
-      reload,
-      prepareReload,
-      now: () => 100_000,
-    });
-    stylesheet.dispatchEvent(new Event('error'));
-
-    await vi.waitFor(() => expect(prepareReload).toHaveBeenCalledTimes(1));
-    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-
-    cleanup();
-    stylesheet.remove();
   });
 });

@@ -146,6 +146,87 @@
     <meta name="twitter:image" content="https://rezo360.com/og-image.jpg" />
 
     <!--
+      Ne jamais exposer l'interface HTML brute.
+
+      Ce filet vit directement dans `index.html`, donc il fonctionne même si
+      le bundle JavaScript de l'application n'a pas encore démarré. Le marqueur
+      `--app-styles-ready` est défini par la feuille principale : tant qu'il
+      n'est pas lisible, seul cet écran léger est affiché.
+    -->
+    <style>
+      html:not(.rezo360-styles-ready) #root {
+        visibility: hidden;
+      }
+
+      #rezo360-style-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        padding: 24px;
+        background: #f7f8fa;
+        color: #243247;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      html.rezo360-styles-ready #rezo360-style-boot {
+        display: none;
+      }
+
+      .rezo360-style-boot-card {
+        width: min(100%, 360px);
+        box-sizing: border-box;
+        padding: 28px 24px;
+        border: 1px solid #e2e6ec;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgb(36 50 71 / 8%);
+        text-align: center;
+      }
+
+      .rezo360-style-boot-logo {
+        margin: 0 0 12px;
+        color: #2451d1;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+
+      .rezo360-style-boot-message {
+        margin: 0;
+        color: #657185;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      #rezo360-style-retry {
+        display: none;
+        width: 100%;
+        margin-top: 18px;
+        padding: 12px 18px;
+        border: 0;
+        border-radius: 999px;
+        background: #2451d1;
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      #rezo360-style-boot[data-failed='true'] #rezo360-style-retry {
+        display: block;
+      }
+    </style>
+
+    <!--
       Le titre porte la promesse, pas seulement la marque.
 
       « REZO360 » seul est ce que lit un visiteur dans son onglet, dans ses
@@ -155,7 +236,123 @@
     <title>REZO360 — Pilotez votre activité de terrain</title>
   </head>
   <body>
+    <div id="rezo360-style-boot" role="status" aria-live="polite">
+      <div class="rezo360-style-boot-card">
+        <p class="rezo360-style-boot-logo">REZO<span>360</span></p>
+        <p id="rezo360-style-message" class="rezo360-style-boot-message">
+          Chargement de l’interface…
+        </p>
+        <button id="rezo360-style-retry" type="button">Réessayer</button>
+      </div>
+    </div>
     <div id="root"></div>
+    <script>
+      (function () {
+        var documentElement = document.documentElement;
+        var bootScreen = document.getElementById('rezo360-style-boot');
+        var message = document.getElementById('rezo360-style-message');
+        var retryButton = document.getElementById('rezo360-style-retry');
+        var retryInProgress = false;
+        var automaticRetryDone = false;
+        var readinessTimer = 0;
+
+        function stylesAreReady() {
+          return (
+            getComputedStyle(documentElement).getPropertyValue('--app-styles-ready').trim().length >
+            0
+          );
+        }
+
+        function revealApplication() {
+          if (readinessTimer) window.clearInterval(readinessTimer);
+          documentElement.classList.add('rezo360-styles-ready');
+        }
+
+        function showFailure() {
+          retryInProgress = false;
+          bootScreen.setAttribute('data-failed', 'true');
+          message.textContent =
+            'L’interface n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.';
+        }
+
+        function mainStylesheet() {
+          return document.querySelector('link[rel="stylesheet"][href*="/assets/"]');
+        }
+
+        function retryStylesheet() {
+          if (retryInProgress) return;
+          if (stylesAreReady()) {
+            revealApplication();
+            return;
+          }
+
+          var original = mainStylesheet();
+          if (!original) {
+            showFailure();
+            return;
+          }
+
+          retryInProgress = true;
+          bootScreen.removeAttribute('data-failed');
+          message.textContent = 'Récupération de l’interface…';
+
+          var recovered = original.cloneNode();
+          var recoveredUrl = new URL(original.href, window.location.href);
+          recoveredUrl.searchParams.set('rezo360-css-recovery', String(Date.now()));
+          recovered.href = recoveredUrl.toString();
+          recovered.setAttribute('data-rezo360-recovery', 'true');
+          recovered.addEventListener('load', function () {
+            retryInProgress = false;
+            window.setTimeout(function () {
+              if (stylesAreReady()) {
+                original.remove();
+                revealApplication();
+              } else {
+                recovered.remove();
+                showFailure();
+              }
+            }, 0);
+          });
+          recovered.addEventListener('error', function () {
+            retryInProgress = false;
+            recovered.remove();
+            showFailure();
+          });
+          original.after(recovered);
+        }
+
+        function checkReadiness() {
+          if (stylesAreReady()) {
+            revealApplication();
+            return;
+          }
+
+          var stylesheet = mainStylesheet();
+          if (stylesheet && !stylesheet.dataset.rezo360Observed) {
+            stylesheet.dataset.rezo360Observed = 'true';
+            stylesheet.addEventListener('load', checkReadiness);
+            stylesheet.addEventListener('error', function () {
+              if (!automaticRetryDone) {
+                automaticRetryDone = true;
+                retryStylesheet();
+              } else {
+                showFailure();
+              }
+            });
+          }
+        }
+
+        retryButton.addEventListener('click', retryStylesheet);
+        checkReadiness();
+        readinessTimer = window.setInterval(checkReadiness, 100);
+        window.setTimeout(function () {
+          if (!stylesAreReady() && !automaticRetryDone) {
+            automaticRetryDone = true;
+            retryStylesheet();
+          }
+        }, 2500);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -11,7 +11,11 @@
 // v5 force un nouveau téléchargement de la feuille principale : certains
 // appareils ont conservé une réponse CSS défectueuse sous son ancienne URL
 // pourtant déclarée immuable.
-const CACHE_NAME = 'rezo360-pwa-v5';
+// v6 ne met plus les bundles CSS/JS en Cache Storage. Leur nom contient déjà
+// une empreinte de contenu et le navigateur sait les mettre en cache : une
+// seconde couche « cache d'abord » empêchait précisément leur récupération
+// lorsqu'une réponse incomplète avait été enregistrée sur Android.
+const CACHE_NAME = 'rezo360-pwa-v6';
 
 const STATIC_ASSETS = ['/', '/favicon-32.png', '/icon-192.png', '/site.webmanifest'];
 
@@ -45,6 +49,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // Les API et ressources tierces conservent leur comportement réseau natif.
+  if (url.origin !== self.location.origin) return;
+
   // Pour les requêtes de navigation (HTML) : Network First avec repli Cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -63,6 +70,15 @@ self.addEventListener('fetch', (event) => {
             .then((cache) => cache.match('/') || cache.match(event.request));
         }),
     );
+    return;
+  }
+
+  // Vite donne aux CSS et JS un nom empreinté (`index-ABC123.css`). Ils sont
+  // donc immuables par URL et n'ont besoin que du cache HTTP du navigateur.
+  // Surtout, les laisser hors du service worker permet au récupérateur intégré
+  // à `index.html` de contourner une copie locale défectueuse avec une requête
+  // versionnée, sans retomber dans le même Cache Storage.
+  if (url.pathname.startsWith('/assets/') && url.pathname.match(/\.(css|js)$/)) {
     return;
   }
 
@@ -120,8 +136,9 @@ self.addEventListener('fetch', (event) => {
           const typeRecu = networkResponse.headers.get('content-type') ?? '';
           const replSPA = typeRecu.includes('text/html');
 
-          // Cache uniquement les fichiers légers d'assets
-          if (!replSPA && url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?|css|js)$/)) {
+          // Cache uniquement les médias et polices. Les bundles CSS/JS sont
+          // volontairement exclus plus haut.
+          if (!replSPA && url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?)$/)) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
