@@ -40,6 +40,7 @@ import {
   useMembers,
   usePermission,
 } from '@/features/organizations';
+import { cn } from '@/lib/cn';
 
 /** Les formules souscriptibles : Free est l'état par défaut, pas une offre. */
 const PAYABLE_PLANS = PRICING_PLANS.filter((tier) => tier.id !== 'free');
@@ -401,10 +402,9 @@ export default function BillingPage() {
               const auDela = Math.max(0, seats - tier.includedUsers);
 
               return (
-                <Button
+                <button
                   key={tier.id}
                   type="button"
-                  variant="outline"
                   disabled={isCurrent || updatePlan.isPending || !canManageBilling}
                   onClick={() => {
                     if (isDowngrade && gereParStripe) {
@@ -422,11 +422,12 @@ export default function BillingPage() {
                     }
                   }}
                   aria-current={isCurrent ? 'true' : undefined}
-                  className={`h-auto min-h-[112px] w-full flex-col items-start justify-center gap-2 rounded-lg p-4 text-left whitespace-normal transition-colors sm:h-auto ${
+                  className={cn(
+                    'border-border-strong bg-surface text-foreground focus-visible:ring-ring flex min-h-28 w-full cursor-pointer flex-col items-start justify-center gap-2 rounded-lg border p-4 text-left text-xs whitespace-normal shadow-xs transition-[border-color,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
                     isCurrent
                       ? 'border-primary/60 bg-primary/[0.07] cursor-default shadow-xs disabled:opacity-100'
-                      : 'hover:border-primary/40 hover:bg-surface-hover'
-                  }`}
+                      : 'hover:border-primary/40 hover:bg-surface-hover',
+                  )}
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-sm font-semibold">
@@ -459,7 +460,7 @@ export default function BillingPage() {
                       </span>
                     ) : null}
                   </div>
-                </Button>
+                </button>
               );
             })}
           </div>

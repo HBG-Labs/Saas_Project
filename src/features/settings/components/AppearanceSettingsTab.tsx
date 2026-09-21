@@ -164,11 +164,11 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                       : 'border-border bg-surface hover:border-primary/40 hover:bg-surface-hover',
                   )}
                 >
-                  <div className="flex w-full items-center justify-between">
-                    <span className="text-foreground group-hover:text-primary text-xs font-bold transition-colors">
+                  <div className="flex w-full min-w-0 items-start justify-between gap-1">
+                    <span className="text-foreground group-hover:text-primary min-w-0 text-xs leading-tight font-bold break-words transition-colors">
                       {p.label}
                     </span>
-                    {isSelected && <Check className="text-primary size-3" />}
+                    {isSelected && <Check className="text-primary mt-0.5 size-3 shrink-0" />}
                   </div>
                   <p className="text-3xs text-muted-foreground line-clamp-2 leading-tight">
                     {p.description}

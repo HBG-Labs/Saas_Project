@@ -114,7 +114,7 @@ export function Select({
             // déjà cette règle. Le déclencheur était figé à `h-9` : 36 px, soit
             // sous la cible tactile de WCAG 2.5.5 sur un champ que l'on ouvre
             // en permanence dans les filtres de liste.
-            'bg-surface text-foreground atelier-field h-touch sm:h-field flex w-full items-center justify-between gap-2 rounded-sm border px-3 text-base sm:text-sm',
+            'bg-surface text-foreground atelier-field h-touch sm:h-field flex w-full items-center justify-between gap-2 overflow-hidden rounded-sm border px-3 text-base sm:text-sm',
             'transition-colors duration-[120ms]',
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
@@ -123,8 +123,10 @@ export function Select({
             triggerClassName,
           )}
         >
-          <RadixSelect.Value placeholder={placeholder} />
-          <RadixSelect.Icon>
+          <span className="min-w-0 flex-1 truncate text-left">
+            <RadixSelect.Value placeholder={placeholder} />
+          </span>
+          <RadixSelect.Icon className="shrink-0">
             <ChevronDown className="text-subtle-foreground size-4" aria-hidden="true" />
           </RadixSelect.Icon>
         </RadixSelect.Trigger>

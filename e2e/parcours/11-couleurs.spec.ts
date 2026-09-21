@@ -105,7 +105,11 @@ test('les neuf couleurs se choisissent, recolorent les commandes et persistent',
 
   if (isMobile) await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
   const selected = page.locator('.atelier-nav-link[aria-current="page"]').filter({ visible: true });
-  await expect(selected).toHaveCSS('background-color', 'rgb(14, 116, 144)');
+  await expect
+    .poll(() =>
+      selected.evaluate((element) => getComputedStyle(element, '::before').backgroundColor),
+    )
+    .toBe('rgb(14, 116, 144)');
   if (isMobile) await page.keyboard.press('Escape');
 
   await openCustomizer();

@@ -563,6 +563,7 @@ export default function QuotesPage() {
                       <input
                         type="text"
                         inputMode="decimal"
+                        aria-label="Taux de TVA, en pourcentage"
                         value={vatInput}
                         onChange={(e) => setVatInput(e.target.value)}
                         className="border-border-strong bg-surface text-success focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border py-1 pr-6 pl-2 text-right text-xs font-bold focus:outline-none focus-visible:ring-2 sm:min-h-0"
@@ -578,7 +579,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('8.5')}
                       className={cn(
-                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
+                        'min-h-touch shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 8.5
                           ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
@@ -590,7 +591,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('20')}
                       className={cn(
-                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
+                        'min-h-touch shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
                         vatRate === 20
                           ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',
@@ -602,7 +603,7 @@ export default function QuotesPage() {
                       type="button"
                       onClick={() => setVatInput('0')}
                       className={cn(
-                        'min-h-touch cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5',
+                        'min-h-touch w-11 shrink-0 cursor-pointer rounded border px-2 transition-colors sm:min-h-0 sm:w-auto sm:px-1.5 sm:py-0.5',
                         vatRate === 0
                           ? 'border-success/50 bg-success/10 text-success font-bold'
                           : 'border-border text-muted-foreground hover:text-foreground',

@@ -114,7 +114,7 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
         '--surface-subtle',
         '--surface-hover',
       ].map((token) => sombre[token]),
-    ).toEqual(['#1c2947', '#243150', '#26324f', '#202c4a', '#222f4e', '#26334f']);
+    ).toEqual(['#1c2947', '#243150', '#26324f', '#182541', '#222f4e', '#283654']);
 
     for (const shadow of ['--shadow-raised', '--shadow-overlay', '--shadow-modal']) {
       expect(sombre[shadow], shadow).not.toContain('0 0 0');

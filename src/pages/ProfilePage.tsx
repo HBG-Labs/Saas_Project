@@ -447,7 +447,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setIsAvatarModalOpen(true)}
-              className="mt-2 min-h-9 rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:mt-5 sm:min-h-10 sm:px-5 sm:py-2 sm:text-sm"
+              className="atelier-touch-target mt-2 min-h-9 rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:mt-5 sm:min-h-10 sm:px-5 sm:py-2 sm:text-sm"
             >
               Modifier mon avatar
             </button>

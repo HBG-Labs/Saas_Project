@@ -1,31 +1,61 @@
 import { expect, test } from '@playwright/test';
 
-import { ORGANISATION_ID, UTILISATEUR_ID, type DonneesTest } from '../fixtures/donnees';
+import { MEMBRE_ID, ORGANISATION_ID, UTILISATEUR_ID, type DonneesTest } from '../fixtures/donnees';
 import { installeSupabase } from '../fixtures/supabase';
 
 const ROUTES = [
   '/dashboard',
   '/missions',
+  '/missions/nouvelle',
   '/planning',
+  '/carte',
   '/clients',
-  '/equipements',
   '/analytics',
+  '/controle',
+  '/dossiers-clos',
+  '/stock',
+  '/stock/mouvements',
+  '/equipements',
+  '/equipes',
+  '/organisation/membres',
+  '/vehicules',
+  '/organisation',
+  '/organisation/facturation-electronique',
+  '/organisation/portail-client',
+  '/organisation/facturation',
+  '/journal',
+  '/devis',
   '/devis/historique',
   '/factures',
+  '/factures/recues',
   '/achats/commandes',
+  '/achats/fournisseurs',
+  '/workspace/pages',
   '/bloc-notes',
   '/bibliotheque',
   '/tutoriels',
   '/assistant-ia',
+  '/assistant-ia/documents',
+  '/tools',
+  '/tools?tab=favorites',
+  '/favorites',
+  '/references',
   '/metiers',
+  '/metiers/btp',
+  '/metiers/plomberie',
+  '/metiers/electricite',
+  '/metiers/espaces-verts',
+  '/metiers/fibre-optique',
+  '/metiers/reseaux',
   '/profile',
   '/settings',
-  '/organisation',
-  '/organisation/facturation',
+  '/history',
+  '/comptes-rendus',
+  '/achats',
 ] as const;
 
 test.describe('Finalisation Atelier', () => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
 
   test('les écrans principaux restent stables, nommés et tactiles', async ({ page, isMobile }) => {
     await page.setViewportSize(
@@ -33,6 +63,21 @@ test.describe('Finalisation Atelier', () => {
     );
     await installeSupabase(page, {
       role: 'owner',
+      rpc: {
+        ensure_personal_workspace_space: {
+          id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          organization_id: ORGANISATION_ID,
+          name: 'Mon espace',
+          description: null,
+          icon: null,
+          position: 0,
+          created_by: UTILISATEUR_ID,
+          owner_member_id: MEMBRE_ID,
+          archived_at: null,
+          created_at: '2026-09-19T08:00:00.000Z',
+          updated_at: '2026-09-19T08:00:00.000Z',
+        },
+      },
       // La table n'est pas encore dans le type du jeu générique, mais cette
       // ligne évite le 406 normal de `maybeSingle()` dans la console auditée.
       donnees: {
@@ -88,6 +133,7 @@ test.describe('Finalisation Atelier', () => {
 
     let currentRoute = '';
     const runtimeErrors: string[] = [];
+    const interfaceErrors: string[] = [];
     page.on('pageerror', (error) => {
       runtimeErrors.push(`${currentRoute}: ${error.message}`);
     });
@@ -187,25 +233,172 @@ test.describe('Finalisation Atelier', () => {
           }
         }
 
+        const clippedContent: string[] = [];
+        for (const control of root.querySelectorAll('button, a[href], [role="button"]')) {
+          if (!visible(control)) continue;
+          const bounds = control.getBoundingClientRect();
+          const walker = document.createTreeWalker(control, NodeFilter.SHOW_TEXT);
+          let textNode = walker.nextNode();
+          let clipped = false;
+
+          while (textNode && !clipped) {
+            const parent = textNode.parentElement;
+            const text = textNode.textContent?.trim() ?? '';
+            const parentStyle = parent ? getComputedStyle(parent) : null;
+            const parentBounds = parent?.getBoundingClientRect();
+            const visuallyHidden =
+              parentStyle !== null &&
+              parentBounds !== undefined &&
+              ((parentStyle.position === 'absolute' &&
+                parentStyle.overflow === 'hidden' &&
+                parentBounds.width <= 1 &&
+                parentBounds.height <= 1) ||
+                parentStyle.clipPath.includes('inset(50%') ||
+                parentStyle.clip.includes('rect(0'));
+            if (
+              text !== '' &&
+              parent !== null &&
+              !visuallyHidden &&
+              !parent.closest('.sr-only') &&
+              !parent.closest('.truncate') &&
+              !parent.closest('[class*="line-clamp-"]') &&
+              !parent.closest('[aria-hidden="true"]')
+            ) {
+              const range = document.createRange();
+              range.selectNodeContents(textNode);
+              for (const rect of range.getClientRects()) {
+                if (
+                  rect.width > 0 &&
+                  rect.height > 0 &&
+                  (rect.top < bounds.top - 1 ||
+                    rect.right > bounds.right + 1 ||
+                    rect.bottom > bounds.bottom + 1 ||
+                    rect.left < bounds.left - 1)
+                ) {
+                  clippedContent.push(descriptor(control));
+                  clipped = true;
+                  break;
+                }
+              }
+            }
+            textNode = walker.nextNode();
+          }
+        }
+
         return {
           unnamed: unnamed.slice(0, 8),
           smallTargets: smallTargets.slice(0, 8),
+          clippedContent: clippedContent.slice(0, 8),
           scrollWidth: document.documentElement.scrollWidth,
           viewportWidth: window.innerWidth,
         };
       }, isMobile);
 
-      expect(
-        audit.scrollWidth - audit.viewportWidth,
-        `${route} ne doit pas déborder horizontalement`,
-      ).toBeLessThanOrEqual(1);
-      expect(audit.unnamed, `${route} contient des commandes sans nom accessible`).toEqual([]);
-      expect(
-        audit.smallTargets,
-        `${route} contient des commandes trop petites pour un usage tactile`,
-      ).toEqual([]);
+      if (audit.scrollWidth - audit.viewportWidth > 1) {
+        interfaceErrors.push(
+          `${route}: débordement horizontal de ${audit.scrollWidth - audit.viewportWidth}px`,
+        );
+      }
+      for (const item of audit.unnamed) {
+        interfaceErrors.push(`${route}: commande sans nom accessible — ${item}`);
+      }
+      for (const item of audit.smallTargets) {
+        interfaceErrors.push(`${route}: commande tactile trop petite — ${item}`);
+      }
+      for (const item of audit.clippedContent) {
+        interfaceErrors.push(`${route}: texte hors de sa commande — ${item}`);
+      }
     }
 
+    if (isMobile) {
+      currentRoute = 'menu mobile';
+      await page.goto('/missions');
+      await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
+      const navigation = page
+        .getByRole('navigation', { name: 'Navigation principale' })
+        .filter({ visible: true });
+      await expect(navigation).toBeVisible();
+
+      const auditMenu = async (label: string) => {
+        const issues = await navigation.evaluate((root) => {
+          const visible = (element: Element) => {
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return (
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.display !== 'none' &&
+              style.visibility !== 'hidden'
+            );
+          };
+          const clipped: string[] = [];
+
+          for (const control of root.querySelectorAll('button, a[href], [role="radio"]')) {
+            if (!visible(control)) continue;
+            const bounds = control.getBoundingClientRect();
+            const walker = document.createTreeWalker(control, NodeFilter.SHOW_TEXT);
+            let textNode = walker.nextNode();
+
+            while (textNode) {
+              const parent = textNode.parentElement;
+              if (
+                textNode.textContent?.trim() &&
+                parent &&
+                !parent.closest('.sr-only, .truncate, [class*="line-clamp-"], [aria-hidden="true"]')
+              ) {
+                const range = document.createRange();
+                range.selectNodeContents(textNode);
+                const outside = [...range.getClientRects()].some(
+                  (rect) =>
+                    rect.top < bounds.top - 1 ||
+                    rect.right > bounds.right + 1 ||
+                    rect.bottom > bounds.bottom + 1 ||
+                    rect.left < bounds.left - 1,
+                );
+                if (outside) {
+                  clipped.push(
+                    `${control.tagName.toLowerCase()} « ${(control.textContent ?? '').trim().slice(0, 50)} »`,
+                  );
+                  break;
+                }
+              }
+              textNode = walker.nextNode();
+            }
+          }
+
+          return {
+            clipped,
+            overflow: root.scrollWidth - root.clientWidth,
+          };
+        });
+
+        if (issues.overflow > 1) {
+          interfaceErrors.push(`menu ${label}: débordement horizontal de ${issues.overflow}px`);
+        }
+        for (const item of issues.clipped) {
+          interfaceErrors.push(`menu ${label}: texte hors de sa commande — ${item}`);
+        }
+      };
+
+      const universes = navigation.getByRole('radiogroup', { name: 'Univers' });
+      for (const universe of ['Gestion', 'Finance', 'Workspace']) {
+        const radio = universes.getByRole('radio', { name: universe, exact: true });
+        await radio.click();
+        await expect(radio).toBeChecked();
+        await auditMenu(universe);
+
+        const sections = navigation.locator('button[aria-expanded]');
+        const sectionCount = await sections.count();
+        for (let index = 0; index < sectionCount; index += 1) {
+          const section = sections.nth(index);
+          if (!(await section.isVisible())) continue;
+          if ((await section.getAttribute('aria-expanded')) === 'false') await section.click();
+          await auditMenu(`${universe}, section ${index + 1}`);
+        }
+      }
+    }
+
+    expect(interfaceErrors, "l'audit visuel de toutes les routes doit rester propre").toEqual([]);
     expect(
       runtimeErrors,
       'la navigation globale ne doit produire aucune erreur navigateur',

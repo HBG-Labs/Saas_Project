@@ -1,12 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import {
-  Compass,
-  Map as MapIcon,
-  List,
-  Crosshair,
-  AlertCircle,
-} from 'lucide-react';
+import { Compass, Map as MapIcon, List, Crosshair, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/config/routes';
@@ -120,8 +114,7 @@ export default function MapPage() {
       missions
         .filter((mission) => mission.latitude === null || mission.longitude === null)
         .filter(
-          (mission) =>
-            mission.site_id === null || sitesMap.get(mission.site_id)?.latitude == null,
+          (mission) => mission.site_id === null || sitesMap.get(mission.site_id)?.latitude == null,
         )
         .filter(
           (mission) =>
@@ -278,31 +271,33 @@ export default function MapPage() {
   const organizationName = organization?.name ?? 'votre organisation';
 
   return (
-    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto pb-6">
+    <div className="mx-auto max-w-7xl space-y-3 pb-6 sm:space-y-4">
       {/* 1. Header & Actions GPS Ponctuelles */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-3.5 sm:p-4 rounded-2xl border border-border shadow-xs">
+      <div className="bg-surface border-border flex flex-col justify-between gap-3 rounded-2xl border p-3.5 shadow-xs sm:flex-row sm:items-center sm:p-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <div className="bg-primary/10 text-primary border-primary/20 flex size-8 items-center justify-center rounded-xl border">
               <Compass className="size-4" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight">
+              <h1 className="text-foreground text-base font-extrabold tracking-tight sm:text-lg">
                 Cartographie & Chantiers
               </h1>
               <p className="text-3xs text-muted-foreground mt-0.5">
                 {interventions.length} lieu{interventions.length > 1 ? 'x' : ''} géolocalisé
-                {interventions.length > 1 ? 's' : ''} ({missionsCount} mission{missionsCount > 1 ? 's' : ''}, {clientsCount} client{clientsCount > 1 ? 's' : ''}) · {organizationName}
+                {interventions.length > 1 ? 's' : ''} ({missionsCount} mission
+                {missionsCount > 1 ? 's' : ''}, {clientsCount} client{clientsCount > 1 ? 's' : ''})
+                · {organizationName}
               </p>
             </div>
           </div>
         </div>
 
         {/* Actions GPS Ponctuelles & Filtres */}
-        <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
           {/* Sélecteur de rayon de proximité si position connue */}
           {userPosition && (
-            <div className="flex items-center gap-1 bg-surface-subtle p-1 rounded-xl border border-border text-3xs">
+            <div className="bg-surface-subtle border-border text-3xs flex items-center gap-1 rounded-xl border p-1">
               <span className="text-muted-foreground px-1.5 font-medium">Rayon :</span>
               {[5, 10, 25, 50].map((r) => (
                 <button
@@ -310,7 +305,7 @@ export default function MapPage() {
                   type="button"
                   onClick={() => setRadiusKm(radiusKm === r ? null : r)}
                   className={cn(
-                    'px-2 py-0.5 font-semibold rounded-lg transition-all',
+                    'rounded-lg px-2 py-0.5 font-semibold transition-all',
                     radiusKm === r
                       ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground',
@@ -329,19 +324,27 @@ export default function MapPage() {
             size="sm"
             onClick={handleLocateAndNearby}
             disabled={isLocatingUser}
-            className="text-xs h-8 gap-1.5 shadow-xs"
+            className="h-8 gap-1.5 text-xs shadow-xs"
           >
             <Crosshair className={cn('size-3.5', isLocatingUser && 'animate-spin')} />
-            <span>{isLocatingUser ? 'Localisation...' : userPosition ? 'Actualiser GPS' : 'Autour de moi'}</span>
+            <span>
+              {isLocatingUser
+                ? 'Localisation...'
+                : userPosition
+                  ? 'Actualiser GPS'
+                  : 'Autour de moi'}
+            </span>
           </Button>
 
           {/* Bascule Mobile Carte / Liste */}
-          <div className="flex items-center lg:hidden bg-surface-subtle p-0.5 rounded-xl border border-border text-3xs">
+          <div className="bg-surface-subtle border-border text-3xs flex items-center rounded-xl border p-0.5 lg:hidden">
             <button
               type="button"
               onClick={() => setMobileTab('map')}
+              aria-label="Afficher la carte"
+              aria-pressed={mobileTab === 'map'}
               className={cn(
-                'size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg transition-all',
+                'size-touch flex items-center justify-center rounded-lg transition-all sm:size-auto sm:p-1.5',
                 mobileTab === 'map'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground',
@@ -352,8 +355,10 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setMobileTab('list')}
+              aria-label="Afficher la liste"
+              aria-pressed={mobileTab === 'list'}
               className={cn(
-                'size-touch sm:size-auto sm:p-1.5 flex items-center justify-center rounded-lg transition-all',
+                'size-touch flex items-center justify-center rounded-lg transition-all sm:size-auto sm:p-1.5',
                 mobileTab === 'list'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground',
@@ -367,16 +372,20 @@ export default function MapPage() {
 
       {/* Alerte discrète si des missions sont sans coordonnées */}
       {unlocatedCount > 0 && (
-        <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-warning/10 border border-warning/25 rounded-xl text-3xs text-warning">
+        <div className="bg-warning/10 border-warning/25 text-3xs text-warning flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-3.5 shrink-0 text-warning" />
+            <AlertCircle className="text-warning size-3.5 shrink-0" />
             <span>
-              <strong>{unlocatedCount} mission{unlocatedCount > 1 ? 's' : ''}</strong> sans adresse ou coordonnées GPS ne peu{unlocatedCount > 1 ? 'vent' : 't'} pas être affichée{unlocatedCount > 1 ? 's' : ''} sur la carte.
+              <strong>
+                {unlocatedCount} mission{unlocatedCount > 1 ? 's' : ''}
+              </strong>{' '}
+              sans adresse ou coordonnées GPS ne peu{unlocatedCount > 1 ? 'vent' : 't'} pas être
+              affichée{unlocatedCount > 1 ? 's' : ''} sur la carte.
             </span>
           </div>
           <Link
             to={ROUTES.missions}
-            className="underline font-bold text-warning shrink-0 hover:opacity-80"
+            className="text-warning shrink-0 font-bold underline hover:opacity-80"
           >
             Voir les missions
           </Link>
@@ -385,7 +394,7 @@ export default function MapPage() {
 
       {/* Message d'erreur GPS éventuel */}
       {geoError && (
-        <div className="flex items-center gap-2 p-3 bg-error/10 border border-error/30 rounded-xl text-xs text-error">
+        <div className="bg-error/10 border-error/30 text-error flex items-center gap-2 rounded-xl border p-3 text-xs">
           <AlertCircle className="size-4 shrink-0" />
           <span>{geoError.message}</span>
         </div>
@@ -393,7 +402,7 @@ export default function MapPage() {
 
       {/* Adresses que le géocodeur n'a pas su placer */}
       {unplacedCount > 0 && (
-        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/30 rounded-xl text-xs text-warning">
+        <div className="bg-warning/10 border-warning/30 text-warning flex items-center gap-2 rounded-xl border p-3 text-xs">
           <AlertCircle className="size-4 shrink-0" />
           <span>
             {unplacedCount} adresse{unplacedCount > 1 ? 's' : ''} n’a pas pu être placée sur la
@@ -403,10 +412,10 @@ export default function MapPage() {
       )}
 
       {/* 2. Zone Principale (Carte + Sidebar Chantiers & Clients) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 h-[calc(100vh-210px)] min-h-[580px]">
+      <div className="grid h-[calc(100vh-210px)] min-h-[580px] grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12">
         {/* Vue Carte */}
         <div
-          className={`lg:col-span-8 xl:col-span-9 h-full ${
+          className={`h-full lg:col-span-8 xl:col-span-9 ${
             mobileTab === 'map' ? 'block' : 'hidden lg:block'
           }`}
         >
@@ -424,7 +433,7 @@ export default function MapPage() {
 
         {/* Sidebar Liste des Chantiers, Clients & Distances */}
         <div
-          className={`lg:col-span-4 xl:col-span-3 h-full ${
+          className={`h-full lg:col-span-4 xl:col-span-3 ${
             mobileTab === 'list' ? 'block' : 'hidden lg:block'
           }`}
         >

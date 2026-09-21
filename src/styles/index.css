@@ -146,9 +146,9 @@
     --background: #1c2947;
     --surface: #243150;
     --surface-raised: #26324f;
-    --surface-sunken: #202c4a;
+    --surface-sunken: #182541;
     --surface-subtle: #222f4e;
-    --surface-hover: #26334f;
+    --surface-hover: #283654;
 
     /* Filet décoratif : sépare, ne délimite pas un contrôle. */
     --border: #3b4c73;
@@ -881,14 +881,19 @@ html.compact-mode {
   }
 
   .atelier-pill-action,
-  .atelier-action-tab {
+  .atelier-action-tab,
+  .atelier-touch-target {
     position: relative;
   }
 
   .atelier-pill-action::after,
-  .atelier-action-tab::after {
+  .atelier-action-tab::after,
+  .atelier-touch-target::after {
     position: absolute;
-    inset: -0.275rem 0;
+    top: min(0px, calc((100% - 44px) / 2));
+    right: min(0px, calc((100% - 44px) / 2));
+    bottom: min(0px, calc((100% - 44px) / 2));
+    left: min(0px, calc((100% - 44px) / 2));
     content: '';
   }
 }

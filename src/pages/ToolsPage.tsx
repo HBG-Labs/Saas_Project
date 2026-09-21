@@ -707,7 +707,7 @@ export default function ToolsPage() {
                     setQuery('');
                     handleTabChange('all');
                   }}
-                  className="text-3xs text-primary cursor-pointer font-semibold hover:underline"
+                  className="atelier-touch-target text-3xs text-primary cursor-pointer font-semibold hover:underline"
                 >
                   Réinitialiser
                 </button>
