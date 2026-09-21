@@ -101,6 +101,9 @@ export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
 export type WorkspaceRecordingStatus = 'uploading' | 'pending' | 'processing' | 'done' | 'failed';
 /** Moteur de transcription par organisation — 20261006090000_stt_colonnes_et_flag.sql */
 export type SttEngine = 'legacy' | 'v2';
+/** Dictionnaire de transcription — 20261007090000_organization_vocabulary.sql */
+export type VocabularyType = 'client' | 'site' | 'materiel' | 'technique' | 'personne' | 'lieu' | 'autre';
+export type VocabularySource = 'auto' | 'manuel';
 /** Un paragraphe horodaté d'une transcription (secondes). */
 export interface RecordingSegment {
   start: number | null;
@@ -4254,6 +4257,42 @@ export interface Database {
         ];
       };
 
+      /**
+       * Le dictionnaire de transcription d'une organisation —
+       * 20261007090000_organization_vocabulary.sql. Lecture : tout membre ;
+       * écriture : `workspace.manage`. Un terme, un type, une source. 500 au plus.
+       */
+      organization_vocabulary: {
+        Row: {
+          id: string;
+          organization_id: string;
+          term: string;
+          type: VocabularyType;
+          source: VocabularySource;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          term: string;
+          type?: VocabularyType;
+          source?: VocabularySource;
+        };
+        Update: {
+          term?: string;
+          type?: VocabularyType;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'organization_vocabulary_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
       /** Page épinglée par la personne connectée. `user_id` et `organization_id` posés par trigger. */
       workspace_favorites: {
         Row: {
@@ -5479,6 +5518,11 @@ export interface Database {
           remaining_minutes: number | null;
           unlimited: boolean;
         }[];
+      };
+      /** Des noms déjà dans les données de l'organisation (clients, sites, matériel, membres, communes), à proposer au dictionnaire. */
+      suggest_organization_vocabulary: {
+        Args: { p_organization_id: string };
+        Returns: { term: string; type: VocabularyType; already_present: boolean }[];
       };
       /** Recherche plein texte (français) dans les pages visibles. Syntaxe « web ». */
       search_workspace_pages: {

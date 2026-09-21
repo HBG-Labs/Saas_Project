@@ -5,6 +5,8 @@ import type {
   TablesInsert,
   TablesUpdate,
   TiptapDocument,
+  VocabularySource,
+  VocabularyType,
   WorkspaceRecordingStatus,
 } from '@/types/database';
 
@@ -33,6 +35,7 @@ import type {
 
 export type WorkspaceSpace = Tables<'workspace_spaces'>;
 export type WorkspacePage = Tables<'workspace_pages'>;
+export type WorkspacePagePreference = Tables<'workspace_page_preferences'>;
 export type WorkspacePageRevision = Tables<'workspace_page_revisions'>;
 export type WorkspaceTask = Tables<'workspace_tasks'>;
 
@@ -157,11 +160,39 @@ export async function updatePagePresentation(
   pageId: string,
   patch: Pick<
     TablesUpdate<'workspace_pages'>,
-    'font_family' | 'small_text' | 'full_width' | 'locked'
+    'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
   >,
 ): Promise<WorkspacePage> {
   return unwrap(
     supabase.from('workspace_pages').update(patch).eq('id', pageId).select('*').single(),
+  );
+}
+
+export async function getPagePreference(
+  pageId: string,
+): Promise<WorkspacePagePreference | null> {
+  return unwrapMaybe(
+    supabase
+      .from('workspace_page_preferences')
+      .select('*')
+      .eq('page_id', pageId)
+      .maybeSingle(),
+  );
+}
+
+export async function setPageNotificationLevel(
+  pageId: string,
+  notificationLevel: WorkspacePagePreference['notification_level'],
+): Promise<WorkspacePagePreference> {
+  return unwrap(
+    supabase
+      .from('workspace_page_preferences')
+      .upsert(
+        { page_id: pageId, notification_level: notificationLevel },
+        { onConflict: 'page_id,user_id' },
+      )
+      .select('*')
+      .single(),
   );
 }
 
@@ -731,4 +762,78 @@ export async function getRecordingAudioUrl(
     .createSignedUrl(recording.audio_path, expiresInSeconds);
   if (error) throw error;
   return data.signedUrl;
+}
+
+// ─── Le dictionnaire de transcription ────────────────────────────────────────
+//
+// 20261007090000_organization_vocabulary.sql. Les termes que le moteur doit
+// connaître pour cette entreprise, transmis en tête du contexte (v2). Tout
+// membre lit ; `workspace.manage` écrit. La suggestion ne fait que proposer.
+
+export type VocabularyEntry = Tables<'organization_vocabulary'>;
+export type VocabularySuggestion =
+  Database['public']['Functions']['suggest_organization_vocabulary']['Returns'][number];
+
+export const VOCABULARY_TYPE_LABELS: Record<VocabularyType, string> = {
+  client: 'Client',
+  site: 'Site',
+  materiel: 'Matériel',
+  technique: 'Terme technique',
+  personne: 'Personne',
+  lieu: 'Lieu',
+  autre: 'Autre',
+};
+
+export async function listVocabulary(organizationId: string): Promise<VocabularyEntry[]> {
+  return unwrap(
+    supabase
+      .from('organization_vocabulary')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .order('type')
+      .order('term'),
+  );
+}
+
+export async function addVocabularyTerms(
+  organizationId: string,
+  terms: ReadonlyArray<{ term: string; type?: VocabularyType; source?: VocabularySource }>,
+): Promise<VocabularyEntry[]> {
+  const propres = terms
+    .map((t) => ({ ...t, term: t.term.trim() }))
+    .filter((t) => t.term.length >= 2);
+  if (propres.length === 0) return [];
+  return unwrap(
+    supabase
+      .from('organization_vocabulary')
+      .insert(
+        propres.map((t) => ({
+          organization_id: organizationId,
+          term: t.term,
+          ...(t.type !== undefined ? { type: t.type } : {}),
+          ...(t.source !== undefined ? { source: t.source } : {}),
+        })),
+      )
+      .select('*'),
+  );
+}
+
+export async function updateVocabularyTerm(
+  id: string,
+  patch: TablesUpdate<'organization_vocabulary'>,
+): Promise<VocabularyEntry> {
+  return unwrap(
+    supabase.from('organization_vocabulary').update(patch).eq('id', id).select('*').single(),
+  );
+}
+
+export async function removeVocabularyTerm(id: string): Promise<void> {
+  await unwrap(supabase.from('organization_vocabulary').delete().eq('id', id).select('id'));
+}
+
+/** Des noms déjà dans les données de l'organisation ; rien n'est écrit. */
+export async function suggestVocabulary(organizationId: string): Promise<VocabularySuggestion[]> {
+  return unwrap(
+    supabase.rpc('suggest_organization_vocabulary', { p_organization_id: organizationId }),
+  );
 }

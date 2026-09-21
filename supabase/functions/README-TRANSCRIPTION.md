@@ -45,7 +45,15 @@ Basculer une organisation : `update organizations set stt_engine = 'v2' where id
 revenir : `'legacy'`. Aucun déploiement.
 
 Ce qui part chez OpenAI en v2, en plus de l'audio : la phrase de contexte
-(≤ 1 500 caractères). Elle n'est jamais journalisée. Ajouter un secteur au
+(≤ 1 500 caractères) — en tête, le **dictionnaire de l'organisation**
+(`organization_vocabulary` : noms de clients, sites, techniciens, communes,
+matériel, termes techniques qu'elle a choisis, 150 au plus, les plus
+spécifiques d'abord), puis le glossaire de son secteur. Elle n'est jamais
+journalisée. Le dictionnaire se gère avec `workspace.manage` ; la suggestion
+(`suggest_organization_vocabulary`) propose des noms déjà présents dans les
+données de l'organisation, rien n'entre sans un geste. RGPD : un terme, un
+type, une source — pas d'adresse, pas de numéro ; isolé par organisation ;
+supprimable. Ajouter un secteur au
 glossaire de base = une entrée dans `GLOSSAIRE_PAR_SECTEUR`.
 
 ## Architecture

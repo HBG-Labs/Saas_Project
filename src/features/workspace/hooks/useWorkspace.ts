@@ -11,6 +11,7 @@ import {
   deletePage,
   deleteTask,
   getPage,
+  getPagePreference,
   listPageRevisions,
   listPages,
   listSpaces,
@@ -19,6 +20,7 @@ import {
   movePage,
   updatePagePresentation,
   savePage,
+  setPageNotificationLevel,
   updateSpace,
   updateTask,
   addFavorite,
@@ -43,6 +45,11 @@ import {
   getTranscriptionQuota,
   listRecordings,
   renameRecording,
+  addVocabularyTerms,
+  listVocabulary,
+  removeVocabularyTerm,
+  suggestVocabulary,
+  updateVocabularyTerm,
   type CreateRecordingInput,
   type SavePageInput,
   type TaskFilters,
@@ -127,6 +134,30 @@ export function usePageRevisions(pageId: string | undefined) {
     queryKey: qk.workspace.revisions(pageId ?? 'none'),
     queryFn: () => listPageRevisions(pageId ?? ''),
     enabled: pageId !== undefined,
+  });
+}
+
+export function usePagePreference(pageId: string | undefined) {
+  return useQuery({
+    queryKey: qk.workspace.preference(pageId ?? 'none'),
+    queryFn: () => getPagePreference(pageId ?? ''),
+    enabled: pageId !== undefined,
+  });
+}
+
+export function useSetPageNotificationLevel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      pageId,
+      notificationLevel,
+    }: {
+      pageId: string;
+      notificationLevel: 'off' | 'mentions' | 'all';
+    }) => setPageNotificationLevel(pageId, notificationLevel),
+    onSuccess: (preference) => {
+      queryClient.setQueryData(qk.workspace.preference(preference.page_id), preference);
+    },
   });
 }
 
@@ -517,5 +548,73 @@ export function useRecordingAudioUrl(recording: WorkspaceRecording | null) {
     queryFn: () => (recording ? getRecordingAudioUrl(recording) : Promise.resolve(null)),
     enabled: recording !== null && recording.audio_deleted_at === null,
     staleTime: 50 * 60_000,
+  });
+}
+
+// ─── Le dictionnaire de transcription ────────────────────────────────────────
+
+export function useVocabulary(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.vocabulary(organizationId ?? 'none'),
+    queryFn: () => listVocabulary(organizationId ?? ''),
+    enabled: organizationId !== null,
+  });
+}
+
+export function useVocabularySuggestions(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.vocabularySuggestions(organizationId ?? 'none'),
+    queryFn: () => suggestVocabulary(organizationId ?? ''),
+    enabled: organizationId !== null,
+    staleTime: 60_000,
+  });
+}
+
+function useInvalidateVocabulary() {
+  const queryClient = useQueryClient();
+  return async (organizationId: string) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.workspace.vocabulary(organizationId) }),
+      queryClient.invalidateQueries({
+        queryKey: qk.workspace.vocabularySuggestions(organizationId),
+      }),
+    ]);
+  };
+}
+
+export function useAddVocabularyTerms() {
+  const invalidate = useInvalidateVocabulary();
+  return useMutation({
+    mutationFn: ({
+      organizationId,
+      terms,
+    }: {
+      organizationId: string;
+      terms: Parameters<typeof addVocabularyTerms>[1];
+    }) => addVocabularyTerms(organizationId, terms),
+    onSuccess: (_r, { organizationId }) => invalidate(organizationId),
+  });
+}
+
+export function useUpdateVocabularyTerm() {
+  const invalidate = useInvalidateVocabulary();
+  return useMutation({
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: TablesUpdate<'organization_vocabulary'>;
+      organizationId: string;
+    }) => updateVocabularyTerm(id, patch),
+    onSuccess: (_r, { organizationId }) => invalidate(organizationId),
+  });
+}
+
+export function useRemoveVocabularyTerm() {
+  const invalidate = useInvalidateVocabulary();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; organizationId: string }) => removeVocabularyTerm(id),
+    onSuccess: (_r, { organizationId }) => invalidate(organizationId),
   });
 }

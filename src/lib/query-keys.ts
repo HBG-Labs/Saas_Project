@@ -181,6 +181,7 @@ export const qk = {
     spaces: (organizationId: string) => [...qk.workspace.all, organizationId, 'spaces'] as const,
     pages: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'pages'] as const,
     page: (pageId: string) => [...qk.workspace.all, 'page', pageId] as const,
+    preference: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'preference'] as const,
     revisions: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'revisions'] as const,
     tasks: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'tasks'] as const,
     personalSpace: (organizationId: string) =>
@@ -193,6 +194,10 @@ export const qk = {
     search: (organizationId: string, query: string) =>
       [...qk.workspace.all, organizationId, 'search', query] as const,
     recordings: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'recordings'] as const,
+    vocabulary: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'vocabulary'] as const,
+    vocabularySuggestions: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'vocabulary', 'suggestions'] as const,
   },
 
   // ----------------------------------------------------------- feuille d'heures
