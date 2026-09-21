@@ -51,6 +51,8 @@ export {
   AUDIO_MAX_SECONDS,
   RECORDING_STATUS_LABELS,
   createRecording,
+  createRecordingRow,
+  submitRecording,
   deleteRecording,
   getRecordingAudioUrl,
   getTranscriptionQuota,
@@ -110,3 +112,24 @@ export {
   useRenameRecording,
   useTranscriptionQuota,
 } from './hooks/useWorkspace';
+
+export {
+  CAPTURE_BITRATE,
+  CAPTURE_CONSTRAINTS,
+  useAudioRecorder,
+  type AudioRecorderStatus,
+  type PendingRecording,
+  type RecorderMedia,
+  type RecorderServerApi,
+  type StartOptions,
+  type UseAudioRecorderOptions,
+} from './hooks/useAudioRecorder';
+export {
+  IndexedDbAudioStore,
+  MemoryAudioStore,
+  createLocalAudioStore,
+  type LocalAudioStore,
+  type LocalRecording,
+  type LocalRecordingStatus,
+} from './audio/local-store';
+export { uploadResumable, type ResumableUploader } from './audio/resumable-upload';

@@ -1,34 +1,40 @@
-import { Mic, Square, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Mic, Pause, Play, Square, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import {
-  AUDIO_MAX_SECONDS,
   RECORDING_STATUS_LABELS,
-  useCreateRecording,
+  createRecordingRow,
+  submitRecording,
+  useAudioRecorder,
   useDeleteRecording,
   useRecordingAudioUrl,
   useRecordings,
   useTranscriptionQuota,
+  type RecorderServerApi,
   type WorkspacePage,
   type WorkspaceRecording,
 } from '@/features/workspace';
+import { qk } from '@/lib/query-keys';
 
-/* Présentation Atelier ; la capture, le consentement et les quotas existants sont conservés. */
+/*
+  Présentation Atelier. La mécanique (capture, pause, tranches, sauvegarde
+  locale, envoi reprenable, reprise) vit dans `useAudioRecorder` — ce
+  composant affiche et demande, il n'enregistre rien lui-même.
+*/
+
+/** Les deux pas serveur de l'envoi, branchés sur l'API du Workspace. */
+const serverApi: RecorderServerApi = {
+  createRow: (input) => createRecordingRow(input),
+  submit: (id, size) => submitRecording(id, size),
+};
 
 function formatSeconds(total: number): string {
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${String(m)}:${String(s).padStart(2, '0')}`;
-}
-
-/** Le type MIME que ce navigateur sait produire, dans l'ordre de préférence. */
-function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === 'undefined') return undefined;
-  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find((t) =>
-    MediaRecorder.isTypeSupported(t),
-  );
 }
 
 function RecordingRow({ recording }: { recording: WorkspaceRecording }) {
@@ -71,76 +77,31 @@ function RecordingRow({ recording }: { recording: WorkspaceRecording }) {
 }
 
 export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
+  const queryClient = useQueryClient();
   const recordings = useRecordings(page.id);
   const quota = useTranscriptionQuota(page.organization_id);
-  const create = useCreateRecording();
-
   const [consent, setConsent] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const startedAtRef = useRef<number>(0);
 
-  useEffect(() => {
-    if (!recording) return;
-    const timer = window.setInterval(() => {
-      setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000));
-    }, 500);
-    return () => window.clearInterval(timer);
-  }, [recording]);
-
-  useEffect(() => {
-    // Au-delà d'une heure, on arrête : la base refuserait de toute façon.
-    if (recording && elapsed >= AUDIO_MAX_SECONDS) recorderRef.current?.stop();
-  }, [recording, elapsed]);
-
-  const start = async () => {
-    setError(null);
-    const mimeType = pickMimeType();
-    if (!mimeType) {
-      setError("Ce navigateur ne sait pas enregistrer l'audio.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // 48 kbit/s en opus : de la voix, lisible, ~20 Mo pour une heure —
-      // sous la limite du bucket et de l'API.
-      const recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 48_000 });
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setRecording(false);
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
-        create.mutate(
-          {
-            page,
-            audio: blob,
-            durationSeconds,
-            consentConfirmed: consent,
-            title: `Enregistrement du ${new Date().toLocaleDateString('fr-FR')}`,
-          },
-          { onError: (e) => setError(e instanceof Error ? e.message : 'Envoi impossible.') },
-        );
-      };
-      startedAtRef.current = Date.now();
-      setElapsed(0);
-      recorder.start(1000);
-      recorderRef.current = recorder;
-      setRecording(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Micro inaccessible.');
-    }
-  };
+  const recorder = useAudioRecorder({
+    page,
+    api: serverApi,
+    onSubmitted: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(page.id) });
+      void queryClient.invalidateQueries({
+        queryKey: [...qk.workspace.all, page.organization_id, 'transcription-quota'],
+      });
+    },
+  });
 
   const remaining = quota.data?.remaining_minutes;
+  const enCours = recorder.status === 'recording' || recorder.status === 'paused';
+  const enEnvoi =
+    recorder.status === 'saving' ||
+    recorder.status === 'uploading' ||
+    recorder.status === 'submitting' ||
+    recorder.status === 'requesting';
   const canRecord =
-    consent && !recording && !create.isPending && (quota.data?.unlimited || (remaining ?? 0) > 0);
+    consent && !enCours && !enEnvoi && (quota.data?.unlimited || (remaining ?? 0) > 0);
 
   return (
     <section
@@ -157,31 +118,95 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               ? 'Minutes de transcription : illimitées.'
               : `Minutes de transcription ce mois-ci : ${String(quota.data.used_minutes)} / ${String(quota.data.limit_minutes ?? 0)} (reste ${String(remaining ?? 0)}).`
             : 'Quota de transcription inconnu.'}{' '}
-          L'audio est effacé après 30 jours ; la transcription et le résumé restent dans la page.
+          L’audio est effacé après 30 jours ; la transcription et le résumé restent dans la page.
+          {recorder.durable
+            ? ' L’audio est gardé sur cet appareil jusqu’à confirmation de l’envoi.'
+            : ' Ce navigateur ne garde pas l’audio hors ligne : ne fermez pas la page avant la fin de l’envoi.'}
         </p>
         <Checkbox
-          label="Les personnes enregistrées sont informées et d'accord."
+          label="Les personnes enregistrées sont informées et d’accord."
           checked={consent}
           onCheckedChange={(v) => setConsent(v === true)}
-          disabled={recording}
+          disabled={enCours}
         />
         <div className="flex flex-wrap items-center gap-2">
-          {recording ? (
-            <Button type="button" variant="danger" onClick={() => recorderRef.current?.stop()}>
-              <Square aria-hidden /> Arrêter ({formatSeconds(elapsed)})
-            </Button>
+          {enCours ? (
+            <>
+              {recorder.status === 'recording' ? (
+                <Button type="button" variant="secondary" onClick={recorder.pause}>
+                  <Pause aria-hidden /> Pause
+                </Button>
+              ) : (
+                <Button type="button" variant="secondary" onClick={recorder.resume}>
+                  <Play aria-hidden /> Reprendre
+                </Button>
+              )}
+              <Button type="button" variant="danger" onClick={recorder.stop}>
+                <Square aria-hidden /> Terminer ({formatSeconds(recorder.elapsedSeconds)})
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => void recorder.cancel()}>
+                <X aria-hidden /> Annuler
+              </Button>
+            </>
           ) : (
             <Button
               type="button"
-              onClick={() => void start()}
+              onClick={() =>
+                void recorder.start({
+                  title: `Enregistrement du ${new Date().toLocaleDateString('fr-FR')}`,
+                  consentConfirmed: consent,
+                })
+              }
               disabled={!canRecord}
-              isLoading={create.isPending}
+              isLoading={enEnvoi}
+              loadingLabel={
+                recorder.status === 'uploading' && recorder.progress !== null
+                  ? `Envoi ${String(Math.round(recorder.progress * 100))} %`
+                  : recorder.status === 'submitting'
+                    ? 'Confirmation…'
+                    : 'Sauvegarde…'
+              }
             >
               <Mic aria-hidden /> Enregistrer
             </Button>
           )}
-          {error ? <span className="text-error text-xs">{error}</span> : null}
+          {recorder.error ? <span className="text-error text-xs">{recorder.error}</span> : null}
         </div>
+
+        {recorder.pending.length > 0 ? (
+          <ul className="border-border bg-surface-sunken space-y-2 rounded-lg border p-3 text-sm">
+            {recorder.pending.map((p) => (
+              <li key={p.key} className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">{p.title}</span>
+                <span className="text-muted-foreground text-xs">
+                  {formatSeconds(p.durationSeconds)} ·{' '}
+                  {p.interrupted ? 'interrompu — audio conservé' : 'en attente d’envoi'}
+                  {p.lastError ? ` — ${p.lastError}` : ''}
+                </span>
+                <Button type="button" size="sm" onClick={() => void recorder.retry(p.key)}>
+                  Envoyer
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Supprimer cet enregistrement non envoyé ? L’audio sera perdu.',
+                      )
+                    ) {
+                      void recorder.discard(p.key);
+                    }
+                  }}
+                >
+                  Supprimer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
         {(recordings.data?.length ?? 0) > 0 ? (
           <ul className="space-y-2">
             {(recordings.data ?? []).map((r) => (

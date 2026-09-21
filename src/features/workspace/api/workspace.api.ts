@@ -633,6 +633,57 @@ export async function createRecording(input: CreateRecordingInput): Promise<Work
   );
 }
 
+/**
+ * Le pas 1 de l'envoi reprenable (`useAudioRecorder`) : la ligne serveur
+ * seule, avant le fichier. La règle du bucket exige que la ligne existe et
+ * soit à la session pour accepter le dépôt. `createRecording` ci-dessus
+ * reste pour les appels d'un seul tenant (envoi simple) ; les deux passent par
+ * les mêmes gardes en base.
+ */
+export async function createRecordingRow(input: {
+  page: Pick<WorkspacePage, 'id' | 'organization_id'>;
+  audioPath: string;
+  mimeType: string;
+  durationSeconds: number;
+  sizeBytes: number;
+  consentConfirmedAt: string;
+  title: string;
+  language?: string;
+}): Promise<WorkspaceRecording> {
+  return unwrap(
+    supabase
+      .from('workspace_recordings')
+      .insert({
+        page_id: input.page.id,
+        audio_path: input.audioPath,
+        mime_type: input.mimeType,
+        size_bytes: input.sizeBytes,
+        duration_seconds: Math.max(
+          1,
+          Math.min(AUDIO_MAX_SECONDS, Math.round(input.durationSeconds)),
+        ),
+        consent_confirmed_at: input.consentConfirmedAt,
+        title: input.title,
+        ...(input.language !== undefined ? { language: input.language } : {}),
+      })
+      .select('*')
+      .single(),
+  );
+}
+
+/** Le pas 3 : le fichier est là, la transcription peut partir. Idempotent. */
+export async function submitRecording(
+  recordingId: string,
+  sizeBytes?: number,
+): Promise<WorkspaceRecording> {
+  return unwrap(
+    supabase.rpc('submit_workspace_recording', {
+      p_recording_id: recordingId,
+      ...(sizeBytes !== undefined ? { p_size_bytes: sizeBytes } : {}),
+    }),
+  );
+}
+
 export async function renameRecording(
   recordingId: string,
   title: string,

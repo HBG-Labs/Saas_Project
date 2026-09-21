@@ -19,6 +19,18 @@ ligne) ; le résumé consomme **une requête IA** (`ai_assistant`).
 Limite : 25 Mo et 60 minutes par enregistrement (limite de l'API ; le bucket
 la porte). Le client enregistre en opus 48 kbit/s : une heure ≈ 20 Mo.
 
+## Zéro perte audio (phase 2, 21/09/2026)
+
+Côté client, `useAudioRecorder` (`src/features/workspace/hooks`) écrit chaque
+tranche d'une seconde dans IndexedDB (`rezo360-audio`) avant tout envoi,
+puis envoie en trois pas idempotents — ligne serveur, fichier par TUS
+(`tus-js-client`, tranches de 6 Mo, URL de reprise gardée localement),
+`submit_workspace_recording` — et ne vide le local qu'après la soumission
+acceptée. Une capture retrouvée après fermeture est proposée « interrompue »
+avec ce qui a été capté ; le retour du réseau relance ce qui attend. Sans
+IndexedDB (navigation privée), la capture fonctionne en mémoire et l'écran
+le dit. Le composant `WorkspaceRecorder` n'enregistre rien lui-même.
+
 ## Architecture
 
 ```
