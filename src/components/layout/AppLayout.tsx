@@ -40,7 +40,6 @@ export function AppLayout() {
   const { openCommandBar } = useCommandBar();
   const navigate = useNavigate();
   const location = useLocation();
-  const isTrainingPage = location.pathname.startsWith(ROUTES.tutorials);
   const isProfilePage = location.pathname === ROUTES.profile;
 
   const profileQuery = useMyProfile();
@@ -348,7 +347,10 @@ export function AppLayout() {
             : 'lg:pl-[calc(var(--spacing-sidebar)+1.75rem)]',
         )}
       >
-        <div className={cn('mx-auto space-y-4', isTrainingPage ? 'max-w-none' : 'max-w-7xl')}>
+        {/* Le bureau exploite toute la largeur située entre la barre latérale
+            et le bord de l'écran. L'ancien `max-w-7xl mx-auto` produisait de
+            larges gouttières vides sur les moniteurs 1080p et ultralarges. */}
+        <div className="w-full space-y-4">
           {/*
             Au-dessus du contenu, sur tous les ecrans de l'application.
 
