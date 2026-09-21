@@ -58,6 +58,7 @@ interface DataViewProps<T> {
 
   empty: {
     icon?: LucideIcon;
+    illustration?: ReactNode;
     title: string;
     description: string;
     action?: ReactNode;
@@ -103,6 +104,7 @@ export function DataView<T>({
       // indéfini » : passer `icon={undefined}` n'est pas la même chose que ne
       // pas passer `icon`. D'où l'étalement conditionnel.
       {...(empty.icon ? { icon: empty.icon } : {})}
+      {...(empty.illustration ? { illustration: empty.illustration } : {})}
       {...(empty.action ? { action: empty.action } : {})}
       title={empty.title}
       description={empty.description}

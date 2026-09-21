@@ -1,12 +1,15 @@
-import { Calculator, ChevronRight, FileText, Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 
-import { EmptyState } from '@/components/feedback/EmptyState';
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { DataView } from '@/components/ui/DataView';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TableAmountCell, TableCell, TableHeaderCell } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
 import { useCurrentOrganization } from '@/features/organizations';
 import { toEuros, useQuotesWithTotals } from '@/features/quotes';
@@ -55,6 +58,7 @@ export default function QuoteHistoryPage() {
           </Button>
         }
       />
+      <SalesNavTabs />
 
       {quotesQuery.isError ? (
         <ErrorState error={quotesQuery.error} onRetry={() => void quotesQuery.refetch()} />
@@ -64,73 +68,102 @@ export default function QuoteHistoryPage() {
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
-      ) : quotes.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="Aucun devis enregistré"
-          description="Les devis que vous enregistrez depuis l’outil de chiffrage apparaîtront ici, consultables et téléchargeables à tout moment."
-          action={
-            <Button asChild variant="primary" className="gap-2">
-              <Link to={ROUTES.quotes}>
-                <Calculator className="size-4" aria-hidden="true" />
-                Créer mon premier devis
-              </Link>
-            </Button>
-          }
-        />
       ) : (
-        <ul className="space-y-2.5">
-          {quotes.map((quote) => {
+        <DataView
+          items={quotes}
+          getKey={(quote) => quote.id}
+          label="Historique des devis"
+          breakpoint="md"
+          columnCount={5}
+          head={
+            <>
+              <TableHeaderCell>Référence</TableHeaderCell>
+              <TableHeaderCell>Client</TableHeaderCell>
+              <TableHeaderCell>Statut</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell className="text-right">Montant TTC</TableHeaderCell>
+            </>
+          }
+          empty={{
+            illustration: <AtelierIllustration subject="quotes" />,
+            title: 'Aucun devis enregistré',
+            description:
+              'Préparez votre premier chiffrage : il restera consultable ici avec son statut et son montant.',
+            action: (
+              <Button asChild variant="primary">
+                <Link to={ROUTES.quotes}>Créer un premier devis</Link>
+              </Button>
+            ),
+          }}
+          renderRow={(quote) => {
             const status = STATUS_CONFIG[quote.status];
             const totalTTC = quote.totals ? toEuros(quote.totals.total_cents) : null;
 
             return (
-              <li key={quote.id}>
-                <Link
-                  to={ROUTES.quoteDetail(quote.id)}
-                  className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group min-h-touch flex items-start gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
-                >
-                  <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <FileText className="size-4.5" aria-hidden="true" />
-                  </div>
+              <>
+                <TableCell>
+                  <Link
+                    to={ROUTES.quoteDetail(quote.id)}
+                    className="text-foreground hover:text-primary font-bold tabular-nums"
+                  >
+                    {quote.reference}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <p className="text-foreground font-semibold">
+                    {quote.customer_name || quote.title || 'Client non renseigné'}
+                  </p>
+                  {quote.site_name ? (
+                    <p className="text-subtle-foreground mt-0.5">{quote.site_name}</p>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {formatDate(quote.created_at)}
+                </TableCell>
+                <TableAmountCell className="font-bold">
+                  {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
+                </TableAmountCell>
+              </>
+            );
+          }}
+          renderCard={(quote) => {
+            const status = STATUS_CONFIG[quote.status];
+            const totalTTC = quote.totals ? toEuros(quote.totals.total_cents) : null;
 
-                  <div className="min-w-0 flex-1 space-y-1">
+            return (
+              <Link to={ROUTES.quoteDetail(quote.id)} className="group block min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-foreground font-mono text-sm font-bold">
+                      <span className="text-foreground font-bold tabular-nums">
                         {quote.reference}
                       </span>
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </div>
-                    <p className="text-muted-foreground truncate text-xs">
+                    <p className="text-muted-foreground mt-1 truncate text-sm">
                       {quote.customer_name || quote.title || 'Client non renseigné'}
-                      {quote.site_name ? ` — ${quote.site_name}` : ''}
                     </p>
-                    <div className="flex items-baseline justify-between gap-3 pt-1 sm:hidden">
-                      <p className="text-foreground text-sm font-bold tabular-nums">
-                        {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
-                      </p>
-                      <p className="text-subtle-foreground text-xs">
-                        {formatDate(quote.created_at)}
-                      </p>
-                    </div>
                   </div>
-
-                  <div className="hidden shrink-0 text-right sm:block">
-                    <p className="text-foreground text-sm font-bold tabular-nums">
-                      {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
-                    </p>
-                    <p className="text-subtle-foreground text-xs">{formatDate(quote.created_at)}</p>
-                  </div>
-
                   <ChevronRight
-                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
+                    className="text-subtle-foreground group-hover:text-primary mt-1 size-4 shrink-0"
                     aria-hidden="true"
                   />
-                </Link>
-              </li>
+                </div>
+                <div className="mt-3 flex items-baseline justify-between gap-3">
+                  <span className="text-foreground text-base font-bold tabular-nums">
+                    {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
+                  </span>
+                  <span className="text-subtle-foreground text-xs tabular-nums">
+                    {formatDate(quote.created_at)}
+                  </span>
+                </div>
+              </Link>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </div>
   );

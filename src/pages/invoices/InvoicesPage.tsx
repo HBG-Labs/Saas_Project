@@ -1,12 +1,15 @@
 import { Calculator, ChevronRight, FileText, ReceiptText } from 'lucide-react';
 import { Link } from 'react-router';
 
-import { EmptyState } from '@/components/feedback/EmptyState';
+import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { DataView } from '@/components/ui/DataView';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TableAmountCell, TableCell, TableHeaderCell } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
 import { toEuros, useInvoices } from '@/features/invoices';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -61,6 +64,7 @@ export default function InvoicesPage() {
           </Button>
         }
       />
+      <SalesNavTabs />
       <InvoicesSectionTabs />
 
       {invoicesQuery.isError ? (
@@ -71,48 +75,94 @@ export default function InvoicesPage() {
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
-      ) : invoices.length === 0 ? (
-        <EmptyState
-          icon={ReceiptText}
-          title="Aucune facture"
-          description="Une facture se crée aujourd’hui à partir d’un devis accepté : elle en reprend les lignes, le client et les montants."
-          action={
-            <Button asChild variant="primary" className="gap-2">
-              <Link to={ROUTES.quotesHistory}>
-                <Calculator className="size-4" aria-hidden="true" />
-                Choisir un devis à facturer
-              </Link>
-            </Button>
-          }
-        />
       ) : (
-        <ul className="space-y-2.5">
-          {invoices.map((invoice) => {
+        <DataView
+          items={invoices}
+          getKey={(invoice) => invoice.id}
+          label="Liste des factures et avoirs"
+          breakpoint="md"
+          columnCount={5}
+          head={
+            <>
+              <TableHeaderCell>Document</TableHeaderCell>
+              <TableHeaderCell>Client</TableHeaderCell>
+              <TableHeaderCell>Statut</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell className="text-right">Montant TTC</TableHeaderCell>
+            </>
+          }
+          empty={{
+            illustration: <AtelierIllustration subject="invoices" />,
+            title: 'Aucune facture',
+            description:
+              'Une facture se prépare à partir d’un devis accepté, avec ses lignes, son client et ses montants.',
+            action: (
+              <Button asChild variant="primary" className="gap-2">
+                <Link to={ROUTES.quotesHistory}>
+                  <Calculator className="size-4" aria-hidden="true" />
+                  Choisir un devis
+                </Link>
+              </Button>
+            ),
+          }}
+          renderRow={(invoice) => {
             const status = STATUS_CONFIG[invoice.status];
             const totalTTC = invoice.totals ? toEuros(invoice.totals.total_cents) : null;
             const estAvoir = invoice.document_type === 'credit_note';
 
             return (
-              <li key={invoice.id}>
-                <Link
-                  to={ROUTES.invoiceDetail(invoice.id)}
-                  className="border-border/80 bg-surface hover:border-primary/30 hover:shadow-raised focus-visible:ring-ring group min-h-touch flex items-start gap-3 rounded-xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none motion-reduce:hover:translate-y-0"
-                >
-                  <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                      estAvoir ? 'bg-warning/10 text-warning' : 'bg-primary-subtle text-primary'
-                    }`}
+              <>
+                <TableCell>
+                  <Link
+                    to={ROUTES.invoiceDetail(invoice.id)}
+                    className="text-foreground hover:text-primary inline-flex items-center gap-2 font-bold tabular-nums"
                   >
                     {estAvoir ? (
-                      <ReceiptText className="size-4.5" aria-hidden="true" />
+                      <ReceiptText className="text-warning size-4 shrink-0" aria-hidden="true" />
                     ) : (
-                      <FileText className="size-4.5" aria-hidden="true" />
+                      <FileText className="text-primary size-4 shrink-0" aria-hidden="true" />
                     )}
+                    {invoice.status === 'draft'
+                      ? invoice.title || 'Facture à préparer'
+                      : invoice.reference}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <p className="text-foreground font-semibold">
+                    {invoice.customer_name || invoice.title || 'Client non renseigné'}
+                  </p>
+                  {invoice.site_name ? (
+                    <p className="text-subtle-foreground mt-0.5">{invoice.site_name}</p>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant={status.variant}>
+                      {estAvoir && invoice.status === 'paid' ? 'Remboursé / imputé' : status.label}
+                    </Badge>
+                    {estAvoir ? <Badge variant="warning">Avoir</Badge> : null}
                   </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
+                </TableCell>
+                <TableAmountCell className="font-bold">
+                  {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
+                </TableAmountCell>
+              </>
+            );
+          }}
+          renderCard={(invoice) => {
+            const status = STATUS_CONFIG[invoice.status];
+            const totalTTC = invoice.totals ? toEuros(invoice.totals.total_cents) : null;
+            const estAvoir = invoice.document_type === 'credit_note';
 
-                  <div className="min-w-0 flex-1 space-y-1">
+            return (
+              <Link to={ROUTES.invoiceDetail(invoice.id)} className="group block min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-foreground font-mono text-sm font-bold">
+                      <span className="text-foreground font-bold tabular-nums">
                         {invoice.status === 'draft'
                           ? invoice.title || 'Facture à préparer'
                           : invoice.reference}
@@ -122,44 +172,30 @@ export default function InvoicesPage() {
                           ? 'Remboursé / imputé'
                           : status.label}
                       </Badge>
-                      {estAvoir && <Badge variant="warning">Avoir</Badge>}
+                      {estAvoir ? <Badge variant="warning">Avoir</Badge> : null}
                     </div>
-                    <p className="text-muted-foreground truncate text-xs">
+                    <p className="text-muted-foreground mt-1 truncate text-sm">
                       {invoice.customer_name || invoice.title || 'Client non renseigné'}
-                      {invoice.site_name ? ` — ${invoice.site_name}` : ''}
-                    </p>
-                    <div className="flex items-baseline justify-between gap-3 pt-1 sm:hidden">
-                      <p className="text-foreground text-sm font-bold tabular-nums">
-                        {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
-                      </p>
-                      <p className="text-subtle-foreground text-xs">
-                        {estAvoir && <span>À créditer · </span>}
-                        {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="hidden shrink-0 text-right sm:block">
-                    <p className="text-foreground text-sm font-bold tabular-nums">
-                      {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
-                    </p>
-                    <p className="text-subtle-foreground text-xs">
-                      {estAvoir && <span>À créditer · </span>}
-                      {/* Un brouillon n'a pas de date d'émission : on montre alors
-                          celle de création, seule date qui existe. */}
-                      {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
                     </p>
                   </div>
-
                   <ChevronRight
-                    className="text-subtle-foreground group-hover:text-primary size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
+                    className="text-subtle-foreground group-hover:text-primary mt-1 size-4 shrink-0"
                     aria-hidden="true"
                   />
-                </Link>
-              </li>
+                </div>
+                <div className="mt-3 flex items-baseline justify-between gap-3">
+                  <span className="text-foreground text-base font-bold tabular-nums">
+                    {totalTTC !== null ? `${totalTTC.toFixed(2)} €` : '—'}
+                  </span>
+                  <span className="text-subtle-foreground text-xs tabular-nums">
+                    {estAvoir ? 'À créditer · ' : ''}
+                    {formatInvoiceDate(invoice.issued_at ?? invoice.created_at)}
+                  </span>
+                </div>
+              </Link>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </div>
   );

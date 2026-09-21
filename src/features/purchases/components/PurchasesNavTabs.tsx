@@ -1,4 +1,4 @@
-import { Calculator, ShoppingCart, Store } from 'lucide-react';
+import { ShoppingCart, Store } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
@@ -24,18 +24,12 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
       shortLabel: 'Fournisseurs',
       icon: Store,
     },
-    {
-      to: ROUTES.quotes,
-      label: 'Devis & Chiffrage Client',
-      shortLabel: 'Devis',
-      icon: Calculator,
-    },
   ];
 
   return (
     <nav
       aria-label="Navigation des achats"
-      className="border-border -mx-4 mb-5 grid grid-cols-3 items-center gap-1.5 border-b px-4 pb-2.5 sm:mx-0 sm:flex sm:overflow-x-auto sm:px-0"
+      className="border-border -mx-4 mb-5 grid grid-cols-2 items-center gap-1.5 border-b px-4 pb-2.5 sm:mx-0 sm:flex sm:overflow-x-auto sm:px-0"
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;
@@ -46,9 +40,9 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
             end={tab.to === ROUTES.purchaseOrders || tab.to === ROUTES.suppliers}
             className={({ isActive }) =>
               cn(
-                'min-h-touch inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-1.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98] sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5',
+                'min-h-touch inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-bold transition-colors sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-4',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  ? 'bg-primary-subtle text-primary'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
               )
             }
@@ -60,7 +54,7 @@ export function PurchasesNavTabs({ pendingDeliveryCount = 0 }: PurchasesNavTabsP
               <span
                 className={cn(
                   'text-3xs ml-0.5 rounded-full px-1.5 py-0.5 leading-none font-bold sm:ml-1',
-                  'bg-primary/20 text-primary dark:bg-primary/30',
+                  'bg-primary text-primary-foreground',
                 )}
               >
                 {tab.badge}

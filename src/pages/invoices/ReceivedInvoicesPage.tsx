@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -32,10 +33,7 @@ export default function ReceivedInvoicesPage() {
   });
   const total = query.data?.total ?? 0;
   const page = filters.page ?? 0;
-  const hasNextPage = useMemo(
-    () => (page + 1) * RECEIVED_INVOICES_PER_PAGE < total,
-    [page, total],
-  );
+  const hasNextPage = useMemo(() => (page + 1) * RECEIVED_INVOICES_PER_PAGE < total, [page, total]);
 
   const sort: ReceivedInvoiceSort | undefined = filters.sortBy
     ? { column: filters.sortBy, direction: filters.sortDirection ?? 'desc' }
@@ -52,6 +50,7 @@ export default function ReceivedInvoicesPage() {
         title="Factures reçues"
         description="Les factures électroniques de vos fournisseurs, relevées auprès de SUPER PDP."
       />
+      <SalesNavTabs />
       <InvoicesSectionTabs />
 
       <ReceivedInvoiceFiltersBar value={filters} onChange={setFilters} />

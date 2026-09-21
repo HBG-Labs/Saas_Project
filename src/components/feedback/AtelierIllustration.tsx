@@ -1,9 +1,11 @@
 import library from '@/assets/illustrations/library.svg';
+import invoices from '@/assets/illustrations/invoices.svg';
 import notes from '@/assets/illustrations/notes.svg';
 import pages from '@/assets/illustrations/pages.svg';
+import quotes from '@/assets/illustrations/quotes.svg';
 import { cn } from '@/lib/cn';
 
-const illustrations = { library, notes, pages };
+const illustrations = { invoices, library, notes, pages, quotes };
 
 /** Décor de premier usage : le texte adjacent porte le sens et l'action. */
 export function AtelierIllustration({
