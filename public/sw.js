@@ -8,7 +8,10 @@
 // correspond pas à celui-ci.
 // v4 force l'abandon du shell v3 : celui-ci a pu conserver un index pointant
 // vers des chunks supprimés au déploiement suivant.
-const CACHE_NAME = 'rezo360-pwa-v4';
+// v5 force un nouveau téléchargement de la feuille principale : certains
+// appareils ont conservé une réponse CSS défectueuse sous son ancienne URL
+// pourtant déclarée immuable.
+const CACHE_NAME = 'rezo360-pwa-v5';
 
 const STATIC_ASSETS = ['/', '/favicon-32.png', '/icon-192.png', '/site.webmanifest'];
 

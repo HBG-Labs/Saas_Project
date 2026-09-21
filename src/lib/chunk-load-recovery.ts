@@ -157,10 +157,10 @@ export function installStylesheetLoadRecovery(options: ChunkRecoveryOptions = {}
     recoverStylesheetLoad(options);
   };
   const checkLoadedStylesheets = () => {
-    const primaryColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--primary')
+    const stylesheetVersion = getComputedStyle(document.documentElement)
+      .getPropertyValue('--app-styles-ready')
       .trim();
-    if (primaryColor === '') recover();
+    if (stylesheetVersion !== 'v20260921') recover();
   };
 
   stylesheets.forEach((stylesheet) => stylesheet.addEventListener('error', recover));

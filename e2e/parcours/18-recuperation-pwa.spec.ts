@@ -33,6 +33,11 @@ test.describe('Récupération PWA', () => {
     expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain(
       'Nunito',
     );
+    expect(
+      await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--app-styles-ready').trim(),
+      ),
+    ).toBe('v20260921');
     await expect(
       page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
     ).toHaveCount(0);
@@ -56,6 +61,13 @@ test.describe('Récupération PWA', () => {
     await expect
       .poll(() => page.evaluate(() => getComputedStyle(document.body).fontFamily))
       .toContain('Nunito');
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          getComputedStyle(document.documentElement).getPropertyValue('--app-styles-ready').trim(),
+        ),
+      )
+      .toBe('v20260921');
 
     expect(stylesheetRequests).toBeGreaterThanOrEqual(2);
     await expect(

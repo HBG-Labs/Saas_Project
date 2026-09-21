@@ -36,6 +36,14 @@
   */
   :root,
   .theme-jour-verrouille {
+    /*
+       Marqueur de santé lu au démarrage par `chunk-load-recovery`.
+       Il sert aussi de version de contenu : toute modification de sa valeur
+       produit un nouveau nom de fichier CSS Vite et contourne les copies
+       immuables éventuellement corrompues dans le cache HTTP d'un appareil.
+    */
+    --app-styles-ready: v20260921;
+
     /* Atelier validé : surfaces lumineuses, encre bleutée, actions vertes.
        Les aplats d'action et de navigation ont leur propre encre sombre :
        le blanc sur le vert Tiime n'atteint pas 4,5:1. Les liens et le focus
