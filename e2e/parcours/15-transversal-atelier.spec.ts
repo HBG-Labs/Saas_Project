@@ -112,9 +112,12 @@ test.describe('Transversal Atelier', () => {
     if (isMobile) {
       expect(companyCardHeight).toBe(88);
       expect(subscriptionCardHeight).toBe(80);
+      const topbar = await page.locator('header').first().boundingBox();
+      const profileHero = await page.getByTestId('profile-hero').boundingBox();
       expect(
-        Math.round((await page.getByTestId('profile-hero').boundingBox())?.height ?? 0),
-      ).toBeLessThanOrEqual(300);
+        Math.abs((profileHero?.y ?? 0) - ((topbar?.y ?? 0) + (topbar?.height ?? 0))),
+      ).toBeLessThanOrEqual(1);
+      expect(Math.round(profileHero?.height ?? 0)).toBeLessThanOrEqual(300);
     } else {
       expect(companyCardHeight).toBeGreaterThanOrEqual(112);
       expect(subscriptionCardHeight).toBeGreaterThanOrEqual(96);

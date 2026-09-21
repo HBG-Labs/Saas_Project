@@ -41,6 +41,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isTrainingPage = location.pathname.startsWith(ROUTES.tutorials);
+  const isProfilePage = location.pathname === ROUTES.profile;
 
   const profileQuery = useMyProfile();
   const avatarId = profileQuery.data?.identity?.avatar_id ?? null;
@@ -336,11 +337,16 @@ export function AppLayout() {
         // Le bas ne réserve de la place que là où la navigation basse existe :
         // elle disparaît à `md`, où 80 px de vide n'avaient plus de raison
         // d'être. `safe-x` écarte le contenu des bords arrondis en paysage.
-        className={`safe-x px-4 pt-[5rem] pb-24 transition-all duration-200 sm:px-6 md:pb-10 lg:px-7 ${
+        className={cn(
+          'safe-x px-4 pb-24 transition-all duration-200 sm:px-6 sm:pt-[5rem] md:pb-10 lg:px-7',
+          // Le bandeau du profil est une continuité visuelle de la topbar sur
+          // mobile. Les autres pages gardent les 20 px de respiration prévus
+          // sous l'en-tête ; le bureau conserve aussi cet espacement.
+          isProfilePage ? 'pt-app-header' : 'pt-[5rem]',
           sidebarCollapsed
             ? 'lg:pl-[calc(var(--spacing-sidebar-rail)+1.75rem)]'
-            : 'lg:pl-[calc(var(--spacing-sidebar)+1.75rem)]'
-        }`}
+            : 'lg:pl-[calc(var(--spacing-sidebar)+1.75rem)]',
+        )}
       >
         <div className={cn('mx-auto space-y-4', isTrainingPage ? 'max-w-none' : 'max-w-7xl')}>
           {/*
