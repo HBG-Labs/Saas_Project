@@ -37,13 +37,13 @@ export function SalesNavTabs() {
             to={tab.to}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'min-h-touch inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-bold transition-colors sm:min-h-0 sm:px-4',
+              'atelier-action-tab min-h-touch inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-bold transition-colors sm:min-h-0 sm:px-3',
               active
                 ? 'bg-primary-subtle text-primary'
                 : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
             )}
           >
-            <Icon className="size-4 shrink-0" aria-hidden="true" />
+            <Icon className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{tab.label}</span>
           </Link>
         );

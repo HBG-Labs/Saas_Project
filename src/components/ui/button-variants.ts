@@ -12,7 +12,7 @@ import { cva } from 'class-variance-authority';
  */
 export const buttonVariants = cva(
   [
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-bold atelier-control whitespace-nowrap cursor-pointer select-none',
+    'atelier-pill-action inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-bold atelier-control whitespace-nowrap cursor-pointer select-none',
     'transition-[color,background-color,border-color,box-shadow,transform] duration-[120ms] ease-out-expo active:scale-[0.98] motion-reduce:transform-none',
     'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_*]:pointer-events-none',
@@ -32,11 +32,11 @@ export const buttonVariants = cva(
           'border border-error-border bg-error-subtle text-error hover:border-error hover:bg-error/15 active:bg-error/20 shadow-xs font-medium',
         link: 'text-primary underline-offset-4 hover:underline',
       },
-      /* 34 px au pointeur, 44 px au doigt ; la taille ne dépend pas du zoom de densité. */
+      /* Géométrie visible réduite de 20 % ; la zone tactile mobile reste étendue en CSS. */
       size: {
-        sm: 'min-h-control px-3 text-xs [&_svg]:size-3.5',
-        md: 'min-h-control px-[15px] text-xs [&_svg]:size-4',
-        lg: 'min-h-touch px-5 text-sm [&_svg]:size-4',
+        sm: 'atelier-action-sm min-h-control px-2.5 text-xs [&_svg]:size-3',
+        md: 'atelier-action-md min-h-control px-3 text-xs [&_svg]:size-3.5',
+        lg: 'atelier-action-lg min-h-touch px-4 text-sm [&_svg]:size-3.5',
         icon: 'atelier-icon-control size-control [&_svg]:size-4',
         'icon-sm': 'atelier-icon-control size-control [&_svg]:size-3.5',
       },

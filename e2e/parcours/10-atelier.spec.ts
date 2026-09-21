@@ -23,8 +23,8 @@ test.describe('Atelier — fondations validées', () => {
           fontLoaded: document.fonts.check('700 13px Nunito'),
         };
       });
-      expect(metrics.height).toBeGreaterThanOrEqual(isMobile ? 44 : 34);
-      if (!isMobile) expect(metrics.height).toBeLessThan(37);
+      expect(metrics.height).toBeGreaterThanOrEqual(isMobile ? 35 : 27);
+      expect(metrics.height).toBeLessThan(isMobile ? 36 : 28);
       expect(parseFloat(metrics.radius)).toBeGreaterThan(100);
       expect(metrics.font).toContain('Nunito');
       expect(metrics.fontLoaded).toBe(true);
@@ -49,6 +49,15 @@ test.describe('Atelier — fondations validées', () => {
   }) => {
     await installeSupabase(page, { role: 'owner' });
     await page.goto('/missions');
+
+    const localActionTab = page.locator('main .atelier-action-tab').first();
+    await expect(localActionTab).toBeVisible();
+    const localTabHeight = await localActionTab.evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+    expect(localTabHeight).toBeGreaterThanOrEqual(isMobile ? 35 : 28);
+    expect(localTabHeight).toBeLessThan(isMobile ? 36 : 29);
+
     if (isMobile) {
       await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
     }

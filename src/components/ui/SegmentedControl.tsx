@@ -98,7 +98,7 @@ export function SegmentedControl<T extends string>({
             className={cn(
               'focus-visible:ring-ring atelier-control min-h-touch relative z-10 flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 text-xs transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98] motion-reduce:active:scale-100 sm:min-h-0 sm:flex-none',
               variant === 'pill'
-                ? 'rounded-full font-semibold sm:py-1.5'
+                ? 'atelier-action-tab rounded-full font-semibold sm:py-1.5'
                 : 'rounded-none bg-transparent py-2 font-medium shadow-none hover:bg-transparent sm:py-2',
               isActive && variant === 'pill'
                 ? 'bg-primary text-primary-foreground shadow-xs'

@@ -851,6 +851,49 @@ html.compact-mode {
 }
 
 /*
+   Boutons pilules et onglets d'action : réduction visuelle uniforme de 20 %.
+   Sur écran tactile, une zone transparente déborde de 4,4 px en haut et en
+   bas : le bouton paraît plus fin sans rendre l'appui inutilement précis.
+*/
+.atelier-action-sm,
+.atelier-action-md {
+  height: 1.7rem;
+  min-height: 1.7rem;
+}
+
+.atelier-action-lg {
+  height: 2.2rem;
+  min-height: 2.2rem;
+}
+
+.atelier-action-tab {
+  height: 1.75rem;
+  min-height: 1.75rem;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .atelier-action-sm,
+  .atelier-action-md,
+  .atelier-action-lg,
+  .atelier-action-tab {
+    height: 2.2rem;
+    min-height: 2.2rem;
+  }
+
+  .atelier-pill-action,
+  .atelier-action-tab {
+    position: relative;
+  }
+
+  .atelier-pill-action::after,
+  .atelier-action-tab::after {
+    position: absolute;
+    inset: -0.275rem 0;
+    content: '';
+  }
+}
+
+/*
    La fiche profil utilise les mêmes champs compacts que le reste du produit.
    Cette règle est hors des layers afin de l'emporter sur les anciennes
    hauteurs locales sans modifier la typographie de saisie.

@@ -27,14 +27,14 @@ export function InvoicesSectionTabs() {
             end
             className={({ isActive }) =>
               cn(
-                'min-h-touch inline-flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98] sm:min-h-0 sm:flex-initial sm:shrink sm:gap-2 sm:px-3.5',
+                'atelier-action-tab min-h-touch inline-flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold transition-all duration-150 active:scale-[0.98] sm:min-h-0 sm:flex-initial sm:shrink sm:gap-1.5 sm:px-3',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
               )
             }
           >
-            <Icon className="size-4 shrink-0" />
+            <Icon className="size-3.5 shrink-0" />
             <span className="sm:hidden">{tab.shortLabel}</span>
             <span className="hidden sm:inline">{tab.label}</span>
           </NavLink>
