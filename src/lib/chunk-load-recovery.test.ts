@@ -4,6 +4,7 @@ import {
   clearChunkLoadRecoveryGuard,
   installChunkLoadRecovery,
   isChunkLoadError,
+  recoverChunkLoadError,
 } from './chunk-load-recovery';
 
 function memoryStorage() {
@@ -30,35 +31,74 @@ describe('récupération des modules différés', () => {
     expect(isChunkLoadError(new Error('Client introuvable'))).toBe(false);
   });
 
-  it('actualise une seule fois si plusieurs erreurs arrivent dans la même fenêtre', () => {
+  it('actualise une seule fois si plusieurs erreurs arrivent dans la même fenêtre', async () => {
     const storage = memoryStorage();
     const reload = vi.fn();
+    const prepareReload = vi.fn();
     let currentTime = 100_000;
 
-    cleanups.push(installChunkLoadRecovery({ storage, reload, now: () => currentTime }));
+    cleanups.push(
+      installChunkLoadRecovery({ storage, reload, prepareReload, now: () => currentTime }),
+    );
 
-    const firstError = new Event('vite:preloadError', { cancelable: true });
+    const firstError = Object.assign(new Event('vite:preloadError', { cancelable: true }), {
+      payload: new TypeError('Failed to fetch dynamically imported module: /assets/x.js'),
+    });
     window.dispatchEvent(firstError);
-    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+    window.dispatchEvent(
+      Object.assign(new Event('vite:preloadError', { cancelable: true }), {
+        payload: new TypeError('Failed to fetch dynamically imported module: /assets/x.js'),
+      }),
+    );
 
     expect(firstError.defaultPrevented).toBe(true);
-    expect(reload).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(prepareReload).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 
     currentTime += 31_000;
-    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
-    expect(reload).toHaveBeenCalledTimes(2);
+    window.dispatchEvent(
+      Object.assign(new Event('vite:preloadError', { cancelable: true }), {
+        payload: new TypeError('Failed to fetch dynamically imported module: /assets/x.js'),
+      }),
+    );
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(2));
   });
 
-  it('peut réarmer la récupération après un démarrage réussi', () => {
+  it('peut réarmer la récupération après un démarrage réussi', async () => {
     const storage = memoryStorage();
     const reload = vi.fn();
+    const prepareReload = vi.fn();
 
-    cleanups.push(installChunkLoadRecovery({ storage, reload, now: () => 100_000 }));
-    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+    cleanups.push(installChunkLoadRecovery({ storage, reload, prepareReload, now: () => 100_000 }));
+    const dispatchChunkError = () =>
+      window.dispatchEvent(
+        Object.assign(new Event('vite:preloadError', { cancelable: true }), {
+          payload: new TypeError('Failed to fetch dynamically imported module: /assets/x.js'),
+        }),
+      );
+
+    dispatchChunkError();
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 
     clearChunkLoadRecoveryGuard(storage);
-    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+    dispatchChunkError();
 
-    expect(reload).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(2));
+  });
+
+  it('récupère aussi une erreur attrapée directement pendant le démarrage', async () => {
+    const storage = memoryStorage();
+    const reload = vi.fn();
+    const prepareReload = vi.fn();
+
+    expect(
+      recoverChunkLoadError(
+        new TypeError('Failed to fetch dynamically imported module: /assets/App-old.js'),
+        { storage, reload, prepareReload, now: () => 100_000 },
+      ),
+    ).toBe(true);
+
+    await vi.waitFor(() => expect(prepareReload).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
   });
 });

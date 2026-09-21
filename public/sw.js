@@ -6,30 +6,33 @@
 // déjà mis en cache l'ancienne bibliothèque aurait continué de la servir
 // indéfiniment. `activate` supprime tout compartiment dont le nom ne
 // correspond pas à celui-ci.
-const CACHE_NAME = 'rezo360-pwa-v3';
+// v4 force l'abandon du shell v3 : celui-ci a pu conserver un index pointant
+// vers des chunks supprimés au déploiement suivant.
+const CACHE_NAME = 'rezo360-pwa-v4';
 
-const STATIC_ASSETS = [
-  '/',
-  '/favicon-32.png',
-  '/icon-192.png',
-  '/site.webmanifest'
-];
+const STATIC_ASSETS = ['/', '/favicon-32.png', '/icon-192.png', '/site.webmanifest'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) => {
+        return Promise.all(
+          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
+        );
+      })
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -42,9 +45,20 @@ self.addEventListener('fetch', (event) => {
   // Pour les requêtes de navigation (HTML) : Network First avec repli Cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.open(CACHE_NAME).then((cache) => cache.match('/') || cache.match(event.request));
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          const typeRecu = networkResponse.headers.get('content-type') ?? '';
+          if (networkResponse.ok && typeRecu.includes('text/html')) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.match('/') || cache.match(event.request));
+        }),
     );
     return;
   }
@@ -67,49 +81,52 @@ self.addEventListener('fetch', (event) => {
   // être consulté ni compléter une réponse.
   // ───────────────────────────────────────────────────────────────────────
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => cache.match(event.request)).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        if (
-          !networkResponse ||
-          networkResponse.status !== 200 ||
-          networkResponse.type !== 'basic'
-        ) {
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.match(event.request))
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request).then((networkResponse) => {
+          if (
+            !networkResponse ||
+            networkResponse.status !== 200 ||
+            networkResponse.type !== 'basic'
+          ) {
+            return networkResponse;
+          }
+
+          // NE JAMAIS METTRE EN CACHE UNE PAGE HTML SOUS UNE URL D'ASSET.
+          //
+          // Un serveur SPA répond `200 text/html` — l'`index.html` de repli —
+          // pour toute URL de fichier absente, y compris
+          // `/avatars/avatar-99.svg`. Mesuré sur ce projet : statut 200,
+          // `text/html`, 5078 octets.
+          //
+          // Le générateur d'avatars SUPPRIME les 50 fichiers avant de les
+          // réécrire. Une requête tombant dans cette fenêtre reçoit donc du
+          // HTML avec un statut 200 — que l'ancienne version de ce fichier
+          // mettait en cache sans broncher, l'extension `.svg` suffisant à
+          // déclencher la mise en cache.
+          //
+          // Sans ce contrôle, ce repli serait mis en cache SOUS L'URL DE
+          // L'IMAGE, et resterait ensuite servi à la place du vrai fichier même
+          // après correction du serveur — une image définitivement cassée, que
+          // plus rien côté serveur ne pourrait réparer.
+          const typeRecu = networkResponse.headers.get('content-type') ?? '';
+          const replSPA = typeRecu.includes('text/html');
+
+          // Cache uniquement les fichiers légers d'assets
+          if (!replSPA && url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?|css|js)$/)) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+
           return networkResponse;
-        }
-
-        // NE JAMAIS METTRE EN CACHE UNE PAGE HTML SOUS UNE URL D'ASSET.
-        //
-        // Un serveur SPA répond `200 text/html` — l'`index.html` de repli —
-        // pour toute URL de fichier absente, y compris
-        // `/avatars/avatar-99.svg`. Mesuré sur ce projet : statut 200,
-        // `text/html`, 5078 octets.
-        //
-        // Le générateur d'avatars SUPPRIME les 50 fichiers avant de les
-        // réécrire. Une requête tombant dans cette fenêtre reçoit donc du
-        // HTML avec un statut 200 — que l'ancienne version de ce fichier
-        // mettait en cache sans broncher, l'extension `.svg` suffisant à
-        // déclencher la mise en cache.
-        //
-        // Sans ce contrôle, ce repli serait mis en cache SOUS L'URL DE
-        // L'IMAGE, et resterait ensuite servi à la place du vrai fichier même
-        // après correction du serveur — une image définitivement cassée, que
-        // plus rien côté serveur ne pourrait réparer.
-        const typeRecu = networkResponse.headers.get('content-type') ?? '';
-        const replSPA = typeRecu.includes('text/html');
-
-        // Cache uniquement les fichiers légers d'assets
-        if (!replSPA && url.pathname.match(/\.(svg|png|jpg|jpeg|webp|woff2?|css|js)$/)) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-
-        return networkResponse;
-      });
-    })
+        });
+      }),
   );
 });

@@ -2,12 +2,28 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { renderBootFailure } from '@/app/boot-failure';
-import { clearChunkLoadRecoveryGuard, installChunkLoadRecovery } from '@/lib/chunk-load-recovery';
+import {
+  clearChunkLoadRecoveryGuard,
+  installChunkLoadRecovery,
+  recoverChunkLoadError,
+} from '@/lib/chunk-load-recovery';
 import '@/styles/index.css';
 
 // Installé avant les imports différés de `boot` : il couvre aussi une version
 // devenue obsolète avant que React et le routeur aient pu démarrer.
 installChunkLoadRecovery();
+
+// L'enregistrement ne dépend pas du montage React : même si un ancien chunk
+// empêche `App` de se charger, le navigateur peut déjà récupérer le worker du
+// déploiement courant. Attendre l'événement `load` ici était fragile, car il
+// peut avoir eu lieu pendant les imports différés ci-dessous.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch((error) => {
+    if (import.meta.env.PROD) {
+      console.warn('[REZO360 PWA] Échec enregistrement Service Worker:', error);
+    }
+  });
+}
 
 /**
  * Amorçage.
@@ -32,14 +48,14 @@ async function boot(): Promise<void> {
   try {
     const [{ App }, { applyStoredTheme }, { purgeDemoStorage }, { migrateStorageKeys }] =
       await Promise.all([
-      import('@/app/App'),
-      import('@/features/theme/theme-script'),
-      import('@/lib/purge-demo-storage'),
-      import('@/lib/migrate-storage-keys'),
-      // Enregistre tous les outils présents dans src/tools/ (auto-découverte).
-      // Doit précéder le premier rendu : le catalogue lit le registry.
-      import('@/tools'),
-    ]);
+        import('@/app/App'),
+        import('@/features/theme/theme-script'),
+        import('@/lib/purge-demo-storage'),
+        import('@/lib/migrate-storage-keys'),
+        // Enregistre tous les outils présents dans src/tools/ (auto-découverte).
+        // Doit précéder le premier rendu : le catalogue lit le registry.
+        import('@/tools'),
+      ]);
 
     // AVANT TOUT LE RESTE : les préférences écrites sous l'ancien nom de marque
     // sont recopiées sous le nouveau. Ce qui suit les lit — les laisser passer
@@ -63,19 +79,12 @@ async function boot(): Promise<void> {
     // Un rendu resté stable confirme que les modules du nouveau déploiement
     // sont accessibles. Une future mise à jour pourra alors récupérer à son tour.
     window.setTimeout(clearChunkLoadRecoveryGuard, 15_000);
-
-    // Enregistrement du Service Worker PWA pour l'installation mobile & hors-ligne
-    if ('serviceWorker' in navigator && import.meta.env.PROD) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.warn('[REZO360 PWA] Échec enregistrement Service Worker:', err);
-        });
-      });
-    } else if ('serviceWorker' in navigator) {
-      // En mode développement également pour les tests PWA
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
   } catch (error) {
+    // Un ancien shell PWA peut encore demander les chunks du déploiement
+    // précédent. On nettoie ce cache et on recharge une seule fois avant de
+    // montrer l'écran de secours. Les erreurs applicatives ordinaires ne sont
+    // jamais masquées par cette récupération ciblée.
+    if (recoverChunkLoadError(error)) return;
     renderBootFailure(container, error);
   }
 }

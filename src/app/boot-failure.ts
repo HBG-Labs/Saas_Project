@@ -30,9 +30,7 @@
  */
 function readableDetail(error: unknown): string | null {
   if (!(error instanceof Error)) return null;
-  return error.message.startsWith("Configuration d'environnement invalide")
-    ? error.message
-    : null;
+  return error.message.startsWith("Configuration d'environnement invalide") ? error.message : null;
 }
 
 export function renderBootFailure(container: HTMLElement | null, error: unknown): void {
@@ -68,6 +66,16 @@ export function renderBootFailure(container: HTMLElement | null, error: unknown)
 
   panel.append(title, intro);
 
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.textContent = 'Réessayer';
+  retry.setAttribute(
+    'style',
+    'margin-top:1.25rem;min-height:2.75rem;border:0;border-radius:999px;padding:0.625rem 1.25rem;' +
+      'background:#1b44c8;color:#ffffff;font:inherit;font-weight:700;cursor:pointer',
+  );
+  retry.addEventListener('click', () => window.location.reload());
+
   if (detail !== null) {
     const pre = document.createElement('pre');
     pre.textContent = detail;
@@ -83,6 +91,8 @@ export function renderBootFailure(container: HTMLElement | null, error: unknown)
     // que diluer la seule ligne qui compte.
     panel.append(pre);
   }
+
+  panel.append(retry);
 
   target.append(panel);
 }
