@@ -7,7 +7,7 @@ import {
   type SuperPdpCompany,
   type SuperPdpSession,
 } from '../../../src/features/einvoicing/provider/superpdp-contract.ts';
-import { encryptSuperPdpTokens } from '../_shared/superpdp-connection.ts';
+import { encryptSuperPdpTokens, superPdpConfigFor } from '../_shared/superpdp-connection.ts';
 
 function htmlError(message: string, status = 400) {
   return new Response(
@@ -49,11 +49,14 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (requestUrl.searchParams.has('error')) return redirect(state.return_url, 'annulee');
 
   const code = requestUrl.searchParams.get('code') ?? '';
-  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() ?? '';
-  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() ?? '';
-  const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
-  if (!code || !clientId || !clientSecret || !encryptionKey)
+  if (!code) return redirect(state.return_url, 'erreur');
+  let config: ReturnType<typeof superPdpConfigFor>;
+  try {
+    config = superPdpConfigFor(state.organization_id);
+  } catch {
     return redirect(state.return_url, 'erreur');
+  }
+  const { clientId, clientSecret, encryptionKey } = config;
 
   try {
     const redirectUri = `${url}/functions/v1/superpdp-oauth-callback`;
@@ -81,7 +84,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       lastErrorMessage = 'SUPER PDP verifie encore le rattachement de l’entreprise.';
     }
     let status = connectionStatus(session);
-    const expectedMode = Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox';
+    const expectedMode = config.expectedMode;
     if (company && company.env !== expectedMode) {
       status = 'action_required';
       lastErrorCode = 'environment_mismatch';

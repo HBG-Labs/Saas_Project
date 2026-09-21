@@ -13,6 +13,7 @@ import {
   type SuperPdpSession,
 } from '../../../src/features/einvoicing/provider/superpdp-contract.ts';
 import {
+  superPdpConfigFor,
   usableSuperPdpAccessToken,
   type SuperPdpConnectionRow,
 } from '../_shared/superpdp-connection.ts';
@@ -28,15 +29,6 @@ const json = (value: unknown, status = 200) =>
     status,
     headers: { ...cors, 'Content-Type': 'application/json' },
   });
-
-function serverConfig() {
-  const clientId = Deno.env.get('SUPERPDP_CLIENT_ID')?.trim() ?? '';
-  const clientSecret = Deno.env.get('SUPERPDP_CLIENT_SECRET')?.trim() ?? '';
-  const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
-  if (!clientId || !clientSecret || !encryptionKey)
-    throw new Error('Le raccordement SUPER PDP attend encore ses identifiants de bac a sable.');
-  return { clientId, clientSecret, encryptionKey };
-}
 
 /**
  * Adresse de retour autorisee apres le detour par SUPER PDP.
@@ -128,7 +120,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         environment: Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox',
       });
     }
-    const config = serverConfig();
+    const config = superPdpConfigFor(body.organizationId);
     if (body.action === 'start' || body.action === 'activate_reception') {
       const returnUrl = safeReturnUrl(body.returnUrl);
       if (!returnUrl) return json({ error: 'Adresse de retour invalide.' }, 400);
@@ -148,7 +140,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       if (insertError) throw insertError;
 
       let siren: string | undefined;
-      if ((Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox') === 'production') {
+      if (config.expectedMode === 'production') {
         const { data: organization } = await caller
           .from('organizations')
           .select('registration_number')
@@ -267,7 +259,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       .eq('id', body.organizationId)
       .maybeSingle();
     if (organizationError) throw organizationError;
-    const expectedMode = Deno.env.get('SUPERPDP_MODE')?.trim() || 'sandbox';
+    const expectedMode = config.expectedMode;
     const modeMismatch = company !== null && company.env !== expectedMode;
     const expectedSiren = frenchSiren(organization?.registration_number);
     const connectedSiren = frenchSiren(company?.number);

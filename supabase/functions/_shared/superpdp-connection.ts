@@ -27,6 +27,48 @@ export interface SuperPdpServerConfig {
   now?: () => Date;
 }
 
+export interface SuperPdpEnvironmentConfig extends SuperPdpServerConfig {
+  expectedMode: 'sandbox' | 'production';
+}
+
+/**
+ * Sélection des identifiants OAuth PAR ORGANISATION.
+ *
+ * Une seule organisation, désignée par `SUPERPDP_SANDBOX_TEST_ORGANIZATION_ID`,
+ * bascule vers l'application bac à sable (`SUPERPDP_SANDBOX_CLIENT_ID/SECRET`).
+ * Introduit pour tester la réception (Phase 3) sans jamais toucher une
+ * connexion de production réelle : toute organisation qui n'est PAS celle-ci
+ * continue d'utiliser exactement `SUPERPDP_CLIENT_ID`/`SUPERPDP_CLIENT_SECRET`
+ * et `SUPERPDP_MODE`, comme avant l'ajout de cette fonction. Sans la variable
+ * posée, aucune organisation ne bascule jamais — fermé par défaut.
+ */
+export function superPdpConfigFor(organizationId: string): SuperPdpEnvironmentConfig {
+  const sandboxTestOrganizationId = Deno.env
+    .get('SUPERPDP_SANDBOX_TEST_ORGANIZATION_ID')
+    ?.trim();
+  const useSandbox = Boolean(sandboxTestOrganizationId) && organizationId === sandboxTestOrganizationId;
+
+  const clientId =
+    (useSandbox
+      ? Deno.env.get('SUPERPDP_SANDBOX_CLIENT_ID')
+      : Deno.env.get('SUPERPDP_CLIENT_ID')
+    )?.trim() ?? '';
+  const clientSecret =
+    (useSandbox
+      ? Deno.env.get('SUPERPDP_SANDBOX_CLIENT_SECRET')
+      : Deno.env.get('SUPERPDP_CLIENT_SECRET')
+    )?.trim() ?? '';
+  const encryptionKey = Deno.env.get('SUPERPDP_TOKEN_ENCRYPTION_KEY') ?? '';
+  const expectedMode: 'sandbox' | 'production' = useSandbox
+    ? 'sandbox'
+    : ((Deno.env.get('SUPERPDP_MODE')?.trim() as 'sandbox' | 'production' | undefined) ??
+      'sandbox');
+
+  if (!clientId || !clientSecret || !encryptionKey)
+    throw new Error('Le raccordement SUPER PDP attend encore ses identifiants de bac a sable.');
+  return { clientId, clientSecret, encryptionKey, expectedMode };
+}
+
 const context = (organizationId: string) => `${organizationId}:${SUPERPDP_PROVIDER_CODE}`;
 
 export async function encryptSuperPdpTokens(

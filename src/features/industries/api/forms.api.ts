@@ -97,7 +97,9 @@ export async function getFormTemplate(interventionTypeId: string): Promise<FormT
   const rows = await unwrap(
     supabase
       .from('form_fields')
-      .select('id, key, label, help, type, required, unit, min_value, max_value, options, sort_order')
+      .select(
+        'id, key, label, help, type, required, unit, min_value, max_value, options, sort_order',
+      )
       .eq('form_template_id', template.id)
       .order('sort_order', { ascending: true }),
   );
@@ -130,7 +132,7 @@ export async function getFormResponse(interventionId: string): Promise<FormRespo
       .from('intervention_form_responses')
       .select('id, intervention_id, form_template_id, values, completed_at')
       .eq('intervention_id', interventionId)
-      .single(),
+      .maybeSingle(),
   );
 
   if (row === null) return null;

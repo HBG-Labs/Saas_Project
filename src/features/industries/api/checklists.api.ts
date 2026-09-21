@@ -84,7 +84,7 @@ export async function getChecklistResponse(
       .from('intervention_checklist_responses')
       .select('id, intervention_id, checklist_template_id, checked, completed_at')
       .eq('intervention_id', interventionId)
-      .single(),
+      .maybeSingle(),
   );
 
   if (row === null) return null;

@@ -30,7 +30,10 @@ export function useUserPreferences() {
     },
     onMutate: async (patch) => {
       await queryClient.cancelQueries({ queryKey: [...USER_PREFERENCES_QUERY_KEY, userId] });
-      const previous = queryClient.getQueryData<UserPreferences>([...USER_PREFERENCES_QUERY_KEY, userId]);
+      const previous = queryClient.getQueryData<UserPreferences>([
+        ...USER_PREFERENCES_QUERY_KEY,
+        userId,
+      ]);
 
       if (previous && userId) {
         queryClient.setQueryData<UserPreferences>([...USER_PREFERENCES_QUERY_KEY, userId], {

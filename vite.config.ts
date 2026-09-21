@@ -18,7 +18,14 @@ export default defineConfig({
     // événements sur un dossier synchronisé.
     watch: {
       usePolling: false,
-      ignored: ['**/ezgif-*/**', '**/COdeFinal/**', '**/Test/**', '**/Saas_Project/**', '**/coverage/**'],
+      ignored: [
+        '**/ezgif-*/**',
+        '**/COdeFinal/**',
+        '**/Test/**',
+        '**/Saas_Project/**',
+        '**/coverage/**',
+        '**/demo-output/**',
+      ],
     },
   },
   build: {

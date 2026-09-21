@@ -24,5 +24,5 @@
   // `e2e/` est inclus depuis l'installation effective de @playwright/test : sans
   // cela, typescript-eslint ne rattache les specs à aucun projet et refuse de
   // les analyser (« was not found by the project service »).
-  "include": ["vite.config.ts", "playwright.config.ts", "e2e"]
+  "include": ["vite.config.ts", "playwright.config.ts", "playwright.demo.config.ts", "e2e", "demo"]
 }

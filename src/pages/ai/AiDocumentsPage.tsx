@@ -80,6 +80,7 @@ export default function AiDocumentsPage() {
     setCategory('');
     setFile(null);
     setValidationError(null);
+    uploadDocument.reset();
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -92,11 +93,13 @@ export default function AiDocumentsPage() {
     if (selected.type !== 'application/pdf') {
       setValidationError('Seuls les fichiers PDF sont acceptés.');
       setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (selected.size > MAX_FILE_SIZE) {
       setValidationError('Le fichier dépasse la taille maximale de 25 Mo.');
       setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     setFile(selected);
@@ -120,15 +123,26 @@ export default function AiDocumentsPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!documentToDelete) return;
+
+    try {
+      await deleteDocument.mutateAsync(documentToDelete);
+      setDocumentToDelete(null);
+    } catch {
+      // La mutation conserve l'erreur afin de l'afficher dans la modale.
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <PageHeader
         title="Documents de l’Assistant IA"
         description="Les PDF déposés ici (notices, procédures, normes) sont indexés et consultés par l’assistant pour répondre à partir de votre propre documentation, avec citation de la source."
         actions={
           <Button
             variant="primary"
-            className="gap-2"
+            className="min-h-touch w-full gap-2 sm:min-h-0 sm:w-auto"
             onClick={() => setIsUploadOpen(true)}
           >
             <Plus className="size-4" aria-hidden="true" />
@@ -158,82 +172,134 @@ export default function AiDocumentsPage() {
           }
         />
       ) : (
-        <ul className="space-y-2.5">
-          {documents.map((document) => {
-            const status = STATUS_CONFIG[document.status];
-            const StatusIcon = status.icon;
+        <section className="space-y-3" aria-labelledby="ai-documents-list-title">
+          <div className="flex items-end justify-between gap-4 px-1">
+            <div>
+              <h2 id="ai-documents-list-title" className="text-foreground text-sm font-bold">
+                Base documentaire
+              </h2>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                {documents.length} document{documents.length > 1 ? 's' : ''} disponible
+                {documents.length > 1 ? 's' : ''} pour l’assistant
+              </p>
+            </div>
+            <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">
+              PDF · 25 Mo max.
+            </Badge>
+          </div>
 
-            return (
-              <li
-                key={document.id}
-                className="border-border bg-surface flex items-start gap-3 rounded-xl border p-4"
-              >
-                <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
-                  <FileText className="size-4.5" aria-hidden="true" />
-                </div>
+          <ul className="space-y-3">
+            {documents.map((document) => {
+              const status = STATUS_CONFIG[document.status];
+              const StatusIcon = status.icon;
 
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-foreground truncate text-sm font-bold">
-                      {document.title}
-                    </span>
-                    <Badge variant={status.variant} className="gap-1">
-                      <StatusIcon
-                        className={`size-3 ${document.status === 'processing' ? 'animate-spin' : ''}`}
-                        aria-hidden="true"
-                      />
-                      {status.label}
-                    </Badge>
-                    {document.category && <Badge variant="neutral">{document.category}</Badge>}
+              return (
+                <li
+                  key={document.id}
+                  className="border-border/80 bg-surface hover:border-primary/25 hover:shadow-raised group flex flex-col gap-3 rounded-2xl border p-4 shadow-xs transition-[border-color,box-shadow,transform] motion-reduce:hover:translate-y-0 sm:flex-row sm:items-start sm:hover:-translate-y-0.5"
+                >
+                  <div className="bg-primary-subtle text-primary border-primary/10 flex size-11 shrink-0 items-center justify-center rounded-xl border">
+                    <FileText className="size-4.5" aria-hidden="true" />
                   </div>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {document.filename} · Déposé le {formatDate(document.created_at)}
-                  </p>
-                  {document.status === 'error' && document.error_message && (
-                    <p className="text-error text-xs">{document.error_message}</p>
-                  )}
-                </div>
 
-                <div className="flex shrink-0 items-center gap-1">
-                  {document.status === 'error' && (
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-foreground truncate text-sm font-bold">
+                        {document.title}
+                      </span>
+                      <Badge variant={status.variant} className="gap-1">
+                        <StatusIcon
+                          className={`size-3 ${document.status === 'processing' ? 'animate-spin' : ''}`}
+                          aria-hidden="true"
+                        />
+                        {status.label}
+                      </Badge>
+                      {document.category && <Badge variant="neutral">{document.category}</Badge>}
+                    </div>
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      <span className="max-w-full truncate font-mono">{document.filename}</span>
+                      <span className="text-subtle-foreground hidden sm:inline" aria-hidden="true">
+                        ·
+                      </span>
+                      <span>Déposé le {formatDate(document.created_at)}</span>
+                    </div>
+                    {document.status === 'error' && document.error_message && (
+                      <p className="border-error-border bg-error-subtle text-error rounded-lg border px-2.5 py-2 text-xs">
+                        {document.error_message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="border-border/70 flex w-full shrink-0 items-center justify-end gap-1 border-t pt-3 sm:w-auto sm:border-0 sm:pt-0">
+                    {document.status === 'error' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-touch flex-1 gap-1.5 sm:min-h-0 sm:flex-none"
+                        disabled={reindexDocument.isPending}
+                        onClick={() => reindexDocument.mutate(document.id)}
+                      >
+                        <RefreshCw className="size-3.5" aria-hidden="true" />
+                        Réessayer
+                      </Button>
+                    )}
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5"
-                      disabled={reindexDocument.isPending}
-                      onClick={() => reindexDocument.mutate(document.id)}
+                      variant="danger-outline"
+                      size="icon-sm"
+                      className="min-h-touch min-w-touch sm:min-h-0 sm:min-w-0"
+                      onClick={() => {
+                        deleteDocument.reset();
+                        setDocumentToDelete(document);
+                      }}
+                      aria-label={`Supprimer ${document.title}`}
                     >
-                      <RefreshCw className="size-3.5" aria-hidden="true" />
-                      Réessayer
+                      <Trash2 className="size-3.5" aria-hidden="true" />
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-error hover:bg-error-subtle"
-                    onClick={() => setDocumentToDelete(document)}
-                    aria-label={`Supprimer ${document.title}`}
-                  >
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                  </Button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {/* Dépôt d'un document */}
       <Modal
         open={isUploadOpen}
         onOpenChange={(open) => {
+          if (!open && uploadDocument.isPending) return;
           setIsUploadOpen(open);
           if (!open) resetUploadForm();
         }}
         title="Ajouter un document"
         description="PDF uniquement, 25 Mo maximum. L’indexation démarre automatiquement après le dépôt."
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploadDocument.isPending}
+              onClick={() => setIsUploadOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="ai-document-upload-form"
+              variant="primary"
+              disabled={!file || !title.trim() || uploadDocument.isPending}
+              isLoading={uploadDocument.isPending}
+              loadingLabel="Dépôt et indexation du document"
+              leadingIcon={<Upload className="size-4" aria-hidden="true" />}
+              className="w-full gap-2 sm:w-auto"
+            >
+              Déposer et indexer
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleUpload} className="space-y-4 pt-2">
+        <form id="ai-document-upload-form" onSubmit={handleUpload} className="space-y-4">
           <FormError error={uploadDocument.error} />
           {validationError && (
             <p className="text-error text-xs" role="alert">
@@ -241,19 +307,39 @@ export default function AiDocumentsPage() {
             </p>
           )}
 
-          <div>
-            <label htmlFor="ai-document-file" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="ai-document-file"
+              className="text-muted-foreground block text-xs font-medium"
+            >
               Fichier PDF *
             </label>
-            <input
-              ref={fileInputRef}
-              id="ai-document-file"
-              type="file"
-              accept="application/pdf"
-              required
-              onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-              className="w-full rounded-md border border-border-strong bg-surface py-2 px-3 text-xs text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
-            />
+            <div className="border-border-strong bg-surface-sunken/35 focus-within:border-primary focus-within:ring-primary/20 rounded-2xl border border-dashed p-3 transition-[border-color,box-shadow] focus-within:ring-2">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="bg-primary-subtle text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+                  <Upload className="size-4.5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-foreground text-xs font-semibold" aria-live="polite">
+                    {file ? file.name : 'Sélectionnez un fichier PDF'}
+                  </p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    {file
+                      ? `${(file.size / 1024 / 1024).toFixed(2)} Mo · prêt à être envoyé`
+                      : 'Un seul fichier, jusqu’à 25 Mo'}
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                id="ai-document-file"
+                type="file"
+                accept="application/pdf"
+                required
+                onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+                className="file:bg-primary/10 file:text-primary file:hover:bg-primary/15 file:min-h-touch w-full text-xs text-transparent file:mr-3 file:cursor-pointer file:rounded-xl file:border-0 file:px-3 file:py-2 file:text-xs file:font-semibold sm:file:min-h-0"
+              />
+            </div>
           </div>
 
           <Input
@@ -271,29 +357,6 @@ export default function AiDocumentsPage() {
             onChange={(e) => setCategory(e.target.value)}
             placeholder="ex : fibre"
           />
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsUploadOpen(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={!file || !title.trim() || uploadDocument.isPending}
-              className="gap-2"
-            >
-              {uploadDocument.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Upload className="size-4" aria-hidden="true" />
-              )}
-              {uploadDocument.isPending ? 'Envoi…' : 'Déposer et indexer'}
-            </Button>
-          </div>
         </form>
       </Modal>
 
@@ -301,36 +364,47 @@ export default function AiDocumentsPage() {
       <Modal
         open={documentToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setDocumentToDelete(null);
+          if (!open && !deleteDocument.isPending) {
+            setDocumentToDelete(null);
+            deleteDocument.reset();
+          }
         }}
         title="Supprimer ce document ?"
-        {...(documentToDelete
-          ? {
-              description: `« ${documentToDelete.title} » et ses fragments indexés seront définitivement retirés. L’assistant ne pourra plus s’appuyer dessus.`,
-            }
-          : {})}
+        description={
+          documentToDelete
+            ? `« ${documentToDelete.title} » et ses fragments indexés seront définitivement retirés.`
+            : 'Confirmez la suppression de ce document.'
+        }
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={deleteDocument.isPending}
+              onClick={() => setDocumentToDelete(null)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              disabled={deleteDocument.isPending}
+              isLoading={deleteDocument.isPending}
+              loadingLabel="Suppression du document"
+              leadingIcon={<Trash2 className="size-4" aria-hidden="true" />}
+              onClick={() => void handleDelete()}
+              className="w-full gap-2 sm:w-auto"
+            >
+              Supprimer définitivement
+            </Button>
+          </div>
+        }
       >
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => setDocumentToDelete(null)}>
-            Annuler
-          </Button>
-          <Button
-            variant="danger"
-            disabled={deleteDocument.isPending}
-            onClick={async () => {
-              if (!documentToDelete) return;
-              await deleteDocument.mutateAsync(documentToDelete);
-              setDocumentToDelete(null);
-            }}
-            className="gap-2"
-          >
-            {deleteDocument.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Trash2 className="size-4" aria-hidden="true" />
-            )}
-            Supprimer
-          </Button>
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            L’assistant ne pourra plus utiliser ce document comme source. Cette action est
+            irréversible.
+          </p>
+          <FormError error={deleteDocument.error} />
         </div>
       </Modal>
     </div>

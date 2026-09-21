@@ -1,0 +1,17 @@
+{
+  "stagingProjectRef": "waktfxautydtztcalzbk",
+  "mainProjectRef": "wtsiaisfwtthmcxygeei",
+  "businessEmail": "harrybergoz@gmail.com",
+  "portalEmail": "client.demo@rezo360.test",
+  "organizationSlug": "rezo360-commercial-demo",
+  "organizationId": "de360000-0000-4000-8000-000000000010",
+  "customerId": "de360000-0000-4000-8000-000000000101",
+  "missionId": "de360000-0000-4000-8000-000000000301",
+  "missionReference": "DEMO-360-001",
+  "missionTitle": "Modernisation électrique du Fournil",
+  "interventionId": "de360000-0000-4000-8000-000000000601",
+  "quoteId": "de360000-0000-4000-8000-000000000401",
+  "quoteReference": "DEV-DEMO-001",
+  "invoiceId": "de360000-0000-4000-8000-000000000701",
+  "customerName": "Le Fournil de Belleville"
+}
