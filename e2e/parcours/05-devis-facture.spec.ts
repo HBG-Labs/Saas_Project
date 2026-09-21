@@ -72,7 +72,7 @@ test.describe('Factures', () => {
 
     await page.goto('/factures');
 
-    await expect(page.getByText('FA-2026-0118').first()).toBeVisible();
+    await expect(page.getByText('FA-2026-0118').filter({ visible: true }).first()).toBeVisible();
     /*
       Le montant est écrit DEUX FOIS dans la liste : une variante `sm:hidden`
       pour le téléphone, une `hidden sm:block` pour l'écran large. `.first()`
