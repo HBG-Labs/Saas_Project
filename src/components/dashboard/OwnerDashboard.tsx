@@ -181,13 +181,11 @@ export function OwnerDashboard() {
           icon={Users}
           to={ROUTES.organizationMembers}
           actionLabel="Gérer"
-          badge={
-            members.isPending
-              ? { text: 'Chargement', variant: 'neutral' }
-              : members.isError
-                ? { text: 'Indisponible', variant: 'neutral' }
-                : { text: `${activeMembersCount} actif${activeMembersCount > 1 ? 's' : ''}` }
-          }
+          {...(members.isPending
+            ? { badge: { text: 'Chargement', variant: 'neutral' as const } }
+            : members.isError
+              ? { badge: { text: 'Indisponible', variant: 'neutral' as const } }
+              : {})}
         />
       </div>
 

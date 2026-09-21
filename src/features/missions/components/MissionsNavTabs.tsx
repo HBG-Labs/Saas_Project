@@ -32,7 +32,7 @@ export function MissionsNavTabs({ pendingReviewCount = 0 }: MissionsNavTabsProps
   ];
 
   return (
-    <div className="no-scrollbar border-border -mx-4 mb-5 flex items-center gap-1.5 overflow-x-auto scroll-smooth border-b px-4 pb-2.5 whitespace-nowrap sm:mx-0 sm:px-0">
+    <div className="no-scrollbar border-border -mx-4 flex items-center gap-1.5 overflow-x-auto scroll-smooth border-b px-4 pb-2 whitespace-nowrap sm:mx-0 sm:px-0 sm:pb-2.5">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (

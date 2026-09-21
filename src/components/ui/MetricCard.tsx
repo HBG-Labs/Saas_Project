@@ -71,7 +71,7 @@ export function MetricCard({
           ? 'border-warning-border bg-warning-subtle before:bg-warning'
           : 'border-border/80 hover:border-primary/30 before:bg-primary/70',
         layout === 'strip' &&
-          'border-border hover:bg-surface-hover rounded-none border-0 border-r bg-transparent p-4 shadow-none before:hidden hover:translate-y-0 hover:shadow-none sm:p-5',
+          'border-border hover:bg-surface-hover rounded-none border-0 border-r bg-transparent p-3 shadow-none before:hidden hover:translate-y-0 hover:shadow-none sm:p-4',
         className,
       )}
     >
@@ -102,9 +102,10 @@ export function MetricCard({
             className={cn(
               'flex shrink-0 items-center gap-1 text-sm font-semibold transition-transform group-hover:translate-x-0.5',
               attention ? 'text-warning' : 'text-primary',
+              layout === 'strip' && 'ml-auto',
             )}
           >
-            {actionLabel}
+            <span className={cn(layout === 'strip' && 'sr-only')}>{actionLabel}</span>
             <ArrowRight className="size-3.5" aria-hidden="true" />
           </span>
         </div>

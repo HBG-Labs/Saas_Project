@@ -108,4 +108,36 @@ test.describe('Responsive', () => {
     expect(apparence.iconColor).not.toBe(apparence.inactiveIconColor);
     expect(apparence.iconColor).not.toBe(apparence.labelColor);
   });
+
+  test('les états vides essentiels tiennent dans un écran mobile sans doublons', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Comportement propre à la hauteur contrainte d’un téléphone');
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await installeSupabase(page, {
+      role: 'owner',
+      donnees: { missions: [], interventions: [] },
+    });
+
+    await page.goto('/missions');
+    await expect(page.getByText('Aucune mission en cours', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Nouvelle mission', exact: true })).toHaveCount(1);
+    await expect(page.getByText('Créer une première mission', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('CSV', { exact: true })).toHaveCount(0);
+    await expectVerticalFit(page, 'missions vides');
+
+    await page.goto('/controle');
+    await expect(page.getByText('Rien à contrôler', { exact: true })).toBeVisible();
+    await expect(page.getByText('0 en attente de contrôle', { exact: true })).toHaveCount(0);
+    await expectVerticalFit(page, 'rapports vides');
+  });
 });
+
+async function expectVerticalFit(page: import('@playwright/test').Page, label: string) {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollHeight - window.innerHeight,
+  );
+  expect(overflow, `${label} déborde verticalement de ${overflow} px`).toBeLessThanOrEqual(1);
+}

@@ -3,7 +3,6 @@ import {
   Building2,
   ClipboardList,
   Download,
-  FileText,
   Map as MapIcon,
   MapPin,
   Navigation,
@@ -74,14 +73,15 @@ export default function MissionsListPage() {
    * États réellement peuplés, hors celui déjà sélectionné.
    */
   const counts: Record<string, number> = statusCounts.data ?? {};
+  const hasMissions = Object.values(counts).some((count) => count > 0);
   const elsewhere = (Object.keys(MISSION_STATUS_LABELS) as MissionStatus[])
     .filter((status) => (counts[status] ?? 0) > 0 && status !== filters.status)
     .map((status) => [status, counts[status] ?? 0] as const);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
-        className="sm:flex-col xl:flex-row"
+        className="mb-0 sm:flex-col xl:flex-row"
         title={jobPlural}
         description={
           canViewAll
@@ -89,69 +89,81 @@ export default function MissionsListPage() {
             : `Vos ${jobPlural.toLowerCase()} confiés et à traiter sur le terrain.`
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                exportMissionsToCsv(list, `missions-${new Date().toISOString().slice(0, 10)}.csv`)
-              }
-              className="text-xs"
-              disabled={list.length === 0}
-              title="Exporter les missions affichées en fichier CSV"
-            >
-              <Download className="mr-1 size-3.5" />
-              CSV
-            </Button>
+          hasMissions || canCreate ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {hasMissions ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      exportMissionsToCsv(
+                        list,
+                        `missions-${new Date().toISOString().slice(0, 10)}.csv`,
+                      )
+                    }
+                    className="text-xs"
+                    disabled={list.length === 0}
+                    title="Exporter les missions affichées en fichier CSV"
+                  >
+                    <Download className="mr-1 size-3.5" />
+                    CSV
+                  </Button>
 
-            {canViewPlanning && (
-              <Button asChild variant="outline" size="sm" className="text-xs">
-                <Link to={ROUTES.planning}>
-                  <Calendar className="text-primary mr-1 size-3.5" />
-                  Planning
-                </Link>
-              </Button>
-            )}
+                  {canViewPlanning && (
+                    <Button asChild variant="outline" size="sm" className="text-xs">
+                      <Link to={ROUTES.planning}>
+                        <Calendar className="text-primary mr-1 size-3.5" />
+                        Planning
+                      </Link>
+                    </Button>
+                  )}
 
-            <Button asChild variant="outline" size="sm" className="text-xs">
-              <Link to={ROUTES.map}>
-                <MapIcon className="text-primary mr-1 size-3.5" />
-                Carte
-              </Link>
-            </Button>
+                  <Button asChild variant="outline" size="sm" className="text-xs">
+                    <Link to={ROUTES.map}>
+                      <MapIcon className="text-primary mr-1 size-3.5" />
+                      Carte
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
 
-            {canCreate ? (
-              <Button asChild variant="primary" size="sm" className="text-xs">
-                <Link to={ROUTES.missionNew}>
-                  <Plus className="mr-1 size-4" />
-                  Nouvelle mission
-                </Link>
-              </Button>
-            ) : null}
-          </div>
+              {canCreate ? (
+                <Button asChild variant="primary" size="sm" className="text-xs">
+                  <Link to={ROUTES.missionNew}>
+                    <Plus className="mr-1 size-4" />
+                    Nouvelle mission
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+          ) : null
         }
       />
 
       <MissionsNavTabs />
 
-      {/* Bannière de guidage pour les comptes-rendus terrain */}
-      <div className="border-border text-muted-foreground flex items-center gap-3 border-b pb-4 text-sm">
-        <div className="flex items-center gap-2.5">
-          <FileText className="text-primary size-4 shrink-0" />
-          <span>
-            <strong>Interventions terrain :</strong> Ouvrez une mission pour démarrer
-            l’intervention, enregistrer vos temps et compléter le compte-rendu.
-          </span>
+      {hasMissions ? (
+        <div className="border-border text-muted-foreground flex items-center gap-3 border-b pb-4 text-sm">
+          <div className="flex items-center gap-2.5">
+            <ClipboardList className="text-primary size-4 shrink-0" />
+            <span>
+              <strong>Interventions terrain :</strong> Ouvrez une mission pour démarrer
+              l’intervention, enregistrer vos temps et compléter le compte-rendu.
+            </span>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <MissionFiltersBar
-        organizationId={organizationId}
-        value={filters}
-        onChange={setFilters}
-        showAdvanced={canViewAll}
-      />
+      {hasMissions || activeFilters > 0 ? (
+        <MissionFiltersBar
+          organizationId={organizationId}
+          value={filters}
+          onChange={setFilters}
+          showAdvanced={canViewAll}
+        />
+      ) : null}
 
       {missions.isPending ? (
         <ListSkeleton />
@@ -182,13 +194,6 @@ export default function MissionsListPage() {
                   onClick={() => setFilters(EMPTY_MISSION_FILTERS)}
                 >
                   Réinitialiser les filtres
-                </Button>
-              ) : canCreate ? (
-                <Button asChild variant="primary" size="sm">
-                  <Link to={ROUTES.missionNew}>
-                    <Plus className="mr-1 size-4" />
-                    Créer une première mission
-                  </Link>
                 </Button>
               ) : undefined
             }

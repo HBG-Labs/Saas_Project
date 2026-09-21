@@ -78,7 +78,7 @@ export default function ReviewQueuePage() {
 
   const emptyExplanation =
     drafts + rejected + approved === 0
-      ? 'Aucun compte rendu dans cette entreprise pour l’instant. Ils apparaîtront ici une fois rédigés puis soumis — ce qui suppose la mission terminée.'
+      ? 'Les comptes rendus soumis après une mission terminée apparaîtront ici.'
       : [
           drafts > 0
             ? `${drafts} compte${drafts > 1 ? 's' : ''} rendu${drafts > 1 ? 's' : ''} en cours de rédaction`
@@ -91,10 +91,11 @@ export default function ReviewQueuePage() {
         '. Un compte rendu rejoint cette file une fois soumis, la mission terminée.';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
+        className="mb-0"
         title="Contrôle & Rapports"
-        description="Les comptes rendus soumis attendent votre validation. Vous pouvez valider ou refuser en motivant — le contenu appartient à son auteur."
+        description="Validez ou refusez les comptes rendus soumis. Le contenu reste attribué à son auteur."
       />
 
       <MissionsNavTabs pendingReviewCount={rawList.length} />
@@ -115,28 +116,27 @@ export default function ReviewQueuePage() {
         </div>
       )}
 
-      {/* Barre de stats & recherche */}
-      <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-lg border p-3.5 sm:flex-row sm:items-center sm:p-4">
-        <div className="text-2xs flex flex-wrap items-center gap-2 font-semibold">
-          <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
-            <ClipboardCheck className="size-4" aria-hidden="true" />
-          </span>
-          <Badge variant="primary" className="text-3xs">
-            {rawList.length} en attente de contrôle
-          </Badge>
-          {drafts > 0 && (
-            <Badge variant="outline" className="text-3xs">
-              {drafts} en rédaction
+      {rawList.length > 0 ? (
+        <div className="bg-surface border-border flex flex-col items-stretch justify-between gap-3 rounded-lg border p-3.5 sm:flex-row sm:items-center sm:p-4">
+          <div className="text-2xs flex flex-wrap items-center gap-2 font-semibold">
+            <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+              <ClipboardCheck className="size-4" aria-hidden="true" />
+            </span>
+            <Badge variant="primary" className="text-3xs">
+              {rawList.length} en attente de contrôle
             </Badge>
-          )}
-          {approved > 0 && (
-            <Badge variant="success" className="text-3xs">
-              {approved} validé{approved > 1 ? 's' : ''}
-            </Badge>
-          )}
-        </div>
+            {drafts > 0 && (
+              <Badge variant="outline" className="text-3xs">
+                {drafts} en rédaction
+              </Badge>
+            )}
+            {approved > 0 && (
+              <Badge variant="success" className="text-3xs">
+                {approved} validé{approved > 1 ? 's' : ''}
+              </Badge>
+            )}
+          </div>
 
-        {rawList.length > 0 && (
           <div className="min-w-0 sm:w-72">
             <Input
               type="text"
@@ -163,8 +163,8 @@ export default function ReviewQueuePage() {
               className="rounded-xl text-xs"
             />
           </div>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <FormError error={error} />
 

@@ -54,7 +54,7 @@ export function AtelierIllustration({
       aria-hidden="true"
       data-atelier-illustration={subject}
       className={cn(
-        'atelier-illustration relative isolate block w-56 max-w-full shrink-0 sm:w-64',
+        'atelier-illustration relative isolate block w-44 max-w-full shrink-0 sm:w-64',
         className,
       )}
     >

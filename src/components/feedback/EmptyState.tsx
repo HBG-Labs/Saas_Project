@@ -35,7 +35,9 @@ export function EmptyState({
         illustration
           ? 'bg-surface rounded-xl'
           : 'border-border/80 bg-surface/50 rounded-2xl border border-dashed',
-        size === 'md' ? 'gap-4 px-6 py-12 sm:py-16' : 'gap-3 px-4 py-8',
+        size === 'md'
+          ? 'gap-3 px-4 py-7 sm:gap-4 sm:px-6 sm:py-12 lg:py-16'
+          : 'gap-3 px-4 py-6 sm:py-8',
         className,
       )}
     >
@@ -57,7 +59,7 @@ export function EmptyState({
         <p
           className={cn(
             'text-foreground text-base font-bold tracking-tight',
-            illustration && 'text-lg',
+            illustration && 'text-base sm:text-lg',
           )}
         >
           {title}
