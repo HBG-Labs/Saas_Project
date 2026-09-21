@@ -126,7 +126,7 @@ export default function FavoritesPage() {
           className={cn(
             viewMode === 'grid'
               ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-              : 'w-full space-y-2',
+              : 'border-border w-full border-y',
           )}
         >
           {favoriteCards.map((tool) => (

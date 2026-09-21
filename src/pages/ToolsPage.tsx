@@ -154,6 +154,10 @@ export default function ToolsPage() {
   };
 
   const isBrowsingAll = activeTab === 'all' && query.trim() === '';
+  const toolCollectionClass =
+    viewMode === 'grid'
+      ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+      : 'border-border w-full border-y';
 
   return (
     <>
@@ -536,13 +540,7 @@ export default function ToolsPage() {
                   {favoriteTools.length} outil{favoriteTools.length > 1 ? 's' : ''}
                 </span>
               </div>
-              <div
-                className={cn(
-                  viewMode === 'grid'
-                    ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                    : 'w-full space-y-2',
-                )}
-              >
+              <div className={toolCollectionClass}>
                 {favoriteTools.map((tool) => (
                   <ToolCard
                     key={`fav-${tool.slug}`}
@@ -569,13 +567,7 @@ export default function ToolsPage() {
                 {engineeringCalcTools.length} calculateurs
               </span>
             </div>
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'w-full space-y-2',
-              )}
-            >
+            <div className={toolCollectionClass}>
               {engineeringCalcTools.map((tool) => (
                 <ToolCard
                   key={`calc-${tool.slug}`}
@@ -601,13 +593,7 @@ export default function ToolsPage() {
                 {conversionTools.length} outils
               </span>
             </div>
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'w-full space-y-2',
-              )}
-            >
+            <div className={toolCollectionClass}>
               {conversionTools.map((tool) => (
                 <ToolCard
                   key={`conv-${tool.slug}`}
@@ -633,13 +619,7 @@ export default function ToolsPage() {
                 {fieldTools.length} instruments
               </span>
             </div>
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'w-full space-y-2',
-              )}
-            >
+            <div className={toolCollectionClass}>
               {fieldTools.map((tool) => (
                 <ToolCard
                   key={`field-${tool.slug}`}
@@ -665,13 +645,7 @@ export default function ToolsPage() {
                 {notesTools.length} outils
               </span>
             </div>
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'w-full space-y-2',
-              )}
-            >
+            <div className={toolCollectionClass}>
               {notesTools.map((tool) => (
                 <ToolCard
                   key={`notes-${tool.slug}`}
@@ -716,13 +690,7 @@ export default function ToolsPage() {
           </div>
 
           {filteredTools.length > 0 ? (
-            <div
-              className={cn(
-                viewMode === 'grid'
-                  ? 'grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                  : 'w-full space-y-2',
-              )}
-            >
+            <div className={toolCollectionClass}>
               {filteredTools.map((tool) => (
                 <ToolCard
                   key={tool.slug}

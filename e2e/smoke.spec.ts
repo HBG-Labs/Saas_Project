@@ -58,6 +58,8 @@ test.describe('Parcours de base & navigation marketing', () => {
     await expect(page.getByRole('heading', { name: 'Calculateur de Surface' })).toBeVisible();
     await expect(page.getByRole('heading', { name: "Convertisseur d'unités" })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Lampe Torche & Balisage' })).toBeVisible();
+    await expect(page.getByText('Lancer', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Calculatrice Scientifique' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 

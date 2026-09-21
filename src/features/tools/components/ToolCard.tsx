@@ -40,68 +40,65 @@ export function ToolCard({
     return (
       <div
         className={cn(
-          'group bg-surface border-border shadow-2xs relative flex items-center justify-between rounded-xl border p-2.5 sm:p-3 gap-3',
-          'hover:border-primary/50 hover:shadow-xs transition-all duration-200',
-          'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
+          'group bg-surface border-border relative flex min-h-[4.75rem] items-center gap-3 border-b px-1 py-2.5 last:border-b-0 sm:min-h-20 sm:px-2',
+          'hover:bg-surface-hover/60 transition-colors duration-150',
+          'focus-within:bg-surface-hover/60 focus-within:ring-ring focus-within:ring-2 focus-within:ring-inset',
           className,
         )}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <span
-            className={cn(
-              'flex size-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
-              category?.tint ?? 'bg-surface-hover text-muted-foreground',
-            )}
-          >
-            <Icon className="size-4" aria-hidden="true" />
-          </span>
+        <span
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+            category?.tint ?? 'bg-surface-hover text-muted-foreground',
+          )}
+        >
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-              <h3 className="text-foreground font-bold text-sm tracking-tight">
-                <Link
-                  to={ROUTES.tool(tool.slug)}
-                  className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
-                >
-                  {tool.title}
-                </Link>
-              </h3>
-              {category && <Badge variant="neutral" className="text-3xs px-1.5 py-0 shrink-0">{category.name}</Badge>}
-            </div>
-            <p className="text-muted-foreground line-clamp-1 text-xs">
-              {tool.description}
-            </p>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-foreground text-sm leading-snug font-bold tracking-tight">
+            <Link
+              to={ROUTES.tool(tool.slug)}
+              className="hover:text-primary transition-colors after:absolute after:inset-0 focus-visible:outline-none"
+            >
+              {tool.title}
+            </Link>
+          </h3>
+          <div className="mt-1 flex min-w-0 items-center gap-2">
+            {category ? (
+              <Badge variant="neutral" className="text-3xs shrink-0 px-1.5 py-0">
+                {category.name}
+              </Badge>
+            ) : null}
+            <p className="text-muted-foreground min-w-0 truncate text-xs">{tool.description}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 relative z-20">
+        <div className="relative z-20 flex shrink-0 items-center gap-0.5">
           {onToggleFavorite ? (
             <button
               type="button"
               onClick={() => onToggleFavorite(tool.slug)}
               aria-pressed={isFavorite}
               aria-label={
-                isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
+                isFavorite
+                  ? `Retirer ${tool.title} des favoris`
+                  : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
-                // Voir `MetierToolCard` : cible tactile pleine au doigt,
-                // compacte dès qu'un pointeur est disponible.
-                'size-touch sm:size-7 flex items-center justify-center rounded-md transition-colors',
+                'focus-visible:ring-ring size-touch flex cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-9',
                 'hover:bg-surface-hover',
                 isFavorite ? 'text-warning' : 'text-subtle-foreground',
               )}
             >
-              <Star className={cn('size-3.5', isFavorite && 'fill-current')} aria-hidden="true" />
+              <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden="true" />
             </button>
           ) : null}
 
-          <Link
-            to={ROUTES.tool(tool.slug)}
-            className="min-h-touch sm:min-h-0 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-2xs transition-all hover:bg-primary-hover active:scale-95 cursor-pointer"
-          >
-            <span>Lancer</span>
-            <ChevronRight className="size-3" />
-          </Link>
+          <ChevronRight
+            className="text-subtle-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </div>
       </div>
     );
@@ -110,8 +107,8 @@ export function ToolCard({
   return (
     <div
       className={cn(
-        'group bg-surface border-border shadow-2xs relative flex flex-col justify-between rounded-xl border p-3 sm:p-3.5',
-        'hover:border-primary/40 hover:shadow-xs transition-all duration-200',
+        'group bg-surface border-border relative flex flex-col justify-between rounded-xl border p-3 shadow-2xs sm:p-3.5',
+        'hover:border-primary/40 transition-all duration-200 hover:shadow-xs',
         'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
         className,
       )}
@@ -133,7 +130,9 @@ export function ToolCard({
               onClick={() => onToggleFavorite(tool.slug)}
               aria-pressed={isFavorite}
               aria-label={
-                isFavorite ? `Retirer ${tool.title} des favoris` : `Ajouter ${tool.title} aux favoris`
+                isFavorite
+                  ? `Retirer ${tool.title} des favoris`
+                  : `Ajouter ${tool.title} aux favoris`
               }
               className={cn(
                 'relative z-20 flex size-7 items-center justify-center rounded-md transition-colors',
@@ -148,10 +147,10 @@ export function ToolCard({
           ) : null}
         </div>
 
-        <h3 className="text-foreground mt-2 font-bold text-sm leading-snug">
+        <h3 className="text-foreground mt-2 text-sm leading-snug font-bold">
           <Link
             to={ROUTES.tool(tool.slug)}
-            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none hover:text-primary transition-colors"
+            className="hover:text-primary transition-colors after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
           >
             {tool.title}
           </Link>
@@ -161,7 +160,7 @@ export function ToolCard({
         </p>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between gap-2 text-xs">
+      <div className="border-border/50 mt-3 flex items-center justify-between gap-2 border-t pt-2 text-xs">
         {category ? (
           <Badge variant="neutral" className="text-3xs px-1.5 py-0">
             {category.name}
@@ -170,13 +169,10 @@ export function ToolCard({
           <span aria-hidden="true" />
         )}
 
-        <Link
-          to={ROUTES.tool(tool.slug)}
-          className="relative z-20 text-primary font-bold flex items-center gap-0.5 text-xs hover:underline cursor-pointer"
-        >
-          <span>Lancer</span>
-          <ChevronRight className="size-3" />
-        </Link>
+        <ChevronRight
+          className="text-subtle-foreground size-4 transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
       </div>
     </div>
   );
