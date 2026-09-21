@@ -16,12 +16,14 @@ import { Link } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ROUTES } from '@/config/routes';
+import { Table } from '@/components/ui/Table';
 import { CustomerPicker, SitePicker, useCustomers, useCustomerSites } from '@/features/customers';
 import { useCurrentOrganization } from '@/features/organizations';
 import {
@@ -62,7 +64,7 @@ const STANDARD_PRESETS: readonly { label: string; unit: string; priceEuros: numb
 ];
 
 export default function QuotesPage() {
-  useDocumentTitle('Devis & Chiffrage Express');
+  useDocumentTitle('Nouveau devis');
 
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
@@ -242,8 +244,8 @@ export default function QuotesPage() {
     return (
       <div className="mx-auto max-w-6xl space-y-6 pb-12">
         <PageHeader
-          title="Devis & Chiffrage Express"
-          description="Simulateur et générateur de chiffrage instantané pour les prestations sur site et devis clients."
+          title="Nouveau devis"
+          description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
         />
         <ErrorState error={templatesQuery.error} onRetry={() => void templatesQuery.refetch()} />
       </div>
@@ -253,30 +255,31 @@ export default function QuotesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       <PageHeader
-        title="Devis & Chiffrage Express"
-        description="Simulateur et générateur de chiffrage instantané pour les prestations sur site et devis clients."
+        title="Nouveau devis"
+        description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
         actions={
           <Button asChild variant="outline" className="gap-2">
             <Link to={ROUTES.quotesHistory}>
               <History className="size-4" aria-hidden="true" />
-              Historique des devis
+              Voir les devis
             </Link>
           </Button>
         }
       />
+      <SalesNavTabs />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Formulaire Chiffrage (2/3) */}
         <div className="space-y-6 lg:col-span-2">
           {/* Card Client & Site */}
-          <Card>
-            <CardHeader className="border-b pb-4">
+          <Card variant="section" className="pb-6">
+            <CardHeader className="px-0 pt-0 pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <Building className="text-primary size-4" />
-                Informations Client & Intervention
+                Client et intervention
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-5">
+            <CardContent className="space-y-4 px-0 pt-0">
               <div className="grid gap-4 sm:grid-cols-2">
                 <CustomerPicker
                   organizationId={organizationId}
@@ -309,11 +312,11 @@ export default function QuotesPage() {
           </Card>
 
           {/* Catalog Prestations Rapides */}
-          <Card>
-            <CardHeader className="flex flex-col items-stretch gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <Card variant="section" className="pb-6">
+            <CardHeader className="flex flex-col items-stretch gap-3 px-0 pt-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-muted-foreground flex min-w-0 items-start gap-2 text-xs font-bold tracking-wider uppercase sm:items-center">
                 <Sparkles className="text-warning mt-0.5 size-3.5 shrink-0 sm:mt-0" />
-                Catalogue des Prestations Standards & Perso
+                Catalogue de prestations
               </CardTitle>
 
               <Button
@@ -327,7 +330,7 @@ export default function QuotesPage() {
               </Button>
             </CardHeader>
 
-            <CardContent className="pt-4">
+            <CardContent className="px-0 pt-0">
               <div className="flex flex-wrap gap-2">
                 {templates.map((preset) => {
                   const priceEuros = toEuros(preset.unit_price_cents);
@@ -335,7 +338,7 @@ export default function QuotesPage() {
                   return (
                     <div
                       key={preset.id}
-                      className="group border-border bg-surface text-muted-foreground hover:border-primary/50 hover:bg-primary/5 relative flex min-h-touch items-center rounded-lg border pr-1 pl-3 text-xs transition-[background-color,border-color] sm:min-h-8"
+                      className="group border-border bg-surface text-muted-foreground hover:border-primary/50 hover:bg-primary/5 min-h-touch relative flex items-center rounded-lg border pr-1 pl-3 text-xs transition-[background-color,border-color] sm:min-h-8"
                     >
                       <button
                         type="button"
@@ -346,7 +349,7 @@ export default function QuotesPage() {
                             price: priceEuros,
                           })
                         }
-                        className="focus-visible:ring-ring flex min-h-touch min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
+                        className="focus-visible:ring-ring min-h-touch flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
                       >
                         <Plus className="text-primary size-3 shrink-0" />
                         <span className="text-foreground max-w-[200px] truncate">
@@ -359,7 +362,7 @@ export default function QuotesPage() {
                       <button
                         type="button"
                         onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
-                        className="text-subtle-foreground hover:bg-error/20 hover:text-error focus-visible:ring-ring ml-1 flex size-touch shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-7"
+                        className="text-subtle-foreground hover:bg-error/20 hover:text-error focus-visible:ring-ring size-touch ml-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-7"
                         title="Supprimer cette prestation du catalogue"
                         aria-label={`Supprimer ${preset.label} du catalogue`}
                       >
@@ -394,12 +397,12 @@ export default function QuotesPage() {
           </Card>
 
           {/* Lignes de devis */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <Card variant="section" className="pb-6">
+            <CardHeader className="flex flex-row items-center justify-between px-0 pt-0 pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <Calculator className="text-success size-4" />
-                  Détail des Prestations & Fournitures
+                  Prestations et fournitures
                 </CardTitle>
               </div>
 
@@ -414,7 +417,7 @@ export default function QuotesPage() {
               </Button>
             </CardHeader>
 
-            <CardContent className="space-y-2 pt-5">
+            <CardContent className="space-y-2 px-0 pt-0">
               {/*
                 Ligne d'en-tête, à partir de `sm` seulement.
 
@@ -530,11 +533,11 @@ export default function QuotesPage() {
 
         {/* Aperçu & Synthèse Financière (1/3) */}
         <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-          <Card className="border-success/30 from-surface to-surface-sunken bg-gradient-to-b shadow-xl">
+          <Card className="border-primary/25 shadow-xs">
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <FileText className="text-success size-4" />
-                Synthèse du Devis
+                Synthèse du devis
               </CardTitle>
               <CardDescription>Calcul automatique des totaux HT & TTC.</CardDescription>
             </CardHeader>
@@ -544,13 +547,13 @@ export default function QuotesPage() {
                 <div className="text-muted-foreground flex justify-between">
                   <span>Client :</span>
                   <strong className="text-foreground max-w-[160px] truncate">
-                    {clientName || '—'}
+                    {selectedCustomer?.name || clientName || '—'}
                   </strong>
                 </div>
                 <div className="text-muted-foreground flex justify-between">
                   <span>Site :</span>
                   <strong className="text-foreground max-w-[160px] truncate">
-                    {siteName || '—'}
+                    {selectedSite?.name || siteName || '—'}
                   </strong>
                 </div>
                 <div className="flex flex-col gap-1.5 pt-1">
@@ -622,7 +625,7 @@ export default function QuotesPage() {
                 </div>
                 <div className="border-border flex items-center justify-between border-t pt-3 text-sm">
                   <span className="text-foreground font-bold">Total TTC :</span>
-                  <span className="text-success text-xl font-bold">{totalTTC.toFixed(2)} €</span>
+                  <span className="text-primary text-xl font-bold">{totalTTC.toFixed(2)} €</span>
                 </div>
               </div>
 
@@ -640,7 +643,7 @@ export default function QuotesPage() {
                     ? 'Enregistrement…'
                     : savedReference !== null
                       ? `Devis ${savedReference} enregistré`
-                      : 'Valider & Enregistrer le devis'}
+                      : 'Enregistrer le devis'}
                 </Button>
 
                 {/*
@@ -765,18 +768,20 @@ export default function QuotesPage() {
           */}
           <div
             id="quote-printable-area"
-            className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
+            className="financial-paper space-y-6 rounded-xl border p-4 font-sans sm:p-8"
           >
             {/* Header Document */}
-            <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
+            <div className="financial-paper-border flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-blue-900">
+                <h2 className="financial-paper-brand text-xl font-bold tracking-tight">
                   {organization?.name ?? 'REZO360 Pro'}
                 </h2>
                 {organization?.legal_name && organization.legal_name !== organization.name && (
-                  <p className="text-xs font-semibold text-slate-600">{organization.legal_name}</p>
+                  <p className="financial-paper-text text-xs font-semibold">
+                    {organization.legal_name}
+                  </p>
                 )}
-                <p className="text-2xs mt-1 text-slate-500">
+                <p className="financial-paper-muted text-2xs mt-1">
                   {organization?.registration_number
                     ? `SIRET : ${organization.registration_number}`
                     : ''}
@@ -784,7 +789,7 @@ export default function QuotesPage() {
                   {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
                 </p>
                 {(organization?.address_line1 || organization?.city) && (
-                  <p className="text-3xs text-slate-500">
+                  <p className="financial-paper-muted text-3xs">
                     {[organization?.address_line1, organization?.postal_code, organization?.city]
                       .filter(Boolean)
                       .join(' ')}
@@ -793,66 +798,69 @@ export default function QuotesPage() {
               </div>
 
               <div className="text-left sm:text-right">
-                <span className="inline-block rounded-md bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-900">
+                <span className="financial-paper-label inline-block rounded-md px-2.5 py-1 text-xs font-bold">
                   DEVIS N° {quoteNumber}
                 </span>
-                <p className="text-2xs mt-1 text-slate-500">Émis le : {todayDate}</p>
-                <p className="text-2xs text-slate-500">Valide jusqu'au : {validUntilDate}</p>
+                <p className="financial-paper-muted text-2xs mt-1">Émis le : {todayDate}</p>
+                <p className="financial-paper-muted text-2xs">Valide jusqu'au : {validUntilDate}</p>
               </div>
             </div>
 
             {/* Informations Client & Site */}
-            <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs sm:grid-cols-2">
+            <div className="financial-paper-panel grid grid-cols-1 gap-4 rounded-lg border p-4 text-xs sm:grid-cols-2">
               <div>
-                <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+                <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
                   DESTINATAIRE CLIENT
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-slate-900">
-                  {clientName || 'Client non spécifié'}
+                <p className="financial-paper-strong mt-0.5 text-sm font-bold">
+                  {selectedCustomer?.name || clientName || 'Client non spécifié'}
                 </p>
               </div>
               <div>
-                <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+                <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
                   SITE D'INTERVENTION
                 </p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-800">
-                  {siteName || 'Site principal'}
+                <p className="financial-paper-strong mt-0.5 text-sm font-semibold">
+                  {selectedSite?.name || siteName || 'Site principal'}
                 </p>
               </div>
             </div>
 
             {/* Tableau des Lignes du Devis */}
-            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
-            <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes du devis à imprimer" tabIndex={0}>
-              <table className="w-full min-w-[34rem] border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
-                    <th className="px-3 py-2.5">Désignation de la prestation</th>
-                    <th className="px-2 py-2.5 text-center">Qté</th>
-                    <th className="px-2 py-2.5 text-center">Unité</th>
-                    <th className="px-3 py-2.5 text-right">P.U HT</th>
-                    <th className="px-3 py-2.5 text-right">Total HT</th>
+            <Table
+              label="Lignes du devis à imprimer"
+              minWidth="34rem"
+              containerClassName="financial-paper-focus"
+            >
+              <thead>
+                <tr className="financial-paper-table-head border-b font-semibold">
+                  <th className="px-3 py-2.5">Désignation de la prestation</th>
+                  <th className="px-2 py-2.5 text-center">Qté</th>
+                  <th className="px-2 py-2.5 text-center">Unité</th>
+                  <th className="px-3 py-2.5 text-right">P.U HT</th>
+                  <th className="px-3 py-2.5 text-right">Total HT</th>
+                </tr>
+              </thead>
+              <tbody className="financial-paper-table-body divide-y">
+                {items.map((it) => (
+                  <tr key={it.id}>
+                    <td className="financial-paper-strong px-3 py-2.5 font-medium">
+                      {it.description}
+                    </td>
+                    <td className="px-2 py-2.5 text-center">{it.quantity}</td>
+                    <td className="financial-paper-muted px-2 py-2.5 text-center">{it.unit}</td>
+                    <td className="px-3 py-2.5 text-right">{it.unitPrice.toFixed(2)} €</td>
+                    <td className="financial-paper-strong px-3 py-2.5 text-right font-semibold">
+                      {(it.quantity * it.unitPrice).toFixed(2)} €
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 text-slate-800">
-                  {items.map((it) => (
-                    <tr key={it.id}>
-                      <td className="px-3 py-2.5 font-medium text-slate-900">{it.description}</td>
-                      <td className="px-2 py-2.5 text-center">{it.quantity}</td>
-                      <td className="px-2 py-2.5 text-center text-slate-500">{it.unit}</td>
-                      <td className="px-3 py-2.5 text-right">{it.unitPrice.toFixed(2)} €</td>
-                      <td className="px-3 py-2.5 text-right font-semibold text-slate-900">
-                        {(it.quantity * it.unitPrice).toFixed(2)} €
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </Table>
 
             {/* Récapitulatif Financier */}
-            <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
-              <div className="text-3xs space-y-1 text-slate-500">
+            <div className="financial-paper-border-strong flex flex-col items-end justify-between gap-4 border-t pt-4 sm:flex-row">
+              <div className="financial-paper-muted text-3xs space-y-1">
                 <p>
                   <strong>Conditions de règlement :</strong>{' '}
                   {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
@@ -868,32 +876,34 @@ export default function QuotesPage() {
                 </p>
               </div>
 
-              <div className="w-full space-y-1.5 border-t border-slate-200 pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
-                <div className="flex justify-between text-slate-600">
+              <div className="financial-paper-border w-full space-y-1.5 border-t pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
+                <div className="financial-paper-text flex justify-between">
                   <span>Total HT :</span>
-                  <span className="font-semibold text-slate-900">{totalHT.toFixed(2)} €</span>
+                  <span className="financial-paper-strong font-semibold">
+                    {totalHT.toFixed(2)} €
+                  </span>
                 </div>
-                <div className="flex justify-between text-slate-500">
+                <div className="financial-paper-muted flex justify-between">
                   <span>TVA ({vatRate}%) :</span>
                   <span>{totalVAT.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-300 pt-2 text-sm font-bold text-blue-900">
+                <div className="financial-paper-border-strong financial-paper-total flex justify-between border-t pt-2 text-sm font-bold">
                   <span>TOTAL TTC :</span>
-                  <span className="text-base text-blue-900">{totalTTC.toFixed(2)} €</span>
+                  <span className="text-base">{totalTTC.toFixed(2)} €</span>
                 </div>
               </div>
             </div>
 
             {/* Cadre Bon pour Accord & Signature Client */}
-            <div className="mt-6 rounded-lg border border-slate-300 bg-slate-50/50 p-4">
-              <div className="text-2xs flex flex-col items-start justify-between gap-3 text-slate-600 sm:flex-row">
+            <div className="financial-paper-panel financial-paper-border-strong mt-6 rounded-lg border p-4">
+              <div className="financial-paper-text text-2xs flex flex-col items-start justify-between gap-3 sm:flex-row">
                 <div>
-                  <p className="font-bold text-slate-800">Bon pour accord et commande :</p>
-                  <p className="text-3xs text-slate-500">
+                  <p className="financial-paper-strong font-bold">Bon pour accord et commande :</p>
+                  <p className="financial-paper-muted text-3xs">
                     Mention manuscrite « Bon pour accord », Date et Signature du Client :
                   </p>
                 </div>
-                <div className="text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed border-slate-400 bg-white text-slate-500 italic sm:w-40">
+                <div className="financial-paper-signature text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed italic sm:w-40">
                   [Emplacement Signature Client]
                 </div>
               </div>

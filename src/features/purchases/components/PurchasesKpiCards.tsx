@@ -2,7 +2,6 @@ import { Input } from '@/components/ui/Input';
 import { Calendar, ChevronDown, Clock, Euro, ShoppingCart, Store } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Card } from '@/components/ui/Card';
 import { Dropdown, DropdownItem, DropdownLabel, DropdownSeparator } from '@/components/ui/Dropdown';
 import type { PurchaseMetrics, PurchaseOrder } from '../types/purchases.types';
 
@@ -104,164 +103,115 @@ export function PurchasesKpiCards({ metrics, orders = [] }: PurchasesKpiCardsPro
   ]);
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-      {/* 1. Total Commandes */}
-      <Card className="before:bg-primary/70 hover:border-primary/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase">
-              Total Commandes
-            </p>
-            <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
-              {metrics.totalOrders}
-            </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">
-              {metrics.ordersDraft} brouillon{metrics.ordersDraft > 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="bg-primary/10 text-primary border-primary/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
-            <ShoppingCart className="size-5" />
-          </div>
-        </div>
-      </Card>
+    <dl className="border-border bg-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border lg:grid-cols-4">
+      <div className="bg-surface p-3 sm:p-4">
+        <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold">
+          <ShoppingCart className="text-primary size-4" aria-hidden="true" />
+          Commandes
+        </dt>
+        <dd className="text-foreground mt-2 text-xl font-bold tabular-nums sm:text-2xl">
+          {metrics.totalOrders}
+        </dd>
+        <p className="text-subtle-foreground mt-0.5 text-xs">
+          {metrics.ordersDraft} brouillon{metrics.ordersDraft > 1 ? 's' : ''}
+        </p>
+      </div>
 
-      {/* 2. En attente de livraison */}
-      <Card
-        className={`before:bg-warning/70 hover:shadow-raised relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4 ${
+      <div
+        className={
           metrics.ordersPendingDelivery > 0
-            ? 'border-warning/30 bg-warning/5 dark:bg-warning/10'
-            : 'border-border'
-        }`}
+            ? 'bg-warning-subtle p-3 sm:p-4'
+            : 'bg-surface p-3 sm:p-4'
+        }
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p
-              className={`text-2xs font-semibold tracking-wider uppercase ${
-                metrics.ordersPendingDelivery > 0 ? 'text-warning' : 'text-muted-foreground'
-              }`}
-            >
-              En Attente Livraison
-            </p>
-            <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
-              {metrics.ordersPendingDelivery}
-            </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">
-              {metrics.ordersPendingDelivery > 0
-                ? 'Marchandises à réceptionner'
-                : 'Toutes livraisons à jour'}
-            </p>
-          </div>
-          <div
-            className={`hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex ${
-              metrics.ordersPendingDelivery > 0
-                ? 'bg-warning/15 text-warning border-warning/30 border'
-                : 'bg-surface-raised text-muted-foreground border-border border'
-            }`}
-          >
-            <Clock className="size-5" />
-          </div>
-        </div>
-      </Card>
+        <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold">
+          <Clock
+            className={metrics.ordersPendingDelivery > 0 ? 'text-warning size-4' : 'size-4'}
+            aria-hidden="true"
+          />
+          À réceptionner
+        </dt>
+        <dd className="text-foreground mt-2 text-xl font-bold tabular-nums sm:text-2xl">
+          {metrics.ordersPendingDelivery}
+        </dd>
+        <p className="text-subtle-foreground mt-0.5 text-xs">
+          {metrics.ordersPendingDelivery > 0 ? 'Livraisons attendues' : 'Livraisons à jour'}
+        </p>
+      </div>
 
-      {/* 3. Dépenses engagées avec menu calendrier qui s'ouvre proprement sans chevauchement */}
-      <Card className="before:bg-success/70 hover:border-success/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
-        <div className="flex items-center justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-2xs text-success truncate font-semibold tracking-wider uppercase">
-              Achats HT
-            </p>
-
-            <p className="text-foreground mt-1 font-mono text-xl font-bold sm:text-2xl">
-              {periodSpend.amountEur.toLocaleString('fr-FR', {
-                style: 'currency',
-                currency: 'EUR',
-                maximumFractionDigits: 0,
-              })}
-            </p>
-
-            {/* Bouton calendrier ouvrant le menu de sélection de période */}
-            <div className="mt-1.5 flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center">
-              <Dropdown
-                align="start"
-                trigger={
-                  <button
-                    type="button"
-                    className="min-h-touch border-border bg-surface-raised text-3xs text-foreground hover:border-success/50 hover:bg-success/10 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-lg border px-2 py-0.5 font-semibold transition-colors sm:min-h-0"
-                    title="Cliquer pour changer le mois ou la période"
-                  >
-                    <Calendar className="text-success size-3 shrink-0" />
-                    <span className="truncate">{periodSpend.badgeText}</span>
-                    <ChevronDown className="size-2.5 shrink-0 opacity-60" />
-                  </button>
-                }
+      <div className="bg-surface p-3 sm:p-4">
+        <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold">
+          <Euro className="text-success size-4" aria-hidden="true" />
+          Achats HT
+        </dt>
+        <dd className="text-foreground mt-2 text-xl font-bold tabular-nums sm:text-2xl">
+          {periodSpend.amountEur.toLocaleString('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            maximumFractionDigits: 0,
+          })}
+        </dd>
+        <div className="mt-1 flex min-w-0 items-center gap-1.5">
+          <Dropdown
+            align="start"
+            trigger={
+              <button
+                type="button"
+                className="min-h-touch text-primary hover:text-primary-hover inline-flex min-w-0 items-center gap-1 text-left text-xs font-semibold sm:min-h-0"
+                title="Changer la période des achats"
               >
-                <DropdownLabel>Période d'analyse des achats</DropdownLabel>
-                <DropdownItem onClick={() => setSelectedPeriod('current_month')}>
-                  <span className="text-xs">📌 Ce mois-ci ({currentMonthName})</span>
-                </DropdownItem>
-                <DropdownItem onClick={() => setSelectedPeriod('last_month')}>
-                  <span className="text-xs">📅 Mois dernier ({prevMonthName})</span>
-                </DropdownItem>
-                <DropdownItem onClick={() => setSelectedPeriod('current_year')}>
-                  <span className="text-xs">📊 Année {currentYear}</span>
-                </DropdownItem>
-                <DropdownItem onClick={() => setSelectedPeriod('all')}>
-                  <span className="text-xs">🌐 Tout l’historique</span>
-                </DropdownItem>
-
-                <DropdownSeparator />
-
-                <div className="space-y-1.5 p-2">
-                  <label
-                    htmlFor="purchaseskpicards-choisir-un-mois-precis"
-                    className="text-3xs text-muted-foreground block font-bold tracking-wider uppercase"
-                  >
-                    Choisir un mois précis :
-                  </label>
-                  <Input
-                    id="purchaseskpicards-choisir-un-mois-precis"
-                    type="month"
-                    value={customMonth}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        setCustomMonth(e.target.value);
-                        setSelectedPeriod('custom_month');
-                      }
-                    }}
-                    className="border-border bg-surface text-foreground focus:border-success h-7 w-full cursor-pointer rounded-lg border px-2 text-xs focus:outline-none"
-                  />
-                </div>
-              </Dropdown>
-
-              <span className="text-3xs text-muted-foreground shrink-0">
-                ({periodSpend.count} cmd{periodSpend.count > 1 ? 's' : ''})
-              </span>
+                <Calendar className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{periodSpend.badgeText}</span>
+                <ChevronDown className="size-3 shrink-0" aria-hidden="true" />
+              </button>
+            }
+          >
+            <DropdownLabel>Période d’analyse</DropdownLabel>
+            <DropdownItem onClick={() => setSelectedPeriod('current_month')}>
+              Ce mois-ci ({currentMonthName})
+            </DropdownItem>
+            <DropdownItem onClick={() => setSelectedPeriod('last_month')}>
+              Mois dernier ({prevMonthName})
+            </DropdownItem>
+            <DropdownItem onClick={() => setSelectedPeriod('current_year')}>
+              Année {currentYear}
+            </DropdownItem>
+            <DropdownItem onClick={() => setSelectedPeriod('all')}>Tout l’historique</DropdownItem>
+            <DropdownSeparator />
+            <div className="space-y-1.5 p-2">
+              <label
+                htmlFor="purchaseskpicards-choisir-un-mois-precis"
+                className="text-muted-foreground block text-xs font-semibold"
+              >
+                Choisir un mois
+              </label>
+              <Input
+                id="purchaseskpicards-choisir-un-mois-precis"
+                type="month"
+                value={customMonth}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    setCustomMonth(event.target.value);
+                    setSelectedPeriod('custom_month');
+                  }
+                }}
+              />
             </div>
-          </div>
-
-          <div className="bg-success/10 text-success border-success/20 ml-2 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
-            <Euro className="size-5" />
-          </div>
+          </Dropdown>
+          <span className="text-subtle-foreground shrink-0 text-xs">· {periodSpend.count} cmd</span>
         </div>
-      </Card>
+      </div>
 
-      {/* 4. Fournisseurs Référencés */}
-      <Card className="before:bg-accent/70 hover:border-accent/35 hover:shadow-raised border-border/80 relative overflow-hidden p-3 shadow-xs transition-[border-color,box-shadow,transform] before:absolute before:inset-x-0 before:top-0 before:h-0.5 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-2xs text-accent font-semibold tracking-wider uppercase">
-              Fournisseurs Actifs
-            </p>
-            <p className="text-foreground mt-1 text-xl font-bold sm:text-2xl">
-              {metrics.activeSuppliersCount}
-            </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">Partenaires &amp; Grossistes</p>
-          </div>
-          <div className="bg-accent/10 text-accent border-accent/20 hidden size-10 shrink-0 items-center justify-center rounded-xl border sm:flex">
-            <Store className="size-5" />
-          </div>
-        </div>
-      </Card>
-    </div>
+      <div className="bg-surface p-3 sm:p-4">
+        <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold">
+          <Store className="text-accent size-4" aria-hidden="true" />
+          Fournisseurs actifs
+        </dt>
+        <dd className="text-foreground mt-2 text-xl font-bold tabular-nums sm:text-2xl">
+          {metrics.activeSuppliersCount}
+        </dd>
+        <p className="text-subtle-foreground mt-0.5 text-xs">Partenaires référencés</p>
+      </div>
+    </dl>
   );
 }

@@ -213,7 +213,7 @@ export function PurchaseOrdersTable({
     <Card className="border-border/80 bg-surface overflow-hidden shadow-xs">
       {/* Barre de recherche et filtres */}
       <div className="border-border space-y-3 border-b p-3 sm:p-4">
-        <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-2.5 lg:flex-row lg:items-center">
           <div className="min-w-0 flex-1">
             <Input
               label="Rechercher une commande fournisseur"
@@ -226,12 +226,12 @@ export function PurchaseOrdersTable({
             />
           </div>
 
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:w-auto">
             <SelectField
               value={periodFilter}
               onChange={(e) => setPeriodFilter(e.target.value)}
               aria-label="Filtrer les commandes par période"
-              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 flex-1 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9 sm:flex-none"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 w-full min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none lg:h-9 lg:w-auto"
             >
               <option value="all">Toutes les dates</option>
               <option value="this_month">Ce mois-ci</option>
@@ -246,7 +246,7 @@ export function PurchaseOrdersTable({
                 value={customMonth}
                 onChange={(e) => setCustomMonth(e.target.value)}
                 aria-label="Choisir le mois des commandes"
-                className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 flex-1 cursor-pointer rounded-xl border px-2 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9 sm:flex-none"
+                className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 w-full min-w-0 cursor-pointer rounded-xl border px-2 py-1 text-xs focus:ring-2 focus:outline-none lg:h-9 lg:w-auto"
               />
             )}
 
@@ -254,7 +254,7 @@ export function PurchaseOrdersTable({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filtrer les commandes par statut"
-              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 flex-1 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9 sm:flex-none"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 w-full min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none lg:h-9 lg:w-auto"
             >
               <option value="all">Tous les statuts</option>
               <option value="draft">Brouillons</option>
@@ -268,7 +268,7 @@ export function PurchaseOrdersTable({
               value={supplierFilter}
               onChange={(e) => setSupplierFilter(e.target.value)}
               aria-label="Filtrer les commandes par fournisseur"
-              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 min-w-0 flex-1 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none sm:h-9 sm:flex-none"
+              className="border-border bg-surface-raised text-foreground focus:border-primary focus:ring-primary/25 h-11 w-full min-w-0 rounded-xl border px-2.5 py-1 text-xs focus:ring-2 focus:outline-none lg:h-9 lg:w-auto"
             >
               <option value="all">Tous fournisseurs</option>
               {uniqueSuppliers.map((sup) => (

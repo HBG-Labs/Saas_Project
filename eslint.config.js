@@ -272,14 +272,11 @@ export default tseslint.config(
       'src/pages/PricingPage.tsx',
       'src/pages/ProfilePage.tsx',
       'src/pages/analytics/AnalyticsPage.tsx',
-      'src/pages/invoices/InvoiceDetailPage.tsx',
       'src/pages/metiers/MetierToolPage.tsx',
       'src/pages/organization/BillingPage.tsx',
       'src/pages/portal/PortalHomePage.tsx',
       'src/pages/portal/PortalLoginPage.tsx',
       'src/pages/portal/PortalMessagesPage.tsx',
-      'src/pages/quotes/QuoteDetailPage.tsx',
-      'src/pages/quotes/QuotesPage.tsx',
     ],
     rules: {
       'no-restricted-syntax': [

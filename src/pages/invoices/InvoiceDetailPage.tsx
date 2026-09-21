@@ -19,6 +19,7 @@ import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Table } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
 import {
   emetteurFacture,
@@ -44,7 +45,11 @@ import {
   useUpdateInvoice,
 } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
-import { LinkCustomerControl, SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
+import {
+  LinkCustomerControl,
+  SendToClientDialog,
+  useClientPortalAccess,
+} from '@/features/client-portal';
 import { ensureFacturX, formatInvoiceDate } from '@/features/einvoicing';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { InvoiceStatus } from '@/types/database';
@@ -99,7 +104,11 @@ export default function InvoiceDetailPage() {
 
   const [edition, setEdition] = useState(false);
   const portal = useClientPortalAccess();
-  const [envoiClient, setEnvoiClient] = useState<{ open: boolean; avecPdf: boolean; alerte: string | null }>({
+  const [envoiClient, setEnvoiClient] = useState<{
+    open: boolean;
+    avecPdf: boolean;
+    alerte: string | null;
+  }>({
     open: false,
     avecPdf: false,
     alerte: null,
@@ -283,7 +292,9 @@ export default function InvoiceDetailPage() {
 
       {canManage && !figee && (
         <div className="border-border bg-surface-subtle/50 flex flex-wrap items-center gap-2 rounded-xl border p-3 print:hidden">
-          <span className="text-muted-foreground w-full text-xs font-medium sm:w-auto">Brouillon :</span>
+          <span className="text-muted-foreground w-full text-xs font-medium sm:w-auto">
+            Brouillon :
+          </span>
           <Button
             variant="outline"
             size="sm"
@@ -393,7 +404,11 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
           {invoice.customer_id === null && canManage && organization !== null && (
-            <LinkCustomerControl kind="invoice" documentId={invoice.id} organizationId={organization.id} />
+            <LinkCustomerControl
+              kind="invoice"
+              documentId={invoice.id}
+              organizationId={organization.id}
+            />
           )}
           {invoice.customer_id !== null && portal.canSend && (
             <>
@@ -436,7 +451,9 @@ export default function InvoiceDetailPage() {
                   'Bonjour,',
                   '',
                   `veuillez trouver ${estAvoir ? 'votre avoir' : 'votre facture'} ${invoice.reference}${
-                    invoice.totals ? ` d’un montant de ${totalTTC.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} TTC` : ''
+                    invoice.totals
+                      ? ` d’un montant de ${totalTTC.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} TTC`
+                      : ''
                   }${!estAvoir && invoice.due_date ? `, à régler avant le ${formatInvoiceDate(invoice.due_date)}` : ''}.`,
                   envoiClient.avecPdf
                     ? 'Le PDF est joint à cet e-mail ; vous le retrouverez aussi dans votre espace client, rubrique « Mes factures ».'
@@ -484,17 +501,17 @@ export default function InvoiceDetailPage() {
       */}
       <div
         id="invoice-printable-area"
-        className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
+        className="financial-paper space-y-6 rounded-xl border p-4 font-sans sm:p-8"
       >
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
+        <div className="financial-paper-border flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-blue-900">
+            <h2 className="financial-paper-brand text-xl font-bold tracking-tight">
               {seller.name || seller.legal_name || 'Émetteur à renseigner'}
             </h2>
             {seller.legal_name && seller.legal_name !== seller.name && (
-              <p className="text-xs font-semibold text-slate-600">{seller.legal_name}</p>
+              <p className="financial-paper-text text-xs font-semibold">{seller.legal_name}</p>
             )}
-            <p className="text-2xs mt-1 text-slate-500">
+            <p className="financial-paper-muted text-2xs mt-1">
               {seller.registration_number ? `SIRET : ${seller.registration_number}` : ''}
               {seller.registration_number && seller.vat_number ? ' • ' : ''}
               {seller.vat_number ? `TVA : ${seller.vat_number}` : ''}
@@ -504,14 +521,14 @@ export default function InvoiceDetailPage() {
           <div className="text-left sm:text-right">
             <span
               className={`inline-block rounded-md px-2.5 py-1 text-xs font-bold ${
-                estAvoir ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'
+                estAvoir ? 'financial-paper-label-credit' : 'financial-paper-label'
               }`}
             >
               {invoice.status === 'draft'
                 ? `${libelle} — BROUILLON`
                 : `${libelle} N° ${invoice.reference}`}
             </span>
-            <p className="text-2xs mt-1 text-slate-500">
+            <p className="financial-paper-muted text-2xs mt-1">
               {invoice.issued_at
                 ? `${estAvoir ? 'Émis' : 'Émise'} le : ${formatInvoiceDate(invoice.issued_at)}`
                 : estAvoir
@@ -519,7 +536,7 @@ export default function InvoiceDetailPage() {
                   : 'Brouillon — non émise'}
             </p>
             {invoice.due_date && (
-              <p className="text-2xs text-slate-500">
+              <p className="financial-paper-muted text-2xs">
                 {estAvoir ? 'Remboursement / imputation prévu le' : 'Échéance'} :{' '}
                 {formatInvoiceDate(invoice.due_date)}
               </p>
@@ -528,7 +545,7 @@ export default function InvoiceDetailPage() {
         </div>
 
         {estAvoir && <CreditNoteOrigin invoice={invoice} />}
-        <div className="text-xs text-slate-600">
+        <div className="financial-paper-text text-xs">
           <p>
             {[
               seller.address_line1,
@@ -558,25 +575,25 @@ export default function InvoiceDetailPage() {
           d'énoncer ce qui était vrai le jour de son émission, même si le client
           a déménagé ou changé de raison sociale depuis.
         */}
-        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs sm:grid-cols-2">
+        <div className="financial-paper-panel grid grid-cols-1 gap-4 rounded-lg border p-4 text-xs sm:grid-cols-2">
           <div>
-            <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+            <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
               Destinataire
             </p>
-            <p className="mt-0.5 text-sm font-bold text-slate-900">
+            <p className="financial-paper-strong mt-0.5 text-sm font-bold">
               {invoice.customer_name || 'Client non spécifié'}
             </p>
             {invoice.customer_legal_name && (
-              <p className="text-2xs text-slate-600">{invoice.customer_legal_name}</p>
+              <p className="financial-paper-text text-2xs">{invoice.customer_legal_name}</p>
             )}
             {(invoice.customer_address_line1 || invoice.customer_city) && (
-              <p className="text-2xs mt-1 text-slate-600">
+              <p className="financial-paper-text text-2xs mt-1">
                 {invoice.customer_address_line1}
                 {invoice.customer_address_line1 && <br />}
                 {[invoice.customer_postal_code, invoice.customer_city].filter(Boolean).join(' ')}
               </p>
             )}
-            <p className="text-2xs mt-1 text-slate-500">
+            <p className="financial-paper-muted text-2xs mt-1">
               {invoice.customer_registration_number
                 ? `SIRET : ${invoice.customer_registration_number}`
                 : ''}
@@ -585,53 +602,54 @@ export default function InvoiceDetailPage() {
             </p>
           </div>
           <div>
-            <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">
+            <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
               Site d’intervention
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="financial-paper-strong mt-0.5 text-sm font-semibold">
               {invoice.site_name || 'Site principal'}
             </p>
           </div>
         </div>
 
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
-        <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes de la facture" tabIndex={0}>
-          <table className="w-full min-w-[40rem] border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
-                <th className="px-3 py-2.5">Désignation</th>
-                <th className="px-2 py-2.5 text-center">Qté</th>
-                <th className="px-2 py-2.5 text-center">Unité</th>
-                <th className="px-3 py-2.5 text-right">P.U HT</th>
-                <th className="px-2 py-2.5 text-center">TVA</th>
-                <th className="px-3 py-2.5 text-right">Total HT</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-slate-800">
-              {invoice.items.map((item) => {
-                const prixEuros = toEuros(item.unit_price_cents);
-                return (
-                  <tr key={item.id}>
-                    <td className="px-3 py-2.5 font-medium text-slate-900">{item.description}</td>
-                    <td className="px-2 py-2.5 text-center tabular-nums">{item.quantity}</td>
-                    <td className="px-2 py-2.5 text-center text-slate-500">{item.unit}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums">
-                      {prixEuros.toFixed(2)} €
-                    </td>
-                    <td className="px-2 py-2.5 text-center text-slate-500 tabular-nums">
-                      {item.vat_rate} %
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-semibold text-slate-900 tabular-nums">
-                      {(item.quantity * prixEuros).toFixed(2)} €
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table
+          label="Lignes de la facture"
+          minWidth="40rem"
+          containerClassName="financial-paper-focus"
+        >
+          <thead>
+            <tr className="financial-paper-table-head border-b font-semibold">
+              <th className="px-3 py-2.5">Désignation</th>
+              <th className="px-2 py-2.5 text-center">Qté</th>
+              <th className="px-2 py-2.5 text-center">Unité</th>
+              <th className="px-3 py-2.5 text-right">P.U HT</th>
+              <th className="px-2 py-2.5 text-center">TVA</th>
+              <th className="px-3 py-2.5 text-right">Total HT</th>
+            </tr>
+          </thead>
+          <tbody className="financial-paper-table-body divide-y">
+            {invoice.items.map((item) => {
+              const prixEuros = toEuros(item.unit_price_cents);
+              return (
+                <tr key={item.id}>
+                  <td className="financial-paper-strong px-3 py-2.5 font-medium">
+                    {item.description}
+                  </td>
+                  <td className="px-2 py-2.5 text-center tabular-nums">{item.quantity}</td>
+                  <td className="financial-paper-muted px-2 py-2.5 text-center">{item.unit}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{prixEuros.toFixed(2)} €</td>
+                  <td className="financial-paper-muted px-2 py-2.5 text-center tabular-nums">
+                    {item.vat_rate} %
+                  </td>
+                  <td className="financial-paper-strong px-3 py-2.5 text-right font-semibold tabular-nums">
+                    {(item.quantity * prixEuros).toFixed(2)} €
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
 
-        <div className="space-y-1 text-xs text-slate-600">
+        <div className="financial-paper-text space-y-1 text-xs">
           {invoice.service_date && (
             <p>Date de prestation ou de livraison : {formatInvoiceDate(invoice.service_date)}</p>
           )}
@@ -658,8 +676,8 @@ export default function InvoiceDetailPage() {
           )}
           {invoice.vat_on_debits && <p>Option pour le paiement de la taxe d’après les débits.</p>}
         </div>
-        <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
-          <div className="text-3xs space-y-1 text-slate-500">
+        <div className="financial-paper-border-strong flex flex-col items-end justify-between gap-4 border-t pt-4 sm:flex-row">
+          <div className="financial-paper-muted text-3xs space-y-1">
             {mentionsReglement(invoice).map((mention, index) => (
               <p key={index}>{mention}</p>
             ))}
@@ -670,10 +688,10 @@ export default function InvoiceDetailPage() {
             )}
           </div>
 
-          <div className="w-full space-y-1.5 border-t border-slate-200 pt-3 text-right text-xs sm:w-64 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
-            <div className="flex justify-between text-slate-600">
+          <div className="financial-paper-border w-full space-y-1.5 border-t pt-3 text-right text-xs sm:w-64 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
+            <div className="financial-paper-text flex justify-between">
               <span>Total HT :</span>
-              <span className="font-semibold text-slate-900 tabular-nums">
+              <span className="financial-paper-strong font-semibold tabular-nums">
                 {totalHT.toFixed(2)} €
               </span>
             </div>
@@ -688,7 +706,7 @@ export default function InvoiceDetailPage() {
             {invoice.vatBreakdown.map((ligne) => (
               <div
                 key={`${ligne.vat_rate}-${ligne.vat_category}`}
-                className="flex justify-between text-slate-500"
+                className="financial-paper-muted flex justify-between"
               >
                 <span>
                   TVA {ligne.vat_rate} % (base {toEuros(ligne.base_cents).toFixed(2)} €) :
@@ -698,19 +716,19 @@ export default function InvoiceDetailPage() {
             ))}
 
             {invoice.vatBreakdown.length === 0 && (
-              <div className="flex justify-between text-slate-500">
+              <div className="financial-paper-muted flex justify-between">
                 <span>TVA :</span>
                 <span className="tabular-nums">{totalTVA.toFixed(2)} €</span>
               </div>
             )}
 
-            <div className="flex justify-between border-t border-slate-300 pt-2 text-sm font-bold text-blue-900">
+            <div className="financial-paper-border-strong financial-paper-total flex justify-between border-t pt-2 text-sm font-bold">
               <span>{estAvoir ? 'TOTAL À CRÉDITER :' : 'TOTAL TTC :'}</span>
-              <span className="text-base text-blue-900 tabular-nums">{totalTTC.toFixed(2)} €</span>
+              <span className="text-base tabular-nums">{totalTTC.toFixed(2)} €</span>
             </div>
           </div>
         </div>
-        <div className="space-y-1 border-t border-slate-200 pt-4 text-xs text-slate-600">
+        <div className="financial-paper-border financial-paper-text space-y-1 border-t pt-4 text-xs">
           {seller.vat_regime === 'franchise' && <p>TVA non applicable, art. 293 B du CGI.</p>}
           {[
             ...new Set(

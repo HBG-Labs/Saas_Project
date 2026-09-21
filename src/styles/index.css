@@ -936,19 +936,125 @@ html.compact-mode {
 }
 
 /* Workspace : largeur de lecture, espaces distincts et illustrations de premier usage. */
-.workspace-page-text { min-height: 22rem; font-size: 1rem; line-height: 1.8; padding: 1.25rem; }
-.workspace-browser input, .workspace-browser select { max-width: 100%; }
-.atelier-illustration { animation: atelier-illustration-enter 180ms ease-out both; }
-@keyframes atelier-illustration-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .atelier-illustration { animation: none; } }
-@media (forced-colors: active) { .atelier-illustration > span { display: none; } }
-@media (max-width: 639px) { .workspace-page-text { min-height: 18rem; padding: 1rem; } }
+.workspace-page-text {
+  min-height: 22rem;
+  font-size: 1rem;
+  line-height: 1.8;
+  padding: 1.25rem;
+}
+.workspace-browser input,
+.workspace-browser select {
+  max-width: 100%;
+}
+.atelier-illustration {
+  animation: atelier-illustration-enter 180ms ease-out both;
+}
+@keyframes atelier-illustration-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atelier-illustration {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .atelier-illustration > span {
+    display: none;
+  }
+}
+@media (max-width: 639px) {
+  .workspace-page-text {
+    min-height: 18rem;
+    padding: 1rem;
+  }
+}
+
+/* Finance : le document client reste une feuille blanche, quel que soit le thème de l'application. */
+.financial-paper {
+  color: #0f172a;
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-modal);
+}
+.financial-paper-border {
+  border-color: #e2e8f0;
+}
+.financial-paper-border-strong {
+  border-color: #cbd5e1;
+}
+.financial-paper-panel {
+  color: #475569;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.financial-paper-brand,
+.financial-paper-total {
+  color: #1e3a8a;
+}
+.financial-paper-text {
+  color: #475569;
+}
+.financial-paper-strong {
+  color: #1e293b;
+}
+.financial-paper-muted {
+  color: #64748b;
+}
+.financial-paper-label {
+  color: #1e3a8a;
+  background: #dbeafe;
+}
+.financial-paper-label-credit {
+  color: #78350f;
+  background: #fef3c7;
+}
+.financial-paper-table-head {
+  color: #334155;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.financial-paper-table-body {
+  color: #1e293b;
+}
+.financial-paper-table-body > :not(:last-child) {
+  border-color: #e2e8f0;
+}
+.financial-paper-focus:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.financial-paper-signature {
+  color: #64748b;
+  background: #ffffff;
+  border-color: #94a3b8;
+}
 
 /* Cibles des commandes natives du bloc-notes ; le texte reste à 16 px au toucher. */
-.atelier-note-filter { min-height: 2.125rem; }
-.atelier-note-action { width: 2.125rem; height: 2.125rem; }
+.atelier-note-filter {
+  min-height: 2.125rem;
+}
+.atelier-note-action {
+  width: 2.125rem;
+  height: 2.125rem;
+}
 @media (pointer: coarse), (max-width: 639px) {
-  .atelier-note-filter { min-height: 2.75rem; }
-  .atelier-note-action { width: 2.75rem; height: 2.75rem; }
-  .workspace-notepad input, .workspace-notepad select { font-size: 1rem; min-height: 2.75rem; }
+  .atelier-note-filter {
+    min-height: 2.75rem;
+  }
+  .atelier-note-action {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .workspace-notepad input,
+  .workspace-notepad select {
+    font-size: 1rem;
+    min-height: 2.75rem;
+  }
 }

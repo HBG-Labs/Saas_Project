@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { ArrowLeft, Ban, CheckCircle2, Download, Globe, ReceiptText, Send, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Ban,
+  CheckCircle2,
+  Download,
+  Globe,
+  ReceiptText,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -10,8 +19,13 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Table } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
-import { LinkCustomerControl, SendToClientDialog, useClientPortalAccess } from '@/features/client-portal';
+import {
+  LinkCustomerControl,
+  SendToClientDialog,
+  useClientPortalAccess,
+} from '@/features/client-portal';
 import { useCreateInvoiceFromQuote } from '@/features/invoices';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import {
@@ -28,7 +42,10 @@ import { formatDate } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { QuoteStatus } from '@/types/database';
 
-const STATUS_CONFIG: Record<QuoteStatus, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
+const STATUS_CONFIG: Record<
+  QuoteStatus,
+  { label: string; variant: NonNullable<BadgeProps['variant']> }
+> = {
   draft: { label: 'Brouillon', variant: 'neutral' },
   sent: { label: 'Envoyé', variant: 'info' },
   accepted: { label: 'Accepté', variant: 'success' },
@@ -149,7 +166,9 @@ export default function QuoteDetailPage() {
                       window.open(document.url, '_blank', 'noopener');
                     },
                     onError: (error) => {
-                      setPdfError(error instanceof Error ? error.message : 'Le PDF n’a pas pu être préparé.');
+                      setPdfError(
+                        error instanceof Error ? error.message : 'Le PDF n’a pas pu être préparé.',
+                      );
                     },
                   });
                 }}
@@ -274,7 +293,11 @@ export default function QuoteDetailPage() {
             </div>
           </div>
           {quote.customer_id === null && canManage && organization && (
-            <LinkCustomerControl kind="quote" documentId={quote.id} organizationId={organization.id} />
+            <LinkCustomerControl
+              kind="quote"
+              documentId={quote.id}
+              organizationId={organization.id}
+            />
           )}
           {quote.customer_id !== null && portal.canSend && (
             <>
@@ -342,82 +365,93 @@ export default function QuoteDetailPage() {
       */}
       <div
         id="quote-printable-area"
-        className="space-y-6 rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 shadow-2xl sm:p-8"
+        className="financial-paper space-y-6 rounded-xl border p-4 font-sans sm:p-8"
       >
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
+        <div className="financial-paper-border flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-blue-900">
+            <h2 className="financial-paper-brand text-xl font-bold tracking-tight">
               {organization?.name ?? 'REZO360 Pro'}
             </h2>
             {organization?.legal_name && organization.legal_name !== organization.name && (
-              <p className="text-xs font-semibold text-slate-600">{organization.legal_name}</p>
+              <p className="financial-paper-text text-xs font-semibold">
+                {organization.legal_name}
+              </p>
             )}
-            <p className="mt-1 text-2xs text-slate-500">
-              {organization?.registration_number ? `SIRET : ${organization.registration_number}` : ''}
+            <p className="financial-paper-muted text-2xs mt-1">
+              {organization?.registration_number
+                ? `SIRET : ${organization.registration_number}`
+                : ''}
               {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
               {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
             </p>
           </div>
 
           <div className="text-left sm:text-right">
-            <span className="inline-block rounded-md bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-900">
+            <span className="financial-paper-label inline-block rounded-md px-2.5 py-1 text-xs font-bold">
               DEVIS N° {quote.reference}
             </span>
-            <p className="mt-1 text-2xs text-slate-500">Émis le : {formatDate(quote.created_at)}</p>
+            <p className="financial-paper-muted text-2xs mt-1">
+              Émis le : {formatDate(quote.created_at)}
+            </p>
             {quote.valid_until && (
-              <p className="text-2xs text-slate-500">Valide jusqu’au : {formatDate(quote.valid_until)}</p>
+              <p className="financial-paper-muted text-2xs">
+                Valide jusqu’au : {formatDate(quote.valid_until)}
+              </p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs sm:grid-cols-2">
+        <div className="financial-paper-panel grid grid-cols-1 gap-4 rounded-lg border p-4 text-xs sm:grid-cols-2">
           <div>
-            <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">Destinataire client</p>
-            <p className="mt-0.5 text-sm font-bold text-slate-900">
+            <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
+              Destinataire client
+            </p>
+            <p className="financial-paper-strong mt-0.5 text-sm font-bold">
               {quote.customer_name || 'Client non spécifié'}
             </p>
           </div>
           <div>
-            <p className="text-3xs font-bold tracking-wider text-slate-500 uppercase">Site d’intervention</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
+              Site d’intervention
+            </p>
+            <p className="financial-paper-strong mt-0.5 text-sm font-semibold">
               {quote.site_name || 'Site principal'}
             </p>
           </div>
         </div>
 
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- le tableau horizontal doit être défilable au clavier */}
-        <div className="scroll-x focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none" role="region" aria-label="Lignes du devis" tabIndex={0}>
-          <table className="w-full min-w-[34rem] border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-300 bg-slate-100 font-semibold text-slate-700">
-                <th className="px-3 py-2.5">Désignation de la prestation</th>
-                <th className="px-2 py-2.5 text-center">Qté</th>
-                <th className="px-2 py-2.5 text-center">Unité</th>
-                <th className="px-3 py-2.5 text-right">P.U HT</th>
-                <th className="px-3 py-2.5 text-right">Total HT</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-slate-800">
-              {quote.items.map((item) => {
-                const priceEuros = toEuros(item.unit_price_cents);
-                return (
-                  <tr key={item.id}>
-                    <td className="px-3 py-2.5 font-medium text-slate-900">{item.description}</td>
-                    <td className="px-2 py-2.5 text-center">{item.quantity}</td>
-                    <td className="px-2 py-2.5 text-center text-slate-500">{item.unit}</td>
-                    <td className="px-3 py-2.5 text-right">{priceEuros.toFixed(2)} €</td>
-                    <td className="px-3 py-2.5 text-right font-semibold text-slate-900">
-                      {(item.quantity * priceEuros).toFixed(2)} €
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table label="Lignes du devis" minWidth="34rem" containerClassName="financial-paper-focus">
+          <thead>
+            <tr className="financial-paper-table-head border-b font-semibold">
+              <th className="px-3 py-2.5">Désignation de la prestation</th>
+              <th className="px-2 py-2.5 text-center">Qté</th>
+              <th className="px-2 py-2.5 text-center">Unité</th>
+              <th className="px-3 py-2.5 text-right">P.U HT</th>
+              <th className="px-3 py-2.5 text-right">Total HT</th>
+            </tr>
+          </thead>
+          <tbody className="financial-paper-table-body divide-y">
+            {quote.items.map((item) => {
+              const priceEuros = toEuros(item.unit_price_cents);
+              return (
+                <tr key={item.id}>
+                  <td className="financial-paper-strong px-3 py-2.5 font-medium">
+                    {item.description}
+                  </td>
+                  <td className="px-2 py-2.5 text-center">{item.quantity}</td>
+                  <td className="financial-paper-muted px-2 py-2.5 text-center">{item.unit}</td>
+                  <td className="px-3 py-2.5 text-right">{priceEuros.toFixed(2)} €</td>
+                  <td className="financial-paper-strong px-3 py-2.5 text-right font-semibold">
+                    {(item.quantity * priceEuros).toFixed(2)} €
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
 
-        <div className="flex flex-col items-end justify-between gap-4 border-t border-slate-300 pt-4 sm:flex-row">
-          <div className="space-y-1 text-3xs text-slate-500">
+        <div className="financial-paper-border-strong flex flex-col items-end justify-between gap-4 border-t pt-4 sm:flex-row">
+          <div className="financial-paper-muted text-3xs space-y-1">
             <p>
               <strong>Conditions de règlement :</strong>{' '}
               {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
@@ -428,18 +462,18 @@ export default function QuoteDetailPage() {
             </p>
           </div>
 
-          <div className="w-full space-y-1.5 border-t border-slate-200 pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
-            <div className="flex justify-between text-slate-600">
+          <div className="financial-paper-border w-full space-y-1.5 border-t pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
+            <div className="financial-paper-text flex justify-between">
               <span>Total HT :</span>
-              <span className="font-semibold text-slate-900">{totalHT.toFixed(2)} €</span>
+              <span className="financial-paper-strong font-semibold">{totalHT.toFixed(2)} €</span>
             </div>
-            <div className="flex justify-between text-slate-500">
+            <div className="financial-paper-muted flex justify-between">
               <span>TVA ({quote.vat_rate}%) :</span>
               <span>{totalVAT.toFixed(2)} €</span>
             </div>
-            <div className="flex justify-between border-t border-slate-300 pt-2 text-sm font-bold text-blue-900">
+            <div className="financial-paper-border-strong financial-paper-total flex justify-between border-t pt-2 text-sm font-bold">
               <span>TOTAL TTC :</span>
-              <span className="text-base text-blue-900">{totalTTC.toFixed(2)} €</span>
+              <span className="text-base">{totalTTC.toFixed(2)} €</span>
             </div>
           </div>
         </div>
