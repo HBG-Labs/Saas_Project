@@ -90,6 +90,15 @@ export type CustomerCreditOrigin = 'credit_note' | 'overpayment';
 export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
 /** Enregistrement vocal — 20261005090000_enregistrements_vocaux.sql */
 export type WorkspaceRecordingStatus = 'uploading' | 'pending' | 'processing' | 'done' | 'failed';
+/** Moteur de transcription par organisation — 20261006090000_stt_colonnes_et_flag.sql */
+export type SttEngine = 'legacy' | 'v2';
+/** Un paragraphe horodaté d'une transcription (secondes). */
+export interface RecordingSegment {
+  start: number | null;
+  end: number | null;
+  speaker: string | null;
+  text: string;
+}
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
 export type TiptapDocument = { type: 'doc'; content?: unknown[] } & Record<string, unknown>;
@@ -591,6 +600,8 @@ export interface Database {
           timezone: string;
           /** Durée hebdomadaire contractuelle par défaut (35). Surchargeable par membre. */
           weekly_hours: number;
+          /** Moteur de transcription vocale — 20261006090000. `legacy` = chaîne d'origine, `v2` = nouveau moteur + glossaire. */
+          stt_engine: SttEngine;
           created_at: string;
           updated_at: string;
         };
@@ -627,6 +638,7 @@ export interface Database {
         Update: {
           timezone?: string;
           weekly_hours?: number;
+          stt_engine?: SttEngine;
           name?: string;
           holiday_territory?: string;
           legal_name?: string | null;
@@ -4137,6 +4149,18 @@ export interface Database {
           locked_at: string | null;
           transcribed_at: string | null;
           audio_deleted_at: string | null;
+          /** Le modèle qui a transcrit — 20261006090000. */
+          engine: string | null;
+          /** La sortie brute du moteur, immuable une fois posée. */
+          transcript_raw: string | null;
+          /** Quand `transcript` a été normalisé depuis le brut ; `null` = identique. */
+          transcript_normalized_at: string | null;
+          /** Paragraphes horodatés (phase 8). */
+          segments: RecordingSegment[] | null;
+          /** Résumé structuré avec renvois aux segments (phase 8). */
+          summary_json: Record<string, unknown> | null;
+          /** Notes de la personne pendant l'enregistrement ; jamais transmises au fournisseur. */
+          notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -4152,6 +4176,7 @@ export interface Database {
         };
         Update: {
           title?: string;
+          notes?: string | null;
         };
         Relationships: [
           {

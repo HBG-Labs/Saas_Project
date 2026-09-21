@@ -39,14 +39,14 @@ const audio = new Blob(['bytes'], { type: 'audio/webm' });
 
 Deno.test('envoie le fichier, le modèle et la langue, et rend le texte', async () => {
   const faux = fauxFetch([{ status: 200, body: { text: '  Bonjour.  ' } }]);
-  const texte = await transcribeAudio({
+  const sortie = await transcribeAudio({
     apiKey: 'k',
     audio,
     fileName: 'a.webm',
     language: 'fr',
     fetchImpl: faux.fetchImpl,
   });
-  assertEquals(texte, 'Bonjour.');
+  assertEquals(sortie, { text: 'Bonjour.', engine: TRANSCRIPTION_MODEL });
   assertEquals(faux.appels[0], { model: TRANSCRIPTION_MODEL, language: 'fr', fileName: 'a.webm' });
 });
 
@@ -55,14 +55,14 @@ Deno.test('modèle refusé : repli sur Whisper, une fois', async () => {
     { status: 404, body: 'The model `gpt-4o-transcribe` does not exist' },
     { status: 200, body: { text: 'Via Whisper' } },
   ]);
-  const texte = await transcribeAudio({
+  const sortie = await transcribeAudio({
     apiKey: 'k',
     audio,
     fileName: 'a.webm',
     language: 'fr',
     fetchImpl: faux.fetchImpl,
   });
-  assertEquals(texte, 'Via Whisper');
+  assertEquals(sortie, { text: 'Via Whisper', engine: TRANSCRIPTION_FALLBACK_MODEL });
   assertEquals(
     faux.appels.map((a) => a.model),
     [TRANSCRIPTION_MODEL, TRANSCRIPTION_FALLBACK_MODEL],

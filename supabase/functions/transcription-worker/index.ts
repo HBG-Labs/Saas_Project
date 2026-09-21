@@ -36,7 +36,9 @@ Deno.serve(
       const { error } = await storage.remove(paths);
       if (error) throw error;
     },
-    transcribe: (audio, fileName, language) => {
+    // Phase 4 : le flag est transmis et le moteur utilisé est consigné ;
+    // « v2 » ne diffère pas encore de « legacy » (phase 5 : nouveau moteur + glossaire).
+    transcribe: (audio, fileName, language, _engine) => {
       if (!openaiApiKey)
         throw new Error('OPENAI_API_KEY absente : la transcription est impossible.');
       return transcribeAudio({ apiKey: openaiApiKey, audio, fileName, language });

@@ -37,6 +37,7 @@ function enregistrement(partial: Partial<ClaimedRecording>): ClaimedRecording {
     language: 'fr',
     attempts: 0,
     created_at: '2026-09-20T10:00:00Z',
+    stt_engine: 'legacy',
     ...partial,
   };
 }
@@ -85,7 +86,11 @@ function config(partial: Partial<TranscriptionWorkerConfig>): TranscriptionWorke
     secret: SECRET,
     downloadAudio: () => Promise.resolve(new Blob(['audio'], { type: 'audio/webm' })),
     removeAudio: () => Promise.resolve(),
-    transcribe: () => Promise.resolve('Bonjour à tous. On pose le boîtier jeudi.'),
+    transcribe: () =>
+      Promise.resolve({
+        text: 'Bonjour à tous. On pose le boîtier jeudi.',
+        engine: 'gpt-4o-transcribe',
+      }),
     summarize: () => Promise.resolve('## Décisions\n- Poser le boîtier jeudi'),
     ...partial,
   };
@@ -112,6 +117,7 @@ Deno.test('chemin nominal : texte et résumé rendus à la base', async () => {
     p_transcript: 'Bonjour à tous. On pose le boîtier jeudi.',
     p_summary: '## Décisions\n- Poser le boîtier jeudi',
     p_error: null,
+    p_engine: 'gpt-4o-transcribe',
   });
   assertEquals(fake.heartbeats[0]?.done, 1);
 });
@@ -148,7 +154,7 @@ Deno.test(
           appel += 1;
           if (appel === 1) return Promise.reject(new TranscriptionRejected('Fichier illisible'));
           if (appel === 2) return Promise.reject(new Error('OpenAI 503'));
-          return Promise.resolve('Texte.');
+          return Promise.resolve({ text: 'Texte.', engine: 'whisper-1' });
         },
         summarize: () => Promise.resolve(null),
       }),

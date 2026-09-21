@@ -29,7 +29,13 @@ export class TranscriptionRejected extends Error {
   }
 }
 
-export async function transcribeAudio(params: TranscribeParams): Promise<string> {
+export interface TranscribeOutput {
+  text: string;
+  /** Le modèle qui a répondu : le principal, ou le repli. */
+  engine: string;
+}
+
+export async function transcribeAudio(params: TranscribeParams): Promise<TranscribeOutput> {
   const fetchImpl = params.fetchImpl ?? fetch;
   if (params.audio.size > TRANSCRIPTION_MAX_BYTES) {
     throw new TranscriptionRejected(
@@ -51,11 +57,13 @@ export async function transcribeAudio(params: TranscribeParams): Promise<string>
     return response;
   };
 
+  let engine = TRANSCRIPTION_MODEL;
   let response = await appel(TRANSCRIPTION_MODEL);
   // Modèle inconnu ou non autorisé pour ce compte : Whisper, une fois.
   if (response.status === 400 || response.status === 403 || response.status === 404) {
     const detail = await response.text();
     if (/model/i.test(detail)) {
+      engine = TRANSCRIPTION_FALLBACK_MODEL;
       response = await appel(TRANSCRIPTION_FALLBACK_MODEL);
     } else {
       throw new TranscriptionRejected(
@@ -74,7 +82,7 @@ export async function transcribeAudio(params: TranscribeParams): Promise<string>
   }
 
   const payload = (await response.json()) as { text?: string };
-  return (payload.text ?? '').trim();
+  return { text: (payload.text ?? '').trim(), engine };
 }
 
 /** Le prompt du résumé : points clés, décisions, actions — en Markdown simple. */

@@ -37,6 +37,14 @@ export interface ClaimedRecording {
   language: string;
   attempts: number;
   created_at: string;
+  /** Le moteur choisi par l'organisation (`organizations.stt_engine`) : legacy ou v2. */
+  stt_engine: 'legacy' | 'v2';
+}
+
+export interface TranscriptionResult {
+  text: string;
+  /** Le modèle qui a réellement transcrit — consigné dans `workspace_recordings.engine`. */
+  engine: string;
 }
 
 export interface TranscriptionWorkerConfig {
@@ -47,8 +55,17 @@ export interface TranscriptionWorkerConfig {
   downloadAudio: (path: string) => Promise<Blob>;
   /** Supprime des fichiers du bucket. */
   removeAudio: (paths: string[]) => Promise<void>;
-  /** Le texte de l'audio. Lève `TranscriptionRejected` pour un refus définitif. */
-  transcribe: (audio: Blob, fileName: string, language: string) => Promise<string>;
+  /**
+   * Le texte de l'audio et le modèle utilisé. Lève `TranscriptionRejected`
+   * pour un refus définitif. Reçoit le moteur de l'organisation : « legacy »
+   * = la chaîne d'origine, « v2 » = le nouveau moteur (phase 5).
+   */
+  transcribe: (
+    audio: Blob,
+    fileName: string,
+    language: string,
+    engine: 'legacy' | 'v2',
+  ) => Promise<TranscriptionResult>;
   /**
    * Le résumé, DANS le quota IA de l'organisation : `null` si le quota est
    * épuisé ou le fournisseur indisponible — la transcription part sans
@@ -106,6 +123,7 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
       let transcript: string | null = null;
       let summary: string | null = null;
       let errorMessage: string | null = null;
+      let engine: string | null = null;
 
       try {
         const { data: reservation, error: reserveError } = await admin
@@ -118,7 +136,14 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
           errorMessage = 'Quota de minutes de transcription épuisé pour ce mois.';
         } else {
           const audio = await config.downloadAudio(recording.audio_path);
-          transcript = await config.transcribe(audio, fileNameFor(recording), recording.language);
+          const resultat = await config.transcribe(
+            audio,
+            fileNameFor(recording),
+            recording.language,
+            recording.stt_engine ?? 'legacy',
+          );
+          transcript = resultat.text;
+          engine = resultat.engine;
           summary = await config.summarize({
             admin,
             organizationId: recording.organization_id,
@@ -140,6 +165,7 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
         p_transcript: transcript,
         p_summary: summary,
         p_error: errorMessage,
+        p_engine: engine,
       });
       if (recordError) {
         console.error('transcription-worker: résultat non enregistré', recordError);
