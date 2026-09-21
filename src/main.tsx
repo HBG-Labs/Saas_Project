@@ -5,6 +5,7 @@ import { renderBootFailure } from '@/app/boot-failure';
 import {
   clearChunkLoadRecoveryGuard,
   installChunkLoadRecovery,
+  installStylesheetLoadRecovery,
   recoverChunkLoadError,
 } from '@/lib/chunk-load-recovery';
 import '@/styles/index.css';
@@ -12,6 +13,7 @@ import '@/styles/index.css';
 // Installé avant les imports différés de `boot` : il couvre aussi une version
 // devenue obsolète avant que React et le routeur aient pu démarrer.
 installChunkLoadRecovery();
+installStylesheetLoadRecovery();
 
 // L'enregistrement ne dépend pas du montage React : même si un ancien chunk
 // empêche `App` de se charger, le navigateur peut déjà récupérer le worker du

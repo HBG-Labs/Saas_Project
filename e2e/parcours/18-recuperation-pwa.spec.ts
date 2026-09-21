@@ -30,6 +30,34 @@ test.describe('Récupération PWA', () => {
 
     const cacheNames = await page.evaluate(() => caches.keys());
     expect(cacheNames).not.toContain('rezo360-pwa-v3');
+    expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain(
+      'Nunito',
+    );
+    await expect(
+      page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
+    ).toHaveCount(0);
+  });
+
+  test('une feuille principale perdue est rechargée au lieu d’afficher du HTML brut', async ({
+    page,
+  }) => {
+    let stylesheetRequests = 0;
+    await page.route('**/assets/*.css', async (route) => {
+      stylesheetRequests += 1;
+      if (stylesheetRequests === 1) {
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Commencer gratuitement' }).first()).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => getComputedStyle(document.body).fontFamily))
+      .toContain('Nunito');
+
+    expect(stylesheetRequests).toBeGreaterThanOrEqual(2);
     await expect(
       page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
     ).toHaveCount(0);

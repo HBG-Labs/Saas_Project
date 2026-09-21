@@ -1,4 +1,5 @@
 const RELOAD_GUARD_KEY = 'rezo360_chunk_reload_at';
+const STYLESHEET_RELOAD_GUARD_KEY = 'rezo360_stylesheet_reload_at';
 const RELOAD_GUARD_MS = 30_000;
 const APP_CACHE_PREFIX = 'rezo360-pwa-';
 
@@ -71,8 +72,7 @@ async function prepareBrowserReload(): Promise<void> {
  * programmée. Le garde-fou persistant empêche une boucle si la panne vient du
  * réseau ou du serveur plutôt que du cache local.
  */
-export function recoverChunkLoadError(error: unknown, options: ChunkRecoveryOptions = {}): boolean {
-  if (!isChunkLoadError(error)) return false;
+function scheduleAppShellRecovery(guardKey: string, options: ChunkRecoveryOptions = {}): boolean {
   if (recoveryInProgress) return true;
 
   const storage = options.storage ?? window.sessionStorage;
@@ -82,7 +82,7 @@ export function recoverChunkLoadError(error: unknown, options: ChunkRecoveryOpti
   let lastAttempt = 0;
 
   try {
-    lastAttempt = Number(storage.getItem(RELOAD_GUARD_KEY)) || 0;
+    lastAttempt = Number(storage.getItem(guardKey)) || 0;
   } catch {
     // Un stockage privé ou saturé ne doit jamais empêcher la récupération.
   }
@@ -90,7 +90,7 @@ export function recoverChunkLoadError(error: unknown, options: ChunkRecoveryOpti
   if (now() - lastAttempt < RELOAD_GUARD_MS) return false;
 
   try {
-    storage.setItem(RELOAD_GUARD_KEY, String(now()));
+    storage.setItem(guardKey, String(now()));
   } catch {
     // Le rechargement reste utile même si le garde-fou ne peut être persisté.
   }
@@ -105,6 +105,16 @@ export function recoverChunkLoadError(error: unknown, options: ChunkRecoveryOpti
     });
 
   return true;
+}
+
+export function recoverChunkLoadError(error: unknown, options: ChunkRecoveryOptions = {}): boolean {
+  if (!isChunkLoadError(error)) return false;
+  return scheduleAppShellRecovery(RELOAD_GUARD_KEY, options);
+}
+
+/** Recharge une fois si la feuille principale a été perdue pendant un déploiement. */
+export function recoverStylesheetLoad(options: ChunkRecoveryOptions = {}): boolean {
+  return scheduleAppShellRecovery(STYLESHEET_RELOAD_GUARD_KEY, options);
 }
 
 /**
@@ -129,12 +139,53 @@ export function installChunkLoadRecovery(options: ChunkRecoveryOptions = {}): ()
   return () => window.removeEventListener('vite:preloadError', handlePreloadError);
 }
 
+/**
+ * Surveille les feuilles déjà déclarées dans `index.html`.
+ *
+ * Une feuille peut échouer avant que React ne monte sans provoquer d'exception
+ * JavaScript : l'application fonctionne alors, mais avec le style HTML brut du
+ * navigateur. L'événement `error` couvre l'échec direct ; le contrôle à
+ * `load` couvre celui survenu avant l'installation de cet écouteur.
+ */
+export function installStylesheetLoadRecovery(options: ChunkRecoveryOptions = {}): () => void {
+  const stylesheets = Array.from(
+    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+  );
+  if (stylesheets.length === 0) return () => undefined;
+
+  const recover = () => {
+    recoverStylesheetLoad(options);
+  };
+  const checkLoadedStylesheets = () => {
+    const primaryColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--primary')
+      .trim();
+    if (primaryColor === '') recover();
+  };
+
+  stylesheets.forEach((stylesheet) => stylesheet.addEventListener('error', recover));
+  window.addEventListener('load', checkLoadedStylesheets);
+  if (document.readyState === 'complete') queueMicrotask(checkLoadedStylesheets);
+  // Certains WebView Android signalent l'échec de la feuille avant l'exécution
+  // du module principal, puis ne rejouent ni `error` ni `load` pour l'écouteur
+  // installé ici. Ce contrôle différé ferme ce dernier angle mort sans prendre
+  // une feuille simplement encore en cours de téléchargement pour un échec.
+  const fallbackTimer = window.setTimeout(checkLoadedStylesheets, 5_000);
+
+  return () => {
+    window.clearTimeout(fallbackTimer);
+    stylesheets.forEach((stylesheet) => stylesheet.removeEventListener('error', recover));
+    window.removeEventListener('load', checkLoadedStylesheets);
+  };
+}
+
 /** Autorise une future récupération après que la nouvelle version a démarré. */
 export function clearChunkLoadRecoveryGuard(
   storage: Pick<Storage, 'removeItem'> = window.sessionStorage,
 ): void {
   try {
     storage.removeItem(RELOAD_GUARD_KEY);
+    storage.removeItem(STYLESHEET_RELOAD_GUARD_KEY);
   } catch {
     // Rien à faire : l'absence de stockage ne doit pas affecter l'application.
   }
