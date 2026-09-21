@@ -1,4 +1,12 @@
-import { ChevronLeft, ChevronRight, FileCheck2, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileCheck2,
+  Plus,
+  RefreshCw,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,6 +97,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const save = useSaveInvoiceDraft(invoice.id);
   const customer = useCustomer(invoice.customer_id ?? undefined);
   const [currentStep, setCurrentStep] = useState(0);
+  const [desktopClientDetailsOpen, setDesktopClientDetailsOpen] = useState(false);
   const needsOperationSuggestion =
     invoice.operation_type === null || invoice.operation_type === undefined;
   const needsEarlyPaymentSuggestion =
@@ -263,14 +272,16 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const error = (name: keyof Values) =>
     errors[name]?.message ? { error: errors[name].message } : {};
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-6">
+    <form onSubmit={onSubmit} noValidate className="space-y-6 lg:space-y-4">
       <FormError error={save.error} />
-      <DocumentWizardStepper
-        steps={INVOICE_STEPS}
-        currentStep={currentStep}
-        onStepChange={setCurrentStep}
-        label="Correction de la facture"
-      />
+      <div className="lg:hidden">
+        <DocumentWizardStepper
+          steps={INVOICE_STEPS}
+          currentStep={currentStep}
+          onStepChange={setCurrentStep}
+          label="Correction de la facture"
+        />
+      </div>
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
         {hasSuggestions && (
           <p
@@ -281,409 +292,581 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             enregistrez le brouillon pour les conserver.
           </p>
         )}
-        <section
-          className={currentStep === 0 ? 'space-y-4' : 'hidden'}
-          aria-label="Destinataire de la facture"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-foreground text-sm font-semibold">Destinataire</h3>
-            {invoice.customer_id && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={refreshCustomer}
-                disabled={!customer.data || customer.isFetching}
-                className="gap-1.5"
-              >
-                <RefreshCw className="size-3.5" aria-hidden="true" />
-                Reprendre la fiche client
-              </Button>
-            )}
-          </div>
-          {customer.isError && (
-            <p className="text-warning text-xs">
-              La fiche client est indisponible. Vous pouvez compléter les informations ci-dessous.
-            </p>
-          )}
-          {refreshed && (
-            <p role="status" className="text-success text-xs">
-              Informations reprises. Enregistrez pour les appliquer à ce brouillon.
-            </p>
-          )}
-          <p className="text-muted-foreground text-xs">
-            Ces changements concernent cette facture. La fiche client reste indépendante.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Nom du client" {...register('name')} {...error('name')} />
-            <Input
-              label="Raison sociale du client"
-              {...register('legalName')}
-              {...error('legalName')}
+        <div className="lg:grid lg:grid-cols-[minmax(0,56rem)_18rem] lg:items-start lg:justify-center lg:gap-5">
+          <div className="financial-paper lg:border-border relative space-y-6 lg:flex lg:min-h-[72rem] lg:flex-col lg:overflow-hidden lg:rounded-sm lg:border lg:px-12 lg:py-11 lg:shadow-[0_18px_55px_rgba(15,23,42,0.12)] xl:px-14">
+            <div
+              className="bg-primary absolute inset-x-0 top-0 hidden h-2 lg:block"
+              aria-hidden="true"
             />
-          </div>
-          <Controller
-            control={control}
-            name="type"
-            render={({ field }) => (
-              <Select
-                label="Type de client"
-                value={field.value || 'unknown'}
-                disabled={isSubmitting}
-                onValueChange={(value) => field.onChange(value === 'unknown' ? '' : value)}
-                options={[
-                  { value: 'unknown', label: 'À renseigner' },
-                  { value: 'company', label: 'Entreprise' },
-                  { value: 'individual', label: 'Particulier' },
-                  { value: 'public_body', label: 'Organisme public' },
-                ]}
-              />
-            )}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="SIRET / identifiant du client"
-              {...register('registrationNumber')}
-              {...(registrationIssue ? { error: registrationIssue } : {})}
-              {...error('registrationNumber')}
-            />
-            <Input
-              label="N° TVA du client"
-              {...register('vatNumber')}
-              {...(vatIssue ? { error: vatIssue } : {})}
-              {...error('vatNumber')}
-            />
-          </div>
-          {(registrationIssue || vatIssue) && (
-            <p className="text-muted-foreground text-xs">
-              Vous pouvez enregistrer ce brouillon. Corrigez les identifiants signalés avant de
-              l’émettre.
-            </p>
-          )}
-          <Input label="Adresse du client" {...register('address')} {...error('address')} />
-          <Input
-            label="Complément d’adresse"
-            {...register('addressLine2')}
-            {...error('addressLine2')}
-          />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Input label="Code postal" {...register('postalCode')} {...error('postalCode')} />
-            <Input label="Ville" {...register('city')} {...error('city')} />
-            <Input label="Pays" {...register('country')} {...error('country')} />
-          </div>
-        </section>
-        <section
-          className={currentStep === 1 ? 'space-y-4' : 'hidden'}
-          aria-label="Opération facturée"
-        >
-          <h3 className="text-foreground text-sm font-semibold">Opération facturée</h3>
-          <Input
-            label="Date de prestation ou de livraison"
-            type="date"
-            hint="Date effective de fin de prestation ou de livraison."
-            {...register('serviceDate')}
-            {...error('serviceDate')}
-          />
-          <Controller
-            control={control}
-            name="operationType"
-            render={({ field }) => (
-              <Select
-                label="Nature de l’opération"
-                value={field.value || 'unknown'}
-                disabled={isSubmitting}
-                onValueChange={(v) => field.onChange(v === 'unknown' ? '' : v)}
-                options={[
-                  { value: 'unknown', label: 'À renseigner' },
-                  { value: 'goods', label: 'Vente de biens' },
-                  { value: 'services', label: 'Prestation de services' },
-                  { value: 'mixed', label: 'Biens et services' },
-                ]}
-              />
-            )}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Référence acheteur"
-              hint="Service ou référence demandé par votre client."
-              {...register('buyerReference')}
-              {...error('buyerReference')}
-            />
-            <Input
-              label="Bon de commande du client"
-              {...register('purchaseOrderReference')}
-              {...error('purchaseOrderReference')}
-            />
-          </div>
-          <details className="border-border rounded-xl border p-4">
-            <summary className="cursor-pointer text-sm font-medium">
-              Livraison à une autre adresse
-            </summary>
-            <p className="text-muted-foreground mt-3 text-xs">
-              Laissez ces champs vides si l’adresse du client convient.
-            </p>
-            <div className="mt-3 space-y-3">
-              <Input
-                label="Adresse de livraison"
-                {...register('deliveryAddress')}
-                {...error('deliveryAddress')}
-              />
-              <Input
-                label="Complément de livraison"
-                {...register('deliveryAddressLine2')}
-                {...error('deliveryAddressLine2')}
-              />
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Input
-                  label="Code postal de livraison"
-                  {...register('deliveryPostalCode')}
-                  {...error('deliveryPostalCode')}
-                />
-                <Input
-                  label="Ville de livraison"
-                  {...register('deliveryCity')}
-                  {...error('deliveryCity')}
-                />
-                <Input
-                  label="Pays de livraison"
-                  hint="Code de deux lettres, par exemple FR."
-                  {...register('deliveryCountry')}
-                  {...error('deliveryCountry')}
-                />
+            <div className="hidden items-start justify-between gap-8 lg:order-0 lg:flex">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl shadow-sm">
+                  <FileCheck2 className="size-7" aria-hidden="true" />
+                </div>
+                <div className="pt-1">
+                  <p className="text-foreground text-lg font-black tracking-tight">REZO360 Pro</p>
+                  <p className="text-muted-foreground text-3xs mt-1 leading-relaxed">
+                    Facturation professionnelle · Document en préparation
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <span className="bg-primary/10 text-3xs text-primary inline-flex rounded-full px-3 py-1 font-black tracking-[0.18em] uppercase">
+                  Facture
+                </span>
+                <p className="text-foreground mt-3 text-xl font-black tracking-tight">
+                  {invoice.reference || 'Brouillon'}
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Total TTC · {formatMoney(totalIncludingTax)} €
+                </p>
               </div>
             </div>
-          </details>
-        </section>
-        <section className={currentStep === 2 ? 'space-y-4' : 'hidden'} aria-label="Règlement">
-          <h3 className="text-foreground text-sm font-semibold">Règlement</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Date d’échéance"
-              type="date"
-              {...register('dueDate')}
-              {...error('dueDate')}
-            />
-            <Input label="Mode de règlement" {...register('method')} {...error('method')} />
-          </div>
-          <Textarea
-            label="Conditions d’escompte"
-            hint="Par exemple : Escompte pour paiement anticipé : néant. À adapter à vos conditions."
-            {...register('earlyPaymentTerms')}
-            {...error('earlyPaymentTerms')}
-          />
-          <Textarea
-            label="Pénalités de retard"
-            hint="Précisez le taux applicable aux clients professionnels. L’indemnité de recouvrement de 40 € sera mentionnée pour ces clients uniquement."
-            {...register('latePaymentTerms')}
-            {...error('latePaymentTerms')}
-          />
-          <Textarea
-            label="Conditions de règlement"
-            hint="Renseignez les conditions applicables à ce client, notamment les pénalités de retard lorsqu’elles s’appliquent."
-            {...register('terms')}
-            {...error('terms')}
-          />
-        </section>
-        <section
-          className={currentStep === 1 ? 'border-border space-y-4 border-t pt-5' : 'hidden'}
-          aria-label="Lignes de la facture"
-        >
-          <h3 className="text-foreground text-sm font-semibold">Prestations et TVA</h3>
-          <Controller
-            control={control}
-            name="vatOnDebits"
-            render={({ field }) => (
-              <Select
-                label="Option TVA d’après les débits"
-                value={field.value || 'unknown'}
-                disabled={isSubmitting}
-                onValueChange={(v) => field.onChange(v === 'unknown' ? '' : v)}
-                options={[
-                  { value: 'unknown', label: 'À confirmer' },
-                  { value: 'no', label: 'Non' },
-                  { value: 'yes', label: 'Oui, option exercée' },
-                ]}
-              />
-            )}
-          />
-          {fields.map((field, index) => (
-            <div key={field.id} className="border-border space-y-3 rounded-xl border p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">Ligne {index + 1}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label={`Supprimer la ligne ${index + 1}`}
-                  onClick={() => remove(index)}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </Button>
+            <section
+              className={
+                currentStep === 0
+                  ? 'lg:border-primary/20 lg:bg-primary/5 space-y-4 lg:order-1 lg:rounded-2xl lg:border lg:p-5'
+                  : 'lg:border-primary/20 lg:bg-primary/5 hidden lg:order-1 lg:block lg:space-y-4 lg:rounded-2xl lg:border lg:p-5'
+              }
+              aria-label="Destinataire de la facture"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-foreground text-sm font-semibold">Destinataire</h3>
+                {invoice.customer_id && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshCustomer}
+                    disabled={!customer.data || customer.isFetching}
+                    className="gap-1.5"
+                  >
+                    <RefreshCw className="size-3.5" aria-hidden="true" />
+                    Reprendre la fiche client
+                  </Button>
+                )}
               </div>
-              <Input
-                label={`Description ${index + 1}`}
-                {...register(`items.${index}.description`)}
-                {...(errors.items?.[index]?.description?.message
-                  ? { error: errors.items[index].description.message }
-                  : {})}
-              />
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {customer.isError && (
+                <p className="text-warning text-xs">
+                  La fiche client est indisponible. Vous pouvez compléter les informations
+                  ci-dessous.
+                </p>
+              )}
+              {refreshed && (
+                <p role="status" className="text-success text-xs">
+                  Informations reprises. Enregistrez pour les appliquer à ce brouillon.
+                </p>
+              )}
+              <p className="text-muted-foreground text-xs">
+                Ces changements concernent cette facture. La fiche client reste indépendante.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input label="Nom du client" {...register('name')} {...error('name')} />
                 <Input
-                  label={`Quantité ${index + 1}`}
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  {...register(`items.${index}.quantity`)}
-                />
-                <Input label={`Unité ${index + 1}`} {...register(`items.${index}.unit`)} />
-                <Input
-                  label={`Prix HT (€) ${index + 1}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...register(`items.${index}.price`)}
-                />
-                <Input
-                  label={`TVA (%) ${index + 1}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  {...register(`items.${index}.rate`)}
+                  label="Raison sociale du client"
+                  {...register('legalName')}
+                  {...error('legalName')}
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => setDesktopClientDetailsOpen((open) => !open)}
+                className="text-primary hover:bg-primary/10 hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition lg:inline-flex"
+                aria-expanded={desktopClientDetailsOpen}
+              >
+                <ChevronRight
+                  className={`size-3.5 transition-transform ${desktopClientDetailsOpen ? 'rotate-90' : ''}`}
+                  aria-hidden="true"
+                />
+                {desktopClientDetailsOpen
+                  ? 'Masquer les coordonnées complètes'
+                  : 'Afficher les coordonnées légales et postales'}
+              </button>
+              <div className={`space-y-4 ${desktopClientDetailsOpen ? 'lg:block' : 'lg:hidden'}`}>
+                <Controller
+                  control={control}
+                  name="type"
+                  render={({ field }) => (
+                    <Select
+                      label="Type de client"
+                      value={field.value || 'unknown'}
+                      disabled={isSubmitting}
+                      onValueChange={(value) => field.onChange(value === 'unknown' ? '' : value)}
+                      options={[
+                        { value: 'unknown', label: 'À renseigner' },
+                        { value: 'company', label: 'Entreprise' },
+                        { value: 'individual', label: 'Particulier' },
+                        { value: 'public_body', label: 'Organisme public' },
+                      ]}
+                    />
+                  )}
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input
+                    label="SIRET / identifiant du client"
+                    {...register('registrationNumber')}
+                    {...(registrationIssue ? { error: registrationIssue } : {})}
+                    {...error('registrationNumber')}
+                  />
+                  <Input
+                    label="N° TVA du client"
+                    {...register('vatNumber')}
+                    {...(vatIssue ? { error: vatIssue } : {})}
+                    {...error('vatNumber')}
+                  />
+                </div>
+                {(registrationIssue || vatIssue) && (
+                  <p className="text-muted-foreground text-xs">
+                    Vous pouvez enregistrer ce brouillon. Corrigez les identifiants signalés avant
+                    de l’émettre.
+                  </p>
+                )}
+                <Input label="Adresse du client" {...register('address')} {...error('address')} />
+                <Input
+                  label="Complément d’adresse"
+                  {...register('addressLine2')}
+                  {...error('addressLine2')}
+                />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Input label="Code postal" {...register('postalCode')} {...error('postalCode')} />
+                  <Input label="Ville" {...register('city')} {...error('city')} />
+                  <Input label="Pays" {...register('country')} {...error('country')} />
+                </div>
+              </div>
+            </section>
+            <section
+              className={
+                currentStep === 1
+                  ? 'lg:border-border space-y-4 lg:order-2 lg:border-t lg:pt-7'
+                  : 'lg:border-border hidden lg:order-2 lg:block lg:space-y-4 lg:border-t lg:pt-7'
+              }
+              aria-label="Opération facturée"
+            >
+              <h3 className="text-foreground text-sm font-semibold">Opération facturée</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Date de prestation ou de livraison"
+                  type="date"
+                  hint="Date effective de fin de prestation ou de livraison."
+                  {...register('serviceDate')}
+                  {...error('serviceDate')}
+                />
+                <Controller
+                  control={control}
+                  name="operationType"
+                  render={({ field }) => (
+                    <Select
+                      label="Nature de l’opération"
+                      value={field.value || 'unknown'}
+                      disabled={isSubmitting}
+                      onValueChange={(v) => field.onChange(v === 'unknown' ? '' : v)}
+                      options={[
+                        { value: 'unknown', label: 'À renseigner' },
+                        { value: 'goods', label: 'Vente de biens' },
+                        { value: 'services', label: 'Prestation de services' },
+                        { value: 'mixed', label: 'Biens et services' },
+                      ]}
+                    />
+                  )}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Référence acheteur"
+                  hint="Service ou référence demandé par votre client."
+                  {...register('buyerReference')}
+                  {...error('buyerReference')}
+                />
+                <Input
+                  label="Bon de commande du client"
+                  {...register('purchaseOrderReference')}
+                  {...error('purchaseOrderReference')}
+                />
+              </div>
+              <details className="border-border rounded-xl border p-4">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Livraison à une autre adresse
+                </summary>
+                <p className="text-muted-foreground mt-3 text-xs">
+                  Laissez ces champs vides si l’adresse du client convient.
+                </p>
+                <div className="mt-3 space-y-3">
+                  <Input
+                    label="Adresse de livraison"
+                    {...register('deliveryAddress')}
+                    {...error('deliveryAddress')}
+                  />
+                  <Input
+                    label="Complément de livraison"
+                    {...register('deliveryAddressLine2')}
+                    {...error('deliveryAddressLine2')}
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Input
+                      label="Code postal de livraison"
+                      {...register('deliveryPostalCode')}
+                      {...error('deliveryPostalCode')}
+                    />
+                    <Input
+                      label="Ville de livraison"
+                      {...register('deliveryCity')}
+                      {...error('deliveryCity')}
+                    />
+                    <Input
+                      label="Pays de livraison"
+                      hint="Code de deux lettres, par exemple FR."
+                      {...register('deliveryCountry')}
+                      {...error('deliveryCountry')}
+                    />
+                  </div>
+                </div>
+              </details>
+            </section>
+            <section
+              className={
+                currentStep === 2
+                  ? 'lg:bg-surface-sunken space-y-4 lg:order-4 lg:rounded-2xl lg:p-5'
+                  : 'lg:bg-surface-sunken hidden lg:order-4 lg:block lg:space-y-4 lg:rounded-2xl lg:p-5'
+              }
+              aria-label="Règlement"
+            >
+              <h3 className="text-foreground text-sm font-semibold">Règlement</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Date d’échéance"
+                  type="date"
+                  {...register('dueDate')}
+                  {...error('dueDate')}
+                />
+                <Input label="Mode de règlement" {...register('method')} {...error('method')} />
+              </div>
+              <Textarea
+                label="Conditions d’escompte"
+                hint="Par exemple : Escompte pour paiement anticipé : néant. À adapter à vos conditions."
+                {...register('earlyPaymentTerms')}
+                {...error('earlyPaymentTerms')}
+              />
+              <Textarea
+                label="Pénalités de retard"
+                hint="Précisez le taux applicable aux clients professionnels. L’indemnité de recouvrement de 40 € sera mentionnée pour ces clients uniquement."
+                {...register('latePaymentTerms')}
+                {...error('latePaymentTerms')}
+              />
+              <Textarea
+                label="Conditions de règlement"
+                hint="Renseignez les conditions applicables à ce client, notamment les pénalités de retard lorsqu’elles s’appliquent."
+                {...register('terms')}
+                {...error('terms')}
+              />
+            </section>
+            <section
+              className={
+                currentStep === 1
+                  ? 'border-border space-y-4 border-t pt-5 lg:order-3 lg:pt-7'
+                  : 'border-border hidden border-t pt-5 lg:order-3 lg:block lg:space-y-4 lg:pt-7'
+              }
+              aria-label="Lignes de la facture"
+            >
+              <h3 className="text-foreground text-sm font-semibold">Prestations et TVA</h3>
               <Controller
                 control={control}
-                name={`items.${index}.category`}
-                render={({ field: category }) => (
+                name="vatOnDebits"
+                render={({ field }) => (
                   <Select
-                    label={`Catégorie de TVA ${index + 1}`}
-                    value={category.value}
-                    onValueChange={category.onChange}
+                    label="Option TVA d’après les débits"
+                    value={field.value || 'unknown'}
                     disabled={isSubmitting}
+                    onValueChange={(v) => field.onChange(v === 'unknown' ? '' : v)}
                     options={[
-                      { value: 'S', label: 'TVA applicable' },
-                      { value: 'Z', label: 'Taux zéro' },
-                      { value: 'E', label: 'Exonération' },
-                      { value: 'AE', label: 'Autoliquidation' },
-                      { value: 'K', label: 'Livraison intracommunautaire' },
-                      { value: 'G', label: 'Exportation' },
-                      { value: 'O', label: 'Hors champ' },
+                      { value: 'unknown', label: 'À confirmer' },
+                      { value: 'no', label: 'Non' },
+                      { value: 'yes', label: 'Oui, option exercée' },
                     ]}
                   />
                 )}
               />
-              <Input
-                label={`Motif d’exonération ${index + 1}`}
-                hint="À préciser pour une exonération ou une autoliquidation."
-                {...register(`items.${index}.exemption`)}
-              />
-              {errors.items?.[index] && (
-                <p role="alert" className="text-error text-xs">
-                  Vérifiez cette ligne : description et unité requises, montants positifs, TVA de 0
-                  à 100 %.
+              <div className="bg-primary text-primary-foreground text-3xs hidden grid-cols-[minmax(0,1fr)_5rem_5rem_7rem_5rem] gap-2 rounded-t-xl px-4 py-2.5 font-black tracking-wide uppercase lg:grid">
+                <span>Désignation</span>
+                <span className="text-center">Qté</span>
+                <span className="text-center">Unité</span>
+                <span className="text-right">Prix HT</span>
+                <span className="text-right">TVA</span>
+              </div>
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="border-border lg:bg-surface space-y-3 rounded-xl border p-4 lg:rounded-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">Ligne {index + 1}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Supprimer la ligne ${index + 1}`}
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                  <Input
+                    label={`Description ${index + 1}`}
+                    {...register(`items.${index}.description`)}
+                    {...(errors.items?.[index]?.description?.message
+                      ? { error: errors.items[index].description.message }
+                      : {})}
+                  />
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Input
+                      label={`Quantité ${index + 1}`}
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      {...register(`items.${index}.quantity`)}
+                    />
+                    <Input label={`Unité ${index + 1}`} {...register(`items.${index}.unit`)} />
+                    <Input
+                      label={`Prix HT (€) ${index + 1}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      {...register(`items.${index}.price`)}
+                    />
+                    <Input
+                      label={`TVA (%) ${index + 1}`}
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      {...register(`items.${index}.rate`)}
+                    />
+                  </div>
+                  <Controller
+                    control={control}
+                    name={`items.${index}.category`}
+                    render={({ field: category }) => (
+                      <Select
+                        label={`Catégorie de TVA ${index + 1}`}
+                        value={category.value}
+                        onValueChange={category.onChange}
+                        disabled={isSubmitting}
+                        options={[
+                          { value: 'S', label: 'TVA applicable' },
+                          { value: 'Z', label: 'Taux zéro' },
+                          { value: 'E', label: 'Exonération' },
+                          { value: 'AE', label: 'Autoliquidation' },
+                          { value: 'K', label: 'Livraison intracommunautaire' },
+                          { value: 'G', label: 'Exportation' },
+                          { value: 'O', label: 'Hors champ' },
+                        ]}
+                      />
+                    )}
+                  />
+                  <Input
+                    label={`Motif d’exonération ${index + 1}`}
+                    hint="À préciser pour une exonération ou une autoliquidation."
+                    {...register(`items.${index}.exemption`)}
+                  />
+                  {errors.items?.[index] && (
+                    <p role="alert" className="text-error text-xs">
+                      Vérifiez cette ligne : description et unité requises, montants positifs, TVA
+                      de 0 à 100 %.
+                    </p>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  append({
+                    description: '',
+                    unit: 'u',
+                    quantity: '1',
+                    price: '0.00',
+                    rate: '0',
+                    category: 'S',
+                    exemption: '',
+                  })
+                }
+                className="border-success/30 text-success hover:bg-success/10 gap-2"
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Ajouter une prestation
+              </Button>
+              <dl className="ml-auto hidden w-72 space-y-3 text-sm lg:block">
+                <div className="text-muted-foreground flex items-center justify-between">
+                  <dt>Total HT</dt>
+                  <dd className="text-foreground font-bold tabular-nums">
+                    {formatMoney(totals.excludingTax)} €
+                  </dd>
+                </div>
+                <div className="text-muted-foreground flex items-center justify-between">
+                  <dt>TVA</dt>
+                  <dd className="text-foreground font-semibold tabular-nums">
+                    {formatMoney(totals.vat)} €
+                  </dd>
+                </div>
+                <div className="bg-success/10 text-foreground flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
+                  <dt>Total TTC</dt>
+                  <dd className="text-success tabular-nums">{formatMoney(totalIncludingTax)} €</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section
+              className={currentStep === 3 ? 'space-y-4 lg:hidden' : 'hidden'}
+              aria-label="Validation de la facture"
+            >
+              <div className="flex items-start gap-3">
+                <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+                  <FileCheck2 className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 className="text-foreground text-sm font-semibold">
+                    Vérification du brouillon
+                  </h3>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Revenez à une étape pour corriger une information avant l’enregistrement.
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-border bg-surface grid gap-3 rounded-xl border p-4 text-xs sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground">Destinataire</p>
+                  <p className="text-foreground mt-1 font-semibold">
+                    {customerName.trim() || 'Non renseigné'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Date de prestation</p>
+                  <p className="text-foreground mt-1 font-semibold">
+                    {serviceDate || 'Non renseignée'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Nature de l’opération</p>
+                  <p className="text-foreground mt-1 font-semibold">
+                    {operationType === 'goods'
+                      ? 'Vente de biens'
+                      : operationType === 'services'
+                        ? 'Prestation de services'
+                        : operationType === 'mixed'
+                          ? 'Biens et services'
+                          : 'Non renseignée'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Prestations</p>
+                  <p className="text-foreground mt-1 font-semibold">
+                    {watchedItems.length} ligne{watchedItems.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <dl className="border-border bg-surface space-y-2 rounded-xl border p-4 text-sm">
+                <div className="text-muted-foreground flex items-center justify-between gap-4">
+                  <dt>Total HT</dt>
+                  <dd className="text-foreground font-semibold tabular-nums">
+                    {formatMoney(totals.excludingTax)} €
+                  </dd>
+                </div>
+                <div className="text-muted-foreground flex items-center justify-between gap-4">
+                  <dt>TVA</dt>
+                  <dd className="tabular-nums">{formatMoney(totals.vat)} €</dd>
+                </div>
+                <div className="border-border flex items-center justify-between gap-4 border-t pt-3">
+                  <dt className="text-foreground font-bold">Total TTC</dt>
+                  <dd className="text-primary text-lg font-bold tabular-nums">
+                    {formatMoney(totalIncludingTax)} €
+                  </dd>
+                </div>
+              </dl>
+
+              {(registrationIssue || vatIssue) && (
+                <p className="border-warning/30 bg-warning/10 text-foreground rounded-lg border px-3 py-2 text-xs">
+                  Certains identifiants du client restent à vérifier avant l’émission. Le brouillon
+                  peut néanmoins être enregistré.
+                </p>
+              )}
+            </section>
+          </div>
+
+          <aside
+            aria-label="Options et synthèse de la facture"
+            className="border-border bg-surface sticky top-0 hidden rounded-xl border shadow-xs lg:block"
+          >
+            <div className="border-border flex items-center gap-2 border-b px-4 py-3">
+              <Settings2 className="text-primary size-4" aria-hidden="true" />
+              <h3 className="text-foreground text-sm font-bold">Options de la facture</h3>
+            </div>
+            <div className="space-y-5 p-4 text-xs">
+              <section>
+                <h4 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
+                  Destinataire
+                </h4>
+                <p className="text-foreground mt-1 truncate font-semibold">
+                  {customerName.trim() || 'À renseigner'}
+                </p>
+                <p className="text-muted-foreground mt-0.5">
+                  {professional ? 'Client professionnel' : 'Client particulier'}
+                </p>
+              </section>
+
+              <section className="border-border border-t pt-4">
+                <h4 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
+                  Document
+                </h4>
+                <dl className="mt-2 space-y-2">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Prestation</dt>
+                    <dd className="text-foreground font-semibold">
+                      {serviceDate || 'À renseigner'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Lignes</dt>
+                    <dd className="text-foreground font-semibold tabular-nums">
+                      {watchedItems.length}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Statut</dt>
+                    <dd className="text-foreground font-semibold">Brouillon</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="border-border space-y-2 border-t pt-4">
+                <div className="text-muted-foreground flex justify-between gap-3">
+                  <span>Total HT</span>
+                  <strong className="text-foreground tabular-nums">
+                    {formatMoney(totals.excludingTax)} €
+                  </strong>
+                </div>
+                <div className="text-muted-foreground flex justify-between gap-3">
+                  <span>TVA</span>
+                  <span className="tabular-nums">{formatMoney(totals.vat)} €</span>
+                </div>
+                <div className="border-border flex items-center justify-between gap-3 border-t pt-3">
+                  <span className="text-foreground font-bold">Total TTC</span>
+                  <strong className="text-primary text-lg font-black tabular-nums">
+                    {formatMoney(totalIncludingTax)} €
+                  </strong>
+                </div>
+              </section>
+
+              {(registrationIssue || vatIssue) && (
+                <p className="border-warning/30 bg-warning/10 text-foreground rounded-lg border px-3 py-2 leading-relaxed">
+                  Des identifiants client restent à vérifier avant l’émission.
                 </p>
               )}
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              append({
-                description: '',
-                unit: 'u',
-                quantity: '1',
-                price: '0.00',
-                rate: '0',
-                category: 'S',
-                exemption: '',
-              })
-            }
-            className="gap-2"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Ajouter une prestation
-          </Button>
-        </section>
-
-        <section
-          className={currentStep === 3 ? 'space-y-4' : 'hidden'}
-          aria-label="Validation de la facture"
-        >
-          <div className="flex items-start gap-3">
-            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
-              <FileCheck2 className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h3 className="text-foreground text-sm font-semibold">Vérification du brouillon</h3>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                Revenez à une étape pour corriger une information avant l’enregistrement.
-              </p>
-            </div>
-          </div>
-
-          <div className="border-border bg-surface grid gap-3 rounded-xl border p-4 text-xs sm:grid-cols-2">
-            <div>
-              <p className="text-muted-foreground">Destinataire</p>
-              <p className="text-foreground mt-1 font-semibold">
-                {customerName.trim() || 'Non renseigné'}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Date de prestation</p>
-              <p className="text-foreground mt-1 font-semibold">
-                {serviceDate || 'Non renseignée'}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Nature de l’opération</p>
-              <p className="text-foreground mt-1 font-semibold">
-                {operationType === 'goods'
-                  ? 'Vente de biens'
-                  : operationType === 'services'
-                    ? 'Prestation de services'
-                    : operationType === 'mixed'
-                      ? 'Biens et services'
-                      : 'Non renseignée'}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Prestations</p>
-              <p className="text-foreground mt-1 font-semibold">
-                {watchedItems.length} ligne{watchedItems.length > 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-
-          <dl className="border-border bg-surface space-y-2 rounded-xl border p-4 text-sm">
-            <div className="text-muted-foreground flex items-center justify-between gap-4">
-              <dt>Total HT</dt>
-              <dd className="text-foreground font-semibold tabular-nums">
-                {formatMoney(totals.excludingTax)} €
-              </dd>
-            </div>
-            <div className="text-muted-foreground flex items-center justify-between gap-4">
-              <dt>TVA</dt>
-              <dd className="tabular-nums">{formatMoney(totals.vat)} €</dd>
-            </div>
-            <div className="border-border flex items-center justify-between gap-4 border-t pt-3">
-              <dt className="text-foreground font-bold">Total TTC</dt>
-              <dd className="text-primary text-lg font-bold tabular-nums">
-                {formatMoney(totalIncludingTax)} €
-              </dd>
-            </div>
-          </dl>
-
-          {(registrationIssue || vatIssue) && (
-            <p className="border-warning/30 bg-warning/10 text-foreground rounded-lg border px-3 py-2 text-xs">
-              Certains identifiants du client restent à vérifier avant l’émission. Le brouillon peut
-              néanmoins être enregistré.
-            </p>
-          )}
-        </section>
+          </aside>
+        </div>
       </fieldset>
-      <div className="border-border bg-surface-raised sticky bottom-0 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t px-5 py-3">
+      <div className="border-border bg-surface-raised sticky bottom-0 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t px-5 py-3 lg:hidden">
         {currentStep > 0 ? (
           <Button
             type="button"
@@ -722,6 +905,18 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
           </Button>
         )}
       </div>
+      <div className="border-border bg-surface/95 sticky bottom-0 -mx-5 -mb-5 hidden items-center justify-end gap-3 border-t px-6 py-3 backdrop-blur lg:flex">
+        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          Annuler
+        </Button>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+        >
+          {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+        </Button>
+      </div>
     </form>
   );
 }
@@ -742,6 +937,7 @@ export function InvoiceDraftEditor({
       size="xl"
       title="Corriger le brouillon"
       description="Complétez le destinataire, le règlement et les prestations avant l’émission."
+      className="lg:inset-0 lg:h-dvh lg:max-h-none lg:w-screen lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:border-0"
     >
       {open && <DraftForm key={invoice.id} invoice={invoice} onClose={() => onOpenChange(false)} />}
     </Modal>

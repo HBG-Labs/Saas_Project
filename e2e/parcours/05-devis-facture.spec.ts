@@ -26,6 +26,26 @@ import { installeSupabase } from '../fixtures/supabase';
  */
 
 test.describe('Devis', () => {
+  test('le nouveau devis devient un éditeur de document complet sur ordinateur', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await installeSupabase(page, { role: 'owner' });
+
+    await page.goto('/devis');
+
+    const document = page.getByLabel('Document devis');
+    await expect(document).toBeVisible();
+    await expect(document.getByText('Destinataire', { exact: true })).toBeVisible();
+    await expect(document.getByText('Dates du document')).toBeVisible();
+    await expect(document.getByText('Total TTC', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('complementary', { name: 'Options et synthèse du devis' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Enregistrer le devis' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Création du devis' })).toBeHidden();
+  });
+
   test('le nouveau devis mobile suit les quatre étapes sans perdre de rubrique', async ({
     page,
   }) => {
@@ -43,7 +63,7 @@ test.describe('Devis', () => {
 
     await main.getByRole('button', { name: /Étape 3 sur 4 : Conditions/ }).click();
     await expect(main.getByText('Conditions du devis')).toBeVisible();
-    await expect(main.getByLabel('Taux de TVA')).toBeVisible();
+    await expect(main.locator('#quote-vat-rate')).toBeVisible();
 
     await main.getByRole('button', { name: /Étape 4 sur 4 : Validation/ }).click();
     await expect(main.getByText('Synthèse du devis')).toBeVisible();
@@ -84,6 +104,34 @@ test.describe('Devis', () => {
 });
 
 test.describe('Factures', () => {
+  test('le brouillon affiche tous ses champs et sa synthèse côte à côte sur ordinateur', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await installeSupabase(page, {
+      role: 'owner',
+      donnees: {
+        invoices: [facture()],
+        invoice_totals: [factureTotaux()],
+      },
+    });
+
+    await page.goto(`/factures/${FACTURE_ID}`);
+    await page.getByRole('button', { name: 'Modifier le brouillon' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Corriger le brouillon' });
+    await expect(dialog.getByLabel('Nom du client')).toBeVisible();
+    await expect(dialog.getByLabel('Date de prestation ou de livraison')).toBeVisible();
+    await expect(dialog.getByLabel('Conditions d’escompte')).toBeVisible();
+    await expect(
+      dialog.getByRole('complementary', { name: 'Options et synthèse de la facture' }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Enregistrer les modifications' }),
+    ).toBeVisible();
+    await expect(dialog.getByRole('navigation', { name: 'Correction de la facture' })).toBeHidden();
+  });
+
   /*
     Le montant n'est pas dans la table : il vient de la vue `invoice_totals`,
     recollée côté client par `invoice_id`. Si cette jointure casse, la liste
@@ -182,7 +230,7 @@ test.describe('Factures', () => {
 
     await dialog.getByRole('button', { name: /Étape 4 sur 4 : Validation/ }).click();
     await expect(dialog.getByText('Vérification du brouillon')).toBeVisible();
-    await expect(dialog.getByText('300,00 €')).toBeVisible();
+    await expect(dialog.getByLabel('Validation de la facture').getByText('300,00 €')).toBeVisible();
 
     const overflow = await dialog.evaluate((element) => element.scrollWidth - element.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);

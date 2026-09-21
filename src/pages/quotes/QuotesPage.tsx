@@ -10,7 +10,10 @@ import {
   Building,
   Download,
   History,
+  PanelRightClose,
+  PanelRightOpen,
   Send,
+  Settings2,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -122,6 +125,7 @@ export default function QuotesPage() {
 
   const [items, setItems] = useState<QuoteLineItem[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(true);
   const wizardRef = useRef<HTMLDivElement>(null);
 
   const goToStep = (step: number) => {
@@ -272,22 +276,62 @@ export default function QuotesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      <PageHeader
-        title="Nouveau devis"
-        description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
-        actions={
-          <Button asChild variant="outline" className="gap-2">
+    <div className="lg:bg-surface-sunken mx-auto max-w-6xl space-y-6 pb-12 lg:fixed lg:inset-0 lg:z-50 lg:max-w-none lg:space-y-0 lg:overflow-y-auto lg:pb-24">
+      <div className="lg:hidden">
+        <PageHeader
+          title="Nouveau devis"
+          description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
+          actions={
+            <Button asChild variant="outline" className="gap-2">
+              <Link to={ROUTES.quotesHistory}>
+                <History className="size-4" aria-hidden="true" />
+                Voir les devis
+              </Link>
+            </Button>
+          }
+        />
+        <SalesNavTabs />
+      </div>
+
+      <header className="border-border bg-surface/95 sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur lg:flex">
+        <div className="flex min-w-0 items-center gap-4">
+          <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
             <Link to={ROUTES.quotesHistory}>
-              <History className="size-4" aria-hidden="true" />
-              Voir les devis
+              <X className="size-5" aria-hidden="true" />
             </Link>
           </Button>
-        }
-      />
-      <SalesNavTabs />
+          <div className="min-w-0">
+            <h1 className="text-foreground truncate text-base font-bold">Nouveau devis</h1>
+            <p className="text-muted-foreground text-xs">Brouillon · {todayDate}</p>
+          </div>
+        </div>
 
-      <div ref={wizardRef} className="scroll-mt-20">
+        <div className="text-center">
+          <p className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
+            Total TTC
+          </p>
+          <p className="text-foreground text-xl font-black tabular-nums">{totalTTC.toFixed(2)} €</p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setDesktopOptionsOpen((open) => !open)}
+          className="gap-2"
+          aria-expanded={desktopOptionsOpen}
+          aria-controls="quote-desktop-options"
+        >
+          {desktopOptionsOpen ? (
+            <PanelRightClose className="size-4" aria-hidden="true" />
+          ) : (
+            <PanelRightOpen className="size-4" aria-hidden="true" />
+          )}
+          Options
+        </Button>
+      </header>
+
+      <div ref={wizardRef} className="scroll-mt-20 lg:hidden">
         <DocumentWizardStepper
           steps={QUOTE_STEPS}
           currentStep={currentStep}
@@ -296,157 +340,438 @@ export default function QuotesPage() {
         />
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6">
-        {/* Formulaire Chiffrage (2/3) */}
-        <div className="space-y-6">
-          {/* Card Client & Site */}
-          <Card variant="section" className={cn('pb-6', currentStep !== 0 && 'hidden')}>
-            <CardHeader className="px-0 pt-0 pb-4">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Building className="text-primary size-4" />
-                Client et intervention
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 px-0 pt-0">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <CustomerPicker
-                  organizationId={organizationId}
-                  value={customerId}
-                  onChange={(id) => {
-                    setCustomerId(id);
-                    setSiteId(null);
-                  }}
-                  label="Client de la base"
-                />
-                {customerId === null ? (
-                  <Input
-                    label="Ou nom du client (hors base)"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    hint="Sans fiche, le devis n’apparaîtra pas dans un espace client."
-                  />
-                ) : (
-                  <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
-                )}
-              </div>
-              {customerId === null ? (
-                <Input
-                  label="Site ou Référence Intervention"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                />
-              ) : null}
-            </CardContent>
-          </Card>
+      <div
+        className={cn(
+          'mx-auto max-w-4xl space-y-6 lg:mx-0 lg:grid lg:max-w-none lg:items-start lg:gap-5 lg:space-y-0 lg:px-6 lg:py-5',
+          desktopOptionsOpen
+            ? 'lg:grid-cols-[minmax(0,56rem)_18rem] lg:justify-center'
+            : 'lg:grid-cols-[minmax(0,56rem)] lg:justify-center',
+        )}
+      >
+        <section className="space-y-6">
+          <div
+            aria-label="Document devis"
+            className="financial-paper border-border relative hidden min-h-[72rem] overflow-hidden rounded-sm border px-12 py-11 shadow-[0_18px_55px_rgba(15,23,42,0.12)] lg:block xl:px-14"
+          >
+            <div className="bg-primary absolute inset-x-0 top-0 h-2" aria-hidden="true" />
 
-          {/* Catalog Prestations Rapides */}
-          <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden')}>
-            <CardHeader className="flex flex-col items-stretch gap-3 px-0 pt-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="text-muted-foreground flex min-w-0 items-start gap-2 text-xs font-bold tracking-wider uppercase sm:items-center">
-                <Sparkles className="text-warning mt-0.5 size-3.5 shrink-0 sm:mt-0" />
-                Catalogue de prestations
-              </CardTitle>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAddCustomModalOpen(true)}
-                className="border-primary/30 text-2xs text-primary hover:bg-primary/10 w-full cursor-pointer justify-center gap-1.5 sm:w-auto"
-              >
-                <Plus className="size-3" />
-                Créer une prestation perso
-              </Button>
-            </CardHeader>
-
-            <CardContent className="px-0 pt-0">
-              <div className="flex flex-wrap gap-2">
-                {templates.map((preset) => {
-                  const priceEuros = toEuros(preset.unit_price_cents);
-
-                  return (
-                    <div
-                      key={preset.id}
-                      className="group border-border bg-surface text-muted-foreground hover:border-primary/50 hover:bg-primary/5 min-h-touch relative flex items-center rounded-lg border pr-1 pl-3 text-xs transition-[background-color,border-color] sm:min-h-8"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleAddItem({
-                            label: preset.label,
-                            unit: preset.unit,
-                            price: priceEuros,
-                          })
-                        }
-                        className="focus-visible:ring-ring min-h-touch flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
-                      >
-                        <Plus className="text-primary size-3 shrink-0" />
-                        <span className="text-foreground max-w-[200px] truncate">
-                          {preset.label}
-                        </span>
-                        <span className="text-success shrink-0 font-semibold">
-                          ({priceEuros.toFixed(2)} €)
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
-                        className="text-subtle-foreground hover:bg-error/20 hover:text-error focus-visible:ring-ring size-touch ml-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-7"
-                        title="Supprimer cette prestation du catalogue"
-                        aria-label={`Supprimer ${preset.label} du catalogue`}
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  );
-                })}
-
-                {!templatesQuery.isPending && templates.length === 0 && (
-                  <div className="space-y-2.5">
-                    <p className="text-2xs text-muted-foreground">
-                      Aucune prestation au catalogue. Une fois créées, elles seront réutilisables
-                      pour tous vos devis, par toute l’équipe.
+            <div className="mb-10 flex items-start justify-between gap-8">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl shadow-sm">
+                  <Building className="size-7" aria-hidden="true" />
+                </div>
+                <div className="min-w-0 pt-1">
+                  <p className="text-foreground text-lg font-black tracking-tight">
+                    {organization?.name ?? 'REZO360 Pro'}
+                  </p>
+                  {organization?.legal_name && organization.legal_name !== organization.name ? (
+                    <p className="text-muted-foreground mt-0.5 text-xs font-semibold">
+                      {organization.legal_name}
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => seedTemplates.mutate(STANDARD_PRESETS)}
-                      disabled={seedTemplates.isPending}
-                      className="text-2xs cursor-pointer gap-1.5"
-                    >
-                      <Sparkles className="text-warning size-3" />
-                      {seedTemplates.isPending
-                        ? 'Import en cours…'
-                        : 'Importer les prestations standards'}
-                    </Button>
+                  ) : null}
+                  <p className="text-muted-foreground text-3xs mt-1 max-w-sm leading-relaxed">
+                    {[organization?.address_line1, organization?.postal_code, organization?.city]
+                      .filter(Boolean)
+                      .join(' ') || 'Coordonnées de votre entreprise'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <span className="bg-primary/10 text-3xs text-primary inline-flex rounded-full px-3 py-1 font-black tracking-[0.18em] uppercase">
+                  Devis
+                </span>
+                <p className="text-foreground mt-3 text-2xl font-black tracking-tight">
+                  {savedReference ?? 'Nouveau devis'}
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">Émis le {todayDate}</p>
+              </div>
+            </div>
+
+            <div className="mb-8 grid grid-cols-[minmax(0,1fr)_15rem] gap-5">
+              <div className="border-primary/20 bg-primary/5 rounded-2xl border p-5">
+                <p className="text-3xs text-primary mb-3 font-black tracking-[0.16em] uppercase">
+                  Destinataire
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <CustomerPicker
+                    organizationId={organizationId}
+                    value={customerId}
+                    onChange={(id) => {
+                      setCustomerId(id);
+                      setSiteId(null);
+                    }}
+                    label="Client"
+                  />
+                  {customerId === null ? (
+                    <Input
+                      label="Nom libre"
+                      value={clientName}
+                      onChange={(event) => setClientName(event.target.value)}
+                    />
+                  ) : (
+                    <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
+                  )}
+                </div>
+                {customerId === null ? (
+                  <div className="mt-3">
+                    <Input
+                      label="Site ou référence d’intervention"
+                      value={siteName}
+                      onChange={(event) => setSiteName(event.target.value)}
+                    />
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Lignes de devis */}
-          <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden')}>
-            <CardHeader className="flex flex-row items-center justify-between px-0 pt-0 pb-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Calculator className="text-success size-4" />
-                  Prestations et fournitures
-                </CardTitle>
+                ) : null}
               </div>
 
+              <div className="border-success/30 bg-success/10 rounded-2xl border p-5">
+                <p className="text-3xs text-success font-black tracking-[0.16em] uppercase">
+                  Dates du document
+                </p>
+                <dl className="mt-4 space-y-3 text-xs">
+                  <div>
+                    <dt className="text-muted-foreground">Date d’émission</dt>
+                    <dd className="text-foreground mt-0.5 font-bold">{todayDate}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Validité</dt>
+                    <dd className="text-foreground mt-0.5 font-bold">Jusqu’au {validUntilDate}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <div className="border-border overflow-hidden rounded-xl border">
+              <div className="bg-primary text-primary-foreground text-3xs grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_7rem_7rem_2.5rem] items-center gap-px px-3 py-2.5 font-black tracking-wide uppercase">
+                <span>Désignation</span>
+                <span className="text-center">Qté</span>
+                <span className="text-center">Unité</span>
+                <span className="text-right">Prix HT</span>
+                <span className="text-right">Total HT</span>
+                <span />
+              </div>
+
+              <div className="divide-border divide-y">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-surface grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_7rem_7rem_2.5rem] items-center gap-2 px-3 py-2.5"
+                  >
+                    <input
+                      type="text"
+                      value={item.description}
+                      aria-label="Désignation de la prestation"
+                      onChange={(event) =>
+                        handleUpdateItem(item.id, 'description', event.target.value)
+                      }
+                      className="border-primary/30 bg-primary/5 text-foreground focus:border-primary focus:ring-primary/20 min-w-0 rounded-md border border-dashed px-2.5 py-2 text-xs font-semibold transition outline-none focus:ring-2"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      aria-label="Quantité"
+                      onChange={(event) =>
+                        handleUpdateItem(item.id, 'quantity', Number(event.target.value) || 0)
+                      }
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
+                    />
+                    <input
+                      type="text"
+                      value={item.unit}
+                      aria-label="Unité"
+                      onChange={(event) => handleUpdateItem(item.id, 'unit', event.target.value)}
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
+                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={item.unitPrice}
+                        aria-label="Prix unitaire hors taxes, en euros"
+                        onChange={(event) =>
+                          handleUpdateItem(item.id, 'unitPrice', Number(event.target.value) || 0)
+                        }
+                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 w-full rounded-md border border-dashed py-2 pr-5 pl-2 text-right text-xs font-semibold outline-none focus:ring-2"
+                      />
+                      <span className="text-3xs text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2">
+                        €
+                      </span>
+                    </div>
+                    <span className="text-foreground text-right text-xs font-black tabular-nums">
+                      {(item.quantity * item.unitPrice).toFixed(2)} €
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="text-subtle-foreground hover:bg-error/10 hover:text-error flex size-8 items-center justify-center rounded-lg transition"
+                      aria-label={`Supprimer la ligne « ${item.description} »`}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+
+                {items.length === 0 ? (
+                  <div className="bg-surface-sunken text-muted-foreground flex min-h-28 items-center justify-center px-6 text-center text-xs">
+                    Ajoutez une première prestation pour construire le devis.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => handleAddItem()}
-                className="cursor-pointer gap-1 text-xs"
+                className="border-success/30 text-success hover:bg-success/10 gap-1.5"
               >
-                <Plus className="size-3.5" />
-                Ajouter une ligne
+                <Plus className="size-3.5" aria-hidden="true" />
+                Ligne simple
               </Button>
-            </CardHeader>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAddCustomModalOpen(true)}
+                className="gap-1.5"
+              >
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                Nouvelle prestation
+              </Button>
+              <div className="ml-auto flex max-w-[28rem] flex-wrap justify-end gap-1.5">
+                {templates.slice(0, 4).map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() =>
+                      handleAddItem({
+                        label: preset.label,
+                        unit: preset.unit,
+                        price: toEuros(preset.unit_price_cents),
+                      })
+                    }
+                    className="bg-surface-hover text-3xs text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-full px-2.5 py-1.5 font-semibold transition"
+                  >
+                    + {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            <CardContent className="space-y-2 px-0 pt-0">
-              {/*
+            <div className="mt-9 grid grid-cols-[minmax(0,1fr)_18rem] items-start gap-10">
+              <div className="bg-surface-sunken rounded-2xl p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-3xs text-muted-foreground font-black tracking-[0.16em] uppercase">
+                      Conditions
+                    </p>
+                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                      {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                    </p>
+                  </div>
+                  <label className="text-muted-foreground shrink-0 text-xs font-semibold">
+                    TVA
+                    <span className="relative mt-1 flex w-24 items-center">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={vatInput}
+                        onChange={(event) => setVatInput(event.target.value)}
+                        className="border-border bg-surface text-foreground focus:border-primary focus:ring-primary/20 w-full rounded-lg border py-2 pr-7 pl-3 text-right text-sm font-bold outline-none focus:ring-2"
+                        aria-label="Taux de TVA"
+                      />
+                      <span className="text-muted-foreground absolute right-3 text-xs">%</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <dl className="space-y-3 text-sm">
+                <div className="text-muted-foreground flex items-center justify-between">
+                  <dt>Total HT</dt>
+                  <dd className="text-foreground font-bold tabular-nums">{totalHT.toFixed(2)} €</dd>
+                </div>
+                <div className="text-muted-foreground flex items-center justify-between">
+                  <dt>TVA {vatRate} %</dt>
+                  <dd className="text-foreground font-semibold tabular-nums">
+                    {totalVAT.toFixed(2)} €
+                  </dd>
+                </div>
+                <div className="bg-success/10 text-foreground flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
+                  <dt>Total TTC</dt>
+                  <dd className="text-success tabular-nums">{totalTTC.toFixed(2)} €</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="border-border text-3xs text-muted-foreground mt-10 grid grid-cols-2 gap-5 border-t pt-7">
+              <div>
+                <p className="text-foreground font-bold">Modalités de règlement</p>
+                <p className="mt-1 leading-relaxed">
+                  {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                </p>
+              </div>
+              <div className="border-border-strong rounded-xl border border-dashed p-4">
+                <p className="text-foreground font-bold">Bon pour accord</p>
+                <p className="mt-1">Date, nom et signature du client</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Formulaire Chiffrage (2/3) */}
+          <div className="space-y-6 lg:hidden">
+            {/* Card Client & Site */}
+            <Card variant="section" className={cn('pb-6', currentStep !== 0 && 'hidden lg:block')}>
+              <CardHeader className="px-0 pt-0 pb-4">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Building className="text-primary size-4" />
+                  Client et intervention
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 px-0 pt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <CustomerPicker
+                    organizationId={organizationId}
+                    value={customerId}
+                    onChange={(id) => {
+                      setCustomerId(id);
+                      setSiteId(null);
+                    }}
+                    label="Client de la base"
+                  />
+                  {customerId === null ? (
+                    <Input
+                      label="Ou nom du client (hors base)"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      hint="Sans fiche, le devis n’apparaîtra pas dans un espace client."
+                    />
+                  ) : (
+                    <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
+                  )}
+                </div>
+                {customerId === null ? (
+                  <Input
+                    label="Site ou Référence Intervention"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                  />
+                ) : null}
+              </CardContent>
+            </Card>
+
+            {/* Catalog Prestations Rapides */}
+            <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden lg:block')}>
+              <CardHeader className="flex flex-col items-stretch gap-3 px-0 pt-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="text-muted-foreground flex min-w-0 items-start gap-2 text-xs font-bold tracking-wider uppercase sm:items-center">
+                  <Sparkles className="text-warning mt-0.5 size-3.5 shrink-0 sm:mt-0" />
+                  Catalogue de prestations
+                </CardTitle>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddCustomModalOpen(true)}
+                  className="border-primary/30 text-2xs text-primary hover:bg-primary/10 w-full cursor-pointer justify-center gap-1.5 sm:w-auto"
+                >
+                  <Plus className="size-3" />
+                  Créer une prestation perso
+                </Button>
+              </CardHeader>
+
+              <CardContent className="px-0 pt-0">
+                <div className="flex flex-wrap gap-2">
+                  {templates.map((preset) => {
+                    const priceEuros = toEuros(preset.unit_price_cents);
+
+                    return (
+                      <div
+                        key={preset.id}
+                        className="group border-border bg-surface text-muted-foreground hover:border-primary/50 hover:bg-primary/5 min-h-touch relative flex items-center rounded-lg border pr-1 pl-3 text-xs transition-[background-color,border-color] sm:min-h-8"
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleAddItem({
+                              label: preset.label,
+                              unit: preset.unit,
+                              price: priceEuros,
+                            })
+                          }
+                          className="focus-visible:ring-ring min-h-touch flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md text-left focus-visible:ring-2 focus-visible:outline-none sm:min-h-8"
+                        >
+                          <Plus className="text-primary size-3 shrink-0" />
+                          <span className="text-foreground max-w-[200px] truncate">
+                            {preset.label}
+                          </span>
+                          <span className="text-success shrink-0 font-semibold">
+                            ({priceEuros.toFixed(2)} €)
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteCatalogPreset(preset.id, e)}
+                          className="text-subtle-foreground hover:bg-error/20 hover:text-error focus-visible:ring-ring size-touch ml-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none sm:size-7"
+                          title="Supprimer cette prestation du catalogue"
+                          aria-label={`Supprimer ${preset.label} du catalogue`}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {!templatesQuery.isPending && templates.length === 0 && (
+                    <div className="space-y-2.5">
+                      <p className="text-2xs text-muted-foreground">
+                        Aucune prestation au catalogue. Une fois créées, elles seront réutilisables
+                        pour tous vos devis, par toute l’équipe.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => seedTemplates.mutate(STANDARD_PRESETS)}
+                        disabled={seedTemplates.isPending}
+                        className="text-2xs cursor-pointer gap-1.5"
+                      >
+                        <Sparkles className="text-warning size-3" />
+                        {seedTemplates.isPending
+                          ? 'Import en cours…'
+                          : 'Importer les prestations standards'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lignes de devis */}
+            <Card variant="section" className={cn('pb-6', currentStep !== 1 && 'hidden lg:block')}>
+              <CardHeader className="flex flex-row items-center justify-between px-0 pt-0 pb-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <Calculator className="text-success size-4" />
+                    Prestations et fournitures
+                  </CardTitle>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddItem()}
+                  className="cursor-pointer gap-1 text-xs"
+                >
+                  <Plus className="size-3.5" />
+                  Ajouter une ligne
+                </Button>
+              </CardHeader>
+
+              <CardContent className="space-y-2 px-0 pt-0">
+                {/*
                 Ligne d'en-tête, à partir de `sm` seulement.
 
                 Sur grand écran elle nomme les colonnes une fois pour toutes.
@@ -455,264 +780,351 @@ export default function QuotesPage() {
                 ci-dessous — sans quoi trois nombres se suivent sans qu'on
                 sache lequel est la quantité et lequel le prix.
               */}
-              {items.length > 0 ? (
-                <div className="text-subtle-foreground text-3xs hidden grid-cols-12 gap-2 px-3 font-bold tracking-wider uppercase sm:grid">
-                  <span className="col-span-5">Désignation</span>
-                  <span className="col-span-2 text-center">Quantité</span>
-                  <span className="col-span-2 text-right">Prix unitaire</span>
-                  <span className="col-span-2 text-right">Total HT</span>
-                  <span className="col-span-1" />
-                </div>
-              ) : null}
-
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="border-border bg-surface grid grid-cols-12 items-end gap-2 rounded-lg border p-3 text-xs sm:items-center"
-                >
-                  <div className="col-span-12 sm:col-span-5">
-                    <span
-                      aria-hidden="true"
-                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
-                    >
-                      Désignation
-                    </span>
-                    <input
-                      type="text"
-                      value={item.description}
-                      aria-label="Désignation de la prestation"
-                      onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
-                    />
+                {items.length > 0 ? (
+                  <div className="text-subtle-foreground text-3xs hidden grid-cols-12 gap-2 px-3 font-bold tracking-wider uppercase sm:grid">
+                    <span className="col-span-5">Désignation</span>
+                    <span className="col-span-2 text-center">Quantité</span>
+                    <span className="col-span-2 text-right">Prix unitaire</span>
+                    <span className="col-span-2 text-right">Total HT</span>
+                    <span className="col-span-1" />
                   </div>
+                ) : null}
 
-                  <div className="col-span-4 sm:col-span-2">
-                    <span
-                      aria-hidden="true"
-                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
-                    >
-                      Qté
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      aria-label="Quantité"
-                      onChange={(e) =>
-                        handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
-                      }
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
-                    />
-                  </div>
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="border-border bg-surface grid grid-cols-12 items-end gap-2 rounded-lg border p-3 text-xs sm:items-center"
+                  >
+                    <div className="col-span-12 sm:col-span-5">
+                      <span
+                        aria-hidden="true"
+                        className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                      >
+                        Désignation
+                      </span>
+                      <input
+                        type="text"
+                        value={item.description}
+                        aria-label="Désignation de la prestation"
+                        onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
+                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                      />
+                    </div>
 
-                  <div className="col-span-4 sm:col-span-2">
-                    <span
-                      aria-hidden="true"
-                      className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
-                    >
-                      P.U.
-                    </span>
-                    <div className="relative flex items-center">
+                    <div className="col-span-4 sm:col-span-2">
+                      <span
+                        aria-hidden="true"
+                        className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                      >
+                        Qté
+                      </span>
                       <input
                         type="number"
-                        min="0"
-                        step="0.5"
-                        value={item.unitPrice}
-                        aria-label="Prix unitaire hors taxes, en euros"
+                        min="1"
+                        value={item.quantity}
+                        aria-label="Quantité"
                         onChange={(e) =>
-                          handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
+                          handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
                         }
-                        className="border-border-strong bg-surface-sunken focus:border-primary focus-visible:ring-ring/30 text-success min-h-touch w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
                       />
-                      <span className="text-muted-foreground text-2xs absolute right-2">€</span>
+                    </div>
+
+                    <div className="col-span-4 sm:col-span-2">
+                      <span
+                        aria-hidden="true"
+                        className="text-subtle-foreground text-3xs mb-1 block font-bold tracking-wider uppercase sm:hidden"
+                      >
+                        P.U.
+                      </span>
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={item.unitPrice}
+                          aria-label="Prix unitaire hors taxes, en euros"
+                          onChange={(e) =>
+                            handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
+                          }
+                          className="border-border-strong bg-surface-sunken focus:border-primary focus-visible:ring-ring/30 text-success min-h-touch w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                        />
+                        <span className="text-muted-foreground text-2xs absolute right-2">€</span>
+                      </div>
+                    </div>
+
+                    <div className="text-foreground col-span-3 pb-1.5 text-right text-xs font-bold sm:col-span-2 sm:pb-0">
+                      {(item.quantity * item.unitPrice).toFixed(2)} €
+                    </div>
+
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        // 44 px : la corbeille est collée au montant, et un
+                        // pouce qui vise mal efface une ligne au lieu de la
+                        // corriger.
+                        className="text-subtle-foreground hover:text-error size-touch flex cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
+                        title="Supprimer la ligne"
+                        aria-label={`Supprimer la ligne « ${item.description} »`}
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
+                ))}
 
-                  <div className="text-foreground col-span-3 pb-1.5 text-right text-xs font-bold sm:col-span-2 sm:pb-0">
-                    {(item.quantity * item.unitPrice).toFixed(2)} €
+                {items.length === 0 ? (
+                  <p className="text-muted-foreground border-border rounded-lg border border-dashed px-4 py-6 text-center text-xs">
+                    Aucune ligne pour l’instant. Touchez une prestation du catalogue ci-dessus, ou
+                    ajoutez une ligne libre.
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card variant="section" className={cn('pb-6 lg:hidden', currentStep !== 2 && 'hidden')}>
+            <CardHeader className="px-0 pt-0 pb-4">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <FileText className="text-primary size-4" aria-hidden="true" />
+                Conditions du devis
+              </CardTitle>
+              <CardDescription>
+                Ces informations seront reprises sur le devis et dans son PDF.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5 px-0 pt-0">
+              <div className="border-border bg-surface grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="quote-vat-rate"
+                    className="text-foreground block text-xs font-semibold"
+                  >
+                    Taux de TVA
+                  </label>
+                  <div className="relative flex max-w-40 items-center">
+                    <input
+                      id="quote-vat-rate"
+                      type="text"
+                      inputMode="decimal"
+                      value={vatInput}
+                      onChange={(e) => setVatInput(e.target.value)}
+                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
+                    />
+                    <span className="text-muted-foreground absolute right-3 text-xs font-semibold">
+                      %
+                    </span>
                   </div>
-
-                  <div className="col-span-1 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.id)}
-                      // 44 px : la corbeille est collée au montant, et un
-                      // pouce qui vise mal efface une ligne au lieu de la
-                      // corriger.
-                      className="text-subtle-foreground hover:text-error size-touch flex cursor-pointer items-center justify-center rounded-md transition-colors sm:size-8"
-                      title="Supprimer la ligne"
-                      aria-label={`Supprimer la ligne « ${item.description} »`}
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </button>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { value: '8.5', label: '8,5 % Antilles' },
+                      { value: '20', label: '20 % Métropole' },
+                      { value: '0', label: '0 %' },
+                    ].map((rate) => (
+                      <button
+                        key={rate.value}
+                        type="button"
+                        onClick={() => setVatInput(rate.value)}
+                        className={cn(
+                          'min-h-touch cursor-pointer rounded-lg border px-2.5 text-xs transition-colors sm:min-h-8',
+                          vatInput === rate.value
+                            ? 'border-primary bg-primary/10 text-primary font-bold'
+                            : 'border-border bg-surface text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {rate.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
 
-              {items.length === 0 ? (
-                <p className="text-muted-foreground border-border rounded-lg border border-dashed px-4 py-6 text-center text-xs">
-                  Aucune ligne pour l’instant. Touchez une prestation du catalogue ci-dessus, ou
-                  ajoutez une ligne libre.
-                </p>
-              ) : null}
+                <dl className="text-muted-foreground space-y-3 text-xs">
+                  <div>
+                    <dt className="text-foreground font-semibold">Conditions d’acceptation</dt>
+                    <dd className="mt-1 leading-relaxed">
+                      {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-foreground font-semibold">Modalités de règlement</dt>
+                    <dd className="mt-1 leading-relaxed">
+                      {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Les textes par défaut se modifient dans les paramètres de l’entreprise.
+              </p>
             </CardContent>
           </Card>
-        </div>
 
-        <Card variant="section" className={cn('pb-6', currentStep !== 2 && 'hidden')}>
-          <CardHeader className="px-0 pt-0 pb-4">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <FileText className="text-primary size-4" aria-hidden="true" />
-              Conditions du devis
-            </CardTitle>
-            <CardDescription>
-              Ces informations seront reprises sur le devis et dans son PDF.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5 px-0 pt-0">
-            <div className="border-border bg-surface grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label
-                  htmlFor="quote-vat-rate"
-                  className="text-foreground block text-xs font-semibold"
-                >
-                  Taux de TVA
-                </label>
-                <div className="relative flex max-w-40 items-center">
-                  <input
-                    id="quote-vat-rate"
-                    type="text"
-                    inputMode="decimal"
-                    value={vatInput}
-                    onChange={(e) => setVatInput(e.target.value)}
-                    className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
-                  />
-                  <span className="text-muted-foreground absolute right-3 text-xs font-semibold">
-                    %
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { value: '8.5', label: '8,5 % Antilles' },
-                    { value: '20', label: '20 % Métropole' },
-                    { value: '0', label: '0 %' },
-                  ].map((rate) => (
-                    <button
-                      key={rate.value}
-                      type="button"
-                      onClick={() => setVatInput(rate.value)}
-                      className={cn(
-                        'min-h-touch cursor-pointer rounded-lg border px-2.5 text-xs transition-colors sm:min-h-8',
-                        vatInput === rate.value
-                          ? 'border-primary bg-primary/10 text-primary font-bold'
-                          : 'border-border bg-surface text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {rate.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Aperçu & Synthèse Financière (1/3) */}
+          <div className={cn('space-y-6 lg:hidden', currentStep !== 3 && 'hidden')}>
+            <Card className="border-primary/25 shadow-xs">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <FileText className="text-success size-4" />
+                  Synthèse du devis
+                </CardTitle>
+                <CardDescription>Calcul automatique des totaux HT & TTC.</CardDescription>
+              </CardHeader>
 
-              <dl className="text-muted-foreground space-y-3 text-xs">
-                <div>
-                  <dt className="text-foreground font-semibold">Conditions d’acceptation</dt>
-                  <dd className="mt-1 leading-relaxed">
-                    {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
-                  </dd>
+              <CardContent className="space-y-5 pt-5 text-xs">
+                <div className="space-y-2.5">
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Client :</span>
+                    <strong className="text-foreground max-w-[160px] truncate">
+                      {selectedCustomer?.name || clientName || '—'}
+                    </strong>
+                  </div>
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Site :</span>
+                    <strong className="text-foreground max-w-[160px] truncate">
+                      {selectedSite?.name || siteName || '—'}
+                    </strong>
+                  </div>
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Taux de TVA :</span>
+                    <strong className="text-foreground">{vatRate} %</strong>
+                  </div>
                 </div>
-                <div>
-                  <dt className="text-foreground font-semibold">Modalités de règlement</dt>
-                  <dd className="mt-1 leading-relaxed">
-                    {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Les textes par défaut se modifient dans les paramètres de l’entreprise.
-            </p>
-          </CardContent>
-        </Card>
 
-        {/* Aperçu & Synthèse Financière (1/3) */}
-        <div className={cn('space-y-6', currentStep !== 3 && 'hidden')}>
-          <Card className="border-primary/25 shadow-xs">
-            <CardHeader className="border-b pb-4">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <FileText className="text-success size-4" />
-                Synthèse du devis
-              </CardTitle>
-              <CardDescription>Calcul automatique des totaux HT & TTC.</CardDescription>
-            </CardHeader>
+                <div className="border-border space-y-2 border-t pt-4">
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Sous-total HT :</span>
+                    <span className="text-foreground font-semibold">{totalHT.toFixed(2)} €</span>
+                  </div>
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>TVA ({vatRate}%) :</span>
+                    <span>{totalVAT.toFixed(2)} €</span>
+                  </div>
+                  <div className="border-border flex items-center justify-between border-t pt-3 text-sm">
+                    <span className="text-foreground font-bold">Total TTC :</span>
+                    <span className="text-primary text-xl font-bold">{totalTTC.toFixed(2)} €</span>
+                  </div>
+                </div>
 
-            <CardContent className="space-y-5 pt-5 text-xs">
-              <div className="space-y-2.5">
-                <div className="text-muted-foreground flex justify-between">
-                  <span>Client :</span>
-                  <strong className="text-foreground max-w-[160px] truncate">
-                    {selectedCustomer?.name || clientName || '—'}
-                  </strong>
-                </div>
-                <div className="text-muted-foreground flex justify-between">
-                  <span>Site :</span>
-                  <strong className="text-foreground max-w-[160px] truncate">
-                    {selectedSite?.name || siteName || '—'}
-                  </strong>
-                </div>
-                <div className="text-muted-foreground flex justify-between">
-                  <span>Taux de TVA :</span>
-                  <strong className="text-foreground">{vatRate} %</strong>
-                </div>
-              </div>
+                <div className="border-border space-y-2.5 border-t pt-4">
+                  <FormError error={submitError} />
 
-              <div className="border-border space-y-2 border-t pt-4">
-                <div className="text-muted-foreground flex justify-between">
-                  <span>Sous-total HT :</span>
-                  <span className="text-foreground font-semibold">{totalHT.toFixed(2)} €</span>
-                </div>
-                <div className="text-muted-foreground flex justify-between">
-                  <span>TVA ({vatRate}%) :</span>
-                  <span>{totalVAT.toFixed(2)} €</span>
-                </div>
-                <div className="border-border flex items-center justify-between border-t pt-3 text-sm">
-                  <span className="text-foreground font-bold">Total TTC :</span>
-                  <span className="text-primary text-xl font-bold">{totalTTC.toFixed(2)} €</span>
-                </div>
-              </div>
-
-              <div className="border-border space-y-2.5 border-t pt-4">
-                <FormError error={submitError} />
-
-                {/*
+                  {/*
                   C'est précisément ce qui manquait : le devis était bien
                   enregistré, mais rien à l'écran ne menait vers lui ensuite —
                   seul le PDF, téléchargé sur-le-champ, en gardait une trace.
                 */}
-                {savedQuoteId !== null ? (
-                  <Button asChild variant="outline" className="w-full justify-center gap-2 text-xs">
-                    <Link to={ROUTES.quoteDetail(savedQuoteId)}>
-                      <FileText className="size-4" />
-                      Voir le devis enregistré
-                    </Link>
-                  </Button>
-                ) : null}
+                  {savedQuoteId !== null ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-center gap-2 text-xs"
+                    >
+                      <Link to={ROUTES.quoteDetail(savedQuoteId)}>
+                        <FileText className="size-4" />
+                        Voir le devis enregistré
+                      </Link>
+                    </Button>
+                  ) : null}
 
-                <Button
-                  variant="outline"
-                  onClick={() => setIsPreviewPdfOpen(true)}
-                  className="w-full cursor-pointer justify-center gap-2 text-xs"
-                >
-                  <Download className="size-4" />
-                  Télécharger le Devis PDF
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPreviewPdfOpen(true)}
+                    className="w-full cursor-pointer justify-center gap-2 text-xs"
+                  >
+                    <Download className="size-4" />
+                    Télécharger le Devis PDF
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {desktopOptionsOpen ? (
+          <aside
+            id="quote-desktop-options"
+            aria-label="Options et synthèse du devis"
+            className="border-border bg-surface sticky top-20 hidden rounded-xl border shadow-xs lg:block"
+          >
+            <div className="border-border flex items-center gap-2 border-b px-4 py-3">
+              <Settings2 className="text-primary size-4" aria-hidden="true" />
+              <h2 className="text-foreground text-sm font-bold">Options du devis</h2>
+            </div>
+            <div className="space-y-5 p-4 text-xs">
+              <section>
+                <h3 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
+                  Destinataire
+                </h3>
+                <p className="text-foreground mt-1 truncate font-semibold">
+                  {selectedCustomer?.name || clientName || 'À sélectionner'}
+                </p>
+                <p className="text-muted-foreground mt-0.5 truncate">
+                  {selectedSite?.name || siteName || 'Aucun site renseigné'}
+                </p>
+              </section>
+
+              <section className="border-border border-t pt-4">
+                <h3 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
+                  Document
+                </h3>
+                <dl className="mt-2 space-y-2">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Lignes</dt>
+                    <dd className="text-foreground font-semibold tabular-nums">{items.length}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">TVA</dt>
+                    <dd className="text-foreground font-semibold tabular-nums">{vatRate} %</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Validité</dt>
+                    <dd className="text-foreground font-semibold">30 jours</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="border-border space-y-2 border-t pt-4">
+                <div className="text-muted-foreground flex justify-between gap-3">
+                  <span>Total HT</span>
+                  <strong className="text-foreground tabular-nums">{totalHT.toFixed(2)} €</strong>
+                </div>
+                <div className="text-muted-foreground flex justify-between gap-3">
+                  <span>TVA</span>
+                  <span className="tabular-nums">{totalVAT.toFixed(2)} €</span>
+                </div>
+                <div className="border-border flex items-center justify-between gap-3 border-t pt-3">
+                  <span className="text-foreground font-bold">Total TTC</span>
+                  <strong className="text-primary text-lg font-black tabular-nums">
+                    {totalTTC.toFixed(2)} €
+                  </strong>
+                </div>
+              </section>
+
+              <FormError error={submitError} />
+              {savedQuoteId !== null ? (
+                <Button asChild variant="outline" className="w-full justify-center gap-2 text-xs">
+                  <Link to={ROUTES.quoteDetail(savedQuoteId)}>
+                    <FileText className="size-4" aria-hidden="true" />
+                    Voir le devis
+                  </Link>
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPreviewPdfOpen(true)}
+                className="w-full justify-center gap-2 text-xs"
+              >
+                <Download className="size-4" aria-hidden="true" />
+                Aperçu PDF
+              </Button>
+            </div>
+          </aside>
+        ) : null}
       </div>
 
-      <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 -mx-4 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border">
+      <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 -mx-4 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border lg:hidden">
         {currentStep > 0 ? (
           <Button variant="outline" onClick={() => goToStep(currentStep - 1)} className="gap-1.5">
             <ChevronLeft className="size-4" aria-hidden="true" />
@@ -742,6 +1154,32 @@ export default function QuotesPage() {
                 : 'Enregistrer le devis'}
           </Button>
         )}
+      </div>
+
+      <div className="border-border bg-surface/95 fixed inset-x-0 bottom-0 z-40 hidden items-center justify-end gap-3 border-t px-6 py-3 backdrop-blur lg:flex">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsPreviewPdfOpen(true)}
+          className="gap-2"
+        >
+          <Download className="size-4" aria-hidden="true" />
+          Aperçu PDF
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleSendQuote}
+          disabled={createQuote.isPending}
+          className="gap-2"
+        >
+          <Send className="size-4" aria-hidden="true" />
+          {createQuote.isPending
+            ? 'Enregistrement…'
+            : savedReference !== null
+              ? `${savedReference} enregistré`
+              : 'Enregistrer le devis'}
+        </Button>
       </div>
 
       {/* Modal création de prestation personnalisée */}
