@@ -71,6 +71,7 @@ test.describe('Récupération PWA', () => {
 
     expect(stylesheetRequests).toBeGreaterThanOrEqual(2);
     await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+    await expect(page.locator('html')).toHaveClass(/rezo360-app-ready/);
     await expect(page.locator('#rezo360-style-boot')).toBeHidden();
     await expect(
       page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
@@ -92,7 +93,7 @@ test.describe('Récupération PWA', () => {
       );
       if (!stylesheet) throw new Error('Feuille principale introuvable');
 
-      const cache = await caches.open('rezo360-pwa-v6');
+      const cache = await caches.open('rezo360-pwa-v7');
       await cache.put(
         stylesheet.href,
         new Response(css, { headers: { 'content-type': 'text/css' } }),
@@ -102,6 +103,7 @@ test.describe('Récupération PWA', () => {
     await page.reload();
 
     await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+    await expect(page.locator('html')).toHaveClass(/rezo360-app-ready/);
     await expect(page.getByRole('link', { name: 'Commencer gratuitement' }).first()).toBeVisible();
     expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain(
       'Nunito',
@@ -112,9 +114,31 @@ test.describe('Récupération PWA', () => {
           'link[rel="stylesheet"][href*="/assets/"]',
         );
         if (!stylesheet) return '';
-        const response = await (await caches.open('rezo360-pwa-v6')).match(stylesheet.href);
+        const response = await (await caches.open('rezo360-pwa-v7')).match(stylesheet.href);
         return response?.text();
       }),
     ).toBe(poisonedCss);
+  });
+
+  test('un fichier d’entrée obsolète ne laisse jamais un écran blanc', async ({ page }) => {
+    let entryRequests = 0;
+    await page.route(/\/assets\/index-[^/]+\.js(?:\?.*)?$/, async (route) => {
+      entryRequests += 1;
+      if (entryRequests === 1) {
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByRole('link', { name: 'Commencer gratuitement' }).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    expect(entryRequests).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
+    await expect(page.locator('html')).toHaveClass(/rezo360-app-ready/);
+    await expect(page.locator('#rezo360-style-boot')).toBeHidden();
   });
 });

@@ -177,7 +177,7 @@
           sans-serif;
       }
 
-      html.rezo360-styles-ready #rezo360-style-boot {
+      html.rezo360-styles-ready.rezo360-app-ready #rezo360-style-boot {
         display: none;
       }
 
@@ -242,19 +242,23 @@
         <p id="rezo360-style-message" class="rezo360-style-boot-message">
           Chargement de l’interface…
         </p>
-        <button id="rezo360-style-retry" type="button">Réessayer</button>
+        <button id="rezo360-style-retry" type="button">Réparer et recharger</button>
       </div>
     </div>
     <div id="root"></div>
     <script>
       (function () {
         var documentElement = document.documentElement;
+        var applicationRoot = document.getElementById('root');
         var bootScreen = document.getElementById('rezo360-style-boot');
         var message = document.getElementById('rezo360-style-message');
         var retryButton = document.getElementById('rezo360-style-retry');
         var retryInProgress = false;
         var automaticRetryDone = false;
         var readinessTimer = 0;
+        var applicationTimer = 0;
+        var APP_RECOVERY_KEY = 'rezo360_app_shell_recovery_at';
+        var APP_RECOVERY_GUARD_MS = 60000;
 
         function stylesAreReady() {
           return (
@@ -266,13 +270,84 @@
         function revealApplication() {
           if (readinessTimer) window.clearInterval(readinessTimer);
           documentElement.classList.add('rezo360-styles-ready');
+          if (applicationRoot && applicationRoot.childElementCount > 0) {
+            if (applicationTimer) window.clearTimeout(applicationTimer);
+            documentElement.classList.add('rezo360-app-ready');
+          }
         }
 
-        function showFailure() {
+        function showFailure(failureMessage) {
           retryInProgress = false;
           bootScreen.setAttribute('data-failed', 'true');
           message.textContent =
+            failureMessage ||
             'L’interface n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.';
+        }
+
+        function applicationHasStarted() {
+          return Boolean(applicationRoot && applicationRoot.childElementCount > 0);
+        }
+
+        function reserveAutomaticRecovery() {
+          try {
+            var now = Date.now();
+            var previousAttempt = Number(sessionStorage.getItem(APP_RECOVERY_KEY)) || 0;
+            if (now - previousAttempt < APP_RECOVERY_GUARD_MS) return false;
+            sessionStorage.setItem(APP_RECOVERY_KEY, String(now));
+          } catch (error) {
+            /* Le stockage privé ne doit pas empêcher une tentative de réparation. */
+          }
+          return true;
+        }
+
+        function reloadWithoutOldShell() {
+          var nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set('rezo360-recovery', String(Date.now()));
+          window.location.replace(nextUrl.toString());
+        }
+
+        function repairApplicationShell(automatic) {
+          if (retryInProgress || applicationHasStarted()) return;
+          if (automatic && !reserveAutomaticRecovery()) {
+            showFailure(
+              'Une ancienne version bloque encore l’application. Touchez « Réparer et recharger » pour terminer la mise à jour.',
+            );
+            return;
+          }
+
+          retryInProgress = true;
+          bootScreen.removeAttribute('data-failed');
+          message.textContent = 'Mise à jour de l’application…';
+
+          var cleanups = [];
+          if ('caches' in window) {
+            cleanups.push(
+              caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys
+                    .filter(function (key) {
+                      return key.indexOf('rezo360-pwa-') === 0;
+                    })
+                    .map(function (key) {
+                      return caches.delete(key);
+                    }),
+                );
+              }),
+            );
+          }
+          if ('serviceWorker' in navigator) {
+            cleanups.push(
+              navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                return Promise.all(
+                  registrations.map(function (registration) {
+                    return registration.unregister();
+                  }),
+                );
+              }),
+            );
+          }
+
+          Promise.all(cleanups).then(reloadWithoutOldShell, reloadWithoutOldShell);
         }
 
         function mainStylesheet() {
@@ -342,7 +417,34 @@
           }
         }
 
-        retryButton.addEventListener('click', retryStylesheet);
+        if (applicationRoot) {
+          new MutationObserver(function () {
+            if (applicationHasStarted()) revealApplication();
+          }).observe(applicationRoot, { childList: true });
+        }
+
+        /* Un ancien index peut référencer le fichier d’entrée d’un déploiement
+           précédent. Comme ce fichier échoue AVANT l’exécution de main.tsx,
+           seul ce script en ligne peut sortir l’utilisateur de l’écran blanc. */
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event.target;
+            if (
+              target &&
+              target.tagName === 'SCRIPT' &&
+              (target.type === 'module' || String(target.src).indexOf('/assets/') >= 0)
+            ) {
+              repairApplicationShell(true);
+            }
+          },
+          true,
+        );
+
+        retryButton.addEventListener('click', function () {
+          if (!stylesAreReady()) retryStylesheet();
+          else repairApplicationShell(false);
+        });
         checkReadiness();
         readinessTimer = window.setInterval(checkReadiness, 100);
         window.setTimeout(function () {
@@ -351,6 +453,9 @@
             retryStylesheet();
           }
         }, 2500);
+        applicationTimer = window.setTimeout(function () {
+          if (!applicationHasStarted()) repairApplicationShell(true);
+        }, 10000);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

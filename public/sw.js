@@ -15,7 +15,9 @@
 // une empreinte de contenu et le navigateur sait les mettre en cache : une
 // seconde couche « cache d'abord » empêchait précisément leur récupération
 // lorsqu'une réponse incomplète avait été enregistrée sur Android.
-const CACHE_NAME = 'rezo360-pwa-v6';
+// v7 accompagne le garde-fou d'amorçage : un appareil qui détenait encore un
+// ancien index vide son shell dès l'activation et récupère le bundle courant.
+const CACHE_NAME = 'rezo360-pwa-v7';
 
 const STATIC_ASSETS = ['/', '/favicon-32.png', '/icon-192.png', '/site.webmanifest'];
 
