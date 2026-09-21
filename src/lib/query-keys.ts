@@ -306,6 +306,8 @@ export const qk = {
     folders: (organizationId: string) => [...qk.documents.all, organizationId, 'folders'] as const,
     /** Ce qu'un dossier contient, lu au moment d'annoncer sa suppression. */
     folderContent: (folderId: string) => [...qk.documents.all, 'folder-content', folderId] as const,
+    numbering: (organizationId: string, kind: string) =>
+      [...qk.documents.all, organizationId, 'numbering', kind] as const,
   },
 
   /**

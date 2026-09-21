@@ -34,6 +34,12 @@ export interface CanonicalVatBreakdown {
   taxCents: number;
   exemptionReason: string | null;
 }
+export interface CanonicalAllowance {
+  amountCents: number;
+  reason: string;
+  vatCategory: SupportedVatCategory;
+  vatRate: number;
+}
 
 /** Codes de notes BT-21 utilisés par le profil français AFNOR. */
 export type InvoiceNoteSubjectCode = 'PMT' | 'PMD' | 'AAB' | 'REG' | 'TXD' | 'AAI';
@@ -64,6 +70,10 @@ interface CanonicalDocument {
   paymentIban: string | null;
   paymentBic: string | null;
   lines: CanonicalInvoiceLine[];
+  /** Somme des lignes avant remises au niveau du document. */
+  lineTotalCents?: number;
+  allowances?: CanonicalAllowance[];
+  allowanceTotalCents?: number;
   vatBreakdown: CanonicalVatBreakdown[];
   netCents: number;
   taxCents: number;

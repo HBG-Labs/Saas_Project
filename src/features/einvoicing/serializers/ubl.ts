@@ -40,7 +40,10 @@ const party = (value: InvoiceParty) =>
 const EN16931_CUSTOMIZATION_ID = 'urn:cen.eu:en16931:2017';
 
 /** UBL 2.1 / EN 16931. Le profil de transport reste explicite et optionnel. */
-export function serializeUbl(invoice: CanonicalInvoice, options: { profileId?: string } = {}): string {
+export function serializeUbl(
+  invoice: CanonicalInvoice,
+  options: { profileId?: string } = {},
+): string {
   const isCreditNote = invoice.documentType === 'credit_note';
   const root = isCreditNote ? 'CreditNote' : 'Invoice';
   const lineTag = isCreditNote ? 'CreditNoteLine' : 'InvoiceLine';
@@ -77,7 +80,11 @@ export function serializeUbl(invoice: CanonicalInvoice, options: { profileId?: s
       : '',
     `<cac:PaymentTerms>${text('cbc:Note', invoice.paymentTerms)}</cac:PaymentTerms>`,
     `<cac:TaxTotal>${amount('cbc:TaxAmount', invoice.taxCents)}${invoice.vatBreakdown.map((group) => `<cac:TaxSubtotal>${amount('cbc:TaxableAmount', group.baseCents)}${amount('cbc:TaxAmount', group.taxCents)}<cac:TaxCategory>${text('cbc:ID', group.category)}${text('cbc:Percent', group.rate)}${optional('cbc:TaxExemptionReason', group.exemptionReason)}<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal>`).join('')}</cac:TaxTotal>`,
-    `<cac:LegalMonetaryTotal>${amount('cbc:LineExtensionAmount', invoice.netCents)}${amount('cbc:TaxExclusiveAmount', invoice.netCents)}${amount('cbc:TaxInclusiveAmount', invoice.totalCents)}${amount('cbc:PayableAmount', invoice.totalCents)}</cac:LegalMonetaryTotal>`,
+    ...(invoice.allowances ?? []).map(
+      (allowance) =>
+        `<cac:AllowanceCharge>${text('cbc:ChargeIndicator', 'false')}${text('cbc:AllowanceChargeReason', allowance.reason)}${amount('cbc:Amount', allowance.amountCents)}<cac:TaxCategory>${text('cbc:ID', allowance.vatCategory)}${text('cbc:Percent', allowance.vatRate)}<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory></cac:AllowanceCharge>`,
+    ),
+    `<cac:LegalMonetaryTotal>${amount('cbc:LineExtensionAmount', invoice.lineTotalCents ?? invoice.netCents)}${(invoice.allowanceTotalCents ?? 0) > 0 ? amount('cbc:AllowanceTotalAmount', invoice.allowanceTotalCents ?? 0) : ''}${amount('cbc:TaxExclusiveAmount', invoice.netCents)}${amount('cbc:TaxInclusiveAmount', invoice.totalCents)}${amount('cbc:PayableAmount', invoice.totalCents)}</cac:LegalMonetaryTotal>`,
     ...invoice.lines.map(
       (line) =>
         `<cac:${lineTag}>${text('cbc:ID', line.id)}${text(`cbc:${quantityTag}`, line.quantity, ` unitCode="${xmlText(line.unitCode)}"`)}${amount('cbc:LineExtensionAmount', line.netCents)}<cac:Item>${text('cbc:Name', line.description)}<cac:ClassifiedTaxCategory>${text('cbc:ID', line.vatCategory)}${text('cbc:Percent', line.vatRate)}<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:ClassifiedTaxCategory></cac:Item><cac:Price>${amount('cbc:PriceAmount', line.unitPriceCents)}</cac:Price></cac:${lineTag}>`,

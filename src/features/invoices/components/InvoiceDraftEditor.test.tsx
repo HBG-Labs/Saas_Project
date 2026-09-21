@@ -1,9 +1,25 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render as renderWithTestingLibrary,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from '@/lib/errors';
 import type { InvoiceWithItems } from '@/types/domain';
 import { InvoiceDraftEditor } from './InvoiceDraftEditor';
+
+function render(ui: ReactNode) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return renderWithTestingLibrary(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
 
 const state = vi.hoisted(() => ({ save: vi.fn(), error: null as Error | null }));
 vi.mock('../hooks/useInvoices', () => ({

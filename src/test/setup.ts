@@ -26,3 +26,19 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   }),
 });
+
+// Radix mesure certains panneaux et menus avec ResizeObserver, absent de jsdom.
+Object.defineProperty(globalThis, 'ResizeObserver', {
+  writable: true,
+  value: class ResizeObserverMock {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  },
+});

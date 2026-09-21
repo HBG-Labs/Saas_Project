@@ -1,6 +1,8 @@
 import type { InvoiceWithItems } from '@/types/domain';
 
 export const completeInvoice = (): InvoiceWithItems => ({
+  document_options: {},
+  discount_rate: 0,
   id: 'invoice-test',
   organization_id: 'org-test',
   corrects_invoice_id: null,
@@ -84,6 +86,8 @@ export const completeInvoice = (): InvoiceWithItems => ({
   totals: {
     invoice_id: 'invoice-test',
     organization_id: 'org-test',
+    gross_subtotal_cents: 2468,
+    discount_cents: 0,
     subtotal_cents: 2468,
     vat_cents: 494,
     total_cents: 2962,

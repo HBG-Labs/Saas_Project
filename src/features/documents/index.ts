@@ -16,7 +16,6 @@ export {
   type DocumentListResult,
   type UploadDocumentInput,
 } from './api/documents.api';
-
 export {
   ACCEPT_FICHIER,
   DOCUMENTS_PAR_PAGE,
@@ -51,11 +50,7 @@ export {
   type DocumentFilters,
 } from './hooks/useDocuments';
 
-export {
-  useFileTeleversement,
-  type EtatFichier,
-  type FichierEnFile,
-} from './hooks/useUploadQueue';
+export { useFileTeleversement, type EtatFichier, type FichierEnFile } from './hooks/useUploadQueue';
 
 export { DocumentEditDialog } from './components/DocumentEditDialog';
 export { DocumentList } from './components/DocumentList';
@@ -63,3 +58,15 @@ export { DocumentPreviewDialog } from './components/DocumentPreviewDialog';
 export { DocumentUploadDialog } from './components/DocumentUploadDialog';
 export { FolderDialog, type DemandeDossier } from './components/FolderDialog';
 export { FolderBreadcrumb, FolderGrid } from './components/FolderList';
+export {
+  DEFAULT_DOCUMENT_OPTIONS,
+  normalizeDocumentOptions,
+  serializeDocumentOptions,
+  type DocumentMode,
+  type DocumentOptions,
+} from './document-options';
+export { previewDocumentNumber } from './numbering';
+export { DocumentNumberingBanner } from './components/DocumentNumberingBanner';
+export { DocumentNumberingModal } from './components/DocumentNumberingModal';
+export { DocumentOptionsPanel } from './components/DocumentOptionsPanel';
+export { useDocumentNumbering } from './hooks/useDocumentNumbering';

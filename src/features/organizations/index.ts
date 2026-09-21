@@ -32,14 +32,12 @@ export {
   updateMemberRole,
   updateOwnMemberContact,
   updateOrganization,
+  uploadOrganizationLogo,
 } from './api/organizations.api';
 
 export { OrganizationProvider } from './context/OrganizationProvider';
 export { OrganizationContext } from './context/organization-context';
-export type {
-  OrganizationContextValue,
-  OrganizationStatus,
-} from './context/organization-context';
+export type { OrganizationContextValue, OrganizationStatus } from './context/organization-context';
 export { useCurrentOrganization } from './hooks/useCurrentOrganization';
 export { usePermission, type PermissionChecks } from './hooks/usePermission';
 export { useVisibleNavGroups, useVisibleNavItems } from './hooks/useVisibleNavItems';
@@ -49,6 +47,7 @@ export {
   useMyOrganizations,
   useOrganization,
   useUpdateOrganization,
+  useUploadOrganizationLogo,
 } from './hooks/useOrganizations';
 export {
   memberDisplayName,

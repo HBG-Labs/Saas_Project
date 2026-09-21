@@ -2,7 +2,15 @@ import { z } from 'zod';
 
 import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/database';
-import type { Quote, QuoteItem, QuoteTemplate, QuoteTotals, QuoteWithItems, QuoteWithTotals } from '@/types/domain';
+import type { Json } from '@/types/database';
+import type {
+  Quote,
+  QuoteItem,
+  QuoteTemplate,
+  QuoteTotals,
+  QuoteWithItems,
+  QuoteWithTotals,
+} from '@/types/domain';
 
 /**
  * Accès aux devis et au catalogue de prestations.
@@ -215,6 +223,10 @@ export async function createQuote(input: {
   customerName?: string;
   siteName?: string;
   vatRate: number;
+  discountRate?: number;
+  documentOptions?: Json;
+  notes?: string;
+  validUntil?: string;
   items: readonly QuoteLineInput[];
 }): Promise<Quote> {
   const { data: userData } = await supabase.auth.getUser();
@@ -222,12 +234,16 @@ export async function createQuote(input: {
   const payload: TablesInsert<'quotes'> = {
     organization_id: input.organizationId,
     vat_rate: input.vatRate,
+    discount_rate: input.discountRate ?? 0,
+    document_options: input.documentOptions ?? {},
     ...(userData?.user ? { created_by: userData.user.id } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.customerId ? { customer_id: input.customerId } : {}),
     ...(input.siteId ? { site_id: input.siteId } : {}),
     ...(input.customerName !== undefined ? { customer_name: input.customerName } : {}),
     ...(input.siteName !== undefined ? { site_name: input.siteName } : {}),
+    ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    ...(input.validUntil !== undefined ? { valid_until: input.validUntil } : {}),
   };
 
   const quote = await unwrap(supabase.from('quotes').insert(payload).select('*').single());
@@ -256,10 +272,7 @@ export async function createQuote(input: {
   return quote;
 }
 
-export async function updateQuote(
-  quoteId: string,
-  patch: TablesUpdate<'quotes'>,
-): Promise<Quote> {
+export async function updateQuote(quoteId: string, patch: TablesUpdate<'quotes'>): Promise<Quote> {
   return unwrap(supabase.from('quotes').update(patch).eq('id', quoteId).select('*').single());
 }
 

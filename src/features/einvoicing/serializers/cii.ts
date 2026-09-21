@@ -139,6 +139,22 @@ export function serializeCii(invoice: CanonicalInvoice): string {
           ].join(''),
         ),
       ),
+      ...(invoice.allowances ?? []).map((allowance) =>
+        element(
+          'SpecifiedTradeAllowanceCharge',
+          [
+            '<ram:ChargeIndicator><udt:Indicator>false</udt:Indicator></ram:ChargeIndicator>',
+            amount('ActualAmount', allowance.amountCents),
+            text('Reason', allowance.reason),
+            element(
+              'CategoryTradeTax',
+              text('TypeCode', 'VAT') +
+                text('CategoryCode', allowance.vatCategory) +
+                text('RateApplicablePercent', allowance.vatRate),
+            ),
+          ].join(''),
+        ),
+      ),
       element(
         'SpecifiedTradePaymentTerms',
         text('Description', invoice.paymentTerms) + date('DueDateDateTime', invoice.dueDate),
@@ -146,7 +162,10 @@ export function serializeCii(invoice: CanonicalInvoice): string {
       element(
         'SpecifiedTradeSettlementHeaderMonetarySummation',
         [
-          amount('LineTotalAmount', invoice.netCents),
+          amount('LineTotalAmount', invoice.lineTotalCents ?? invoice.netCents),
+          (invoice.allowanceTotalCents ?? 0) > 0
+            ? amount('AllowanceTotalAmount', invoice.allowanceTotalCents ?? 0)
+            : '',
           amount('TaxBasisTotalAmount', invoice.netCents),
           amount('TaxTotalAmount', invoice.taxCents, ' currencyID="EUR"'),
           amount('GrandTotalAmount', invoice.totalCents),

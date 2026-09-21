@@ -10,6 +10,7 @@ import {
   Building,
   Download,
   History,
+  ImagePlus,
   PanelRightClose,
   PanelRightOpen,
   Send,
@@ -31,7 +32,16 @@ import { Modal } from '@/components/ui/Modal';
 import { ROUTES } from '@/config/routes';
 import { Table } from '@/components/ui/Table';
 import { CustomerPicker, SitePicker, useCustomers, useCustomerSites } from '@/features/customers';
-import { useCurrentOrganization } from '@/features/organizations';
+import {
+  DocumentNumberingBanner,
+  DocumentNumberingModal,
+  DocumentOptionsPanel,
+  DEFAULT_DOCUMENT_OPTIONS,
+  serializeDocumentOptions,
+  useDocumentNumbering,
+  type DocumentOptions,
+} from '@/features/documents';
+import { useCurrentOrganization, useUploadOrganizationLogo } from '@/features/organizations';
 import {
   DEFAULT_QUOTE_PAYMENT_METHOD,
   DEFAULT_QUOTE_PAYMENT_TERMS,
@@ -126,6 +136,18 @@ export default function QuotesPage() {
   const [items, setItems] = useState<QuoteLineItem[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(true);
+  const [documentOptions, setDocumentOptions] = useState<DocumentOptions>({
+    ...DEFAULT_DOCUMENT_OPTIONS,
+    showAcceptanceTerms: true,
+    showSignature: true,
+  });
+  const [numberingOpen, setNumberingOpen] = useState(false);
+  const [discountRate, setDiscountRate] = useState(0);
+  const [documentTitle, setDocumentTitle] = useState('');
+  const [freeField, setFreeField] = useState('');
+  const numbering = useDocumentNumbering(organizationId, 'quote');
+  const uploadLogo = useUploadOrganizationLogo(organizationId ?? '');
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const wizardRef = useRef<HTMLDivElement>(null);
 
   const goToStep = (step: number) => {
@@ -207,7 +229,9 @@ export default function QuotesPage() {
 
   // Calculs Totaux — affichage seul. Le total qui fait foi est celui de la vue
   // `quote_totals`, recalculé côté base à partir des lignes enregistrées.
-  const totalHT = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const grossHT = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const discountAmount = (grossHT * discountRate) / 100;
+  const totalHT = grossHT - discountAmount;
   const totalVAT = (totalHT * vatRate) / 100;
   const totalTTC = totalHT + totalVAT;
 
@@ -218,6 +242,9 @@ export default function QuotesPage() {
   const [todayDate] = useState(() => new Date().toLocaleDateString('fr-FR'));
   const [validUntilDate] = useState(() =>
     new Date(Date.now() + 30 * 24 * 3600 * 1000).toLocaleDateString('fr-FR'),
+  );
+  const [validUntilIso] = useState(() =>
+    new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
   );
 
   /**
@@ -238,6 +265,11 @@ export default function QuotesPage() {
     createQuote.mutate(
       {
         vatRate,
+        discountRate,
+        documentOptions: serializeDocumentOptions(documentOptions),
+        ...(documentOptions.showTitle ? { title: documentTitle.trim() } : {}),
+        ...(documentOptions.showFreeField ? { notes: freeField.trim() } : {}),
+        validUntil: validUntilIso,
         customerId,
         siteId: customerId === null ? null : siteId,
         customerName: selectedCustomer?.name ?? clientName.trim(),
@@ -349,6 +381,14 @@ export default function QuotesPage() {
         )}
       >
         <section className="space-y-6">
+          {numbering.data ? (
+            <DocumentNumberingBanner
+              documentKind="quote"
+              nextValue={numbering.data.next_value}
+              format={numbering.data.format}
+              onModify={() => setNumberingOpen(true)}
+            />
+          ) : null}
           <div
             aria-label="Document devis"
             className="financial-paper border-border relative hidden min-h-[72rem] overflow-hidden rounded-sm border px-12 py-11 shadow-[0_18px_55px_rgba(15,23,42,0.12)] lg:block xl:px-14"
@@ -357,9 +397,36 @@ export default function QuotesPage() {
 
             <div className="mb-10 flex items-start justify-between gap-8">
               <div className="flex min-w-0 items-start gap-4">
-                <div className="bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl shadow-sm">
-                  <Building className="size-7" aria-hidden="true" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="border-primary/35 bg-primary/5 text-primary hover:bg-primary/10 flex h-20 w-44 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed text-xs font-semibold transition"
+                  aria-label="Importer le logo de l’entreprise"
+                >
+                  {organization?.logo_url ? (
+                    <img
+                      src={organization.logo_url}
+                      alt="Logo de l’entreprise"
+                      className="h-full w-full object-contain p-2"
+                    />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <ImagePlus className="size-5" aria-hidden="true" />
+                      Importer votre logo
+                    </span>
+                  )}
+                </button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) uploadLogo.mutate(file, { onError: setSubmitError });
+                    event.target.value = '';
+                  }}
+                />
                 <div className="min-w-0 pt-1">
                   <p className="text-foreground text-lg font-black tracking-tight">
                     {organization?.name ?? 'REZO360 Pro'}
@@ -387,6 +454,15 @@ export default function QuotesPage() {
                 <p className="text-muted-foreground mt-1 text-xs">Émis le {todayDate}</p>
               </div>
             </div>
+
+            {documentOptions.showTitle ? (
+              <input
+                value={documentTitle}
+                onChange={(event) => setDocumentTitle(event.target.value)}
+                placeholder="Intitulé du devis"
+                className="border-primary/35 text-foreground focus:border-primary mb-6 w-full border border-dashed bg-transparent px-3 py-2 text-lg font-bold outline-none"
+              />
+            ) : null}
 
             <div className="mb-8 grid grid-cols-[minmax(0,1fr)_15rem] gap-5">
               <div className="border-primary/20 bg-primary/5 rounded-2xl border p-5">
@@ -591,6 +667,22 @@ export default function QuotesPage() {
               </div>
 
               <dl className="space-y-3 text-sm">
+                {discountRate > 0 ? (
+                  <div className="text-muted-foreground flex items-center justify-between">
+                    <dt>Sous-total HT</dt>
+                    <dd className="text-foreground font-semibold tabular-nums">
+                      {grossHT.toFixed(2)} €
+                    </dd>
+                  </div>
+                ) : null}
+                {discountRate > 0 ? (
+                  <div className="text-muted-foreground flex items-center justify-between">
+                    <dt>Remise {discountRate} %</dt>
+                    <dd className="text-success font-semibold tabular-nums">
+                      − {discountAmount.toFixed(2)} €
+                    </dd>
+                  </div>
+                ) : null}
                 <div className="text-muted-foreground flex items-center justify-between">
                   <dt>Total HT</dt>
                   <dd className="text-foreground font-bold tabular-nums">{totalHT.toFixed(2)} €</dd>
@@ -608,14 +700,28 @@ export default function QuotesPage() {
               </dl>
             </div>
 
+            {documentOptions.showFreeField ? (
+              <textarea
+                value={freeField}
+                onChange={(event) => setFreeField(event.target.value)}
+                placeholder="Ajoutez une information libre…"
+                className="border-primary/35 text-muted-foreground focus:border-primary mt-8 min-h-20 w-full resize-none border border-dashed bg-transparent p-3 text-xs outline-none"
+              />
+            ) : null}
+
             <div className="border-border text-3xs text-muted-foreground mt-10 grid grid-cols-2 gap-5 border-t pt-7">
-              <div>
+              <div className={documentOptions.showAcceptanceTerms ? '' : 'invisible'}>
                 <p className="text-foreground font-bold">Modalités de règlement</p>
                 <p className="mt-1 leading-relaxed">
                   {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
                 </p>
               </div>
-              <div className="border-border-strong rounded-xl border border-dashed p-4">
+              <div
+                className={cn(
+                  'border-border-strong rounded-xl border border-dashed p-4',
+                  !documentOptions.showSignature && 'invisible',
+                )}
+              >
                 <p className="text-foreground font-bold">Bon pour accord</p>
                 <p className="mt-1">Date, nom et signature du client</p>
               </div>
@@ -1051,39 +1157,27 @@ export default function QuotesPage() {
               <Settings2 className="text-primary size-4" aria-hidden="true" />
               <h2 className="text-foreground text-sm font-bold">Options du devis</h2>
             </div>
-            <div className="space-y-5 p-4 text-xs">
-              <section>
-                <h3 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
-                  Destinataire
-                </h3>
-                <p className="text-foreground mt-1 truncate font-semibold">
-                  {selectedCustomer?.name || clientName || 'À sélectionner'}
-                </p>
-                <p className="text-muted-foreground mt-0.5 truncate">
-                  {selectedSite?.name || siteName || 'Aucun site renseigné'}
-                </p>
-              </section>
-
-              <section className="border-border border-t pt-4">
-                <h3 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
-                  Document
-                </h3>
-                <dl className="mt-2 space-y-2">
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Lignes</dt>
-                    <dd className="text-foreground font-semibold tabular-nums">{items.length}</dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">TVA</dt>
-                    <dd className="text-foreground font-semibold tabular-nums">{vatRate} %</dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Validité</dt>
-                    <dd className="text-foreground font-semibold">30 jours</dd>
-                  </div>
-                </dl>
-              </section>
-
+            <DocumentOptionsPanel
+              kind="quote"
+              value={documentOptions}
+              onChange={setDocumentOptions}
+            />
+            {documentOptions.showGlobalDiscount ? (
+              <div className="border-border border-t px-4 py-4">
+                <Input
+                  label="Remise globale (%)"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={discountRate}
+                  onChange={(event) =>
+                    setDiscountRate(Math.min(100, Math.max(0, Number(event.target.value) || 0)))
+                  }
+                />
+              </div>
+            ) : null}
+            <div className="space-y-5 border-t p-4 text-xs">
               <section className="border-border space-y-2 border-t pt-4">
                 <div className="text-muted-foreground flex justify-between gap-3">
                   <span>Total HT</span>
@@ -1123,6 +1217,18 @@ export default function QuotesPage() {
           </aside>
         ) : null}
       </div>
+
+      {organizationId && numbering.data ? (
+        <DocumentNumberingModal
+          key={`${numbering.data.next_value}-${numbering.data.format}`}
+          open={numberingOpen}
+          onOpenChange={setNumberingOpen}
+          organizationId={organizationId}
+          documentKind="quote"
+          initialNumber={numbering.data.next_value}
+          initialFormat={numbering.data.format}
+        />
+      ) : null}
 
       <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 -mx-4 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border lg:hidden">
         {currentStep > 0 ? (

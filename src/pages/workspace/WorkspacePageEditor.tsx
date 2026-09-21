@@ -1,10 +1,12 @@
-import { Sparkles, Star, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Ellipsis, ImagePlus, LockKeyhole, Share2, Sparkles, Star } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
@@ -13,16 +15,23 @@ import { PERMISSIONS, usePermission } from '@/features/organizations';
 import {
   textToTiptapDocument,
   useCreatePage,
-  useDeletePage,
+  useCoverUrl,
   useFavorites,
+  useMovePage,
   usePage,
+  usePageRevisions,
+  usePages,
   useSaveAsTemplate,
   useSavePage,
   useSetPageIcon,
   useToggleFavorite,
   useTouchPage,
+  useUpdatePagePresentation,
+  useUploadPageCover,
+  WorkspacePageOptionsPanel,
   type WorkspacePage,
 } from '@/features/workspace';
+import { cn } from '@/lib/cn';
 
 import { WorkspaceRecorder } from './WorkspaceRecorder';
 
@@ -73,8 +82,13 @@ function PageForm({
   const setIcon = useSetPageIcon();
   const toggleFavorite = useToggleFavorite();
   const saveAsTemplate = useSaveAsTemplate();
-  const deletePage = useDeletePage();
+  const movePage = useMovePage();
+  const updatePresentation = useUpdatePagePresentation();
+  const uploadCover = useUploadPageCover();
   const createPage = useCreatePage();
+  const pages = usePages(loaded.space_id);
+  const revisions = usePageRevisions(pageId);
+  const coverUrl = useCoverUrl(loaded.cover_path);
 
   const [title, setTitle] = useState(loaded.title);
   const [text, setText] = useState(loaded.search_text ?? '');
@@ -83,6 +97,12 @@ function PageForm({
   // l'ouverture, puis celui de chaque écriture réussie depuis ce formulaire.
   const [loadedAt, setLoadedAt] = useState(loaded.updated_at);
   const [message, setMessage] = useState<string | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [parentPageId, setParentPageId] = useState(loaded.parent_page_id ?? 'root');
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (organizationId) touch.mutate({ pageId, organizationId });
@@ -117,10 +137,57 @@ function PageForm({
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Supprimer cette page ? Ses révisions sont conservées.')) return;
-    await deletePage.mutateAsync({ pageId, spaceId: loaded.space_id });
+  const handleArchive = async () => {
+    if (!window.confirm('Déplacer cette page dans la corbeille ?')) return;
+    await movePage.mutateAsync({ pageId, patch: { archived_at: new Date().toISOString() } });
     await navigate(ROUTES.workspacePages);
+  };
+
+  const handleDuplicate = async () => {
+    const created = await createPage.mutateAsync({
+      spaceId: loaded.space_id,
+      parentPageId: loaded.parent_page_id,
+      title: `${title || 'Sans titre'} — copie`,
+    });
+    await save.mutateAsync({
+      pageId: created.id,
+      expectedUpdatedAt: created.updated_at,
+      title: created.title,
+      content: textToTiptapDocument(text),
+    });
+    await navigate(ROUTES.workspacePage(created.id));
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setMessage('Lien copié.');
+  };
+
+  const copyContent = async () => {
+    await navigator.clipboard.writeText(`${title}\n\n${text}`.trim());
+    setMessage('Contenu copié.');
+  };
+
+  const exportMarkdown = () => {
+    const blob = new Blob([`# ${title}\n\n${text}`], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${
+      title
+        .trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '') || 'page'
+    }.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePresentationChange = async (
+    patch: Partial<Pick<WorkspacePage, 'font_family' | 'small_text' | 'full_width' | 'locked'>>,
+  ) => {
+    const saved = await updatePresentation.mutateAsync({ pageId, patch });
+    setLoadedAt(saved.updated_at);
   };
 
   const handleCreateFromAnswer = async () => {
@@ -140,69 +207,139 @@ function PageForm({
   };
 
   return (
-    <div className="workspace-editor min-w-0 space-y-5">
-      <section className="border-border bg-surface overflow-hidden rounded-xl border">
-        <div className="space-y-4 p-4 sm:p-6">
-          <div className="flex flex-wrap items-end gap-2">
-            <Input
-              label="Icône"
-              className="w-20"
+    <div
+      className={cn(
+        'workspace-editor min-w-0 space-y-5 transition-all',
+        loaded.full_width ? 'w-full' : 'mx-auto max-w-5xl',
+        loaded.font_family === 'serif' && 'font-serif',
+        loaded.font_family === 'mono' && 'font-mono',
+      )}
+    >
+      <section className="bg-surface min-h-[36rem] overflow-hidden rounded-xl">
+        {coverUrl.data ? (
+          <div className="h-44 w-full overflow-hidden sm:h-56">
+            <img
+              src={coverUrl.data}
+              alt="Couverture de la page"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+
+        <header className="border-border flex min-h-12 items-center gap-2 border-b px-3 sm:px-5">
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+            {icon || '📄'} {title || 'Sans titre'} {loaded.locked ? '· Verrouillée' : '· Privée'}
+          </span>
+          <span className="text-muted-foreground hidden text-xs md:inline">
+            Dernière modification : {new Date(loadedAt).toLocaleString('fr-FR')}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => void copyLink()}
+          >
+            <Share2 className="size-4" aria-hidden /> Partager
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-pressed={isFavorite}
+            disabled={!organizationId}
+            onClick={() =>
+              organizationId &&
+              toggleFavorite.mutate({ pageId, favorite: !isFavorite, organizationId })
+            }
+          >
+            <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Options de la page"
+            aria-expanded={optionsOpen}
+            onClick={() => setOptionsOpen((open) => !open)}
+          >
+            <Ellipsis className="size-5" aria-hidden />
+          </Button>
+        </header>
+
+        <div
+          className={cn(
+            'mx-auto px-5 pt-10 pb-12 sm:px-10',
+            loaded.full_width ? 'max-w-none' : 'max-w-3xl',
+          )}
+        >
+          {canEdit && !loaded.locked ? (
+            <div className="text-muted-foreground mb-4 flex flex-wrap gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                className="hover:text-foreground flex items-center gap-1.5"
+              >
+                <ImagePlus className="size-3.5" />
+                {loaded.cover_path ? 'Changer la couverture' : 'Ajouter une couverture'}
+              </button>
+              {loaded.locked ? (
+                <span className="flex items-center gap-1">
+                  <LockKeyhole className="size-3.5" />
+                  Page verrouillée
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          <div className="flex items-start gap-3">
+            <input
+              aria-label="Icône de la page"
               value={icon}
               maxLength={40}
-              placeholder="Page"
-              disabled={!canEdit}
-              onChange={(e) => setIconValue(e.target.value)}
+              placeholder="✏️"
+              disabled={!canEdit || loaded.locked}
+              onChange={(event) => setIconValue(event.target.value)}
               onBlur={() => {
                 const next = icon.trim() === '' ? null : icon.trim();
-                if (next !== (loaded.icon ?? null)) {
+                if (next !== (loaded.icon ?? null))
                   setIcon.mutate(
                     { pageId, icon: next },
                     { onSuccess: (saved) => setLoadedAt(saved.updated_at) },
                   );
-                }
               }}
+              className="w-14 border-0 bg-transparent text-4xl outline-none disabled:opacity-70"
             />
-            <div className="min-w-0 flex-1 basis-48">
-              <Input
-                label="Titre"
-                value={title}
-                disabled={!canEdit}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <Button
-              type="button"
-              variant={isFavorite ? 'primary' : 'outline'}
-              size="icon"
-              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              aria-pressed={isFavorite}
-              disabled={!organizationId}
-              onClick={() =>
-                organizationId &&
-                toggleFavorite.mutate({ pageId, favorite: !isFavorite, organizationId })
-              }
-            >
-              <Star aria-hidden />
-            </Button>
+            <input
+              aria-label="Titre de la page"
+              value={title}
+              disabled={!canEdit || loaded.locked}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Sans titre"
+              className="text-foreground min-w-0 flex-1 border-0 bg-transparent text-3xl font-black tracking-tight outline-none disabled:opacity-70 sm:text-4xl"
+            />
           </div>
 
           <Textarea
-            label="Contenu de la page"
-            className="workspace-page-text"
-            rows={8}
+            aria-label="Contenu de la page"
+            className={cn(
+              'workspace-page-text mt-8 min-h-[20rem] resize-none border-0 bg-transparent px-0 leading-7 shadow-none focus-visible:border-transparent focus-visible:ring-0',
+              loaded.small_text ? 'text-xs sm:text-xs' : 'text-base sm:text-base',
+            )}
+            rows={14}
             value={text}
-            disabled={!canEdit}
-            onChange={(e) => setText(e.target.value)}
-            hint="Édition texte : # titre, - liste, 1. liste numérotée. Les autres mises en forme ne sont pas prises en charge."
+            disabled={!canEdit || loaded.locked}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="Cliquez ici et commencez à écrire…"
           />
 
-          <div className="border-border flex flex-wrap items-center gap-2 border-t pt-4">
-            {canEdit ? (
+          <div className="border-border mt-7 flex flex-wrap items-center gap-2 border-t pt-4">
+            {canEdit && !loaded.locked ? (
               <Button type="button" onClick={() => void handleSave()} isLoading={save.isPending}>
                 Enregistrer
               </Button>
             ) : null}
-            {canManage && organizationId ? (
+            {canManage && organizationId && !loaded.locked ? (
               <Button
                 type="button"
                 variant="secondary"
@@ -220,27 +357,127 @@ function PageForm({
                 Enregistrer comme modèle
               </Button>
             ) : null}
-            {canEdit ? (
-              <Button
-                type="button"
-                variant="danger-outline"
-                onClick={() => void handleDelete()}
-                isLoading={deletePage.isPending}
-              >
-                <Trash2 aria-hidden /> Supprimer
-              </Button>
+            {loaded.locked ? (
+              <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                <LockKeyhole className="size-4" />
+                Cette page est verrouillée.
+              </span>
             ) : null}
             {message ? (
               <span role="status" className="text-muted-foreground text-sm">
                 {message}
               </span>
             ) : null}
-            <span className="text-muted-foreground ml-auto text-xs">
-              Modifiée le {new Date(loadedAt).toLocaleString('fr-FR')}
-            </span>
           </div>
         </div>
       </section>
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".md,.txt,text/plain,text/markdown"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file && file.size <= 1024 * 1024)
+            void file.text().then((content) => {
+              setText(content);
+              setMessage('Contenu importé. Enregistrez pour le conserver.');
+            });
+          else if (file) setMessage('Le fichier doit faire moins de 1 Mo.');
+          event.target.value = '';
+        }}
+      />
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file)
+            uploadCover.mutate(
+              { page: loaded, file },
+              { onSuccess: (saved) => setLoadedAt(saved.updated_at) },
+            );
+          event.target.value = '';
+        }}
+      />
+
+      {optionsOpen ? (
+        <WorkspacePageOptionsPanel
+          page={loaded}
+          canEdit={canEdit}
+          onClose={() => setOptionsOpen(false)}
+          onPresentationChange={(patch) => void handlePresentationChange(patch)}
+          onCopyLink={() => void copyLink()}
+          onCopyContent={() => void copyContent()}
+          onDuplicate={() => void handleDuplicate()}
+          onMove={() => setMoveOpen(true)}
+          onArchive={() => void handleArchive()}
+          onImport={() => importInputRef.current?.click()}
+          onExport={exportMarkdown}
+          onHistory={() => setHistoryOpen(true)}
+        />
+      ) : null}
+
+      <Modal
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        title="Déplacer la page"
+        description="Choisissez sa position dans l’arborescence actuelle."
+        footer={
+          <Button
+            type="button"
+            onClick={() =>
+              void movePage
+                .mutateAsync({
+                  pageId,
+                  patch: { parent_page_id: parentPageId === 'root' ? null : parentPageId },
+                })
+                .then(() => setMoveOpen(false))
+            }
+          >
+            Déplacer
+          </Button>
+        }
+      >
+        <Select
+          label="Page parente"
+          value={parentPageId}
+          onValueChange={setParentPageId}
+          options={[
+            { value: 'root', label: 'Racine de l’espace' },
+            ...(pages.data ?? [])
+              .filter((page) => page.id !== pageId)
+              .map((page) => ({ value: page.id, label: `${page.icon ?? '📄'} ${page.title}` })),
+          ]}
+        />
+      </Modal>
+
+      <Modal
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        title="Historique des versions"
+        description="Chaque enregistrement remplace la version courante et conserve la précédente."
+        size="lg"
+      >
+        <div className="space-y-2">
+          {(revisions.data ?? []).map((revision) => (
+            <div key={revision.id} className="border-border rounded-lg border p-3">
+              <p className="text-sm font-semibold">{revision.title}</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Remplacée le {new Date(revision.replaced_at).toLocaleString('fr-FR')}
+              </p>
+            </div>
+          ))}
+          {!revisions.isLoading && (revisions.data?.length ?? 0) === 0 ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              Aucune version antérieure.
+            </p>
+          ) : null}
+        </div>
+      </Modal>
 
       {canAi ? <WorkspaceRecorder page={loaded} /> : null}
 

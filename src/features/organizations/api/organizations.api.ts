@@ -1,4 +1,5 @@
 import { AppError, mapPostgrestError } from '@/lib/errors';
+import { assertFileSignature } from '@/lib/file-signature';
 import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type {
   MemberWithProfile,
@@ -138,6 +139,30 @@ export async function updateOrganization(
   return unwrap(supabase.from('organizations').update(patch).eq('id', id).select('*').single());
 }
 
+/** Dépose le logo public utilisé sur les devis et factures. */
+export async function uploadOrganizationLogo(input: {
+  organizationId: string;
+  file: File;
+}): Promise<Organization> {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(input.file.type)) {
+    throw new Error('Choisissez une image JPEG, PNG ou WebP.');
+  }
+  if (input.file.size > 2 * 1024 * 1024) {
+    throw new Error('Le logo ne doit pas dépasser 2 Mo.');
+  }
+  await assertFileSignature(input.file);
+  const extension = input.file.type === 'image/jpeg' ? 'jpg' : input.file.type.split('/')[1];
+  const path = `${input.organizationId}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from('organization-branding').upload(path, input.file, {
+    contentType: input.file.type,
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from('organization-branding').getPublicUrl(path);
+  return updateOrganization(input.organizationId, { logo_url: data.publicUrl });
+}
+
 /**
  * Propose un slug disponible à partir du nom.
  *
@@ -264,7 +289,7 @@ export async function updateMemberDetails(
     if (data.length === 0) {
       throw new AppError(
         'forbidden',
-        "Le nom affiché appartient à la personne concernée : elle seule peut le modifier, depuis son profil.",
+        'Le nom affiché appartient à la personne concernée : elle seule peut le modifier, depuis son profil.',
       );
     }
   }
@@ -393,9 +418,7 @@ export interface InvitationEmailResult {
   reason?: string;
 }
 
-export async function sendInvitationEmail(
-  invitationId: string,
-): Promise<InvitationEmailResult> {
+export async function sendInvitationEmail(invitationId: string): Promise<InvitationEmailResult> {
   const result = (await supabase.functions.invoke('send-invitation', {
     body: { invitationId },
   })) as { data: { sent?: boolean; error?: string } | null; error: { message?: string } | null };
@@ -407,7 +430,7 @@ export async function sendInvitationEmail(
     // réponse, où la fonction explique ce qui manque, se lit dans `context`.
     // Sans cette lecture, l'écran affiche « envoi impossible » sans jamais dire
     // qu'il suffisait de poser trois secrets.
-    let reason: string = error.message ?? "Envoi impossible";
+    let reason: string = error.message ?? 'Envoi impossible';
 
     const response: unknown = (error as { context?: unknown }).context;
     if (response instanceof Response) {
@@ -434,7 +457,10 @@ export async function sendInvitationEmail(
 
   if (data?.sent === true) return { sent: true };
 
-  return { sent: false, reason: data?.error ?? "Le service d'envoi n'a pas confirmé l'expédition." };
+  return {
+    sent: false,
+    reason: data?.error ?? "Le service d'envoi n'a pas confirmé l'expédition.",
+  };
 }
 
 export interface CreatedMemberAccount {
@@ -479,7 +505,7 @@ export async function createMemberAccount(input: {
     // Le motif précis vit dans le corps de la réponse, que `functions.invoke`
     // n'expose que par `context`. Sans cette lecture, « quota atteint » et
     // « adresse déjà utilisée » deviendraient le même message opaque.
-    let reason = "La création du compte a échoué.";
+    let reason = 'La création du compte a échoué.';
 
     const response: unknown = (error as { context?: unknown }).context;
     if (response instanceof Response) {

@@ -6,6 +6,7 @@ import { invoiceCalendarDate } from './date.ts';
 import { formatMoney, roundPositive, safeInteger, scaledDecimal } from './decimal.ts';
 import type {
   CanonicalInvoice,
+  CanonicalAllowance,
   CanonicalInvoiceLine,
   CanonicalVatBreakdown,
   PostalAddress,
@@ -238,13 +239,42 @@ function validateAndMap(
       issues.push(`Ligne ${index + 1} : montant ou précision numérique non pris en charge.`);
     }
   }
+  const allowances: CanonicalAllowance[] = [];
+  const discountRate = source.discount_rate ?? 0;
+  if (discountRate < 0 || discountRate > 100)
+    issues.push('Le taux de remise globale doit être compris entre 0 et 100 %.');
+  if (discountRate > 0 && discountRate <= 100) {
+    for (const group of groups.values()) {
+      const allowance = safeInteger(
+        roundPositive(BigInt(group.baseCents) * scaledDecimal(discountRate, 2), 10000n),
+      );
+      if (allowance > 0) {
+        allowances.push({
+          amountCents: allowance,
+          reason: `Remise globale de ${discountRate.toLocaleString('fr-FR')} %`,
+          vatCategory: group.category,
+          vatRate: group.rate,
+        });
+        group.baseCents -= allowance;
+        group.taxCents = safeInteger(
+          roundPositive(BigInt(group.baseCents) * scaledDecimal(group.rate, 2), 10000n),
+        );
+      }
+    }
+  }
   const vatBreakdown = [...groups.values()].sort(
     (a, b) => a.category.localeCompare(b.category) || a.rate - b.rate,
   );
-  let netCents = 0,
+  let lineTotalCents = 0,
+    allowanceTotalCents = 0,
+    netCents = 0,
     taxCents = 0,
     totalCents = 0;
   try {
+    lineTotalCents = safeInteger(lines.reduce((sum, line) => sum + BigInt(line.netCents), 0n));
+    allowanceTotalCents = safeInteger(
+      allowances.reduce((sum, allowance) => sum + BigInt(allowance.amountCents), 0n),
+    );
     netCents = safeInteger(vatBreakdown.reduce((sum, g) => sum + BigInt(g.baseCents), 0n));
     taxCents = safeInteger(vatBreakdown.reduce((sum, g) => sum + BigInt(g.taxCents), 0n));
     totalCents = safeInteger(BigInt(netCents) + BigInt(taxCents));
@@ -374,14 +404,14 @@ function validateAndMap(
               },
             ]
           : []),
-        ...([
+        ...[
           isCreditNote
             ? `Avoir ${source.credit_note_scope === 'partial' ? 'partiel' : 'total'}. Motif de l’avoir : ${source.credit_note_reason!.trim()}`
             : null,
           source.notes,
         ]
           .filter((note): note is string => !!note?.trim())
-          .map((content) => ({ subjectCode: 'AAI' as const, content: content.trim() }))),
+          .map((content) => ({ subjectCode: 'AAI' as const, content: content.trim() })),
       ],
       paymentTerms: [
         ...mentionsReglement(source),
@@ -400,6 +430,9 @@ function validateAndMap(
       paymentIban: isCreditNote ? null : clean(identifier(source.seller_iban)),
       paymentBic: isCreditNote ? null : clean(identifier(source.seller_bic)),
       lines,
+      lineTotalCents,
+      allowances,
+      allowanceTotalCents,
       vatBreakdown,
       netCents,
       taxCents,

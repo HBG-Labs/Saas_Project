@@ -72,6 +72,15 @@ export type EquipmentCondition = 'neuf' | 'bon_etat' | 'a_reviser';
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'refused' | 'expired';
 export type QuoteReminderStatus = 'pending' | 'sent' | 'skipped' | 'failed';
+export type DocumentKind = 'quote' | 'invoice' | 'credit_note';
+export type DocumentNumberingFormat =
+  | 'day_sequence'
+  | 'month_sequence'
+  | 'year_sequence'
+  | 'sequence_6'
+  | 'sequence'
+  | 'legacy_quote'
+  | 'legacy_invoice';
 
 /**
  * Cycle de vie d'une facture. `sent` dit que le document est parti chez le
@@ -2330,6 +2339,8 @@ export interface Database {
           vat_rate: number;
           status: QuoteStatus;
           notes: string | null;
+          document_options: Json;
+          discount_rate: number;
           valid_until: string | null;
           created_by: string | null;
           /** Réponse donnée depuis le portail client ; NULL si décidée par l'entreprise. */
@@ -2354,6 +2365,8 @@ export interface Database {
           vat_rate?: number;
           status?: QuoteStatus;
           notes?: string | null;
+          document_options?: Json;
+          discount_rate?: number;
           valid_until?: string | null;
           created_by?: string | null;
         };
@@ -2366,6 +2379,8 @@ export interface Database {
           vat_rate?: number;
           status?: QuoteStatus;
           notes?: string | null;
+          document_options?: Json;
+          discount_rate?: number;
           valid_until?: string | null;
           reminders_enabled?: boolean;
         };
@@ -2380,6 +2395,39 @@ export interface Database {
             foreignKeyName: 'quotes_customer_id_fkey';
             columns: ['customer_id'];
             referencedRelation: 'customers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      document_numbering_settings: {
+        Row: {
+          organization_id: string;
+          document_kind: DocumentKind;
+          format: DocumentNumberingFormat;
+          next_value: number;
+          configured: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          document_kind: DocumentKind;
+          format: DocumentNumberingFormat;
+          next_value?: number;
+          configured?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          format?: DocumentNumberingFormat;
+          next_value?: number;
+          configured?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'document_numbering_settings_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
@@ -2665,6 +2713,8 @@ export interface Database {
           payment_terms: string | null;
           payment_method: string | null;
           notes: string | null;
+          document_options: Json;
+          discount_rate: number;
           /*
             Instantane de l'emetteur, pose PAR LA BASE au moment de l'emission
             (`app.freeze_invoice_seller`). Jamais ecrit par l'application : un
@@ -2736,6 +2786,8 @@ export interface Database {
           payment_terms?: string | null;
           payment_method?: string | null;
           notes?: string | null;
+          document_options?: Json;
+          discount_rate?: number;
           created_by?: string | null;
         };
         /**
@@ -2747,6 +2799,8 @@ export interface Database {
           title?: string | null;
           status?: InvoiceStatus;
           notes?: string | null;
+          document_options?: Json;
+          discount_rate?: number;
           issued_at?: string | null;
           due_date?: string | null;
           payment_terms?: string | null;
@@ -3824,6 +3878,10 @@ export interface Database {
           icon: string | null;
           /** Chemin dans le bucket privé `workspace-covers` : `<org>/<page>/<fichier>`. */
           cover_path: string | null;
+          font_family: 'sans' | 'serif' | 'mono';
+          small_text: boolean;
+          full_width: boolean;
+          locked: boolean;
           /** Texte extrait du JSON TipTap par la base, dans l'ordre du document. Lecture seule. */
           search_text: string | null;
           created_at: string;
@@ -3839,6 +3897,10 @@ export interface Database {
           position?: number;
           icon?: string | null;
           cover_path?: string | null;
+          font_family?: 'sans' | 'serif' | 'mono';
+          small_text?: boolean;
+          full_width?: boolean;
+          locked?: boolean;
         };
         Update: {
           parent_page_id?: string | null;
@@ -3848,6 +3910,10 @@ export interface Database {
           archived_at?: string | null;
           icon?: string | null;
           cover_path?: string | null;
+          font_family?: 'sans' | 'serif' | 'mono';
+          small_text?: boolean;
+          full_width?: boolean;
+          locked?: boolean;
         };
         Relationships: [
           {
@@ -4979,6 +5045,8 @@ export interface Database {
         Row: {
           quote_id: string;
           organization_id: string;
+          gross_subtotal_cents: number;
+          discount_cents: number;
           subtotal_cents: number;
           vat_cents: number;
           total_cents: number;
@@ -4990,6 +5058,8 @@ export interface Database {
         Row: {
           invoice_id: string;
           organization_id: string;
+          gross_subtotal_cents: number;
+          discount_cents: number;
           subtotal_cents: number;
           vat_cents: number;
           total_cents: number;
@@ -5121,6 +5191,15 @@ export interface Database {
     };
 
     Functions: {
+      configure_document_numbering: {
+        Args: {
+          p_organization_id: string;
+          p_document_kind: DocumentKind;
+          p_first_number: number;
+          p_format: DocumentNumberingFormat;
+        };
+        Returns: Database['public']['Tables']['document_numbering_settings']['Row'];
+      };
       // -----------------------------------------------------------------------
       // Portail client — lectures explicites, réservées aux contacts du portail.
       // Chaque fonction renvoie zéro ligne (ou NULL) hors session portail.

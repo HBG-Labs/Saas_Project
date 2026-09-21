@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { qk } from '@/lib/query-keys';
-import type { TablesUpdate } from '@/types/database';
+import type { Json, TablesUpdate } from '@/types/database';
 
 import {
   createQuote,
@@ -124,6 +124,10 @@ export function useCreateQuote(organizationId: string) {
       customerName?: string;
       siteName?: string;
       vatRate: number;
+      discountRate?: number;
+      documentOptions?: Json;
+      notes?: string;
+      validUntil?: string;
       items: readonly QuoteLineInput[];
     }) => createQuote({ ...input, organizationId }),
     onSuccess: async () => {

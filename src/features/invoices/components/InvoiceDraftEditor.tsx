@@ -2,12 +2,13 @@ import {
   ChevronLeft,
   ChevronRight,
   FileCheck2,
+  ImagePlus,
   Plus,
   RefreshCw,
   Settings2,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +21,16 @@ import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { useCustomer } from '@/features/customers';
+import {
+  DocumentNumberingBanner,
+  DocumentNumberingModal,
+  DocumentOptionsPanel,
+  normalizeDocumentOptions,
+  serializeDocumentOptions,
+  useDocumentNumbering,
+  type DocumentOptions,
+} from '@/features/documents';
+import { useOrganization, useUploadOrganizationLogo } from '@/features/organizations';
 import { frenchRegistrationError, frenchVatError } from '@/lib/business-identifiers';
 import type { InvoiceWithItems } from '@/types/domain';
 import { DEFAULT_EARLY_PAYMENT_TERMS, suggestedOperationType } from '../draft-defaults';
@@ -32,6 +43,8 @@ const decimal = z
     'Indiquez un nombre positif ou nul.',
   );
 const schema = z.object({
+  title: z.string().trim().max(200),
+  notes: z.string().trim().max(4000),
   name: z.string().trim().max(150),
   legalName: z.string().trim().max(150),
   type: z.enum(['', 'company', 'individual', 'public_body']),
@@ -96,6 +109,17 @@ const formatMoney = (value: number) =>
 function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: () => void }) {
   const save = useSaveInvoiceDraft(invoice.id);
   const customer = useCustomer(invoice.customer_id ?? undefined);
+  const organizationQuery = useOrganization(invoice.organization_id);
+  const organization = organizationQuery.data;
+  const uploadLogo = useUploadOrganizationLogo(invoice.organization_id);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const numberingKind = invoice.document_type === 'credit_note' ? 'credit_note' : 'invoice';
+  const numbering = useDocumentNumbering(invoice.organization_id, numberingKind);
+  const [numberingOpen, setNumberingOpen] = useState(false);
+  const [documentOptions, setDocumentOptions] = useState<DocumentOptions>(() =>
+    normalizeDocumentOptions(invoice.document_options),
+  );
+  const [discountRate, setDiscountRate] = useState(invoice.discount_rate ?? 0);
   const [currentStep, setCurrentStep] = useState(0);
   const [desktopClientDetailsOpen, setDesktopClientDetailsOpen] = useState(false);
   const needsOperationSuggestion =
@@ -113,6 +137,8 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
+      title: invoice.title ?? '',
+      notes: invoice.notes ?? '',
       name: invoice.customer_name ?? '',
       legalName: invoice.customer_legal_name ?? '',
       type: invoice.customer_type ?? '',
@@ -158,7 +184,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const serviceDate = useWatch({ control, name: 'serviceDate' });
   const operationType = useWatch({ control, name: 'operationType' });
   const watchedItems = useWatch({ control, name: 'items' }) ?? [];
-  const totals = watchedItems.reduce(
+  const grossTotals = watchedItems.reduce(
     (sum, item) => {
       const quantity = Number(item.quantity) || 0;
       const unitPrice = Number(item.price) || 0;
@@ -170,8 +196,19 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
     },
     { excludingTax: 0, vat: 0 },
   );
+  const discountAmount = (grossTotals.excludingTax * discountRate) / 100;
+  const totals = {
+    excludingTax: grossTotals.excludingTax - discountAmount,
+    vat: grossTotals.vat * (1 - discountRate / 100),
+  };
   const totalIncludingTax = totals.excludingTax + totals.vat;
   const professional = customerType === 'company' || customerType === 'public_body';
+  const showDesktopClientDetails =
+    desktopClientDetailsOpen ||
+    documentOptions.mode !== 'quick' ||
+    documentOptions.showDeliveryAddress ||
+    documentOptions.showRegistrationNumber ||
+    documentOptions.showVatNumber;
   const registrationIssue = professional
     ? frenchRegistrationError(registrationNumber, country)
     : undefined;
@@ -201,6 +238,10 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
       try {
         await save.mutateAsync({
           patch: {
+            title: nullable(values.title),
+            notes: nullable(values.notes),
+            document_options: serializeDocumentOptions(documentOptions),
+            discount_rate: discountRate,
             customer_name: nullable(values.name),
             customer_legal_name: nullable(values.legalName),
             customer_type: values.type || null,
@@ -292,6 +333,16 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             enregistrez le brouillon pour les conserver.
           </p>
         )}
+        {numbering.data ? (
+          <div className="hidden lg:block">
+            <DocumentNumberingBanner
+              documentKind={numberingKind}
+              nextValue={numbering.data.next_value}
+              format={numbering.data.format}
+              onModify={() => setNumberingOpen(true)}
+            />
+          </div>
+        ) : null}
         <div className="lg:grid lg:grid-cols-[minmax(0,56rem)_18rem] lg:items-start lg:justify-center lg:gap-5">
           <div className="financial-paper lg:border-border relative space-y-6 lg:flex lg:min-h-[72rem] lg:flex-col lg:overflow-hidden lg:rounded-sm lg:border lg:px-12 lg:py-11 lg:shadow-[0_18px_55px_rgba(15,23,42,0.12)] xl:px-14">
             <div
@@ -300,11 +351,40 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             />
             <div className="hidden items-start justify-between gap-8 lg:order-0 lg:flex">
               <div className="flex min-w-0 items-start gap-4">
-                <div className="bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl shadow-sm">
-                  <FileCheck2 className="size-7" aria-hidden="true" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="border-primary/35 bg-primary/5 text-primary hover:bg-primary/10 flex h-20 w-44 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed text-xs font-semibold transition"
+                  aria-label="Importer le logo de l’entreprise"
+                >
+                  {organization?.logo_url ? (
+                    <img
+                      src={organization.logo_url}
+                      alt="Logo de l’entreprise"
+                      className="h-full w-full object-contain p-2"
+                    />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <ImagePlus className="size-5" />
+                      Importer votre logo
+                    </span>
+                  )}
+                </button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) uploadLogo.mutate(file);
+                    event.target.value = '';
+                  }}
+                />
                 <div className="pt-1">
-                  <p className="text-foreground text-lg font-black tracking-tight">REZO360 Pro</p>
+                  <p className="text-foreground text-lg font-black tracking-tight">
+                    {organization?.name ?? 'REZO360 Pro'}
+                  </p>
                   <p className="text-muted-foreground text-3xs mt-1 leading-relaxed">
                     Facturation professionnelle · Document en préparation
                   </p>
@@ -322,6 +402,11 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                 </p>
               </div>
             </div>
+            {documentOptions.showTitle ? (
+              <div className="hidden lg:order-1 lg:block">
+                <Input label="Intitulé du document" {...register('title')} {...error('title')} />
+              </div>
+            ) : null}
             <section
               className={
                 currentStep === 0
@@ -375,14 +460,14 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                 aria-expanded={desktopClientDetailsOpen}
               >
                 <ChevronRight
-                  className={`size-3.5 transition-transform ${desktopClientDetailsOpen ? 'rotate-90' : ''}`}
+                  className={`size-3.5 transition-transform ${showDesktopClientDetails ? 'rotate-90' : ''}`}
                   aria-hidden="true"
                 />
-                {desktopClientDetailsOpen
+                {showDesktopClientDetails
                   ? 'Masquer les coordonnées complètes'
                   : 'Afficher les coordonnées légales et postales'}
               </button>
-              <div className={`space-y-4 ${desktopClientDetailsOpen ? 'lg:block' : 'lg:hidden'}`}>
+              <div className={`space-y-4 ${showDesktopClientDetails ? 'lg:block' : 'lg:hidden'}`}>
                 <Controller
                   control={control}
                   name="type"
@@ -695,6 +780,22 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                 Ajouter une prestation
               </Button>
               <dl className="ml-auto hidden w-72 space-y-3 text-sm lg:block">
+                {discountRate > 0 ? (
+                  <div className="text-muted-foreground flex items-center justify-between">
+                    <dt>Sous-total HT</dt>
+                    <dd className="text-foreground font-semibold tabular-nums">
+                      {formatMoney(grossTotals.excludingTax)} €
+                    </dd>
+                  </div>
+                ) : null}
+                {discountRate > 0 ? (
+                  <div className="text-muted-foreground flex items-center justify-between">
+                    <dt>Remise {discountRate} %</dt>
+                    <dd className="text-success font-semibold tabular-nums">
+                      − {formatMoney(discountAmount)} €
+                    </dd>
+                  </div>
+                ) : null}
                 <div className="text-muted-foreground flex items-center justify-between">
                   <dt>Total HT</dt>
                   <dd className="text-foreground font-bold tabular-nums">
@@ -712,6 +813,18 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                   <dd className="text-success tabular-nums">{formatMoney(totalIncludingTax)} €</dd>
                 </div>
               </dl>
+              {documentOptions.showFreeField ? (
+                <Textarea label="Champ libre" {...register('notes')} {...error('notes')} />
+              ) : null}
+              {documentOptions.showBankDetails && organization ? (
+                <div className="border-primary/30 text-muted-foreground border border-dashed p-3 text-xs">
+                  <p className="text-foreground font-bold">Coordonnées bancaires</p>
+                  <p className="mt-1">
+                    IBAN : {organization.iban || 'À compléter dans les paramètres'}
+                  </p>
+                  <p>BIC : {organization.bic || 'À compléter dans les paramètres'}</p>
+                </div>
+              ) : null}
             </section>
 
             <section
@@ -801,43 +914,27 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
               <Settings2 className="text-primary size-4" aria-hidden="true" />
               <h3 className="text-foreground text-sm font-bold">Options de la facture</h3>
             </div>
-            <div className="space-y-5 p-4 text-xs">
-              <section>
-                <h4 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
-                  Destinataire
-                </h4>
-                <p className="text-foreground mt-1 truncate font-semibold">
-                  {customerName.trim() || 'À renseigner'}
-                </p>
-                <p className="text-muted-foreground mt-0.5">
-                  {professional ? 'Client professionnel' : 'Client particulier'}
-                </p>
-              </section>
-
-              <section className="border-border border-t pt-4">
-                <h4 className="text-muted-foreground text-2xs font-bold tracking-wider uppercase">
-                  Document
-                </h4>
-                <dl className="mt-2 space-y-2">
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Prestation</dt>
-                    <dd className="text-foreground font-semibold">
-                      {serviceDate || 'À renseigner'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Lignes</dt>
-                    <dd className="text-foreground font-semibold tabular-nums">
-                      {watchedItems.length}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Statut</dt>
-                    <dd className="text-foreground font-semibold">Brouillon</dd>
-                  </div>
-                </dl>
-              </section>
-
+            <DocumentOptionsPanel
+              kind="invoice"
+              value={documentOptions}
+              onChange={setDocumentOptions}
+            />
+            {documentOptions.showGlobalDiscount ? (
+              <div className="border-border border-t px-4 py-4">
+                <Input
+                  label="Remise globale (%)"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={discountRate}
+                  onChange={(event) =>
+                    setDiscountRate(Math.min(100, Math.max(0, Number(event.target.value) || 0)))
+                  }
+                />
+              </div>
+            ) : null}
+            <div className="space-y-5 border-t p-4 text-xs">
               <section className="border-border space-y-2 border-t pt-4">
                 <div className="text-muted-foreground flex justify-between gap-3">
                   <span>Total HT</span>
@@ -866,6 +963,17 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
           </aside>
         </div>
       </fieldset>
+      {numbering.data ? (
+        <DocumentNumberingModal
+          key={`${numbering.data.next_value}-${numbering.data.format}`}
+          open={numberingOpen}
+          onOpenChange={setNumberingOpen}
+          organizationId={invoice.organization_id}
+          documentKind={numberingKind}
+          initialNumber={numbering.data.next_value}
+          initialFormat={numbering.data.format}
+        />
+      ) : null}
       <div className="border-border bg-surface-raised sticky bottom-0 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t px-5 py-3 lg:hidden">
         {currentStep > 0 ? (
           <Button

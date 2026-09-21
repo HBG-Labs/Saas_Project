@@ -17,6 +17,7 @@ import {
   listTasks,
   listTasksForMission,
   movePage,
+  updatePagePresentation,
   savePage,
   updateSpace,
   updateTask,
@@ -167,6 +168,23 @@ export function useMovePage() {
     mutationFn: ({ pageId, patch }: { pageId: string; patch: Parameters<typeof movePage>[1] }) =>
       movePage(pageId, patch),
     onSuccess: async (page) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) });
+    },
+  });
+}
+
+export function useUpdatePagePresentation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      pageId,
+      patch,
+    }: {
+      pageId: string;
+      patch: Parameters<typeof updatePagePresentation>[1];
+    }) => updatePagePresentation(pageId, patch),
+    onSuccess: async (page) => {
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
       await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) });
     },
   });

@@ -22,6 +22,7 @@ export {
   listTasks,
   listTasksForMission,
   movePage,
+  updatePagePresentation,
   savePage,
   updateSpace,
   updateTask,
@@ -82,6 +83,7 @@ export {
   useDeleteTask,
   useMissionTasks,
   useMovePage,
+  useUpdatePagePresentation,
   usePage,
   usePageRevisions,
   usePages,
@@ -133,3 +135,4 @@ export {
   type LocalRecordingStatus,
 } from './audio/local-store';
 export { uploadResumable, type ResumableUploader } from './audio/resumable-upload';
+export { WorkspacePageOptionsPanel } from './components/WorkspacePageOptionsPanel';

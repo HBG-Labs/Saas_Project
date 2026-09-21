@@ -2,7 +2,11 @@ import { assert, assertEquals, assertRejects } from 'jsr:@std/assert@1';
 // @ts-types="npm:@types/pdfkit@0.17.3"
 import PDFDocument from 'npm:pdfkit@0.17.2';
 
-import { renderQuotePdf, type QuotePdfInput, type QuotePdfOrganization } from './quote-pdf-render.ts';
+import {
+  renderQuotePdf,
+  type QuotePdfInput,
+  type QuotePdfOrganization,
+} from './quote-pdf-render.ts';
 
 /*
   Hors CI, comme `generate-facturx/render.test.ts` : `npm:pdfkit` a besoin de
@@ -36,13 +40,21 @@ function quote(overrides: Partial<QuotePdfInput> = {}): QuotePdfInput {
     valid_until: '2026-10-20',
     created_at: '2026-09-01T10:00:00.000Z',
     vat_rate: 20,
+    gross_subtotal_cents: 118_400,
+    discount_cents: 0,
     subtotal_cents: 118_400,
     vat_cents: 23_680,
     total_cents: 142_080,
     payment_terms: 'Paiement à 30 jours à compter de la réception.',
     payment_method: 'Virement bancaire / Carte bancaire Pro.',
     items: [
-      { description: 'Tableau divisionnaire', unit: 'Forfait', quantity: 1, unit_price_cents: 142_000, line_total_cents: 142_000 },
+      {
+        description: 'Tableau divisionnaire',
+        unit: 'Forfait',
+        quantity: 1,
+        unit_price_cents: 142_000,
+        line_total_cents: 142_000,
+      },
     ],
     ...overrides,
   };
@@ -71,7 +83,11 @@ Deno.test('refuse un devis sans ligne', async () => {
 
 Deno.test('refuse plus de 500 lignes', async () => {
   const items = Array.from({ length: 501 }, (_, i) => ({
-    description: `Ligne ${i}`, unit: 'Unité', quantity: 1, unit_price_cents: 100, line_total_cents: 100,
+    description: `Ligne ${i}`,
+    unit: 'Unité',
+    quantity: 1,
+    unit_price_cents: 100,
+    line_total_cents: 100,
   }));
   await assertRejects(
     () => renderQuotePdf(PDFDocument, quote({ items }), ORG, new Date()),
@@ -83,7 +99,10 @@ Deno.test('refuse plus de 500 lignes', async () => {
 Deno.test('un devis à beaucoup de lignes déborde sur une deuxième page', async () => {
   const items = Array.from({ length: 60 }, (_, i) => ({
     description: `Prestation numéro ${i} — description suffisamment longue pour occuper de la place`,
-    unit: 'Unité', quantity: 1, unit_price_cents: 5_000, line_total_cents: 5_000,
+    unit: 'Unité',
+    quantity: 1,
+    unit_price_cents: 5_000,
+    line_total_cents: 5_000,
   }));
   const pdf = await renderQuotePdf(PDFDocument, quote({ items }), ORG, new Date());
   // Chaque page ajoute un objet `/Type /Page` : au moins deux pages signifie

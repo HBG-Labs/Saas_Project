@@ -153,6 +153,18 @@ export async function movePage(
   );
 }
 
+export async function updatePagePresentation(
+  pageId: string,
+  patch: Pick<
+    TablesUpdate<'workspace_pages'>,
+    'font_family' | 'small_text' | 'full_width' | 'locked'
+  >,
+): Promise<WorkspacePage> {
+  return unwrap(
+    supabase.from('workspace_pages').update(patch).eq('id', pageId).select('*').single(),
+  );
+}
+
 export async function deletePage(pageId: string): Promise<void> {
   await unwrap(supabase.from('workspace_pages').delete().eq('id', pageId).select('id'));
 }

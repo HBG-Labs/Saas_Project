@@ -9,6 +9,7 @@ import {
   getOrganization,
   listMyOrganizations,
   updateOrganization,
+  uploadOrganizationLogo,
 } from '../api/organizations.api';
 
 import { useCurrentOrganization } from './useCurrentOrganization';
@@ -68,6 +69,19 @@ export function useUpdateOrganization(organizationId: string) {
     onSuccess: async () => {
       // La liste porte le nom affiché par le sélecteur : les deux clés doivent
       // être invalidées, sans quoi l'en-tête garderait l'ancien nom.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.organizations.detail(organizationId) }),
+        queryClient.invalidateQueries({ queryKey: qk.organizations.all }),
+      ]);
+    },
+  });
+}
+
+export function useUploadOrganizationLogo(organizationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => uploadOrganizationLogo({ organizationId, file }),
+    onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.organizations.detail(organizationId) }),
         queryClient.invalidateQueries({ queryKey: qk.organizations.all }),

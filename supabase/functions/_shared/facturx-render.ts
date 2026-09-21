@@ -292,10 +292,13 @@ export async function renderFacturX(
     y += 4;
     font(false, 9).fillColor(muted);
     write('Montants en euros', left, y);
-    for (const [label, cents] of [
-      ['Total HT', invoice.netCents],
-      ['TVA', invoice.taxCents],
-    ] as const) {
+    const totalsRows: Array<readonly [string, number]> = [];
+    if ((invoice.allowanceTotalCents ?? 0) > 0) {
+      totalsRows.push(['Sous-total HT', invoice.lineTotalCents ?? invoice.netCents]);
+      totalsRows.push(['Remise globale', -(invoice.allowanceTotalCents ?? 0)]);
+    }
+    totalsRows.push(['Total HT', invoice.netCents], ['TVA', invoice.taxCents]);
+    for (const [label, cents] of totalsRows) {
       font(false, 10).fillColor(ink);
       write(label, left + 290, y);
       write(money(cents), left + 407, y, { width: width - 407, align: 'right' });
