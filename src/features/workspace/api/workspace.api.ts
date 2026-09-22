@@ -769,8 +769,10 @@ export async function fetchLiveToken(
     const context: unknown = (error as { context?: unknown } | null)?.context;
     if (context instanceof Response) {
       try {
-        const corps = (await context.clone().json()) as { error?: string };
+        const corps = (await context.clone().json()) as { error?: string; code?: string };
         if (corps.error) motif = corps.error;
+        // Le code d'OpenAI, utile pour diagnostiquer sans lire les journaux.
+        if (corps.code) motif = `${motif} [${corps.code}]`;
       } catch {
         // le corps n'est pas du JSON : le motif générique suffit
       }

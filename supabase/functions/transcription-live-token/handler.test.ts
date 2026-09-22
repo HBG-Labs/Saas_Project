@@ -2,7 +2,7 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 
 import {
-  KEYWORDS_MAX,
+  LIVE_FALLBACK_MODEL,
   LIVE_MODEL,
   createLiveTokenHandler,
   sessionConfig,
@@ -53,10 +53,7 @@ function fabriquer(overrides: {
     callerClient,
     authenticate: overrides.authenticate ?? (() => Promise.resolve({ userId: 'user-1' })),
     loadContext: () =>
-      Promise.resolve({
-        prompt: 'Enregistrement de terrain… Caraïbe Télécom, PTO, PBO',
-        keywords: ['Caraïbe Télécom', 'Le Lamentin'],
-      }),
+      Promise.resolve({ prompt: 'Enregistrement de terrain… Caraïbe Télécom, PTO, PBO' }),
     createClientSecret:
       overrides.createClientSecret ??
       ((session) => {
@@ -120,7 +117,7 @@ Deno.test('la porte ouvre : jeton rendu, session avec le contexte, trace sans te
     type: string;
     audio: {
       input: {
-        transcription: { model: string; prompt: string; languages: string[]; keywords: string[] };
+        transcription: Record<string, unknown>;
         turn_detection: { type: string };
         noise_reduction: { type: string };
       };
@@ -128,9 +125,15 @@ Deno.test('la porte ouvre : jeton rendu, session avec le contexte, trace sans te
   };
   assertEquals(session.type, 'transcription');
   assertEquals(session.audio.input.transcription.model, LIVE_MODEL);
-  assertStringIncludes(session.audio.input.transcription.prompt, 'Caraïbe Télécom');
-  assertEquals(session.audio.input.transcription.languages, ['fr']);
-  assertEquals(session.audio.input.transcription.keywords, ['Caraïbe Télécom', 'Le Lamentin']);
+  assertStringIncludes(String(session.audio.input.transcription.prompt), 'Caraïbe Télécom');
+  assertEquals(session.audio.input.transcription.language, 'fr');
+  // Seulement les champs que la documentation liste : un champ inconnu fait
+  // refuser toute la session (cas vécu avec `keywords`, 22/09).
+  assertEquals(Object.keys(session.audio.input.transcription).sort(), [
+    'language',
+    'model',
+    'prompt',
+  ]);
   assertEquals(session.audio.input.turn_detection.type, 'server_vad');
   assertEquals(session.audio.input.noise_reduction.type, 'near_field');
 
@@ -146,22 +149,43 @@ Deno.test('la porte ouvre : jeton rendu, session avec le contexte, trace sans te
   assert(!JSON.stringify(corps).includes('sk-'), 'jamais la clé OpenAI');
 });
 
-Deno.test('OpenAI en panne : 503 sans détail, pas de trace', async () => {
+Deno.test('OpenAI refuse le modèle du direct : repli sur celui de la finale', async () => {
+  const essais: string[] = [];
   const f = fabriquer({
-    createClientSecret: () => Promise.reject(new Error('OpenAI 500 prompt=Caraïbe Télécom')),
+    createClientSecret: (session) => {
+      const model = String(
+        (session as { audio: { input: { transcription: { model: string } } } }).audio.input
+          .transcription.model,
+      );
+      essais.push(model);
+      if (model === LIVE_MODEL) return Promise.reject(new Error('400 model_not_found param=model'));
+      return Promise.resolve({ value: 'ek_fallback', expiresAt: 1 });
+    },
+  });
+  const r = await f.handler(requete({ organizationId: ORG, pageId: PAGE }));
+  assertEquals(r.status, 200);
+  assertEquals(essais, [LIVE_MODEL, LIVE_FALLBACK_MODEL]);
+  assertEquals(((await r.json()) as { model: string }).model, LIVE_FALLBACK_MODEL);
+  assertEquals(f.traces[0]?.model, LIVE_FALLBACK_MODEL);
+});
+
+Deno.test('OpenAI refuse tout : 503 avec le code, sans le prompt, et sans trace', async () => {
+  const f = fabriquer({
+    createClientSecret: () =>
+      Promise.reject(new Error('400 invalid_value param=session.audio.input.transcription')),
   });
   const r = await f.handler(requete({ organizationId: ORG, pageId: PAGE }));
   assertEquals(r.status, 503);
-  const texte = await r.text();
-  assert(!texte.includes('Caraïbe'), 'le détail OpenAI ne sort pas');
+  const corps = (await r.json()) as { reason: string; code: string; error: string };
+  assertEquals(corps.reason, 'openai');
+  assertStringIncludes(corps.code, 'invalid_value');
+  assert(!JSON.stringify(corps).includes('Caraïbe'), 'le prompt ne sort pas');
   assertEquals(f.traces.length, 0);
 });
 
-Deno.test('la configuration borne les mots-clés à ce qu’OpenAI accepte', () => {
-  const s = sessionConfig({
-    prompt: 'p',
-    keywords: Array.from({ length: 150 }, (_, i) => `k${String(i)}`),
-    language: 'fr',
-  }) as { audio: { input: { transcription: { keywords: string[] } } } };
-  assertEquals(s.audio.input.transcription.keywords.length, KEYWORDS_MAX);
+Deno.test('la configuration porte le modèle demandé', () => {
+  const s = sessionConfig({ prompt: 'p', language: 'fr', model: LIVE_FALLBACK_MODEL }) as {
+    audio: { input: { transcription: { model: string } } };
+  };
+  assertEquals(s.audio.input.transcription.model, LIVE_FALLBACK_MODEL);
 });

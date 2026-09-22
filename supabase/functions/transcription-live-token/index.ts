@@ -22,10 +22,7 @@ Deno.serve(
     // glossaire du secteur ; les termes du dictionnaire aussi en mots-clés.
     loadContext: async (client, organizationId, industry) => {
       const termes = await chargerTermesOrganisation(client, organizationId);
-      return {
-        prompt: construirePromptStt({ industry, termesSupplementaires: termes }),
-        keywords: termes,
-      };
+      return { prompt: construirePromptStt({ industry, termesSupplementaires: termes }) };
     },
     createClientSecret: async (session) => {
       if (!openaiApiKey) throw new Error('OPENAI_API_KEY absente.');
@@ -40,7 +37,15 @@ Deno.serve(
           session,
         }),
       });
-      if (!response.ok) throw new Error(`OpenAI ${String(response.status)}`);
+      if (!response.ok) {
+        // Le code et le champ fautif, jamais le corps entier : il contient le prompt.
+        const detail = (await response.json().catch(() => null)) as {
+          error?: { code?: string; param?: string; message?: string };
+        } | null;
+        throw new Error(
+          `${String(response.status)} ${detail?.error?.code ?? '?'} param=${detail?.error?.param ?? '?'} ${(detail?.error?.message ?? '').slice(0, 120)}`,
+        );
+      }
       const payload = (await response.json()) as { value?: string; expires_at?: number };
       if (!payload.value || typeof payload.expires_at !== 'number') {
         throw new Error('Réponse OpenAI sans jeton.');

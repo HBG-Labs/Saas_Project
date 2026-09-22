@@ -25,10 +25,10 @@ import { CORS_HEADERS, json } from '../_shared/billing.ts';
  */
 
 export const LIVE_MODEL = 'gpt-live-transcribe';
+/** Si le compte n'a pas accès au modèle du direct, celui de la finale sait aussi streamer. */
+export const LIVE_FALLBACK_MODEL = 'gpt-transcribe';
 /** Le jeton sert à ouvrir la connexion, pas à la tenir : une minute suffit. */
 export const TOKEN_TTL_SECONDS = 60;
-/** OpenAI accepte au plus 100 mots-clés ; les plus spécifiques d'abord (déjà triés). */
-export const KEYWORDS_MAX = 100;
 
 export interface LiveTokenConfig {
   /** Rend l'identité de la session, ou `null` si elle est invalide. */
@@ -42,8 +42,11 @@ export interface LiveTokenConfig {
     admin: SupabaseClient,
     organizationId: string,
     industry: string | null,
-  ) => Promise<{ prompt: string; keywords: string[] }>;
-  /** Demande le jeton à OpenAI ; injecté pour tester sans réseau. */
+  ) => Promise<{ prompt: string }>;
+  /**
+   * Demande le jeton à OpenAI ; injecté pour tester sans réseau. Lève
+   * `LiveTokenRefused` (avec le code d'OpenAI) sur un refus définitif.
+   */
   createClientSecret: (session: Record<string, unknown>) => Promise<{
     value: string;
     expiresAt: number;
@@ -65,11 +68,16 @@ function lireCorps(raw: unknown): Body | null {
   return { organizationId: o.organizationId, pageId: o.pageId };
 }
 
-/** La configuration de session que porte le jeton — ce que le téléphone ne peut pas changer. */
+/**
+ * La configuration de session que porte le jeton — ce que le téléphone ne
+ * peut pas changer. Seuls les champs que la documentation d'OpenAI liste
+ * pour une session de transcription : un champ inconnu (`keywords`, essayé
+ * le 22/09) fait refuser toute la session en 400.
+ */
 export function sessionConfig(params: {
   prompt: string;
-  keywords: string[];
   language: string;
+  model?: string;
 }): Record<string, unknown> {
   return {
     type: 'transcription',
@@ -77,10 +85,9 @@ export function sessionConfig(params: {
       input: {
         noise_reduction: { type: 'near_field' },
         transcription: {
-          model: LIVE_MODEL,
+          model: params.model ?? LIVE_MODEL,
           prompt: params.prompt,
-          languages: [params.language],
-          keywords: params.keywords.slice(0, KEYWORDS_MAX),
+          language: params.language,
         },
         turn_detection: { type: 'server_vad', silence_duration_ms: 600 },
       },
@@ -140,28 +147,44 @@ export function createLiveTokenHandler(config: LiveTokenConfig) {
     }
 
     const contexte = await config.loadContext(config.admin, body.organizationId, porte.industry);
-    const session = sessionConfig({
-      prompt: contexte.prompt,
-      keywords: contexte.keywords,
-      language: porte.language ?? 'fr',
-    });
+    const langue = porte.language ?? 'fr';
 
-    let jeton: { value: string; expiresAt: number };
-    try {
-      jeton = await config.createClientSecret(session);
-    } catch {
-      // Sans détail : le message d'OpenAI pourrait porter des éléments du contexte.
-      return json({ error: 'Le direct est indisponible pour le moment.' }, 503);
+    // Le modèle du direct, puis celui de la finale si le compte n'y a pas
+    // accès. Le code du refus est journalisé (jamais le prompt ni le texte).
+    let jeton: { value: string; expiresAt: number } | null = null;
+    let modeleRetenu = LIVE_MODEL;
+    let dernierCode = 'inconnu';
+    for (const model of [LIVE_MODEL, LIVE_FALLBACK_MODEL]) {
+      try {
+        jeton = await config.createClientSecret(
+          sessionConfig({ prompt: contexte.prompt, language: langue, model }),
+        );
+        modeleRetenu = model;
+        break;
+      } catch (echec) {
+        dernierCode = echec instanceof Error ? echec.message.slice(0, 200) : 'inconnu';
+        console.error('transcription-live-token: OpenAI a refusé', model, dernierCode);
+      }
+    }
+    if (!jeton) {
+      return json(
+        {
+          error: 'Le direct est indisponible pour le moment.',
+          reason: 'openai',
+          code: dernierCode,
+        },
+        503,
+      );
     }
 
     const { error: traceError } = await config.admin.from('transcription_live_sessions').insert({
       organization_id: body.organizationId,
       user_id: identite.userId,
       page_id: body.pageId,
-      model: LIVE_MODEL,
+      model: modeleRetenu,
     });
     if (traceError) console.error('transcription-live-token: trace impossible', traceError.code);
 
-    return json({ token: jeton.value, expiresAt: jeton.expiresAt, model: LIVE_MODEL });
+    return json({ token: jeton.value, expiresAt: jeton.expiresAt, model: modeleRetenu });
   };
 }
