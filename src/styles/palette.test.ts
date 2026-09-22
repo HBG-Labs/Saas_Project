@@ -14,7 +14,7 @@ import { CONTRASTE_ELEVE_PRESET } from '@/features/theme/theme-presets';
  * Deux défauts ont vécu des mois dans la feuille de styles, sans qu'aucun
  * outil ne les voie :
  *
- * - `--border-strong` borde les champs, les sélecteurs et les cases à cocher.
+ * - `--border-strong` borde les cases, poignées et contrôles compacts.
  *   WCAG 1.4.11 lui impose 3:1 contre la surface qui le porte. Il tenait
  *   1,76:1 en clair et 1,46:1 en sombre.
  *
@@ -114,7 +114,7 @@ const ENCRES: readonly (readonly [string, number, string])[] = [
   ['--info', 4.5, 'libellé d’information'],
   // WCAG 1.4.11 : la bordure d'un contrôle n'est pas du texte, mais elle
   // délimite un élément d'interface. Seuil 3:1, pas 4,5:1.
-  ['--border-strong', 3, 'bordure des champs'],
+  ['--border-strong', 3, 'bordure des contrôles compacts'],
 ];
 
 const THEMES = [

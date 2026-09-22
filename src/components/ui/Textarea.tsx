@@ -55,7 +55,7 @@ export function Textarea({
           'disabled:cursor-not-allowed disabled:opacity-50',
           // Empêche l'élargissement horizontal, qui casserait la mise en page.
           'resize-y',
-          error ? 'border-error focus-visible:ring-error' : 'border-border-strong',
+          error ? 'border-error focus-visible:ring-error' : 'border-border',
           className,
         )}
         {...props}

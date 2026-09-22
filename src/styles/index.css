@@ -55,9 +55,9 @@
     --surface-subtle: #f7f8fa;
     --surface-hover: #f0f2f6;
 
-    /* Filet décoratif : sépare, ne délimite pas un contrôle. */
+    /* Filet discret utilisé par les séparateurs et les champs de saisie. */
     --border: #e2e6ec;
-    /* Bordure vérifiée à 3:1 minimum sur les six surfaces. Seuil WCAG 1.4.11 : 3:1. */
+    /* Contraste renforcé réservé aux cases, poignées et contrôles compacts. */
     --border-strong: #7a8799;
 
     --foreground: #243247;
@@ -150,13 +150,12 @@
     --surface-subtle: #222f4e;
     --surface-hover: #283654;
 
-    /* Filet décoratif : sépare, ne délimite pas un contrôle. */
+    /* Filet discret utilisé par les séparateurs et les champs de saisie. */
     --border: #3b4c73;
     /*
-      Borde les champs, les sélecteurs et les cases à cocher : WCAG 1.4.11 lui
-      impose 3:1. L'ancienne valeur (#324880) tenait 1,46:1 sur la surface la
-      plus claire — la bordure de chaque champ du thème sombre était très loin
-      sous le seuil. 3,14:1 au pire désormais.
+      Borde les cases, poignées et contrôles compacts : WCAG 1.4.11 lui impose
+      3:1. Les champs de saisie utilisent le filet discret ci-dessus et gagnent
+      un anneau bleu contrasté dès qu'ils reçoivent le focus.
     */
     --border-strong: #7187b4;
 

@@ -324,7 +324,7 @@ export function DateTimeInput({
               'bg-surface text-foreground atelier-field h-touch sm:h-field flex w-full items-center gap-2 rounded-sm border px-3 text-left text-base sm:text-sm',
               'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              error ? 'border-error' : 'border-border-strong',
+              error ? 'border-error' : 'border-border',
               className,
             )}
           >

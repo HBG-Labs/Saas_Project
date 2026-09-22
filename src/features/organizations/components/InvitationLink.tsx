@@ -49,7 +49,7 @@ export function InvitationLink({ token }: { token: string }) {
         onFocus={(event) => {
           event.target.select();
         }}
-        className="bg-surface-sunken border-border-strong text-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 min-w-0 flex-1 truncate rounded-lg border px-3 font-mono text-xs transition-[border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none sm:h-9"
+        className="bg-surface-sunken border-border text-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 min-w-0 flex-1 truncate rounded-lg border px-3 font-mono text-xs transition-[border-color,box-shadow] focus-visible:ring-2 focus-visible:outline-none sm:h-9"
       />
       <Button
         variant="outline"

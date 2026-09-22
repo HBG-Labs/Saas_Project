@@ -119,7 +119,7 @@ export function Select({
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'data-[placeholder]:text-subtle-foreground',
-            error ? 'border-error' : 'border-border-strong',
+            error ? 'border-error' : 'border-border',
             triggerClassName,
           )}
         >

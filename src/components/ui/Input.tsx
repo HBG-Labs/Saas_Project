@@ -90,7 +90,7 @@ export function Input(inputProps: InputProps) {
             'transition-colors duration-[120ms]',
             'focus-visible:ring-ring focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            error ? 'border-error focus-visible:ring-error' : 'border-border-strong',
+            error ? 'border-error focus-visible:ring-error' : 'border-border',
             leadingIcon && 'pl-9',
             trailingSlot && 'pr-10',
             className,

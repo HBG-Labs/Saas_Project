@@ -368,7 +368,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                   placeholder="Rechercher une note…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="atelier-field h-touch sm:h-field border-border-strong bg-surface text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-sm border pr-3 pl-8 text-base focus-visible:ring-2 focus-visible:outline-none sm:text-sm"
+                  className="atelier-field h-touch sm:h-field border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-sm border pr-3 pl-8 text-base focus-visible:ring-2 focus-visible:outline-none sm:text-sm"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export function NotepadCard(_props: NotepadCardProps = {}) {
                         onChange={(e) => handleUpdateTitle(e.target.value)}
                         aria-label="Titre de la note"
                         placeholder="Titre de la note…"
-                        className="atelier-field h-touch sm:h-field border-border-strong bg-surface text-foreground focus-visible:ring-ring w-full rounded-sm border px-3 text-base font-bold focus-visible:ring-2 focus-visible:outline-none"
+                        className="atelier-field h-touch sm:h-field border-border bg-surface text-foreground focus-visible:ring-ring w-full rounded-sm border px-3 text-base font-bold focus-visible:ring-2 focus-visible:outline-none"
                         title="Modifier le nom du fichier"
                       />
                     </div>

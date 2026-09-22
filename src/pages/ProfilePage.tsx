@@ -999,7 +999,7 @@ export default function ProfilePage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="h-touch border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
+                className="h-touch border-border bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />
               <button
                 type="button"
@@ -1034,7 +1034,7 @@ export default function ProfilePage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="h-touch border-border-strong bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
+                className="h-touch border-border bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />
               <button
                 type="button"

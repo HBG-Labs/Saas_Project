@@ -550,14 +550,14 @@ export default function QuotesPage() {
                       onChange={(event) =>
                         handleUpdateItem(item.id, 'quantity', Number(event.target.value) || 0)
                       }
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
+                      className="border-border bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
                     />
                     <input
                       type="text"
                       value={item.unit}
                       aria-label="Unité"
                       onChange={(event) => handleUpdateItem(item.id, 'unit', event.target.value)}
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
+                      className="border-border bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 rounded-md border border-dashed px-2 py-2 text-center text-xs outline-none focus:ring-2"
                     />
                     <div className="relative">
                       <input
@@ -569,7 +569,7 @@ export default function QuotesPage() {
                         onChange={(event) =>
                           handleUpdateItem(item.id, 'unitPrice', Number(event.target.value) || 0)
                         }
-                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 w-full rounded-md border border-dashed py-2 pr-5 pl-2 text-right text-xs font-semibold outline-none focus:ring-2"
+                        className="border-border bg-surface-sunken text-foreground focus:border-primary focus:ring-primary/20 w-full rounded-md border border-dashed py-2 pr-5 pl-2 text-right text-xs font-semibold outline-none focus:ring-2"
                       />
                       <span className="text-3xs text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2">
                         €
@@ -913,7 +913,7 @@ export default function QuotesPage() {
                         value={item.description}
                         aria-label="Désignation de la prestation"
                         onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
-                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                        className="border-border bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2.5 py-1.5 text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
                       />
                     </div>
 
@@ -932,7 +932,7 @@ export default function QuotesPage() {
                         onChange={(e) =>
                           handleUpdateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
                         }
-                        className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                        className="border-border bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded border px-2 py-1.5 text-center text-xs focus:outline-none focus-visible:ring-2 sm:min-h-0"
                       />
                     </div>
 
@@ -953,7 +953,7 @@ export default function QuotesPage() {
                           onChange={(e) =>
                             handleUpdateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
                           }
-                          className="border-border-strong bg-surface-sunken focus:border-primary focus-visible:ring-ring/30 text-success min-h-touch w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold focus:outline-none focus-visible:ring-2 sm:min-h-0"
+                          className="border-border bg-surface-sunken focus:border-primary focus-visible:ring-ring/30 text-success min-h-touch w-full rounded border py-1.5 pr-5 pl-2 text-right text-xs font-semibold focus:outline-none focus-visible:ring-2 sm:min-h-0"
                         />
                         <span className="text-muted-foreground text-2xs absolute right-2">€</span>
                       </div>
@@ -1016,7 +1016,7 @@ export default function QuotesPage() {
                       inputMode="decimal"
                       value={vatInput}
                       onChange={(e) => setVatInput(e.target.value)}
-                      className="border-border-strong bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
+                      className="border-border bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
                     />
                     <span className="text-muted-foreground absolute right-3 text-xs font-semibold">
                       %
@@ -1318,7 +1318,7 @@ export default function QuotesPage() {
                 id="quote-new-preset-unit"
                 value={newPreset.unit}
                 onChange={(e) => setNewPreset({ ...newPreset, unit: e.target.value })}
-                className="border-border-strong bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
+                className="border-border bg-surface text-foreground focus:border-primary focus-visible:ring-ring/30 w-full rounded-md border px-3 py-2 text-xs focus:outline-none focus-visible:ring-2"
               >
                 <option value="Unité">Unité / Pièce</option>
                 <option value="Forfait">Forfait Global</option>
