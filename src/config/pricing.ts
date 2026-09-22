@@ -78,6 +78,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
       'Carnet Clients & Devis/Facturation',
       'Exportation des rapports en PDF certifié & CSV',
       'Historique de calculs & sauvegardes illimité',
+      'Enregistrement vocal — 30 min/mois, transcrit et résumé',
     ],
   },
   {
@@ -96,6 +97,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaVariant: 'primary',
     features: [
       'Assistant IA — 100 requêtes/mois (données de l’entreprise + documentation)',
+      'Enregistrement vocal — 120 min/mois',
       'Calculateurs Métiers certifiés (Fibre, Élec, BTP...)',
       '5 utilisateurs inclus (+5 € / util. supp.)',
       'Toutes les fonctionnalités du plan Starter',
@@ -122,6 +124,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaVariant: 'primary',
     features: [
       'Assistant IA — 300 requêtes/mois',
+      'Enregistrement vocal — 600 min/mois',
       'Toutes les fonctionnalités du plan Pro',
       '10 utilisateurs inclus (+5 € / util. supp.)',
       'Planning avancé & calendrier d’équipe',
@@ -146,6 +149,7 @@ export const PRICING_PLANS: readonly PricingTier[] = [
     ctaVariant: 'primary',
     features: [
       'Assistant IA — 1 000 requêtes/mois',
+      'Enregistrement vocal — 3 000 min/mois',
       'Toutes les fonctionnalités du plan Business',
       '20 utilisateurs inclus',
       '+5 € / utilisateur supplémentaire / mois',

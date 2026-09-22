@@ -1,11 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.112.2';
 
-import {
-  createChatCompletion,
-  finalizeAiUsage,
-  releaseAiUsage,
-  reserveAiUsage,
-} from '../_shared/ai.ts';
+import { createChatCompletion } from '../_shared/ai.ts';
 import { chargerTermesOrganisation, contexteOrganisation } from '../_shared/stt-context.ts';
 import {
   lireResume,
@@ -85,20 +80,19 @@ Deno.serve(
           : {}),
       });
     },
-    // Le résumé compte une requête IA de l'organisation, réservée comme une
-    // conversation Workspace ; sans quota ou sans clé, la transcription part
-    // sans résumé.
+    // Le résumé fait partie de la transcription : il est payé par les minutes
+    // réservées, PAS par le quota de requêtes de l'Assistant (décision du
+    // 22/09/2026). Deux raisons : Starter a la voix sans l'Assistant, et un
+    // client qui enregistrait beaucoup épuisait son quota d'Assistant en
+    // résumés — ce que personne n'avait voulu. Le coût est borné par les
+    // minutes : quelques centièmes de centime par minute d'audio.
     //
     // En v2, le résumé est structuré (points clés, décisions, actions, chacun
     // citant ses paragraphes) et le Markdown de la page en est dérivé. Si le
     // modèle ne rend pas la forme attendue, on retombe sur le résumé libre —
     // un second appel, compté dans la même réservation.
-    summarize: async ({ admin, organizationId, userId, engine, transcript, segments }) => {
-      if (!openaiApiKey || !userId || transcript.trim().length === 0) return null;
-      const reservation = await reserveAiUsage(admin, organizationId, userId, 'workspace');
-      if (!reservation) return null;
-      let inputTokens = 0;
-      let outputTokens = 0;
+    summarize: async ({ engine, transcript, segments }) => {
+      if (!openaiApiKey || transcript.trim().length === 0) return null;
       try {
         let markdown: string | null = null;
         let structured = null;
@@ -109,8 +103,6 @@ Deno.serve(
             history: [],
             query: requeteResume(segments),
           });
-          inputTokens += structure.inputTokens;
-          outputTokens += structure.outputTokens;
           structured = lireResume(structure.content, segments);
           if (structured) markdown = resumeEnMarkdown(structured);
         }
@@ -121,22 +113,12 @@ Deno.serve(
             history: [],
             query: summaryQuery(transcript),
           });
-          inputTokens += completion.inputTokens;
-          outputTokens += completion.outputTokens;
           markdown = completion.content;
         }
-        await finalizeAiUsage({
-          admin,
-          reservationId: reservation.id,
-          organizationId,
-          userId,
-          inputTokens,
-          outputTokens,
-        });
         return { markdown, structured };
       } catch (failure) {
+        // Sans résumé, la transcription part quand même.
         console.error('transcription-worker: résumé impossible', failure);
-        await releaseAiUsage(admin, reservation.id, organizationId, userId);
         return null;
       }
     },

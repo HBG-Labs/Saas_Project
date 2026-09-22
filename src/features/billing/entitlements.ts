@@ -109,7 +109,9 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     // seulement) — distinct de « n'a jamais été inclus ».
     ai_assistant: 0,
     workspace: null,
-    ai_transcription_minutes: 0,
+    // 30 minutes pour goûter la voix (22/09/2026) ; le direct en consomme
+    // deux par minute d'audio. L'Assistant reste à partir de Pro.
+    ai_transcription_minutes: 30,
   },
 
   pro: {

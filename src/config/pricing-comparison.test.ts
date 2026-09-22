@@ -41,7 +41,8 @@ describe('matrice de comparaison des tarifs', () => {
   it('suit les entitlements pour la transcription vocale', () => {
     const row = ligne('Enregistrement vocal');
     expect(row.free).toBe(false);
-    expect(row.starter).toBe(false);
+    // Starter goûte la voix depuis le 22/09/2026 : 30 minutes, résumé compris.
+    expect(row.starter).toBe('30 min/mois');
     expect(row.pro).toBe('120 min/mois');
     expect(row.business).toBe('600 min/mois');
     // Espace fine insécable du format français : c'est bien « 3 000 ».

@@ -103,8 +103,9 @@ export interface TranscriptionWorkerConfig {
     text: string;
   }) => Promise<Normalisation | null>;
   /**
-   * Le résumé, DANS le quota IA de l'organisation : `null` si le quota est
-   * épuisé ou le fournisseur indisponible — la transcription part sans
+   * Le résumé. Il fait partie de la transcription (payé par les minutes
+   * réservées), pas du quota de requêtes de l'Assistant — 22/09/2026.
+   * `null` si le fournisseur est indisponible : la transcription part sans
    * résumé plutôt que d'attendre.
    */
   summarize: (params: {

@@ -30,6 +30,7 @@ import workspaceSql from '../../supabase/migrations/20260929090000_workspace.sql
 import feuilleHeuresSql from '../../supabase/migrations/20261002090000_feuille_heures.sql?raw';
 import workspaceV2Sql from '../../supabase/migrations/20261003090000_workspace_v2.sql?raw';
 import enregistrementsVocauxSql from '../../supabase/migrations/20261005090000_enregistrements_vocaux.sql?raw';
+import starterVoixSql from '../../supabase/migrations/20261013093000_starter_voix_decouverte.sql?raw';
 
 /**
  * Lecture des migrations SQL depuis les tests.
@@ -89,6 +90,7 @@ const MIGRATIONS: Record<string, string> = {
   feuilleHeures: feuilleHeuresSql,
   workspaceV2: workspaceV2Sql,
   enregistrementsVocaux: enregistrementsVocauxSql,
+  starterVoix: starterVoixSql,
 };
 
 export const MIGRATION_FILES = {
@@ -124,6 +126,7 @@ export const MIGRATION_FILES = {
   feuilleHeures: 'feuilleHeures',
   workspaceV2: 'workspaceV2',
   enregistrementsVocaux: 'enregistrementsVocaux',
+  starterVoix: 'starterVoix',
 } as const;
 
 /**

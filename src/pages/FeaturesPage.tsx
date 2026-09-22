@@ -160,8 +160,8 @@ const FEATURES_LIST = [
     title: 'Enregistrement vocal',
     subtitle: 'Parlez, la page s’écrit',
     description:
-      'Enregistrez une réunion ou un point de chantier depuis une page : la transcription et un résumé (points clés, décisions, actions) sont écrits dans la page en tâche de fond. L’audio est effacé après 30 jours ; le texte reste.',
-    badge: 'À partir de Pro',
+      'Enregistrez une réunion ou un point de chantier depuis une page : le texte apparaît pendant que vous parlez, puis la transcription et un résumé (points clés, décisions, actions) sont écrits dans la page. L’audio est effacé après 30 jours ; le texte reste.',
+    badge: 'À partir de Starter',
     benefit: 'Un compte rendu de réunion sans personne pour le taper.',
   },
   {
