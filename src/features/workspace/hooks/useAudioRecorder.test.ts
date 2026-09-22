@@ -10,6 +10,7 @@ import {
   type RecorderMedia,
   type RecorderServerApi,
 } from './useAudioRecorder';
+import type { DurationFixer } from '../audio/webm-duration';
 
 /*
   Aucun micro, aucun réseau : le MediaRecorder est factice (on lui « émet »
@@ -73,6 +74,7 @@ function fabriquer(
     /** Le niveau que le vu-mètre lit ; `null` = navigateur sans mesure. */
     niveau?: { valeur: number } | null;
     muted?: boolean;
+    durationFixer?: DurationFixer;
   } = {},
 ) {
   const store = overrides.store ?? new MemoryAudioStore();
@@ -105,6 +107,7 @@ function fabriquer(
       page: { id: 'page-1', organization_id: 'org-1' },
       store,
       uploader: upload,
+      durationFixer: overrides.durationFixer ?? ((b) => Promise.resolve(b)),
       api: { createRow, submit, updateNotes },
       media,
       now,
@@ -553,5 +556,22 @@ describe('useAudioRecorder — zéro perte', () => {
       sans.result.current.stop();
     });
     await waitFor(() => expect(sans.result.current.status).toBe('done'));
+  });
+
+  it("la durée mesurée est inscrite dans l'en-tête avant l'envoi, et c'est ce fichier qui part", async () => {
+    const corrige = new Blob(['CORRIGE'], { type: 'audio/webm' });
+    const fixer = vi.fn((_b: Blob, _ms: number) => Promise.resolve(corrige));
+    const h = fabriquer({ durationFixer: fixer });
+    const recorder = await demarrer(h);
+    act(() => {
+      h.avancer(14_000);
+      recorder.emit('A');
+      h.result.current.stop();
+    });
+    await waitFor(() => expect(h.result.current.status).toBe('done'));
+    expect(fixer).toHaveBeenCalledTimes(1);
+    expect(fixer.mock.calls[0]?.[1]).toBe(14_000);
+    expect(h.upload).toHaveBeenCalledWith(expect.objectContaining({ blob: corrige }));
+    expect(h.createRow).toHaveBeenCalledWith(expect.objectContaining({ sizeBytes: corrige.size }));
   });
 });

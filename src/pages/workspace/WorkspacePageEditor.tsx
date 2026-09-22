@@ -153,6 +153,28 @@ function PageForm({
   // l'ouverture, puis celui de chaque écriture réussie depuis ce formulaire.
   const [loadedAt, setLoadedAt] = useState(loaded.updated_at);
   const [message, setMessage] = useState<string | null>(null);
+  // Le texte tel que le serveur le connaît : ce contre quoi on mesure ce qui
+  // a changé ailleurs (une transcription écrite pendant que la page est ouverte).
+  const [serverText, setServerText] = useState(loaded.search_text ?? '');
+  const serveur = loaded.search_text ?? '';
+  if (loaded.updated_at !== loadedAt && serveur !== serverText) {
+    // La page a bougé sur le serveur pendant qu'elle est ouverte — le cas
+    // courant : la transcription d'un enregistrement vient d'y être ajoutée.
+    // On la prend sans perdre ce qui est tapé ici : si le serveur n'a fait
+    // qu'ajouter à la suite, on ajoute la même chose ; sinon on prévient.
+    const delta = serveur.startsWith(serverText) ? serveur.slice(serverText.length) : null;
+    setServerText(serveur);
+    setLoadedAt(loaded.updated_at);
+    if (text === serverText) setText(serveur);
+    else if (delta !== null)
+      setText((courant) =>
+        courant.endsWith('\n') || delta.startsWith('\n') ? courant + delta : `${courant}\n${delta}`,
+      );
+    else
+      setMessage(
+        "Cette page a été modifiée ailleurs pendant votre saisie : rechargez-la avant d'enregistrer.",
+      );
+  }
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
@@ -194,6 +216,7 @@ function PageForm({
         content: textToTiptapDocument(text),
       });
       setLoadedAt(saved.updated_at);
+      setServerText(saved.search_text ?? '');
       setMessage('Enregistré.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Échec de l'enregistrement.");

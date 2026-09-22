@@ -7,6 +7,7 @@ import {
   type LocalRecording,
 } from '../audio/local-store';
 import { uploadResumable, type ResumableUploader } from '../audio/resumable-upload';
+import { fixDuration, type DurationFixer } from '../audio/webm-duration';
 
 /**
  * La mécanique de l'enregistrement vocal — capture, pause, tranches,
@@ -113,6 +114,8 @@ export interface UseAudioRecorderOptions {
   onSubmitted?: (recordingId: string) => void;
   store?: LocalAudioStore;
   uploader?: ResumableUploader;
+  /** Inscrit la durée dans l'en-tête WebM avant l'envoi ; injecté pour les tests. */
+  durationFixer?: DurationFixer;
   api?: RecorderServerApi;
   media?: RecorderMedia;
   now?: () => number;
@@ -218,6 +221,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     [options.store],
   );
   const uploader = options.uploader ?? uploadResumable;
+  const fixer = options.durationFixer ?? fixDuration;
   const media = options.media ?? defaultMedia;
   const now = options.now ?? Date.now;
   const api = options.api;
@@ -298,8 +302,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
           rec = { ...actuel, ...patch, updatedAt: new Date(now()).toISOString() };
           await store.putRecording(rec);
         };
-        const audio = await store.readAudio(key, rec.mimeType);
-        if (audio.size === 0) throw new Error('Aucun audio capté.');
+        const brut = await store.readAudio(key, rec.mimeType);
+        if (brut.size === 0) throw new Error('Aucun audio capté.');
+        // La durée dans l'en-tête, pour que le lecteur l'affiche juste.
+        const audio = await fixer(brut, rec.durationSeconds * 1000);
         if (audio.size > AUDIO_MAX_BYTES)
           throw new Error('Enregistrement trop lourd (25 Mo au plus).');
 
@@ -387,7 +393,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         await rafraichirPending();
       }
     },
-    [api, store, uploader, now, onSubmitted, rafraichirPending],
+    [api, store, uploader, fixer, now, onSubmitted, rafraichirPending],
   );
 
   const arreterFlux = () => {
