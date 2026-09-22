@@ -4313,6 +4313,8 @@ export interface Database {
           duration_seconds: number;
           language?: string;
           consent_confirmed_at: string;
+          /** Les notes tapées pendant la capture (phase 9). */
+          notes?: string | null;
         };
         Update: {
           title?: string;

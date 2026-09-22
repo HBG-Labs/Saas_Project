@@ -45,6 +45,7 @@ import {
   getTranscriptionQuota,
   listRecordings,
   renameRecording,
+  updateRecordingNotes,
   addVocabularyTerms,
   listVocabulary,
   removeVocabularyTerm,
@@ -526,6 +527,17 @@ export function useRenameRecording() {
   return useMutation({
     mutationFn: ({ recordingId, title }: { recordingId: string; title: string }) =>
       renameRecording(recordingId, title),
+    onSuccess: async (recording) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
+    },
+  });
+}
+
+export function useUpdateRecordingNotes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ recordingId, notes }: { recordingId: string; notes: string }) =>
+      updateRecordingNotes(recordingId, notes),
     onSuccess: async (recording) => {
       await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
     },

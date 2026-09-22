@@ -1,0 +1,4 @@
+-- Retour arrière de 20261010090000_stt_notes_dans_la_page.sql — À LA MAIN, JAMAIS PAR db push.
+-- Aucune colonne ni signature nouvelle : rejouer le `create or replace function
+-- public.record_workspace_recording_result(...)` de 20261009090000_stt_segments_resume.sql
+-- suffit (les notes ne seront plus copiées dans la page ; la colonne reste).

@@ -111,6 +111,18 @@ juste en dessous, un paragraphe par segment. Si le modèle ne rend pas la
 forme attendue, repli sur le résumé libre (second appel, même réservation
 IA) et `summary_json` reste null. Legacy : ni segments ni JSON, comme avant.
 
+## Les notes (phase 9)
+
+`workspace_recordings.notes` (≤ 20 000 caractères) : ce que la personne tape
+pendant la capture. Côté appareil, gardées dans IndexedDB avec l'audio
+(`LocalRecording.notes`) et envoyées avec la ligne (`createRecordingRow`) ou,
+si elles ont bougé pendant l'envoi, juste avant la soumission
+(`updateRecordingNotes`). Écriture : l'auteur ou `workspace.manage` ;
+lecture : qui voit la page. **Le worker ne les lit pas** : le tirage
+(`claim_workspace_recordings`) ne porte pas la colonne, rien n'en part chez
+le fournisseur. À la transcription, la base les copie dans la page sous
+« Notes », avant le résumé (`20261010090000`) ; la colonne reste la source.
+
 ## Architecture
 
 ```

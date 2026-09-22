@@ -686,6 +686,8 @@ export async function createRecordingRow(input: {
   consentConfirmedAt: string;
   title: string;
   language?: string;
+  /** Les notes tapées pendant la capture ; jamais transmises au fournisseur. */
+  notes?: string;
 }): Promise<WorkspaceRecording> {
   return unwrap(
     supabase
@@ -702,6 +704,9 @@ export async function createRecordingRow(input: {
         consent_confirmed_at: input.consentConfirmedAt,
         title: input.title,
         ...(input.language !== undefined ? { language: input.language } : {}),
+        ...(input.notes !== undefined && input.notes.trim().length > 0
+          ? { notes: input.notes }
+          : {}),
       })
       .select('*')
       .single(),
@@ -729,6 +734,25 @@ export async function renameRecording(
     supabase
       .from('workspace_recordings')
       .update({ title })
+      .eq('id', recordingId)
+      .select('*')
+      .single(),
+  );
+}
+
+/**
+ * Les notes de la personne sur un enregistrement (≤ 20 000 caractères) —
+ * l'auteur ou `workspace.manage`. Vide = effacées. Le worker ne les lit pas.
+ */
+export async function updateRecordingNotes(
+  recordingId: string,
+  notes: string,
+): Promise<WorkspaceRecording> {
+  const propre = notes.trim();
+  return unwrap(
+    supabase
+      .from('workspace_recordings')
+      .update({ notes: propre.length > 0 ? propre : null })
       .eq('id', recordingId)
       .select('*')
       .single(),

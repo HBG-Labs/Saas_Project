@@ -475,3 +475,22 @@ que l'écran doit rendre (enregistrement → sauvegarde locale → envoyé ✓ �
 transcription en cours → transcrite ✓ → résumé en cours → terminé) et les
 vues finales (Résumé | Notes | Transcription) sont fournis par ce hook et
 les données du Workspace ; leur forme est à concevoir, mobile d'abord.
+
+Ce que le hook et les données offrent aujourd'hui (21/09/2026) :
+
+- `recorder.notes` / `recorder.setNotes(texte)` — les notes tapées pendant
+  la capture et l'envoi ; gardées sur l'appareil avec l'audio, envoyées avec
+  la ligne. Un `<Textarea>` provisoire les affiche ; à redessiner.
+- `recorder.pending[]` porte `notes` — un enregistrement interrompu revient
+  avec ce qui avait été tapé.
+- Sur une ligne serveur : `recording.notes` (à afficher, à éditer avec
+  `useUpdateRecordingNotes({ recordingId, notes })` — l'auteur ou
+  `workspace.manage`), `recording.transcript_raw` + `normalization_diff`
+  (le brut et ce qui a été corrigé — à montrer sur demande, jamais caché),
+  `recording.segments` (paragraphes `s1…`, sans minutes) et
+  `recording.summary_json` (points clés / décisions / actions, chaque élément
+  avec `citations` vers les segments — l'occasion d'un renvoi cliquable vers
+  le paragraphe). `summary` (Markdown) est dérivé de `summary_json`.
+- Les données ci-dessus n'existent qu'en chaîne v2 (`organizations.stt_engine`)
+  ; en legacy, `segments`/`summary_json`/`normalization_diff` sont null : le
+  rendu doit tenir dans les deux cas.

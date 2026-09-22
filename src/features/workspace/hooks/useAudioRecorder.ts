@@ -67,8 +67,11 @@ export interface RecorderServerApi {
     consentConfirmedAt: string;
     title: string;
     language?: string;
+    notes?: string;
   }): Promise<{ id: string }>;
   submit(recordingId: string, sizeBytes: number): Promise<unknown>;
+  /** Les notes tapées après la création de la ligne (pendant l'envoi). */
+  updateNotes?(recordingId: string, notes: string): Promise<unknown>;
 }
 
 /** Ce que le hook demande au navigateur — injecté, pour tester sans micro. */
@@ -160,10 +163,13 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingRecording[]>([]);
+  const [notes, setNotesState] = useState('');
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const activeRef = useRef<LocalRecording | null>(null);
+  /** L'enregistrement dont les notes s'éditent : le courant, jusqu'à son envoi confirmé. */
+  const notesKeyRef = useRef<string | null>(null);
   const chunkIndexRef = useRef(0);
   const startedAtRef = useRef(0);
   const pausedAccumRef = useRef(0);
@@ -206,10 +212,13 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       if (envoisEnCoursRef.current.has(key)) return;
       envoisEnCoursRef.current.add(key);
       try {
-        let rec = await store.getRecording(key);
-        if (!rec) return;
+        const initial = await store.getRecording(key);
+        if (!initial) return;
+        let rec: LocalRecording = initial;
+        // Relire avant d'écrire : les notes peuvent avoir bougé entre-temps.
         const noter = async (patch: Partial<LocalRecording>) => {
-          rec = { ...(rec as LocalRecording), ...patch, updatedAt: new Date(now()).toISOString() };
+          const actuel = (await store.getRecording(key)) ?? rec;
+          rec = { ...actuel, ...patch, updatedAt: new Date(now()).toISOString() };
           await store.putRecording(rec);
         };
         const audio = await store.readAudio(key, rec.mimeType);
@@ -232,12 +241,14 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
             sizeBytes: audio.size,
             consentConfirmedAt: rec.consentConfirmedAt,
             title: rec.title,
+            ...(rec.notes && rec.notes.trim().length > 0 ? { notes: rec.notes } : {}),
           });
           await noter({
             serverRecordingId: row.id,
             audioPath,
             status: 'uploading',
             lastError: undefined,
+            notesSynced: rec.notes ?? '',
           });
         }
 
@@ -259,9 +270,20 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
           await noter({ status: 'uploaded', uploadUrl: undefined });
         }
 
-        // Pas 3 — la soumission ; puis seulement, le local est vidé.
+        // Pas 3 — les notes tapées pendant l'envoi, puis la soumission ; puis
+        // seulement, le local est vidé.
         setStatus('submitting');
+        rec = (await store.getRecording(key)) ?? rec;
+        const notesActuelles = rec.notes ?? '';
+        if (api.updateNotes && notesActuelles !== (rec.notesSynced ?? '')) {
+          await api.updateNotes(rec.serverRecordingId as string, notesActuelles);
+          await noter({ notesSynced: notesActuelles });
+        }
         await api.submit(rec.serverRecordingId as string, audio.size);
+        if (notesKeyRef.current === key) {
+          notesKeyRef.current = null;
+          setNotesState('');
+        }
         await store.deleteRecording(key);
         setProgress(null);
         setStatus('done');
@@ -347,6 +369,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       };
       await store.putRecording(rec);
       activeRef.current = rec;
+      notesKeyRef.current = key;
+      setNotesState('');
       chunkIndexRef.current = 0;
       startedAtRef.current = startedAt;
       pausedAccumRef.current = 0;
@@ -384,9 +408,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         if (!courant || cancelledRef.current) return;
         void (async () => {
           setStatus('saving');
-          // Laisser la dernière tranche s'écrire, puis marquer « prêt ».
+          // Laisser la dernière tranche s'écrire, puis marquer « prêt » — sur
+          // l'état relu, pour ne pas écraser des notes tapées entre-temps.
           await store.putRecording({
-            ...courant,
+            ...((await store.getRecording(courant.key)) ?? courant),
             durationSeconds: Math.max(
               1,
               Math.round((now() - startedAtRef.current - pausedAccumRef.current) / 1000),
@@ -442,6 +467,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     if (r && r.state !== 'inactive') r.stop();
     arreterFlux();
     activeRef.current = null;
+    notesKeyRef.current = null;
+    setNotesState('');
     if (courant) await store.deleteRecording(courant.key);
     setStatus('idle');
     setElapsedSeconds(0);
@@ -474,6 +501,32 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       await rafraichirPending();
     },
     [store, rafraichirPending],
+  );
+
+  /**
+   * Les notes de l'enregistrement en cours (capture, puis envoi). Écrites
+   * localement à chaque frappe ; elles partent avec la ligne serveur, ou
+   * juste avant la soumission si elles ont bougé entre-temps.
+   */
+  const setNotes = useCallback(
+    (texte: string) => {
+      setNotesState(texte);
+      const key = notesKeyRef.current;
+      if (!key) return;
+      if (activeRef.current?.key === key)
+        activeRef.current = { ...activeRef.current, notes: texte };
+      void (async () => {
+        const rec = await store.getRecording(key);
+        // Annulé ou envoyé entre-temps : ne pas recréer ce qui a été effacé.
+        if (!rec || notesKeyRef.current !== key) return;
+        await store.putRecording({
+          ...rec,
+          notes: texte,
+          updatedAt: new Date(now()).toISOString(),
+        });
+      })();
+    },
+    [store, now],
   );
 
   // Au-delà d'une heure, on arrête : la base refuserait de toute façon.
@@ -510,6 +563,9 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     /** Le stockage local survit-il à une fermeture ? (IndexedDB oui, mémoire non.) */
     durable: store.durable,
     pending,
+    /** Les notes de l'enregistrement en cours ; vides hors capture/envoi. */
+    notes,
+    setNotes,
     start,
     pause,
     resume,

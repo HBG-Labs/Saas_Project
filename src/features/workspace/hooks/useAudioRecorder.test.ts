@@ -53,6 +53,7 @@ function fabriquer(
     upload?: ResumableUploader;
     createRow?: RecorderServerApi['createRow'];
     submit?: RecorderServerApi['submit'];
+    updateNotes?: RecorderServerApi['updateNotes'];
     store?: MemoryAudioStore;
     getUserMedia?: RecorderMedia['getUserMedia'];
   } = {},
@@ -74,6 +75,7 @@ function fabriquer(
   };
   const createRow = overrides.createRow ?? vi.fn(() => Promise.resolve({ id: 'srv-1' }));
   const submit = overrides.submit ?? vi.fn(() => Promise.resolve({}));
+  const updateNotes = overrides.updateNotes ?? vi.fn(() => Promise.resolve({}));
   const upload = overrides.upload ?? vi.fn(() => Promise.resolve());
   const onSubmitted = vi.fn();
   let horloge = 1_000_000;
@@ -86,13 +88,24 @@ function fabriquer(
       page: { id: 'page-1', organization_id: 'org-1' },
       store,
       uploader: upload,
-      api: { createRow, submit },
+      api: { createRow, submit, updateNotes },
       media,
       now,
       onSubmitted,
     }),
   );
-  return { ...rendu, store, recorders, pistes, createRow, submit, upload, onSubmitted, avancer };
+  return {
+    ...rendu,
+    store,
+    recorders,
+    pistes,
+    createRow,
+    submit,
+    updateNotes,
+    upload,
+    onSubmitted,
+    avancer,
+  };
 }
 
 const demarrer = async (h: ReturnType<typeof fabriquer>) => {
@@ -344,5 +357,100 @@ describe('useAudioRecorder — zéro perte', () => {
     });
     await waitFor(() => expect(h.result.current.status).toBe('done'));
     expect(h.createRow).toHaveBeenCalledWith(expect.objectContaining({ durationSeconds: 6 }));
+  });
+
+  it('les notes tapées pendant la capture sont gardées localement et partent avec la ligne', async () => {
+    const h = fabriquer();
+    const recorder = await demarrer(h);
+    act(() => {
+      h.result.current.setNotes('PTO au salon');
+      recorder.emit('A');
+    });
+    expect(h.result.current.notes).toBe('PTO au salon');
+    const cle = (await h.store.listRecordings())[0]!.key;
+    await waitFor(async () =>
+      expect((await h.store.getRecording(cle))?.notes).toBe('PTO au salon'),
+    );
+    act(() => {
+      recorder.emit('B'); // une tranche après la frappe n'écrase pas les notes
+    });
+    await waitFor(async () =>
+      expect((await h.store.getRecording(cle))?.notes).toBe('PTO au salon'),
+    );
+    act(() => {
+      h.result.current.stop();
+    });
+    await waitFor(() => expect(h.result.current.status).toBe('done'));
+    expect(h.createRow).toHaveBeenCalledWith(expect.objectContaining({ notes: 'PTO au salon' }));
+    expect(h.updateNotes).not.toHaveBeenCalled();
+    expect(h.result.current.notes).toBe('');
+  });
+
+  it("des notes tapées pendant l'envoi sont renvoyées avant la soumission", async () => {
+    let liberer: () => void = () => {};
+    const upload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          liberer = resolve;
+        }),
+    );
+    const h = fabriquer({ upload });
+    const recorder = await demarrer(h);
+    act(() => {
+      recorder.emit('A');
+      h.result.current.stop();
+    });
+    await waitFor(() => expect(h.result.current.status).toBe('uploading'));
+    act(() => {
+      h.result.current.setNotes('Ajouté pendant l’envoi');
+    });
+    await waitFor(async () =>
+      expect((await h.store.listRecordings())[0]?.notes).toBe('Ajouté pendant l’envoi'),
+    );
+    act(() => liberer());
+    await waitFor(() => expect(h.result.current.status).toBe('done'));
+    expect(h.updateNotes).toHaveBeenCalledWith('srv-1', 'Ajouté pendant l’envoi');
+    const ordre = (fn: unknown) =>
+      (fn as { mock: { invocationCallOrder: number[] } }).mock.invocationCallOrder[0] ?? -1;
+    expect(ordre(h.updateNotes)).toBeLessThan(ordre(h.submit));
+  });
+
+  it('une capture interrompue garde ses notes ; annuler les efface', async () => {
+    const store = new MemoryAudioStore();
+    await store.putRecording({
+      key: 'ancien',
+      organizationId: 'org-1',
+      pageId: 'page-1',
+      mimeType: 'audio/webm',
+      title: 'Avant la coupure',
+      startedAt: '2026-09-21T10:00:00Z',
+      durationSeconds: 42,
+      chunkCount: 1,
+      consentConfirmedAt: '2026-09-21T10:00:00Z',
+      status: 'recording',
+      notes: 'Karim repasse jeudi',
+      updatedAt: '2026-09-21T10:00:42Z',
+    });
+    await store.appendChunk('ancien', 0, new Blob(['A']));
+    const h = fabriquer({ store });
+    await waitFor(() => expect(h.result.current.pending).toHaveLength(1));
+    expect(h.result.current.pending[0]?.notes).toBe('Karim repasse jeudi');
+    await act(async () => {
+      await h.result.current.retry('ancien');
+    });
+    expect(h.createRow).toHaveBeenCalledWith(
+      expect.objectContaining({ notes: 'Karim repasse jeudi' }),
+    );
+
+    const recorder = await demarrer(h);
+    act(() => {
+      h.result.current.setNotes('brouillon');
+      recorder.emit('A');
+    });
+    await act(async () => {
+      await h.result.current.cancel();
+    });
+    expect(h.result.current.notes).toBe('');
+    expect(await store.listRecordings()).toEqual([]);
   });
 });

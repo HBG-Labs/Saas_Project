@@ -42,6 +42,14 @@ export interface LocalRecording {
   chunkCount: number;
   consentConfirmedAt: string;
   status: LocalRecordingStatus;
+  /**
+   * Les notes tapées pendant la capture (phase 9). Gardées ici jusqu'à la
+   * confirmation de l'envoi, comme l'audio : une fermeture ne les perd pas.
+   * Jamais transmises au fournisseur de transcription.
+   */
+  notes?: string | undefined;
+  /** Les notes telles que le serveur les a reçues ; si différentes, on renvoie. */
+  notesSynced?: string | undefined;
   /** Posés au fil de l'envoi ; restent pour la reprise. */
   serverRecordingId?: string | undefined;
   audioPath?: string | undefined;

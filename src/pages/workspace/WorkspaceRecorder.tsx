@@ -4,10 +4,12 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Textarea } from '@/components/ui/Textarea';
 import {
   RECORDING_STATUS_LABELS,
   createRecordingRow,
   submitRecording,
+  updateRecordingNotes,
   useAudioRecorder,
   useDeleteRecording,
   useRecordingAudioUrl,
@@ -25,10 +27,11 @@ import { qk } from '@/lib/query-keys';
   composant affiche et demande, il n'enregistre rien lui-même.
 */
 
-/** Les deux pas serveur de l'envoi, branchés sur l'API du Workspace. */
+/** Les pas serveur de l'envoi, branchés sur l'API du Workspace. */
 const serverApi: RecorderServerApi = {
   createRow: (input) => createRecordingRow(input),
   submit: (id, size) => submitRecording(id, size),
+  updateNotes: (id, notes) => updateRecordingNotes(id, notes),
 };
 
 function formatSeconds(total: number): string {
@@ -48,6 +51,11 @@ function RecordingRow({ recording }: { recording: WorkspaceRecording }) {
         {recording.status === 'failed' && recording.error ? ` — ${recording.error}` : ''}
         {recording.audio_deleted_at ? ' · audio effacé (30 jours)' : ''}
       </span>
+      {recording.notes ? (
+        <p className="text-muted-foreground w-full text-sm whitespace-pre-wrap">
+          {recording.notes}
+        </p>
+      ) : null}
       {audio.data ? (
         // La transcription, écrite dans la page, tient lieu de sous-titres :
         // l'audio n'est que la source, effacée après 30 jours.
@@ -172,6 +180,19 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
           )}
           {recorder.error ? <span className="text-error text-xs">{recorder.error}</span> : null}
         </div>
+
+        {enCours || enEnvoi ? (
+          // Les notes de la personne pendant la capture : gardées sur l'appareil
+          // avec l'audio, envoyées avec la ligne, jamais lues par le fournisseur.
+          <Textarea
+            label="Notes pendant l’enregistrement"
+            value={recorder.notes}
+            onChange={(e) => recorder.setNotes(e.target.value)}
+            maxLength={20000}
+            rows={3}
+            placeholder="Ce que vous voulez retenir — noms, chiffres, à faire…"
+          />
+        ) : null}
 
         {recorder.pending.length > 0 ? (
           <ul className="border-border bg-surface-sunken space-y-2 rounded-lg border p-3 text-sm">
