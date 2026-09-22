@@ -88,6 +88,29 @@ Contester une correction : le brut est là, la trace dit quoi a changé et où.
 Retirer le terme du dictionnaire suffit pour que la passe suivante ne le
 refasse plus.
 
+## Segments et résumé structuré (phase 8)
+
+En v2 seulement. Le texte normalisé est découpé en **paragraphes numérotés**
+(`_shared/transcript-segments.ts` : coupure sur les paragraphes existants,
+puis entre phrases, ≤ 450 caractères, jamais au milieu d'une phrase) :
+`segments = [{ id: 's1', start: null, end: null, speaker: null, text }]`.
+Pas d'horodatage : les moteurs retenus n'en rendent pas, et on n'estime pas
+des secondes au prorata des caractères — ce serait une information
+inventée. La forme accueille `start`/`end`/`speaker` le jour où un moteur
+les donne.
+
+Le résumé (`_shared/structured-summary.ts`) reçoit ces paragraphes et rend
+un JSON — `summary_json = { version: 1, points_cles, decisions, actions }`,
+chaque élément avec ses **citations** (identifiants de segments). Le code ne
+garde d'une citation que ce qui désigne un segment existant, borne le
+nombre d'éléments (12 par section) et leur longueur (300 caractères) ; un
+élément sans citation valable reste, visiblement « sans source ». Le
+Markdown de la page (`summary`) est **dérivé** de ce JSON : « - Soudure —
+Karim (jeudi) [§3] », où §3 est le 3ᵉ paragraphe de la transcription écrite
+juste en dessous, un paragraphe par segment. Si le modèle ne rend pas la
+forme attendue, repli sur le résumé libre (second appel, même réservation
+IA) et `summary_json` reste null. Legacy : ni segments ni JSON, comme avant.
+
 ## Architecture
 
 ```
@@ -99,8 +122,8 @@ navigateur : ligne workspace_recordings (uploading) → fichier dans workspace-a
       → reserve_transcription_minutes()         (atomique ; « quota » si épuisé)
       → OpenAI transcription
       → normalisation contrôlée (v2 : termes connus ; brut conservé, trace rejouable)
-      → résumé (reserve_ai_usage 'workspace')
-      → record_workspace_recording_result()     (brut, texte, trace ; écrit dans la page ; recul 2/4/8… min, abandon au 6e échec)
+      → segments numérotés (v2) → résumé structuré cité, repli résumé libre (reserve_ai_usage 'workspace')
+      → record_workspace_recording_result()     (brut, texte, trace, segments, résumé ; page paragraphe par segment ; recul 2/4/8… min, abandon au 6e échec)
       → claim_workspace_audio_purges() → Storage remove → mark_workspace_audio_deleted()
 ```
 

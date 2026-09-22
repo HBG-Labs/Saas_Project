@@ -93,7 +93,8 @@ function config(partial: Partial<TranscriptionWorkerConfig>): TranscriptionWorke
       }),
     buildPrompt: ({ engine }) => Promise.resolve(engine === 'v2' ? 'Contexte v2' : undefined),
     normalize: () => Promise.resolve(null),
-    summarize: () => Promise.resolve('## Décisions\n- Poser le boîtier jeudi'),
+    summarize: () =>
+      Promise.resolve({ markdown: '## Décisions\n- Poser le boîtier jeudi', structured: null }),
     ...partial,
   };
 }
@@ -122,8 +123,65 @@ Deno.test('chemin nominal : texte et résumé rendus à la base', async () => {
     p_engine: 'gpt-4o-transcribe',
     p_raw: 'Bonjour à tous. On pose le boîtier jeudi.',
     p_normalization: null,
+    p_segments: null,
+    p_summary_json: null,
   });
   assertEquals(fake.heartbeats[0]?.done, 1);
+});
+
+Deno.test(
+  'v2 : les paragraphes numérotés sont rendus à la base et au résumé ; le résumé structuré aussi',
+  async () => {
+    const fake = fakeSupabase([enregistrement({ id: 'seg', stt_engine: 'v2' })]);
+    const recus: Array<{ engine: string; ids: string[] }> = [];
+    const structure = {
+      version: 1 as const,
+      points_cles: [{ texte: 'Boîtier jeudi', citations: ['s1'] }],
+      decisions: [],
+      actions: [],
+    };
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        transcribe: () =>
+          Promise.resolve({
+            text: 'Premier paragraphe.\n\nSecond paragraphe.',
+            engine: 'gpt-transcribe',
+          }),
+        summarize: ({ engine, segments }) => {
+          recus.push({ engine, ids: segments.map((s) => s.id) });
+          return Promise.resolve({
+            markdown: '## Points clés\n- Boîtier jeudi [§1]',
+            structured: structure,
+          });
+        },
+      }),
+    )(request());
+    assertEquals(recus, [{ engine: 'v2', ids: ['s1', 's2'] }]);
+    assertEquals(fake.results[0]?.p_segments, [
+      { id: 's1', start: null, end: null, speaker: null, text: 'Premier paragraphe.' },
+      { id: 's2', start: null, end: null, speaker: null, text: 'Second paragraphe.' },
+    ]);
+    assertEquals(fake.results[0]?.p_summary_json, structure);
+    assertEquals(fake.results[0]?.p_summary, '## Points clés\n- Boîtier jeudi [§1]');
+  },
+);
+
+Deno.test('legacy : ni segments ni résumé structuré — comme avant', async () => {
+  const fake = fakeSupabase([enregistrement({ id: 'leg', stt_engine: 'legacy' })]);
+  const recus: string[][] = [];
+  await createTranscriptionWorkerHandler(
+    config({
+      fetch: fake.fetchImpl,
+      summarize: ({ segments }) => {
+        recus.push(segments.map((s) => s.id));
+        return Promise.resolve({ markdown: '- Rien', structured: null });
+      },
+    }),
+  )(request());
+  assertEquals(recus, [[]]);
+  assertEquals(fake.results[0]?.p_segments, null);
+  assertEquals(fake.results[0]?.p_summary_json, null);
 });
 
 Deno.test(

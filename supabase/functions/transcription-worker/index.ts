@@ -7,6 +7,12 @@ import {
   reserveAiUsage,
 } from '../_shared/ai.ts';
 import { chargerTermesOrganisation, contexteOrganisation } from '../_shared/stt-context.ts';
+import {
+  lireResume,
+  promptResumeStructure,
+  requeteResume,
+  resumeEnMarkdown,
+} from '../_shared/structured-summary.ts';
 import { glossaireDeBase } from '../_shared/stt-glossary.ts';
 import { normaliserTranscription } from '../_shared/transcript-normalize.ts';
 import { summaryPrompt, summaryQuery, transcribeAudio } from '../_shared/transcription.ts';
@@ -82,26 +88,52 @@ Deno.serve(
     // Le résumé compte une requête IA de l'organisation, réservée comme une
     // conversation Workspace ; sans quota ou sans clé, la transcription part
     // sans résumé.
-    summarize: async ({ admin, organizationId, userId, transcript }) => {
+    //
+    // En v2, le résumé est structuré (points clés, décisions, actions, chacun
+    // citant ses paragraphes) et le Markdown de la page en est dérivé. Si le
+    // modèle ne rend pas la forme attendue, on retombe sur le résumé libre —
+    // un second appel, compté dans la même réservation.
+    summarize: async ({ admin, organizationId, userId, engine, transcript, segments }) => {
       if (!openaiApiKey || !userId || transcript.trim().length === 0) return null;
       const reservation = await reserveAiUsage(admin, organizationId, userId, 'workspace');
       if (!reservation) return null;
+      let inputTokens = 0;
+      let outputTokens = 0;
       try {
-        const completion = await createChatCompletion({
-          apiKey: openaiApiKey,
-          systemPrompt: summaryPrompt(),
-          history: [],
-          query: summaryQuery(transcript),
-        });
+        let markdown: string | null = null;
+        let structured = null;
+        if (engine === 'v2' && segments.length > 0) {
+          const structure = await createChatCompletion({
+            apiKey: openaiApiKey,
+            systemPrompt: promptResumeStructure(),
+            history: [],
+            query: requeteResume(segments),
+          });
+          inputTokens += structure.inputTokens;
+          outputTokens += structure.outputTokens;
+          structured = lireResume(structure.content, segments);
+          if (structured) markdown = resumeEnMarkdown(structured);
+        }
+        if (markdown === null) {
+          const completion = await createChatCompletion({
+            apiKey: openaiApiKey,
+            systemPrompt: summaryPrompt(),
+            history: [],
+            query: summaryQuery(transcript),
+          });
+          inputTokens += completion.inputTokens;
+          outputTokens += completion.outputTokens;
+          markdown = completion.content;
+        }
         await finalizeAiUsage({
           admin,
           reservationId: reservation.id,
           organizationId,
           userId,
-          inputTokens: completion.inputTokens,
-          outputTokens: completion.outputTokens,
+          inputTokens,
+          outputTokens,
         });
-        return completion.content;
+        return { markdown, structured };
       } catch (failure) {
         console.error('transcription-worker: résumé impossible', failure);
         await releaseAiUsage(admin, reservation.id, organizationId, userId);

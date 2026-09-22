@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
+import type { ResumeStructure } from '../_shared/structured-summary.ts';
 import type { Normalisation } from '../_shared/transcript-normalize.ts';
+import { type Segment, decouperEnSegments } from '../_shared/transcript-segments.ts';
 import { TranscriptionRejected } from '../_shared/transcription.ts';
 import { workerSecretMatches } from '../_shared/worker-secret.ts';
 
@@ -15,9 +17,10 @@ import { workerSecretMatches } from '../_shared/worker-secret.ts';
  * minutes (`reserve_transcription_minutes`, atomique), écrit dans la page et
  * décide du recul (`record_workspace_recording_result`). Le worker : télécharge
  * l'audio, appelle le fournisseur (texte), normalise ce texte sous contrainte
- * (phase 7, v2 seulement), le résume (dans le quota IA), rend compte — brut,
- * texte et trace des remplacements —, et supprime les fichiers désignés à
- * la purge.
+ * (phase 7, v2 seulement), le découpe en paragraphes numérotés (phase 8, v2),
+ * le résume (dans le quota IA ; structuré et cité en v2), rend compte — brut,
+ * texte, trace, segments, résumé —, et supprime les fichiers désignés à la
+ * purge.
  *
  * Les appels fournisseur et le stockage sont injectés : ce fichier ne lit
  * jamais `Deno.env` et se teste sans réseau.
@@ -42,6 +45,12 @@ export interface ClaimedRecording {
   created_at: string;
   /** Le moteur choisi par l'organisation (`organizations.stt_engine`) : legacy ou v2. */
   stt_engine: 'legacy' | 'v2';
+}
+
+/** Ce que rend le résumé : le Markdown de la page et, en v2, sa forme structurée. */
+export interface SummaryResult {
+  markdown: string;
+  structured: ResumeStructure | null;
 }
 
 export interface TranscriptionResult {
@@ -101,8 +110,11 @@ export interface TranscriptionWorkerConfig {
     admin: SupabaseClient;
     organizationId: string;
     userId: string | null;
+    engine: 'legacy' | 'v2';
     transcript: string;
-  }) => Promise<string | null>;
+    /** Les paragraphes numérotés (v2) ; vide en legacy. */
+    segments: readonly Segment[];
+  }) => Promise<SummaryResult | null>;
   fetch?: typeof fetch;
   now?: () => Date;
 }
@@ -150,6 +162,8 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
       let transcriptRaw: string | null = null;
       let normalization: Normalisation['remplacements'] | null = null;
       let summary: string | null = null;
+      let summaryJson: ResumeStructure | null = null;
+      let segments: Segment[] | null = null;
       let errorMessage: string | null = null;
       let engine: string | null = null;
 
@@ -191,12 +205,19 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
             .catch(() => null);
           transcript = normalisation ? normalisation.texte : transcriptRaw;
           normalization = normalisation ? normalisation.remplacements : null;
-          summary = await config.summarize({
+          // Les paragraphes numérotés que le résumé cite — v2 seulement, le
+          // legacy reste tel qu'il était.
+          segments = moteur === 'v2' ? decouperEnSegments(transcript) : null;
+          const resume = await config.summarize({
             admin,
             organizationId: recording.organization_id,
             userId: recording.created_by,
+            engine: moteur,
             transcript,
+            segments: segments ?? [],
           });
+          summary = resume?.markdown ?? null;
+          summaryJson = resume?.structured ?? null;
           outcome = 'done';
         }
       } catch (failure) {
@@ -215,6 +236,8 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
         p_engine: engine,
         p_raw: transcriptRaw,
         p_normalization: normalization,
+        p_segments: segments,
+        p_summary_json: summaryJson,
       });
       if (recordError) {
         console.error('transcription-worker: résultat non enregistré', recordError);

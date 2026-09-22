@@ -117,12 +117,33 @@ export interface NormalizationChange {
 export type VocabularyType =
   'client' | 'site' | 'materiel' | 'technique' | 'personne' | 'lieu' | 'autre';
 export type VocabularySource = 'auto' | 'manuel';
-/** Un paragraphe horodaté d'une transcription (secondes). */
+/**
+ * Un paragraphe d'une transcription — 20261009090000_stt_segments_resume.sql.
+ * Extrait littéral de `transcript`, numéroté (`s1`, `s2`…) ; `start`/`end`
+ * (secondes) et `speaker` restent null tant que le moteur ne les donne pas.
+ */
 export interface RecordingSegment {
+  id: string;
   start: number | null;
   end: number | null;
   speaker: string | null;
   text: string;
+}
+/** Un élément du résumé structuré ; `citations` = identifiants de segments qui le fondent (vide = sans source). */
+export interface RecordingSummaryItem {
+  texte: string;
+  citations: string[];
+}
+export interface RecordingSummaryAction extends RecordingSummaryItem {
+  qui: string | null;
+  quand: string | null;
+}
+/** Le résumé structuré d'un enregistrement ; `summary` (Markdown) en est dérivé. */
+export interface RecordingSummary {
+  version: 1;
+  points_cles: RecordingSummaryItem[];
+  decisions: RecordingSummaryItem[];
+  actions: RecordingSummaryAction[];
 }
 export type WorkspaceTaskPriority = 'low' | 'normal' | 'high';
 /** Document TipTap : `{ type: 'doc', content: [...] }`. Opaque pour la base. */
@@ -4274,10 +4295,10 @@ export interface Database {
            * passe ; `[]` = passe sans changement.
            */
           normalization_diff: NormalizationChange[] | null;
-          /** Paragraphes horodatés (phase 8). */
+          /** Paragraphes numérotés que le résumé cite (v2). */
           segments: RecordingSegment[] | null;
-          /** Résumé structuré avec renvois aux segments (phase 8). */
-          summary_json: Record<string, unknown> | null;
+          /** Résumé structuré avec citations (v2) ; `summary` en est dérivé. */
+          summary_json: RecordingSummary | null;
           /** Notes de la personne pendant l'enregistrement ; jamais transmises au fournisseur. */
           notes: string | null;
           created_at: string;

@@ -180,8 +180,10 @@ do $$ begin raise notice '=== PARTIE 6 — une seule surcharge ==='; end $$;
 select pg_temp.ok((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                    where n.nspname = 'public' and p.proname = 'record_workspace_recording_result') = 1,
   'l''ancienne signature a disparu');
+-- Par oid : la signature évolue d'une phase à l'autre, pas la règle.
 select pg_temp.ok(not has_function_privilege('authenticated',
-  'public.record_workspace_recording_result(uuid, text, text, text, text, text, text, jsonb)', 'execute'),
+  (select p.oid from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'record_workspace_recording_result'), 'execute'),
   'un client n''execute pas le resultat');
 
 select 'TOUS LES TESTS PASSENT' as resultat;
