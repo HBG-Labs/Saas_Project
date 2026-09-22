@@ -2,13 +2,12 @@ import {
   ChevronLeft,
   ChevronRight,
   FileCheck2,
-  ImagePlus,
   Plus,
   RefreshCw,
   Settings2,
   Trash2,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,6 +23,7 @@ import { useCustomer } from '@/features/customers';
 import {
   DocumentNumberingBanner,
   DocumentNumberingModal,
+  DocumentLogoEditor,
   DocumentOptionsPanel,
   normalizeDocumentOptions,
   serializeDocumentOptions,
@@ -112,14 +112,26 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const organizationQuery = useOrganization(invoice.organization_id);
   const organization = organizationQuery.data;
   const uploadLogo = useUploadOrganizationLogo(invoice.organization_id);
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const numberingKind = invoice.document_type === 'credit_note' ? 'credit_note' : 'invoice';
   const numbering = useDocumentNumbering(invoice.organization_id, numberingKind);
   const [numberingOpen, setNumberingOpen] = useState(false);
   const [documentOptions, setDocumentOptions] = useState<DocumentOptions>(() =>
     normalizeDocumentOptions(invoice.document_options),
   );
+  const updateLogoSize = useCallback(
+    (size: { width: number; height: number }) =>
+      setDocumentOptions((current) => ({
+        ...current,
+        logoWidth: size.width,
+        logoHeight: size.height,
+      })),
+    [],
+  );
   const [discountRate, setDiscountRate] = useState(invoice.discount_rate ?? 0);
+  const presentationIsDirty =
+    JSON.stringify(documentOptions) !==
+      JSON.stringify(normalizeDocumentOptions(invoice.document_options)) ||
+    discountRate !== (invoice.discount_rate ?? 0);
   const [currentStep, setCurrentStep] = useState(0);
   const [desktopClientDetailsOpen, setDesktopClientDetailsOpen] = useState(false);
   const needsOperationSuggestion =
@@ -344,62 +356,57 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
           </div>
         ) : null}
         <div className="lg:grid lg:grid-cols-[minmax(0,56rem)_18rem] lg:items-start lg:justify-center lg:gap-5">
-          <div className="financial-paper lg:border-border relative space-y-6 lg:flex lg:min-h-[72rem] lg:flex-col lg:overflow-hidden lg:rounded-sm lg:border lg:px-12 lg:py-11 lg:shadow-[0_18px_55px_rgba(15,23,42,0.12)] xl:px-14">
+          <div className="financial-paper financial-paper-a4 lg:border-border relative space-y-6 lg:flex lg:flex-col lg:overflow-hidden lg:rounded-sm lg:border lg:px-12 lg:py-11 lg:shadow-[0_18px_55px_rgba(15,23,42,0.12)] xl:px-14">
             <div
-              className="bg-primary absolute inset-x-0 top-0 hidden h-2 lg:block"
+              className="financial-paper-accent-bar absolute inset-x-0 top-0 hidden h-1.5 lg:block"
               aria-hidden="true"
             />
             <div className="hidden items-start justify-between gap-8 lg:order-0 lg:flex">
-              <div className="flex min-w-0 items-start gap-4">
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  className="border-primary/35 bg-primary/5 text-primary hover:bg-primary/10 flex h-20 w-44 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed text-xs font-semibold transition"
-                  aria-label="Importer le logo de l’entreprise"
-                >
-                  {organization?.logo_url ? (
-                    <img
-                      src={organization.logo_url}
-                      alt="Logo de l’entreprise"
-                      className="h-full w-full object-contain p-2"
-                    />
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <ImagePlus className="size-5" />
-                      Importer votre logo
-                    </span>
-                  )}
-                </button>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) uploadLogo.mutate(file);
-                    event.target.value = '';
-                  }}
+              <div className="min-w-0 space-y-3">
+                <DocumentLogoEditor
+                  src={organization?.logo_url}
+                  size={{ width: documentOptions.logoWidth, height: documentOptions.logoHeight }}
+                  onSizeChange={updateLogoSize}
+                  onUpload={(file) => uploadLogo.mutateAsync(file)}
                 />
-                <div className="pt-1">
-                  <p className="text-foreground text-lg font-black tracking-tight">
+                <div className="financial-paper-company min-w-64 border border-dashed px-3 py-2.5">
+                  <p className="financial-paper-strong text-sm font-black tracking-tight">
                     {organization?.name ?? 'REZO360 Pro'}
                   </p>
-                  <p className="text-muted-foreground text-3xs mt-1 leading-relaxed">
-                    Facturation professionnelle · Document en préparation
+                  {organization?.legal_name && organization.legal_name !== organization.name ? (
+                    <p className="financial-paper-text text-xs">{organization.legal_name}</p>
+                  ) : null}
+                  <p className="financial-paper-muted text-3xs mt-1 leading-relaxed">
+                    {[organization?.address_line1, organization?.postal_code, organization?.city]
+                      .filter(Boolean)
+                      .join(' ') || 'Coordonnées de votre entreprise'}
                   </p>
+                  {organization?.registration_number || organization?.vat_number ? (
+                    <p className="financial-paper-muted text-3xs mt-1">
+                      {organization?.registration_number
+                        ? `SIRET : ${organization.registration_number}`
+                        : ''}
+                      {organization?.registration_number && organization?.vat_number ? ' · ' : ''}
+                      {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="shrink-0 text-right">
-                <span className="bg-primary/10 text-3xs text-primary inline-flex rounded-full px-3 py-1 font-black tracking-[0.18em] uppercase">
+                <span className="financial-paper-label text-3xs inline-flex rounded-full px-3 py-1 font-black tracking-[0.18em] uppercase">
                   Facture
                 </span>
-                <p className="text-foreground mt-3 text-xl font-black tracking-tight">
+                <p className="financial-paper-strong mt-3 text-xl font-black tracking-tight">
                   {invoice.reference || 'Brouillon'}
                 </p>
-                <p className="text-muted-foreground mt-1 text-xs">
+                <p className="financial-paper-muted mt-1 text-xs">
                   Total TTC · {formatMoney(totalIncludingTax)} €
                 </p>
+                {documentOptions.mode === 'electronic' ? (
+                  <p className="financial-paper-electronic text-3xs mt-3 inline-flex rounded-full px-3 py-1 font-bold">
+                    Factur‑X
+                  </p>
+                ) : null}
               </div>
             </div>
             {documentOptions.showTitle ? (
@@ -410,8 +417,8 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             <section
               className={
                 currentStep === 0
-                  ? 'lg:border-primary/20 lg:bg-primary/5 space-y-4 lg:order-1 lg:rounded-2xl lg:border lg:p-5'
-                  : 'lg:border-primary/20 lg:bg-primary/5 hidden lg:order-1 lg:block lg:space-y-4 lg:rounded-2xl lg:border lg:p-5'
+                  ? 'financial-paper-client-panel space-y-4 lg:order-1 lg:rounded-2xl lg:border lg:p-5'
+                  : 'financial-paper-client-panel hidden lg:order-1 lg:block lg:space-y-4 lg:rounded-2xl lg:border lg:p-5'
               }
               aria-label="Destinataire de la facture"
             >
@@ -670,7 +677,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                   />
                 )}
               />
-              <div className="bg-primary text-primary-foreground text-3xs hidden grid-cols-[minmax(0,1fr)_5rem_5rem_7rem_5rem] gap-2 rounded-t-xl px-4 py-2.5 font-black tracking-wide uppercase lg:grid">
+              <div className="financial-paper-table-accent text-3xs hidden grid-cols-[minmax(0,1fr)_5rem_5rem_7rem_5rem] gap-2 rounded-t-xl px-4 py-2.5 font-black tracking-wide uppercase lg:grid">
                 <span>Désignation</span>
                 <span className="text-center">Qté</span>
                 <span className="text-center">Unité</span>
@@ -808,9 +815,9 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                     {formatMoney(totals.vat)} €
                   </dd>
                 </div>
-                <div className="bg-success/10 text-foreground flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
+                <div className="financial-paper-total-panel flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
                   <dt>Total TTC</dt>
-                  <dd className="text-success tabular-nums">{formatMoney(totalIncludingTax)} €</dd>
+                  <dd className="tabular-nums">{formatMoney(totalIncludingTax)} €</dd>
                 </div>
               </dl>
               {documentOptions.showFreeField ? (
@@ -1007,7 +1014,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+            disabled={isSubmitting || (!isDirty && !hasSuggestions && !presentationIsDirty)}
           >
             {isSubmitting ? 'Enregistrement…' : 'Enregistrer le brouillon'}
           </Button>
@@ -1020,7 +1027,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || (!isDirty && !hasSuggestions)}
+          disabled={isSubmitting || (!isDirty && !hasSuggestions && !presentationIsDirty)}
         >
           {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
         </Button>

@@ -39,9 +39,16 @@ test.describe('Devis', () => {
     await expect(document.getByText('Destinataire', { exact: true })).toBeVisible();
     await expect(document.getByText('Dates du document')).toBeVisible();
     await expect(document.getByText('Total TTC', { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole('complementary', { name: 'Options et synthèse du devis' }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Importer le logo de l’entreprise')).toBeVisible();
+    await expect(page.getByLabel('Date d’émission')).toHaveAttribute('type', 'date');
+    await expect(page.getByLabel('Période de validité')).toHaveText(/60 jours/);
+
+    const options = page.getByRole('complementary', { name: 'Options et synthèse du devis' });
+    await expect(options).toBeHidden();
+    await page.getByRole('button', { name: 'Ouvrir les options du devis' }).click();
+    await expect(options).toBeVisible();
+    await expect(options.getByText('Langue')).toHaveCount(0);
+    await expect(options.getByText('Format électronique')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Enregistrer le devis' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Création du devis' })).toBeHidden();
   });

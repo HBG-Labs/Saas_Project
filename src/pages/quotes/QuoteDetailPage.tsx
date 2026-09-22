@@ -21,6 +21,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Table } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
+import { useCustomer } from '@/features/customers';
+import { DEFAULT_DOCUMENT_OPTIONS, normalizeDocumentOptions } from '@/features/documents';
 import {
   LinkCustomerControl,
   SendToClientDialog,
@@ -62,6 +64,7 @@ export default function QuoteDetailPage() {
 
   const quoteQuery = useQuote(quoteId);
   const quote = quoteQuery.data ?? null;
+  const customerQuery = useCustomer(quote?.customer_id ?? undefined);
 
   const updateQuote = useUpdateQuote(quoteId ?? '');
   const deleteQuote = useDeleteQuote();
@@ -126,6 +129,22 @@ export default function QuoteDetailPage() {
   const totalHT = quote.totals ? toEuros(quote.totals.subtotal_cents) : 0;
   const totalVAT = quote.totals ? toEuros(quote.totals.vat_cents) : 0;
   const totalTTC = quote.totals ? toEuros(quote.totals.total_cents) : 0;
+  const documentOptions =
+    quote.document_options === null
+      ? {
+          ...DEFAULT_DOCUMENT_OPTIONS,
+          showAcceptanceTerms: true,
+          showSignature: true,
+        }
+      : normalizeDocumentOptions(quote.document_options);
+  const customer = customerQuery.data ?? null;
+  const customerAddress = customer
+    ? [
+        [customer.address_line1, customer.address_line2].filter(Boolean).join(' '),
+        [customer.postal_code, customer.city].filter(Boolean).join(' '),
+        customer.country,
+      ].filter(Boolean)
+    : [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -365,25 +384,40 @@ export default function QuoteDetailPage() {
       */}
       <div
         id="quote-printable-area"
-        className="financial-paper space-y-6 rounded-xl border p-4 font-sans sm:p-8"
+        className="financial-paper financial-paper-a4-preview space-y-6 rounded-sm border p-4 font-sans sm:p-10"
       >
-        <div className="financial-paper-border flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="financial-paper-brand text-xl font-bold tracking-tight">
-              {organization?.name ?? 'REZO360 Pro'}
-            </h2>
-            {organization?.legal_name && organization.legal_name !== organization.name && (
-              <p className="financial-paper-text text-xs font-semibold">
-                {organization.legal_name}
+        <div className="financial-paper-accent-bar -mx-4 -mt-4 h-1.5 sm:-mx-10 sm:-mt-10" />
+        <div className="financial-paper-border flex flex-col justify-between gap-5 border-b pb-5 sm:flex-row">
+          <div className="space-y-3">
+            {organization?.logo_url ? (
+              <div
+                className="financial-paper-company flex items-center justify-center overflow-hidden border border-dashed"
+                style={{ width: documentOptions.logoWidth, height: documentOptions.logoHeight }}
+              >
+                <img
+                  src={organization.logo_url}
+                  alt="Logo de l’entreprise"
+                  className="size-full object-contain p-2"
+                />
+              </div>
+            ) : null}
+            <div className="financial-paper-company border border-dashed px-3 py-2">
+              <h2 className="financial-paper-brand text-base font-bold tracking-tight">
+                {organization?.name ?? 'REZO360 Pro'}
+              </h2>
+              {organization?.legal_name && organization.legal_name !== organization.name && (
+                <p className="financial-paper-text text-xs font-semibold">
+                  {organization.legal_name}
+                </p>
+              )}
+              <p className="financial-paper-muted text-2xs mt-1">
+                {organization?.registration_number
+                  ? `SIRET : ${organization.registration_number}`
+                  : ''}
+                {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
+                {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
               </p>
-            )}
-            <p className="financial-paper-muted text-2xs mt-1">
-              {organization?.registration_number
-                ? `SIRET : ${organization.registration_number}`
-                : ''}
-              {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
-              {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
-            </p>
+            </div>
           </div>
 
           <div className="text-left sm:text-right">
@@ -391,15 +425,24 @@ export default function QuoteDetailPage() {
               DEVIS N° {quote.reference}
             </span>
             <p className="financial-paper-muted text-2xs mt-1">
-              Émis le : {formatDate(quote.created_at)}
+              Émis le : {formatDate(quote.issue_date)}
             </p>
             {quote.valid_until && (
               <p className="financial-paper-muted text-2xs">
                 Valide jusqu’au : {formatDate(quote.valid_until)}
               </p>
             )}
+            {documentOptions.mode === 'electronic' ? (
+              <p className="financial-paper-electronic text-3xs mt-2 inline-flex rounded-full px-2.5 py-1 font-bold">
+                Prêt pour conversion Factur‑X
+              </p>
+            ) : null}
           </div>
         </div>
+
+        {documentOptions.showTitle && quote.title ? (
+          <h3 className="financial-paper-strong text-lg font-black">{quote.title}</h3>
+        ) : null}
 
         <div className="financial-paper-panel grid grid-cols-1 gap-4 rounded-lg border p-4 text-xs sm:grid-cols-2">
           <div>
@@ -409,6 +452,23 @@ export default function QuoteDetailPage() {
             <p className="financial-paper-strong mt-0.5 text-sm font-bold">
               {quote.customer_name || 'Client non spécifié'}
             </p>
+            {documentOptions.showDeliveryAddress ? (
+              <p className="financial-paper-muted text-3xs mt-1 leading-relaxed">
+                {customerAddress.length > 0
+                  ? customerAddress.join(' · ')
+                  : 'Adresse non renseignée'}
+              </p>
+            ) : null}
+            {documentOptions.showRegistrationNumber ? (
+              <p className="financial-paper-muted text-3xs mt-1">
+                SIREN / SIRET : {customer?.registration_number || 'Non renseigné'}
+              </p>
+            ) : null}
+            {documentOptions.showVatNumber ? (
+              <p className="financial-paper-muted text-3xs mt-1">
+                TVA : {customer?.vat_number || 'Non renseignée'}
+              </p>
+            ) : null}
           </div>
           <div>
             <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
@@ -450,16 +510,32 @@ export default function QuoteDetailPage() {
           </tbody>
         </Table>
 
+        {documentOptions.showFreeField && quote.notes ? (
+          <div className="financial-paper-company financial-paper-text border border-dashed p-3 text-xs leading-relaxed whitespace-pre-wrap">
+            {quote.notes}
+          </div>
+        ) : null}
+
         <div className="financial-paper-border-strong flex flex-col items-end justify-between gap-4 border-t pt-4 sm:flex-row">
-          <div className="financial-paper-muted text-3xs space-y-1">
-            <p>
-              <strong>Conditions de règlement :</strong>{' '}
-              {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
-            </p>
-            <p>
-              <strong>Mode de paiement :</strong>{' '}
-              {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
-            </p>
+          <div className="financial-paper-muted text-3xs space-y-2">
+            {documentOptions.showAcceptanceTerms ? (
+              <>
+                <p>
+                  <strong>Conditions de règlement :</strong>{' '}
+                  {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                </p>
+                <p>
+                  <strong>Mode de paiement :</strong>{' '}
+                  {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                </p>
+              </>
+            ) : null}
+            {documentOptions.showBankDetails ? (
+              <p>
+                <strong>Coordonnées bancaires :</strong> IBAN {organization?.iban || 'à compléter'}
+                {organization?.bic ? ` · BIC ${organization.bic}` : ''}
+              </p>
+            ) : null}
           </div>
 
           <div className="financial-paper-border w-full space-y-1.5 border-t pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
@@ -477,6 +553,22 @@ export default function QuoteDetailPage() {
             </div>
           </div>
         </div>
+
+        {documentOptions.showSignature ? (
+          <div className="financial-paper-panel financial-paper-border-strong rounded-lg border p-4">
+            <div className="financial-paper-text text-2xs flex flex-col items-start justify-between gap-3 sm:flex-row">
+              <div>
+                <p className="financial-paper-strong font-bold">Bon pour accord et commande :</p>
+                <p className="financial-paper-muted text-3xs">
+                  Mention manuscrite, date et signature du client.
+                </p>
+              </div>
+              <div className="financial-paper-signature text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed italic sm:w-40">
+                Emplacement signature
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/*

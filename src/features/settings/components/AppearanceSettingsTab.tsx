@@ -51,7 +51,7 @@ export function AppearanceSettingsTab({ onSaved }: { onSaved?: () => void }) {
                 avatarId={avatarId}
                 name={displayName}
                 size="lg"
-                className="border-primary/40 shrink-0 border-2 shadow-xs"
+                className="border-primary/40 bg-primary-subtle shrink-0 border-2 shadow-xs md:[&_img]:size-[82%] md:[&_img]:rounded-full"
               />
               <div>
                 <h4 className="text-foreground text-xs font-bold">Avatar sélectionné</h4>

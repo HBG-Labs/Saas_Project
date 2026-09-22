@@ -2378,6 +2378,7 @@ export interface Database {
           notes: string | null;
           document_options: Json;
           discount_rate: number;
+          issue_date: string;
           valid_until: string | null;
           created_by: string | null;
           /** Réponse donnée depuis le portail client ; NULL si décidée par l'entreprise. */
@@ -2404,6 +2405,7 @@ export interface Database {
           notes?: string | null;
           document_options?: Json;
           discount_rate?: number;
+          issue_date?: string;
           valid_until?: string | null;
           created_by?: string | null;
         };
@@ -2418,6 +2420,7 @@ export interface Database {
           notes?: string | null;
           document_options?: Json;
           discount_rate?: number;
+          issue_date?: string;
           valid_until?: string | null;
           reminders_enabled?: boolean;
         };

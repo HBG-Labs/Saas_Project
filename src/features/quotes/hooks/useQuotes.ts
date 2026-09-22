@@ -127,6 +127,7 @@ export function useCreateQuote(organizationId: string) {
       discountRate?: number;
       documentOptions?: Json;
       notes?: string;
+      issueDate?: string;
       validUntil?: string;
       items: readonly QuoteLineInput[];
     }) => createQuote({ ...input, organizationId }),

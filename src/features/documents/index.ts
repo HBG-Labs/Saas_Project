@@ -60,6 +60,7 @@ export { FolderDialog, type DemandeDossier } from './components/FolderDialog';
 export { FolderBreadcrumb, FolderGrid } from './components/FolderList';
 export {
   DEFAULT_DOCUMENT_OPTIONS,
+  DOCUMENT_LOGO_SIZE_LIMITS,
   normalizeDocumentOptions,
   serializeDocumentOptions,
   type DocumentMode,
@@ -69,4 +70,5 @@ export { previewDocumentNumber } from './numbering';
 export { DocumentNumberingBanner } from './components/DocumentNumberingBanner';
 export { DocumentNumberingModal } from './components/DocumentNumberingModal';
 export { DocumentOptionsPanel } from './components/DocumentOptionsPanel';
+export { DocumentLogoEditor, type DocumentLogoSize } from './components/DocumentLogoEditor';
 export { useDocumentNumbering } from './hooks/useDocumentNumbering';

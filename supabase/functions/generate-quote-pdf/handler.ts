@@ -153,6 +153,13 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
       if (!organizationResult.data)
         return json({ error: 'Entreprise introuvable ou inaccessible.' }, 404);
 
+      const customerResult = quote.customer_id
+        ? await caller.from('customers').select('*').eq('id', quote.customer_id).maybeSingle()
+        : { data: null, error: null };
+      if (customerResult.error) {
+        return json({ error: 'Les coordonnées du client ne peuvent pas être vérifiées.' }, 503);
+      }
+
       const org = organizationResult.data;
       const organization: QuotePdfOrganization = {
         name: org.name,
@@ -211,7 +218,24 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
         site_name: quote.site_name,
         notes: quote.notes,
         valid_until: quote.valid_until,
-        created_at: quote.created_at,
+        issue_date: quote.issue_date ?? String(quote.created_at).slice(0, 10),
+        customer_address: customerResult.data
+          ? [
+              [customerResult.data.address_line1, customerResult.data.address_line2]
+                .filter(Boolean)
+                .join(' '),
+              [customerResult.data.postal_code, customerResult.data.city].filter(Boolean).join(' '),
+              customerResult.data.country,
+            ].filter((line): line is string => Boolean(line))
+          : [],
+        customer_registration_number: customerResult.data?.registration_number ?? null,
+        customer_vat_number: customerResult.data?.vat_number ?? null,
+        document_options:
+          quote.document_options &&
+          typeof quote.document_options === 'object' &&
+          !Array.isArray(quote.document_options)
+            ? (quote.document_options as QuotePdfInput['document_options'])
+            : null,
         vat_rate: vatRate,
         gross_subtotal_cents: grossSubtotalCents,
         discount_cents: discountCents,
@@ -243,13 +267,11 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
 
       const pdfHash = await digest(pdf);
       const objectPath = `${quote.organization_id}/${quoteId}/devis.pdf`;
-      const { error: uploadError } = await admin.storage
-        .from(BUCKET)
-        .upload(objectPath, pdf, {
-          contentType: 'application/pdf',
-          upsert: false,
-          cacheControl: '0',
-        });
+      const { error: uploadError } = await admin.storage.from(BUCKET).upload(objectPath, pdf, {
+        contentType: 'application/pdf',
+        upsert: false,
+        cacheControl: '0',
+      });
       if (uploadError) {
         // Double clic, concurrent ou reprise : ne jamais remplacer un fichier existant.
         const { data: concurrent } = await table.select('*').eq('quote_id', quoteId).maybeSingle();

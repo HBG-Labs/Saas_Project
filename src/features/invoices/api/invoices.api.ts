@@ -5,6 +5,7 @@ import type {
   CustomerType,
   Database,
   InvoiceStatus,
+  Json,
   PaymentMethod,
   Tables,
   TablesInsert,
@@ -240,6 +241,7 @@ export interface InvoiceLineInput {
 
 export interface CreateInvoiceInput {
   organizationId: string;
+  documentOptions?: Json;
   title?: string;
   customerId?: string | null;
   siteId?: string | null;
@@ -295,6 +297,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
   const payload: TablesInsert<'invoices'> = {
     organization_id: input.organizationId,
     created_by: userData.user.id,
+    ...(input.documentOptions !== undefined ? { document_options: input.documentOptions } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.customerId ? { customer_id: input.customerId } : {}),
     ...(input.siteId ? { site_id: input.siteId } : {}),
@@ -500,6 +503,7 @@ export async function createInvoiceFromQuote(input: {
         site_name: string | null;
         vat_rate: number;
         notes: string | null;
+        document_options: Json;
         items: {
           description: string;
           unit: string;
@@ -541,6 +545,7 @@ export async function createInvoiceFromQuote(input: {
   return createInvoice({
     organizationId: input.organizationId,
     quoteId: quote.id,
+    documentOptions: quote.document_options,
     ...(quote.title !== null ? { title: quote.title } : {}),
     customerId: quote.customer_id,
     siteId: quote.site_id,

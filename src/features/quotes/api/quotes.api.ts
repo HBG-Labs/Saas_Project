@@ -226,6 +226,7 @@ export async function createQuote(input: {
   discountRate?: number;
   documentOptions?: Json;
   notes?: string;
+  issueDate?: string;
   validUntil?: string;
   items: readonly QuoteLineInput[];
 }): Promise<Quote> {
@@ -243,6 +244,7 @@ export async function createQuote(input: {
     ...(input.customerName !== undefined ? { customer_name: input.customerName } : {}),
     ...(input.siteName !== undefined ? { site_name: input.siteName } : {}),
     ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    ...(input.issueDate !== undefined ? { issue_date: input.issueDate } : {}),
     ...(input.validUntil !== undefined ? { valid_until: input.validUntil } : {}),
   };
 

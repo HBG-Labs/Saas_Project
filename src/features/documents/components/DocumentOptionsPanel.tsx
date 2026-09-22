@@ -1,6 +1,5 @@
-import { BadgeInfo, Building2, FileSliders, Languages, List } from 'lucide-react';
+import { BadgeInfo, Building2, FileSliders, List } from 'lucide-react';
 import { Checkbox } from '@/components/ui/Checkbox';
-import { Select } from '@/components/ui/Select';
 import type { DocumentOptions, DocumentMode } from '../document-options';
 
 const OPTIONS: Array<{ key: keyof DocumentOptions; label: string }> = [
@@ -29,7 +28,14 @@ export function DocumentOptionsPanel({
       ...value,
       mode,
       ...(mode !== 'quick'
-        ? { showRegistrationNumber: true, showVatNumber: true, showTitle: true }
+        ? {
+            showDeliveryAddress: true,
+            showRegistrationNumber: true,
+            showVatNumber: true,
+            showBankDetails: true,
+            showTitle: true,
+            ...(kind === 'quote' ? { showAcceptanceTerms: true, showSignature: true } : {}),
+          }
         : {}),
     });
   const toggle = (key: keyof DocumentOptions, checked: boolean | 'indeterminate') =>
@@ -54,28 +60,30 @@ export function DocumentOptionsPanel({
               {mode === 'quick' ? 'Rapide' : 'Complet'}
             </label>
           ))}
-          {kind === 'invoice' ? (
-            <label className="flex cursor-pointer items-start gap-2">
-              <input
-                type="radio"
-                name="invoice-mode"
-                checked={value.mode === 'electronic'}
-                onChange={() => setMode('electronic')}
-                className="accent-primary mt-0.5"
-              />
-              <span>
-                Format électronique · Factur‑X{' '}
-                <span className="text-muted-foreground text-2xs block">
-                  PDF lisible + données structurées conformes.
-                </span>
+          <label className="flex cursor-pointer items-start gap-2">
+            <input
+              type="radio"
+              name={`${kind}-mode`}
+              checked={value.mode === 'electronic'}
+              onChange={() => setMode('electronic')}
+              className="accent-primary mt-0.5"
+            />
+            <span>
+              {kind === 'invoice' ? 'Format électronique · Factur‑X' : 'Format électronique'}{' '}
+              <span className="text-muted-foreground text-2xs block leading-relaxed">
+                {kind === 'invoice'
+                  ? 'PDF lisible + données structurées conformes.'
+                  : 'Devis structuré, prêt pour la conversion Factur‑X lors de la facturation.'}
               </span>
-            </label>
-          ) : (
-            <p className="text-muted-foreground text-2xs flex gap-1.5">
-              <BadgeInfo className="size-3.5 shrink-0" />
-              Factur‑X est réservé aux factures.
+            </span>
+          </label>
+          {kind === 'quote' && value.mode === 'electronic' ? (
+            <p className="bg-primary/5 text-muted-foreground text-2xs flex gap-1.5 rounded-lg p-2 leading-relaxed">
+              <BadgeInfo className="text-primary size-3.5 shrink-0" />
+              Factur‑X est une norme de facture : les réglages seront transmis à la facture créée
+              depuis ce devis.
             </p>
-          )}
+          ) : null}
         </div>
       </section>
       <section className="border-border border-t pt-4">
@@ -94,17 +102,6 @@ export function DocumentOptionsPanel({
             />
           ))}
         </div>
-      </section>
-      <section className="border-border border-t pt-4">
-        <h3 className="text-foreground mb-2 flex items-center gap-2 font-bold">
-          <Languages className="size-4" />
-          Langue
-        </h3>
-        <Select
-          value={value.language}
-          onValueChange={() => undefined}
-          options={[{ value: 'fr', label: 'Français' }]}
-        />
       </section>
       <section className="border-border border-t pt-4">
         <h3 className="text-foreground mb-2 flex items-center gap-2 font-bold">

@@ -1052,8 +1052,70 @@ input.profile-form-field {
 .financial-paper {
   color: #0f172a;
   background: #ffffff;
-  border-color: #cbd5e1;
+  border-color: #d5dfda;
   box-shadow: var(--shadow-modal);
+}
+.financial-paper-a4 {
+  width: min(100%, 56rem);
+  min-height: 79.2rem;
+}
+.financial-paper-a4-preview {
+  box-sizing: border-box;
+  width: min(100%, 52rem);
+  min-height: 73.54rem;
+  margin-inline: auto;
+}
+.financial-paper-accent-bar,
+.bg-financial-accent {
+  background: #52796f;
+}
+.financial-paper-table-accent {
+  color: #ffffff;
+  background: #52796f;
+}
+.financial-paper-client-panel {
+  color: #243831;
+  background: #f2f7f4;
+  border-color: #bed2c8;
+}
+.financial-paper-date-panel {
+  color: #304942;
+  background: #f8f3e9;
+  border-color: #ded2bd;
+}
+.financial-paper-date-input {
+  color: #263b35;
+  background: rgb(255 255 255 / 75%);
+  border-color: #c9d7d1;
+}
+.financial-paper-date-input:focus {
+  border-color: #52796f;
+  box-shadow: 0 0 0 3px rgb(82 121 111 / 12%);
+}
+.financial-paper-company,
+.border-financial-accent {
+  border-color: #abc3b8;
+}
+.financial-paper-electronic,
+.bg-financial-soft {
+  color: #3f6259;
+  background: #e9f1ed;
+}
+.text-financial-accent {
+  color: #52796f;
+}
+.financial-paper-total-panel {
+  color: #203a33;
+  background: #e4efe9;
+}
+.financial-paper-total-panel dd {
+  color: #3f6b5f;
+}
+.document-logo-frame {
+  min-width: 120px;
+  max-width: 320px;
+  min-height: 64px;
+  max-height: 180px;
 }
 .financial-paper-border {
   border-color: #e2e8f0;
@@ -1068,7 +1130,7 @@ input.profile-form-field {
 }
 .financial-paper-brand,
 .financial-paper-total {
-  color: #1e3a8a;
+  color: #3f6259;
 }
 .financial-paper-text {
   color: #475569;
@@ -1080,17 +1142,17 @@ input.profile-form-field {
   color: #64748b;
 }
 .financial-paper-label {
-  color: #1e3a8a;
-  background: #dbeafe;
+  color: #3f6259;
+  background: #e9f1ed;
 }
 .financial-paper-label-credit {
   color: #78350f;
   background: #fef3c7;
 }
 .financial-paper-table-head {
-  color: #334155;
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  color: #304942;
+  background: #edf3f0;
+  border-color: #c4d3cc;
 }
 .financial-paper-table-body {
   color: #1e293b;
@@ -1099,13 +1161,44 @@ input.profile-form-field {
   border-color: #e2e8f0;
 }
 .financial-paper-focus:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid #52796f;
   outline-offset: 2px;
 }
 .financial-paper-signature {
   color: #64748b;
   background: #ffffff;
-  border-color: #94a3b8;
+  border-color: #abc3b8;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  #quote-printable-area,
+  #quote-printable-area *,
+  #invoice-printable-area,
+  #invoice-printable-area * {
+    visibility: visible !important;
+  }
+  #quote-printable-area,
+  #invoice-printable-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    box-sizing: border-box !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
 
 /* Cibles des commandes natives du bloc-notes ; le texte reste à 16 px au toucher. */

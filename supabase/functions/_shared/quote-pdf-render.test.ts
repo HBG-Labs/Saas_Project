@@ -38,7 +38,7 @@ function quote(overrides: Partial<QuotePdfInput> = {}): QuotePdfInput {
     site_name: 'Cabinet — RDC',
     notes: null,
     valid_until: '2026-10-20',
-    created_at: '2026-09-01T10:00:00.000Z',
+    issue_date: '2026-09-01',
     vat_rate: 20,
     gross_subtotal_cents: 118_400,
     discount_cents: 0,

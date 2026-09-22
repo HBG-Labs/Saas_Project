@@ -1,5 +1,5 @@
 import { SelectField } from '@/components/ui/SelectField';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   Calculator,
   ChevronLeft,
@@ -9,10 +9,8 @@ import {
   FileText,
   Building,
   Download,
+  Ellipsis,
   History,
-  ImagePlus,
-  PanelRightClose,
-  PanelRightOpen,
   Send,
   Settings2,
   Sparkles,
@@ -35,6 +33,7 @@ import { CustomerPicker, SitePicker, useCustomers, useCustomerSites } from '@/fe
 import {
   DocumentNumberingBanner,
   DocumentNumberingModal,
+  DocumentLogoEditor,
   DocumentOptionsPanel,
   DEFAULT_DOCUMENT_OPTIONS,
   serializeDocumentOptions,
@@ -54,6 +53,7 @@ import {
 } from '@/features/quotes';
 import { cn } from '@/lib/cn';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import type { Customer } from '@/types/domain';
 
 export interface QuoteLineItem {
   id: string;
@@ -86,6 +86,38 @@ const QUOTE_STEPS = [
   { label: 'Validation', description: 'Contrôlez les montants avant l’enregistrement.' },
 ] as const;
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function localIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addCalendarDays(isoDate: string, days: number): string {
+  const base = new Date(`${isoDate}T12:00:00`);
+  return localIsoDate(new Date(base.getTime() + days * ONE_DAY_MS));
+}
+
+function formatDocumentDate(isoDate: string): string {
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(`${isoDate}T12:00:00`));
+}
+
+function customerAddress(customer: Customer | null): string[] {
+  return customer
+    ? [
+        [customer.address_line1, customer.address_line2].filter(Boolean).join(' '),
+        [customer.postal_code, customer.city].filter(Boolean).join(' '),
+        customer.country,
+      ].filter((line): line is string => Boolean(line))
+    : [];
+}
+
 export default function QuotesPage() {
   useDocumentTitle('Nouveau devis');
 
@@ -103,6 +135,7 @@ export default function QuotesPage() {
   const sitesQuery = useCustomerSites(customerId ?? undefined);
   const selectedCustomer = (customersQuery.data ?? []).find((c) => c.id === customerId) ?? null;
   const selectedSite = (sitesQuery.data ?? []).find((site) => site.id === siteId) ?? null;
+  const selectedCustomerAddress = customerAddress(selectedCustomer);
   const [vatInput, setVatInput] = useState<string>(() =>
     organization?.default_vat_rate != null ? String(organization.default_vat_rate) : '20',
   );
@@ -135,7 +168,7 @@ export default function QuotesPage() {
 
   const [items, setItems] = useState<QuoteLineItem[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(true);
+  const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(false);
   const [documentOptions, setDocumentOptions] = useState<DocumentOptions>({
     ...DEFAULT_DOCUMENT_OPTIONS,
     showAcceptanceTerms: true,
@@ -147,7 +180,6 @@ export default function QuotesPage() {
   const [freeField, setFreeField] = useState('');
   const numbering = useDocumentNumbering(organizationId, 'quote');
   const uploadLogo = useUploadOrganizationLogo(organizationId ?? '');
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const wizardRef = useRef<HTMLDivElement>(null);
 
   const goToStep = (step: number) => {
@@ -239,12 +271,19 @@ export default function QuotesPage() {
   const quoteNumber = savedReference ?? 'brouillon non enregistré';
   // Initialiseurs paresseux : la date d'émission d'un devis est fixée à
   // l'ouverture de l'écran, elle ne doit pas se recalculer à chaque rendu.
-  const [todayDate] = useState(() => new Date().toLocaleDateString('fr-FR'));
-  const [validUntilDate] = useState(() =>
-    new Date(Date.now() + 30 * 24 * 3600 * 1000).toLocaleDateString('fr-FR'),
-  );
-  const [validUntilIso] = useState(() =>
-    new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+  const [issueDateIso, setIssueDateIso] = useState(() => localIsoDate(new Date()));
+  const [validityDays, setValidityDays] = useState(60);
+  const validUntilIso = addCalendarDays(issueDateIso, validityDays);
+  const issueDateLabel = formatDocumentDate(issueDateIso);
+  const validUntilDate = formatDocumentDate(validUntilIso);
+  const updateLogoSize = useCallback(
+    (size: { width: number; height: number }) =>
+      setDocumentOptions((current) => ({
+        ...current,
+        logoWidth: size.width,
+        logoHeight: size.height,
+      })),
+    [],
   );
 
   /**
@@ -269,6 +308,7 @@ export default function QuotesPage() {
         documentOptions: serializeDocumentOptions(documentOptions),
         ...(documentOptions.showTitle ? { title: documentTitle.trim() } : {}),
         ...(documentOptions.showFreeField ? { notes: freeField.trim() } : {}),
+        issueDate: issueDateIso,
         validUntil: validUntilIso,
         customerId,
         siteId: customerId === null ? null : siteId,
@@ -326,17 +366,11 @@ export default function QuotesPage() {
       </div>
 
       <header className="border-border bg-surface/95 sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur lg:flex">
-        <div className="flex min-w-0 items-center gap-4">
-          <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
-            <Link to={ROUTES.quotesHistory}>
-              <X className="size-5" aria-hidden="true" />
-            </Link>
-          </Button>
-          <div className="min-w-0">
-            <h1 className="text-foreground truncate text-base font-bold">Nouveau devis</h1>
-            <p className="text-muted-foreground text-xs">Brouillon · {todayDate}</p>
-          </div>
-        </div>
+        <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
+          <Link to={ROUTES.quotesHistory}>
+            <X className="size-5" aria-hidden="true" />
+          </Link>
+        </Button>
 
         <div className="text-center">
           <p className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
@@ -348,18 +382,16 @@ export default function QuotesPage() {
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
           onClick={() => setDesktopOptionsOpen((open) => !open)}
-          className="gap-2"
+          aria-label={
+            desktopOptionsOpen ? 'Fermer les options du devis' : 'Ouvrir les options du devis'
+          }
+          title="Options du devis"
           aria-expanded={desktopOptionsOpen}
           aria-controls="quote-desktop-options"
         >
-          {desktopOptionsOpen ? (
-            <PanelRightClose className="size-4" aria-hidden="true" />
-          ) : (
-            <PanelRightOpen className="size-4" aria-hidden="true" />
-          )}
-          Options
+          <Ellipsis className="size-5" aria-hidden="true" />
         </Button>
       </header>
 
@@ -391,43 +423,25 @@ export default function QuotesPage() {
           ) : null}
           <div
             aria-label="Document devis"
-            className="financial-paper border-border relative hidden min-h-[72rem] overflow-hidden rounded-sm border px-12 py-11 shadow-[0_18px_55px_rgba(15,23,42,0.12)] lg:block xl:px-14"
+            className="financial-paper financial-paper-a4 border-border relative hidden overflow-hidden rounded-sm border px-12 py-11 shadow-[0_18px_55px_rgba(15,23,42,0.12)] lg:block xl:px-14"
           >
-            <div className="bg-primary absolute inset-x-0 top-0 h-2" aria-hidden="true" />
+            <div
+              className="financial-paper-accent-bar absolute inset-x-0 top-0 h-1.5"
+              aria-hidden="true"
+            />
 
             <div className="mb-10 flex items-start justify-between gap-8">
-              <div className="flex min-w-0 items-start gap-4">
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  className="border-primary/35 bg-primary/5 text-primary hover:bg-primary/10 flex h-20 w-44 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed text-xs font-semibold transition"
-                  aria-label="Importer le logo de l’entreprise"
-                >
-                  {organization?.logo_url ? (
-                    <img
-                      src={organization.logo_url}
-                      alt="Logo de l’entreprise"
-                      className="h-full w-full object-contain p-2"
-                    />
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <ImagePlus className="size-5" aria-hidden="true" />
-                      Importer votre logo
-                    </span>
-                  )}
-                </button>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) uploadLogo.mutate(file, { onError: setSubmitError });
-                    event.target.value = '';
+              <div className="flex min-w-0 flex-col items-start gap-3">
+                <DocumentLogoEditor
+                  src={organization?.logo_url}
+                  size={{
+                    width: documentOptions.logoWidth,
+                    height: documentOptions.logoHeight,
                   }}
+                  onSizeChange={updateLogoSize}
+                  onUpload={(file) => uploadLogo.mutateAsync(file)}
                 />
-                <div className="min-w-0 pt-1">
+                <div className="financial-paper-company min-w-64 border border-dashed px-3 py-2.5">
                   <p className="text-foreground text-lg font-black tracking-tight">
                     {organization?.name ?? 'REZO360 Pro'}
                   </p>
@@ -437,21 +451,34 @@ export default function QuotesPage() {
                     </p>
                   ) : null}
                   <p className="text-muted-foreground text-3xs mt-1 max-w-sm leading-relaxed">
-                    {[organization?.address_line1, organization?.postal_code, organization?.city]
+                    {[
+                      organization?.address_line1,
+                      organization?.address_line2,
+                      [organization?.postal_code, organization?.city].filter(Boolean).join(' '),
+                      organization?.country,
+                    ]
                       .filter(Boolean)
-                      .join(' ') || 'Coordonnées de votre entreprise'}
+                      .join(' · ') || 'Coordonnées de votre entreprise'}
                   </p>
+                  {organization?.registration_number ? (
+                    <p className="text-muted-foreground text-3xs mt-1">
+                      SIRET {organization.registration_number}
+                      {organization.vat_number ? ` · TVA ${organization.vat_number}` : ''}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="shrink-0 text-right">
-                <span className="bg-primary/10 text-3xs text-primary inline-flex rounded-full px-3 py-1 font-black tracking-[0.18em] uppercase">
-                  Devis
-                </span>
-                <p className="text-foreground mt-3 text-2xl font-black tracking-tight">
-                  {savedReference ?? 'Nouveau devis'}
+                <p className="text-foreground text-2xl font-black tracking-tight">
+                  {savedReference ?? 'Brouillon'}
                 </p>
-                <p className="text-muted-foreground mt-1 text-xs">Émis le {todayDate}</p>
+                <p className="text-muted-foreground mt-1 text-xs">Émis le {issueDateLabel}</p>
+                {documentOptions.mode === 'electronic' ? (
+                  <p className="financial-paper-electronic mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold">
+                    Format électronique
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -465,8 +492,8 @@ export default function QuotesPage() {
             ) : null}
 
             <div className="mb-8 grid grid-cols-[minmax(0,1fr)_15rem] gap-5">
-              <div className="border-primary/20 bg-primary/5 rounded-2xl border p-5">
-                <p className="text-3xs text-primary mb-3 font-black tracking-[0.16em] uppercase">
+              <div className="financial-paper-client-panel rounded-2xl border p-5">
+                <p className="text-financial-accent text-3xs mb-3 font-black tracking-[0.16em] uppercase">
                   Destinataire
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -498,27 +525,73 @@ export default function QuotesPage() {
                     />
                   </div>
                 ) : null}
+
+                {documentOptions.showDeliveryAddress ? (
+                  <div className="financial-paper-company text-3xs mt-4 border border-dashed p-3 leading-relaxed">
+                    <p className="financial-paper-strong font-bold">Adresse du client</p>
+                    {selectedCustomerAddress.length > 0 ? (
+                      selectedCustomerAddress.map((line) => <p key={line}>{line}</p>)
+                    ) : (
+                      <p className="financial-paper-muted mt-1">
+                        Sélectionnez une fiche client avec une adresse renseignée.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                {documentOptions.showRegistrationNumber || documentOptions.showVatNumber ? (
+                  <div className="financial-paper-text text-3xs mt-3 flex flex-wrap gap-x-5 gap-y-1">
+                    {documentOptions.showRegistrationNumber ? (
+                      <span>
+                        <strong>SIREN / SIRET :</strong>{' '}
+                        {selectedCustomer?.registration_number || 'Non renseigné'}
+                      </span>
+                    ) : null}
+                    {documentOptions.showVatNumber ? (
+                      <span>
+                        <strong>TVA :</strong> {selectedCustomer?.vat_number || 'Non renseignée'}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
-              <div className="border-success/30 bg-success/10 rounded-2xl border p-5">
-                <p className="text-3xs text-success font-black tracking-[0.16em] uppercase">
+              <div className="financial-paper-date-panel rounded-2xl border p-5">
+                <p className="text-financial-accent text-3xs font-black tracking-[0.16em] uppercase">
                   Dates du document
                 </p>
-                <dl className="mt-4 space-y-3 text-xs">
-                  <div>
-                    <dt className="text-muted-foreground">Date d’émission</dt>
-                    <dd className="text-foreground mt-0.5 font-bold">{todayDate}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Validité</dt>
-                    <dd className="text-foreground mt-0.5 font-bold">Jusqu’au {validUntilDate}</dd>
-                  </div>
-                </dl>
+                <div className="mt-4 space-y-3 text-xs">
+                  <label className="text-muted-foreground block font-semibold">
+                    Date d’émission
+                    <input
+                      type="date"
+                      value={issueDateIso}
+                      onChange={(event) => setIssueDateIso(event.target.value)}
+                      onClick={(event) => event.currentTarget.showPicker?.()}
+                      className="financial-paper-date-input financial-paper-strong mt-1 w-full rounded-lg border px-3 py-2 outline-none"
+                    />
+                  </label>
+                  <SelectField
+                    label="Période de validité"
+                    value={String(validityDays)}
+                    onChange={(event) => setValidityDays(Number(event.target.value))}
+                    className="financial-paper-date-input financial-paper-strong mt-1 w-full rounded-lg border px-3 py-2 outline-none"
+                  >
+                    <option value="15">15 jours</option>
+                    <option value="30">30 jours</option>
+                    <option value="45">45 jours</option>
+                    <option value="60">60 jours</option>
+                    <option value="90">90 jours</option>
+                  </SelectField>
+                  <p className="financial-paper-muted text-3xs">
+                    Valable jusqu’au <strong>{validUntilDate}</strong>
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="border-border overflow-hidden rounded-xl border">
-              <div className="bg-primary text-primary-foreground text-3xs grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_7rem_7rem_2.5rem] items-center gap-px px-3 py-2.5 font-black tracking-wide uppercase">
+              <div className="financial-paper-table-accent text-3xs grid grid-cols-[minmax(0,1fr)_4.5rem_5.5rem_7rem_7rem_2.5rem] items-center gap-px px-3 py-2.5 font-black tracking-wide uppercase">
                 <span>Désignation</span>
                 <span className="text-center">Qté</span>
                 <span className="text-center">Unité</span>
@@ -693,9 +766,9 @@ export default function QuotesPage() {
                     {totalVAT.toFixed(2)} €
                   </dd>
                 </div>
-                <div className="bg-success/10 text-foreground flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
+                <div className="financial-paper-total-panel flex items-center justify-between rounded-xl px-4 py-3 text-base font-black">
                   <dt>Total TTC</dt>
-                  <dd className="text-success tabular-nums">{totalTTC.toFixed(2)} €</dd>
+                  <dd className="tabular-nums">{totalTTC.toFixed(2)} €</dd>
                 </div>
               </dl>
             </div>
@@ -709,23 +782,38 @@ export default function QuotesPage() {
               />
             ) : null}
 
-            <div className="border-border text-3xs text-muted-foreground mt-10 grid grid-cols-2 gap-5 border-t pt-7">
-              <div className={documentOptions.showAcceptanceTerms ? '' : 'invisible'}>
-                <p className="text-foreground font-bold">Modalités de règlement</p>
-                <p className="mt-1 leading-relaxed">
-                  {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
-                </p>
+            {documentOptions.showBankDetails ||
+            documentOptions.showAcceptanceTerms ||
+            documentOptions.showSignature ? (
+              <div className="border-border text-3xs text-muted-foreground mt-10 grid grid-cols-2 gap-5 border-t pt-7">
+                <div className="space-y-4">
+                  {documentOptions.showAcceptanceTerms ? (
+                    <div>
+                      <p className="text-foreground font-bold">Modalités de règlement</p>
+                      <p className="mt-1 leading-relaxed">
+                        {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                      </p>
+                    </div>
+                  ) : null}
+                  {documentOptions.showBankDetails ? (
+                    <div>
+                      <p className="text-foreground font-bold">Coordonnées bancaires</p>
+                      <p className="mt-1 leading-relaxed">
+                        IBAN : {organization?.iban || 'À compléter dans les paramètres'}
+                        <br />
+                        BIC : {organization?.bic || 'À compléter dans les paramètres'}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+                {documentOptions.showSignature ? (
+                  <div className="border-border-strong rounded-xl border border-dashed p-4">
+                    <p className="text-foreground font-bold">Bon pour accord</p>
+                    <p className="mt-1">Date, nom et signature du client</p>
+                  </div>
+                ) : null}
               </div>
-              <div
-                className={cn(
-                  'border-border-strong rounded-xl border border-dashed p-4',
-                  !documentOptions.showSignature && 'invisible',
-                )}
-              >
-                <p className="text-foreground font-bold">Bon pour accord</p>
-                <p className="mt-1">Date, nom et signature du client</p>
-              </div>
-            </div>
+            ) : null}
           </div>
 
           {/* Formulaire Chiffrage (2/3) */}
@@ -1155,7 +1243,15 @@ export default function QuotesPage() {
           >
             <div className="border-border flex items-center gap-2 border-b px-4 py-3">
               <Settings2 className="text-primary size-4" aria-hidden="true" />
-              <h2 className="text-foreground text-sm font-bold">Options du devis</h2>
+              <h2 className="text-foreground flex-1 text-sm font-bold">Options du devis</h2>
+              <button
+                type="button"
+                onClick={() => setDesktopOptionsOpen(false)}
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex size-7 items-center justify-center rounded-md transition"
+                aria-label="Fermer les options du devis"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
             </div>
             <DocumentOptionsPanel
               kind="quote"
@@ -1382,43 +1478,70 @@ export default function QuotesPage() {
           */}
           <div
             id="quote-printable-area"
-            className="financial-paper space-y-6 rounded-xl border p-4 font-sans sm:p-8"
+            className="financial-paper financial-paper-a4-preview space-y-6 rounded-sm border p-4 font-sans sm:p-10"
           >
             {/* Header Document */}
-            <div className="financial-paper-border flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="financial-paper-brand text-xl font-bold tracking-tight">
-                  {organization?.name ?? 'REZO360 Pro'}
-                </h2>
-                {organization?.legal_name && organization.legal_name !== organization.name && (
-                  <p className="financial-paper-text text-xs font-semibold">
-                    {organization.legal_name}
+            <div className="financial-paper-accent-bar -mx-4 -mt-4 h-1.5 sm:-mx-10 sm:-mt-10" />
+            <div className="financial-paper-border flex flex-col items-start justify-between gap-5 border-b pb-5 sm:flex-row">
+              <div className="space-y-3">
+                {organization?.logo_url ? (
+                  <div
+                    className="financial-paper-company flex items-center justify-center overflow-hidden border border-dashed"
+                    style={{
+                      width: documentOptions.logoWidth,
+                      height: documentOptions.logoHeight,
+                    }}
+                  >
+                    <img
+                      src={organization.logo_url}
+                      alt="Logo de l’entreprise"
+                      className="size-full object-contain p-2"
+                    />
+                  </div>
+                ) : null}
+                <div className="financial-paper-company border border-dashed px-3 py-2">
+                  <h2 className="financial-paper-brand text-base font-bold tracking-tight">
+                    {organization?.name ?? 'REZO360 Pro'}
+                  </h2>
+                  {organization?.legal_name && organization.legal_name !== organization.name && (
+                    <p className="financial-paper-text text-xs font-semibold">
+                      {organization.legal_name}
+                    </p>
+                  )}
+                  <p className="financial-paper-muted text-2xs mt-1">
+                    {organization?.registration_number
+                      ? `SIRET : ${organization.registration_number}`
+                      : ''}
+                    {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
+                    {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
                   </p>
-                )}
-                <p className="financial-paper-muted text-2xs mt-1">
-                  {organization?.registration_number
-                    ? `SIRET : ${organization.registration_number}`
-                    : ''}
-                  {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
-                  {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
-                </p>
-                {(organization?.address_line1 || organization?.city) && (
-                  <p className="financial-paper-muted text-3xs">
-                    {[organization?.address_line1, organization?.postal_code, organization?.city]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </p>
-                )}
+                  {(organization?.address_line1 || organization?.city) && (
+                    <p className="financial-paper-muted text-3xs">
+                      {[organization?.address_line1, organization?.postal_code, organization?.city]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="text-left sm:text-right">
                 <span className="financial-paper-label inline-block rounded-md px-2.5 py-1 text-xs font-bold">
                   DEVIS N° {quoteNumber}
                 </span>
-                <p className="financial-paper-muted text-2xs mt-1">Émis le : {todayDate}</p>
+                <p className="financial-paper-muted text-2xs mt-1">Émis le : {issueDateLabel}</p>
                 <p className="financial-paper-muted text-2xs">Valide jusqu'au : {validUntilDate}</p>
+                {documentOptions.mode === 'electronic' ? (
+                  <p className="financial-paper-electronic text-3xs mt-2 inline-flex rounded-full px-2.5 py-1 font-bold">
+                    Prêt pour conversion Factur‑X
+                  </p>
+                ) : null}
               </div>
             </div>
+
+            {documentOptions.showTitle && documentTitle.trim() ? (
+              <h3 className="financial-paper-strong text-lg font-black">{documentTitle.trim()}</h3>
+            ) : null}
 
             {/* Informations Client & Site */}
             <div className="financial-paper-panel grid grid-cols-1 gap-4 rounded-lg border p-4 text-xs sm:grid-cols-2">
@@ -1429,6 +1552,23 @@ export default function QuotesPage() {
                 <p className="financial-paper-strong mt-0.5 text-sm font-bold">
                   {selectedCustomer?.name || clientName || 'Client non spécifié'}
                 </p>
+                {documentOptions.showDeliveryAddress ? (
+                  <p className="financial-paper-muted text-3xs mt-1 leading-relaxed">
+                    {selectedCustomerAddress.length > 0
+                      ? selectedCustomerAddress.join(' · ')
+                      : 'Adresse à compléter sur la fiche client'}
+                  </p>
+                ) : null}
+                {documentOptions.showRegistrationNumber && selectedCustomer ? (
+                  <p className="financial-paper-muted text-3xs mt-1">
+                    SIREN / SIRET : {selectedCustomer.registration_number || 'Non renseigné'}
+                  </p>
+                ) : null}
+                {documentOptions.showVatNumber && selectedCustomer ? (
+                  <p className="financial-paper-muted text-3xs mt-1">
+                    TVA : {selectedCustomer.vat_number || 'Non renseignée'}
+                  </p>
+                ) : null}
               </div>
               <div>
                 <p className="financial-paper-muted text-3xs font-bold tracking-wider uppercase">
@@ -1472,22 +1612,34 @@ export default function QuotesPage() {
               </tbody>
             </Table>
 
+            {documentOptions.showFreeField && freeField.trim() ? (
+              <div className="financial-paper-company financial-paper-text border border-dashed p-3 text-xs leading-relaxed whitespace-pre-wrap">
+                {freeField.trim()}
+              </div>
+            ) : null}
+
             {/* Récapitulatif Financier */}
             <div className="financial-paper-border-strong flex flex-col items-end justify-between gap-4 border-t pt-4 sm:flex-row">
-              <div className="financial-paper-muted text-3xs space-y-1">
-                <p>
-                  <strong>Conditions de règlement :</strong>{' '}
-                  {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
-                </p>
-                <p>
-                  <strong>Mode de paiement :</strong>{' '}
-                  {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
-                </p>
-                <p>
-                  <em>
-                    En cas de retard de paiement, une indemnité forfaitaire de 40 € sera appliquée.
-                  </em>
-                </p>
+              <div className="financial-paper-muted text-3xs space-y-2">
+                {documentOptions.showAcceptanceTerms ? (
+                  <>
+                    <p>
+                      <strong>Conditions de règlement :</strong>{' '}
+                      {organization?.quote_payment_terms ?? DEFAULT_QUOTE_PAYMENT_TERMS}
+                    </p>
+                    <p>
+                      <strong>Mode de paiement :</strong>{' '}
+                      {organization?.quote_payment_method ?? DEFAULT_QUOTE_PAYMENT_METHOD}
+                    </p>
+                  </>
+                ) : null}
+                {documentOptions.showBankDetails ? (
+                  <p>
+                    <strong>Coordonnées bancaires :</strong> IBAN{' '}
+                    {organization?.iban || 'à compléter'}
+                    {organization?.bic ? ` · BIC ${organization.bic}` : ''}
+                  </p>
+                ) : null}
               </div>
 
               <div className="financial-paper-border w-full space-y-1.5 border-t pt-3 text-right text-xs sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
@@ -1509,19 +1661,23 @@ export default function QuotesPage() {
             </div>
 
             {/* Cadre Bon pour Accord & Signature Client */}
-            <div className="financial-paper-panel financial-paper-border-strong mt-6 rounded-lg border p-4">
-              <div className="financial-paper-text text-2xs flex flex-col items-start justify-between gap-3 sm:flex-row">
-                <div>
-                  <p className="financial-paper-strong font-bold">Bon pour accord et commande :</p>
-                  <p className="financial-paper-muted text-3xs">
-                    Mention manuscrite « Bon pour accord », Date et Signature du Client :
-                  </p>
-                </div>
-                <div className="financial-paper-signature text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed italic sm:w-40">
-                  [Emplacement Signature Client]
+            {documentOptions.showSignature ? (
+              <div className="financial-paper-panel financial-paper-border-strong mt-6 rounded-lg border p-4">
+                <div className="financial-paper-text text-2xs flex flex-col items-start justify-between gap-3 sm:flex-row">
+                  <div>
+                    <p className="financial-paper-strong font-bold">
+                      Bon pour accord et commande :
+                    </p>
+                    <p className="financial-paper-muted text-3xs">
+                      Mention manuscrite « Bon pour accord », date et signature du client.
+                    </p>
+                  </div>
+                  <div className="financial-paper-signature text-3xs flex h-14 w-full items-center justify-center rounded border border-dashed italic sm:w-40">
+                    Emplacement signature
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           {/* Action Buttons Modal */}

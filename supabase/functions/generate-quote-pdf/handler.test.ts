@@ -24,7 +24,10 @@ const QUOTE = {
   site_name: 'Cabinet — RDC',
   notes: null,
   valid_until: '2026-10-20',
+  issue_date: '2026-09-01',
   created_at: '2026-09-01T10:00:00Z',
+  customer_id: null,
+  document_options: {},
   vat_rate: 20,
   status: 'sent',
 };

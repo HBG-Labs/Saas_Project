@@ -41,7 +41,23 @@ export interface QuotePdfInput {
   site_name: string | null;
   notes: string | null;
   valid_until: string | null;
-  created_at: string;
+  issue_date: string;
+  customer_address?: string[];
+  customer_registration_number?: string | null;
+  customer_vat_number?: string | null;
+  document_options?: {
+    mode?: 'quick' | 'complete' | 'electronic';
+    logoWidth?: number;
+    logoHeight?: number;
+    showDeliveryAddress?: boolean;
+    showRegistrationNumber?: boolean;
+    showVatNumber?: boolean;
+    showBankDetails?: boolean;
+    showTitle?: boolean;
+    showFreeField?: boolean;
+    showSignature?: boolean;
+    showAcceptanceTerms?: boolean;
+  } | null;
   vat_rate: number;
   gross_subtotal_cents: number;
   discount_cents: number;
@@ -105,15 +121,18 @@ export async function renderQuotePdf(
   const width = right - left;
 
   // ---------------------------------------------------------------- en-tête
-  let organizationLeft = left;
+  const option = (key: keyof NonNullable<QuotePdfInput['document_options']>, fallback = false) =>
+    quote.document_options ? quote.document_options[key] === true : fallback;
+  const logoWidth = Math.min(320, Math.max(120, quote.document_options?.logoWidth ?? 176)) * 0.45;
+  const logoHeight = Math.min(180, Math.max(64, quote.document_options?.logoHeight ?? 80)) * 0.45;
+  let organizationY = 50;
   if (logoBytes?.length) {
     try {
       doc.image(Buffer.from(logoBytes), left, 48, {
-        fit: [92, 52],
-        align: 'left',
+        fit: [logoWidth, logoHeight],
         valign: 'center',
       });
-      organizationLeft += 105;
+      organizationY = 48 + logoHeight + 7;
     } catch {
       // Un logo corrompu ne doit jamais empêcher la production du devis.
     }
@@ -122,7 +141,7 @@ export async function renderQuotePdf(
     .font('Helvetica-Bold')
     .fontSize(18)
     .fillColor('#111827')
-    .text(organization.legal_name ?? organization.name, organizationLeft, 50, { width: 250 });
+    .text(organization.legal_name ?? organization.name, left, organizationY, { width: 250 });
   doc.font('Helvetica').fontSize(9).fillColor('#4b5563');
   const orgLines = [
     [organization.address_line1, organization.address_line2].filter(Boolean).join(' '),
@@ -133,7 +152,7 @@ export async function renderQuotePdf(
     organization.phone,
   ].filter((line): line is string => Boolean(line && line.trim() !== ''));
   doc.moveDown(0.3);
-  for (const line of orgLines) doc.text(line, organizationLeft);
+  for (const line of orgLines) doc.text(line, left);
 
   doc
     .font('Helvetica-Bold')
@@ -143,12 +162,12 @@ export async function renderQuotePdf(
   doc.font('Helvetica').fontSize(10).fillColor('#374151');
   doc.text(quote.reference, left, 78, { width, align: 'right' });
   doc.fontSize(9).fillColor('#6b7280');
-  doc.text(`Émis le ${dateFr(quote.created_at)}`, { width, align: 'right' });
+  doc.text(`Émis le ${dateFr(quote.issue_date)}`, { width, align: 'right' });
   if (quote.valid_until)
     doc.text(`Valable jusqu'au ${dateFr(quote.valid_until)}`, { width, align: 'right' });
 
   doc.moveDown(1.5);
-  const clientY = doc.y + 10;
+  const clientY = Math.max(doc.y + 10, 155);
   doc.moveTo(left, clientY).lineTo(right, clientY).strokeColor('#e5e7eb').lineWidth(1).stroke();
 
   // -------------------------------------------------------------- client
@@ -160,7 +179,24 @@ export async function renderQuotePdf(
   doc.font('Helvetica').fontSize(11).fillColor('#111827');
   doc.text(quote.customer_name ?? '—', left, clientY + 28);
   if (quote.site_name) doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text(quote.site_name);
-  if (quote.title) {
+  if (option('showDeliveryAddress') && quote.customer_address?.length) {
+    doc.font('Helvetica').fontSize(8).fillColor('#6b7280').text(quote.customer_address.join(' · '));
+  }
+  if (option('showRegistrationNumber') && quote.customer_registration_number) {
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .fillColor('#6b7280')
+      .text(`SIREN / SIRET : ${quote.customer_registration_number}`);
+  }
+  if (option('showVatNumber') && quote.customer_vat_number) {
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .fillColor('#6b7280')
+      .text(`TVA : ${quote.customer_vat_number}`);
+  }
+  if (quote.title && option('showTitle', true)) {
     doc
       .font('Helvetica-Bold')
       .fontSize(9)
@@ -185,8 +221,8 @@ export async function renderQuotePdf(
   const colWidth = { description: 205, unit: 65, qty: 55, price: 75, total: right - cols.total };
 
   function header() {
-    doc.rect(left, y, width, 20).fill('#f3f4f6');
-    doc.font('Helvetica-Bold').fontSize(8).fillColor('#374151');
+    doc.rect(left, y, width, 20).fill('#52796f');
+    doc.font('Helvetica-Bold').fontSize(8).fillColor('#ffffff');
     doc.text('Désignation', cols.description + 4, y + 6, { width: colWidth.description });
     doc.text('Unité', cols.unit, y + 6, { width: colWidth.unit, align: 'right' });
     doc.text('Qté', cols.qty, y + 6, { width: colWidth.qty, align: 'right' });
@@ -246,32 +282,34 @@ export async function renderQuotePdf(
   }
   totalRow('Total HT', euros(quote.subtotal_cents));
   totalRow(`TVA (${quote.vat_rate} %)`, euros(quote.vat_cents));
-  doc.moveTo(totalsX, y).lineTo(right, y).strokeColor('#d1d5db').lineWidth(1).stroke();
+  doc.moveTo(totalsX, y).lineTo(right, y).strokeColor('#abc3b8').lineWidth(1).stroke();
   y += 6;
   totalRow('Total TTC', euros(quote.total_cents), true);
 
   // -------------------------------------------------------------- pied
   y += 20;
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .fillColor('#374151')
-    .text('Conditions de règlement', left, y);
-  doc
-    .font('Helvetica')
-    .fontSize(9)
-    .fillColor('#4b5563')
-    .text(quote.payment_terms, left, y + 13, { width });
-  y = doc.y + 8;
-  doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151').text('Mode de règlement', left, y);
-  doc
-    .font('Helvetica')
-    .fontSize(9)
-    .fillColor('#4b5563')
-    .text(quote.payment_method, left, y + 13, { width });
-  y = doc.y;
+  if (option('showAcceptanceTerms', true)) {
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(9)
+      .fillColor('#374151')
+      .text('Conditions de règlement', left, y);
+    doc
+      .font('Helvetica')
+      .fontSize(9)
+      .fillColor('#4b5563')
+      .text(quote.payment_terms, left, y + 13, { width });
+    y = doc.y + 8;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151').text('Mode de règlement', left, y);
+    doc
+      .font('Helvetica')
+      .fontSize(9)
+      .fillColor('#4b5563')
+      .text(quote.payment_method, left, y + 13, { width });
+    y = doc.y;
+  }
 
-  if (organization.iban) {
+  if (organization.iban && option('showBankDetails', true)) {
     y += 8;
     doc.font('Helvetica').fontSize(8).fillColor('#6b7280');
     doc.text(
@@ -281,9 +319,34 @@ export async function renderQuotePdf(
     );
   }
 
-  if (quote.notes) {
+  if (quote.notes && option('showFreeField', true)) {
     y = doc.y + 12;
     doc.font('Helvetica').fontSize(8).fillColor('#6b7280').text(quote.notes, left, y, { width });
+  }
+
+  if (option('showSignature')) {
+    y = Math.max(doc.y + 18, y + 18);
+    if (y + 75 > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      y = doc.page.margins.top;
+    }
+    doc
+      .roundedRect(left, y, width, 62, 6)
+      .lineWidth(0.8)
+      .dash(3, { space: 3 })
+      .strokeColor('#abc3b8')
+      .stroke();
+    doc.undash();
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(9)
+      .fillColor('#374151')
+      .text('Bon pour accord', left + 12, y + 12);
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .fillColor('#6b7280')
+      .text('Date, nom et signature du client', left + 12, y + 29);
   }
 
   const pageRange = doc.bufferedPageRange();
