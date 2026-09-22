@@ -56,6 +56,38 @@ type, une source — pas d'adresse, pas de numéro ; isolé par organisation ;
 supprimable. Ajouter un secteur au
 glossaire de base = une entrée dans `GLOSSAIRE_PAR_SECTEUR`.
 
+## La normalisation contrôlée (phase 7)
+
+En v2 seulement. Après la transcription, avant le résumé, le texte passe par
+`_shared/transcript-normalize.ts`. La règle : **jamais de reformulation**. La
+passe ne sait faire qu'une chose — remplacer une forme par un terme connu
+(dictionnaire de l'organisation, puis glossaire de son secteur) — en deux
+couches :
+
+| Couche | Ce qu'elle fait | Exemple | Modèle |
+|---|---|---|---|
+| `orthographe` | la graphie d'un terme connu : casse, accents, espaces, tirets | « caraibe telecom » → « Caraïbe Télécom », « pto » → « PTO », « 36 fo » → « 36FO » | aucun |
+| `modele` | un mot mal entendu, remplacé par un terme connu **dans son seul passage** | « la photo est posée » → « la PTO est posée » (et pas « j'ai pris une photo ») | `gpt-5.6-luna`, qui **propose** `{contexte, de, vers}` ; le code n'applique que si `vers` est un terme connu, `contexte` un passage exact du texte, `de` ni un nombre ni déjà un terme, et proche de `vers` (distance d'édition ≤ moitié du terme, 2 au moins) |
+
+Une majuscule de début de phrase sur un terme en minuscules reste. Une
+réponse du modèle qui n'est pas le JSON attendu ne change rien. La couche
+modèle fait partie de la transcription (couverte par les minutes réservées),
+pas du quota de requêtes IA.
+
+Ce qui est écrit (`record_workspace_recording_result`, `p_raw`,
+`p_normalization`) : `transcript_raw` = la sortie du moteur, immuable ;
+`transcript` = le texte normalisé ; `normalization_diff` = la liste des
+remplacements `[{de, vers, occurrences, couche, contexte?}]` ;
+`transcript_normalized_at`. **La liste rejouée sur le brut doit redonner le
+texte** (`rejouer()`) — sinon la passe est jetée et le brut sert de texte,
+sans trace. La page reçoit le texte normalisé. Un membre lit le brut et la
+trace (`select`), n'en modifie aucun. Legacy : `transcript_raw = transcript`,
+rien de marqué, comme avant.
+
+Contester une correction : le brut est là, la trace dit quoi a changé et où.
+Retirer le terme du dictionnaire suffit pour que la passe suivante ne le
+refasse plus.
+
 ## Architecture
 
 ```
@@ -65,8 +97,10 @@ navigateur : ligne workspace_recordings (uploading) → fichier dans workspace-a
   → transcription-worker                        [Edge]
       → claim_workspace_recordings()            (SKIP LOCKED)
       → reserve_transcription_minutes()         (atomique ; « quota » si épuisé)
-      → OpenAI transcription, puis résumé (reserve_ai_usage 'workspace')
-      → record_workspace_recording_result()     (écrit dans la page ; recul 2/4/8… min, abandon au 6e échec)
+      → OpenAI transcription
+      → normalisation contrôlée (v2 : termes connus ; brut conservé, trace rejouable)
+      → résumé (reserve_ai_usage 'workspace')
+      → record_workspace_recording_result()     (brut, texte, trace ; écrit dans la page ; recul 2/4/8… min, abandon au 6e échec)
       → claim_workspace_audio_purges() → Storage remove → mark_workspace_audio_deleted()
 ```
 

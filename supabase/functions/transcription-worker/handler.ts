@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
+import type { Normalisation } from '../_shared/transcript-normalize.ts';
 import { TranscriptionRejected } from '../_shared/transcription.ts';
 import { workerSecretMatches } from '../_shared/worker-secret.ts';
 
@@ -13,8 +14,10 @@ import { workerSecretMatches } from '../_shared/worker-secret.ts';
  * La base tire (`claim_workspace_recordings`, SKIP LOCKED), réserve les
  * minutes (`reserve_transcription_minutes`, atomique), écrit dans la page et
  * décide du recul (`record_workspace_recording_result`). Le worker : télécharge
- * l'audio, appelle le fournisseur deux fois (texte, puis résumé dans le quota
- * IA), rend compte, et supprime les fichiers désignés à la purge.
+ * l'audio, appelle le fournisseur (texte), normalise ce texte sous contrainte
+ * (phase 7, v2 seulement), le résume (dans le quota IA), rend compte — brut,
+ * texte et trace des remplacements —, et supprime les fichiers désignés à
+ * la purge.
  *
  * Les appels fournisseur et le stockage sont injectés : ce fichier ne lit
  * jamais `Deno.env` et se teste sans réseau.
@@ -78,6 +81,18 @@ export interface TranscriptionWorkerConfig {
     engine: 'legacy' | 'v2';
   }) => Promise<string | undefined>;
   /**
+   * La normalisation contrôlée du texte (phase 7) : la graphie des termes
+   * connus et, sous contrainte, les mots mal entendus — jamais une
+   * reformulation. `null` = pas de passe (legacy, échec, trace non
+   * vérifiable) : le brut sert de texte. Ne journalise jamais le texte.
+   */
+  normalize: (params: {
+    admin: SupabaseClient;
+    organizationId: string;
+    engine: 'legacy' | 'v2';
+    text: string;
+  }) => Promise<Normalisation | null>;
+  /**
    * Le résumé, DANS le quota IA de l'organisation : `null` si le quota est
    * épuisé ou le fournisseur indisponible — la transcription part sans
    * résumé plutôt que d'attendre.
@@ -132,6 +147,8 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
 
       let outcome: 'done' | 'error' | 'quota' | 'rejected' = 'error';
       let transcript: string | null = null;
+      let transcriptRaw: string | null = null;
+      let normalization: Normalisation['remplacements'] | null = null;
       let summary: string | null = null;
       let errorMessage: string | null = null;
       let engine: string | null = null;
@@ -160,8 +177,20 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
             moteur,
             prompt,
           );
-          transcript = resultat.text;
+          transcriptRaw = resultat.text;
           engine = resultat.engine;
+          // La normalisation ne peut pas faire échouer une transcription :
+          // sans elle, le brut est le texte.
+          const normalisation = await config
+            .normalize({
+              admin,
+              organizationId: recording.organization_id,
+              engine: moteur,
+              text: transcriptRaw,
+            })
+            .catch(() => null);
+          transcript = normalisation ? normalisation.texte : transcriptRaw;
+          normalization = normalisation ? normalisation.remplacements : null;
           summary = await config.summarize({
             admin,
             organizationId: recording.organization_id,
@@ -184,6 +213,8 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
         p_summary: summary,
         p_error: errorMessage,
         p_engine: engine,
+        p_raw: transcriptRaw,
+        p_normalization: normalization,
       });
       if (recordError) {
         console.error('transcription-worker: résultat non enregistré', recordError);

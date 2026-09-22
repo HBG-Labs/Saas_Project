@@ -6,7 +6,9 @@ import {
   releaseAiUsage,
   reserveAiUsage,
 } from '../_shared/ai.ts';
-import { contexteOrganisation } from '../_shared/stt-context.ts';
+import { chargerTermesOrganisation, contexteOrganisation } from '../_shared/stt-context.ts';
+import { glossaireDeBase } from '../_shared/stt-glossary.ts';
+import { normaliserTranscription } from '../_shared/transcript-normalize.ts';
 import { summaryPrompt, summaryQuery, transcribeAudio } from '../_shared/transcription.ts';
 import { createTranscriptionWorkerHandler } from './handler.ts';
 
@@ -46,6 +48,37 @@ Deno.serve(
     // le glossaire de son secteur. Rien en legacy. Jamais journalisé.
     buildPrompt: ({ admin, organizationId, engine }) =>
       engine === 'v2' ? contexteOrganisation(admin, organizationId) : Promise.resolve(undefined),
+    // La normalisation contrôlée (phase 7), en v2 seulement : les termes
+    // connus sont le dictionnaire de l'organisation puis le glossaire de son
+    // secteur ; la couche modèle fait partie de la transcription (couverte
+    // par les minutes réservées), pas du quota de requêtes IA. Sans clé, la
+    // couche orthographe seule. Rien du texte n'est journalisé.
+    normalize: async ({ admin, organizationId, engine, text }) => {
+      if (engine !== 'v2') return null;
+      const [{ data: org }, dictionnaire] = await Promise.all([
+        admin.from('organizations').select('industry').eq('id', organizationId).maybeSingle(),
+        chargerTermesOrganisation(admin, organizationId),
+      ]);
+      const industry = (org as { industry?: string | null } | null)?.industry ?? null;
+      const termes = [...dictionnaire, ...glossaireDeBase(industry)];
+      return normaliserTranscription({
+        brut: text,
+        termes,
+        ...(openaiApiKey
+          ? {
+              proposer: async (promptSysteme: string, texte: string) =>
+                (
+                  await createChatCompletion({
+                    apiKey: openaiApiKey,
+                    systemPrompt: promptSysteme,
+                    history: [],
+                    query: texte,
+                  })
+                ).content,
+            }
+          : {}),
+      });
+    },
     // Le résumé compte une requête IA de l'organisation, réservée comme une
     // conversation Workspace ; sans quota ou sans clé, la transcription part
     // sans résumé.

@@ -92,6 +92,7 @@ function config(partial: Partial<TranscriptionWorkerConfig>): TranscriptionWorke
         engine: 'gpt-4o-transcribe',
       }),
     buildPrompt: ({ engine }) => Promise.resolve(engine === 'v2' ? 'Contexte v2' : undefined),
+    normalize: () => Promise.resolve(null),
     summarize: () => Promise.resolve('## Décisions\n- Poser le boîtier jeudi'),
     ...partial,
   };
@@ -119,8 +120,59 @@ Deno.test('chemin nominal : texte et résumé rendus à la base', async () => {
     p_summary: '## Décisions\n- Poser le boîtier jeudi',
     p_error: null,
     p_engine: 'gpt-4o-transcribe',
+    p_raw: 'Bonjour à tous. On pose le boîtier jeudi.',
+    p_normalization: null,
   });
   assertEquals(fake.heartbeats[0]?.done, 1);
+});
+
+Deno.test(
+  'normalisation : le brut, le texte normalisé et la trace sont rendus ; le résumé lit le texte normalisé',
+  async () => {
+    const fake = fakeSupabase([enregistrement({ id: 'n', stt_engine: 'v2' })]);
+    const resumeDe: string[] = [];
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        transcribe: () => Promise.resolve({ text: 'La pto est posée.', engine: 'gpt-transcribe' }),
+        normalize: ({ engine, text }) =>
+          Promise.resolve(
+            engine === 'v2'
+              ? {
+                  texte: text.replace('pto', 'PTO'),
+                  remplacements: [
+                    { de: 'pto', vers: 'PTO', occurrences: 1, couche: 'orthographe' },
+                  ],
+                }
+              : null,
+          ),
+        summarize: ({ transcript }) => {
+          resumeDe.push(transcript);
+          return Promise.resolve(null);
+        },
+      }),
+    )(request());
+    assertEquals(fake.results[0]?.p_raw, 'La pto est posée.');
+    assertEquals(fake.results[0]?.p_transcript, 'La PTO est posée.');
+    assertEquals(fake.results[0]?.p_normalization, [
+      { de: 'pto', vers: 'PTO', occurrences: 1, couche: 'orthographe' },
+    ]);
+    assertEquals(resumeDe, ['La PTO est posée.']);
+  },
+);
+
+Deno.test('normalisation en échec : le brut sert de texte, la transcription aboutit', async () => {
+  const fake = fakeSupabase([enregistrement({ id: 'n', stt_engine: 'v2' })]);
+  await createTranscriptionWorkerHandler(
+    config({
+      fetch: fake.fetchImpl,
+      normalize: () => Promise.reject(new Error('modèle indisponible')),
+    }),
+  )(request());
+  assertEquals(fake.results[0]?.p_outcome, 'done');
+  assertEquals(fake.results[0]?.p_transcript, 'Bonjour à tous. On pose le boîtier jeudi.');
+  assertEquals(fake.results[0]?.p_raw, 'Bonjour à tous. On pose le boîtier jeudi.');
+  assertEquals(fake.results[0]?.p_normalization, null);
 });
 
 Deno.test('quota refusé : rien n’est téléchargé, « quota » est rendu', async () => {

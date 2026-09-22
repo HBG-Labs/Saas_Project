@@ -101,8 +101,21 @@ export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
 export type WorkspaceRecordingStatus = 'uploading' | 'pending' | 'processing' | 'done' | 'failed';
 /** Moteur de transcription par organisation — 20261006090000_stt_colonnes_et_flag.sql */
 export type SttEngine = 'legacy' | 'v2';
+/** Un remplacement de la normalisation contrôlée — 20261008090000_stt_normalisation.sql */
+export interface NormalizationChange {
+  /** La forme trouvée dans le brut. */
+  de: string;
+  /** Le terme connu qui la remplace. */
+  vers: string;
+  occurrences: number;
+  /** « orthographe » : graphie d'un terme connu ; « modele » : mot mal entendu, dans son seul passage. */
+  couche: 'orthographe' | 'modele';
+  /** Couche modèle : le passage exact où le remplacement s'applique. */
+  contexte?: string;
+}
 /** Dictionnaire de transcription — 20261007093000_organization_vocabulary.sql */
-export type VocabularyType = 'client' | 'site' | 'materiel' | 'technique' | 'personne' | 'lieu' | 'autre';
+export type VocabularyType =
+  'client' | 'site' | 'materiel' | 'technique' | 'personne' | 'lieu' | 'autre';
 export type VocabularySource = 'auto' | 'manuel';
 /** Un paragraphe horodaté d'une transcription (secondes). */
 export interface RecordingSegment {
@@ -4255,6 +4268,12 @@ export interface Database {
           transcript_raw: string | null;
           /** Quand `transcript` a été normalisé depuis le brut ; `null` = identique. */
           transcript_normalized_at: string | null;
+          /**
+           * Les remplacements faits du brut au texte — 20261008090000. Rejoués
+           * sur `transcript_raw`, ils redonnent `transcript`. `null` = pas de
+           * passe ; `[]` = passe sans changement.
+           */
+          normalization_diff: NormalizationChange[] | null;
           /** Paragraphes horodatés (phase 8). */
           segments: RecordingSegment[] | null;
           /** Résumé structuré avec renvois aux segments (phase 8). */
