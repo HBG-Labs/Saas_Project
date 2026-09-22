@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 
 /* Polices auto-hébergées — aucune requête vers un CDN tiers. */
-@import '@fontsource-variable/archivo';
 @import '@fontsource-variable/ibm-plex-sans';
 @import '@fontsource-variable/jetbrains-mono';
 @import '@fontsource-variable/caveat';
@@ -461,8 +460,8 @@
   /*
     Les titres passent sur la police d'affichage, le reste sur celle de texte.
 
-    Archivo est plus serrée qu'IBM Plex Sans : l'interlettrage négatif est
-    réduit de -0.02em à -0.015em, sinon les gros titres se referment.
+    Nunito est utilisée pour les titres comme pour le texte courant. Un léger
+    interlettrage négatif suffit à structurer les grands titres sans les fermer.
   */
   h1,
   h2,
@@ -722,7 +721,7 @@ html.compact-mode {
    réellement utilisé, pour l'indicateur de synchronisation.
    ============================================================================= */
 
-/* La vitrine conserve sa palette et ses familles ; elle ne fait pas partie du lot A. */
+/* La vitrine conserve sa palette claire, mais hérite de la typographie globale. */
 @layer base {
   .theme-jour-verrouille {
     --background: #fbfaf8;
@@ -800,8 +799,6 @@ html.compact-mode {
   }
   .public-shell,
   .theme-jour-verrouille {
-    --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', sans-serif;
-    --font-display: 'Archivo Variable', 'Archivo', sans-serif;
     --action: var(--primary);
     --action-hover: var(--primary-hover);
     --action-active: var(--primary-active);

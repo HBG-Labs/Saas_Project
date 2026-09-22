@@ -104,6 +104,18 @@ describe('préréglages de thème, miroirs des blocs CSS', () => {
     expect(Object.keys(ATELIER_NUIT_PRESET.variables)).toEqual([]);
   });
 
+  it('la coque publique hérite de la nouvelle typographie globale', () => {
+    const coquePublique = lireBloc(
+      /\.public-shell,\s*\.theme-jour-verrouille\s*\{/,
+      '.public-shell',
+    );
+
+    expect(CSS).toMatch(/--font-sans:\s*'Nunito'/);
+    expect(CSS).toMatch(/--font-display:\s*'Nunito'/);
+    expect(coquePublique['--font-sans']).toBeUndefined();
+    expect(coquePublique['--font-display']).toBeUndefined();
+  });
+
   it('Atelier Nuit reste bleu ardoise sans surface ni ombre noire', () => {
     expect(
       [
