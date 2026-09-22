@@ -257,10 +257,12 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
    * Le direct : `off` (pas demandé), `unavailable` (refusé ou en panne — la
    * capture continue), puis les états de la connexion. `text` est le brouillon.
    */
-  const [live, setLive] = useState<{ status: 'off' | 'unavailable' | LiveStatus; text: string }>({
-    status: 'off',
-    text: '',
-  });
+  const [live, setLive] = useState<{
+    status: 'off' | 'unavailable' | LiveStatus;
+    text: string;
+    /** Pourquoi le direct est indisponible — le motif du serveur, à montrer. */
+    reason: string | null;
+  }>({ status: 'off', text: '', reason: null });
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -512,7 +514,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       liveTextRef.current = '';
       liveUsedRef.current = false;
       liveTurnsRef.current = 0;
-      setLive({ status: liveOptions ? 'connecting' : 'off', text: '' });
+      setLive({ status: liveOptions ? 'connecting' : 'off', text: '', reason: null });
       if (liveOptions) {
         void startLiveTranscript({
           track: piste,
@@ -552,7 +554,13 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
             if (activeRef.current?.key === key) liveSessionRef.current = session;
             else session.close();
           })
-          .catch(() => setLive((l) => ({ ...l, status: 'unavailable' })));
+          .catch((e: unknown) =>
+            setLive((l) => ({
+              ...l,
+              status: 'unavailable',
+              reason: messageDe(e, 'Direct indisponible.'),
+            })),
+          );
       }
       const rec: LocalRecording = {
         key,

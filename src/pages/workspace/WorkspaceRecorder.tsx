@@ -209,6 +209,12 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
           {recorder.error ? <span className="text-error text-xs">{recorder.error}</span> : null}
         </div>
 
+        {enCours && recorder.live.status === 'unavailable' ? (
+          <p className="text-muted-foreground text-xs" role="status">
+            Direct indisponible — {recorder.live.reason ?? 'motif inconnu'}. La transcription finale
+            suivra.
+          </p>
+        ) : null}
         {enCours && recorder.live.status !== 'off' && recorder.live.status !== 'unavailable' ? (
           <div
             className="border-border bg-surface-sunken max-h-48 overflow-y-auto rounded-lg border p-3 text-sm whitespace-pre-wrap"

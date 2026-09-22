@@ -652,6 +652,7 @@ describe('useAudioRecorder — zéro perte', () => {
     const h = fabriquer({ live: { getToken: () => Promise.reject(new Error('403')) } });
     const recorder = await demarrer(h);
     await waitFor(() => expect(h.result.current.live.status).toBe('unavailable'));
+    expect(h.result.current.live.reason).toBe('403');
     expect(h.result.current.status).toBe('recording');
     act(() => {
       recorder.emit('A');
