@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.1
 
 import type { ResumeStructure } from '../_shared/structured-summary.ts';
 import type { Normalisation } from '../_shared/transcript-normalize.ts';
+import { MESSAGE_REFUS, verifierTexte } from '../_shared/transcript-sanity.ts';
 import { type Segment, decouperEnSegments } from '../_shared/transcript-segments.ts';
 import { TranscriptionRejected } from '../_shared/transcription.ts';
 import { workerSecretMatches } from '../_shared/worker-secret.ts';
@@ -191,8 +192,13 @@ export function createTranscriptionWorkerHandler(config: TranscriptionWorkerConf
             moteur,
             prompt,
           );
-          transcriptRaw = resultat.text;
           engine = resultat.engine;
+          // Du silence transcrit n'est pas une transcription : ce que le moteur
+          // hallucine (autre alphabet, formule de sous-titrage) n'entre ni
+          // dans la page ni dans le résumé. La ligne est marquée, l'audio reste.
+          const verdict = verifierTexte(resultat.text, recording.language);
+          if (!verdict.ok) throw new TranscriptionRejected(MESSAGE_REFUS[verdict.motif]);
+          transcriptRaw = resultat.text;
           // La normalisation ne peut pas faire échouer une transcription :
           // sans elle, le brut est le texte.
           const normalisation = await config

@@ -1,4 +1,4 @@
-import { assertEquals } from 'jsr:@std/assert@1';
+import { assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 
 import { TranscriptionRejected } from '../_shared/transcription.ts';
 import {
@@ -107,6 +107,36 @@ Deno.test('un mauvais secret est refusé', async () => {
   assertEquals(response.status, 401);
   assertEquals(fake.results.length, 0);
 });
+
+Deno.test(
+  'du silence halluciné (cyrillique pour du français) est refusé : ni page, ni résumé, ni normalisation',
+  async () => {
+    const fake = fakeSupabase([enregistrement({ id: 'muet', stt_engine: 'v2' })]);
+    const appels = { normalize: 0, summarize: 0 };
+    await createTranscriptionWorkerHandler(
+      config({
+        fetch: fake.fetchImpl,
+        transcribe: () =>
+          Promise.resolve({ text: 'Анди Тоттенсон живет в зоопарке.', engine: 'gpt-transcribe' }),
+        normalize: () => {
+          appels.normalize += 1;
+          return Promise.resolve(null);
+        },
+        summarize: () => {
+          appels.summarize += 1;
+          return Promise.resolve(null);
+        },
+      }),
+    )(request());
+    assertEquals(fake.results[0]?.p_outcome, 'rejected');
+    assertEquals(fake.results[0]?.p_transcript, null);
+    assertEquals(fake.results[0]?.p_raw, null);
+    assertEquals(fake.results[0]?.p_engine, 'gpt-transcribe');
+    assertStringIncludes(String(fake.results[0]?.p_error), 'Aucune parole détectée');
+    assertEquals(appels, { normalize: 0, summarize: 0 });
+    assertEquals(fake.heartbeats[0]?.failed, 1);
+  },
+);
 
 Deno.test('chemin nominal : texte et résumé rendus à la base', async () => {
   const fake = fakeSupabase([enregistrement({ id: 'r-1' })]);

@@ -48,6 +48,20 @@ class FakeRecorder {
   }
 }
 
+function fauxFlux(pistes: { stopped: number }, muted: boolean): MediaStream {
+  const piste = {
+    muted,
+    readyState: 'live',
+    stop: () => (pistes.stopped += 1),
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+  return {
+    getTracks: () => [piste],
+    getAudioTracks: () => [piste],
+  } as unknown as MediaStream;
+}
+
 function fabriquer(
   overrides: {
     upload?: ResumableUploader;
@@ -56,14 +70,16 @@ function fabriquer(
     updateNotes?: RecorderServerApi['updateNotes'];
     store?: MemoryAudioStore;
     getUserMedia?: RecorderMedia['getUserMedia'];
+    /** Le niveau que le vu-mètre lit ; `null` = navigateur sans mesure. */
+    niveau?: { valeur: number } | null;
+    muted?: boolean;
   } = {},
 ) {
   const store = overrides.store ?? new MemoryAudioStore();
   const recorders: FakeRecorder[] = [];
   const pistes = { stopped: 0 };
-  const stream = {
-    getTracks: () => [{ stop: () => (pistes.stopped += 1) }],
-  } as unknown as MediaStream;
+  const stream = fauxFlux(pistes, overrides.muted ?? false);
+  const niveau = overrides.niveau === undefined ? { valeur: 0.05 } : overrides.niveau;
   const media: RecorderMedia = {
     getUserMedia: overrides.getUserMedia ?? (() => Promise.resolve(stream)),
     isTypeSupported: (t) => t === 'audio/webm;codecs=opus',
@@ -72,6 +88,7 @@ function fabriquer(
       recorders.push(r);
       return r as unknown as MediaRecorder;
     },
+    createLevelMeter: () => (niveau ? { read: () => niveau.valeur, close: () => {} } : null),
   };
   const createRow = overrides.createRow ?? vi.fn(() => Promise.resolve({ id: 'srv-1' }));
   const submit = overrides.submit ?? vi.fn(() => Promise.resolve({}));
@@ -130,7 +147,7 @@ describe('useAudioRecorder — zéro perte', () => {
 
   it('demande le micro avec des contraintes explicites, et retombe sur { audio: true } si elles sont refusées', async () => {
     const appels: MediaStreamConstraints[] = [];
-    const stream = { getTracks: () => [] } as unknown as MediaStream;
+    const stream = fauxFlux({ stopped: 0 }, false);
     const h = fabriquer({
       getUserMedia: (c) => {
         appels.push(c);
@@ -452,5 +469,89 @@ describe('useAudioRecorder — zéro perte', () => {
     });
     expect(h.result.current.notes).toBe('');
     expect(await store.listRecordings()).toEqual([]);
+  });
+
+  it('une piste muette au départ est refusée avec un message qui dit quoi faire', async () => {
+    vi.useFakeTimers();
+    try {
+      const h = fabriquer({ muted: true });
+      const demarrage = act(() => h.result.current.start({ title: 'x', consentConfirmed: true }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      await demarrage;
+      expect(h.result.current.status).toBe('idle');
+      expect(h.result.current.error).toMatch(/micro est coupé/);
+      expect(h.recorders).toHaveLength(0);
+      expect(h.pistes.stopped).toBeGreaterThan(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("un enregistrement sans aucun son n'est pas envoyé : il reste sur l'appareil, marqué", async () => {
+    vi.useFakeTimers();
+    try {
+      const niveau = { valeur: 0.001 };
+      const h = fabriquer({ niveau });
+      const recorder = await demarrer(h);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(7000);
+      });
+      expect(h.result.current.signal).toBe('none');
+      expect(h.result.current.level).toBeCloseTo(0.001);
+      act(() => {
+        recorder.emit('A');
+        h.result.current.stop();
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+      expect(h.result.current.status).toBe('error');
+      expect(h.result.current.error).toMatch(/Aucun son capté/);
+      expect(h.createRow).not.toHaveBeenCalled();
+      expect(h.upload).not.toHaveBeenCalled();
+      const restes = await h.store.listRecordings();
+      expect(restes).toHaveLength(1);
+      expect(restes[0]).toMatchObject({
+        status: 'ready',
+        lastError: expect.stringMatching(/Aucun son/),
+      });
+      expect(h.result.current.pending[0]?.key).toBe(restes[0]?.key);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('avec du son, le signal est bon et l’envoi part ; sans mesure possible, on ne bloque rien', async () => {
+    vi.useFakeTimers();
+    try {
+      const h = fabriquer({ niveau: { valeur: 0.05 } });
+      const recorder = await demarrer(h);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(7000);
+      });
+      expect(h.result.current.signal).toBe('ok');
+      act(() => {
+        recorder.emit('A');
+        h.result.current.stop();
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+      expect(h.createRow).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    const sans = fabriquer({ niveau: null });
+    const recorder = await demarrer(sans);
+    expect(sans.result.current.signal).toBe('unknown');
+    expect(sans.result.current.level).toBeNull();
+    act(() => {
+      recorder.emit('A');
+      sans.result.current.stop();
+    });
+    await waitFor(() => expect(sans.result.current.status).toBe('done'));
   });
 });

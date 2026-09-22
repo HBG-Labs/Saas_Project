@@ -152,6 +152,30 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               <Button type="button" variant="danger" onClick={recorder.stop}>
                 <Square aria-hidden /> Terminer ({formatSeconds(recorder.elapsedSeconds)})
               </Button>
+              {recorder.level !== null ? (
+                // Le niveau du micro : une barre qui bouge quand on parle. Sans
+                // mouvement, le micro n'entend rien — mieux vaut le voir tout de suite.
+                <span
+                  className="bg-surface-sunken inline-flex h-2 w-20 overflow-hidden rounded-full"
+                  role="meter"
+                  aria-label="Niveau du micro"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(Math.min(1, recorder.level * 5) * 100)}
+                >
+                  <span
+                    className={recorder.signal === 'none' ? 'bg-error' : 'bg-success'}
+                    style={{
+                      width: `${String(Math.round(Math.min(1, recorder.level * 5) * 100))}%`,
+                    }}
+                  />
+                </span>
+              ) : null}
+              {recorder.signal === 'none' ? (
+                <span className="text-error text-xs" role="alert">
+                  Aucun son capté : vérifiez le micro.
+                </span>
+              ) : null}
               <Button type="button" variant="ghost" onClick={() => void recorder.cancel()}>
                 <X aria-hidden /> Annuler
               </Button>

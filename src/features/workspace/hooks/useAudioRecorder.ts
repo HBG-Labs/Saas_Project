@@ -74,12 +74,38 @@ export interface RecorderServerApi {
   updateNotes?(recordingId: string, notes: string): Promise<unknown>;
 }
 
+/** Mesure le niveau du micro : `read()` rend l'amplitude efficace (0 → 1) de l'instant. */
+export interface LevelMeter {
+  read(): number;
+  close(): void;
+}
+
 /** Ce que le hook demande au navigateur — injecté, pour tester sans micro. */
 export interface RecorderMedia {
   getUserMedia(constraints: MediaStreamConstraints): Promise<MediaStream>;
   isTypeSupported(mimeType: string): boolean;
   createRecorder(stream: MediaStream, options: MediaRecorderOptions): MediaRecorder;
+  /** `null` quand le navigateur ne sait pas mesurer : on n'en déduit rien. */
+  createLevelMeter(stream: MediaStream): LevelMeter | null;
 }
+
+/**
+ * Sous ce niveau efficace, c'est du silence. Une voix normale au téléphone
+ * donne 0,02 à 0,2 ; le bruit de fond d'une pièce, 0,001 à 0,005.
+ */
+export const SILENCE_RMS = 0.008;
+/** Au-delà de cette durée sans aucun son, l'écran prévient. */
+export const SILENCE_WARN_SECONDS = 6;
+/** Attente d'une piste qui se déclare muette au départ avant de refuser. */
+const MUTED_GRACE_MS = 1500;
+const LEVEL_INTERVAL_MS = 250;
+/** En dessous de ce nombre de mesures (2 s), on ne juge pas : trop court pour conclure au silence. */
+const MIN_READINGS_TO_JUDGE = 8;
+
+export const MESSAGE_MICRO_MUET =
+  "Le micro est coupé par le système : aucun son n'arrive. Dans l'application installée, autorisez le micro pour REZO360 dans les réglages du téléphone (Applications → REZO360 → Autorisations), ou enregistrez depuis le navigateur.";
+export const MESSAGE_AUCUN_SON =
+  "Aucun son capté pendant l'enregistrement : il n'a pas été envoyé. Vérifiez le micro (autorisation de l'application, autre appli qui l'utilise), puis réessayez. L'audio reste sur cet appareil.";
 
 export interface UseAudioRecorderOptions {
   page: RecorderPage;
@@ -143,7 +169,45 @@ const defaultMedia: RecorderMedia = {
   getUserMedia: (c) => navigator.mediaDevices.getUserMedia(c),
   isTypeSupported: (t) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t),
   createRecorder: (s, o) => new MediaRecorder(s, o),
+  createLevelMeter: (stream) => {
+    if (typeof AudioContext === 'undefined') return null;
+    try {
+      const contexte = new AudioContext();
+      const source = contexte.createMediaStreamSource(stream);
+      const analyseur = contexte.createAnalyser();
+      analyseur.fftSize = 1024;
+      source.connect(analyseur);
+      const tampon = new Float32Array(analyseur.fftSize);
+      return {
+        read: () => {
+          analyseur.getFloatTimeDomainData(tampon);
+          let somme = 0;
+          for (const v of tampon) somme += v * v;
+          return Math.sqrt(somme / tampon.length);
+        },
+        close: () => {
+          source.disconnect();
+          void contexte.close();
+        },
+      };
+    } catch {
+      return null;
+    }
+  },
 };
+
+/** Une piste déclarée muette par le système au départ le reste presque toujours : on attend un peu, puis on tranche. */
+function attendreDemutage(track: MediaStreamTrack, delaiMs: number): Promise<boolean> {
+  if (!track.muted) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const fin = () => {
+      track.removeEventListener('unmute', fin);
+      resolve(!track.muted);
+    };
+    track.addEventListener('unmute', fin);
+    setTimeout(fin, delaiMs);
+  });
+}
 
 let defaultStore: LocalAudioStore | null = null;
 
@@ -168,9 +232,18 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   const [current, setCurrent] = useState<{ key: string; title: string; startedAt: string } | null>(
     null,
   );
+  /** Le niveau du micro à l'instant (0 → 1) ; `null` quand on ne sait pas mesurer. */
+  const [level, setLevel] = useState<number | null>(null);
+  /** `none` : rien n'a été capté depuis SILENCE_WARN_SECONDS ; `unknown` : pas de mesure possible. */
+  const [signal, setSignal] = useState<'unknown' | 'ok' | 'none'>('unknown');
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const meterRef = useRef<LevelMeter | null>(null);
+  const meterTimerRef = useRef<number | null>(null);
+  /** Le plus fort niveau vu pendant la capture : décide, à l'arrêt, si quelque chose a été capté. */
+  const peakRef = useRef(0);
+  const readingsRef = useRef(0);
   const activeRef = useRef<LocalRecording | null>(null);
   /** L'enregistrement dont les notes s'éditent : le courant, jusqu'à son envoi confirmé. */
   const notesKeyRef = useRef<string | null>(null);
@@ -318,6 +391,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   );
 
   const arreterFlux = () => {
+    if (meterTimerRef.current !== null) window.clearInterval(meterTimerRef.current);
+    meterTimerRef.current = null;
+    meterRef.current?.close();
+    meterRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     recorderRef.current = null;
@@ -357,7 +434,38 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         setError(messageDe(e, 'Micro inaccessible.'));
         return;
       }
+      // Une piste muette au départ : le système livre du silence (permission
+      // de l'application refusée sur Android, par exemple). On refuse tout de
+      // suite plutôt que d'enregistrer deux minutes de rien.
+      const piste = stream.getAudioTracks()[0];
+      if (!piste || !(await attendreDemutage(piste, MUTED_GRACE_MS))) {
+        stream.getTracks().forEach((t) => t.stop());
+        setStatus('idle');
+        setError(MESSAGE_MICRO_MUET);
+        return;
+      }
       streamRef.current = stream;
+
+      // Le niveau sonore, pour l'écran et pour refuser un enregistrement muet.
+      peakRef.current = 0;
+      readingsRef.current = 0;
+      const meter = media.createLevelMeter(stream);
+      meterRef.current = meter;
+      setLevel(meter ? 0 : null);
+      setSignal(meter ? 'ok' : 'unknown');
+      if (meter) {
+        meterTimerRef.current = window.setInterval(() => {
+          const v = meter.read();
+          if (!Number.isFinite(v)) return;
+          readingsRef.current += 1;
+          setLevel(v);
+          if (v > peakRef.current) peakRef.current = v;
+          const muetDepuis = (readingsRef.current * LEVEL_INTERVAL_MS) / 1000;
+          setSignal(
+            peakRef.current < SILENCE_RMS && muetDepuis >= SILENCE_WARN_SECONDS ? 'none' : 'ok',
+          );
+        }, LEVEL_INTERVAL_MS);
+      }
 
       const key = crypto.randomUUID();
       const startedAt = now();
@@ -410,12 +518,34 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         })();
       };
       recorder.onstop = () => {
+        // On ne conclut au silence qu'avec assez de mesures : une capture d'une
+        // seconde n'est pas jugée.
+        const rienCapte =
+          meterRef.current !== null &&
+          readingsRef.current >= MIN_READINGS_TO_JUDGE &&
+          peakRef.current < SILENCE_RMS;
         arreterFlux();
+        setLevel(null);
         const courant = activeRef.current;
         activeRef.current = null;
         if (!courant || cancelledRef.current) return;
         void (async () => {
           setStatus('saving');
+          if (rienCapte) {
+            // Rien n'a été capté : on n'envoie pas. L'audio reste sur l'appareil,
+            // marqué, et la personne décide (réessayer, envoyer quand même, jeter).
+            await store.putRecording({
+              ...((await store.getRecording(courant.key)) ?? courant),
+              status: 'ready',
+              lastError: MESSAGE_AUCUN_SON,
+              updatedAt: new Date(now()).toISOString(),
+            });
+            setError(MESSAGE_AUCUN_SON);
+            setStatus('error');
+            setCurrent(null);
+            await rafraichirPending();
+            return;
+          }
           // Laisser la dernière tranche s'écrire, puis marquer « prêt » — sur
           // l'état relu, pour ne pas écraser des notes tapées entre-temps.
           await store.putRecording({
@@ -438,7 +568,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       recorder.start(TIMESLICE_MS);
       setStatus('recording');
     },
-    [supported, media, store, page, now, envoyer],
+    [supported, media, store, page, now, envoyer, rafraichirPending],
   );
 
   const pause = useCallback(() => {
@@ -577,6 +707,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     setNotes,
     /** La capture en cours (clé, titre, début) ; `null` hors capture/envoi. */
     current,
+    /** Le niveau du micro (0 → 1) pendant la capture ; `null` hors capture ou sans mesure. */
+    level,
+    /** `none` = rien capté depuis plusieurs secondes : l'écran prévient. */
+    signal,
     start,
     pause,
     resume,
