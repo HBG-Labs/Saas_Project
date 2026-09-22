@@ -7,6 +7,13 @@ import {
   type LocalRecording,
 } from '../audio/local-store';
 import { uploadResumable, type ResumableUploader } from '../audio/resumable-upload';
+import {
+  startLiveTranscript,
+  type LiveSession,
+  type LiveStatus,
+  type LiveToken,
+  type LiveTransport,
+} from '../audio/live-transcript';
 import { fixDuration, type DurationFixer } from '../audio/webm-duration';
 
 /**
@@ -69,6 +76,9 @@ export interface RecorderServerApi {
     title: string;
     language?: string;
     notes?: string;
+    /** Le brouillon du direct et son marqueur (phase 14). */
+    transcriptLive?: string;
+    liveUsed?: boolean;
   }): Promise<{ id: string }>;
   submit(recordingId: string, sizeBytes: number): Promise<unknown>;
   /** Les notes tapées après la création de la ligne (pendant l'envoi). */
@@ -116,6 +126,12 @@ export interface UseAudioRecorderOptions {
   uploader?: ResumableUploader;
   /** Inscrit la durée dans l'en-tête WebM avant l'envoi ; injecté pour les tests. */
   durationFixer?: DurationFixer;
+  /**
+   * Le direct (phase 14) : le texte pendant la parole. `getToken` demande au
+   * serveur un jeton éphémère ; absent, pas de direct. Un refus ou une panne
+   * ne touche jamais à la capture.
+   */
+  live?: { getToken: () => Promise<LiveToken>; transport?: LiveTransport };
   api?: RecorderServerApi;
   media?: RecorderMedia;
   now?: () => number;
@@ -222,6 +238,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   );
   const uploader = options.uploader ?? uploadResumable;
   const fixer = options.durationFixer ?? fixDuration;
+  const liveOptions = options.live;
   const media = options.media ?? defaultMedia;
   const now = options.now ?? Date.now;
   const api = options.api;
@@ -240,10 +257,22 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   const [level, setLevel] = useState<number | null>(null);
   /** `none` : rien n'a été capté depuis SILENCE_WARN_SECONDS ; `unknown` : pas de mesure possible. */
   const [signal, setSignal] = useState<'unknown' | 'ok' | 'none'>('unknown');
+  /**
+   * Le direct : `off` (pas demandé), `unavailable` (refusé ou en panne — la
+   * capture continue), puis les états de la connexion. `text` est le brouillon.
+   */
+  const [live, setLive] = useState<{ status: 'off' | 'unavailable' | LiveStatus; text: string }>({
+    status: 'off',
+    text: '',
+  });
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const meterRef = useRef<LevelMeter | null>(null);
+  const liveSessionRef = useRef<LiveSession | null>(null);
+  const liveTextRef = useRef('');
+  const liveUsedRef = useRef(false);
+  const liveTurnsRef = useRef(0);
   const meterTimerRef = useRef<number | null>(null);
   /** Le plus fort niveau vu pendant la capture : décide, à l'arrêt, si quelque chose a été capté. */
   const peakRef = useRef(0);
@@ -325,6 +354,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
             consentConfirmedAt: rec.consentConfirmedAt,
             title: rec.title,
             ...(rec.notes && rec.notes.trim().length > 0 ? { notes: rec.notes } : {}),
+            ...(rec.transcriptLive && rec.transcriptLive.length > 0
+              ? { transcriptLive: rec.transcriptLive }
+              : {}),
+            ...(rec.liveUsed ? { liveUsed: true } : {}),
           });
           await noter({
             serverRecordingId: row.id,
@@ -397,6 +430,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   );
 
   const arreterFlux = () => {
+    liveSessionRef.current?.close();
+    liveSessionRef.current = null;
     if (meterTimerRef.current !== null) window.clearInterval(meterTimerRef.current);
     meterTimerRef.current = null;
     meterRef.current?.close();
@@ -475,6 +510,53 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
 
       const key = crypto.randomUUID();
       const startedAt = now();
+
+      // Le direct, en parallèle et sans attendre : la capture ne dépend pas de lui.
+      liveTextRef.current = '';
+      liveUsedRef.current = false;
+      liveTurnsRef.current = 0;
+      setLive({ status: liveOptions ? 'connecting' : 'off', text: '' });
+      if (liveOptions) {
+        void startLiveTranscript({
+          track: piste,
+          getToken: liveOptions.getToken,
+          ...(liveOptions.transport ? { transport: liveOptions.transport } : {}),
+          events: {
+            onStatus: (status) => {
+              if (status === 'on') liveUsedRef.current = true;
+              setLive((l) => ({ ...l, status }));
+            },
+            onText: (text, turns, settled) => {
+              liveTextRef.current = text;
+              setLive((l) => ({ ...l, text }));
+              // Écrit sur l'appareil à chaque tour de parole terminé, pas à chaque mot.
+              if (settled || turns.length !== liveTurnsRef.current) {
+                liveTurnsRef.current = turns.length;
+                void (async () => {
+                  const rec = await store.getRecording(key);
+                  if (!rec || activeRef.current?.key !== key) return;
+                  activeRef.current = {
+                    ...activeRef.current,
+                    transcriptLive: text,
+                    liveUsed: true,
+                  };
+                  await store.putRecording({
+                    ...rec,
+                    transcriptLive: text,
+                    liveUsed: true,
+                    updatedAt: new Date(now()).toISOString(),
+                  });
+                })();
+              }
+            },
+          },
+        })
+          .then((session) => {
+            if (activeRef.current?.key === key) liveSessionRef.current = session;
+            else session.close();
+          })
+          .catch(() => setLive((l) => ({ ...l, status: 'unavailable' })));
+      }
       const rec: LocalRecording = {
         key,
         organizationId: page.organization_id,
@@ -530,7 +612,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
           meterRef.current !== null &&
           readingsRef.current >= MIN_READINGS_TO_JUDGE &&
           peakRef.current < SILENCE_RMS;
+        const brouillon = liveTextRef.current;
+        const directUtilise = liveUsedRef.current;
         arreterFlux();
+        setLive((l) => ({ ...l, status: l.status === 'off' ? 'off' : 'closed' }));
         setLevel(null);
         const courant = activeRef.current;
         activeRef.current = null;
@@ -560,6 +645,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
               1,
               Math.round((now() - startedAtRef.current - pausedAccumRef.current) / 1000),
             ),
+            ...(brouillon.length > 0 ? { transcriptLive: brouillon } : {}),
+            ...(directUtilise ? { liveUsed: true } : {}),
             status: 'ready',
             updatedAt: new Date(now()).toISOString(),
           });
@@ -574,13 +661,15 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       recorder.start(TIMESLICE_MS);
       setStatus('recording');
     },
-    [supported, media, store, page, now, envoyer, rafraichirPending],
+    [supported, media, store, page, now, envoyer, rafraichirPending, liveOptions],
   );
 
   const pause = useCallback(() => {
     const r = recorderRef.current;
     if (!r || r.state !== 'recording') return;
     r.pause();
+    // En pause, le direct ne doit rien entendre non plus.
+    streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = false));
     pausedAtRef.current = now();
     setStatus('paused');
   }, [now]);
@@ -590,6 +679,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     if (!r || r.state !== 'paused') return;
     if (pausedAtRef.current !== null) pausedAccumRef.current += now() - pausedAtRef.current;
     pausedAtRef.current = null;
+    streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = true));
     r.resume();
     setStatus('recording');
   }, [now]);
@@ -717,6 +807,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     level,
     /** `none` = rien capté depuis plusieurs secondes : l'écran prévient. */
     signal,
+    /** Le direct : son état et le brouillon du texte pendant la parole. */
+    live,
     start,
     pause,
     resume,

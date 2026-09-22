@@ -688,6 +688,9 @@ export async function createRecordingRow(input: {
   language?: string;
   /** Les notes tapées pendant la capture ; jamais transmises au fournisseur. */
   notes?: string;
+  /** Le brouillon du direct et son marqueur (phase 14). */
+  transcriptLive?: string;
+  liveUsed?: boolean;
 }): Promise<WorkspaceRecording> {
   return unwrap(
     supabase
@@ -707,6 +710,10 @@ export async function createRecordingRow(input: {
         ...(input.notes !== undefined && input.notes.trim().length > 0
           ? { notes: input.notes }
           : {}),
+        ...(input.transcriptLive !== undefined && input.transcriptLive.length > 0
+          ? { transcript_live: input.transcriptLive }
+          : {}),
+        ...(input.liveUsed ? { live_used: true } : {}),
       })
       .select('*')
       .single(),
@@ -738,6 +745,39 @@ export async function renameRecording(
       .select('*')
       .single(),
   );
+}
+
+/**
+ * Le jeton éphémère du direct (phase 14) : demandé à la fonction Edge, qui
+ * vérifie la porte (`live_transcription_access`) et garde la clé OpenAI.
+ * Refusé → l'erreur porte le motif ; le hook continue sans direct.
+ */
+export async function fetchLiveToken(
+  organizationId: string,
+  pageId: string,
+): Promise<{ token: string; expiresAt: number; model: string }> {
+  const response: {
+    data: { token: string; expiresAt: number; model: string } | null;
+    error: unknown;
+  } = await supabase.functions.invoke<{ token: string; expiresAt: number; model: string }>(
+    'transcription-live-token',
+    { body: { organizationId, pageId } },
+  );
+  const { data, error } = response;
+  if (error || !data?.token) {
+    let motif = 'Direct indisponible.';
+    const context: unknown = (error as { context?: unknown } | null)?.context;
+    if (context instanceof Response) {
+      try {
+        const corps = (await context.clone().json()) as { error?: string };
+        if (corps.error) motif = corps.error;
+      } catch {
+        // le corps n'est pas du JSON : le motif générique suffit
+      }
+    }
+    throw new Error(motif);
+  }
+  return data;
 }
 
 /**

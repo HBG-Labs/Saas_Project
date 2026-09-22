@@ -493,6 +493,17 @@ Markdown), `notes`, `transcript.segments` (paragraphes `§n` — un seul en
 legacy), et `raw` (brut, `normalized`, `changes`) ; `citedSegments(item,
 segments)` résout les renvois d'un point du résumé vers ses paragraphes.
 
+**Le direct (phase 14, 22/09/2026)** — `recorder.live` : `{ status, text }`.
+`status` : `off` (pas demandé, organisation en legacy), `connecting`, `on`,
+`interrupted` (coupé après 3 reconnexions — la finale suivra), `unavailable`
+(refusé : quota, permission…), `closed`. `text` : le brouillon qui tombe
+pendant la parole — à afficher en direct, marqué comme brouillon, jamais
+comme le texte final. Après l'arrêt, `recordingViews(recording).live`
+porte ce brouillon si la finale a échoué. `recorder.level` (0 → 1) et
+`recorder.signal` (`none` = rien capté depuis 6 s) alimentent un vu-mètre et
+une alerte micro ; une piste muette ou un enregistrement sans son sont
+refusés par le hook avec un message (`recorder.error`).
+
 Ce que le hook et les données offrent aujourd'hui (21/09/2026) :
 
 - `recorder.notes` / `recorder.setNotes(texte)` — les notes tapées pendant

@@ -82,6 +82,8 @@ const serveur = (r: Partial<WorkspaceRecording>): WorkspaceRecording => ({
     actions: [],
   },
   notes: null,
+  transcript_live: null,
+  live_used: false,
   created_at: '2026-09-21T09:00:00Z',
   updated_at: '2026-09-21T09:05:00Z',
   ...r,
@@ -234,6 +236,24 @@ describe('vues d’un enregistrement', () => {
       { id: 's1', start: null, end: null, speaker: null, text: 'La PTO est posée.' },
     ]);
     expect(v.raw).toEqual({ text: 'La PTO est posée.', normalized: false, changes: [] });
+    expect(v.live).toEqual({ text: null, used: false });
+  });
+
+  it('en échec de la finale, le brouillon du direct reste à montrer', () => {
+    const v = recordingViews(
+      serveur({
+        status: 'failed',
+        transcript: null,
+        transcript_raw: null,
+        segments: null,
+        summary_json: null,
+        summary: null,
+        transcript_live: 'la pto est posée au salon',
+        live_used: true,
+      }),
+    );
+    expect(v.transcript.segments).toEqual([]);
+    expect(v.live).toEqual({ text: 'la pto est posée au salon', used: true });
   });
 
   it('les citations résolvent vers les paragraphes existants, les inconnues sont ignorées', () => {

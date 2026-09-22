@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import {
   RECORDING_STATUS_LABELS,
   createRecordingRow,
+  fetchLiveToken,
   submitRecording,
   updateRecordingNotes,
   useAudioRecorder,
@@ -93,6 +94,9 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
   const recorder = useAudioRecorder({
     page,
     api: serverApi,
+    // Le direct : le texte pendant la parole. Le serveur décide (moteur v2,
+    // quota, permission) ; refusé, la capture continue sans lui.
+    live: { getToken: () => fetchLiveToken(page.organization_id, page.id) },
     onSubmitted: () => {
       void queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(page.id) });
       void queryClient.invalidateQueries({
@@ -204,6 +208,31 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
           )}
           {recorder.error ? <span className="text-error text-xs">{recorder.error}</span> : null}
         </div>
+
+        {enCours && recorder.live.status !== 'off' && recorder.live.status !== 'unavailable' ? (
+          <div
+            className="border-border bg-surface-sunken max-h-48 overflow-y-auto rounded-lg border p-3 text-sm whitespace-pre-wrap"
+            aria-live="polite"
+            aria-label="Transcription en direct"
+          >
+            {recorder.live.text.length > 0 ? (
+              recorder.live.text
+            ) : (
+              <span className="text-muted-foreground">
+                {recorder.live.status === 'connecting'
+                  ? 'Connexion du direct…'
+                  : recorder.live.status === 'interrupted'
+                    ? 'Direct interrompu — la transcription finale suivra.'
+                    : 'Parlez : le texte apparaît ici.'}
+              </span>
+            )}
+            {recorder.live.status === 'interrupted' && recorder.live.text.length > 0 ? (
+              <p className="text-muted-foreground mt-2 text-xs">
+                Direct interrompu — la transcription finale suivra.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {enCours || enEnvoi ? (
           // Les notes de la personne pendant la capture : gardées sur l'appareil

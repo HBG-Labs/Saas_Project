@@ -123,6 +123,41 @@ lecture : qui voit la page. **Le worker ne les lit pas** : le tirage
 le fournisseur. À la transcription, la base les copie dans la page sous
 « Notes », avant le résumé (`20261010090000`) ; la colonne reste la source.
 
+## Le direct (phase 14, 22/09/2026)
+
+Comme Notion : le texte tombe **pendant** qu'on parle, puis la finale le
+remplace. Deux passes :
+
+1. **Le direct** — le téléphone ouvre une connexion WebRTC vers OpenAI
+   Realtime (`gpt-live-transcribe`, session `transcription`, `server_vad`,
+   réduction de bruit) avec la même piste micro que `MediaRecorder`, et
+   reçoit le texte au fil des mots (`conversation.item.input_audio_transcription.delta`
+   / `.completed`, canal `oai-events`). C'est un **brouillon** : affiché,
+   gardé sur l'appareil avec l'audio (`LocalRecording.transcriptLive`),
+   envoyé avec la ligne (`transcript_live`), jamais résumé, jamais dans la
+   page ; montré seulement si la finale échoue.
+2. **La finale** — inchangée : l'audio complet, `gpt-transcribe` + contexte,
+   normalisation, paragraphes, résumé cité, page.
+
+**La clé OpenAI ne quitte jamais le serveur.** `transcription-live-token`
+(session Supabase obligatoire) : la base dit oui ou non
+(`live_transcription_access` : membre, `ai.workspace`, module Workspace,
+page visible, moteur **v2**, ≥ 2 minutes de quota — le motif est rendu),
+puis la fonction charge le contexte (glossaire du secteur, dictionnaire en
+`prompt` et en `keywords`) et demande à OpenAI un jeton éphémère
+(`/v1/realtime/client_secrets`, 60 s, configuration de session incluse : le
+téléphone ne peut pas la changer). Chaque jeton délivré = une ligne dans
+`transcription_live_sessions` (organisation, personne, page, modèle — jamais
+de texte).
+
+**Le coût** : le direct est une seconde transcription. Un enregistrement
+fait avec le direct (`live_used`) réserve **deux fois** ses minutes
+(`reserve_transcription_minutes`). Une coupure du direct se répare seule
+avec un nouveau jeton (3 fois), puis se déclare « interrompu » : la capture
+et la finale ne dépendent jamais de lui. En pause, la piste micro est
+coupée : le direct n'entend rien. En `legacy` : pas de direct, rien ne
+change. Sessions Realtime : 60 min, comme nos enregistrements.
+
 ## Architecture
 
 ```

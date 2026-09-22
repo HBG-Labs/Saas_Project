@@ -50,6 +50,10 @@ export interface LocalRecording {
   notes?: string | undefined;
   /** Les notes telles que le serveur les a reçues ; si différentes, on renvoie. */
   notesSynced?: string | undefined;
+  /** Le brouillon du direct (phase 14), gardé avec l'audio ; jamais dans la page. */
+  transcriptLive?: string | undefined;
+  /** Le direct a servi : la réservation comptera deux fois les minutes. */
+  liveUsed?: boolean | undefined;
   /** Posés au fil de l'envoi ; restent pour la reprise. */
   serverRecordingId?: string | undefined;
   audioPath?: string | undefined;

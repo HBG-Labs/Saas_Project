@@ -10,6 +10,7 @@ import {
   type RecorderMedia,
   type RecorderServerApi,
 } from './useAudioRecorder';
+import type { LiveTransport } from '../audio/live-transcript';
 import type { DurationFixer } from '../audio/webm-duration';
 
 /*
@@ -52,6 +53,7 @@ class FakeRecorder {
 function fauxFlux(pistes: { stopped: number }, muted: boolean): MediaStream {
   const piste = {
     muted,
+    enabled: true,
     readyState: 'live',
     stop: () => (pistes.stopped += 1),
     addEventListener: () => {},
@@ -75,6 +77,7 @@ function fabriquer(
     niveau?: { valeur: number } | null;
     muted?: boolean;
     durationFixer?: DurationFixer;
+    live?: { getToken?: () => Promise<{ token: string; expiresAt: number; model: string }> };
   } = {},
 ) {
   const store = overrides.store ?? new MemoryAudioStore();
@@ -97,6 +100,33 @@ function fabriquer(
   const updateNotes = overrides.updateNotes ?? vi.fn(() => Promise.resolve({}));
   const upload = overrides.upload ?? vi.fn(() => Promise.resolve());
   const onSubmitted = vi.fn();
+  // Le direct : un faux WebRTC dont on pilote le canal d'événements.
+  const canaux: Array<{
+    onmessage: ((m: MessageEvent<string>) => void) | null;
+    onopen: (() => void) | null;
+  }> = [];
+  const liveTransport: LiveTransport = {
+    createPeerConnection: () =>
+      ({
+        addTrack: () => {},
+        createDataChannel: () => {
+          const c = { onmessage: null, onopen: null, onclose: null };
+          canaux.push(c);
+          return c as unknown as RTCDataChannel;
+        },
+        createOffer: () => Promise.resolve({ type: 'offer', sdp: 'o' }),
+        setLocalDescription: () => Promise.resolve(),
+        setRemoteDescription: () => Promise.resolve(),
+        close: () => {},
+      }) as unknown as RTCPeerConnection,
+    exchangeSdp: () => Promise.resolve('a'),
+  };
+  const direct = {
+    canaux,
+    ouvrir: () => canaux.at(-1)?.onopen?.(),
+    envoie: (evenement: unknown) =>
+      canaux.at(-1)?.onmessage?.({ data: JSON.stringify(evenement) } as MessageEvent<string>),
+  };
   let horloge = 1_000_000;
   const now = () => horloge;
   const avancer = (ms: number) => {
@@ -108,6 +138,17 @@ function fabriquer(
       store,
       uploader: upload,
       durationFixer: overrides.durationFixer ?? ((b) => Promise.resolve(b)),
+      ...(overrides.live
+        ? {
+            live: {
+              getToken:
+                overrides.live.getToken ??
+                (() =>
+                  Promise.resolve({ token: 'ek', expiresAt: 0, model: 'gpt-live-transcribe' })),
+              transport: liveTransport,
+            },
+          }
+        : {}),
       api: { createRow, submit, updateNotes },
       media,
       now,
@@ -125,6 +166,8 @@ function fabriquer(
     upload,
     onSubmitted,
     avancer,
+    direct,
+    stream,
   };
 }
 
@@ -573,5 +616,70 @@ describe('useAudioRecorder — zéro perte', () => {
     expect(fixer.mock.calls[0]?.[1]).toBe(14_000);
     expect(h.upload).toHaveBeenCalledWith(expect.objectContaining({ blob: corrige }));
     expect(h.createRow).toHaveBeenCalledWith(expect.objectContaining({ sizeBytes: corrige.size }));
+  });
+
+  it('le direct : le texte tombe pendant la capture, est gardé sur l’appareil, part avec la ligne', async () => {
+    const h = fabriquer({ live: {} });
+    const recorder = await demarrer(h);
+    await waitFor(() => expect(h.direct.canaux).toHaveLength(1));
+    expect(h.result.current.live.status).toBe('connecting');
+    act(() => h.direct.ouvrir());
+    expect(h.result.current.live.status).toBe('on');
+    act(() => {
+      h.direct.envoie({
+        type: 'conversation.item.input_audio_transcription.delta',
+        item_id: 'a',
+        delta: 'La pto',
+      });
+    });
+    expect(h.result.current.live.text).toBe('La pto');
+    act(() => {
+      h.direct.envoie({
+        type: 'conversation.item.input_audio_transcription.completed',
+        item_id: 'a',
+        transcript: 'La PTO est posée.',
+      });
+    });
+    await waitFor(async () =>
+      expect((await h.store.listRecordings())[0]?.transcriptLive).toBe('La PTO est posée.'),
+    );
+    act(() => {
+      recorder.emit('A');
+      h.result.current.stop();
+    });
+    await waitFor(() => expect(h.result.current.status).toBe('done'));
+    expect(h.result.current.live.status).toBe('closed');
+    expect(h.createRow).toHaveBeenCalledWith(
+      expect.objectContaining({ transcriptLive: 'La PTO est posée.', liveUsed: true }),
+    );
+  });
+
+  it('le direct refusé ou en panne ne touche pas à la capture', async () => {
+    const h = fabriquer({ live: { getToken: () => Promise.reject(new Error('403')) } });
+    const recorder = await demarrer(h);
+    await waitFor(() => expect(h.result.current.live.status).toBe('unavailable'));
+    expect(h.result.current.status).toBe('recording');
+    act(() => {
+      recorder.emit('A');
+      h.result.current.stop();
+    });
+    await waitFor(() => expect(h.result.current.status).toBe('done'));
+    expect(h.createRow).toHaveBeenCalledTimes(1);
+    expect(h.createRow).not.toHaveBeenCalledWith(expect.objectContaining({ liveUsed: true }));
+    expect(h.createRow).not.toHaveBeenCalledWith(
+      expect.objectContaining({ transcriptLive: expect.any(String) }),
+    );
+  });
+
+  it('sans direct demandé, rien ne change ; en pause, la piste micro est coupée', async () => {
+    const h = fabriquer();
+    await demarrer(h);
+    expect(h.result.current.live.status).toBe('off');
+    expect(h.direct.canaux).toHaveLength(0);
+    const piste = h.stream.getAudioTracks()[0]!;
+    act(() => h.result.current.pause());
+    expect(piste.enabled).toBe(false);
+    act(() => h.result.current.resume());
+    expect(piste.enabled).toBe(true);
   });
 });

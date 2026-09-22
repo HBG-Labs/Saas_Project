@@ -4304,6 +4304,10 @@ export interface Database {
           summary_json: RecordingSummary | null;
           /** Notes de la personne pendant l'enregistrement ; jamais transmises au fournisseur. */
           notes: string | null;
+          /** Brouillon du direct (phase 14) ; jamais résumé ni dans la page. */
+          transcript_live: string | null;
+          /** Le direct a servi : minutes comptées deux fois. */
+          live_used: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -4318,6 +4322,8 @@ export interface Database {
           consent_confirmed_at: string;
           /** Les notes tapées pendant la capture (phase 9). */
           notes?: string | null;
+          transcript_live?: string | null;
+          live_used?: boolean;
         };
         Update: {
           title?: string;
@@ -5593,6 +5599,16 @@ export interface Database {
           limit_minutes: number | null;
           remaining_minutes: number | null;
           unlimited: boolean;
+        }[];
+      };
+      /** La porte du direct (phase 14) : membre, ai.workspace, module, page visible, v2, quota. Motif sinon. */
+      live_transcription_access: {
+        Args: { p_organization_id: string; p_page_id: string };
+        Returns: {
+          allowed: boolean;
+          reason: string | null;
+          industry: string | null;
+          language: string | null;
         }[];
       };
       /** Des noms déjà dans les données de l'organisation (clients, sites, matériel, membres, communes), à proposer au dictionnaire. */

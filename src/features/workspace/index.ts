@@ -55,6 +55,7 @@ export {
   RECORDING_STATUS_LABELS,
   createRecording,
   createRecordingRow,
+  fetchLiveToken,
   submitRecording,
   updateRecordingNotes,
   deleteRecording,
@@ -155,6 +156,14 @@ export {
   type LocalRecordingStatus,
 } from './audio/local-store';
 export { uploadResumable, type ResumableUploader } from './audio/resumable-upload';
+export {
+  LiveText,
+  startLiveTranscript,
+  type LiveSession,
+  type LiveStatus,
+  type LiveToken,
+  type LiveTransport,
+} from './audio/live-transcript';
 export {
   PHASE_LABELS,
   PHASE_STEPS,

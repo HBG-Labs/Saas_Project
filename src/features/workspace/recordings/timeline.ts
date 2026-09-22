@@ -248,6 +248,8 @@ export interface RecordingViews {
     normalized: boolean;
     changes: NormalizationChange[];
   };
+  /** Le brouillon du direct (phase 14) : à montrer, marqué « brouillon », quand la finale manque. */
+  live: { text: string | null; used: boolean };
 }
 
 export function recordingViews(r: WorkspaceRecording): RecordingViews {
@@ -266,6 +268,7 @@ export function recordingViews(r: WorkspaceRecording): RecordingViews {
       normalized: r.transcript_normalized_at !== null,
       changes: r.normalization_diff ?? [],
     },
+    live: { text: r.transcript_live, used: r.live_used },
   };
 }
 
