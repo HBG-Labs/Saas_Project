@@ -35,6 +35,7 @@ import type {
 
 export type WorkspaceSpace = Tables<'workspace_spaces'>;
 export type WorkspacePage = Tables<'workspace_pages'>;
+export type WorkspacePagePreference = Tables<'workspace_page_preferences'>;
 export type WorkspacePageRevision = Tables<'workspace_page_revisions'>;
 export type WorkspaceTask = Tables<'workspace_tasks'>;
 
@@ -159,11 +160,33 @@ export async function updatePagePresentation(
   pageId: string,
   patch: Pick<
     TablesUpdate<'workspace_pages'>,
-    'font_family' | 'small_text' | 'full_width' | 'locked'
+    'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
   >,
 ): Promise<WorkspacePage> {
   return unwrap(
     supabase.from('workspace_pages').update(patch).eq('id', pageId).select('*').single(),
+  );
+}
+
+export async function getPagePreference(pageId: string): Promise<WorkspacePagePreference | null> {
+  return unwrapMaybe(
+    supabase.from('workspace_page_preferences').select('*').eq('page_id', pageId).maybeSingle(),
+  );
+}
+
+export async function setPageNotificationLevel(
+  pageId: string,
+  notificationLevel: WorkspacePagePreference['notification_level'],
+): Promise<WorkspacePagePreference> {
+  return unwrap(
+    supabase
+      .from('workspace_page_preferences')
+      .upsert(
+        { page_id: pageId, notification_level: notificationLevel },
+        { onConflict: 'page_id,user_id' },
+      )
+      .select('*')
+      .single(),
   );
 }
 

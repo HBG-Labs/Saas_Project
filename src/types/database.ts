@@ -3885,6 +3885,8 @@ export interface Database {
           small_text: boolean;
           full_width: boolean;
           locked: boolean;
+          accent_color: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
+          wiki_mode: boolean;
           /** Texte extrait du JSON TipTap par la base, dans l'ordre du document. Lecture seule. */
           search_text: string | null;
           created_at: string;
@@ -3904,6 +3906,8 @@ export interface Database {
           small_text?: boolean;
           full_width?: boolean;
           locked?: boolean;
+          accent_color?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
+          wiki_mode?: boolean;
         };
         Update: {
           parent_page_id?: string | null;
@@ -3917,6 +3921,8 @@ export interface Database {
           small_text?: boolean;
           full_width?: boolean;
           locked?: boolean;
+          accent_color?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
+          wiki_mode?: boolean;
         };
         Relationships: [
           {
@@ -3928,6 +3934,31 @@ export interface Database {
           {
             foreignKeyName: 'workspace_pages_parent_page_id_fkey';
             columns: ['parent_page_id'];
+            referencedRelation: 'workspace_pages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      workspace_page_preferences: {
+        Row: {
+          page_id: string;
+          user_id: string;
+          notification_level: 'off' | 'mentions' | 'all';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          page_id: string;
+          user_id?: string;
+          notification_level?: 'off' | 'mentions' | 'all';
+        };
+        Update: {
+          notification_level?: 'off' | 'mentions' | 'all';
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workspace_page_preferences_page_id_fkey';
+            columns: ['page_id'];
             referencedRelation: 'workspace_pages';
             referencedColumns: ['id'];
           },

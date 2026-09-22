@@ -11,6 +11,7 @@ import {
   deletePage,
   deleteTask,
   getPage,
+  getPagePreference,
   listPageRevisions,
   listPages,
   listSpaces,
@@ -19,6 +20,7 @@ import {
   movePage,
   updatePagePresentation,
   savePage,
+  setPageNotificationLevel,
   updateSpace,
   updateTask,
   addFavorite,
@@ -132,6 +134,30 @@ export function usePageRevisions(pageId: string | undefined) {
     queryKey: qk.workspace.revisions(pageId ?? 'none'),
     queryFn: () => listPageRevisions(pageId ?? ''),
     enabled: pageId !== undefined,
+  });
+}
+
+export function usePagePreference(pageId: string | undefined) {
+  return useQuery({
+    queryKey: qk.workspace.preference(pageId ?? 'none'),
+    queryFn: () => getPagePreference(pageId ?? ''),
+    enabled: pageId !== undefined,
+  });
+}
+
+export function useSetPageNotificationLevel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      pageId,
+      notificationLevel,
+    }: {
+      pageId: string;
+      notificationLevel: 'off' | 'mentions' | 'all';
+    }) => setPageNotificationLevel(pageId, notificationLevel),
+    onSuccess: (preference) => {
+      queryClient.setQueryData(qk.workspace.preference(preference.page_id), preference);
+    },
   });
 }
 
