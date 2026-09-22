@@ -260,7 +260,7 @@ export const ACHATS_NAV: readonly NavItem[] = [
   l'argent : ce qui entre (ventes) et ce qui sort (achats).
 */
 export const VENTES_NAV: readonly NavItem[] = [
-  { to: ROUTES.quotes, label: 'Devis & Chiffrage', icon: 'calculator', feature: 'quotes' },
+  { to: ROUTES.quotes, label: 'Devis', icon: 'calculator', feature: 'quotes' },
   /*
     `feature` ET `permission`, et les deux ne font pas la même chose.
 

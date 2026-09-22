@@ -158,7 +158,17 @@ export async function uploadOrganizationLogo(input: {
     contentType: input.file.type,
     upsert: false,
   });
-  if (error) throw error;
+  if (error) {
+    const storageCode = 'code' in error && typeof error.code === 'string' ? error.code : '';
+    if (storageCode === 'NoSuchBucket' || /bucket not found/i.test(error.message)) {
+      throw new AppError(
+        'unknown',
+        'Le stockage des logos d’entreprise n’est pas encore initialisé. La mise à jour serveur doit être appliquée avant de réessayer.',
+        { cause: error },
+      );
+    }
+    throw error;
+  }
   const { data } = supabase.storage.from('organization-branding').getPublicUrl(path);
   return updateOrganization(input.organizationId, { logo_url: data.publicUrl });
 }

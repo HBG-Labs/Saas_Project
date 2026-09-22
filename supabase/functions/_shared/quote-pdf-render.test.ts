@@ -61,7 +61,12 @@ function quote(overrides: Partial<QuotePdfInput> = {}): QuotePdfInput {
 }
 
 Deno.test('produit un PDF valide contenant les informations du devis', async () => {
-  const pdf = await renderQuotePdf(PDFDocument, quote(), ORG, new Date('2026-09-16T10:00:00.000Z'));
+  const pdf = await renderQuotePdf(
+    PDFDocument,
+    quote({ document_options: { sellerName: 'Atelier Horizon' } }),
+    ORG,
+    new Date('2026-09-16T10:00:00.000Z'),
+  );
 
   assert(pdf.length > 200);
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), '%PDF-');
@@ -70,7 +75,8 @@ Deno.test('produit un PDF valide contenant les informations du devis', async () 
   // et la taille — l'exactitude du texte est couverte par `handler.test.ts`,
   // qui contrôle les données transmises au moteur de rendu.
   const text = new TextDecoder('latin1').decode(pdf);
-  assert(/\/Type\s*\/Page[^s]/.test(text), 'le document doit contenir au moins une page');
+  const pageCount = (text.match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+  assertEquals(pageCount, 1, 'un devis court ne doit pas créer de page blanche après le contenu');
 });
 
 Deno.test('refuse un devis sans ligne', async () => {

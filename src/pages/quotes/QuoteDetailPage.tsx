@@ -22,7 +22,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Table } from '@/components/ui/Table';
 import { ROUTES } from '@/config/routes';
 import { useCustomer } from '@/features/customers';
-import { DEFAULT_DOCUMENT_OPTIONS, normalizeDocumentOptions } from '@/features/documents';
+import {
+  DEFAULT_DOCUMENT_OPTIONS,
+  documentSellerName,
+  normalizeDocumentOptions,
+} from '@/features/documents';
 import {
   LinkCustomerControl,
   SendToClientDialog,
@@ -138,6 +142,10 @@ export default function QuoteDetailPage() {
         }
       : normalizeDocumentOptions(quote.document_options);
   const customer = customerQuery.data ?? null;
+  const sellerName = documentSellerName(
+    documentOptions,
+    organization?.name ?? organization?.legal_name,
+  );
   const customerAddress = customer
     ? [
         [customer.address_line1, customer.address_line2].filter(Boolean).join(' '),
@@ -386,24 +394,23 @@ export default function QuoteDetailPage() {
         id="quote-printable-area"
         className="financial-paper financial-paper-a4-preview space-y-6 rounded-sm border p-4 font-sans sm:p-10"
       >
-        <div className="financial-paper-accent-bar -mx-4 -mt-4 h-1.5 sm:-mx-10 sm:-mt-10" />
-        <div className="financial-paper-border flex flex-col justify-between gap-5 border-b pb-5 sm:flex-row">
-          <div className="space-y-3">
+        <div className="financial-paper-border flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
             {organization?.logo_url ? (
               <div
-                className="financial-paper-company flex items-center justify-center overflow-hidden border border-dashed"
+                className="flex shrink-0 items-center justify-center overflow-hidden"
                 style={{ width: documentOptions.logoWidth, height: documentOptions.logoHeight }}
               >
                 <img
                   src={organization.logo_url}
                   alt="Logo de l’entreprise"
-                  className="size-full object-contain p-2"
+                  className="size-full object-contain"
                 />
               </div>
             ) : null}
-            <div className="financial-paper-company border border-dashed px-3 py-2">
+            <div>
               <h2 className="financial-paper-brand text-base font-bold tracking-tight">
-                {organization?.name ?? 'REZO360 Pro'}
+                {sellerName}
               </h2>
               {organization?.legal_name && organization.legal_name !== organization.name && (
                 <p className="financial-paper-text text-xs font-semibold">
@@ -438,6 +445,21 @@ export default function QuoteDetailPage() {
               </p>
             ) : null}
           </div>
+        </div>
+
+        <div className="financial-paper-text text-xs">
+          <p>
+            {[
+              organization?.address_line1,
+              organization?.address_line2,
+              organization?.postal_code,
+              organization?.city,
+              organization?.country,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <p>{[organization?.email, organization?.phone].filter(Boolean).join(' · ')}</p>
         </div>
 
         {documentOptions.showTitle && quote.title ? (
@@ -480,13 +502,14 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        <Table label="Lignes du devis" minWidth="34rem" containerClassName="financial-paper-focus">
+        <Table label="Lignes du devis" minWidth="40rem" containerClassName="financial-paper-focus">
           <thead>
             <tr className="financial-paper-table-head border-b font-semibold">
               <th className="px-3 py-2.5">Désignation de la prestation</th>
               <th className="px-2 py-2.5 text-center">Qté</th>
               <th className="px-2 py-2.5 text-center">Unité</th>
               <th className="px-3 py-2.5 text-right">P.U HT</th>
+              <th className="px-2 py-2.5 text-center">TVA</th>
               <th className="px-3 py-2.5 text-right">Total HT</th>
             </tr>
           </thead>
@@ -501,6 +524,9 @@ export default function QuoteDetailPage() {
                   <td className="px-2 py-2.5 text-center">{item.quantity}</td>
                   <td className="financial-paper-muted px-2 py-2.5 text-center">{item.unit}</td>
                   <td className="px-3 py-2.5 text-right">{priceEuros.toFixed(2)} €</td>
+                  <td className="financial-paper-muted px-2 py-2.5 text-center">
+                    {quote.vat_rate} %
+                  </td>
                   <td className="financial-paper-strong px-3 py-2.5 text-right font-semibold">
                     {(item.quantity * priceEuros).toFixed(2)} €
                   </td>

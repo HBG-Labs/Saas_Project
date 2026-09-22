@@ -23,21 +23,22 @@ export function DocumentOptionsPanel({
   value: DocumentOptions;
   onChange: (value: DocumentOptions) => void;
 }) {
-  const setMode = (mode: DocumentMode) =>
+  const setMode = (mode: DocumentMode) => {
+    const enabled = mode !== 'quick';
     onChange({
       ...value,
       mode,
-      ...(mode !== 'quick'
-        ? {
-            showDeliveryAddress: true,
-            showRegistrationNumber: true,
-            showVatNumber: true,
-            showBankDetails: true,
-            showTitle: true,
-            ...(kind === 'quote' ? { showAcceptanceTerms: true, showSignature: true } : {}),
-          }
-        : {}),
+      showDeliveryAddress: enabled,
+      showRegistrationNumber: enabled,
+      showVatNumber: enabled,
+      showBankDetails: enabled,
+      showTitle: enabled,
+      showFreeField: enabled,
+      showGlobalDiscount: enabled,
+      showAcceptanceTerms: enabled && kind === 'quote',
+      showSignature: enabled && kind === 'quote',
     });
+  };
   const toggle = (key: keyof DocumentOptions, checked: boolean | 'indeterminate') =>
     onChange({ ...value, [key]: checked === true });
   return (

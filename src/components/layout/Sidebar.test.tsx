@@ -91,7 +91,7 @@ const GROUPES_PAR_UNIVERS = [
     label: 'Ventes & facturation',
     icon: 'file-text',
     universe: 'finance',
-    items: [{ label: 'Devis & Chiffrage', to: '/devis', icon: 'calculator', locked: false }],
+    items: [{ label: 'Devis', to: '/devis', icon: 'calculator', locked: false }],
   },
   {
     id: 'resources',
@@ -187,7 +187,7 @@ describe('Sidebar — univers', () => {
     await user.keyboard('{Enter}');
     await user.click(screen.getByRole('menuitem', { name: 'Finance' }));
     expect(screen.getByRole('button', { name: /Changer d'univers : Finance/ })).toHaveFocus();
-    expect(screen.getByRole('link', { name: 'Devis & Chiffrage' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Devis' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Missions' })).not.toBeInTheDocument();
     expect(localStorage.getItem('rezo360-universe')).toBe('finance');
   });

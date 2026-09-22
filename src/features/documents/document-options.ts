@@ -5,6 +5,8 @@ export type DocumentMode = 'quick' | 'complete' | 'electronic';
 export interface DocumentOptions {
   mode: DocumentMode;
   language: 'fr';
+  /** Nom commercial figé sur le document. `null` reprend le nom courant de l'organisation. */
+  sellerName: string | null;
   logoWidth: number;
   logoHeight: number;
   showDeliveryAddress: boolean;
@@ -21,6 +23,7 @@ export interface DocumentOptions {
 export const DEFAULT_DOCUMENT_OPTIONS: DocumentOptions = {
   mode: 'quick',
   language: 'fr',
+  sellerName: null,
   logoWidth: 176,
   logoHeight: 80,
   showDeliveryAddress: false,
@@ -68,6 +71,7 @@ export function normalizeDocumentOptions(value: Json | undefined): DocumentOptio
   return {
     ...DEFAULT_DOCUMENT_OPTIONS,
     mode,
+    sellerName: typeof source.sellerName === 'string' ? source.sellerName.slice(0, 160) : null,
     logoWidth: boundedNumber(
       source.logoWidth,
       DEFAULT_DOCUMENT_OPTIONS.logoWidth,
@@ -82,6 +86,10 @@ export function normalizeDocumentOptions(value: Json | undefined): DocumentOptio
     ),
     ...Object.fromEntries(BOOLEAN_OPTION_KEYS.map((key) => [key, source[key] === true])),
   };
+}
+
+export function documentSellerName(options: DocumentOptions, organizationName?: string | null) {
+  return options.sellerName?.trim() || organizationName?.trim() || 'REZO360 Pro';
 }
 
 export function serializeDocumentOptions(options: DocumentOptions): Json {

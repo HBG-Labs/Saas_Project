@@ -61,6 +61,7 @@ export { FolderBreadcrumb, FolderGrid } from './components/FolderList';
 export {
   DEFAULT_DOCUMENT_OPTIONS,
   DOCUMENT_LOGO_SIZE_LIMITS,
+  documentSellerName,
   normalizeDocumentOptions,
   serializeDocumentOptions,
   type DocumentMode,

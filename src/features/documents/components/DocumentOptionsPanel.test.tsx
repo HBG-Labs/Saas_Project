@@ -48,8 +48,50 @@ describe('DocumentOptionsPanel', () => {
         showVatNumber: true,
         showBankDetails: true,
         showTitle: true,
+        showFreeField: true,
+        showGlobalDiscount: true,
         showAcceptanceTerms: true,
         showSignature: true,
+      }),
+    );
+  });
+
+  it('réinitialise réellement le document quand on revient au mode rapide', async () => {
+    const onChange = vi.fn();
+    render(
+      <DocumentOptionsPanel
+        kind="quote"
+        value={{
+          ...DEFAULT_DOCUMENT_OPTIONS,
+          mode: 'complete',
+          showDeliveryAddress: true,
+          showRegistrationNumber: true,
+          showVatNumber: true,
+          showBankDetails: true,
+          showTitle: true,
+          showFreeField: true,
+          showSignature: true,
+          showAcceptanceTerms: true,
+          showGlobalDiscount: true,
+        }}
+        onChange={onChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByLabelText('Rapide'));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'quick',
+        showDeliveryAddress: false,
+        showRegistrationNumber: false,
+        showVatNumber: false,
+        showBankDetails: false,
+        showTitle: false,
+        showFreeField: false,
+        showSignature: false,
+        showAcceptanceTerms: false,
+        showGlobalDiscount: false,
       }),
     );
   });

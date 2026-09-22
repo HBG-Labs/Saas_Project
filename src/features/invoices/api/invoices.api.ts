@@ -242,6 +242,7 @@ export interface InvoiceLineInput {
 export interface CreateInvoiceInput {
   organizationId: string;
   documentOptions?: Json;
+  discountRate?: number;
   title?: string;
   customerId?: string | null;
   siteId?: string | null;
@@ -298,6 +299,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     organization_id: input.organizationId,
     created_by: userData.user.id,
     ...(input.documentOptions !== undefined ? { document_options: input.documentOptions } : {}),
+    ...(input.discountRate !== undefined ? { discount_rate: input.discountRate } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.customerId ? { customer_id: input.customerId } : {}),
     ...(input.siteId ? { site_id: input.siteId } : {}),
@@ -502,6 +504,7 @@ export async function createInvoiceFromQuote(input: {
         customer_name: string | null;
         site_name: string | null;
         vat_rate: number;
+        discount_rate: number;
         notes: string | null;
         document_options: Json;
         items: {
@@ -546,6 +549,7 @@ export async function createInvoiceFromQuote(input: {
     organizationId: input.organizationId,
     quoteId: quote.id,
     documentOptions: quote.document_options,
+    discountRate: quote.discount_rate,
     ...(quote.title !== null ? { title: quote.title } : {}),
     customerId: quote.customer_id,
     siteId: quote.site_id,

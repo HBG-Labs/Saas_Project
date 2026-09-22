@@ -49,6 +49,35 @@ test.describe('Devis', () => {
     await expect(options).toBeVisible();
     await expect(options.getByText('Langue')).toHaveCount(0);
     await expect(options.getByText('Format électronique')).toBeVisible();
+    await options.getByLabel('Complet').click();
+    await expect(document.getByPlaceholder('Intitulé du devis')).toBeVisible();
+    await expect(options.getByLabel('Coordonnées bancaires')).toBeChecked();
+    await options.getByLabel('Rapide').click();
+    await expect(document.getByPlaceholder('Intitulé du devis')).toHaveCount(0);
+    await expect(options.getByLabel('Coordonnées bancaires')).not.toBeChecked();
+
+    const sellerName = document.getByLabel('Nom de l’entreprise sur le devis');
+    await sellerName.fill('Atelier Horizon');
+    await expect(sellerName).toHaveValue('Atelier Horizon');
+
+    await page.getByRole('button', { name: 'Aperçu PDF' }).last().click();
+    const previewDialog = page.getByRole('dialog', { name: 'Document Officiel Devis PDF' });
+    await expect(previewDialog).toBeVisible();
+    const preview = previewDialog.locator('#quote-printable-area');
+    await expect(preview.getByText('Atelier Horizon')).toBeVisible();
+    await expect(preview.getByRole('columnheader', { name: 'TVA' })).toBeVisible();
+    await expect(preview.locator('.financial-paper-table-head')).toHaveCSS(
+      'background-color',
+      'rgb(237, 243, 240)',
+    );
+    await expect(preview.locator('.financial-paper-accent-bar')).toHaveCount(0);
+    await page.emulateMedia({ media: 'print' });
+    const printTop = await page
+      .locator('#quote-printable-area')
+      .evaluate((element) => Math.round(element.getBoundingClientRect().top));
+    expect(printTop).toBe(0);
+    await page.emulateMedia({ media: 'screen' });
+    await page.getByLabel('Fermer', { exact: true }).click();
     await expect(page.getByRole('button', { name: 'Enregistrer le devis' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Création du devis' })).toBeHidden();
   });
@@ -92,6 +121,13 @@ test.describe('Devis', () => {
     await page.goto(`/devis/${DEVIS_ID}`);
 
     await expect(page.getByText('Facturer ce devis')).toBeVisible();
+    const document = page.locator('#quote-printable-area');
+    await expect(document.getByRole('columnheader', { name: 'TVA' })).toBeVisible();
+    await expect(document.locator('.financial-paper-table-head')).toHaveCSS(
+      'background-color',
+      'rgb(237, 243, 240)',
+    );
+    await expect(document.locator('.financial-paper-accent-bar')).toHaveCount(0);
   });
 
   test('un devis encore en discussion ne propose pas de facturer', async ({ page }) => {

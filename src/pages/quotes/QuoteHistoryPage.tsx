@@ -88,7 +88,7 @@ export default function QuoteHistoryPage() {
             illustration: <AtelierIllustration subject="quotes" />,
             title: 'Aucun devis enregistré',
             description:
-              'Préparez votre premier chiffrage : il restera consultable ici avec son statut et son montant.',
+              'Préparez votre premier devis : il restera consultable ici avec son statut et son montant.',
             action: (
               <Button asChild variant="primary">
                 <Link to={ROUTES.quotes}>Créer un premier devis</Link>

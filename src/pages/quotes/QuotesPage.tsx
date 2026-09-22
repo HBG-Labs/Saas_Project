@@ -36,6 +36,7 @@ import {
   DocumentLogoEditor,
   DocumentOptionsPanel,
   DEFAULT_DOCUMENT_OPTIONS,
+  documentSellerName,
   serializeDocumentOptions,
   useDocumentNumbering,
   type DocumentOptions,
@@ -201,6 +202,10 @@ export default function QuotesPage() {
   /** Référence et identifiant attribués par la base une fois le devis enregistré. */
   const [savedReference, setSavedReference] = useState<string | null>(null);
   const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+  const invalidateSavedQuote = useCallback(() => {
+    setSavedReference(null);
+    setSavedQuoteId(null);
+  }, []);
 
   const handleAddItem = (preset?: { label: string; unit: string; price: number }) => {
     const newItem: QuoteLineItem = {
@@ -213,8 +218,7 @@ export default function QuotesPage() {
     setItems((previous) => [...previous, newItem]);
     // Toute modification invalide la référence déjà émise : ce n'est plus le
     // même devis, et laisser l'ancien numéro affiché serait trompeur.
-    setSavedReference(null);
-    setSavedQuoteId(null);
+    invalidateSavedQuote();
   };
 
   const handleCreateCustomPreset = (e: React.FormEvent) => {
@@ -249,14 +253,12 @@ export default function QuotesPage() {
 
   const handleUpdateItem = (id: string, key: keyof QuoteLineItem, value: string | number) => {
     setItems((previous) => previous.map((it) => (it.id === id ? { ...it, [key]: value } : it)));
-    setSavedReference(null);
-    setSavedQuoteId(null);
+    invalidateSavedQuote();
   };
 
   const handleRemoveItem = (id: string) => {
     setItems((previous) => previous.filter((it) => it.id !== id));
-    setSavedReference(null);
-    setSavedQuoteId(null);
+    invalidateSavedQuote();
   };
 
   // Calculs Totaux — affichage seul. Le total qui fait foi est celui de la vue
@@ -276,14 +278,29 @@ export default function QuotesPage() {
   const validUntilIso = addCalendarDays(issueDateIso, validityDays);
   const issueDateLabel = formatDocumentDate(issueDateIso);
   const validUntilDate = formatDocumentDate(validUntilIso);
+  const sellerNameInput =
+    documentOptions.sellerName ?? organization?.name ?? organization?.legal_name ?? 'REZO360 Pro';
+  const sellerName = documentSellerName(
+    documentOptions,
+    organization?.name ?? organization?.legal_name,
+  );
+  const updateDocumentOptions = useCallback(
+    (next: DocumentOptions) => {
+      setDocumentOptions(next);
+      invalidateSavedQuote();
+    },
+    [invalidateSavedQuote],
+  );
   const updateLogoSize = useCallback(
-    (size: { width: number; height: number }) =>
+    (size: { width: number; height: number }) => {
       setDocumentOptions((current) => ({
         ...current,
         logoWidth: size.width,
         logoHeight: size.height,
-      })),
-    [],
+      }));
+      invalidateSavedQuote();
+    },
+    [invalidateSavedQuote],
   );
 
   /**
@@ -295,6 +312,10 @@ export default function QuotesPage() {
    */
   const handleSendQuote = () => {
     setSubmitError(null);
+
+    // Un second clic ne doit jamais créer un doublon. Dès qu'un champ du
+    // document change, `invalidateSavedQuote` réactive l'enregistrement.
+    if (savedQuoteId !== null) return;
 
     if (items.length === 0) {
       setSubmitError(new Error('Ajoutez au moins une prestation avant d’enregistrer le devis.'));
@@ -340,7 +361,7 @@ export default function QuotesPage() {
       <div className="mx-auto max-w-6xl space-y-6 pb-12">
         <PageHeader
           title="Nouveau devis"
-          description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
+          description="Préparez le devis, vérifiez les montants puis enregistrez le document client."
         />
         <ErrorState error={templatesQuery.error} onRetry={() => void templatesQuery.refetch()} />
       </div>
@@ -352,7 +373,7 @@ export default function QuotesPage() {
       <div className="lg:hidden">
         <PageHeader
           title="Nouveau devis"
-          description="Préparez le chiffrage, vérifiez les montants puis enregistrez le document client."
+          description="Préparez le devis, vérifiez les montants puis enregistrez le document client."
           actions={
             <Button asChild variant="outline" className="gap-2">
               <Link to={ROUTES.quotesHistory}>
@@ -442,9 +463,25 @@ export default function QuotesPage() {
                   onUpload={(file) => uploadLogo.mutateAsync(file)}
                 />
                 <div className="financial-paper-company min-w-64 border border-dashed px-3 py-2.5">
-                  <p className="text-foreground text-lg font-black tracking-tight">
-                    {organization?.name ?? 'REZO360 Pro'}
-                  </p>
+                  <label
+                    htmlFor="quote-seller-name"
+                    className="text-financial-accent text-3xs mb-1 block font-bold tracking-wide uppercase"
+                  >
+                    Nom affiché sur le devis
+                  </label>
+                  <input
+                    id="quote-seller-name"
+                    aria-label="Nom de l’entreprise sur le devis"
+                    value={sellerNameInput}
+                    maxLength={160}
+                    onChange={(event) =>
+                      updateDocumentOptions({
+                        ...documentOptions,
+                        sellerName: event.target.value,
+                      })
+                    }
+                    className="financial-paper-focus text-foreground w-full bg-transparent text-lg font-black tracking-tight outline-none"
+                  />
                   {organization?.legal_name && organization.legal_name !== organization.name ? (
                     <p className="text-muted-foreground mt-0.5 text-xs font-semibold">
                       {organization.legal_name}
@@ -485,7 +522,10 @@ export default function QuotesPage() {
             {documentOptions.showTitle ? (
               <input
                 value={documentTitle}
-                onChange={(event) => setDocumentTitle(event.target.value)}
+                onChange={(event) => {
+                  setDocumentTitle(event.target.value);
+                  invalidateSavedQuote();
+                }}
                 placeholder="Intitulé du devis"
                 className="border-primary/35 text-foreground focus:border-primary mb-6 w-full border border-dashed bg-transparent px-3 py-2 text-lg font-bold outline-none"
               />
@@ -503,6 +543,7 @@ export default function QuotesPage() {
                     onChange={(id) => {
                       setCustomerId(id);
                       setSiteId(null);
+                      invalidateSavedQuote();
                     }}
                     label="Client"
                   />
@@ -510,10 +551,20 @@ export default function QuotesPage() {
                     <Input
                       label="Nom libre"
                       value={clientName}
-                      onChange={(event) => setClientName(event.target.value)}
+                      onChange={(event) => {
+                        setClientName(event.target.value);
+                        invalidateSavedQuote();
+                      }}
                     />
                   ) : (
-                    <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
+                    <SitePicker
+                      customerId={customerId}
+                      value={siteId}
+                      onChange={(id) => {
+                        setSiteId(id);
+                        invalidateSavedQuote();
+                      }}
+                    />
                   )}
                 </div>
                 {customerId === null ? (
@@ -521,7 +572,10 @@ export default function QuotesPage() {
                     <Input
                       label="Site ou référence d’intervention"
                       value={siteName}
-                      onChange={(event) => setSiteName(event.target.value)}
+                      onChange={(event) => {
+                        setSiteName(event.target.value);
+                        invalidateSavedQuote();
+                      }}
                     />
                   </div>
                 ) : null}
@@ -566,7 +620,10 @@ export default function QuotesPage() {
                     <input
                       type="date"
                       value={issueDateIso}
-                      onChange={(event) => setIssueDateIso(event.target.value)}
+                      onChange={(event) => {
+                        setIssueDateIso(event.target.value);
+                        invalidateSavedQuote();
+                      }}
                       onClick={(event) => event.currentTarget.showPicker?.()}
                       className="financial-paper-date-input financial-paper-strong mt-1 w-full rounded-lg border px-3 py-2 outline-none"
                     />
@@ -574,7 +631,10 @@ export default function QuotesPage() {
                   <SelectField
                     label="Période de validité"
                     value={String(validityDays)}
-                    onChange={(event) => setValidityDays(Number(event.target.value))}
+                    onChange={(event) => {
+                      setValidityDays(Number(event.target.value));
+                      invalidateSavedQuote();
+                    }}
                     className="financial-paper-date-input financial-paper-strong mt-1 w-full rounded-lg border px-3 py-2 outline-none"
                   >
                     <option value="15">15 jours</option>
@@ -729,7 +789,10 @@ export default function QuotesPage() {
                         type="text"
                         inputMode="decimal"
                         value={vatInput}
-                        onChange={(event) => setVatInput(event.target.value)}
+                        onChange={(event) => {
+                          setVatInput(event.target.value);
+                          invalidateSavedQuote();
+                        }}
                         className="border-border bg-surface text-foreground focus:border-primary focus:ring-primary/20 w-full rounded-lg border py-2 pr-7 pl-3 text-right text-sm font-bold outline-none focus:ring-2"
                         aria-label="Taux de TVA"
                       />
@@ -776,7 +839,10 @@ export default function QuotesPage() {
             {documentOptions.showFreeField ? (
               <textarea
                 value={freeField}
-                onChange={(event) => setFreeField(event.target.value)}
+                onChange={(event) => {
+                  setFreeField(event.target.value);
+                  invalidateSavedQuote();
+                }}
                 placeholder="Ajoutez une information libre…"
                 className="border-primary/35 text-muted-foreground focus:border-primary mt-8 min-h-20 w-full resize-none border border-dashed bg-transparent p-3 text-xs outline-none"
               />
@@ -834,6 +900,7 @@ export default function QuotesPage() {
                     onChange={(id) => {
                       setCustomerId(id);
                       setSiteId(null);
+                      invalidateSavedQuote();
                     }}
                     label="Client de la base"
                   />
@@ -841,18 +908,31 @@ export default function QuotesPage() {
                     <Input
                       label="Ou nom du client (hors base)"
                       value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
+                      onChange={(e) => {
+                        setClientName(e.target.value);
+                        invalidateSavedQuote();
+                      }}
                       hint="Sans fiche, le devis n’apparaîtra pas dans un espace client."
                     />
                   ) : (
-                    <SitePicker customerId={customerId} value={siteId} onChange={setSiteId} />
+                    <SitePicker
+                      customerId={customerId}
+                      value={siteId}
+                      onChange={(id) => {
+                        setSiteId(id);
+                        invalidateSavedQuote();
+                      }}
+                    />
                   )}
                 </div>
                 {customerId === null ? (
                   <Input
                     label="Site ou Référence Intervention"
                     value={siteName}
-                    onChange={(e) => setSiteName(e.target.value)}
+                    onChange={(e) => {
+                      setSiteName(e.target.value);
+                      invalidateSavedQuote();
+                    }}
                   />
                 ) : null}
               </CardContent>
@@ -1103,7 +1183,10 @@ export default function QuotesPage() {
                       type="text"
                       inputMode="decimal"
                       value={vatInput}
-                      onChange={(e) => setVatInput(e.target.value)}
+                      onChange={(e) => {
+                        setVatInput(e.target.value);
+                        invalidateSavedQuote();
+                      }}
                       className="border-border bg-surface-sunken text-foreground focus:border-primary focus-visible:ring-ring/30 min-h-touch w-full rounded-lg border py-2 pr-8 pl-3 text-sm font-semibold focus:outline-none focus-visible:ring-2"
                     />
                     <span className="text-muted-foreground absolute right-3 text-xs font-semibold">
@@ -1119,7 +1202,10 @@ export default function QuotesPage() {
                       <button
                         key={rate.value}
                         type="button"
-                        onClick={() => setVatInput(rate.value)}
+                        onClick={() => {
+                          setVatInput(rate.value);
+                          invalidateSavedQuote();
+                        }}
                         className={cn(
                           'min-h-touch cursor-pointer rounded-lg border px-2.5 text-xs transition-colors sm:min-h-8',
                           vatInput === rate.value
@@ -1256,7 +1342,7 @@ export default function QuotesPage() {
             <DocumentOptionsPanel
               kind="quote"
               value={documentOptions}
-              onChange={setDocumentOptions}
+              onChange={updateDocumentOptions}
             />
             {documentOptions.showGlobalDiscount ? (
               <div className="border-border border-t px-4 py-4">
@@ -1267,9 +1353,10 @@ export default function QuotesPage() {
                   max={100}
                   step="0.01"
                   value={discountRate}
-                  onChange={(event) =>
-                    setDiscountRate(Math.min(100, Math.max(0, Number(event.target.value) || 0)))
-                  }
+                  onChange={(event) => {
+                    setDiscountRate(Math.min(100, Math.max(0, Number(event.target.value) || 0)));
+                    invalidateSavedQuote();
+                  }}
                 />
               </div>
             ) : null}
@@ -1345,7 +1432,7 @@ export default function QuotesPage() {
           <Button
             variant="primary"
             onClick={handleSendQuote}
-            disabled={createQuote.isPending}
+            disabled={createQuote.isPending || savedQuoteId !== null}
             className="gap-1.5"
           >
             <Send className="size-4" aria-hidden="true" />
@@ -1372,7 +1459,7 @@ export default function QuotesPage() {
           type="button"
           variant="primary"
           onClick={handleSendQuote}
-          disabled={createQuote.isPending}
+          disabled={createQuote.isPending || savedQuoteId !== null}
           className="gap-2"
         >
           <Send className="size-4" aria-hidden="true" />
@@ -1465,6 +1552,7 @@ export default function QuotesPage() {
         title="Document Officiel Devis PDF"
         description="Aperçu avant impression et téléversement du document client."
         size="2xl"
+        className="document-preview-dialog"
       >
         <div className="space-y-6 pt-2">
           {/* Document Paper Preview Container (Fond Blanc Style Papier Imprimable) */}
@@ -1481,12 +1569,11 @@ export default function QuotesPage() {
             className="financial-paper financial-paper-a4-preview space-y-6 rounded-sm border p-4 font-sans sm:p-10"
           >
             {/* Header Document */}
-            <div className="financial-paper-accent-bar -mx-4 -mt-4 h-1.5 sm:-mx-10 sm:-mt-10" />
-            <div className="financial-paper-border flex flex-col items-start justify-between gap-5 border-b pb-5 sm:flex-row">
-              <div className="space-y-3">
+            <div className="financial-paper-border flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-4">
                 {organization?.logo_url ? (
                   <div
-                    className="financial-paper-company flex items-center justify-center overflow-hidden border border-dashed"
+                    className="flex shrink-0 items-center justify-center overflow-hidden"
                     style={{
                       width: documentOptions.logoWidth,
                       height: documentOptions.logoHeight,
@@ -1495,13 +1582,13 @@ export default function QuotesPage() {
                     <img
                       src={organization.logo_url}
                       alt="Logo de l’entreprise"
-                      className="size-full object-contain p-2"
+                      className="size-full object-contain"
                     />
                   </div>
                 ) : null}
-                <div className="financial-paper-company border border-dashed px-3 py-2">
+                <div>
                   <h2 className="financial-paper-brand text-base font-bold tracking-tight">
-                    {organization?.name ?? 'REZO360 Pro'}
+                    {sellerName}
                   </h2>
                   {organization?.legal_name && organization.legal_name !== organization.name && (
                     <p className="financial-paper-text text-xs font-semibold">
@@ -1515,13 +1602,6 @@ export default function QuotesPage() {
                     {organization?.registration_number && organization?.vat_number ? ' • ' : ''}
                     {organization?.vat_number ? `TVA : ${organization.vat_number}` : ''}
                   </p>
-                  {(organization?.address_line1 || organization?.city) && (
-                    <p className="financial-paper-muted text-3xs">
-                      {[organization?.address_line1, organization?.postal_code, organization?.city]
-                        .filter(Boolean)
-                        .join(' ')}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -1537,6 +1617,21 @@ export default function QuotesPage() {
                   </p>
                 ) : null}
               </div>
+            </div>
+
+            <div className="financial-paper-text text-xs">
+              <p>
+                {[
+                  organization?.address_line1,
+                  organization?.address_line2,
+                  organization?.postal_code,
+                  organization?.city,
+                  organization?.country,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+              <p>{[organization?.email, organization?.phone].filter(Boolean).join(' · ')}</p>
             </div>
 
             {documentOptions.showTitle && documentTitle.trim() ? (
@@ -1583,7 +1678,7 @@ export default function QuotesPage() {
             {/* Tableau des Lignes du Devis */}
             <Table
               label="Lignes du devis à imprimer"
-              minWidth="34rem"
+              minWidth="40rem"
               containerClassName="financial-paper-focus"
             >
               <thead>
@@ -1592,6 +1687,7 @@ export default function QuotesPage() {
                   <th className="px-2 py-2.5 text-center">Qté</th>
                   <th className="px-2 py-2.5 text-center">Unité</th>
                   <th className="px-3 py-2.5 text-right">P.U HT</th>
+                  <th className="px-2 py-2.5 text-center">TVA</th>
                   <th className="px-3 py-2.5 text-right">Total HT</th>
                 </tr>
               </thead>
@@ -1604,6 +1700,7 @@ export default function QuotesPage() {
                     <td className="px-2 py-2.5 text-center">{it.quantity}</td>
                     <td className="financial-paper-muted px-2 py-2.5 text-center">{it.unit}</td>
                     <td className="px-3 py-2.5 text-right">{it.unitPrice.toFixed(2)} €</td>
+                    <td className="financial-paper-muted px-2 py-2.5 text-center">{vatRate} %</td>
                     <td className="financial-paper-strong px-3 py-2.5 text-right font-semibold">
                       {(it.quantity * it.unitPrice).toFixed(2)} €
                     </td>
