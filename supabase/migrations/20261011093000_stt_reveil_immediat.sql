@@ -14,7 +14,7 @@
 -- Vault ou de pg_net ne bloque jamais la soumission : l'erreur est avalée en
 -- notice, la ligne est « pending », le cron la prendra.
 --
--- Rollback : supabase/rollbacks/20261011090000_stt_reveil_immediat.down.sql
+-- Rollback : supabase/rollbacks/20261011093000_stt_reveil_immediat.down.sql
 -- =============================================================================
 
 create or replace function app.wake_transcription_worker()
