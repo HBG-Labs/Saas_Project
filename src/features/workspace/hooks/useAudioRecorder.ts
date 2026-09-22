@@ -14,7 +14,6 @@ import {
   type LiveToken,
   type LiveTransport,
 } from '../audio/live-transcript';
-import { fixDuration, type DurationFixer } from '../audio/webm-duration';
 
 /**
  * La mécanique de l'enregistrement vocal — capture, pause, tranches,
@@ -124,8 +123,6 @@ export interface UseAudioRecorderOptions {
   onSubmitted?: (recordingId: string) => void;
   store?: LocalAudioStore;
   uploader?: ResumableUploader;
-  /** Inscrit la durée dans l'en-tête WebM avant l'envoi ; injecté pour les tests. */
-  durationFixer?: DurationFixer;
   /**
    * Le direct (phase 14) : le texte pendant la parole. `getToken` demande au
    * serveur un jeton éphémère ; absent, pas de direct. Un refus ou une panne
@@ -237,7 +234,6 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     [options.store],
   );
   const uploader = options.uploader ?? uploadResumable;
-  const fixer = options.durationFixer ?? fixDuration;
   const liveOptions = options.live;
   const media = options.media ?? defaultMedia;
   const now = options.now ?? Date.now;
@@ -331,10 +327,11 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
           rec = { ...actuel, ...patch, updatedAt: new Date(now()).toISOString() };
           await store.putRecording(rec);
         };
-        const brut = await store.readAudio(key, rec.mimeType);
-        if (brut.size === 0) throw new Error('Aucun audio capté.');
-        // La durée dans l'en-tête, pour que le lecteur l'affiche juste.
-        const audio = await fixer(brut, rec.durationSeconds * 1000);
+        // L'audio part INTACT : réécrire l'en-tête WebM avant l'envoi a rendu le
+        // fichier illisible pour OpenAI (Android, 22/09). La durée n'est
+        // corrigée qu'à la lecture, sur la copie du navigateur.
+        const audio = await store.readAudio(key, rec.mimeType);
+        if (audio.size === 0) throw new Error('Aucun audio capté.');
         if (audio.size > AUDIO_MAX_BYTES)
           throw new Error('Enregistrement trop lourd (25 Mo au plus).');
 
@@ -426,7 +423,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         await rafraichirPending();
       }
     },
-    [api, store, uploader, fixer, now, onSubmitted, rafraichirPending],
+    [api, store, uploader, now, onSubmitted, rafraichirPending],
   );
 
   const arreterFlux = () => {

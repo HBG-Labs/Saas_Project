@@ -56,6 +56,7 @@ import {
   type TaskFilters,
   type WorkspaceRecording,
 } from '../api/workspace.api';
+import { playableUrl } from '../audio/webm-duration';
 
 /**
  * Hooks du Workspace.
@@ -557,7 +558,13 @@ export function useDeleteRecording() {
 export function useRecordingAudioUrl(recording: WorkspaceRecording | null) {
   return useQuery({
     queryKey: [...qk.workspace.all, 'recording', recording?.id ?? 'none', 'audio'],
-    queryFn: () => (recording ? getRecordingAudioUrl(recording) : Promise.resolve(null)),
+    // L'URL signée, puis la copie locale avec la durée inscrite dans l'en-tête
+    // (le lecteur affichait « 9:02 » pour 14 s). Le fichier du bucket reste intact.
+    queryFn: async () => {
+      if (!recording) return null;
+      const signee = await getRecordingAudioUrl(recording);
+      return signee ? playableUrl(signee, recording.duration_seconds) : null;
+    },
     enabled: recording !== null && recording.audio_deleted_at === null,
     staleTime: 50 * 60_000,
   });
