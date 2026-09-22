@@ -179,7 +179,7 @@ export function MobileDrawer({
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
           className={cn(
-            'border-border bg-surface shadow-overlay fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(20rem,85vw)] flex-col border-r select-none lg:hidden',
+            'border-border bg-surface shadow-overlay fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(18rem,80vw)] flex-col border-r select-none lg:hidden',
             'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left duration-200',
             'focus-visible:outline-none',
             className,

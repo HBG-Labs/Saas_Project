@@ -13,7 +13,9 @@ describe('MobileDrawer', () => {
       </MobileDrawer>,
     );
 
-    expect(screen.getByRole('dialog', { name: 'Menu de navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Menu de navigation' })).toHaveClass(
+      'w-[min(18rem,80vw)]',
+    );
     expect(screen.getByText('Contenu du drawer')).toBeInTheDocument();
   });
 
