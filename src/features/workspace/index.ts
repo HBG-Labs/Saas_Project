@@ -155,4 +155,23 @@ export {
   type LocalRecordingStatus,
 } from './audio/local-store';
 export { uploadResumable, type ResumableUploader } from './audio/resumable-upload';
+export {
+  PHASE_LABELS,
+  PHASE_STEPS,
+  buildTimeline,
+  citedSegments,
+  isTerminal,
+  localPhase,
+  pendingPhase,
+  recordingViews,
+  segmentLabel,
+  serverPhase,
+  stepOf,
+  type PhaseStep,
+  type RecorderSnapshot,
+  type RecordingPhase,
+  type RecordingViews,
+  type TimelineItem,
+} from './recordings/timeline';
+export { useRecordingTimeline } from './recordings/useRecordingTimeline';
 export { WorkspacePageOptionsPanel } from './components/WorkspacePageOptionsPanel';

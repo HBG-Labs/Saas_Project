@@ -476,6 +476,23 @@ transcription en cours → transcrite ✓ → résumé en cours → terminé) et
 vues finales (Résumé | Notes | Transcription) sont fournis par ce hook et
 les données du Workspace ; leur forme est à concevoir, mobile d'abord.
 
+**La frise (phase 10, 21/09/2026)** — `useRecordingTimeline(recorder, recordings)`
+(`src/features/workspace`) rend UNE liste, du plus récent au plus ancien, qui
+fusionne la capture en cours, ce qui attend sur l'appareil et ce que le
+serveur connaît. Chaque `TimelineItem` porte : `phase` (`recording` → `paused`
+→ `saving` → `uploading` → `submitting`, `interrupted`, `waiting`, `queued`,
+`transcribing`, `done`, `failed`), `label` (`PHASE_LABELS`, à ne pas
+redoubler), `step` (0 → 5 sur `PHASE_STEPS`, pour une barre d'étapes),
+`progress` (envoi), `error`, `notes`, et `can` (`retry`, `discard`, `delete`,
+`editNotes` : ce que l'écran peut proposer). Un même enregistrement n'y est
+qu'une fois. « Résumé en cours » n'existe pas comme étape : le worker
+transcrit et résume dans la même passe ; `transcribing` couvre les deux — ne
+pas inventer une étape qu'on ne mesure pas. Pour un enregistrement terminé,
+`recordingViews(recording)` donne les trois vues : `summary` (structuré +
+Markdown), `notes`, `transcript.segments` (paragraphes `§n` — un seul en
+legacy), et `raw` (brut, `normalized`, `changes`) ; `citedSegments(item,
+segments)` résout les renvois d'un point du résumé vers ses paragraphes.
+
 Ce que le hook et les données offrent aujourd'hui (21/09/2026) :
 
 - `recorder.notes` / `recorder.setNotes(texte)` — les notes tapées pendant

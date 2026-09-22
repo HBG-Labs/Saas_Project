@@ -164,6 +164,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingRecording[]>([]);
   const [notes, setNotesState] = useState('');
+  /** La capture en cours, pour l'écran (le ref `activeRef` ne déclenche pas de rendu). */
+  const [current, setCurrent] = useState<{ key: string; title: string; startedAt: string } | null>(
+    null,
+  );
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -284,6 +288,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
           notesKeyRef.current = null;
           setNotesState('');
         }
+        setCurrent((c) => (c?.key === key ? null : c));
         await store.deleteRecording(key);
         setProgress(null);
         setStatus('done');
@@ -302,6 +307,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
         setError(message);
         setStatus('error');
         setProgress(null);
+        // L'enregistrement reste sur l'appareil : c'est `pending` qui le montre désormais.
+        setCurrent((c) => (c?.key === key ? null : c));
       } finally {
         envoisEnCoursRef.current.delete(key);
         await rafraichirPending();
@@ -371,6 +378,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
       activeRef.current = rec;
       notesKeyRef.current = key;
       setNotesState('');
+      setCurrent({ key, title: rec.title, startedAt: rec.startedAt });
       chunkIndexRef.current = 0;
       startedAtRef.current = startedAt;
       pausedAccumRef.current = 0;
@@ -469,6 +477,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     activeRef.current = null;
     notesKeyRef.current = null;
     setNotesState('');
+    setCurrent(null);
     if (courant) await store.deleteRecording(courant.key);
     setStatus('idle');
     setElapsedSeconds(0);
@@ -566,6 +575,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions) {
     /** Les notes de l'enregistrement en cours ; vides hors capture/envoi. */
     notes,
     setNotes,
+    /** La capture en cours (clé, titre, début) ; `null` hors capture/envoi. */
+    current,
     start,
     pause,
     resume,
