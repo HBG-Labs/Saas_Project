@@ -101,7 +101,7 @@ export type WorkTimeKind = 'travel' | 'workshop' | 'training' | 'other';
 export type WorkspaceRecordingStatus = 'uploading' | 'pending' | 'processing' | 'done' | 'failed';
 /** Moteur de transcription par organisation — 20261006090000_stt_colonnes_et_flag.sql */
 export type SttEngine = 'legacy' | 'v2';
-/** Dictionnaire de transcription — 20261007090000_organization_vocabulary.sql */
+/** Dictionnaire de transcription — 20261007093000_organization_vocabulary.sql */
 export type VocabularyType = 'client' | 'site' | 'materiel' | 'technique' | 'personne' | 'lieu' | 'autre';
 export type VocabularySource = 'auto' | 'manuel';
 /** Un paragraphe horodaté d'une transcription (secondes). */
@@ -4259,7 +4259,7 @@ export interface Database {
 
       /**
        * Le dictionnaire de transcription d'une organisation —
-       * 20261007090000_organization_vocabulary.sql. Lecture : tout membre ;
+       * 20261007093000_organization_vocabulary.sql. Lecture : tout membre ;
        * écriture : `workspace.manage`. Un terme, un type, une source. 500 au plus.
        */
       organization_vocabulary: {

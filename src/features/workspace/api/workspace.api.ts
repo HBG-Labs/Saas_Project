@@ -737,7 +737,7 @@ export async function getRecordingAudioUrl(
 
 // ─── Le dictionnaire de transcription ────────────────────────────────────────
 //
-// 20261007090000_organization_vocabulary.sql. Les termes que le moteur doit
+// 20261007093000_organization_vocabulary.sql. Les termes que le moteur doit
 // connaître pour cette entreprise, transmis en tête du contexte (v2). Tout
 // membre lit ; `workspace.manage` écrit. La suggestion ne fait que proposer.
 
