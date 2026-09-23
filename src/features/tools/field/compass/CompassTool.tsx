@@ -1,9 +1,11 @@
 import { Check, Compass, Copy, Lock, MapPin, RefreshCw, Unlock } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
+
+import { normalizeHeading, unwrapHeading } from './heading';
 
 interface GeoLocationState {
   lat: number | null;
@@ -41,13 +43,15 @@ function getCardinalDirection(heading: number): string {
     { label: 'Nord-Nord-Ouest', short: 'NNO', min: 326.25, max: 348.75 },
   ];
 
-  const normalized = ((heading % 360) + 360) % 360;
+  const normalized = normalizeHeading(heading);
   const match = directions.find((d) => normalized >= d.min && normalized < d.max);
   return match ? `${match.short} • ${match.label}` : `${Math.round(normalized)}°`;
 }
 
 export default function CompassTool() {
   const [heading, setHeading] = useState<number>(0);
+  const [dialHeading, setDialHeading] = useState<number>(0);
+  const dialHeadingRef = useRef(0);
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [hasOrientationSensor, setHasOrientationSensor] = useState<boolean | null>(null);
   const [permissionRequested, setPermissionRequested] = useState(false);
@@ -59,6 +63,14 @@ export default function CompassTool() {
     alt: null,
     accuracy: null,
   });
+
+  const updateHeading = useCallback((nextHeading: number) => {
+    const normalized = normalizeHeading(nextHeading);
+    const unwrapped = unwrapHeading(dialHeadingRef.current, normalized);
+    dialHeadingRef.current = unwrapped;
+    setDialHeading(unwrapped);
+    setHeading(Math.round(normalized) % 360);
+  }, []);
 
   // Demande d'autorisation pour iOS 13+
   const requestOrientationPermission = useCallback(async () => {
@@ -96,7 +108,7 @@ export default function CompassTool() {
 
       if (compassHeading !== null) {
         setHasOrientationSensor(true);
-        setHeading(Math.round(((compassHeading % 360) + 360) % 360));
+        updateHeading(compassHeading);
       }
     };
 
@@ -104,7 +116,7 @@ export default function CompassTool() {
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation, true);
     };
-  }, []);
+  }, [updateHeading]);
 
   // Récupération des coordonnées GPS
   const fetchLocation = useCallback(() => {
@@ -211,7 +223,7 @@ export default function CompassTool() {
               {/* Cadran tournant gradué */}
               <div
                 className="border-border bg-surface-sunken relative flex size-full items-center justify-center rounded-full border-4 shadow-2xl transition-transform duration-100 ease-out"
-                style={{ transform: `rotate(${-heading}deg)` }}
+                style={{ transform: `rotate(${-dialHeading}deg)` }}
               >
                 {/* Graduations circulaires */}
                 <div className="border-border absolute inset-2 rounded-full border" />
@@ -300,7 +312,7 @@ export default function CompassTool() {
                 min="0"
                 max="359"
                 value={heading}
-                onChange={(e) => setHeading(Number(e.target.value))}
+                onChange={(e) => updateHeading(Number(e.target.value))}
                 aria-label="Cap manuel"
                 className="accent-primary bg-surface h-2 w-full cursor-pointer rounded-lg"
               />
