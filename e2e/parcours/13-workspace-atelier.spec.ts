@@ -55,9 +55,13 @@ test.describe('Workspace Atelier', () => {
     await expect(page.getByRole('status').filter({ hasText: 'Enregistré.' })).toBeVisible();
     await expect(text).toHaveText('Les mesures sont prêtes.');
     const recorder = page.getByRole('region', { name: 'Enregistrement vocal', exact: true });
-    await expect(recorder.getByRole('button', { name: 'Enregistrer', exact: true })).toBeDisabled();
+    await expect(
+      recorder.getByRole('button', { name: 'Enregistrer une note vocale', exact: true }),
+    ).toBeDisabled();
     await recorder.getByRole('checkbox').check();
-    await expect(recorder.getByRole('button', { name: 'Enregistrer', exact: true })).toBeEnabled();
+    await expect(
+      recorder.getByRole('button', { name: 'Enregistrer une note vocale', exact: true }),
+    ).toBeEnabled();
   });
 
   test('le choix de modèle reste utilisable et crée dans le bon espace', async ({
@@ -103,6 +107,20 @@ test.describe('Workspace Atelier', () => {
     await page.getByRole('button', { name: /Sérif/ }).click();
     expect((await styleRequest).postDataJSON()).toMatchObject({ font_family: 'serif' });
     await expect(page.locator('.workspace-editor')).toHaveClass(/font-serif/);
+
+    const spacingRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/rest/v1/workspace_pages') &&
+        request.method() === 'PATCH' &&
+        postDataHas(request, 'text_spacing', 'compact'),
+    );
+    const optionsPanel = page.locator('aside').filter({ hasText: 'Style de la page' });
+    await optionsPanel.getByRole('button', { name: 'Compact', exact: true }).click();
+    expect((await spacingRequest).postDataJSON()).toMatchObject({ text_spacing: 'compact' });
+    await expect(page.locator('.workspace-rich-editor')).toHaveAttribute(
+      'data-text-spacing',
+      'compact',
+    );
 
     await page.getByRole('button', { name: 'Personnaliser la page' }).click();
     const customizeDialog = page.getByRole('dialog', { name: 'Personnaliser la page' });

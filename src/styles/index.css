@@ -1008,14 +1008,29 @@ input.profile-form-field {
 }
 
 /* Workspace : largeur de lecture, espaces distincts et illustrations de premier usage. */
+.workspace-rich-editor {
+  --workspace-text-leading: 1.5;
+  --workspace-paragraph-gap: 0.52em;
+  --workspace-list-gap: 0.18em;
+}
+.workspace-rich-editor[data-text-spacing='compact'] {
+  --workspace-text-leading: 1.38;
+  --workspace-paragraph-gap: 0.3em;
+  --workspace-list-gap: 0.1em;
+}
+.workspace-rich-editor[data-text-spacing='airy'] {
+  --workspace-text-leading: 1.68;
+  --workspace-paragraph-gap: 0.82em;
+  --workspace-list-gap: 0.3em;
+}
 .workspace-rich-editor .ProseMirror {
   min-height: 14rem;
   color: var(--color-foreground);
-  line-height: 1.8;
+  line-height: var(--workspace-text-leading);
   outline: none;
 }
 .workspace-rich-editor .ProseMirror > * + * {
-  margin-top: 0.75rem;
+  margin-top: var(--workspace-paragraph-gap);
 }
 .workspace-rich-editor .ProseMirror h1,
 .workspace-rich-editor .ProseMirror h2,
@@ -1033,6 +1048,16 @@ input.profile-form-field {
 .workspace-rich-editor .ProseMirror h3 {
   font-size: 1.25rem;
 }
+.workspace-rich-editor .ProseMirror > h1:not(:first-child),
+.workspace-rich-editor .ProseMirror > h2:not(:first-child),
+.workspace-rich-editor .ProseMirror > h3:not(:first-child) {
+  margin-top: max(0.8em, calc(var(--workspace-paragraph-gap) * 1.5));
+}
+.workspace-rich-editor .ProseMirror h1 + *,
+.workspace-rich-editor .ProseMirror h2 + *,
+.workspace-rich-editor .ProseMirror h3 + * {
+  margin-top: calc(var(--workspace-paragraph-gap) * 0.7);
+}
 .workspace-rich-editor .ProseMirror ul,
 .workspace-rich-editor .ProseMirror ol {
   padding-left: 1.5rem;
@@ -1042,6 +1067,13 @@ input.profile-form-field {
 }
 .workspace-rich-editor .ProseMirror ol {
   list-style: decimal;
+}
+.workspace-rich-editor .ProseMirror li + li {
+  margin-top: var(--workspace-list-gap);
+}
+.workspace-rich-editor .ProseMirror li > p + p,
+.workspace-rich-editor .ProseMirror blockquote > p + p {
+  margin-top: var(--workspace-paragraph-gap);
 }
 .workspace-rich-editor .ProseMirror blockquote {
   border-left: 3px solid var(--color-border);
@@ -1053,6 +1085,66 @@ input.profile-form-field {
   background: var(--color-surface-sunken);
   padding: 0.1rem 0.3rem;
   font-family: var(--font-mono);
+}
+
+/* REZO Voice Morph : une seule surface évolue sans rebond ni glow. */
+.rezo-voice-morph {
+  transition:
+    border-color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 200ms ease-out;
+}
+.rezo-voice-dock {
+  animation: rezo-voice-dock-enter 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.rezo-voice-recording-dot {
+  animation: rezo-voice-recording-pulse 1.8s ease-in-out infinite;
+}
+.rezo-voice-success {
+  animation: rezo-voice-success-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes rezo-voice-dock-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes rezo-voice-recording-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(0.88);
+  }
+}
+@keyframes rezo-voice-success-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rezo-voice-morph {
+    transition-duration: 0.01ms;
+  }
+  .rezo-voice-dock,
+  .rezo-voice-recording-dot,
+  .rezo-voice-success {
+    animation: none;
+  }
 }
 .workspace-browser input,
 .workspace-browser select {

@@ -172,7 +172,13 @@ export async function updatePagePresentation(
   pageId: string,
   patch: Pick<
     TablesUpdate<'workspace_pages'>,
-    'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
+    | 'font_family'
+    | 'small_text'
+    | 'text_spacing'
+    | 'full_width'
+    | 'locked'
+    | 'accent_color'
+    | 'wiki_mode'
   >,
 ): Promise<WorkspacePage> {
   return unwrap(
@@ -756,6 +762,17 @@ export async function renameRecording(
       .eq('id', recordingId)
       .select('*')
       .single(),
+  );
+}
+
+/** Relance uniquement le traitement serveur : l'audio déjà déposé est réutilisé. */
+export async function retryRecordingTranscription(
+  recordingId: string,
+): Promise<WorkspaceRecording> {
+  return unwrap(
+    supabase.rpc('retry_workspace_recording_transcription', {
+      p_recording_id: recordingId,
+    }),
   );
 }
 

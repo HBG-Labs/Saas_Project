@@ -21,15 +21,6 @@ import {
 } from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import type { JSONContent } from '@tiptap/core';
-import BoldExtension from '@tiptap/extension-bold';
-import Document from '@tiptap/extension-document';
-import HardBreak from '@tiptap/extension-hard-break';
-import Heading from '@tiptap/extension-heading';
-import ItalicExtension from '@tiptap/extension-italic';
-import { BulletList, ListItem, OrderedList } from '@tiptap/extension-list';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import { UndoRedo } from '@tiptap/extensions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -43,7 +34,10 @@ import { ROUTES } from '@/config/routes';
 import { useAiAssistant } from '@/features/ai';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
 import {
+  appendDocumentBlocks,
   isPersonalSpace,
+  createWorkspaceEditorExtensions,
+  getAppendOnlySuffix,
   textToTiptapDocument,
   useCreatePage,
   useCoverUrl,
@@ -110,13 +104,20 @@ const PAGE_ACCENT_LABELS: Record<keyof typeof PAGE_ACCENT_STYLES, string> = {
 
 type PagePresentation = Pick<
   WorkspacePage,
-  'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
+  | 'font_family'
+  | 'small_text'
+  | 'text_spacing'
+  | 'full_width'
+  | 'locked'
+  | 'accent_color'
+  | 'wiki_mode'
 >;
 
 function getPagePresentation(page: WorkspacePage): PagePresentation {
   return {
     font_family: page.font_family,
     small_text: page.small_text,
+    text_spacing: page.text_spacing ?? 'normal',
     full_width: page.full_width,
     locked: page.locked,
     accent_color: page.accent_color,
@@ -202,6 +203,7 @@ function PageForm({
   const [message, setMessage] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const loadedAtRef = useRef(loaded.updated_at);
+  const serverContentRef = useRef(loaded.content);
   const revisionRef = useRef(0);
   const savingRef = useRef(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -228,19 +230,7 @@ function PageForm({
     // Conserver seulement les capacités proposées dans la barre d'outils.
     // Charger StarterKit ici ajoutait notamment liens, code, citations et
     // décorations jamais exposés, soit plus de 80 Kio gzip inutiles.
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      HardBreak,
-      BoldExtension,
-      ItalicExtension,
-      Heading.configure({ levels: [2] }),
-      ListItem,
-      BulletList,
-      OrderedList,
-      UndoRedo,
-    ],
+    extensions: createWorkspaceEditorExtensions(),
     content: loaded.content as JSONContent,
     editable: canEdit && !presentation.locked,
     immediatelyRender: false,
@@ -278,22 +268,36 @@ function PageForm({
    * Synchronisation légitime d'un éditeur externe avec une version serveur
    * arrivée pendant que le formulaire est propre. TipTap est mis à jour sans
    * émettre d'événement ; les miroirs React suivent la même version. En cas de
-   * saisie locale, on ne touche à rien et `hasExternalConflict` bloque l'autosave.
+   * saisie locale, seuls les nouveaux blocs ajoutés à la fin par le serveur
+   * (notamment une transcription) sont fusionnés. Toute autre modification
+   * reste un conflit et bloque l'autosave.
    */
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!editor || loaded.updated_at === loadedAtRef.current) return;
-    if (dirty) return;
+    if (dirty) {
+      const appendedBlocks = getAppendOnlySuffix(serverContentRef.current, loaded.content);
+      if (!appendedBlocks?.length) return;
+
+      const merged = appendDocumentBlocks(editor.getJSON() as TiptapDocument, appendedBlocks);
+      editor.commands.setContent(merged as JSONContent, { emitUpdate: false });
+      setContent(merged);
+      setText(editor.getText({ blockSeparator: '\n' }));
+      serverContentRef.current = loaded.content;
+      loadedAtRef.current = loaded.updated_at;
+      setLoadedAt(loaded.updated_at);
+      setMessage('Transcription ajoutée à la note sans interrompre votre saisie.');
+      return;
+    }
     editor.commands.setContent(loaded.content as JSONContent, { emitUpdate: false });
     setContent(loaded.content);
     setText(loaded.search_text ?? '');
     setTitle(loaded.title);
     setIconValue(loaded.icon ?? '');
     setPresentation(getPagePresentation(loaded));
+    serverContentRef.current = loaded.content;
     loadedAtRef.current = loaded.updated_at;
     setLoadedAt(loaded.updated_at);
   }, [dirty, editor, loaded, loadedAt]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (organizationId) touch.mutate({ pageId, organizationId });
@@ -342,6 +346,7 @@ function PageForm({
         content,
       });
       loadedAtRef.current = saved.updated_at;
+      serverContentRef.current = saved.content;
       setLoadedAt(saved.updated_at);
       if (revisionRef.current === savedRevision) setDirty(false);
       setMessage('Enregistré.');
@@ -647,6 +652,8 @@ function PageForm({
             />
           </div>
 
+          {canAi ? <WorkspaceRecorder page={loaded} /> : null}
+
           <div className="mt-6">
             {canEdit && !presentation.locked && editor ? (
               <div
@@ -704,11 +711,38 @@ function PageForm({
                 >
                   <ListOrdered className="size-4" />
                 </Button>
+                <div
+                  className="border-border ml-1 hidden items-center gap-1 border-l pl-2 md:flex"
+                  role="group"
+                  aria-label="Espacement du texte"
+                >
+                  <span className="text-muted-foreground px-1 text-xs">Espacement</span>
+                  {(
+                    [
+                      ['compact', 'Compact'],
+                      ['normal', 'Normal'],
+                      ['airy', 'Aéré'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      size="sm"
+                      variant={presentation.text_spacing === value ? 'secondary' : 'ghost'}
+                      aria-pressed={presentation.text_spacing === value}
+                      disabled={updatePresentation.isPending}
+                      onClick={() => void handlePresentationChange({ text_spacing: value })}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             ) : null}
             <EditorContent
               editor={editor}
               aria-label="Contenu de la page"
+              data-text-spacing={presentation.text_spacing ?? 'normal'}
               className={cn(
                 'workspace-rich-editor min-h-[14rem]',
                 presentation.small_text ? 'text-xs' : 'text-base',
@@ -1249,8 +1283,6 @@ function PageForm({
           ) : null}
         </div>
       </Modal>
-
-      {canAi ? <WorkspaceRecorder page={loaded} /> : null}
 
       {canAi ? (
         <section

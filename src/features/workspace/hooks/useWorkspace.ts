@@ -43,6 +43,7 @@ import {
   createRecording,
   deleteRecording,
   getRecordingAudioUrl,
+  retryRecordingTranscription,
   getTranscriptionQuota,
   listRecordings,
   renameRecording,
@@ -542,6 +543,16 @@ export function useRenameRecording() {
   return useMutation({
     mutationFn: ({ recordingId, title }: { recordingId: string; title: string }) =>
       renameRecording(recordingId, title),
+    onSuccess: async (recording) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
+    },
+  });
+}
+
+export function useRetryRecordingTranscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (recording: WorkspaceRecording) => retryRecordingTranscription(recording.id),
     onSuccess: async (recording) => {
       await queryClient.invalidateQueries({ queryKey: qk.workspace.recordings(recording.page_id) });
     },

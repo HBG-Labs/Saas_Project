@@ -52,6 +52,7 @@ export const pageDocument = {
   cover_path: null,
   font_family: 'sans',
   small_text: false,
+  text_spacing: 'normal',
   full_width: false,
   locked: false,
   accent_color: 'blue',

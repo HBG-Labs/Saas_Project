@@ -8,6 +8,7 @@ const page = {
   id: 'page-1',
   font_family: 'sans',
   small_text: false,
+  text_spacing: 'normal',
   full_width: false,
   locked: false,
   accent_color: 'blue',
@@ -70,6 +71,8 @@ describe('WorkspacePageOptionsPanel', () => {
     expect(props.onPresentationChange).toHaveBeenCalledWith({ font_family: 'serif' });
     fireEvent.click(screen.getByRole('switch', { name: 'Pleine largeur' }));
     expect(props.onPresentationChange).toHaveBeenCalledWith({ full_width: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Compact' }));
+    expect(props.onPresentationChange).toHaveBeenCalledWith({ text_spacing: 'compact' });
   });
 
   it('bloque les réglages concurrents pendant leur enregistrement', () => {
@@ -79,5 +82,6 @@ describe('WorkspacePageOptionsPanel', () => {
     expect(screen.getByRole('button', { name: /Sérif/ })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Pleine largeur' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Verrouiller la page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Aéré' })).toBeDisabled();
   });
 });

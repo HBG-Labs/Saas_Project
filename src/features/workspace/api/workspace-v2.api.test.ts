@@ -20,7 +20,12 @@ vi.mock('@/services/supabase', () => ({
   unwrapMaybe: deballer,
 }));
 
-import { createPageFromTemplate, searchPages, textToTiptapDocument } from './workspace.api';
+import {
+  createPageFromTemplate,
+  retryRecordingTranscription,
+  searchPages,
+  textToTiptapDocument,
+} from './workspace.api';
 
 describe('workspace.api — v2', () => {
   beforeEach(() => {
@@ -61,6 +66,16 @@ describe('workspace.api — v2', () => {
       p_space_id: 's-1',
       p_parent_page_id: null,
       p_title: 'X',
+    });
+  });
+
+  it('relance une transcription existante sans recréer l’enregistrement', async () => {
+    rpc.mockResolvedValue({ data: { id: 'rec-1', status: 'pending' }, error: null });
+
+    await retryRecordingTranscription('rec-1');
+
+    expect(rpc).toHaveBeenCalledWith('retry_workspace_recording_transcription', {
+      p_recording_id: 'rec-1',
     });
   });
 });

@@ -64,6 +64,7 @@ export {
   getTranscriptionQuota,
   listRecordings,
   renameRecording,
+  retryRecordingTranscription,
   VOCABULARY_TYPE_LABELS,
   addVocabularyTerms,
   listVocabulary,
@@ -129,6 +130,7 @@ export {
   useRecordingAudioUrl,
   useRecordings,
   useRenameRecording,
+  useRetryRecordingTranscription,
   useUpdateRecordingNotes,
   useTranscriptionQuota,
   useAddVocabularyTerms,
@@ -185,5 +187,8 @@ export {
   type TimelineItem,
 } from './recordings/timeline';
 export { useRecordingTimeline } from './recordings/useRecordingTimeline';
+export { countTranscriptWords, formatRecordingDuration } from './recordings/voice-ui';
 export { WorkspacePageOptionsPanel } from './components/WorkspacePageOptionsPanel';
 export { WorkspaceSidebarPageRow } from './components/WorkspaceSidebarPageRow';
+export { createWorkspaceEditorExtensions } from './editor/workspace-editor-extensions';
+export { appendDocumentBlocks, getAppendOnlySuffix } from './editor/append-only-merge';

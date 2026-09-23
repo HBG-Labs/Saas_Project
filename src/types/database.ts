@@ -3920,6 +3920,8 @@ export interface Database {
           cover_path: string | null;
           font_family: 'sans' | 'serif' | 'mono';
           small_text: boolean;
+          /** Densité verticale du contenu de la page — 20261015090000. */
+          text_spacing: 'compact' | 'normal' | 'airy';
           full_width: boolean;
           locked: boolean;
           accent_color: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
@@ -3941,6 +3943,7 @@ export interface Database {
           cover_path?: string | null;
           font_family?: 'sans' | 'serif' | 'mono';
           small_text?: boolean;
+          text_spacing?: 'compact' | 'normal' | 'airy';
           full_width?: boolean;
           locked?: boolean;
           accent_color?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
@@ -3956,6 +3959,7 @@ export interface Database {
           cover_path?: string | null;
           font_family?: 'sans' | 'serif' | 'mono';
           small_text?: boolean;
+          text_spacing?: 'compact' | 'normal' | 'airy';
           full_width?: boolean;
           locked?: boolean;
           accent_color?: 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'slate';
@@ -5613,6 +5617,11 @@ export interface Database {
       /** Le fichier est déposé : la transcription peut partir (auteur seul). */
       submit_workspace_recording: {
         Args: { p_recording_id: string; p_size_bytes?: number | null };
+        Returns: Database['public']['Tables']['workspace_recordings']['Row'];
+      };
+      /** Relance une transcription en échec tant que son audio existe encore. */
+      retry_workspace_recording_transcription: {
+        Args: { p_recording_id: string };
         Returns: Database['public']['Tables']['workspace_recordings']['Row'];
       };
       /** Minutes de transcription du mois : consommées, plafond, reste. Membres seulement. */

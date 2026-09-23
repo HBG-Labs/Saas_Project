@@ -87,7 +87,13 @@ export function WorkspacePageOptionsPanel({
     patch: Partial<
       Pick<
         WorkspacePage,
-        'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
+        | 'font_family'
+        | 'small_text'
+        | 'text_spacing'
+        | 'full_width'
+        | 'locked'
+        | 'accent_color'
+        | 'wiki_mode'
       >
     >,
   ) => void;
@@ -322,6 +328,34 @@ export function WorkspacePageOptionsPanel({
                     <span className="text-muted-foreground text-2xs">{label}</span>
                   </button>
                 ))}
+              </div>
+              <div className="mt-3">
+                <p className="text-muted-foreground mb-2 px-1 text-xs font-bold">Espacement</p>
+                <div className="bg-surface-sunken grid grid-cols-3 gap-1 rounded-xl p-1">
+                  {(
+                    [
+                      ['compact', 'Compact'],
+                      ['normal', 'Normal'],
+                      ['airy', 'Aéré'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={(page.text_spacing ?? 'normal') === value}
+                      disabled={!canEdit || presentationPending}
+                      onClick={() => onPresentationChange({ text_spacing: value })}
+                      className={cn(
+                        'min-h-11 rounded-lg px-2 text-sm font-semibold transition',
+                        (page.text_spacing ?? 'normal') === value
+                          ? 'bg-surface text-primary shadow-sm'
+                          : 'text-muted-foreground hover:bg-surface-hover',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
           ) : null}
