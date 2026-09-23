@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -111,7 +112,7 @@ export default function InterventionPage() {
   const canTrack = membership !== null && data.technician_id === membership.id;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <PageShell width="3xl">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={data.mission_id !== null ? ROUTES.mission(data.mission_id) : ROUTES.missions}>
           <ArrowLeft className="size-4" />
@@ -417,7 +418,7 @@ export default function InterventionPage() {
         attachments={attachments.data ?? []}
         workedSeconds={workedSeconds.data ?? 0}
       />
-    </div>
+    </PageShell>
   );
 }
 

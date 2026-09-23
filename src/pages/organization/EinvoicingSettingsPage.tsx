@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -329,7 +330,7 @@ export default function EinvoicingSettingsPage() {
         : '#identite';
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-6">
+    <PageShell width="5xl">
       <PageHeader
         title="Facturation électronique"
         description="Préparez les informations qui accompagneront vos factures."
@@ -461,6 +462,6 @@ export default function EinvoicingSettingsPage() {
           Sélectionnez une entreprise pour préparer votre facturation.
         </p>
       )}
-    </div>
+    </PageShell>
   );
 }

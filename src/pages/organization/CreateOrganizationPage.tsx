@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -135,7 +136,7 @@ export default function CreateOrganizationPage() {
   });
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 pb-10">
+    <PageShell width="xl">
       <PageHeader
         title="Créer votre entreprise"
         description="Une entreprise regroupe vos équipes, vos clients et vos missions. Vous en serez le propriétaire."
@@ -314,6 +315,6 @@ export default function CreateOrganizationPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { useToast } from '@/components/feedback/toast-context';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -90,24 +91,24 @@ export default function ReceivedInvoiceDetailPage() {
 
   if (query.isPending) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4 pb-12">
+      <PageShell width="3xl">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-48 w-full rounded-xl" />
-      </div>
+      </PageShell>
     );
   }
 
   if (query.isError) {
     return (
-      <div className="mx-auto max-w-3xl pb-12">
+      <PageShell width="3xl">
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-      </div>
+      </PageShell>
     );
   }
 
   if (query.data === null) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4 pb-12">
+      <PageShell width="3xl">
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
           <Link to={ROUTES.receivedInvoices}>
             <ArrowLeft className="size-4" aria-hidden="true" />
@@ -115,7 +116,7 @@ export default function ReceivedInvoiceDetailPage() {
           </Link>
         </Button>
         <p className="text-muted-foreground text-sm">Cette facture reçue est introuvable.</p>
-      </div>
+      </PageShell>
     );
   }
 
@@ -125,7 +126,7 @@ export default function ReceivedInvoiceDetailPage() {
   }`;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-12">
+    <PageShell width="3xl">
       <Button asChild variant="ghost" size="sm" className="w-fit gap-1.5">
         <Link to={ROUTES.receivedInvoices}>
           <ArrowLeft className="size-4" aria-hidden="true" />
@@ -267,6 +268,6 @@ export default function ReceivedInvoiceDetailPage() {
           </ol>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { PortalSettingsCard } from '@/features/client-portal';
 import { OrganizationNavTabs } from '@/features/organizations';
 import { useDocumentTitle } from '@/lib/use-document-title';
@@ -12,13 +13,13 @@ export default function ClientPortalSettingsPage() {
   useDocumentTitle('Portail client');
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-10">
+    <PageShell width="4xl">
       <PageHeader
         title="Portail client"
         description="Contrôlez l'accès, l'identité affichée et les échanges proposés à vos clients."
       />
       <OrganizationNavTabs />
       <PortalSettingsCard />
-    </div>
+    </PageShell>
   );
 }

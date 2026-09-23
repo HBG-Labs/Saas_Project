@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router';
 import { FormError } from '@/components/feedback/FormError';
 import { useToast } from '@/components/feedback/toast-context';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ROUTES } from '@/config/routes';
@@ -124,7 +125,7 @@ export default function MissionCreatePage() {
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <PageShell width="2xl">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={ROUTES.missions}>
           <ArrowLeft className="size-4" />
@@ -176,6 +177,6 @@ export default function MissionCreatePage() {
           </Button>
         </div>
       </form>
-    </div>
+    </PageShell>
   );
 }

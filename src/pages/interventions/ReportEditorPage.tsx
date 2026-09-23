@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -241,7 +242,7 @@ export default function ReportEditorPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <PageShell width="2xl">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={ROUTES.intervention(interventionId)}>
           <ArrowLeft className="size-4" />
@@ -646,6 +647,6 @@ export default function ReportEditorPage() {
         attachments={attachments.data ?? []}
         workedSeconds={workedSecondsQuery.data ?? 0}
       />
-    </div>
+    </PageShell>
   );
 }

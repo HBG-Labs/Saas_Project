@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -240,7 +241,7 @@ export default function OrganizationSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <PageShell width="3xl">
       <PageHeader
         title="Paramètres de l'entreprise"
         description={
@@ -564,6 +565,6 @@ export default function OrganizationSettingsPage() {
           ) : null}
         </form>
       )}
-    </div>
+    </PageShell>
   );
 }

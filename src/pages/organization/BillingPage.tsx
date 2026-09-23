@@ -15,6 +15,7 @@ import { Link, useSearchParams } from 'react-router';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -176,7 +177,7 @@ export default function BillingPage() {
   const data = subscription.data ?? null;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-10">
+    <PageShell width="4xl">
       <PageHeader
         title="Facturation"
         description="Formule de l’entreprise et consommation associée."
@@ -688,6 +689,6 @@ export default function BillingPage() {
           <FormError error={cancel.error} />
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }
