@@ -186,3 +186,4 @@ export {
 } from './recordings/timeline';
 export { useRecordingTimeline } from './recordings/useRecordingTimeline';
 export { WorkspacePageOptionsPanel } from './components/WorkspacePageOptionsPanel';
+export { WorkspaceSidebarPageRow } from './components/WorkspaceSidebarPageRow';

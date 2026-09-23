@@ -1,13 +1,4 @@
-import {
-  BookOpen,
-  ChevronDown,
-  FileText,
-  Plus,
-  RotateCcw,
-  Search,
-  Star,
-  Trash2,
-} from 'lucide-react';
+import { BookOpen, ChevronDown, Plus, RotateCcw, Search, Star, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
@@ -36,6 +27,8 @@ import {
   useSearchPages,
   useSpaces,
   useTemplates,
+  useToggleFavorite,
+  WorkspaceSidebarPageRow,
   type WorkspacePage,
   type WorkspaceSpace,
 } from '@/features/workspace';
@@ -45,14 +38,42 @@ import { WorkspacePageEditor } from './WorkspacePageEditor';
 
 /* Le lot visuel conserve les hooks, les permissions et le parcours de création v2. */
 
+type SidebarPage = Pick<WorkspacePage, 'id' | 'title' | 'icon'>;
+
+async function copyText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement('textarea');
+  input.value = value;
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand?.('copy') ?? false;
+  input.remove();
+  if (!copied) throw new Error("Le presse-papiers n'est pas disponible sur cet appareil.");
+}
+
 function SpacePages({
   space,
   activePageId,
+  canEdit,
+  favoritePageIds,
   onSelect,
+  onToggleFavorite,
+  onCopyLink,
+  onArchive,
 }: {
   space: WorkspaceSpace;
   activePageId: string | undefined;
+  canEdit: boolean;
+  favoritePageIds: ReadonlySet<string>;
   onSelect: () => void;
+  onToggleFavorite: (page: SidebarPage) => void;
+  onCopyLink: (page: SidebarPage) => void;
+  onArchive: (page: SidebarPage) => void;
 }) {
   const { data: pages = [], isLoading } = usePages(space.id);
 
@@ -82,22 +103,19 @@ function SpacePages({
   return (
     <ul className="space-y-0.5">
       {ordered.map(({ page, depth }) => (
-        <li key={page.id}>
-          <Link
-            to={ROUTES.workspacePage(page.id)}
-            onClick={onSelect}
-            aria-current={page.id === activePageId ? 'page' : undefined}
-            style={{ paddingLeft: `${String(8 + depth * 14)}px` }}
-            className={`hover:bg-surface-hover flex min-h-11 items-center gap-2 rounded-lg py-2 pr-2 text-sm lg:min-h-9 ${
-              page.id === activePageId ? 'bg-nav-selected text-nav-foreground font-bold' : ''
-            }`}
-          >
-            <span className="w-5 shrink-0 text-center">
-              {page.icon ?? <FileText className="inline size-4" aria-hidden />}
-            </span>
-            <span className="truncate">{page.title}</span>
-          </Link>
-        </li>
+        <WorkspaceSidebarPageRow
+          key={page.id}
+          page={page}
+          to={ROUTES.workspacePage(page.id)}
+          active={page.id === activePageId}
+          depth={depth}
+          canEdit={canEdit}
+          isFavorite={favoritePageIds.has(page.id)}
+          onSelect={onSelect}
+          onToggleFavorite={onToggleFavorite}
+          onCopyLink={onCopyLink}
+          onArchive={onArchive}
+        />
       ))}
     </ul>
   );
@@ -123,6 +141,7 @@ export default function WorkspacePagesPage() {
   const createFromTemplate = useCreatePageFromTemplate();
   const movePage = useMovePage();
   const deletePage = useDeletePage();
+  const toggleFavorite = useToggleFavorite();
 
   const [query, setQuery] = useState('');
   const [browserOpen, setBrowserOpen] = useState(false);
@@ -131,6 +150,7 @@ export default function WorkspacePagesPage() {
   const [templateId, setTemplateId] = useState<string>('');
   const [trashOpen, setTrashOpen] = useState(false);
   const [trashMessage, setTrashMessage] = useState<string | null>(null);
+  const [sidebarActionMessage, setSidebarActionMessage] = useState<string | null>(null);
 
   const allSpaces = useMemo(() => {
     const list = spaces.data ?? [];
@@ -152,6 +172,11 @@ export default function WorkspacePagesPage() {
     return map;
   }, [recents.data]);
 
+  const favoritePageIds = useMemo(
+    () => new Set((favorites.data ?? []).map((favorite) => favorite.page_id)),
+    [favorites.data],
+  );
+
   const handleNewPage = async () => {
     if (!effectiveSpaceId) return;
     const page = await createPage.mutateAsync({ spaceId: effectiveSpaceId });
@@ -167,6 +192,55 @@ export default function WorkspacePagesPage() {
     });
     setBrowserOpen(false);
     await navigate(ROUTES.workspacePage(page.id));
+  };
+
+  const copyPageLink = async (page: SidebarPage) => {
+    setSidebarActionMessage(null);
+    try {
+      const url = new URL(ROUTES.workspacePage(page.id), window.location.origin).toString();
+      await copyText(url);
+      setSidebarActionMessage(`Lien de « ${page.title || 'Sans titre'} » copié.`);
+    } catch (error) {
+      setSidebarActionMessage(
+        error instanceof Error ? error.message : 'Impossible de copier le lien.',
+      );
+    }
+  };
+
+  const togglePageFavorite = async (page: SidebarPage) => {
+    if (!organizationId) return;
+    const favorite = !favoritePageIds.has(page.id);
+    setSidebarActionMessage(null);
+    try {
+      await toggleFavorite.mutateAsync({ pageId: page.id, favorite, organizationId });
+      setSidebarActionMessage(
+        favorite
+          ? `« ${page.title || 'Sans titre'} » ajoutée aux favoris.`
+          : `« ${page.title || 'Sans titre'} » retirée des favoris.`,
+      );
+    } catch (error) {
+      setSidebarActionMessage(
+        error instanceof Error ? error.message : 'Les favoris n’ont pas pu être mis à jour.',
+      );
+    }
+  };
+
+  const archivePageFromSidebar = async (page: SidebarPage) => {
+    const title = page.title || 'Sans titre';
+    if (!window.confirm(`Déplacer « ${title} » dans la corbeille ?`)) return;
+    setSidebarActionMessage(null);
+    try {
+      await movePage.mutateAsync({
+        pageId: page.id,
+        patch: { archived_at: new Date().toISOString() },
+      });
+      setSidebarActionMessage(`« ${title} » a été déplacée dans la corbeille.`);
+      if (page.id === pageId) await navigate(ROUTES.workspacePages);
+    } catch (error) {
+      setSidebarActionMessage(
+        error instanceof Error ? error.message : 'La page n’a pas pu être déplacée.',
+      );
+    }
   };
 
   const restorePage = async (page: WorkspacePage) => {
@@ -232,6 +306,14 @@ export default function WorkspacePagesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          {sidebarActionMessage ? (
+            <p
+              role="status"
+              className="border-info-border bg-info-subtle text-info rounded-lg border px-2.5 py-2 text-xs"
+            >
+              {sidebarActionMessage}
+            </p>
+          ) : null}
           {query.trim().length >= 2 ? (
             <div className="border-border border-b pb-4">
               <div className="space-y-1">
@@ -312,17 +394,23 @@ export default function WorkspacePagesPage() {
             <div className="border-border border-b pb-4">
               <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">Récentes</p>
-                {(recents.data ?? []).map((r) => (
-                  <Link
-                    key={r.page.id}
-                    onClick={() => setBrowserOpen(false)}
-                    to={ROUTES.workspacePage(r.page.id)}
-                    className="hover:bg-surface-hover block min-h-11 truncate rounded-lg px-2 py-2 text-sm lg:min-h-9"
-                  >
-                    {r.page.icon ? `${r.page.icon} ` : ''}
-                    {r.page.title}
-                  </Link>
-                ))}
+                <ul className="space-y-0.5">
+                  {(recents.data ?? []).map((r) => (
+                    <WorkspaceSidebarPageRow
+                      key={r.page.id}
+                      page={r.page}
+                      to={ROUTES.workspacePage(r.page.id)}
+                      active={r.page.id === pageId}
+                      showFallbackIcon={false}
+                      canEdit={canEdit}
+                      isFavorite={favoritePageIds.has(r.page.id)}
+                      onSelect={() => setBrowserOpen(false)}
+                      onToggleFavorite={(page) => void togglePageFavorite(page)}
+                      onCopyLink={(page) => void copyPageLink(page)}
+                      onArchive={(page) => void archivePageFromSidebar(page)}
+                    />
+                  ))}
+                </ul>
               </div>
             </div>
           ) : null}
@@ -359,7 +447,12 @@ export default function WorkspacePagesPage() {
                 <SpacePages
                   space={space}
                   activePageId={pageId}
+                  canEdit={canEdit}
+                  favoritePageIds={favoritePageIds}
                   onSelect={() => setBrowserOpen(false)}
+                  onToggleFavorite={(page) => void togglePageFavorite(page)}
+                  onCopyLink={(page) => void copyPageLink(page)}
+                  onArchive={(page) => void archivePageFromSidebar(page)}
                 />
               </div>
             </div>

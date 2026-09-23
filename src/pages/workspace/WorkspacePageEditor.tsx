@@ -43,6 +43,7 @@ import { ROUTES } from '@/config/routes';
 import { useAiAssistant } from '@/features/ai';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
 import {
+  isPersonalSpace,
   textToTiptapDocument,
   useCreatePage,
   useCoverUrl,
@@ -57,6 +58,7 @@ import {
   useSavePage,
   useSetPageNotificationLevel,
   useSetPageIcon,
+  useSpaces,
   useToggleFavorite,
   useTouchPage,
   useTasks,
@@ -169,6 +171,7 @@ function PageForm({
   const canAi = can(PERMISSIONS.aiWorkspace);
 
   const favorites = useFavorites(organizationId);
+  const spaces = useSpaces(organizationId);
   const touch = useTouchPage();
   const save = useSavePage();
   const setIcon = useSetPageIcon();
@@ -302,6 +305,23 @@ function PageForm({
     () => (favorites.data ?? []).some((f) => f.page_id === pageId),
     [favorites.data, pageId],
   );
+  const currentSpace = useMemo(
+    () => (spaces.data ?? []).find((space) => space.id === loaded.space_id),
+    [loaded.space_id, spaces.data],
+  );
+  const isPagePersonal = currentSpace ? isPersonalSpace(currentSpace) : null;
+  const accessLabel =
+    isPagePersonal === true
+      ? 'Espace personnel'
+      : isPagePersonal === false
+        ? 'Partagée avec l’équipe'
+        : 'Accès restreint';
+  const shareDescription =
+    isPagePersonal === true
+      ? 'Cette page est dans votre espace personnel. Le lien ne peut être ouvert que par vous.'
+      : isPagePersonal === false
+        ? 'Cette page est accessible aux membres de votre organisation qui disposent des autorisations Workspace.'
+        : 'Le lien reste réservé aux personnes autorisées dans votre organisation.';
 
   const ai = useAiAssistant({ pageId });
   const [question, setQuestion] = useState('');
@@ -511,8 +531,8 @@ function PageForm({
 
         <header className="border-border flex min-h-12 items-center gap-2 border-b px-3 sm:px-5">
           <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-            {icon || '📄'} {title || 'Sans titre'}{' '}
-            {presentation.locked ? '· Verrouillée' : '· Privée'}
+            {icon || '📄'} {title || 'Sans titre'} · {accessLabel}
+            {presentation.locked ? ' · Verrouillée' : ''}
             {presentation.wiki_mode ? ' · Wiki' : ''}
           </span>
           <span className="text-muted-foreground hidden text-xs md:inline">
@@ -840,7 +860,7 @@ function PageForm({
         open={shareOpen}
         onOpenChange={setShareOpen}
         title="Partager cette page"
-        description="La page reste privée : seules les personnes autorisées dans votre organisation pourront l’ouvrir."
+        description={shareDescription}
         footer={
           <Button
             type="button"

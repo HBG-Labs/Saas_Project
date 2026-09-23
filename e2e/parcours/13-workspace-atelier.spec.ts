@@ -91,6 +91,8 @@ test.describe('Workspace Atelier', () => {
     const refuseCookies = page.getByRole('button', { name: 'Tout refuser' });
     if (await refuseCookies.isVisible()) await refuseCookies.click();
 
+    await expect(page.getByText(/Espace personnel/)).toBeVisible();
+
     await page.getByRole('button', { name: 'Options de la page' }).click();
     const styleRequest = page.waitForRequest(
       (request) =>
@@ -117,6 +119,7 @@ test.describe('Workspace Atelier', () => {
 
     await page.getByRole('button', { name: 'Partager' }).click();
     const shareDialog = page.getByRole('dialog', { name: 'Partager cette page' });
+    await expect(shareDialog).toContainText('Le lien ne peut être ouvert que par vous.');
     await expect(shareDialog.getByLabel('Lien de la page')).toHaveValue(page.url());
     await expect(shareDialog.getByRole('button', { name: 'Copier le lien' })).toBeVisible();
     await shareDialog.getByRole('button', { name: 'Fermer' }).click();

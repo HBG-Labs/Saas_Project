@@ -118,6 +118,14 @@ select pg_temp.login('tech_a'); set local role authenticated;
 update public.workspace_pages set title = 'Mes notes de terrain (v2)' where id = (select page_privee from t_ctx);
 select pg_temp.ok((select count(*) from public.workspace_page_revisions where page_id = (select page_privee from t_ctx)) = 1,
   'tech_a voit la revision de sa page');
+update public.workspace_pages
+set font_family = 'serif', small_text = true, full_width = true, locked = true
+where id = (select page_privee from t_ctx);
+select pg_temp.ok((
+  select font_family = 'serif' and small_text and full_width and locked
+  from public.workspace_pages
+  where id = (select page_privee from t_ctx)
+), 'les reglages de presentation sont modifiables et persistent');
 reset role;
 select pg_temp.login('chef'); set local role authenticated;
 select pg_temp.ok((select count(*) from public.workspace_page_revisions where page_id = (select page_privee from t_ctx)) = 0,
