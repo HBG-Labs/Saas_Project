@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
-import { normalizeHeading, unwrapHeading } from './heading';
+import {
+  headingFromAbsoluteAlpha,
+  headingFromWebkitCompass,
+  normalizeHeading,
+  unwrapHeading,
+} from './heading';
 
 interface GeoLocationState {
   lat: number | null;
@@ -16,11 +21,20 @@ interface GeoLocationState {
 
 interface DeviceOrientationEventWithCompass extends DeviceOrientationEvent {
   webkitCompassHeading?: number;
+  webkitCompassAccuracy?: number;
 }
 
 type DeviceOrientationConstructorWithPermission = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<'granted' | 'denied'>;
+  requestPermission?: (absolute?: boolean) => Promise<'granted' | 'denied'>;
 };
+
+type HeadingStatus = 'waiting' | 'absolute' | 'relative' | 'uncalibrated' | 'denied' | 'manual';
+
+function getScreenOrientationAngle(): number {
+  if (typeof screen.orientation?.angle === 'number') return screen.orientation.angle;
+  const legacyAngle = (window as Window & { orientation?: number }).orientation;
+  return typeof legacyAngle === 'number' ? legacyAngle : 0;
+}
 
 function getCardinalDirection(heading: number): string {
   const directions = [
@@ -55,6 +69,9 @@ export default function CompassTool() {
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [hasOrientationSensor, setHasOrientationSensor] = useState<boolean | null>(null);
   const [permissionRequested, setPermissionRequested] = useState(false);
+  const [headingStatus, setHeadingStatus] = useState<HeadingStatus>('waiting');
+  const [compassAccuracy, setCompassAccuracy] = useState<number | null>(null);
+  const hasAbsoluteHeadingRef = useRef(false);
   const [copiedGps, signalerCopiedGps] = useEphemeralFlag();
 
   const [coords, setCoords] = useState<GeoLocationState>({
@@ -74,18 +91,27 @@ export default function CompassTool() {
 
   // Demande d'autorisation pour iOS 13+
   const requestOrientationPermission = useCallback(async () => {
-    const orientationEvent = DeviceOrientationEvent as DeviceOrientationConstructorWithPermission;
-    if (typeof window !== 'undefined' && typeof orientationEvent.requestPermission === 'function') {
+    const orientationEvent = window.DeviceOrientationEvent as
+      DeviceOrientationConstructorWithPermission | undefined;
+    if (!orientationEvent) {
+      setHasOrientationSensor(false);
+      setHeadingStatus('denied');
+      return;
+    }
+    if (typeof orientationEvent.requestPermission === 'function') {
       try {
-        const response = await orientationEvent.requestPermission();
+        // `true` demande aussi le magnétomètre dans la spécification actuelle.
+        const response = await orientationEvent.requestPermission(true);
         if (response === 'granted') {
-          setHasOrientationSensor(true);
           setPermissionRequested(true);
         } else {
           setHasOrientationSensor(false);
+          setHeadingStatus('denied');
         }
       } catch (err) {
         console.warn('Erreur permission orientation:', err);
+        setHasOrientationSensor(false);
+        setHeadingStatus('denied');
       }
     } else {
       setPermissionRequested(true);
@@ -94,27 +120,56 @@ export default function CompassTool() {
 
   // Écoute des capteurs gyroscopiques
   useEffect(() => {
-    const handleOrientation = (event: DeviceOrientationEvent) => {
-      let compassHeading: number | null = null;
+    const processOrientation = (event: DeviceOrientationEvent, forceAbsolute: boolean) => {
+      const webkitEvent = event as DeviceOrientationEventWithCompass;
+      const iosHeading = webkitEvent.webkitCompassHeading;
+      const hasIosHeading = typeof iosHeading === 'number' && Number.isFinite(iosHeading);
+      const hasAlpha = typeof event.alpha === 'number' && Number.isFinite(event.alpha);
+      if (!hasIosHeading && !hasAlpha) return;
 
-      // Spécifique iOS (webkitCompassHeading est le cap magnétique direct)
-      const iosHeading = (event as DeviceOrientationEventWithCompass).webkitCompassHeading;
-      if (iosHeading !== undefined) {
-        compassHeading = iosHeading;
-      } else if (event.alpha !== null) {
-        // Standard Android / Web (alpha inversé)
-        compassHeading = 360 - event.alpha;
+      setHasOrientationSensor(true);
+      const screenAngle = getScreenOrientationAngle();
+
+      // iOS expose directement le cap magnétique et son incertitude.
+      if (hasIosHeading) {
+        const accuracy = webkitEvent.webkitCompassAccuracy;
+        if (iosHeading < 0 || accuracy === -1) {
+          setCompassAccuracy(null);
+          setHeadingStatus('uncalibrated');
+          return;
+        }
+        hasAbsoluteHeadingRef.current = true;
+        setCompassAccuracy(
+          typeof accuracy === 'number' && Number.isFinite(accuracy) ? accuracy : null,
+        );
+        setHeadingStatus('absolute');
+        updateHeading(headingFromWebkitCompass(iosHeading, screenAngle));
+        return;
       }
 
-      if (compassHeading !== null) {
-        setHasOrientationSensor(true);
-        updateHeading(compassHeading);
+      // Sur Android, seul un événement absolu est relié au repère terrestre.
+      // Un alpha relatif démarre à une direction arbitraire et ne doit jamais
+      // être présenté comme un cap magnétique.
+      if (!forceAbsolute && event.absolute !== true) {
+        if (!hasAbsoluteHeadingRef.current) setHeadingStatus('relative');
+        return;
       }
+
+      hasAbsoluteHeadingRef.current = true;
+      setCompassAccuracy(null);
+      setHeadingStatus('absolute');
+      updateHeading(headingFromAbsoluteAlpha(event.alpha ?? 0, screenAngle));
     };
 
+    const handleOrientation = (event: DeviceOrientationEvent) => processOrientation(event, false);
+    const handleAbsoluteOrientation = (event: DeviceOrientationEvent) =>
+      processOrientation(event, true);
+
     window.addEventListener('deviceorientation', handleOrientation, true);
+    window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation, true);
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('deviceorientationabsolute', handleAbsoluteOrientation, true);
     };
   }, [updateHeading]);
 
@@ -152,6 +207,7 @@ export default function CompassTool() {
 
   // Calcul de l'écart par rapport au cap verrouillé
   const headingDiff = lockedHeading !== null ? ((heading - lockedHeading + 540) % 360) - 180 : null;
+  const hasUsableHeading = headingStatus === 'absolute' || headingStatus === 'manual';
 
   return (
     <div className="mx-auto max-w-4xl min-w-0 space-y-4 sm:space-y-6">
@@ -177,6 +233,7 @@ export default function CompassTool() {
               variant={lockedHeading !== null ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setLockedHeading(lockedHeading !== null ? null : heading)}
+              disabled={!hasUsableHeading && lockedHeading === null}
               className="h-8 shrink-0 gap-1.5 self-start text-xs font-semibold sm:self-auto"
             >
               {lockedHeading !== null ? (
@@ -211,6 +268,33 @@ export default function CompassTool() {
               </Button>
             </div>
           )}
+
+          {headingStatus === 'relative' ? (
+            <div
+              role="status"
+              className="border-warning-border bg-warning-subtle text-foreground rounded-xl border p-3 text-xs"
+            >
+              <p className="font-bold">Nord magnétique indisponible</p>
+              <p className="text-muted-foreground mt-1">
+                Ce téléphone fournit seulement une orientation relative. Le cadran est suspendu
+                plutôt que d’afficher une direction possiblement fausse.
+              </p>
+            </div>
+          ) : null}
+
+          {headingStatus === 'uncalibrated' ||
+          (compassAccuracy !== null && compassAccuracy > 20) ? (
+            <div
+              role="status"
+              className="border-warning-border bg-warning-subtle text-foreground rounded-xl border p-3 text-xs"
+            >
+              <p className="font-bold">Boussole à calibrer</p>
+              <p className="text-muted-foreground mt-1">
+                Éloignez le téléphone des objets métalliques puis dessinez lentement un 8 avec
+                l’appareil avant de recommencer la mesure.
+              </p>
+            </div>
+          ) : null}
 
           {/* Cadran Central de la Boussole */}
           <div className="flex flex-col items-center justify-center py-4">
@@ -270,9 +354,13 @@ export default function CompassTool() {
 
               {/* Centre du cadran avec Cap en Degrés */}
               <div className="bg-surface-sunken/90 border-border absolute z-10 flex size-24 flex-col items-center justify-center rounded-full border text-white shadow-xl backdrop-blur-md">
-                <span className="font-mono text-2xl font-black tracking-tight">{heading}°</span>
+                <span className="font-mono text-2xl font-black tracking-tight">
+                  {hasUsableHeading ? `${heading}°` : '—°'}
+                </span>
                 <span className="text-3xs text-muted-foreground font-bold uppercase">
-                  {getCardinalDirection(heading).split(' • ')[0]}
+                  {hasUsableHeading
+                    ? getCardinalDirection(heading).split(' • ')[0]
+                    : 'Indisponible'}
                 </span>
               </div>
             </div>
@@ -280,9 +368,24 @@ export default function CompassTool() {
             {/* Direction Textuelle */}
             <div className="mt-5 space-y-1 text-center">
               <p className="text-foreground text-base font-extrabold">
-                {getCardinalDirection(heading)}
+                {hasUsableHeading
+                  ? getCardinalDirection(heading)
+                  : 'En attente d’un cap magnétique fiable'}
               </p>
-              {lockedHeading !== null && headingDiff !== null && (
+              {headingStatus === 'absolute' ? (
+                <p className="text-3xs text-muted-foreground">
+                  {compassAccuracy !== null
+                    ? `Précision annoncée : ± ${Math.round(compassAccuracy)}° · `
+                    : 'Cap absolu · '}
+                  téléphone à plat et éloigné des masses métalliques
+                </p>
+              ) : null}
+              {headingStatus === 'manual' ? (
+                <p className="text-3xs text-muted-foreground">
+                  Réglage manuel · ne constitue pas une mesure magnétique
+                </p>
+              ) : null}
+              {hasUsableHeading && lockedHeading !== null && headingDiff !== null && (
                 <div className="bg-warning/10 text-warning border-warning/20 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold">
                   <span>Cap cible : {lockedHeading}°</span>
                   <span>•</span>
@@ -312,7 +415,10 @@ export default function CompassTool() {
                 min="0"
                 max="359"
                 value={heading}
-                onChange={(e) => updateHeading(Number(e.target.value))}
+                onChange={(e) => {
+                  setHeadingStatus('manual');
+                  updateHeading(Number(e.target.value));
+                }}
                 aria-label="Cap manuel"
                 className="accent-primary bg-surface h-2 w-full cursor-pointer rounded-lg"
               />

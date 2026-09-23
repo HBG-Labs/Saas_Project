@@ -2,6 +2,16 @@ export function normalizeHeading(heading: number): number {
   return ((heading % 360) + 360) % 360;
 }
 
+/** Cap du bord supérieur de l'écran à partir de l'alpha absolu W3C. */
+export function headingFromAbsoluteAlpha(alpha: number, screenAngle = 0): number {
+  return normalizeHeading(360 - alpha + screenAngle);
+}
+
+/** Le cap WebKit pointe déjà vers le nord magnétique, dans le sens horaire. */
+export function headingFromWebkitCompass(compassHeading: number, screenAngle = 0): number {
+  return normalizeHeading(compassHeading + screenAngle);
+}
+
 /**
  * Prolonge un cap normalisé sur un axe continu.
  *

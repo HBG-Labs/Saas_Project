@@ -1,12 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeHeading, unwrapHeading } from './heading';
+import {
+  headingFromAbsoluteAlpha,
+  headingFromWebkitCompass,
+  normalizeHeading,
+  unwrapHeading,
+} from './heading';
 
 describe('normalizeHeading', () => {
   it('ramène tout angle entre 0° inclus et 360° exclus', () => {
     expect(normalizeHeading(360)).toBe(0);
     expect(normalizeHeading(-1)).toBe(359);
     expect(normalizeHeading(721)).toBe(1);
+  });
+});
+
+describe('conversion en cap magnétique', () => {
+  it("inverse l'alpha absolu conformément à la convention W3C", () => {
+    expect(headingFromAbsoluteAlpha(0)).toBe(0);
+    expect(headingFromAbsoluteAlpha(90)).toBe(270);
+    expect(headingFromAbsoluteAlpha(270)).toBe(90);
+  });
+
+  it("compense l'orientation courante de l'écran", () => {
+    expect(headingFromAbsoluteAlpha(0, 90)).toBe(90);
+    expect(headingFromWebkitCompass(350, 90)).toBe(80);
   });
 });
 

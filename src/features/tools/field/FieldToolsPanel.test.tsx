@@ -40,7 +40,9 @@ describe('FieldToolsPanel', () => {
     expect(compass).toHaveAttribute('aria-pressed', 'true');
     expect(stopwatch).toHaveAttribute('aria-pressed', 'false');
     expect(await screen.findByText('Boussole active')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Boussole & Cap' })).toBeInTheDocument();
+    const content = screen.getByRole('region', { name: 'Boussole & Cap' });
+    expect(content).toHaveClass('min-h-0', 'overflow-y-auto');
+    expect(content.parentElement).toHaveClass('min-h-0', 'flex-1');
   });
 
   it('expose une action de fermeture explicite', async () => {

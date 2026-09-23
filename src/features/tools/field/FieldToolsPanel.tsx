@@ -83,7 +83,7 @@ export function FieldToolsPanel({
   return (
     <div
       className={cn(
-        'flex w-full min-w-0 flex-col',
+        'flex min-h-0 w-full min-w-0 flex-1 flex-col',
         isModal &&
           'bg-surface border-border shadow-overlay max-h-[92vh] overflow-hidden rounded-2xl border',
       )}
@@ -158,7 +158,7 @@ export function FieldToolsPanel({
       <div
         role="region"
         aria-label={activeToolLabel}
-        className="bg-surface min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-5"
+        className="bg-surface min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3 sm:p-5"
       >
         <Suspense fallback={<LoadingScreen />}>
           {activeTool === 'flashlight' && <FlashlightTool />}

@@ -292,6 +292,10 @@ export default function ToolsPage() {
               initialTool={activeFieldModalTool}
               onClose={() => setShowFieldModal(false)}
             />
+            <div
+              className="h-[max(var(--safe-bottom),0.25rem)] shrink-0 sm:hidden"
+              aria-hidden="true"
+            />
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
