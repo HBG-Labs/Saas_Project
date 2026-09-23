@@ -153,7 +153,16 @@ describe('useTrainingProgress', () => {
       await waitFor(() => expect(result.current.completed).toEqual(['ch1']));
       expect(api.enregistrer).toHaveBeenCalledWith('bien-demarrer', ['ch1']);
       expect(resoudre).toBeDefined();
-      act(() => resoudre?.());
+      await act(async () => {
+        resoudre?.();
+        await Promise.resolve();
+      });
+
+      // La confirmation ne doit pas déclencher une relecture susceptible de
+      // remplacer la coche optimiste par une réponse réseau momentanément
+      // obsolète (réplication, cache HTTP ou second onglet).
+      expect(api.lister).toHaveBeenCalledTimes(1);
+      expect(result.current.completed).toEqual(['ch1']);
     });
 
     it('signale un enregistrement en échec', async () => {

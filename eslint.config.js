@@ -21,6 +21,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'android/**',
       'coverage/**',
       'node_modules/**',
       'playwright-report/**',

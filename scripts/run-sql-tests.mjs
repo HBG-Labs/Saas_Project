@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Exécute TOUTES les suites de `supabase/tests/` contre la base liée.
+ * Exécute TOUTES les suites de `supabase/tests/` contre la base locale.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * POURQUOI UN SCRIPT PLUTÔT QU'UNE LIGNE DANS package.json
@@ -20,6 +20,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const TESTS_DIR = 'supabase/tests';
+const linked = process.argv.includes('--linked');
+if (linked && process.env.REZO360_ALLOW_LINKED_SQL_TESTS !== 'yes') {
+  console.error(
+    'Les tests SQL liés peuvent toucher un projet distant. Posez REZO360_ALLOW_LINKED_SQL_TESTS=yes pour confirmer explicitement.',
+  );
+  process.exit(2);
+}
+const target = linked ? '--linked' : '--local';
 
 // Seuls les fichiers à la racine sont des suites : `communs/` porte les socles
 // inclus, `fixtures/` des jeux de données à lancer à la main.
@@ -77,10 +85,10 @@ for (const suite of suites) {
     // désormais comme un risque. Les chemins ici sont des noms de fichiers du
     // dépôt, mais un avertissement qu'on apprend à ignorer finit par en
     // masquer un vrai.
-    const output = execSync(
-      `npx supabase db query --linked --file "${fichier}"`,
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    const output = execSync(`npx supabase db query ${target} --file "${fichier}"`, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
 
     if (output.includes('TOUS LES TESTS PASSENT')) {
       console.log('  ✓ toutes les assertions passent');

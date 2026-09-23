@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ROUTES } from '@/config/routes';
+import { useAuth } from '@/features/auth';
 import { useCurrentOrganization } from '@/features/organizations';
 
 import { DEFAULT_AI_SUGGESTIONS, sendAiQuery } from '../services/ai.service';
@@ -33,6 +34,7 @@ export interface UseAiAssistantOptions {
 
 export function useAiAssistant(options: UseAiAssistantOptions = {}) {
   const { pageId } = options;
+  const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? 'default-org';
   const navigate = useNavigate();
@@ -60,7 +62,7 @@ export function useAiAssistant(options: UseAiAssistantOptions = {}) {
     addEntry: addSearchEntry,
     removeEntry: removeSearchHistoryItem,
     clearHistory: clearSearchHistory,
-  } = useAiSearchHistory(organizationId);
+  } = useAiSearchHistory(user?.id ?? 'anonymous', organizationId);
 
   const sendMessage = useCallback(
     async (text: string) => {

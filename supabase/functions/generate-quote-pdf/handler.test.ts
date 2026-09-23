@@ -26,6 +26,7 @@ const QUOTE = {
   valid_until: '2026-10-20',
   issue_date: '2026-09-01',
   created_at: '2026-09-01T10:00:00Z',
+  updated_at: '2026-09-01T10:00:00Z',
   customer_id: null,
   document_options: {},
   vat_rate: 20,
@@ -49,10 +50,22 @@ const ORG = {
   quote_payment_terms: null,
   quote_payment_method: null,
 };
-const ITEMS = [{ id: 'i1', description: 'Tableau divisionnaire', unit: 'Forfait', quantity: 1, unit_price_cents: 142_000, position: 0 }];
+const ITEMS = [
+  {
+    id: 'i1',
+    description: 'Tableau divisionnaire',
+    unit: 'Forfait',
+    quantity: 1,
+    unit_price_cents: 142_000,
+    position: 0,
+  },
+];
 
 function json(value: unknown, status = 200) {
-  return new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(value), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function request(body: Record<string, unknown>, auth = 'Bearer owner-test'): Request {
@@ -63,9 +76,14 @@ function request(body: Record<string, unknown>, auth = 'Bearer owner-test'): Req
   });
 }
 
-function isolatedService(overrides: { quote?: Record<string, unknown> | null; quoteStatus?: string } = {}) {
+function isolatedService(
+  overrides: { quote?: Record<string, unknown> | null; quoteStatus?: string } = {},
+) {
   const state = {
-    quote: overrides.quote === undefined ? { ...QUOTE, status: overrides.quoteStatus ?? QUOTE.status } : overrides.quote,
+    quote:
+      overrides.quote === undefined
+        ? { ...QUOTE, status: overrides.quoteStatus ?? QUOTE.status }
+        : overrides.quote,
     stored: null as Uint8Array | null,
     document: null as Record<string, unknown> | null,
     uploads: 0,
@@ -82,6 +100,11 @@ function isolatedService(overrides: { quote?: Record<string, unknown> | null; qu
       return json({ id: 'owner-test', aud: 'authenticated', role: 'authenticated' });
     }
     if (path === '/rest/v1/quotes') {
+      if (req.method === 'PATCH') {
+        if (!state.quote || state.quote.status !== 'draft') return json(null);
+        state.quote = { ...state.quote, status: 'sent' };
+        return json({ id: quoteId, status: 'sent' });
+      }
       return json(state.quote);
     }
     if (path === '/rest/v1/quote_items') {
@@ -150,10 +173,12 @@ Deno.test('refuse un devis introuvable ou inaccessible', async () => {
   assertEquals(response.status, 404);
 });
 
-Deno.test('refuse un brouillon : pas de PDF avant l’envoi', async () => {
-  const { transport } = isolatedService({ quoteStatus: 'draft' });
+Deno.test('finalise le brouillon seulement après un rendu PDF réussi', async () => {
+  const { transport, state } = isolatedService({ quoteStatus: 'draft' });
   const response = await handler(transport)(request({ quoteId }));
-  assertEquals(response.status, 409);
+  assertEquals(response.status, 200);
+  assertEquals(state.quote?.status, 'sent');
+  assertEquals(state.uploads, 1);
 });
 
 Deno.test('génère le PDF une première fois et le conserve', async () => {
@@ -168,16 +193,19 @@ Deno.test('génère le PDF une première fois et le conserve', async () => {
   assert(typeof body.sha256 === 'string' && /^[0-9a-f]{64}$/.test(body.sha256));
 });
 
-Deno.test('un second appel renvoie le document existant sans re-rendre ni re-téléverser', async () => {
-  const { transport, state } = isolatedService();
-  await handler(transport)(request({ quoteId }));
-  assertEquals(state.uploads, 1);
+Deno.test(
+  'un second appel renvoie le document existant sans re-rendre ni re-téléverser',
+  async () => {
+    const { transport, state } = isolatedService();
+    await handler(transport)(request({ quoteId }));
+    assertEquals(state.uploads, 1);
 
-  const second = await handler(transport)(request({ quoteId }));
-  assertEquals(second.status, 200);
-  assertEquals(state.uploads, 1, 'aucun nouveau téléversement');
-  assertEquals(state.inserts, 1, 'aucune nouvelle ligne');
-});
+    const second = await handler(transport)(request({ quoteId }));
+    assertEquals(second.status, 200);
+    assertEquals(state.uploads, 1, 'aucun nouveau téléversement');
+    assertEquals(state.inserts, 1, 'aucune nouvelle ligne');
+  },
+);
 
 Deno.test('refuse un identifiant de devis mal formé', async () => {
   const { transport } = isolatedService();

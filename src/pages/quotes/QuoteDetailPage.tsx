@@ -79,13 +79,13 @@ export default function QuoteDetailPage() {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  /**
-   * Prépare le PDF sans bloquer l'envoi ni le faire échouer : le document
-   * existera au plus tard au prochain clic sur « Télécharger le PDF ». Voir
-   * `generate-quote-pdf` — mêmes garanties que `ensureFacturX`.
-   */
-  const warmUpQuotePdf = (id: string) => {
-    ensureQuotePdf.mutate(id, { onError: () => undefined });
+  const finalizeQuote = async () => {
+    setPdfError(null);
+    try {
+      await ensureQuotePdf.mutateAsync(quote!.id);
+    } catch (error) {
+      setPdfError(error instanceof Error ? error.message : 'Le devis n’a pas pu être envoyé.');
+    }
   };
 
   useDocumentTitle(quote ? `Devis ${quote.reference}` : 'Devis');
@@ -253,13 +253,9 @@ export default function QuoteDetailPage() {
               variant="outline"
               size="sm"
               className="w-full justify-center gap-1.5 text-xs sm:w-auto"
-              disabled={updateQuote.isPending}
-              onClick={() =>
-                updateQuote.mutate(
-                  { status: 'sent' },
-                  { onSuccess: () => warmUpQuotePdf(quote.id) },
-                )
-              }
+              disabled={ensureQuotePdf.isPending}
+              isLoading={ensureQuotePdf.isPending}
+              onClick={() => void finalizeQuote()}
             >
               <Send className="size-3.5" aria-hidden="true" />
               Marquer comme envoyé
@@ -319,7 +315,7 @@ export default function QuoteDetailPage() {
               </p>
             </div>
           </div>
-          {quote.customer_id === null && canManage && organization && (
+          {quote.customer_id === null && quote.status === 'draft' && canManage && organization && (
             <LinkCustomerControl
               kind="quote"
               documentId={quote.id}
@@ -332,22 +328,8 @@ export default function QuoteDetailPage() {
                 variant={quote.status === 'draft' ? 'primary' : 'outline'}
                 size="sm"
                 className="w-full justify-center gap-1.5 text-xs sm:w-auto"
-                disabled={updateQuote.isPending}
-                onClick={() => {
-                  if (quote.status === 'draft') {
-                    updateQuote.mutate(
-                      { status: 'sent' },
-                      {
-                        onSuccess: () => {
-                          warmUpQuotePdf(quote.id);
-                          setNotifyOpen(true);
-                        },
-                      },
-                    );
-                  } else {
-                    setNotifyOpen(true);
-                  }
-                }}
+                disabled={updateQuote.isPending || ensureQuotePdf.isPending}
+                onClick={() => setNotifyOpen(true)}
               >
                 <Send className="size-3.5" aria-hidden="true" />
                 {quote.status === 'draft' ? 'Envoyer au client' : 'Prévenir le client'}
@@ -368,6 +350,14 @@ export default function QuoteDetailPage() {
                   organization?.name ?? '',
                 ].join('\n')}
                 link={{ quoteId: quote.id }}
+                beforeSend={
+                  quote.status === 'draft'
+                    ? async () => {
+                        setPdfError(null);
+                        await ensureQuotePdf.mutateAsync(quote.id);
+                      }
+                    : undefined
+                }
               />
             </>
           )}
@@ -651,13 +641,14 @@ export default function QuoteDetailPage() {
         </Card>
       )}
 
-      {canManage && (
+      {canManage && quote.status === 'draft' && (
         <Card className="border-error/20">
           <CardContent className="flex flex-col items-stretch justify-between gap-3 py-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-foreground text-xs font-semibold">Supprimer ce devis</p>
               <p className="text-muted-foreground text-xs">
-                Le devis et ses lignes sont définitivement retirés. Cette action est irréversible.
+                Le brouillon et ses lignes sont définitivement retirés. Un devis envoyé est conservé
+                comme pièce commerciale et ne peut plus être supprimé.
               </p>
             </div>
             <Button

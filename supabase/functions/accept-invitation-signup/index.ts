@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.2';
 
 /**
  * Créer son compte et rejoindre l'entreprise, d'un seul geste.

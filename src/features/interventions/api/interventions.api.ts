@@ -106,15 +106,10 @@ export async function completeIntervention(
   notes?: string,
 ): Promise<Intervention> {
   return unwrap(
-    supabase
-      .from('interventions')
-      .update({
-        status: 'completed',
-        ...(notes !== undefined ? { notes } : {}),
-      })
-      .eq('id', interventionId)
-      .select('*')
-      .single(),
+    supabase.rpc('complete_intervention_atomic', {
+      p_intervention_id: interventionId,
+      ...(notes !== undefined ? { p_notes: notes } : {}),
+    }),
   );
 }
 

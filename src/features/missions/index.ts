@@ -11,6 +11,7 @@ export {
 
 export {
   assignMission,
+  appendMissionNote,
   getMissionConflicts,
   changeMissionStatus,
   createMission,
@@ -26,6 +27,7 @@ export {
 
 export {
   useAssignMission,
+  useAppendMissionNote,
   useMissionConflicts,
   useChangeMissionStatus,
   useCreateMission,

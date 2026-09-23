@@ -5,8 +5,8 @@ import type { AiSearchHistoryItem } from '../types/ai.types';
 const STORAGE_PREFIX = 'rezo_ai_search_history_';
 const MAX_HISTORY_ITEMS = 30;
 
-export function useAiSearchHistory(organizationId: string) {
-  const storageKey = `${STORAGE_PREFIX}${organizationId}`;
+export function useAiSearchHistory(userId: string, organizationId: string) {
+  const storageKey = `${STORAGE_PREFIX}${userId}_${organizationId}`;
 
   const [history, setHistory] = useState<AiSearchHistoryItem[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -29,9 +29,7 @@ export function useAiSearchHistory(organizationId: string) {
       if (!trimmed) return;
 
       setHistory((prev) => {
-        const filtered = prev.filter(
-          (item) => item.query.toLowerCase() !== trimmed.toLowerCase(),
-        );
+        const filtered = prev.filter((item) => item.query.toLowerCase() !== trimmed.toLowerCase());
         const newItem: AiSearchHistoryItem = {
           id: `sh-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           query: trimmed,

@@ -74,7 +74,6 @@ export default function ArchivedMissionsPage() {
   const missions = useMissions(organizationId, {
     status: [scope],
     ...(search.trim() !== '' ? { search: search.trim() } : {}),
-    limit: 200,
   });
 
   const list = missions.data ?? [];

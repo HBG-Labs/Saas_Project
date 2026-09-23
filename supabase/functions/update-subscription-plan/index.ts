@@ -48,6 +48,29 @@ interface StripeSubscription {
   current_period_end?: number;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStripeSubscription(
+  value: Record<string, unknown>,
+): value is Record<string, unknown> & StripeSubscription {
+  if (typeof value.id !== 'string') return false;
+  if (value.items === undefined) return true;
+  if (!isRecord(value.items)) return false;
+  if (value.items.data === undefined) return true;
+  if (!Array.isArray(value.items.data)) return false;
+
+  return value.items.data.every((item) => {
+    if (!isRecord(item) || typeof item.id !== 'string') return false;
+    if (item.quantity !== undefined && typeof item.quantity !== 'number') return false;
+    if (item.price === undefined) return true;
+    return (
+      isRecord(item.price) && (item.price.id === undefined || typeof item.price.id === 'string')
+    );
+  });
+}
+
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
   if (request.method !== 'POST') return json({ error: 'Méthode non autorisée.' }, 405);
@@ -72,8 +95,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (planCode === 'free') {
     return json(
       {
-        error:
-          "Pour repasser sur la formule Gratuite, utilisez la résiliation d'abonnement.",
+        error: "Pour repasser sur la formule Gratuite, utilisez la résiliation d'abonnement.",
       },
       400,
     );
@@ -128,11 +150,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (subscription?.provider_subscription_id) {
     try {
       const subId = subscription.provider_subscription_id;
-      const remote = (await stripeRequest(
-        `/v1/subscriptions/${subId}`,
-        {},
-        'GET',
-      )) as StripeSubscription;
+      const remote = await stripeRequest(`/v1/subscriptions/${subId}`, {}, 'GET');
+      if (!isStripeSubscription(remote)) {
+        return json({ error: 'Stripe a renvoyé un abonnement dans un format inattendu.' }, 502);
+      }
 
       const items = remote.items?.data ?? [];
       const seatItem = items.find((item) => item.price?.id === prices.extraSeatPriceId);
@@ -225,8 +246,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (successUrl === null || cancelUrl === null) {
     return json(
       {
-        error:
-          'Adresse de retour introuvable. Transmettez successUrl et cancelUrl absolues.',
+        error: 'Adresse de retour introuvable. Transmettez successUrl et cancelUrl absolues.',
       },
       400,
     );
@@ -247,7 +267,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   if (finEssai !== null) {
     checkoutParams['subscription_data[trial_end]'] = String(finEssai);
-    checkoutParams['subscription_data[trial_settings][end_behavior][missing_payment_method]'] = 'cancel';
+    checkoutParams['subscription_data[trial_settings][end_behavior][missing_payment_method]'] =
+      'cancel';
   }
 
   if (extraSeats > 0) {

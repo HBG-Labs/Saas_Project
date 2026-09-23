@@ -1,9 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth';
-import { clearTenantQueryCache } from '@/lib/query-client';
+import { createQueryClient } from '@/lib/query-client';
 import { qk } from '@/lib/query-keys';
 
 import { getMyMembership, listMyOrganizations } from '../api/organizations.api';
@@ -33,7 +32,6 @@ function readStoredOrganizationId(userId: string): string | null {
 }
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
-  const queryClient = useQueryClient();
   const { user, status: authStatus } = useAuth();
   const userId = user?.id ?? null;
 
@@ -41,7 +39,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     userId: string | null;
     organizationId: string | null;
   }>({ userId: null, organizationId: null });
-  const previousOrganizationIdRef = useRef<string | null | undefined>(undefined);
   const storedSelectedId = useMemo(
     () => (userId === null ? null : readStoredOrganizationId(userId)),
     [userId],
@@ -78,37 +75,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     enabled: organization !== null && userId !== null,
   });
 
-  /**
-   * Purge du cache quand l'organisation change SANS passer par `select` : on a
-   * pu être retiré de l'entreprise courante, et le repli sur `list[0]` change
-   * alors de tenant sans aucun geste de l'utilisateur.
-   *
-   * La garde porte sur `null`, pas seulement sur `undefined`. L'ARRIVÉE de la
-   * première organisation n'est pas un changement d'organisation : au premier
-   * rendu la liste n'est pas encore chargée, `organization` vaut `null`, et
-   * c'est ce passage-là qui consommait la garde `undefined`. La transition
-   * `null → organisation` était donc traitée comme un changement de tenant et
-   * purgeait le cache juste après que l'appartenance ci-dessus a été lancée.
-   */
-  useEffect(() => {
-    const nextOrganizationId = organization?.id ?? null;
-    const previousOrganizationId = previousOrganizationIdRef.current;
-
-    if (
-      previousOrganizationId !== undefined &&
-      previousOrganizationId !== null &&
-      previousOrganizationId !== nextOrganizationId &&
-      nextOrganizationId !== null
-    ) {
-      clearTenantQueryCache(queryClient);
-    }
-
-    previousOrganizationIdRef.current = nextOrganizationId;
-  }, [organization?.id, queryClient]);
-
   const select = useCallback(
     (organizationId: string) => {
-      if (organization?.id !== organizationId) clearTenantQueryCache(queryClient);
       setSelection({ userId, organizationId });
       try {
         if (userId !== null) {
@@ -119,8 +87,25 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         // rechargement, ce qui est une gêne, pas une panne.
       }
     },
-    [organization?.id, queryClient, userId],
+    [userId],
   );
+
+  /**
+   * Le cache metier est physiquement distinct par compte ET par organisation.
+   * Ainsi une cle de detail imparfaite ne peut jamais servir une valeur du
+   * tenant precedent pendant un changement d'entreprise.
+   *
+   * Les requetes de ce provider (liste des organisations et appartenance)
+   * restent dans le QueryClient parent ; seuls les ecrans metier utilisent ce
+   * client imbrique et jetable.
+   */
+  const tenantCacheIdentity = `${userId ?? 'anonymous'}:${organization?.id ?? 'none'}`;
+  const tenantQueryClient = useMemo(() => {
+    // La valeur n'est pas transmise au client : sa variation EST le signal qui
+    // détruit physiquement l'ancien cache et en crée un nouveau.
+    void tenantCacheIdentity;
+    return createQueryClient();
+  }, [tenantCacheIdentity]);
 
   const value = useMemo<OrganizationContextValue>(() => {
     const status: OrganizationContextValue['status'] =
@@ -155,5 +140,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     select,
   ]);
 
-  return <OrganizationContext value={value}>{children}</OrganizationContext>;
+  return (
+    <OrganizationContext value={value}>
+      <QueryClientProvider client={tenantQueryClient}>{children}</QueryClientProvider>
+    </OrganizationContext>
+  );
 }

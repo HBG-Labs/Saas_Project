@@ -11,12 +11,12 @@ describe('useAiSearchHistory', () => {
   });
 
   it('initialise avec un historique vide si rien en localStorage', () => {
-    const { result } = renderHook(() => useAiSearchHistory('org-1'));
+    const { result } = renderHook(() => useAiSearchHistory('user-1', 'org-1'));
     expect(result.current.history).toEqual([]);
   });
 
   it('ajoute une recherche dans l’historique et la persiste', () => {
-    const { result } = renderHook(() => useAiSearchHistory('org-1'));
+    const { result } = renderHook(() => useAiSearchHistory('user-1', 'org-1'));
 
     act(() => {
       result.current.addEntry('Vérifier les interventions en retard');
@@ -27,14 +27,14 @@ describe('useAiSearchHistory', () => {
 
     // Vérifie la persistance dans localStorage
     const saved = JSON.parse(
-      localStorage.getItem('rezo_ai_search_history_org-1') || '[]',
+      localStorage.getItem('rezo_ai_search_history_user-1_org-1') || '[]',
     ) as AiSearchHistoryItem[];
     expect(saved).toHaveLength(1);
     expect(saved[0]?.query).toBe('Vérifier les interventions en retard');
   });
 
   it('dédoublonne les requêtes identiques et place la plus récente en premier', () => {
-    const { result } = renderHook(() => useAiSearchHistory('org-1'));
+    const { result } = renderHook(() => useAiSearchHistory('user-1', 'org-1'));
 
     act(() => {
       result.current.addEntry('Question 1');
@@ -48,7 +48,7 @@ describe('useAiSearchHistory', () => {
   });
 
   it('permet de supprimer un élément individuel de l’historique', () => {
-    const { result } = renderHook(() => useAiSearchHistory('org-1'));
+    const { result } = renderHook(() => useAiSearchHistory('user-1', 'org-1'));
 
     act(() => {
       result.current.addEntry('Question A');
@@ -69,7 +69,7 @@ describe('useAiSearchHistory', () => {
   });
 
   it('permet de vider complètement l’historique', () => {
-    const { result } = renderHook(() => useAiSearchHistory('org-1'));
+    const { result } = renderHook(() => useAiSearchHistory('user-1', 'org-1'));
 
     act(() => {
       result.current.addEntry('Question A');
@@ -83,6 +83,6 @@ describe('useAiSearchHistory', () => {
     });
 
     expect(result.current.history).toEqual([]);
-    expect(localStorage.getItem('rezo_ai_search_history_org-1')).toBeNull();
+    expect(localStorage.getItem('rezo_ai_search_history_user-1_org-1')).toBeNull();
   });
 });

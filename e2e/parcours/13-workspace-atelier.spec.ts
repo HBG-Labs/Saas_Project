@@ -43,7 +43,7 @@ test.describe('Workspace Atelier', () => {
       },
     });
     await expect(page.getByRole('status').filter({ hasText: 'Enregistré.' })).toBeVisible();
-    await expect(text).toHaveValue('Les mesures sont prêtes.');
+    await expect(text).toHaveText('Les mesures sont prêtes.');
     const recorder = page.getByRole('region', { name: 'Enregistrement vocal', exact: true });
     await expect(recorder.getByRole('button', { name: 'Enregistrer', exact: true })).toBeDisabled();
     await recorder.getByRole('checkbox').check();

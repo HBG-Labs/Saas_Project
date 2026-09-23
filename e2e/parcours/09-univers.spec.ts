@@ -36,7 +36,7 @@ test.describe('Univers', () => {
     await expect(univers.getByRole('radio', { name: /Finance/ })).toBeChecked();
 
     const navigation = page.getByRole('navigation', { name: 'Navigation principale' });
-    await expect(navigation.getByRole('link', { name: 'Devis & Chiffrage' })).toBeVisible();
+    await expect(navigation.getByRole('link', { name: 'Devis', exact: true })).toBeVisible();
     await expect(navigation.getByRole('link', { name: 'Missions' })).toHaveCount(0);
   });
 

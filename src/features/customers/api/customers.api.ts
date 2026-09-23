@@ -1,6 +1,6 @@
-import { AppError } from '@/lib/errors';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { ContentStatus, CustomerType, TablesUpdate } from '@/types/database';
+import { collectAllPages } from '@/lib/pagination';
+import type { ContentStatus, CustomerType, Json, TablesUpdate } from '@/types/database';
 import type { Customer, CustomerContact, MissionWithRelations, Site } from '@/types/domain';
 
 /**
@@ -33,27 +33,33 @@ export async function listCustomers(
   organizationId: string,
   filters: CustomerFilters = {},
 ): Promise<Customer[]> {
-  let query = supabase
-    .from('customers')
-    .select('*')
-    .eq('organization_id', organizationId)
-    .eq('status', filters.status ?? 'active');
+  // PostgREST plafonne une réponse, souvent à 1 000 lignes. Une simple
+  // `.limit(200)` faisait donc disparaître silencieusement les clients les plus
+  // bas dans l'alphabet des sélecteurs et des exports. On lit par pages stables
+  // jusqu'à épuisement (ou jusqu'à la limite explicitement demandée).
+  const term = filters.search?.replace(/[%,()]/g, ' ').trim() ?? '';
 
-  if (filters.search) {
-    // `%`, `,` et les parenthèses sont la syntaxe du filtre `or` de PostgREST :
-    // les laisser passer permettrait de réécrire la requête depuis le champ de
-    // recherche. Les neutraliser suffit, la RLS restant de toute façon en place.
-    const term = filters.search.replace(/[%,()]/g, ' ').trim();
-    if (term !== '') {
-      query = query.or(`name.ilike.%${term}%,reference.ilike.%${term}%,city.ilike.%${term}%`);
-    }
-  }
+  return collectAllPages(
+    async (offset, size) => {
+      let query = supabase
+        .from('customers')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('status', filters.status ?? 'active');
 
-  return unwrap(
-    query
-      .order('name', { ascending: true })
-      .limit(filters.limit ?? 200)
-      .returns<Customer[]>(),
+      if (term !== '') {
+        query = query.or(`name.ilike.%${term}%,reference.ilike.%${term}%,city.ilike.%${term}%`);
+      }
+
+      return await unwrap(
+        query
+          .order('name', { ascending: true })
+          .order('id', { ascending: true })
+          .range(offset, offset + size - 1)
+          .returns<Customer[]>(),
+      );
+    },
+    { limit: filters.limit },
   );
 }
 
@@ -90,57 +96,44 @@ export async function createCustomer(input: {
   longitude?: number | null;
   notes?: string;
 }): Promise<Customer> {
-  const { data: userData } = await supabase.auth.getUser();
-
-  if (!userData?.user) {
-    throw new AppError('unauthenticated', 'Vous devez être connecté pour créer un client.');
-  }
-
-  const customer = await unwrap(
-    supabase
-      .from('customers')
-      .insert({
-        organization_id: input.organizationId,
-        name: input.name,
-        created_by: userData.user.id,
-        ...(input.legalName !== undefined ? { legal_name: input.legalName } : {}),
-        ...(input.registrationNumber !== undefined
-          ? { registration_number: input.registrationNumber }
-          : {}),
-        ...(input.vatNumber !== undefined ? { vat_number: input.vatNumber } : {}),
-        ...(input.customerType !== undefined ? { customer_type: input.customerType } : {}),
-        ...(input.email !== undefined ? { email: input.email } : {}),
-        ...(input.phone !== undefined ? { phone: input.phone } : {}),
-        ...(input.addressLine1 !== undefined ? { address_line1: input.addressLine1 } : {}),
-        ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
-        ...(input.city !== undefined ? { city: input.city } : {}),
-        ...(input.country !== undefined ? { country: input.country } : {}),
-        ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      })
-      .select('*')
-      .single(),
+  const customer: Json = {
+    name: input.name,
+    ...(input.legalName !== undefined ? { legal_name: input.legalName } : {}),
+    ...(input.registrationNumber !== undefined
+      ? { registration_number: input.registrationNumber }
+      : {}),
+    ...(input.vatNumber !== undefined ? { vat_number: input.vatNumber } : {}),
+    ...(input.customerType !== undefined ? { customer_type: input.customerType } : {}),
+    ...(input.email !== undefined ? { email: input.email } : {}),
+    ...(input.phone !== undefined ? { phone: input.phone } : {}),
+    ...(input.addressLine1 !== undefined ? { address_line1: input.addressLine1 } : {}),
+    ...(input.postalCode !== undefined ? { postal_code: input.postalCode } : {}),
+    ...(input.city !== undefined ? { city: input.city } : {}),
+    ...(input.country !== undefined ? { country: input.country } : {}),
+    ...(input.notes !== undefined ? { notes: input.notes } : {}),
+  };
+  const shouldCreateSite = Boolean(
+    input.addressLine1 || input.city || input.postalCode || input.latitude != null,
   );
-
-  // Création automatique du site principal rattaché avec coordonnées pour affichage en cartographie
-  if (input.addressLine1 || input.city || input.postalCode || input.latitude != null) {
-    try {
-      await supabase.from('sites').insert({
-        customer_id: customer.id,
-        organization_id: input.organizationId,
-        name: 'Site Principal',
+  const site: Json | null = shouldCreateSite
+    ? {
+        name: 'Site principal',
         address_line1: input.addressLine1 ?? null,
         postal_code: input.postalCode ?? null,
         city: input.city ?? null,
         country: input.country ?? 'FR',
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
-      });
-    } catch {
-      // Ignorer si la création du site échoue
-    }
-  }
+      }
+    : null;
 
-  return customer;
+  return unwrap(
+    supabase.rpc('create_customer_with_primary_site', {
+      p_organization_id: input.organizationId,
+      p_customer: customer,
+      p_site: site,
+    }),
+  );
 }
 
 export async function updateCustomer(
@@ -244,15 +237,12 @@ export async function setPrimaryContact(
   customerId: string,
   contactId: string,
 ): Promise<CustomerContact> {
-  const { error } = await supabase
-    .from('customer_contacts')
-    .update({ is_primary: false })
-    .eq('customer_id', customerId)
-    .eq('is_primary', true);
-
-  if (error) throw error;
-
-  return updateContact(contactId, { is_primary: true });
+  return unwrap(
+    supabase.rpc('set_primary_customer_contact', {
+      p_customer_id: customerId,
+      p_contact_id: contactId,
+    }),
+  );
 }
 
 // -----------------------------------------------------------------------------

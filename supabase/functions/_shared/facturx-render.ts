@@ -6,7 +6,7 @@ import type {
 } from '../../../src/features/einvoicing/canonical/types.ts';
 import { serializeCii } from '../../../src/features/einvoicing/serializers/cii.ts';
 
-export const FACTURX_GENERATOR_VERSION = 'rezo360-fx-4';
+export const FACTURX_GENERATOR_VERSION = 'rezo360-fx-5';
 export const FACTURX_PROFILE = 'EN 16931';
 const FX_NS = 'urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#';
 const properties = {
@@ -28,12 +28,21 @@ const extensionMetadata = `<rdf:Description rdf:about="" xmlns:pdfaExtension="ht
 </rdf:li></rdf:Bag></pdfaExtension:schemas></rdf:Description>
 <rdf:Description rdf:about="" xmlns:fx="${FX_NS}"><fx:DocumentType>INVOICE</fx:DocumentType><fx:DocumentFileName>factur-x.xml</fx:DocumentFileName><fx:Version>1.0</fx:Version><fx:ConformanceLevel>EN 16931</fx:ConformanceLevel></rdf:Description>`;
 
+export interface FacturXVisualOptions {
+  /** Nom de marque visuel ; l'identité légale demeure celle du XML et du bloc émetteur. */
+  sellerName?: string | null;
+  logoBytes?: Uint8Array | null;
+  logoWidth?: number | null;
+  logoHeight?: number | null;
+}
+
 /** Same renderer in Node validation and Deno production; PDFKit is injected. */
 export async function renderFacturX(
   PDF: typeof PDFDocument,
   invoice: CanonicalInvoice,
   fonts: { regular: Uint8Array; bold: Uint8Array },
   generatedAt: Date,
+  visual: FacturXVisualOptions = {},
 ): Promise<{ pdf: Uint8Array; xml: string }> {
   const isCreditNote = invoice.documentType === 'credit_note';
   const documentLabel = isCreditNote ? 'AVOIR' : 'FACTURE';
@@ -76,7 +85,9 @@ export async function renderFacturX(
     doc.on('error', reject);
   });
   const ink = '#172B45',
-    blue = '#234EA0',
+    // Même identité sauge que le devis et l'éditeur desktop : le format
+    // électronique ne doit pas donner l'impression d'un second produit.
+    blue = '#3F6259',
     muted = '#54647A';
   const left = 44,
     width = doc.page.width - 88,
@@ -168,24 +179,69 @@ export async function renderFacturX(
       .filter(Boolean)
       .join('\n');
   try {
-    font(true, 23).fillColor(blue);
-    write(heading, left, y);
-    font(false, 9).fillColor(muted);
-    write('FACTUR-X · EN 16931', left + 275, y + 9, { width: width - 275, align: 'right' });
-    y += 30;
-    font(true, 13).fillColor(ink);
-    const refHeight = doc.heightOfString(invoice.id, { width });
-    if (refHeight > 40) throw new Error('La référence de facture est trop longue pour le PDF.');
-    write(invoice.id, left, y, { width });
-    y += refHeight + 8;
-    font(false, 9).fillColor(muted);
+    const brandName = visual.sellerName?.trim() || invoice.seller.name;
+    const configuredLogoWidth = Math.min(320, Math.max(120, visual.logoWidth ?? 176));
+    const configuredLogoHeight = Math.min(180, Math.max(64, visual.logoHeight ?? 80));
+    const logoWidth = configuredLogoWidth * 0.32;
+    const logoHeight = configuredLogoHeight * 0.32;
+    let brandX = left;
+    let brandWidth = 278;
+    let logoRendered = false;
+    if (visual.logoBytes?.length) {
+      try {
+        doc.image(Buffer.from(visual.logoBytes), left, y, {
+          fit: [logoWidth, logoHeight],
+          valign: 'center',
+        });
+        brandX = left + logoWidth + 12;
+        brandWidth = Math.max(128, 278 - logoWidth - 12);
+        logoRendered = true;
+      } catch {
+        // Un logo illisible n'empêche jamais l'émission du document légal.
+      }
+    }
+    font(true, 14).fillColor(blue);
+    write(brandName, brandX, y + 2, {
+      width: brandWidth,
+      lineBreak: false,
+      ellipsis: true,
+    });
+    if (brandName !== invoice.seller.name) {
+      font(false, 8).fillColor(muted);
+      write(invoice.seller.name, brandX, y + 23, {
+        width: brandWidth,
+        lineBreak: false,
+        ellipsis: true,
+      });
+    }
+
+    const labelX = left + 315;
+    doc.roundedRect(labelX, y, width - 315, 23, 5).fill('#EDF3F0');
+    font(true, 8.5).fillColor(blue);
+    write(`${heading} N° ${invoice.id}`, labelX + 7, y + 7, {
+      width: width - 329,
+      align: 'center',
+      lineBreak: false,
+      ellipsis: true,
+    });
+    font(false, 7.5).fillColor(muted);
+    write('FACTUR-X · EN 16931', labelX, y + 30, {
+      width: width - 315,
+      align: 'right',
+      lineBreak: false,
+    });
     write(
-      `${invoice.isTest ? 'Simulation du' : isCreditNote ? 'Émis le' : 'Émise le'} ${dateFr(invoice.issueDate)}  ·  Prestation / livraison le ${dateFr(invoice.deliveryDate)}`,
-      left,
-      y,
-      { width },
+      `${invoice.isTest ? 'Simulation du' : isCreditNote ? 'Émis le' : 'Émise le'} ${dateFr(invoice.issueDate)}`,
+      labelX,
+      y + 43,
+      { width: width - 315, align: 'right', lineBreak: false },
     );
-    y += 22;
+    write(`Prestation / livraison : ${dateFr(invoice.deliveryDate)}`, labelX, y + 56, {
+      width: width - 315,
+      align: 'right',
+      lineBreak: false,
+    });
+    y += Math.max(76, logoRendered ? logoHeight + 12 : 0);
     rule(y);
     y += 14;
     const partyWidth = (width - 32) / 2;
@@ -237,7 +293,7 @@ export async function renderFacturX(
     const widths = [237, 37, 70, 49, width - 422];
     function tableHeader() {
       ensure(60);
-      doc.rect(left, y, width, 27).fill('#EEF3FC');
+      doc.rect(left, y, width, 27).fill('#EDF3F0');
       font(true, 8).fillColor(ink);
       ['DÉSIGNATION', 'QTÉ', 'P.U. HT', 'TVA', 'TOTAL HT'].forEach((label, i) =>
         write(label, columns[i]! + (i === 0 ? 8 : 0), y + 8, {

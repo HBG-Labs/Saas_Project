@@ -39,9 +39,7 @@ export default function MapPage() {
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
 
   // 2. Chargement de toutes les missions de l'organisation
-  const missionsQuery = useMissions(organizationId, {
-    limit: 500,
-  });
+  const missionsQuery = useMissions(organizationId);
   const missions = useMemo(() => missionsQuery.data ?? [], [missionsQuery.data]);
 
   // 3. Chargement des clients et de leurs sites

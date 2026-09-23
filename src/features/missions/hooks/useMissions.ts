@@ -4,6 +4,7 @@ import { qk } from '@/lib/query-keys';
 import type { MissionStatus, TablesUpdate } from '@/types/database';
 
 import {
+  appendMissionNote,
   assignMission,
   getMissionConflicts,
   changeMissionStatus,
@@ -105,6 +106,17 @@ export function useUpdateMission(missionId: string) {
         queryClient.invalidateQueries({ queryKey: qk.missions.all }),
         queryClient.invalidateQueries({ queryKey: qk.analytics.all }),
       ]);
+    },
+  });
+}
+
+export function useAppendMissionNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ missionId, note }: { missionId: string; note: string }) =>
+      appendMissionNote(missionId, note),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.missions.all });
     },
   });
 }

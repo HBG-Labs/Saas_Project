@@ -1008,11 +1008,51 @@ input.profile-form-field {
 }
 
 /* Workspace : largeur de lecture, espaces distincts et illustrations de premier usage. */
-.workspace-page-text {
+.workspace-rich-editor .ProseMirror {
   min-height: 22rem;
-  font-size: 1rem;
+  color: var(--color-foreground);
   line-height: 1.8;
-  padding: 1.25rem;
+  outline: none;
+}
+.workspace-rich-editor .ProseMirror > * + * {
+  margin-top: 0.75rem;
+}
+.workspace-rich-editor .ProseMirror h1,
+.workspace-rich-editor .ProseMirror h2,
+.workspace-rich-editor .ProseMirror h3 {
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.workspace-rich-editor .ProseMirror h1 {
+  font-size: 1.875rem;
+}
+.workspace-rich-editor .ProseMirror h2 {
+  font-size: 1.5rem;
+}
+.workspace-rich-editor .ProseMirror h3 {
+  font-size: 1.25rem;
+}
+.workspace-rich-editor .ProseMirror ul,
+.workspace-rich-editor .ProseMirror ol {
+  padding-left: 1.5rem;
+}
+.workspace-rich-editor .ProseMirror ul {
+  list-style: disc;
+}
+.workspace-rich-editor .ProseMirror ol {
+  list-style: decimal;
+}
+.workspace-rich-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  padding-left: 1rem;
+}
+.workspace-rich-editor .ProseMirror code {
+  border-radius: 0.35rem;
+  background: var(--color-surface-sunken);
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono);
 }
 .workspace-browser input,
 .workspace-browser select {
@@ -1042,9 +1082,8 @@ input.profile-form-field {
   }
 }
 @media (max-width: 639px) {
-  .workspace-page-text {
+  .workspace-rich-editor .ProseMirror {
     min-height: 18rem;
-    padding: 1rem;
   }
 }
 

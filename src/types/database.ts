@@ -5312,6 +5312,30 @@ export interface Database {
     };
 
     Functions: {
+      create_quote_draft: {
+        Args: { p_organization_id: string; p_payload: Json; p_items: Json };
+        Returns: Database['public']['Tables']['quotes']['Row'];
+      };
+      create_invoice_draft: {
+        Args: { p_organization_id: string; p_payload: Json; p_items: Json };
+        Returns: Database['public']['Tables']['invoices']['Row'];
+      };
+      create_customer_with_primary_site: {
+        Args: { p_organization_id: string; p_customer: Json; p_site?: Json | null };
+        Returns: Database['public']['Tables']['customers']['Row'];
+      };
+      set_primary_customer_contact: {
+        Args: { p_customer_id: string; p_contact_id: string };
+        Returns: Database['public']['Tables']['customer_contacts']['Row'];
+      };
+      complete_intervention_atomic: {
+        Args: { p_intervention_id: string; p_notes?: string | null };
+        Returns: Database['public']['Tables']['interventions']['Row'];
+      };
+      append_mission_note: {
+        Args: { p_mission_id: string; p_note: string };
+        Returns: Database['public']['Tables']['missions']['Row'];
+      };
       configure_document_numbering: {
         Args: {
           p_organization_id: string;

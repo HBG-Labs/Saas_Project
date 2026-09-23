@@ -420,19 +420,22 @@ export default function InvoiceDetailPage() {
                 onClick={() => {
                   void (async () => {
                     setPreparationEnvoi(true);
-                    let avecPdf = true;
-                    let alerte: string | null = null;
                     try {
                       await ensureFacturX(invoice.id);
-                    } catch (e) {
-                      avecPdf = false;
-                      alerte = `PDF non joint : ${e instanceof Error ? e.message : 'génération impossible'}`;
+                      setEnvoiClient({ open: true, avecPdf: true, alerte: null });
+                    } catch (error) {
+                      setEnvoiClient({
+                        open: false,
+                        avecPdf: false,
+                        alerte: `Envoi impossible : ${
+                          error instanceof Error
+                            ? error.message
+                            : 'préparation du document impossible'
+                        }`,
+                      });
+                    } finally {
+                      setPreparationEnvoi(false);
                     }
-                    if (invoice.status === 'issued') {
-                      await updateInvoice.mutateAsync({ status: 'sent' }).catch(() => undefined);
-                    }
-                    setPreparationEnvoi(false);
-                    setEnvoiClient({ open: true, avecPdf, alerte });
                   })();
                 }}
               >
@@ -465,6 +468,18 @@ export default function InvoiceDetailPage() {
                 ].join('\n')}
                 link={{ invoiceId: invoice.id }}
                 attachInvoicePdf={envoiClient.avecPdf}
+                onDelivered={() => {
+                  if (invoice.status === 'issued') {
+                    void updateInvoice.mutateAsync({ status: 'sent' }).catch((error: unknown) => {
+                      setEnvoiClient((etat) => ({
+                        ...etat,
+                        alerte: `Le courriel est parti, mais le statut n’a pas été mis à jour : ${
+                          error instanceof Error ? error.message : 'réessayez depuis la facture'
+                        }`,
+                      }));
+                    });
+                  }
+                }}
               />
             </>
           )}

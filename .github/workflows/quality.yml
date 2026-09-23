@@ -13,7 +13,7 @@ jobs:
   application:
     name: Types, qualité, tests et build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       VITE_SUPABASE_URL: https://test-project.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_only
@@ -33,6 +33,22 @@ jobs:
 
       - name: Installer les dépendances
         run: npm ci
+
+      - name: Auditer les dépendances
+        run: npm audit --audit-level=high
+
+      - name: Installer la CLI Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Démarrer la base de test et appliquer toutes les migrations
+        run: |
+          supabase start
+          supabase db reset --local
+
+      - name: Vérifier les migrations, la RLS et les scénarios SQL
+        run: npm run test:sql
 
       - name: Vérifier les types
         run: npm run typecheck
@@ -56,7 +72,16 @@ jobs:
       # version que le frontend.
       - name: Vérifier les types des fonctions Edge
         run: |
-          deno check \
+          deno check --node-modules-dir=none \
+            supabase/functions/accept-invitation-signup/index.ts \
+            supabase/functions/create-member/index.ts \
+            supabase/functions/send-invitation/index.ts \
+            supabase/functions/send-support-request/index.ts \
+            supabase/functions/create-checkout-session/index.ts \
+            supabase/functions/create-billing-portal-session/index.ts \
+            supabase/functions/cancel-subscription/index.ts \
+            supabase/functions/update-subscription-plan/index.ts \
+            supabase/functions/stripe-webhook/index.ts \
             supabase/functions/superpdp-connection/index.ts \
             supabase/functions/superpdp-oauth-callback/index.ts \
             supabase/functions/superpdp-invoice/index.ts \
@@ -71,21 +96,24 @@ jobs:
             supabase/functions/resend-webhook/index.ts \
             supabase/functions/portal-message-send/index.ts \
             supabase/functions/portal-request-access/index.ts \
-            supabase/functions/portal-file-url/index.ts
-          deno check \
+            supabase/functions/portal-file-url/index.ts \
+            supabase/functions/notification-worker/index.ts \
+            supabase/functions/transcription-live-token/index.ts \
+            supabase/functions/transcription-worker/index.ts
+          deno check --node-modules-dir=none \
             --config supabase/functions/generate-facturx/deno.json \
             supabase/functions/generate-facturx/index.ts
           # `meta-capi.ts` n'importe rien : il échappe donc au blocage
           # `jsr:@supabase/supabase-js@2` qui tient les fonctions plus
           # anciennes hors de cette vérification.
-          deno check supabase/functions/_shared/meta-capi.ts
-          deno check supabase/functions/_shared/email-confirme.ts
-          deno check supabase/functions/_shared/email.ts
-          deno check supabase/functions/_shared/portal-mail.ts
-          # `unpdf` est une dépendance npm propre au runtime Edge, pas au
-          # bundle React. Deno l'installe dans son espace isolé pour ce check.
-          deno check --node-modules-dir=auto supabase/functions/index-ai-document/index.ts
-          deno check --node-modules-dir=auto supabase/functions/generate-quote-pdf/index.ts
+          deno check --node-modules-dir=none supabase/functions/_shared/meta-capi.ts
+          deno check --node-modules-dir=none supabase/functions/_shared/email-confirme.ts
+          deno check --node-modules-dir=none supabase/functions/_shared/email.ts
+          deno check --node-modules-dir=none supabase/functions/_shared/portal-mail.ts
+          # Le cache npm de Deno reste isolé : le mode `auto` remplaçait les
+          # lanceurs ESLint/Vitest de l'installation npm avant leurs tests.
+          deno check --node-modules-dir=none supabase/functions/index-ai-document/index.ts
+          deno check --node-modules-dir=none supabase/functions/generate-quote-pdf/index.ts
 
       # Ces tests tournent SANS aucune permission Deno : ni réseau, ni disque.
       # C'est la garantie qu'ils n'atteignent jamais le partenaire ni la base,
@@ -94,7 +122,7 @@ jobs:
       # projet Supabase lié.
       - name: Tester le cycle de transmission
         run: |
-          deno test \
+          deno test --node-modules-dir=none \
             supabase/functions/_shared/superpdp-transmission.test.ts \
             supabase/functions/_shared/superpdp-reception.test.ts \
             supabase/functions/_shared/meta-capi.test.ts \
@@ -122,6 +150,13 @@ jobs:
             supabase/functions/portal-request-access/handler.test.ts \
             supabase/functions/portal-file-url/handler.test.ts
 
+      # Le moteur PDF lit les polices embarquées. Cette permission est limitée
+      # à la lecture locale ; le test ne dispose toujours d'aucun accès réseau.
+      - name: Tester la génération PDF des devis
+        run: >-
+          deno test --node-modules-dir=none --allow-read
+          supabase/functions/generate-quote-pdf/handler.test.ts
+
       - name: Exécuter les tests
         run: npm run test
 
@@ -136,3 +171,48 @@ jobs:
 
       - name: Construire la version de production
         run: npm run build
+
+      - name: Contrôler le budget du bundle
+        run: npm run audit:bundle
+
+      - name: Arrêter la base de test
+        if: always()
+        run: supabase stop --no-backup
+
+  android:
+    name: Application Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire et synchroniser Capacitor
+        env:
+          VITE_SUPABASE_URL: https://test-project.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_only
+          VITE_APP_ENV: production
+          VITE_PUBLIC_APP_URL: https://app.rezo360.com
+          VITE_APP_VERSION: ${{ github.sha }}
+        run: npm run cap:build
+
+      - name: Tester et analyser le projet Android
+        working-directory: android
+        run: ./gradlew testDebugUnitTest lintDebug --no-daemon

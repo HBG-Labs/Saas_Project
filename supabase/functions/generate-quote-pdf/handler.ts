@@ -10,11 +10,10 @@ import {
 } from '../_shared/quote-pdf-render.ts';
 
 /**
- * S'assure que le PDF d'un devis existe (le génère s'il manque), et renvoie
- * un lien signé pour l'ouvrir. Même contrat que `generate-facturx` (jeton de
- * l'appelant, RLS, conservation immuable), en plus simple : pas de mode test,
- * pas de vérification de version de brouillon — un devis « envoyé » ne se
- * corrige pas, il se remplace par un nouvel envoi (voir `sent_at`).
+ * Finalise un brouillon au moment de son premier PDF, puis renvoie un lien
+ * signé. Le changement `draft -> sent` est conditionné par `updated_at` : une
+ * édition concurrente ne peut donc jamais produire un PDF périmé. Le PDF est
+ * rendu avant de figer le devis, mais n'est téléversé qu'après la transition.
  *
  * Idempotent et concurrent-safe : deux appels simultanés (double clic, deux
  * onglets) ne créent jamais deux fichiers ni deux lignes.
@@ -90,15 +89,39 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
       if (quoteError)
         return json({ error: 'Le devis ne peut pas être chargé pour le moment.' }, 503);
       if (!quote) return json({ error: 'Devis introuvable ou inaccessible.' }, 404);
-      if (quote.status === 'draft') {
-        return json({ error: 'Un brouillon n’a pas de PDF : envoyez le devis d’abord.' }, 409);
-      }
-
       const admin: SupabaseClient = createClient(config.url, config.serviceRoleKey, {
         global: { fetch: config.fetch },
         auth: { persistSession: false, autoRefreshToken: false },
       });
       const table = admin.from('quote_documents');
+
+      async function finalizeDraft(): Promise<Response | null> {
+        if (quote.status !== 'draft') return null;
+        const { data, error } = await caller
+          .from('quotes')
+          .update({ status: 'sent' })
+          .eq('id', quoteId)
+          .eq('status', 'draft')
+          .eq('updated_at', quote.updated_at)
+          .select('id,status')
+          .maybeSingle();
+        if (error) {
+          return json(
+            { error: "Vous n'avez pas l'autorisation d'envoyer ce devis." },
+            error.code === '42501' ? 403 : 503,
+          );
+        }
+        if (!data) {
+          return json(
+            {
+              error:
+                'Le devis a changé pendant la préparation du PDF. Relisez-le puis recommencez.',
+            },
+            409,
+          );
+        }
+        return null;
+      }
 
       async function ready(doc: {
         object_path: string;
@@ -132,7 +155,11 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
           { error: 'La conservation des documents est temporairement indisponible.' },
           503,
         );
-      if (existing) return await ready(existing);
+      if (existing) {
+        const finalizationError = await finalizeDraft();
+        if (finalizationError) return finalizationError;
+        return await ready(existing);
+      }
 
       const [itemsResult, organizationResult] = await Promise.all([
         caller
@@ -264,6 +291,9 @@ export function createQuotePdfHandler(config: QuotePdfServiceConfig) {
           422,
         );
       }
+
+      const finalizationError = await finalizeDraft();
+      if (finalizationError) return finalizationError;
 
       const pdfHash = await digest(pdf);
       const objectPath = `${quote.organization_id}/${quoteId}/devis.pdf`;

@@ -2,9 +2,11 @@
  * Garde-fou de poids sur le build réellement livré.
  *
  * Les seuils portent sur le gzip, plus proche du coût réseau que le poids brut.
- * Ils laissent une marge courte au build Atelier du 20/09/2026 : une nouvelle
- * dépendance lourde ou un retour à un gros bundle commun doit donc être décidé,
- * pas absorbé silencieusement.
+ * Ils laissent une marge courte au build Atelier du 22/09/2026, après ajout
+ * volontaire de l'éditeur riche Workspace. Le moteur est isolé dans des
+ * chunks différés et reste soumis au plafond individuel de 75 Kio gzip : une
+ * nouvelle dépendance lourde ou un retour à un gros bundle commun doit donc
+ * toujours être décidé, pas absorbé silencieusement.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -16,7 +18,7 @@ const assetDirectory = resolve(process.argv[2] ?? 'dist/assets');
 const limits = {
   jsChunk: Number(process.env['BUNDLE_MAX_JS_CHUNK_GZIP_KIB'] ?? 75) * KIB,
   cssChunk: Number(process.env['BUNDLE_MAX_CSS_CHUNK_GZIP_KIB'] ?? 45) * KIB,
-  jsTotal: Number(process.env['BUNDLE_MAX_JS_TOTAL_GZIP_KIB'] ?? 1100) * KIB,
+  jsTotal: Number(process.env['BUNDLE_MAX_JS_TOTAL_GZIP_KIB'] ?? 1150) * KIB,
   cssTotal: Number(process.env['BUNDLE_MAX_CSS_TOTAL_GZIP_KIB'] ?? 50) * KIB,
 };
 

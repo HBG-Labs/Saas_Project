@@ -1,4 +1,5 @@
 import { AppError } from '@/lib/errors';
+import { collectAllPages } from '@/lib/pagination';
 import { validerFactureAvantEmission } from '@/features/einvoicing';
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type {
@@ -8,7 +9,6 @@ import type {
   Json,
   PaymentMethod,
   Tables,
-  TablesInsert,
   TablesUpdate,
   VatCategory,
 } from '@/types/database';
@@ -86,18 +86,23 @@ export async function listInvoices(
   organizationId: string,
   filters: InvoiceFilters = {},
 ): Promise<Invoice[]> {
-  let query = supabase.from('invoices').select('*').eq('organization_id', organizationId);
+  return collectAllPages(
+    async (offset, size) => {
+      let query = supabase.from('invoices').select('*').eq('organization_id', organizationId);
+      if (filters.status !== undefined) query = query.eq('status', filters.status);
+      if (filters.customerId !== undefined) query = query.eq('customer_id', filters.customerId);
 
-  if (filters.status !== undefined) query = query.eq('status', filters.status);
-  if (filters.customerId !== undefined) query = query.eq('customer_id', filters.customerId);
-
-  return unwrap(
-    query
-      // Les brouillons n'ont pas de date d'émission : `nulls first` les garde en
-      // tête de liste, là où ils réclament une action.
-      .order('issued_at', { ascending: false, nullsFirst: true })
-      .order('created_at', { ascending: false })
-      .limit(filters.limit ?? 100),
+      return await unwrap(
+        query
+          // Les brouillons n'ont pas de date d'émission : `nulls first` les garde en
+          // tête de liste, là où ils réclament une action.
+          .order('issued_at', { ascending: false, nullsFirst: true })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + size - 1),
+      );
+    },
+    { limit: filters.limit },
   );
 }
 
@@ -112,12 +117,18 @@ export async function listInvoicesWithTotals(
   organizationId: string,
   filters: InvoiceFilters = {},
 ): Promise<InvoiceWithTotals[]> {
-  const [invoices, totals] = await Promise.all([
-    listInvoices(organizationId, filters),
-    unwrap(
-      supabase.from('invoice_totals').select('*').eq('organization_id', organizationId),
-    ) as Promise<InvoiceTotals[]>,
-  ]);
+  const invoices = await listInvoices(organizationId, filters);
+  const totals: InvoiceTotals[] = [];
+  for (let offset = 0; offset < invoices.length; offset += 100) {
+    const ids = invoices.slice(offset, offset + 100).map((invoice) => invoice.id);
+    if (ids.length > 0) {
+      totals.push(
+        ...(await (unwrap(
+          supabase.from('invoice_totals').select('*').in('invoice_id', ids),
+        ) as Promise<InvoiceTotals[]>)),
+      );
+    }
+  }
 
   const parId = new Map(totals.map((t) => [t.invoice_id, t]));
 
@@ -276,28 +287,14 @@ export interface CreateInvoiceInput {
 }
 
 /**
- * Crée une facture en BROUILLON, avec ses lignes.
- *
- * Deux écritures faute de transaction côté client. Si la seconde échoue, la
- * facture existe sans ses lignes — visible, corrigeable, et de loin préférable à
- * des lignes orphelines qu'aucune facture ne réclame. C'est aussi pour cela
- * qu'on crée en brouillon : un document incomplet ne doit pas consommer un
- * numéro de la série définitive.
+ * Crée une facture en BROUILLON avec ses lignes dans une transaction unique.
  *
  * La base attribue une référence provisoire ; le numéro définitif vient à l’émission.
  */
 export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
-  const { data: userData } = await supabase.auth.getUser();
-
-  if (!userData?.user) {
-    throw new AppError('unauthenticated', 'Vous devez être connecté pour créer une facture.');
-  }
-
   const c = input.customer;
 
-  const payload: TablesInsert<'invoices'> = {
-    organization_id: input.organizationId,
-    created_by: userData.user.id,
+  const payload: Json = {
     ...(input.documentOptions !== undefined ? { document_options: input.documentOptions } : {}),
     ...(input.discountRate !== undefined ? { discount_rate: input.discountRate } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
@@ -327,42 +324,20 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     ...(input.notes !== undefined ? { notes: input.notes } : {}),
   };
 
-  const invoice = await unwrap(supabase.from('invoices').insert(payload).select('*').single());
-
-  if (input.items.length > 0) {
-    await insertInvoiceItems(invoice.id, input.organizationId, input.items);
-  }
-
-  return invoice;
-}
-
-async function insertInvoiceItems(
-  invoiceId: string,
-  organizationId: string,
-  items: readonly InvoiceLineInput[],
-): Promise<void> {
-  await unwrap(
-    supabase
-      .from('invoice_items')
-      .insert(
-        items.map((item, index) => ({
-          invoice_id: invoiceId,
-          // Écrasé par le trigger depuis la facture parente ; la colonne est
-          // `not null`, d'où sa présence.
-          organization_id: organizationId,
-          description: item.description,
-          unit: item.unit,
-          quantity: item.quantity,
-          unit_price_cents: toCents(item.priceEuros),
-          vat_rate: item.vatRate,
-          ...(item.vatCategory !== undefined ? { vat_category: item.vatCategory } : {}),
-          ...(item.vatExemptionReason !== undefined
-            ? { vat_exemption_reason: item.vatExemptionReason }
-            : {}),
-          position: index,
-        })),
-      )
-      .select('id'),
+  return unwrap(
+    supabase.rpc('create_invoice_draft', {
+      p_organization_id: input.organizationId,
+      p_payload: payload,
+      p_items: input.items.map((item) => ({
+        description: item.description,
+        unit: item.unit,
+        quantity: item.quantity,
+        unit_price_cents: toCents(item.priceEuros),
+        vat_rate: item.vatRate,
+        vat_category: item.vatCategory ?? 'S',
+        vat_exemption_reason: item.vatExemptionReason || null,
+      })),
+    }),
   );
 }
 

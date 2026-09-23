@@ -113,7 +113,7 @@ test.describe('Atelier — fondations validées', () => {
         .toBe(commonMenuColor);
 
       const financeIcons = [
-        navigation.getByRole('link', { name: 'Devis & Chiffrage', exact: true }).locator('svg'),
+        navigation.getByRole('link', { name: 'Devis', exact: true }).locator('svg'),
         navigation.getByRole('button', { name: 'Achats', exact: true }).locator('svg').first(),
       ];
       for (const icon of financeIcons) {

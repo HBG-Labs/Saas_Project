@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
-import type { Tables, TablesInsert, TablesUpdate } from '@/types/database';
+import { collectAllPages } from '@/lib/pagination';
+import type { Tables, TablesUpdate } from '@/types/database';
 import type { Json } from '@/types/database';
 import type {
   Quote,
@@ -128,14 +129,19 @@ export async function deleteQuoteTemplate(templateId: string): Promise<void> {
 // Devis
 // -----------------------------------------------------------------------------
 
-export async function listQuotes(organizationId: string, limit = 50): Promise<Quote[]> {
-  return unwrap(
-    supabase
-      .from('quotes')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false })
-      .limit(limit),
+export async function listQuotes(organizationId: string, limit?: number): Promise<Quote[]> {
+  return collectAllPages(
+    (offset, size) =>
+      unwrap(
+        supabase
+          .from('quotes')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + size - 1),
+      ),
+    { limit },
   );
 }
 
@@ -149,14 +155,20 @@ export async function listQuotes(organizationId: string, limit = 50): Promise<Qu
  */
 export async function listQuotesWithTotals(
   organizationId: string,
-  limit = 50,
+  limit?: number,
 ): Promise<QuoteWithTotals[]> {
-  const [quotes, totals] = await Promise.all([
-    listQuotes(organizationId, limit),
-    unwrap(
-      supabase.from('quote_totals').select('*').eq('organization_id', organizationId),
-    ) as Promise<QuoteTotals[]>,
-  ]);
+  const quotes = await listQuotes(organizationId, limit);
+  const totals: QuoteTotals[] = [];
+  for (let offset = 0; offset < quotes.length; offset += 100) {
+    const ids = quotes.slice(offset, offset + 100).map((quote) => quote.id);
+    if (ids.length > 0) {
+      totals.push(
+        ...(await (unwrap(supabase.from('quote_totals').select('*').in('quote_id', ids)) as Promise<
+          QuoteTotals[]
+        >)),
+      );
+    }
+  }
 
   const totalsByQuoteId = new Map(totals.map((t) => [t.quote_id, t]));
 
@@ -205,11 +217,7 @@ export interface QuoteLineInput {
 }
 
 /**
- * Enregistre un devis complet : l'en-tête puis ses lignes.
- *
- * Deux écritures faute de transaction côté client. Si la seconde échoue, le
- * devis existe sans ses lignes — visible, corrigeable, et de loin préférable à
- * des lignes orphelines qu'aucun devis ne réclame.
+ * Enregistre un devis complet dans une transaction PostgreSQL unique.
  *
  * `reference` n'est pas fournie : le trigger `quotes_generate_reference` produit
  * `DEV-nnnn` par organisation. La calculer ici donnerait le même numéro à deux
@@ -230,14 +238,10 @@ export async function createQuote(input: {
   validUntil?: string;
   items: readonly QuoteLineInput[];
 }): Promise<Quote> {
-  const { data: userData } = await supabase.auth.getUser();
-
-  const payload: TablesInsert<'quotes'> = {
-    organization_id: input.organizationId,
+  const payload: Json = {
     vat_rate: input.vatRate,
     discount_rate: input.discountRate ?? 0,
     document_options: input.documentOptions ?? {},
-    ...(userData?.user ? { created_by: userData.user.id } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.customerId ? { customer_id: input.customerId } : {}),
     ...(input.siteId ? { site_id: input.siteId } : {}),
@@ -248,30 +252,18 @@ export async function createQuote(input: {
     ...(input.validUntil !== undefined ? { valid_until: input.validUntil } : {}),
   };
 
-  const quote = await unwrap(supabase.from('quotes').insert(payload).select('*').single());
-
-  if (input.items.length > 0) {
-    await unwrap(
-      supabase
-        .from('quote_items')
-        .insert(
-          input.items.map((item, index) => ({
-            quote_id: quote.id,
-            // Écrasé par le trigger depuis le devis parent ; la colonne est
-            // `not null`, d'où sa présence.
-            organization_id: input.organizationId,
-            description: item.description,
-            unit: item.unit,
-            quantity: item.quantity,
-            unit_price_cents: toCents(item.priceEuros),
-            position: index,
-          })),
-        )
-        .select('id'),
-    );
-  }
-
-  return quote;
+  return unwrap(
+    supabase.rpc('create_quote_draft', {
+      p_organization_id: input.organizationId,
+      p_payload: payload,
+      p_items: input.items.map((item) => ({
+        description: item.description,
+        unit: item.unit,
+        quantity: item.quantity,
+        unit_price_cents: toCents(item.priceEuros),
+      })),
+    }),
+  );
 }
 
 export async function updateQuote(quoteId: string, patch: TablesUpdate<'quotes'>): Promise<Quote> {

@@ -73,12 +73,18 @@ export function useQuotes(organizationId: string | null) {
 /**
  * Prépare (ou récupère) le PDF du devis et renvoie son lien signé.
  *
- * Appelée sans attendre à l'envoi au client (le PDF se prépare pendant que
- * l'entreprise remplit le reste), et à nouveau — instantanément, le document
- * existe déjà — quand quelqu'un clique « Télécharger le PDF ».
+ * Appelée explicitement au moment d'envoyer ou de télécharger. La génération
+ * est le geste qui fige atomiquement un brouillon en devis transmis : aucun
+ * préchauffage silencieux ne doit donc partir à l'ouverture de la fiche.
  */
 export function useEnsureQuotePdf() {
-  return useMutation({ mutationFn: ensureQuotePdf });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ensureQuotePdf,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.quotes.all });
+    },
+  });
 }
 
 export function useQuoteReminders(quoteId: string | undefined) {

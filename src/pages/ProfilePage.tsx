@@ -219,8 +219,8 @@ export default function ProfilePage() {
     setPasswordError(null);
     effacerPasswordSuccess();
 
-    if (newPassword.length < 6) {
-      setPasswordError(new Error('Le nouveau mot de passe doit contenir au moins 6 caractères.'));
+    if (newPassword.length < 8) {
+      setPasswordError(new Error('Le nouveau mot de passe doit contenir au moins 8 caractères.'));
       return;
     }
 
@@ -952,7 +952,7 @@ export default function ProfilePage() {
         open={isPasswordModalOpen}
         onOpenChange={setIsPasswordModalOpen}
         title="Modifier votre mot de passe"
-        description="Saisissez votre nouveau mot de passe contenant au moins 6 caractères pour sécuriser votre compte."
+        description="Saisissez votre nouveau mot de passe contenant au moins 8 caractères pour sécuriser votre compte."
         size="md"
         footer={
           <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -995,9 +995,9 @@ export default function ProfilePage() {
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimum 6 caractères"
+                placeholder="Minimum 8 caractères"
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 className="h-touch border-border bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />
@@ -1032,7 +1032,7 @@ export default function ProfilePage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Répétez le mot de passe"
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 className="h-touch border-border bg-surface text-foreground placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-primary w-full rounded-md border px-3 pr-12 text-sm focus-visible:ring-2 focus-visible:outline-none sm:h-9"
               />

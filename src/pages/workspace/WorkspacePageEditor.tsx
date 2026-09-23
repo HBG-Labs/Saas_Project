@@ -1,11 +1,16 @@
 import {
   Bell,
+  Bold,
   BookOpen,
   Download,
   Ellipsis,
   FileText,
+  Heading2,
   ImagePlus,
+  Italic,
   Languages,
+  List,
+  ListOrdered,
   LockKeyhole,
   Printer,
   Share2,
@@ -13,7 +18,18 @@ import {
   Star,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { EditorContent, useEditor } from '@tiptap/react';
+import type { JSONContent } from '@tiptap/core';
+import BoldExtension from '@tiptap/extension-bold';
+import Document from '@tiptap/extension-document';
+import HardBreak from '@tiptap/extension-hard-break';
+import Heading from '@tiptap/extension-heading';
+import ItalicExtension from '@tiptap/extension-italic';
+import { BulletList, ListItem, OrderedList } from '@tiptap/extension-list';
+import Paragraph from '@tiptap/extension-paragraph';
+import Text from '@tiptap/extension-text';
+import { UndoRedo } from '@tiptap/extensions';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -22,7 +38,6 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
-import { Textarea } from '@/components/ui/Textarea';
 import { ROUTES } from '@/config/routes';
 import { useAiAssistant } from '@/features/ai';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
@@ -50,6 +65,7 @@ import {
   type WorkspacePage,
 } from '@/features/workspace';
 import { cn } from '@/lib/cn';
+import type { TiptapDocument } from '@/types/database';
 
 import { WorkspaceRecorder } from './WorkspaceRecorder';
 
@@ -86,17 +102,6 @@ const PAGE_ACCENT_LABELS: Record<keyof typeof PAGE_ACCENT_STYLES, string> = {
   rose: 'Rose',
   slate: 'Ardoise',
 };
-
-/*
-  ÉCHAFAUDAGE — éditeur provisoire.
-
-  Le contenu d'une page est un document TipTap (JSON). Sans l'éditeur (à venir
-  avec les écrans de Codex), on édite le TEXTE extrait par la base
-  (`search_text`) et on le réenregistre en document minimal : titres `#`,
-  listes `-`/`1.`, paragraphes. La mise en forme riche d'une page créée par
-  l'éditeur final serait perdue ici — c'est pourquoi cet écran n'est pas un
-  livrable.
-*/
 
 export function WorkspacePageEditor({
   pageId,
@@ -147,34 +152,17 @@ function PageForm({
   const removeCover = useRemovePageCover();
 
   const [title, setTitle] = useState(loaded.title);
+  const [content, setContent] = useState<TiptapDocument>(loaded.content);
   const [text, setText] = useState(loaded.search_text ?? '');
   const [icon, setIconValue] = useState(loaded.icon ?? '');
   // L'`updated_at` que la base comparera à l'enregistrement : celui de
   // l'ouverture, puis celui de chaque écriture réussie depuis ce formulaire.
   const [loadedAt, setLoadedAt] = useState(loaded.updated_at);
   const [message, setMessage] = useState<string | null>(null);
-  // Le texte tel que le serveur le connaît : ce contre quoi on mesure ce qui
-  // a changé ailleurs (une transcription écrite pendant que la page est ouverte).
-  const [serverText, setServerText] = useState(loaded.search_text ?? '');
-  const serveur = loaded.search_text ?? '';
-  if (loaded.updated_at !== loadedAt && serveur !== serverText) {
-    // La page a bougé sur le serveur pendant qu'elle est ouverte — le cas
-    // courant : la transcription d'un enregistrement vient d'y être ajoutée.
-    // On la prend sans perdre ce qui est tapé ici : si le serveur n'a fait
-    // qu'ajouter à la suite, on ajoute la même chose ; sinon on prévient.
-    const delta = serveur.startsWith(serverText) ? serveur.slice(serverText.length) : null;
-    setServerText(serveur);
-    setLoadedAt(loaded.updated_at);
-    if (text === serverText) setText(serveur);
-    else if (delta !== null)
-      setText((courant) =>
-        courant.endsWith('\n') || delta.startsWith('\n') ? courant + delta : `${courant}\n${delta}`,
-      );
-    else
-      setMessage(
-        "Cette page a été modifiée ailleurs pendant votre saisie : rechargez-la avant d'enregistrer.",
-      );
-  }
+  const [dirty, setDirty] = useState(false);
+  const loadedAtRef = useRef(loaded.updated_at);
+  const revisionRef = useRef(0);
+  const savingRef = useRef(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
@@ -188,6 +176,73 @@ function PageForm({
   const importInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const assistantSectionRef = useRef<HTMLElement>(null);
+
+  const markDirty = useCallback(() => {
+    revisionRef.current += 1;
+    setDirty(true);
+  }, []);
+
+  const editor = useEditor({
+    // Conserver seulement les capacités proposées dans la barre d'outils.
+    // Charger StarterKit ici ajoutait notamment liens, code, citations et
+    // décorations jamais exposés, soit plus de 80 Kio gzip inutiles.
+    extensions: [
+      Document,
+      Paragraph,
+      Text,
+      HardBreak,
+      BoldExtension,
+      ItalicExtension,
+      Heading.configure({ levels: [2] }),
+      ListItem,
+      BulletList,
+      OrderedList,
+      UndoRedo,
+    ],
+    content: loaded.content as JSONContent,
+    editable: canEdit && !loaded.locked,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        'aria-label': 'Contenu de la page',
+        'aria-multiline': 'true',
+        role: 'textbox',
+      },
+    },
+    onUpdate: ({ editor: currentEditor }) => {
+      setContent(currentEditor.getJSON() as TiptapDocument);
+      setText(currentEditor.getText({ blockSeparator: '\n' }));
+      markDirty();
+    },
+  });
+
+  useEffect(() => {
+    editor?.setEditable(canEdit && !loaded.locked);
+  }, [canEdit, editor, loaded.locked]);
+
+  const hasExternalConflict = dirty && loaded.updated_at !== loadedAt;
+  const displayedMessage = hasExternalConflict
+    ? "Cette page a été modifiée ailleurs pendant votre saisie. Enregistrez une copie ou rechargez la page pour éviter d'écraser ces changements."
+    : message;
+
+  /*
+   * Synchronisation légitime d'un éditeur externe avec une version serveur
+   * arrivée pendant que le formulaire est propre. TipTap est mis à jour sans
+   * émettre d'événement ; les miroirs React suivent la même version. En cas de
+   * saisie locale, on ne touche à rien et `hasExternalConflict` bloque l'autosave.
+   */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!editor || loaded.updated_at === loadedAtRef.current) return;
+    if (dirty) return;
+    editor.commands.setContent(loaded.content as JSONContent, { emitUpdate: false });
+    setContent(loaded.content);
+    setText(loaded.search_text ?? '');
+    setTitle(loaded.title);
+    loadedAtRef.current = loaded.updated_at;
+    setLoadedAt(loaded.updated_at);
+  }, [dirty, editor, loaded.content, loaded.search_text, loaded.title, loaded.updated_at]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (organizationId) touch.mutate({ pageId, organizationId });
@@ -206,22 +261,43 @@ function PageForm({
     .reverse()
     .find((m) => m.role === 'assistant' && m.id !== 'msg-init');
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const savedRevision = revisionRef.current;
     setMessage(null);
     try {
       const saved = await save.mutateAsync({
         pageId,
-        expectedUpdatedAt: loadedAt,
+        expectedUpdatedAt: loadedAtRef.current,
         title,
-        content: textToTiptapDocument(text),
+        content,
       });
+      loadedAtRef.current = saved.updated_at;
       setLoadedAt(saved.updated_at);
-      setServerText(saved.search_text ?? '');
+      if (revisionRef.current === savedRevision) setDirty(false);
       setMessage('Enregistré.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Échec de l'enregistrement.");
+    } finally {
+      savingRef.current = false;
     }
-  };
+  }, [content, pageId, save, title]);
+
+  useEffect(() => {
+    if (!dirty || !canEdit || loaded.locked || hasExternalConflict) return;
+    const timer = window.setTimeout(() => void handleSave(), 1200);
+    return () => window.clearTimeout(timer);
+  }, [canEdit, content, dirty, handleSave, hasExternalConflict, loaded.locked, title]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [dirty]);
 
   const handleArchive = async () => {
     if (!window.confirm('Déplacer cette page dans la corbeille ?')) return;
@@ -239,7 +315,7 @@ function PageForm({
       pageId: created.id,
       expectedUpdatedAt: created.updated_at,
       title: created.title,
-      content: textToTiptapDocument(text),
+      content,
     });
     await navigate(ROUTES.workspacePage(created.id));
   };
@@ -296,7 +372,7 @@ function PageForm({
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;');
     downloadPage(
-      `<!doctype html><html lang="fr"><meta charset="utf-8"><title>${escape(title)}</title><body><main><h1>${escape(title)}</h1><div style="white-space:pre-wrap">${escape(text)}</div></main></body></html>`,
+      `<!doctype html><html lang="fr"><meta charset="utf-8"><title>${escape(title)}</title><body><main><h1>${escape(title)}</h1>${editor?.getHTML() ?? `<div style="white-space:pre-wrap">${escape(text)}</div>`}</main></body></html>`,
       'html',
       'text/html;charset=utf-8',
     );
@@ -311,6 +387,7 @@ function PageForm({
     >,
   ) => {
     const saved = await updatePresentation.mutateAsync({ pageId, patch });
+    loadedAtRef.current = saved.updated_at;
     setLoadedAt(saved.updated_at);
   };
 
@@ -441,33 +518,97 @@ function PageForm({
                 if (next !== (loaded.icon ?? null))
                   setIcon.mutate(
                     { pageId, icon: next },
-                    { onSuccess: (saved) => setLoadedAt(saved.updated_at) },
+                    {
+                      onSuccess: (saved) => {
+                        loadedAtRef.current = saved.updated_at;
+                        setLoadedAt(saved.updated_at);
+                      },
+                    },
                   );
               }}
               className="w-14 border-0 bg-transparent text-4xl outline-none disabled:opacity-70"
             />
             <input
-              aria-label="Titre de la page"
+              aria-label="Titre"
               value={title}
               disabled={!canEdit || loaded.locked}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                markDirty();
+              }}
               placeholder="Sans titre"
               className="text-foreground min-w-0 flex-1 border-0 bg-transparent text-3xl font-black tracking-tight outline-none disabled:opacity-70 sm:text-4xl"
             />
           </div>
 
-          <Textarea
-            aria-label="Contenu de la page"
-            className={cn(
-              'workspace-page-text mt-8 min-h-[20rem] resize-none border-0 bg-transparent px-0 leading-7 shadow-none focus-visible:border-transparent focus-visible:ring-0',
-              loaded.small_text ? 'text-xs sm:text-xs' : 'text-base sm:text-base',
-            )}
-            rows={14}
-            value={text}
-            disabled={!canEdit || loaded.locked}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Cliquez ici et commencez à écrire…"
-          />
+          <div className="mt-8">
+            {canEdit && !loaded.locked && editor ? (
+              <div
+                className="border-border bg-surface sticky top-0 z-10 mb-3 flex flex-wrap gap-1 rounded-xl border p-1 shadow-sm"
+                role="toolbar"
+                aria-label="Mise en forme du contenu"
+              >
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editor.isActive('bold') ? 'secondary' : 'ghost'}
+                  aria-label="Gras"
+                  aria-pressed={editor.isActive('bold')}
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                >
+                  <Bold className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editor.isActive('italic') ? 'secondary' : 'ghost'}
+                  aria-label="Italique"
+                  aria-pressed={editor.isActive('italic')}
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                >
+                  <Italic className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'ghost'}
+                  aria-label="Titre de niveau 2"
+                  aria-pressed={editor.isActive('heading', { level: 2 })}
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                >
+                  <Heading2 className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editor.isActive('bulletList') ? 'secondary' : 'ghost'}
+                  aria-label="Liste à puces"
+                  aria-pressed={editor.isActive('bulletList')}
+                  onClick={() => editor.chain().focus().toggleBulletList().run()}
+                >
+                  <List className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={editor.isActive('orderedList') ? 'secondary' : 'ghost'}
+                  aria-label="Liste numérotée"
+                  aria-pressed={editor.isActive('orderedList')}
+                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                >
+                  <ListOrdered className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+            <EditorContent
+              editor={editor}
+              aria-label="Contenu de la page"
+              className={cn(
+                'workspace-rich-editor min-h-[20rem]',
+                loaded.small_text ? 'text-xs' : 'text-base',
+              )}
+            />
+          </div>
 
           {loaded.wiki_mode ? (
             <section className={cn('mt-8 rounded-2xl p-4 sm:p-5', accent.soft)}>
@@ -516,7 +657,7 @@ function PageForm({
                   saveAsTemplate.mutate(
                     {
                       organizationId,
-                      page: { title, content: textToTiptapDocument(text), icon: icon || null },
+                      page: { title, content, icon: icon || null },
                     },
                     { onSuccess: () => setMessage('Modèle enregistré.') },
                   )
@@ -531,9 +672,9 @@ function PageForm({
                 Cette page est verrouillée.
               </span>
             ) : null}
-            {message ? (
+            {displayedMessage ? (
               <span role="status" className="text-muted-foreground text-sm">
-                {message}
+                {displayedMessage}
               </span>
             ) : null}
           </div>
@@ -549,7 +690,9 @@ function PageForm({
           const file = event.target.files?.[0];
           if (file && file.size <= 1024 * 1024)
             void file.text().then((content) => {
-              setText(content);
+              editor?.commands.setContent(textToTiptapDocument(content) as JSONContent, {
+                emitUpdate: true,
+              });
               setMessage('Contenu importé. Enregistrez pour le conserver.');
             });
           else if (file) setMessage('Le fichier doit faire moins de 1 Mo.');
@@ -566,7 +709,12 @@ function PageForm({
           if (file)
             uploadCover.mutate(
               { page: loaded, file },
-              { onSuccess: (saved) => setLoadedAt(saved.updated_at) },
+              {
+                onSuccess: (saved) => {
+                  loadedAtRef.current = saved.updated_at;
+                  setLoadedAt(saved.updated_at);
+                },
+              },
             );
           event.target.value = '';
         }}
@@ -986,7 +1134,14 @@ function PageForm({
                   type="button"
                   variant="secondary"
                   size="sm"
-                  onClick={() => setText((t) => `${t.trimEnd()}\n\n${lastAnswer.content}`)}
+                  onClick={() => {
+                    const answer = textToTiptapDocument(lastAnswer.content);
+                    editor
+                      ?.chain()
+                      .focus()
+                      .insertContent(answer.content ?? [])
+                      .run();
+                  }}
                 >
                   Insérer dans la page
                 </Button>

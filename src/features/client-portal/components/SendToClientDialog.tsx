@@ -26,7 +26,12 @@ export interface SendToClientDialogProps {
   link?: { quoteId?: string; invoiceId?: string; missionId?: string };
   /** Joindre le PDF de la facture `link.invoiceId` au courriel. */
   attachInvoicePdf?: boolean;
+  /** Préparation bloquante exécutée au vrai clic d'envoi, jamais à l'ouverture. */
+  beforeSend?: (() => Promise<void>) | undefined;
+  /** Conversation créée, y compris si le fournisseur de courriel l'a refusée. */
   onSent?: (conversationId: string) => void;
+  /** Courriel effectivement accepté par le fournisseur. */
+  onDelivered?: (conversationId: string) => void;
 }
 
 /**
@@ -45,7 +50,9 @@ export function SendToClientDialog({
   defaultBody = '',
   link,
   attachInvoicePdf = false,
+  beforeSend,
   onSent,
+  onDelivered,
 }: SendToClientDialogProps) {
   const [innerOpen, setInnerOpen] = useState(false);
   const open = controlledOpen ?? innerOpen;
@@ -61,8 +68,11 @@ export function SendToClientDialog({
   const [body, setBody] = useState(defaultBody);
   const [error, setError] = useState<unknown>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
-  const eligible = (contacts.data ?? []).filter((c) => c.portal_enabled && c.email !== null && c.email !== '');
+  const eligible = (contacts.data ?? []).filter(
+    (c) => c.portal_enabled && c.email !== null && c.email !== '',
+  );
   // Un seul interlocuteur possible : pas la peine de le demander.
   const effectiveContactId = contactId || (eligible.length === 1 ? eligible[0]!.id : '');
 
@@ -72,6 +82,7 @@ export function SendToClientDialog({
     setBody(defaultBody);
     setError(null);
     setFailed(null);
+    setPreparing(false);
   };
 
   return (
@@ -97,32 +108,35 @@ export function SendToClientDialog({
           className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
-            setError(null);
-            setFailed(null);
-            send.mutate(
-              {
-                contactId: effectiveContactId,
-                subject: subject.trim(),
-                body: body.trim(),
-                ...link,
-                ...(attachInvoicePdf && link?.invoiceId ? { attachInvoiceId: link.invoiceId } : {}),
-              },
-              {
-                onSuccess: (result) => {
-                  if (result.status === 'failed') {
-                    setFailed(result.error ?? 'L’e-mail n’a pas pu être envoyé.');
-                    onSent?.(result.conversationId);
-                    return;
-                  }
-                  setOpen(false);
-                  reset();
-                  onSent?.(result.conversationId);
-                },
-                onError: (e) => {
-                  setError(e);
-                },
-              },
-            );
+            void (async () => {
+              setError(null);
+              setFailed(null);
+              setPreparing(true);
+              try {
+                await beforeSend?.();
+                const result = await send.mutateAsync({
+                  contactId: effectiveContactId,
+                  subject: subject.trim(),
+                  body: body.trim(),
+                  ...link,
+                  ...(attachInvoicePdf && link?.invoiceId
+                    ? { attachInvoiceId: link.invoiceId }
+                    : {}),
+                });
+                onSent?.(result.conversationId);
+                if (result.status === 'failed') {
+                  setFailed(result.error ?? 'L’e-mail n’a pas pu être envoyé.');
+                  return;
+                }
+                setOpen(false);
+                reset();
+                onDelivered?.(result.conversationId);
+              } catch (cause) {
+                setError(cause);
+              } finally {
+                setPreparing(false);
+              }
+            })();
           }}
         >
           <FormError error={error} />
@@ -183,10 +197,16 @@ export function SendToClientDialog({
             </Button>
             <Button
               type="submit"
-              disabled={send.isPending || effectiveContactId === '' || subject.trim() === '' || body.trim() === ''}
+              disabled={
+                send.isPending ||
+                preparing ||
+                effectiveContactId === '' ||
+                subject.trim() === '' ||
+                body.trim() === ''
+              }
             >
               <Send className="size-4" />
-              {send.isPending ? 'Envoi…' : 'Envoyer'}
+              {preparing ? 'Préparation…' : send.isPending ? 'Envoi…' : 'Envoyer'}
             </Button>
           </div>
         </form>

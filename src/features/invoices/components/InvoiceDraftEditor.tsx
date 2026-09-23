@@ -32,6 +32,7 @@ import {
 } from '@/features/documents';
 import { useOrganization, useUploadOrganizationLogo } from '@/features/organizations';
 import { frenchRegistrationError, frenchVatError } from '@/lib/business-identifiers';
+import { calculateInvoiceTotals } from '@/lib/document-totals';
 import type { InvoiceWithItems } from '@/types/domain';
 import { DEFAULT_EARLY_PAYMENT_TERMS, suggestedOperationType } from '../draft-defaults';
 import { useSaveInvoiceDraft } from '../hooks/useInvoices';
@@ -118,6 +119,8 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const [documentOptions, setDocumentOptions] = useState<DocumentOptions>(() =>
     normalizeDocumentOptions(invoice.document_options),
   );
+  const sellerNameInput =
+    documentOptions.sellerName ?? organization?.name ?? organization?.legal_name ?? 'REZO360 Pro';
   const updateLogoSize = useCallback(
     (size: { width: number; height: number }) =>
       setDocumentOptions((current) => ({
@@ -196,24 +199,22 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   const serviceDate = useWatch({ control, name: 'serviceDate' });
   const operationType = useWatch({ control, name: 'operationType' });
   const watchedItems = useWatch({ control, name: 'items' }) ?? [];
-  const grossTotals = watchedItems.reduce(
-    (sum, item) => {
-      const quantity = Number(item.quantity) || 0;
-      const unitPrice = Number(item.price) || 0;
-      const rate = Number(item.rate) || 0;
-      const lineTotal = quantity * unitPrice;
-      sum.excludingTax += lineTotal;
-      sum.vat += (lineTotal * rate) / 100;
-      return sum;
-    },
-    { excludingTax: 0, vat: 0 },
+  const calculatedTotals = calculateInvoiceTotals(
+    watchedItems.map((item) => ({
+      quantity: Number(item.quantity) || 0,
+      unitPriceEuros: Number(item.price) || 0,
+      vatRate: Number(item.rate) || 0,
+      vatCategory: item.category,
+    })),
+    discountRate,
   );
-  const discountAmount = (grossTotals.excludingTax * discountRate) / 100;
+  const grossTotals = { excludingTax: calculatedTotals.grossSubtotalCents / 100 };
+  const discountAmount = calculatedTotals.discountCents / 100;
   const totals = {
-    excludingTax: grossTotals.excludingTax - discountAmount,
-    vat: grossTotals.vat * (1 - discountRate / 100),
+    excludingTax: calculatedTotals.subtotalCents / 100,
+    vat: calculatedTotals.vatCents / 100,
   };
-  const totalIncludingTax = totals.excludingTax + totals.vat;
+  const totalIncludingTax = calculatedTotals.totalCents / 100;
   const professional = customerType === 'company' || customerType === 'public_body';
   const showDesktopClientDetails =
     desktopClientDetailsOpen ||
@@ -370,9 +371,25 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
                   onUpload={(file) => uploadLogo.mutateAsync(file)}
                 />
                 <div className="financial-paper-company min-w-64 border border-dashed px-3 py-2.5">
-                  <p className="financial-paper-strong text-sm font-black tracking-tight">
-                    {organization?.name ?? 'REZO360 Pro'}
-                  </p>
+                  <label
+                    htmlFor="invoice-seller-name"
+                    className="text-financial-accent text-3xs mb-1 block font-bold tracking-wide uppercase"
+                  >
+                    Nom affiché sur la facture
+                  </label>
+                  <input
+                    id="invoice-seller-name"
+                    aria-label="Nom de l’entreprise sur la facture"
+                    value={sellerNameInput}
+                    maxLength={160}
+                    onChange={(event) =>
+                      setDocumentOptions((current) => ({
+                        ...current,
+                        sellerName: event.target.value,
+                      }))
+                    }
+                    className="financial-paper-focus financial-paper-strong w-full bg-transparent text-sm font-black tracking-tight outline-none"
+                  />
                   {organization?.legal_name && organization.legal_name !== organization.name ? (
                     <p className="financial-paper-text text-xs">{organization.legal_name}</p>
                   ) : null}

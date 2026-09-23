@@ -65,6 +65,13 @@ export default defineConfig({
         */
         manualChunks(id) {
           if (id.includes('node_modules/lucide-react')) return 'icons';
+          // L'éditeur Workspace est chargé uniquement sur sa route. Séparer
+          // son moteur ProseMirror et ses extensions évite qu'une page
+          // fonctionnelle mais rarement ouverte forme un chunk monolithique.
+          if (id.includes('node_modules/@tiptap/pm') || id.includes('node_modules/prosemirror-'))
+            return 'editor-engine';
+          if (id.includes('node_modules/@tiptap/react')) return 'editor-react';
+          if (id.includes('node_modules/@tiptap/')) return 'editor-extensions';
         },
       },
     },

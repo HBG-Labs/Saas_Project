@@ -16,7 +16,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
@@ -53,6 +53,7 @@ import {
   useSeedQuoteTemplates,
 } from '@/features/quotes';
 import { cn } from '@/lib/cn';
+import { calculateQuoteTotals } from '@/lib/document-totals';
 import { useDocumentTitle } from '@/lib/use-document-title';
 import type { Customer } from '@/types/domain';
 
@@ -122,6 +123,12 @@ function customerAddress(customer: Customer | null): string[] {
 export default function QuotesPage() {
   useDocumentTitle('Nouveau devis');
 
+  const location = useLocation();
+  const calculationNote =
+    typeof (location.state as { calculationNote?: unknown } | null)?.calculationNote === 'string'
+      ? (location.state as { calculationNote: string }).calculationNote.slice(0, 20000)
+      : '';
+
   const { organization } = useCurrentOrganization();
   const organizationId = organization?.id ?? null;
 
@@ -172,13 +179,14 @@ export default function QuotesPage() {
   const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(false);
   const [documentOptions, setDocumentOptions] = useState<DocumentOptions>({
     ...DEFAULT_DOCUMENT_OPTIONS,
+    showFreeField: calculationNote.length > 0,
     showAcceptanceTerms: true,
     showSignature: true,
   });
   const [numberingOpen, setNumberingOpen] = useState(false);
   const [discountRate, setDiscountRate] = useState(0);
   const [documentTitle, setDocumentTitle] = useState('');
-  const [freeField, setFreeField] = useState('');
+  const [freeField, setFreeField] = useState(calculationNote);
   const numbering = useDocumentNumbering(organizationId, 'quote');
   const uploadLogo = useUploadOrganizationLogo(organizationId ?? '');
   const wizardRef = useRef<HTMLDivElement>(null);
@@ -261,13 +269,17 @@ export default function QuotesPage() {
     invalidateSavedQuote();
   };
 
-  // Calculs Totaux — affichage seul. Le total qui fait foi est celui de la vue
-  // `quote_totals`, recalculé côté base à partir des lignes enregistrées.
-  const grossHT = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const discountAmount = (grossHT * discountRate) / 100;
-  const totalHT = grossHT - discountAmount;
-  const totalVAT = (totalHT * vatRate) / 100;
-  const totalTTC = totalHT + totalVAT;
+  // Exactement la meme arithmetique en centimes que `quote_totals` en base.
+  const calculatedTotals = calculateQuoteTotals(
+    items.map((item) => ({ quantity: item.quantity, unitPriceEuros: item.unitPrice })),
+    vatRate,
+    discountRate,
+  );
+  const grossHT = calculatedTotals.grossSubtotalCents / 100;
+  const discountAmount = calculatedTotals.discountCents / 100;
+  const totalHT = calculatedTotals.subtotalCents / 100;
+  const totalVAT = calculatedTotals.vatCents / 100;
+  const totalTTC = calculatedTotals.totalCents / 100;
 
   const [isPreviewPdfOpen, setIsPreviewPdfOpen] = useState(false);
   const quoteNumber = savedReference ?? 'brouillon non enregistré';
@@ -388,7 +400,7 @@ export default function QuotesPage() {
 
       <header className="border-border bg-surface/95 sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur lg:flex">
         <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
-          <Link to={ROUTES.quotesHistory}>
+          <Link to={ROUTES.quotesHistory} aria-label="Fermer l’éditeur de devis">
             <X className="size-5" aria-hidden="true" />
           </Link>
         </Button>

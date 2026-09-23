@@ -82,6 +82,21 @@ perform pg_temp.ok(
   'un brouillon n''a aucune relance planifiee');
 end $$;
 
+do $$
+begin
+  begin
+    update public.quotes
+    set status = 'sent', title = 'Contenu modifie pendant envoi'
+    where id = pg_temp.q();
+    raise exception 'ECHEC : contenu et statut ont change dans la meme requete'
+      using errcode = 'assert_failure';
+  exception
+    when restrict_violation then
+      raise notice '  OK  le contenu ne change pas pendant la transition vers envoye';
+  end;
+end
+$$;
+
 update public.quotes set status = 'sent' where id = pg_temp.q();
 
 do $$ begin
@@ -102,17 +117,6 @@ perform pg_temp.ok(
     where r.quote_id = pg_temp.q() and r.sequence = 1) = 7,
   'la premiere relance est due 7 jours apres l''envoi');
 end $$;
-
--- Validité courte : la deuxième relance tomberait après, elle disparaît.
-update public.quotes set valid_until = current_date + 10 where id = pg_temp.q();
-
-do $$ begin
-perform pg_temp.ok(
-  (select array_agg(sequence order by sequence) from public.quote_reminders where quote_id = pg_temp.q() and status = 'pending') = '{1}',
-  'raccourcir la validite retire la relance qui tomberait apres');
-end $$;
-
-update public.quotes set valid_until = current_date + 30 where id = pg_temp.q();
 
 -- Cadence par entreprise.
 update public.organizations set quote_reminder_days = '{3,10,20}' where id = (select org_id from t_ctx);
@@ -169,23 +173,34 @@ perform pg_temp.ok(
   'devis accepte : les relances restantes sont passees, motif « Devis accepté »');
 end $$;
 
--- Un second envoi (brouillon → envoyé) repart de zéro.
-update public.quotes set status = 'draft' where id = pg_temp.q();
-update public.quotes set status = 'sent'  where id = pg_temp.q();
-
-do $$ begin
-perform pg_temp.ok(
-  (select count(*) from public.quote_reminders where quote_id = pg_temp.q() and status = 'pending') = 3,
-  'un nouvel envoi replanifie (les anciennes lignes passees restent en historique)');
-end $$;
+do $$
+begin
+  begin
+    update public.quotes set status = 'draft' where id = pg_temp.q();
+    raise exception 'ECHEC : un devis accepte a ete rouvert' using errcode = 'assert_failure';
+  exception
+    when check_violation or restrict_violation then
+      raise notice '  OK  un devis accepte ne peut pas redevenir brouillon';
+  end;
+end
+$$;
 
 do $$ begin raise notice '=== PARTIE 3 — expiration ==='; end $$;
 
-update public.quotes set valid_until = current_date - 1 where id = pg_temp.q();
+insert into public.quotes (
+  organization_id, reference, title, customer_id, status, valid_until, created_by
+)
+select org_id, 'DEV-EXP', 'Devis expire', customer_id, 'draft', current_date - 1, pg_temp.uid('owner')
+from t_ctx;
+
+create function pg_temp.q_exp() returns uuid
+language sql stable as $$ select id from public.quotes where reference = 'DEV-EXP' $$;
+
+update public.quotes set status = 'sent' where id = pg_temp.q_exp();
 
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.quote_reminders where quote_id = pg_temp.q() and status = 'pending') = 0,
+  (select count(*) from public.quote_reminders where quote_id = pg_temp.q_exp() and status = 'pending') = 0,
   'une validite deja depassee ne planifie plus rien');
 end $$;
 
@@ -195,34 +210,42 @@ end $$;
 
 do $$ begin
 perform pg_temp.ok(
-  (select status = 'expired' from public.quotes where id = pg_temp.q()),
+  (select status = 'expired' from public.quotes where id = pg_temp.q_exp()),
   'le devis est passe en « expire »');
 end $$;
 
 do $$ begin raise notice '=== PARTIE 4 — tirage atomique ==='; end $$;
 
-update public.quotes set valid_until = current_date + 30, status = 'draft' where id = pg_temp.q();
-update public.quotes set status = 'sent' where id = pg_temp.q();
+insert into public.quotes (
+  organization_id, reference, title, customer_id, status, valid_until, created_by
+)
+select org_id, 'DEV-CLAIM', 'Devis a relancer', customer_id, 'draft', current_date + 30, pg_temp.uid('owner')
+from t_ctx;
+
+create function pg_temp.q_claim() returns uuid
+language sql stable as $$ select id from public.quotes where reference = 'DEV-CLAIM' $$;
+
+update public.quotes set status = 'sent' where id = pg_temp.q_claim();
 -- Rendre la premiere relance due maintenant.
-update public.quote_reminders set due_at = now() - interval '1 minute' where quote_id = pg_temp.q() and sequence = 1;
+update public.quote_reminders set due_at = now() - interval '1 minute' where quote_id = pg_temp.q_claim() and sequence = 1;
 
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q()) = 1,
+  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q_claim()) = 1,
   'seule la relance due est tiree, pas celles a venir');
 end $$;
 
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q()) = 0,
+  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q_claim()) = 0,
   'une relance fraichement verrouillee n''est pas retiree');
 end $$;
 
-update public.quote_reminders set locked_at = now() - interval '20 minutes' where quote_id = pg_temp.q() and sequence = 1;
+update public.quote_reminders set locked_at = now() - interval '20 minutes' where quote_id = pg_temp.q_claim() and sequence = 1;
 
 do $$ begin
 perform pg_temp.ok(
-  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q()) = 1,
+  (select count(*) from public.claim_quote_reminders(10) c where c.quote_id = pg_temp.q_claim()) = 1,
   'un verrou de plus de 15 minutes (worker mort) est recupere');
 end $$;
 

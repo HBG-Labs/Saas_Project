@@ -11,7 +11,6 @@ import {
   listOrganizationInterventions,
   listTimeEntries,
   startIntervention,
-  stopTimeTracking,
   switchTimeEntry,
   updateIntervention,
 } from '../api/interventions.api';
@@ -129,20 +128,16 @@ export function useSwitchTimeEntry(interventionId: string) {
 /**
  * Termine l'intervention.
  *
- * Ferme d'abord le segment de temps ouvert, sinon le relevé garderait un
- * segment sans fin — et le temps net, qui ne compte que les segments clos,
- * omettrait la dernière période travaillée.
+ * PostgreSQL ferme le segment ouvert et termine l'intervention dans une seule
+ * transaction. `openEntryId` reste dans le contrat du formulaire pour
+ * compatibilite d'affichage, mais n'est jamais utilise comme autorite.
  */
 export function useCompleteIntervention(interventionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { openEntryId: string | null; notes?: string }) => {
-      if (input.openEntryId !== null) {
-        await stopTimeTracking(input.openEntryId);
-      }
-      return completeIntervention(interventionId, input.notes);
-    },
+    mutationFn: (input: { openEntryId: string | null; notes?: string }) =>
+      completeIntervention(interventionId, input.notes),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.interventions.all }),

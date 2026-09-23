@@ -144,6 +144,7 @@ export async function uploadOrganizationLogo(input: {
   organizationId: string;
   file: File;
 }): Promise<Organization> {
+  const previousOrganization = await getOrganization(input.organizationId);
   const allowed = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowed.includes(input.file.type)) {
     throw new Error('Choisissez une image JPEG, PNG ou WebP.');
@@ -170,7 +171,31 @@ export async function uploadOrganizationLogo(input: {
     throw error;
   }
   const { data } = supabase.storage.from('organization-branding').getPublicUrl(path);
-  return updateOrganization(input.organizationId, { logo_url: data.publicUrl });
+  let updated: Organization;
+  try {
+    updated = await updateOrganization(input.organizationId, { logo_url: data.publicUrl });
+  } catch (updateError) {
+    // L'enregistrement a échoué : ne pas laisser un fichier sans propriétaire.
+    await supabase.storage.from('organization-branding').remove([path]);
+    throw updateError;
+  }
+
+  const oldUrl = previousOrganization?.logo_url;
+  if (oldUrl && oldUrl !== data.publicUrl) {
+    try {
+      const marker = '/storage/v1/object/public/organization-branding/';
+      const pathname = new URL(oldUrl).pathname;
+      const markerIndex = pathname.indexOf(marker);
+      const oldPath =
+        markerIndex >= 0 ? decodeURIComponent(pathname.slice(markerIndex + marker.length)) : '';
+      if (oldPath.startsWith(`${input.organizationId}/`)) {
+        await supabase.storage.from('organization-branding').remove([oldPath]);
+      }
+    } catch {
+      // Une ancienne URL externe ou mal formée ne doit pas annuler le nouveau logo.
+    }
+  }
+  return updated;
 }
 
 /**

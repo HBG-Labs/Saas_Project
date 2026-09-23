@@ -14,11 +14,14 @@ import { createPortalRequestAccessHandler, type AccessStore, type PortalGate } f
 
 function env(name: string): string {
   const value = Deno.env.get(name);
-  if (value === undefined || value === '') throw new Error(`Variable d'environnement manquante : ${name}`);
+  if (value === undefined || value === '')
+    throw new Error(`Variable d'environnement manquante : ${name}`);
   return value;
 }
 
-const admin = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
+const admin = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
+  auth: { persistSession: false },
+});
 
 const store: AccessStore = {
   async portalGate(email): Promise<PortalGate | null> {
@@ -26,33 +29,22 @@ const store: AccessStore = {
     if (error !== null) throw new Error(`portal_gate_for_email : ${error.message}`);
     const row = Array.isArray(data) ? data[0] : null;
     if (!row) return null;
-    return { contact_id: row.contact_id, organization_id: row.organization_id, organization_name: row.organization_name };
+    return {
+      contact_id: row.contact_id,
+      organization_id: row.organization_id,
+      organization_name: row.organization_name,
+    };
   },
 
-  async recentRequests(contactId, sinceIso) {
-    const { count } = await admin
-      .from('audit_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('entity_type', 'customer_contact')
-      .eq('entity_id', contactId)
-      .eq('action', 'portal.code_requested')
-      .gte('created_at', sinceIso);
-    return count ?? 0;
-  },
-
-  async recordRequest(gate) {
-    // Le journal est immuable et n'accepte que des insertions : celle-ci
-    // trace le fait, jamais le code.
-    const { error } = await admin.from('audit_logs').insert({
-      organization_id: gate.organization_id,
-      user_id: null,
-      actor_label: 'portail client',
-      action: 'portal.code_requested',
-      entity_type: 'customer_contact',
-      entity_id: gate.contact_id,
-      metadata: {},
+  async claimRequest(gate, windowSeconds, maxRequests) {
+    const { data, error } = await admin.rpc('claim_portal_code_request', {
+      p_contact_id: gate.contact_id,
+      p_organization_id: gate.organization_id,
+      p_window_seconds: windowSeconds,
+      p_max_requests: maxRequests,
     });
-    if (error !== null) throw new Error(`audit_logs : ${error.message}`);
+    if (error !== null) throw new Error(`claim_portal_code_request : ${error.message}`);
+    return data === true;
   },
 
   async issueOtp(email) {
@@ -71,7 +63,8 @@ const store: AccessStore = {
       if (result.error !== null) throw new Error(`Génération du code : ${result.error.message}`);
     }
     const code = result.data.properties?.email_otp;
-    if (typeof code !== 'string' || code.length === 0) throw new Error('Supabase Auth n’a pas fourni de code.');
+    if (typeof code !== 'string' || code.length === 0)
+      throw new Error('Supabase Auth n’a pas fourni de code.');
     return { code };
   },
 };

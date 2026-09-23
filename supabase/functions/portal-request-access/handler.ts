@@ -39,10 +39,8 @@ export interface PortalGate {
 export interface AccessStore {
   /** Le contact autorisé pour cette adresse, ou `null` — sans dire pourquoi. */
   portalGate(email: string): Promise<PortalGate | null>;
-  /** Nombre de codes demandés pour ce contact dans la fenêtre. */
-  recentRequests(contactId: string, sinceIso: string): Promise<number>;
-  /** Trace la demande (audit) ; jamais le code. */
-  recordRequest(gate: PortalGate): Promise<void>;
+  /** Reserve atomiquement une place dans le quota et trace la demande. */
+  claimRequest(gate: PortalGate, windowSeconds: number, maxRequests: number): Promise<boolean>;
   /** Fait générer le code par Supabase Auth ; crée le compte s'il n'existe pas. */
   issueOtp(email: string): Promise<{ code: string }>;
 }
@@ -51,7 +49,6 @@ export interface AccessConfig {
   store: AccessStore;
   send: (message: Message) => Promise<SendResult>;
   missing: string[];
-  now?: () => Date;
   /** Fenêtre et plafond : 3 codes par 15 minutes par contact. */
   windowMinutes?: number;
   maxPerWindow?: number;
@@ -64,13 +61,23 @@ const CORS_HEADERS = {
 };
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+  });
 
-const NEUTRAL = { ok: true, message: 'Si cette adresse a accès au portail, un code vient de lui être envoyé.' };
+const NEUTRAL = {
+  ok: true,
+  message: 'Si cette adresse a accès au portail, un code vient de lui être envoyé.',
+};
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function renderOtpEmail(input: { organizationName: string; code: string; expiresMinutes: number }): { subject: string; html: string; text: string } {
+export function renderOtpEmail(input: {
+  organizationName: string;
+  code: string;
+  expiresMinutes: number;
+}): { subject: string; html: string; text: string } {
   const code = escapeHtml(input.code);
   const org = escapeHtml(input.organizationName);
   const subject = `${input.code} — votre code d'accès à l'espace client ${input.organizationName}`;
@@ -98,7 +105,6 @@ export function renderOtpEmail(input: { organizationName: string; code: string; 
 }
 
 export function createPortalRequestAccessHandler(config: AccessConfig) {
-  const clock = config.now ?? (() => new Date());
   const windowMinutes = config.windowMinutes ?? 15;
   const maxPerWindow = config.maxPerWindow ?? 3;
 
@@ -106,36 +112,43 @@ export function createPortalRequestAccessHandler(config: AccessConfig) {
     if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
     if (request.method !== 'POST') return json({ error: 'Méthode non autorisée.' }, 405);
     if (config.missing.length > 0) {
-      return json({ error: `Envoi non configuré : ${config.missing.join(', ')} absent(s) des secrets de la fonction.` }, 500);
+      console.error('Configuration portail incomplete', config.missing);
+      return json({ error: 'Le service de connexion est temporairement indisponible.' }, 503);
     }
 
     let raw: { email?: unknown };
     try {
-      raw = await request.json() as { email?: unknown };
+      raw = (await request.json()) as { email?: unknown };
     } catch {
       return json({ error: 'Corps de requête invalide.' }, 400);
     }
     const email = typeof raw.email === 'string' ? normalizeEmail(raw.email) : '';
-    if (!EMAIL_RE.test(email) || email.length > 254) return json({ error: 'Adresse e-mail invalide.' }, 400);
+    if (!EMAIL_RE.test(email) || email.length > 254)
+      return json({ error: 'Adresse e-mail invalide.' }, 400);
 
     const gate = await config.store.portalGate(email);
     if (gate === null) return json(NEUTRAL);
 
-    const since = new Date(clock().getTime() - windowMinutes * 60_000).toISOString();
-    if (await config.store.recentRequests(gate.contact_id, since) >= maxPerWindow) {
+    if (!(await config.store.claimRequest(gate, windowMinutes * 60, maxPerWindow))) {
       // Même réponse : le plafond ne se voit pas de l'extérieur, mais rien ne part.
       return json(NEUTRAL);
     }
 
-    await config.store.recordRequest(gate);
     const { code } = await config.store.issueOtp(email);
-    const rendered = renderOtpEmail({ organizationName: gate.organization_name, code, expiresMinutes: 60 });
+    const rendered = renderOtpEmail({
+      organizationName: gate.organization_name,
+      code,
+      expiresMinutes: 60,
+    });
     try {
       await config.send({ to: email, ...rendered });
     } catch (error) {
       // Ici, dire la vérité : l'appelant est autorisé, et il attend un code qui n'arrivera pas.
-      const reason = error instanceof Error ? error.message : String(error);
-      return json({ error: `Le code n'a pas pu être envoyé : ${reason}` }, 502);
+      console.error('Envoi du code portail echoue', error instanceof Error ? error.message : error);
+      return json(
+        { error: "Le code n'a pas pu être envoyé. Réessayez dans quelques instants." },
+        502,
+      );
     }
     return json(NEUTRAL);
   };

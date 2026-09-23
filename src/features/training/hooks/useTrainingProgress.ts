@@ -69,7 +69,6 @@ export function useTrainingProgress(courseSlug: string | undefined) {
   const enregistrement = useMutation({
     mutationFn: (entree: { slug: string; chapitres: string[] }) =>
       enregistrerProgression(entree.slug, entree.chapitres),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.training.all }),
   });
 
   // Visiteur non connecté : le navigateur reste la seule mémoire.

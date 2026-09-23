@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.2';
 
 /**
  * Création directe d'un compte collaborateur par le dirigeant.

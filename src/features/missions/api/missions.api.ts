@@ -1,4 +1,5 @@
 import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import { collectAllPages } from '@/lib/pagination';
 import type { MissionPriority, MissionStatus, TablesInsert, TablesUpdate } from '@/types/database';
 import type {
   Mission,
@@ -58,36 +59,37 @@ export async function listMissions(
   organizationId: string,
   filters: MissionFilters = {},
 ): Promise<MissionWithRelations[]> {
-  let query = supabase
-    .from('missions')
-    .select(MISSION_SELECT)
-    .eq('organization_id', organizationId);
+  const term = filters.search?.replace(/[%,()]/g, ' ').trim() ?? '';
+  return collectAllPages(
+    async (offset, size) => {
+      let query = supabase
+        .from('missions')
+        .select(MISSION_SELECT)
+        .eq('organization_id', organizationId);
 
-  if (filters.status?.length) query = query.in('status', filters.status);
-  if (filters.priority?.length) query = query.in('priority', filters.priority);
-  if (filters.teamId) query = query.eq('assigned_team_id', filters.teamId);
-  if (filters.memberId) query = query.eq('assigned_user_id', filters.memberId);
-  if (filters.customerId) query = query.eq('customer_id', filters.customerId);
-  if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
-  if (filters.from) query = query.gte('scheduled_start', filters.from);
-  if (filters.to) query = query.lte('scheduled_start', filters.to);
+      if (filters.status?.length) query = query.in('status', filters.status);
+      if (filters.priority?.length) query = query.in('priority', filters.priority);
+      if (filters.teamId) query = query.eq('assigned_team_id', filters.teamId);
+      if (filters.memberId) query = query.eq('assigned_user_id', filters.memberId);
+      if (filters.customerId) query = query.eq('customer_id', filters.customerId);
+      if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
+      if (filters.from) query = query.gte('scheduled_start', filters.from);
+      if (filters.to) query = query.lte('scheduled_start', filters.to);
+      if (term !== '') {
+        query = query.or(
+          `title.ilike.%${term}%,reference.ilike.%${term}%,customer_name.ilike.%${term}%`,
+        );
+      }
 
-  if (filters.search) {
-    // `%`, `,` et les parenthèses composent la syntaxe du filtre `or` : les
-    // neutraliser empêche le champ de recherche de réécrire la requête.
-    const term = filters.search.replace(/[%,()]/g, ' ').trim();
-    if (term !== '') {
-      query = query.or(
-        `title.ilike.%${term}%,reference.ilike.%${term}%,customer_name.ilike.%${term}%`,
+      return await unwrap(
+        query
+          .order('scheduled_start', { ascending: true, nullsFirst: false })
+          .order('id', { ascending: true })
+          .range(offset, offset + size - 1)
+          .returns<MissionWithRelations[]>(),
       );
-    }
-  }
-
-  return unwrap(
-    query
-      .order('scheduled_start', { ascending: true, nullsFirst: false })
-      .limit(filters.limit ?? 100)
-      .returns<MissionWithRelations[]>(),
+    },
+    { limit: filters.limit },
   );
 }
 
@@ -237,6 +239,11 @@ export async function updateMission(
   patch: TablesUpdate<'missions'>,
 ): Promise<Mission> {
   return unwrap(supabase.from('missions').update(patch).eq('id', missionId).select('*').single());
+}
+
+/** Ajoute une note sans écraser les notes existantes, sous verrou PostgreSQL. */
+export async function appendMissionNote(missionId: string, note: string): Promise<Mission> {
+  return unwrap(supabase.rpc('append_mission_note', { p_mission_id: missionId, p_note: note }));
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   FACTURX_GENERATOR_VERSION,
   FACTURX_PROFILE,
   renderFacturX,
+  type FacturXVisualOptions,
 } from '../_shared/facturx-render.ts';
 
 const bucket = 'invoice-electronic-documents';
@@ -30,6 +31,38 @@ const fonts = Promise.all([
   Deno.readFile(new URL('./assets/NotoSans-Regular.ttf', import.meta.url)),
   Deno.readFile(new URL('./assets/NotoSans-Bold.ttf', import.meta.url)),
 ]).then(([regular, bold]) => ({ regular, bold }));
+
+function visualOptions(header: Record<string, unknown>): FacturXVisualOptions {
+  const raw = header.document_options;
+  const options =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return {
+    sellerName: typeof options.sellerName === 'string' ? options.sellerName : null,
+    logoWidth: typeof options.logoWidth === 'number' ? options.logoWidth : null,
+    logoHeight: typeof options.logoHeight === 'number' ? options.logoHeight : null,
+  };
+}
+
+async function loadOrganizationLogo(
+  config: FacturXServiceConfig,
+  organizationId: string,
+  logoUrl: unknown,
+): Promise<Uint8Array | null> {
+  const prefix = `${config.url.replace(/\/$/, '')}/storage/v1/object/public/organization-branding/`;
+  if (typeof logoUrl !== 'string' || !logoUrl.startsWith(prefix)) return null;
+  const objectPath = decodeURIComponent(logoUrl.slice(prefix.length));
+  if (!objectPath.startsWith(`${organizationId}/`)) return null;
+  try {
+    const response = await (config.fetch ?? fetch)(logoUrl, { headers: { Accept: 'image/*' } });
+    if (!response.ok) return null;
+    const declaredSize = Number(response.headers.get('content-length'));
+    if (Number.isFinite(declaredSize) && declaredSize > 2 * 1024 * 1024) return null;
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return bytes.length <= 2 * 1024 * 1024 ? bytes : null;
+  } catch {
+    return null;
+  }
+}
 
 export interface FacturXServiceConfig {
   url: string;
@@ -141,11 +174,18 @@ export function createFacturXHandler(config: FacturXServiceConfig) {
         );
         if (!preparation.invoice) return json({ error: preparation.issues.join(' · ') }, 422);
         try {
+          const visual = visualOptions(header as Record<string, unknown>);
+          visual.logoBytes = await loadOrganizationLogo(
+            config,
+            header.organization_id,
+            (organization.data as Organization).logo_url,
+          );
           const result = await renderFacturX(
             PDFDocument,
             preparation.invoice,
             await fonts,
             simulatedAt,
+            visual,
           );
           if (result.pdf.length > 5_000_000)
             return json({ error: 'Le PDF de test est trop volumineux.' }, 422);
@@ -210,7 +250,7 @@ export function createFacturXHandler(config: FacturXServiceConfig) {
       }
       if (existing) return await ready(existing);
 
-      const [itemsResult, totalsResult] = await Promise.all([
+      const [itemsResult, totalsResult, organizationResult] = await Promise.all([
         caller
           .from('invoice_items')
           .select('*')
@@ -219,9 +259,12 @@ export function createFacturXHandler(config: FacturXServiceConfig) {
           .order('id')
           .limit(501),
         caller.from('invoice_totals').select('*').eq('invoice_id', invoiceId).maybeSingle(),
+        caller.from('organizations').select('*').eq('id', header.organization_id).maybeSingle(),
       ]);
-      if (itemsResult.error || totalsResult.error)
+      if (itemsResult.error || totalsResult.error || organizationResult.error)
         return json({ error: 'Les montants de la facture ne peuvent pas être vérifiés.' }, 503);
+      if (!organizationResult.data)
+        return json({ error: 'Entreprise introuvable ou inaccessible.' }, 404);
       if (!itemsResult.data || itemsResult.data.length > 500)
         return json({ error: 'Factur-X prend en charge au maximum 500 lignes par facture.' }, 422);
       const invoice = {
@@ -234,12 +277,19 @@ export function createFacturXHandler(config: FacturXServiceConfig) {
       if (!preparation.invoice) return json({ error: preparation.issues.join(' · ') }, 422);
       let result: Awaited<ReturnType<typeof renderFacturX>>;
       try {
+        const visual = visualOptions(header as Record<string, unknown>);
+        visual.logoBytes = await loadOrganizationLogo(
+          config,
+          header.organization_id,
+          (organizationResult.data as Organization).logo_url,
+        );
         // Date stable : une reprise après interruption reproduit les mêmes octets.
         result = await renderFacturX(
           PDFDocument,
           preparation.invoice,
           await fonts,
           new Date(invoice.issued_at!),
+          visual,
         );
       } catch (error) {
         console.error('facturx render failed', error instanceof Error ? error.name : 'unknown');

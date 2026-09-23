@@ -129,7 +129,11 @@ export function useNotificationStates(userId: string | null, organizationId: str
     L'état effectif. Tant que la base n'a pas répondu — ou si elle a refusé —
     c'est le miroir local qui fait foi. Dès qu'elle a répondu, c'est elle.
   */
-  const serveurDisponible = query.isSuccess;
+  // React Query conserve `isSuccess` et les dernières données lors d'un échec
+  // de relecture. Pour ce miroir hors ligne, ce serait trompeur : après un
+  // refus d'écriture puis une relecture réseau en erreur, l'état local doit
+  // redevenir la source de vérité jusqu'au prochain succès réel.
+  const serveurDisponible = query.isSuccess && !query.isRefetchError;
   const etats: NotificationStates = serveurDisponible
     ? (query.data ?? VIDE)
     : { readIds: lireLocal(cleLue), dismissedIds: lireLocal(cleEcartee) };

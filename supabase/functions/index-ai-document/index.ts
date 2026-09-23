@@ -157,13 +157,7 @@ Deno.serve(async (req: Request) => {
       openaiApiKey,
     );
 
-    // Réindexation idempotente : un document redéposé (correction, nouvelle
-    // version) remplace intégralement ses fragments plutôt que de les
-    // accumuler à côté de versions périmées.
-    await admin.from('ai_document_chunks').delete().eq('document_id', documentId);
-
     const rows = chunks.map((chunk, index) => ({
-      document_id: documentId,
       content: chunk.content,
       chunk_index: chunk.chunkIndex,
       embedding: embeddings[index],
@@ -174,18 +168,19 @@ Deno.serve(async (req: Request) => {
       },
     }));
 
-    const { error: insertError } = await admin.from('ai_document_chunks').insert(rows);
-    if (insertError) {
-      console.error('Insertion des fragments échouée:', documentId, insertError);
+    // La suppression de l'ancienne version, l'insertion de la nouvelle et le
+    // passage a `ready` sont une transaction PostgreSQL unique. Une panne ne
+    // peut donc plus laisser le document sans ancien index ni nouvel index.
+    const { data: replacedCount, error: replaceError } = await admin.rpc(
+      'replace_ai_document_chunks',
+      { p_document_id: documentId, p_chunks: rows },
+    );
+    if (replaceError) {
+      console.error('Remplacement des fragments échoué:', documentId, replaceError);
       return await markAsError("Échec de l'enregistrement des fragments indexés.");
     }
 
-    await admin
-      .from('ai_documents')
-      .update({ status: 'ready', error_message: null })
-      .eq('id', documentId);
-
-    return json({ status: 'ready', chunksCount: rows.length });
+    return json({ status: 'ready', chunksCount: Number(replacedCount ?? rows.length) });
   } catch (err) {
     console.error('Erreur inattendue index-ai-document:', documentId, err);
     return await markAsError('Erreur inattendue lors du traitement du document.');
