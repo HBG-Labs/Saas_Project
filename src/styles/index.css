@@ -1009,7 +1009,7 @@ input.profile-form-field {
 
 /* Workspace : largeur de lecture, espaces distincts et illustrations de premier usage. */
 .workspace-rich-editor .ProseMirror {
-  min-height: 22rem;
+  min-height: 14rem;
   color: var(--color-foreground);
   line-height: 1.8;
   outline: none;
@@ -1083,7 +1083,7 @@ input.profile-form-field {
 }
 @media (max-width: 639px) {
   .workspace-rich-editor .ProseMirror {
-    min-height: 18rem;
+    min-height: 12rem;
   }
 }
 

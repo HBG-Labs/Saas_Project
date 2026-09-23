@@ -1,4 +1,13 @@
-import { BookOpen, ChevronDown, FileText, Plus, Search, Star } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  FileText,
+  Plus,
+  RotateCcw,
+  Search,
+  Star,
+  Trash2,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
@@ -8,15 +17,19 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
 import { PERMISSIONS, useCurrentOrganization, usePermission } from '@/features/organizations';
 import {
   isPersonalSpace,
+  useArchivedPages,
   useCreatePage,
   useCreatePageFromTemplate,
+  useDeletePage,
   useFavorites,
+  useMovePage,
   usePages,
   usePersonalSpace,
   useRecentPages,
@@ -98,20 +111,26 @@ export default function WorkspacePagesPage() {
   const organizationId = organization?.id ?? null;
   const { can } = usePermission();
   const canEdit = can(PERMISSIONS.workspaceEdit);
+  const canManage = can(PERMISSIONS.workspaceManage);
 
   const personal = usePersonalSpace(canEdit ? organizationId : null);
   const spaces = useSpaces(organizationId);
   const recents = useRecentPages(organizationId, 6);
   const favorites = useFavorites(organizationId);
   const templates = useTemplates(organizationId);
+  const archivedPages = useArchivedPages(organizationId);
   const createPage = useCreatePage();
   const createFromTemplate = useCreatePageFromTemplate();
+  const movePage = useMovePage();
+  const deletePage = useDeletePage();
 
   const [query, setQuery] = useState('');
   const [browserOpen, setBrowserOpen] = useState(false);
   const search = useSearchPages(organizationId, query);
   const [targetSpaceId, setTargetSpaceId] = useState<string>('');
   const [templateId, setTemplateId] = useState<string>('');
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trashMessage, setTrashMessage] = useState<string | null>(null);
 
   const allSpaces = useMemo(() => {
     const list = spaces.data ?? [];
@@ -148,6 +167,35 @@ export default function WorkspacePagesPage() {
     });
     setBrowserOpen(false);
     await navigate(ROUTES.workspacePage(page.id));
+  };
+
+  const restorePage = async (page: WorkspacePage) => {
+    setTrashMessage(null);
+    try {
+      await movePage.mutateAsync({
+        pageId: page.id,
+        // Une page restaurée revient toujours à la racine : son ancien parent
+        // peut lui-même se trouver dans la corbeille.
+        patch: { archived_at: null, parent_page_id: null },
+      });
+      setTrashMessage(`« ${page.title} » a été restaurée.`);
+    } catch (error) {
+      setTrashMessage(error instanceof Error ? error.message : 'La restauration a échoué.');
+    }
+  };
+
+  const permanentlyDeletePage = async (page: WorkspacePage) => {
+    if (
+      !window.confirm(`Supprimer définitivement « ${page.title} » ? Cette action est irréversible.`)
+    )
+      return;
+    setTrashMessage(null);
+    try {
+      await deletePage.mutateAsync({ pageId: page.id, spaceId: page.space_id });
+      setTrashMessage(`« ${page.title} » a été supprimée définitivement.`);
+    } catch (error) {
+      setTrashMessage(error instanceof Error ? error.message : 'La suppression a échoué.');
+    }
   };
 
   if (spaces.isError) return <ErrorState error={spaces.error} title="Workspace indisponible" />;
@@ -316,6 +364,25 @@ export default function WorkspacePagesPage() {
               </div>
             </div>
           ))}
+
+          <div className="border-border border-t pt-4">
+            <button
+              type="button"
+              className="hover:bg-surface-hover flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm lg:min-h-9"
+              onClick={() => {
+                setTrashMessage(null);
+                setTrashOpen(true);
+              }}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              <span className="flex-1">Corbeille</span>
+              {(archivedPages.data?.length ?? 0) > 0 ? (
+                <span className="bg-surface-sunken text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
+                  {archivedPages.data?.length}
+                </span>
+              ) : null}
+            </button>
+          </div>
         </aside>
 
         <section aria-label="Page de travail" className="min-w-0">
@@ -347,6 +414,82 @@ export default function WorkspacePagesPage() {
           )}
         </section>
       </div>
+
+      <Modal
+        open={trashOpen}
+        onOpenChange={setTrashOpen}
+        title="Corbeille des pages"
+        description="Restaurez une page supprimée ou effacez-la définitivement."
+        size="lg"
+      >
+        <div className="space-y-3">
+          {trashMessage ? (
+            <p
+              role="status"
+              className="border-info-border bg-info-subtle text-info rounded-xl border px-3 py-2 text-sm"
+            >
+              {trashMessage}
+            </p>
+          ) : null}
+          {archivedPages.isLoading ? <ListSkeleton rows={3} /> : null}
+          {archivedPages.isError ? (
+            <ErrorState error={archivedPages.error} title="Corbeille inaccessible" />
+          ) : null}
+          {(archivedPages.data ?? []).map((page) => (
+            <div
+              key={page.id}
+              className="border-border flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {page.icon ? `${page.icon} ` : ''}
+                  {page.title || 'Sans titre'}
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Supprimée le{' '}
+                  {page.archived_at
+                    ? new Date(page.archived_at).toLocaleString('fr-FR')
+                    : 'récemment'}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={movePage.isPending || deletePage.isPending}
+                    onClick={() => void restorePage(page)}
+                  >
+                    <RotateCcw className="size-4" aria-hidden /> Restaurer
+                  </Button>
+                ) : null}
+                {canManage ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-error"
+                    disabled={movePage.isPending || deletePage.isPending}
+                    onClick={() => void permanentlyDeletePage(page)}
+                  >
+                    <Trash2 className="size-4" aria-hidden /> Supprimer
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {!archivedPages.isLoading && (archivedPages.data?.length ?? 0) === 0 ? (
+            <div className="py-8 text-center">
+              <Trash2 className="text-muted-foreground mx-auto mb-2 size-8" aria-hidden />
+              <p className="text-sm font-semibold">La corbeille est vide.</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Les pages déplacées dans la corbeille apparaîtront ici.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }

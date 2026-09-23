@@ -18,6 +18,7 @@ export {
   getPage,
   getPagePreference,
   listPageRevisions,
+  listArchivedPages,
   listPages,
   listSpaces,
   listTasks,
@@ -89,6 +90,7 @@ export {
 
 export {
   useArchiveSpace,
+  useArchivedPages,
   useCreatePage,
   useCreateSpace,
   useCreateTask,

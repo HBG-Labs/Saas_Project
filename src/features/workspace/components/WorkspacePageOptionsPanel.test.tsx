@@ -66,7 +66,18 @@ describe('WorkspacePageOptionsPanel', () => {
     expect(screen.queryByRole('button', { name: 'Copier le lien' })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Rechercher des actions'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sérif/ }));
+    expect(props.onPresentationChange).toHaveBeenCalledWith({ font_family: 'serif' });
     fireEvent.click(screen.getByRole('switch', { name: 'Pleine largeur' }));
     expect(props.onPresentationChange).toHaveBeenCalledWith({ full_width: true });
+  });
+
+  it('bloque les réglages concurrents pendant leur enregistrement', () => {
+    const props = createProps();
+    render(<WorkspacePageOptionsPanel {...props} presentationPending />);
+
+    expect(screen.getByRole('button', { name: /Sérif/ })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Pleine largeur' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Verrouiller la page' })).toBeDisabled();
   });
 });

@@ -95,7 +95,9 @@ function correspond(valeur: unknown, expression: string): boolean {
     case 'neq':
       return texte(valeur) !== attendu;
     case 'is':
-      return attendu === 'null' ? valeur === null || valeur === undefined : texte(valeur) === attendu;
+      return attendu === 'null'
+        ? valeur === null || valeur === undefined
+        : texte(valeur) === attendu;
     case 'in':
       return attendu
         .replace(/^\(|\)$/g, '')
@@ -110,10 +112,10 @@ function correspond(valeur: unknown, expression: string): boolean {
       return texte(valeur) > attendu;
     case 'lt':
       return texte(valeur) < attendu;
+    case 'not':
+      return !correspond(valeur, attendu);
     case 'ilike':
-      return texte(valeur)
-        .toLowerCase()
-        .includes(attendu.replace(/%/g, '').toLowerCase());
+      return texte(valeur).toLowerCase().includes(attendu.replace(/%/g, '').toLowerCase());
     default:
       return true;
   }
@@ -201,6 +203,17 @@ export async function installeSupabase(page: Page, options: OptionsSupabase = {}
         `rezo360_current_organization:${graine.utilisateur}`,
         graine.organisation,
       );
+      // Les parcours applicatifs ne testent pas le bandeau légal : on garde
+      // un refus explicite, sans activer aucun traceur, afin qu'il n'intercepte
+      // jamais les actions situées en bas d'écran.
+      window.localStorage.setItem(
+        'rezo360_cookie_consent',
+        JSON.stringify({
+          analytics: false,
+          marketing: false,
+          decidedAt: '2026-09-01T00:00:00.000Z',
+        }),
+      );
     },
     {
       cle: CLE_SESSION,
@@ -232,23 +245,26 @@ export async function installeSupabase(page: Page, options: OptionsSupabase = {}
       const table = chemin.slice('/rest/v1/'.length);
 
       if (enErreur.has(table))
-        return json(
-          route,
-          { message: `Lecture refusée sur ${table}`, code: 'PGRST301' },
-          {},
-          403,
-        );
+        return json(route, { message: `Lecture refusée sur ${table}`, code: 'PGRST301' }, {}, 403);
 
       if (requete.method() !== 'GET') {
         // Une écriture renvoie ce qu'elle prétend avoir écrit : les parcours
         // vérifient la réaction de l'interface, pas la persistance.
         const corps: unknown = requete.postDataJSON?.() ?? {};
-        const ecrit: Ligne =
-          Array.isArray(corps) ? ((corps[0] ?? {}) as Ligne) : (corps as Ligne);
-        return json(route, [{ id: crypto.randomUUID(), ...ecrit }], {}, 201);
+        const ecrit: Ligne = Array.isArray(corps) ? ((corps[0] ?? {}) as Ligne) : (corps as Ligne);
+        const existant =
+          requete.method() === 'PATCH'
+            ? (filtre(tables[table] ?? [], url.searchParams)[0] ?? {})
+            : {};
+        const enregistrement = { id: crypto.randomUUID(), ...existant, ...ecrit };
+        const objetSeul = (requete.headers()['accept'] ?? '').includes('vnd.pgrst.object+json');
+        return json(route, objetSeul ? enregistrement : [enregistrement], {}, 201);
       }
 
-      const lignes = trie(filtre(tables[table] ?? [], url.searchParams), url.searchParams.get('order'));
+      const lignes = trie(
+        filtre(tables[table] ?? [], url.searchParams),
+        url.searchParams.get('order'),
+      );
       const limite = url.searchParams.get('limit');
       const page0 = limite ? lignes.slice(0, Number(limite)) : lignes;
 
@@ -264,10 +280,13 @@ export async function installeSupabase(page: Page, options: OptionsSupabase = {}
         return json(route, page0[0]);
       }
 
-      return json(route, page0, { 'Content-Range': `0-${Math.max(page0.length - 1, 0)}/${lignes.length}` });
+      return json(route, page0, {
+        'Content-Range': `0-${Math.max(page0.length - 1, 0)}/${lignes.length}`,
+      });
     }
 
-    if (chemin.startsWith('/storage/v1/')) return json(route, { signedUrl: `${ORIGINE}/faux-fichier` });
+    if (chemin.startsWith('/storage/v1/'))
+      return json(route, { signedUrl: `${ORIGINE}/faux-fichier` });
     if (chemin.startsWith('/functions/v1/')) return json(route, {});
 
     return json(route, {});

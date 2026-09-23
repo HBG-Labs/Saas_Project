@@ -13,6 +13,7 @@ import {
   getPage,
   getPagePreference,
   listPageRevisions,
+  listArchivedPages,
   listPages,
   listSpaces,
   listTasks,
@@ -123,6 +124,14 @@ export function usePages(spaceId: string | undefined) {
   });
 }
 
+export function useArchivedPages(organizationId: string | null) {
+  return useQuery({
+    queryKey: qk.workspace.archivedPages(organizationId ?? 'none'),
+    queryFn: () => listArchivedPages(organizationId ?? ''),
+    enabled: organizationId !== null,
+  });
+}
+
 export function usePage(pageId: string | undefined) {
   return useQuery({
     queryKey: qk.workspace.page(pageId ?? 'none'),
@@ -168,7 +177,8 @@ export function useCreatePage() {
   return useMutation({
     mutationFn: (input: Parameters<typeof createPage>[0]) => createPage(input),
     onSuccess: async (page) => {
-      await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) });
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.all });
     },
   });
 }
@@ -201,7 +211,8 @@ export function useMovePage() {
     mutationFn: ({ pageId, patch }: { pageId: string; patch: Parameters<typeof movePage>[1] }) =>
       movePage(pageId, patch),
     onSuccess: async (page) => {
-      await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(page.space_id) });
+      queryClient.setQueryData(qk.workspace.page(page.id), page);
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.all });
     },
   });
 }
@@ -228,7 +239,10 @@ export function useDeletePage() {
   return useMutation({
     mutationFn: ({ pageId }: { pageId: string; spaceId: string }) => deletePage(pageId),
     onSuccess: async (_result, { spaceId }) => {
-      await queryClient.invalidateQueries({ queryKey: qk.workspace.pages(spaceId) });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.workspace.pages(spaceId) }),
+        queryClient.invalidateQueries({ queryKey: qk.workspace.all }),
+      ]);
     },
   });
 }

@@ -103,6 +103,18 @@ export async function listPages(spaceId: string): Promise<WorkspacePage[]> {
   );
 }
 
+/** Pages placées dans la corbeille de l'organisation, de la plus récente à la plus ancienne. */
+export async function listArchivedPages(organizationId: string): Promise<WorkspacePage[]> {
+  return unwrap(
+    supabase
+      .from('workspace_pages')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .not('archived_at', 'is', null)
+      .order('archived_at', { ascending: false }),
+  );
+}
+
 export async function getPage(pageId: string): Promise<WorkspacePage | null> {
   return unwrapMaybe(supabase.from('workspace_pages').select('*').eq('id', pageId).maybeSingle());
 }

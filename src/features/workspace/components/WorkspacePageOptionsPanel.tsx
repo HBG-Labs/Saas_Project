@@ -56,6 +56,7 @@ export function WorkspacePageOptionsPanel({
   page,
   canEdit,
   canAi,
+  presentationPending = false,
   notificationLevel,
   connectionCount,
   onClose,
@@ -78,6 +79,7 @@ export function WorkspacePageOptionsPanel({
   page: WorkspacePage;
   canEdit: boolean;
   canAi: boolean;
+  presentationPending?: boolean;
   notificationLevel: WorkspacePagePreference['notification_level'];
   connectionCount: number;
   onClose: () => void;
@@ -305,7 +307,7 @@ export function WorkspacePageOptionsPanel({
                   <button
                     key={value}
                     type="button"
-                    disabled={!canEdit}
+                    disabled={!canEdit || presentationPending}
                     onClick={() => onPresentationChange({ font_family: value })}
                     className={cn(
                       'hover:bg-surface-hover rounded-lg border px-1 py-2 text-center transition',
@@ -367,20 +369,20 @@ export function WorkspacePageOptionsPanel({
               <Switch
                 label="Texte de petite taille"
                 checked={page.small_text}
-                disabled={!canEdit}
+                disabled={!canEdit || presentationPending}
                 onCheckedChange={(checked) => onPresentationChange({ small_text: checked })}
               />
               <Switch
                 label="Pleine largeur"
                 checked={page.full_width}
-                disabled={!canEdit}
+                disabled={!canEdit || presentationPending}
                 onCheckedChange={(checked) => onPresentationChange({ full_width: checked })}
               />
               <Switch
                 label="Verrouiller la page"
                 description="Empêche les modifications accidentelles."
                 checked={page.locked}
-                disabled={!canEdit}
+                disabled={!canEdit || presentationPending}
                 onCheckedChange={(checked) => onPresentationChange({ locked: checked })}
               />
             </section>

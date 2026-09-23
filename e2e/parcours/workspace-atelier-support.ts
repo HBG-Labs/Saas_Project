@@ -50,6 +50,12 @@ export const pageDocument = {
   archived_at: null,
   icon: null,
   cover_path: null,
+  font_family: 'sans',
+  small_text: false,
+  full_width: false,
+  locked: false,
+  accent_color: 'blue',
+  wiki_mode: false,
   created_at: DATE,
   updated_at: DATE,
 };
@@ -89,6 +95,13 @@ export async function installeWorkspace(
           id: 'a2000000-0000-4000-8000-000000000003',
           title: 'Consignes de sécurité',
           position: 2,
+        },
+        {
+          ...pageDocument,
+          id: 'a2000000-0000-4000-8000-000000000004',
+          title: 'Ancienne procédure',
+          position: 3,
+          archived_at: '2026-09-21T12:00:00.000Z',
         },
       ];
   const donnees = {

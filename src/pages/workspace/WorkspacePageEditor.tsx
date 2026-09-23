@@ -2,6 +2,7 @@ import {
   Bell,
   Bold,
   BookOpen,
+  Copy,
   Download,
   Ellipsis,
   FileText,
@@ -82,9 +83,11 @@ const PAGE_ACCENT_STYLES = {
     text: 'text-success',
   },
   amber: {
-    soft: 'bg-warning-subtle',
-    line: 'bg-warning',
-    text: 'text-warning',
+    // La clé est conservée pour la compatibilité des pages existantes, mais
+    // la teinte brune historique devient un cyan lumineux.
+    soft: 'bg-signal-cyan/10',
+    line: 'bg-signal-cyan',
+    text: 'text-workspace-foreground',
   },
   rose: { soft: 'bg-error-subtle', line: 'bg-error', text: 'text-error' },
   slate: {
@@ -98,10 +101,42 @@ const PAGE_ACCENT_LABELS: Record<keyof typeof PAGE_ACCENT_STYLES, string> = {
   blue: 'Bleu',
   violet: 'Violet',
   emerald: 'Émeraude',
-  amber: 'Ambre',
+  amber: 'Ciel',
   rose: 'Rose',
   slate: 'Ardoise',
 };
+
+type PagePresentation = Pick<
+  WorkspacePage,
+  'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
+>;
+
+function getPagePresentation(page: WorkspacePage): PagePresentation {
+  return {
+    font_family: page.font_family,
+    small_text: page.small_text,
+    full_width: page.full_width,
+    locked: page.locked,
+    accent_color: page.accent_color,
+    wiki_mode: page.wiki_mode,
+  };
+}
+
+async function copyText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement('textarea');
+  input.value = value;
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand?.('copy') ?? false;
+  input.remove();
+  if (!copied) throw new Error("Le presse-papiers n'est pas disponible sur cet appareil.");
+}
 
 export function WorkspacePageEditor({
   pageId,
@@ -158,6 +193,9 @@ function PageForm({
   // L'`updated_at` que la base comparera à l'enregistrement : celui de
   // l'ouverture, puis celui de chaque écriture réussie depuis ce formulaire.
   const [loadedAt, setLoadedAt] = useState(loaded.updated_at);
+  const [presentation, setPresentation] = useState<PagePresentation>(() =>
+    getPagePresentation(loaded),
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const loadedAtRef = useRef(loaded.updated_at);
@@ -171,6 +209,7 @@ function PageForm({
   const [translateOpen, setTranslateOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [translationLanguage, setTranslationLanguage] = useState('Anglais');
   const [parentPageId, setParentPageId] = useState(loaded.parent_page_id ?? 'root');
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -200,7 +239,7 @@ function PageForm({
       UndoRedo,
     ],
     content: loaded.content as JSONContent,
-    editable: canEdit && !loaded.locked,
+    editable: canEdit && !presentation.locked,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -214,11 +253,18 @@ function PageForm({
       setText(currentEditor.getText({ blockSeparator: '\n' }));
       markDirty();
     },
+    onCreate: ({ editor: currentEditor }) => {
+      // Une nouvelle page démarre en italique, tout en laissant le bouton de
+      // mise en forme permettre de revenir au romain.
+      if (currentEditor.isEmpty && canEdit && !presentation.locked) {
+        currentEditor.commands.setItalic();
+      }
+    },
   });
 
   useEffect(() => {
-    editor?.setEditable(canEdit && !loaded.locked);
-  }, [canEdit, editor, loaded.locked]);
+    editor?.setEditable(canEdit && !presentation.locked);
+  }, [canEdit, editor, presentation.locked]);
 
   const hasExternalConflict = dirty && loaded.updated_at !== loadedAt;
   const displayedMessage = hasExternalConflict
@@ -239,9 +285,11 @@ function PageForm({
     setContent(loaded.content);
     setText(loaded.search_text ?? '');
     setTitle(loaded.title);
+    setIconValue(loaded.icon ?? '');
+    setPresentation(getPagePresentation(loaded));
     loadedAtRef.current = loaded.updated_at;
     setLoadedAt(loaded.updated_at);
-  }, [dirty, editor, loaded.content, loaded.search_text, loaded.title, loaded.updated_at]);
+  }, [dirty, editor, loaded, loadedAt]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
@@ -285,10 +333,10 @@ function PageForm({
   }, [content, pageId, save, title]);
 
   useEffect(() => {
-    if (!dirty || !canEdit || loaded.locked || hasExternalConflict) return;
+    if (!dirty || !canEdit || presentation.locked || hasExternalConflict) return;
     const timer = window.setTimeout(() => void handleSave(), 1200);
     return () => window.clearTimeout(timer);
-  }, [canEdit, content, dirty, handleSave, hasExternalConflict, loaded.locked, title]);
+  }, [canEdit, content, dirty, handleSave, hasExternalConflict, presentation.locked, title]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -301,33 +349,49 @@ function PageForm({
 
   const handleArchive = async () => {
     if (!window.confirm('Déplacer cette page dans la corbeille ?')) return;
-    await movePage.mutateAsync({ pageId, patch: { archived_at: new Date().toISOString() } });
-    await navigate(ROUTES.workspacePages);
+    try {
+      await movePage.mutateAsync({ pageId, patch: { archived_at: new Date().toISOString() } });
+      await navigate(ROUTES.workspacePages);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'La page n’a pas pu être supprimée.');
+    }
   };
 
   const handleDuplicate = async () => {
-    const created = await createPage.mutateAsync({
-      spaceId: loaded.space_id,
-      parentPageId: loaded.parent_page_id,
-      title: `${title || 'Sans titre'} — copie`,
-    });
-    await save.mutateAsync({
-      pageId: created.id,
-      expectedUpdatedAt: created.updated_at,
-      title: created.title,
-      content,
-    });
-    await navigate(ROUTES.workspacePage(created.id));
+    try {
+      const created = await createPage.mutateAsync({
+        spaceId: loaded.space_id,
+        parentPageId: loaded.parent_page_id,
+        title: `${title || 'Sans titre'} — copie`,
+      });
+      await save.mutateAsync({
+        pageId: created.id,
+        expectedUpdatedAt: created.updated_at,
+        title: created.title,
+        content,
+      });
+      await navigate(ROUTES.workspacePage(created.id));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'La duplication a échoué.');
+    }
   };
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setMessage('Lien copié.');
+    try {
+      await copyText(window.location.href);
+      setMessage('Lien copié. Il reste réservé aux membres autorisés.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Impossible de copier le lien.');
+    }
   };
 
   const copyContent = async () => {
-    await navigator.clipboard.writeText(`${title}\n\n${text}`.trim());
-    setMessage('Contenu copié.');
+    try {
+      await copyText(`${title}\n\n${text}`.trim());
+      setMessage('Contenu copié.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Impossible de copier le contenu.');
+    }
   };
 
   useEffect(() => {
@@ -378,17 +442,20 @@ function PageForm({
     );
   };
 
-  const handlePresentationChange = async (
-    patch: Partial<
-      Pick<
-        WorkspacePage,
-        'font_family' | 'small_text' | 'full_width' | 'locked' | 'accent_color' | 'wiki_mode'
-      >
-    >,
-  ) => {
-    const saved = await updatePresentation.mutateAsync({ pageId, patch });
-    loadedAtRef.current = saved.updated_at;
-    setLoadedAt(saved.updated_at);
+  const handlePresentationChange = async (patch: Partial<PagePresentation>) => {
+    const previous = presentation;
+    setPresentation((current) => ({ ...current, ...patch }));
+    setMessage(null);
+    try {
+      const saved = await updatePresentation.mutateAsync({ pageId, patch });
+      loadedAtRef.current = saved.updated_at;
+      setLoadedAt(saved.updated_at);
+      setPresentation(getPagePresentation(saved));
+      setMessage('Présentation mise à jour.');
+    } catch (error) {
+      setPresentation(previous);
+      setMessage(error instanceof Error ? error.message : 'Le réglage n’a pas pu être enregistré.');
+    }
   };
 
   const handleCreateFromAnswer = async () => {
@@ -407,7 +474,7 @@ function PageForm({
     await navigate(ROUTES.workspacePage(created.id));
   };
 
-  const accent = PAGE_ACCENT_STYLES[loaded.accent_color ?? 'blue'];
+  const accent = PAGE_ACCENT_STYLES[presentation.accent_color ?? 'blue'];
   const childPages = (pages.data ?? []).filter((page) => page.parent_page_id === pageId);
   const notificationLevel = pagePreference.data?.notification_level ?? 'mentions';
 
@@ -421,12 +488,12 @@ function PageForm({
     <div
       className={cn(
         'workspace-editor min-w-0 space-y-5 transition-all',
-        loaded.full_width ? 'w-full' : 'mx-auto max-w-5xl',
-        loaded.font_family === 'serif' && 'font-serif',
-        loaded.font_family === 'mono' && 'font-mono',
+        presentation.full_width ? 'w-full' : 'mx-auto max-w-6xl',
+        presentation.font_family === 'serif' && 'font-serif',
+        presentation.font_family === 'mono' && 'font-mono',
       )}
     >
-      <section className="bg-surface min-h-[36rem] overflow-hidden rounded-xl">
+      <section className="bg-surface border-border shadow-raised overflow-hidden rounded-2xl border">
         {coverUrl.data ? (
           <div className="h-44 w-full overflow-hidden sm:h-56">
             <img
@@ -436,12 +503,17 @@ function PageForm({
             />
           </div>
         ) : null}
-        <div className={cn('h-1 w-full', accent.line)} aria-hidden="true" />
+        <div
+          data-testid="workspace-page-accent"
+          className={cn('h-1 w-full', accent.line)}
+          aria-hidden="true"
+        />
 
         <header className="border-border flex min-h-12 items-center gap-2 border-b px-3 sm:px-5">
           <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-            {icon || '📄'} {title || 'Sans titre'} {loaded.locked ? '· Verrouillée' : '· Privée'}
-            {loaded.wiki_mode ? ' · Wiki' : ''}
+            {icon || '📄'} {title || 'Sans titre'}{' '}
+            {presentation.locked ? '· Verrouillée' : '· Privée'}
+            {presentation.wiki_mode ? ' · Wiki' : ''}
           </span>
           <span className="text-muted-foreground hidden text-xs md:inline">
             Dernière modification : {new Date(loadedAt).toLocaleString('fr-FR')}
@@ -451,7 +523,7 @@ function PageForm({
             variant="ghost"
             size="sm"
             className="gap-1.5"
-            onClick={() => void copyLink()}
+            onClick={() => setShareOpen(true)}
           >
             <Share2 className="size-4" aria-hidden /> Partager
           </Button>
@@ -462,10 +534,17 @@ function PageForm({
             aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
             aria-pressed={isFavorite}
             disabled={!organizationId}
-            onClick={() =>
-              organizationId &&
-              toggleFavorite.mutate({ pageId, favorite: !isFavorite, organizationId })
-            }
+            onClick={() => {
+              if (!organizationId) return;
+              toggleFavorite.mutate(
+                { pageId, favorite: !isFavorite, organizationId },
+                {
+                  onSuccess: () =>
+                    setMessage(isFavorite ? 'Retirée des favoris.' : 'Ajoutée aux favoris.'),
+                  onError: (error) => setMessage(error.message),
+                },
+              );
+            }}
           >
             <Star className={cn('size-4', isFavorite && 'fill-current')} aria-hidden />
           </Button>
@@ -483,11 +562,19 @@ function PageForm({
 
         <div
           className={cn(
-            'mx-auto px-5 pt-10 pb-12 sm:px-10',
-            loaded.full_width ? 'max-w-none' : 'max-w-3xl',
+            'mx-auto px-5 pt-7 pb-9 sm:px-10 sm:pt-9 lg:px-12',
+            presentation.full_width ? 'max-w-none' : 'max-w-4xl',
           )}
         >
-          {canEdit && !loaded.locked ? (
+          {displayedMessage ? (
+            <p
+              role="status"
+              className="border-info-border bg-info-subtle text-foreground mb-5 rounded-xl border px-3 py-2 text-sm"
+            >
+              {displayedMessage}
+            </p>
+          ) : null}
+          {canEdit && !presentation.locked ? (
             <div className="text-muted-foreground mb-4 flex flex-wrap gap-3 text-xs">
               <button
                 type="button"
@@ -497,12 +584,6 @@ function PageForm({
                 <ImagePlus className="size-3.5" />
                 {loaded.cover_path ? 'Changer la couverture' : 'Ajouter une couverture'}
               </button>
-              {loaded.locked ? (
-                <span className="flex items-center gap-1">
-                  <LockKeyhole className="size-3.5" />
-                  Page verrouillée
-                </span>
-              ) : null}
             </div>
           ) : null}
           <div className="flex items-start gap-3">
@@ -511,7 +592,7 @@ function PageForm({
               value={icon}
               maxLength={40}
               placeholder="✏️"
-              disabled={!canEdit || loaded.locked}
+              disabled={!canEdit || presentation.locked}
               onChange={(event) => setIconValue(event.target.value)}
               onBlur={() => {
                 const next = icon.trim() === '' ? null : icon.trim();
@@ -522,6 +603,11 @@ function PageForm({
                       onSuccess: (saved) => {
                         loadedAtRef.current = saved.updated_at;
                         setLoadedAt(saved.updated_at);
+                        setMessage('Icône mise à jour.');
+                      },
+                      onError: (error) => {
+                        setIconValue(loaded.icon ?? '');
+                        setMessage(error.message);
                       },
                     },
                   );
@@ -531,7 +617,7 @@ function PageForm({
             <input
               aria-label="Titre"
               value={title}
-              disabled={!canEdit || loaded.locked}
+              disabled={!canEdit || presentation.locked}
               onChange={(event) => {
                 setTitle(event.target.value);
                 markDirty();
@@ -541,8 +627,8 @@ function PageForm({
             />
           </div>
 
-          <div className="mt-8">
-            {canEdit && !loaded.locked && editor ? (
+          <div className="mt-6">
+            {canEdit && !presentation.locked && editor ? (
               <div
                 className="border-border bg-surface sticky top-0 z-10 mb-3 flex flex-wrap gap-1 rounded-xl border p-1 shadow-sm"
                 role="toolbar"
@@ -604,13 +690,13 @@ function PageForm({
               editor={editor}
               aria-label="Contenu de la page"
               className={cn(
-                'workspace-rich-editor min-h-[20rem]',
-                loaded.small_text ? 'text-xs' : 'text-base',
+                'workspace-rich-editor min-h-[14rem]',
+                presentation.small_text ? 'text-xs' : 'text-base',
               )}
             />
           </div>
 
-          {loaded.wiki_mode ? (
+          {presentation.wiki_mode ? (
             <section className={cn('mt-8 rounded-2xl p-4 sm:p-5', accent.soft)}>
               <div className="mb-4 flex items-center gap-2">
                 <BookOpen className={cn('size-5', accent.text)} aria-hidden />
@@ -643,12 +729,12 @@ function PageForm({
           ) : null}
 
           <div className="border-border mt-7 flex flex-wrap items-center gap-2 border-t pt-4">
-            {canEdit && !loaded.locked ? (
+            {canEdit && !presentation.locked ? (
               <Button type="button" onClick={() => void handleSave()} isLoading={save.isPending}>
                 Enregistrer
               </Button>
             ) : null}
-            {canManage && organizationId && !loaded.locked ? (
+            {canManage && organizationId && !presentation.locked ? (
               <Button
                 type="button"
                 variant="secondary"
@@ -659,22 +745,20 @@ function PageForm({
                       organizationId,
                       page: { title, content, icon: icon || null },
                     },
-                    { onSuccess: () => setMessage('Modèle enregistré.') },
+                    {
+                      onSuccess: () => setMessage('Modèle enregistré.'),
+                      onError: (error) => setMessage(error.message),
+                    },
                   )
                 }
               >
                 Enregistrer comme modèle
               </Button>
             ) : null}
-            {loaded.locked ? (
+            {presentation.locked ? (
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                 <LockKeyhole className="size-4" />
                 Cette page est verrouillée.
-              </span>
-            ) : null}
-            {displayedMessage ? (
-              <span role="status" className="text-muted-foreground text-sm">
-                {displayedMessage}
               </span>
             ) : null}
           </div>
@@ -688,14 +772,17 @@ function PageForm({
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file && file.size <= 1024 * 1024)
-            void file.text().then((content) => {
-              editor?.commands.setContent(textToTiptapDocument(content) as JSONContent, {
-                emitUpdate: true,
-              });
-              setMessage('Contenu importé. Enregistrez pour le conserver.');
-            });
-          else if (file) setMessage('Le fichier doit faire moins de 1 Mo.');
+          if (file && file.size <= 1024 * 1024) {
+            void file
+              .text()
+              .then((importedContent) => {
+                editor?.commands.setContent(textToTiptapDocument(importedContent) as JSONContent, {
+                  emitUpdate: true,
+                });
+                setMessage('Contenu importé. Enregistrez pour le conserver.');
+              })
+              .catch(() => setMessage('Le fichier n’a pas pu être lu.'));
+          } else if (file) setMessage('Le fichier doit faire moins de 1 Mo.');
           event.target.value = '';
         }}
       />
@@ -713,7 +800,9 @@ function PageForm({
                 onSuccess: (saved) => {
                   loadedAtRef.current = saved.updated_at;
                   setLoadedAt(saved.updated_at);
+                  setMessage('Couverture mise à jour.');
                 },
+                onError: (error) => setMessage(error.message),
               },
             );
           event.target.value = '';
@@ -722,9 +811,10 @@ function PageForm({
 
       {optionsOpen ? (
         <WorkspacePageOptionsPanel
-          page={loaded}
+          page={{ ...loaded, ...presentation }}
           canEdit={canEdit}
           canAi={canAi}
+          presentationPending={updatePresentation.isPending}
           notificationLevel={notificationLevel}
           connectionCount={connectedTasks.data?.length ?? 0}
           onClose={() => setOptionsOpen(false)}
@@ -739,12 +829,55 @@ function PageForm({
           onTranslate={() => setTranslateOpen(true)}
           onImport={() => importInputRef.current?.click()}
           onExport={() => setExportOpen(true)}
-          onToggleWiki={() => void handlePresentationChange({ wiki_mode: !loaded.wiki_mode })}
+          onToggleWiki={() => void handlePresentationChange({ wiki_mode: !presentation.wiki_mode })}
           onHistory={() => setHistoryOpen(true)}
           onNotifications={() => setNotificationsOpen(true)}
           onConnections={() => setConnectionsOpen(true)}
         />
       ) : null}
+
+      <Modal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        title="Partager cette page"
+        description="La page reste privée : seules les personnes autorisées dans votre organisation pourront l’ouvrir."
+        footer={
+          <Button
+            type="button"
+            onClick={() => {
+              void copyLink();
+              setShareOpen(false);
+            }}
+          >
+            <Copy className="size-4" aria-hidden /> Copier le lien
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <Input label="Lien de la page" value={window.location.href} readOnly />
+          {typeof navigator.share === 'function' ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                void navigator
+                  .share({ title: title || 'Page REZO360', url: window.location.href })
+                  .then(() => {
+                    setMessage('Page partagée avec votre appareil.');
+                    setShareOpen(false);
+                  })
+                  .catch((error: unknown) => {
+                    if (error instanceof DOMException && error.name === 'AbortError') return;
+                    setMessage(error instanceof Error ? error.message : 'Le partage a échoué.');
+                  });
+              }}
+            >
+              <Share2 className="size-4" aria-hidden /> Ouvrir le partage de l’appareil
+            </Button>
+          ) : null}
+        </div>
+      </Modal>
 
       <Modal
         open={customizeOpen}
@@ -766,7 +899,17 @@ function PageForm({
                     setIconValue(candidate);
                     setIcon.mutate(
                       { pageId, icon: candidate },
-                      { onSuccess: (saved) => setLoadedAt(saved.updated_at) },
+                      {
+                        onSuccess: (saved) => {
+                          loadedAtRef.current = saved.updated_at;
+                          setLoadedAt(saved.updated_at);
+                          setMessage('Icône mise à jour.');
+                        },
+                        onError: (error) => {
+                          setIconValue(loaded.icon ?? '');
+                          setMessage(error.message);
+                        },
+                      },
                     );
                   }}
                   className={cn(
@@ -789,11 +932,13 @@ function PageForm({
                     key={color}
                     type="button"
                     aria-label={`Couleur ${PAGE_ACCENT_LABELS[color]}`}
-                    aria-pressed={loaded.accent_color === color}
+                    aria-pressed={presentation.accent_color === color}
+                    disabled={updatePresentation.isPending}
                     onClick={() => void handlePresentationChange({ accent_color: color })}
                     className={cn(
                       'border-border hover:border-primary/50 text-2xs flex flex-col items-center gap-2 rounded-xl border p-2',
-                      loaded.accent_color === color && 'border-primary ring-primary/20 ring-2',
+                      presentation.accent_color === color &&
+                        'border-primary ring-primary/20 ring-2',
                     )}
                   >
                     <span
@@ -828,7 +973,12 @@ function PageForm({
                   isLoading={removeCover.isPending}
                   onClick={() =>
                     removeCover.mutate(loaded, {
-                      onSuccess: (saved) => setLoadedAt(saved.updated_at),
+                      onSuccess: (saved) => {
+                        loadedAtRef.current = saved.updated_at;
+                        setLoadedAt(saved.updated_at);
+                        setMessage('Couverture retirée.');
+                      },
+                      onError: (error) => setMessage(error.message),
                     })
                   }
                 >
@@ -958,10 +1108,16 @@ function PageForm({
           label="Me notifier"
           value={notificationLevel}
           onValueChange={(value) =>
-            setNotificationLevel.mutate({
-              pageId,
-              notificationLevel: value as 'off' | 'mentions' | 'all',
-            })
+            setNotificationLevel.mutate(
+              {
+                pageId,
+                notificationLevel: value as 'off' | 'mentions' | 'all',
+              },
+              {
+                onSuccess: () => setMessage('Préférence de notification enregistrée.'),
+                onError: (error) => setMessage(error.message),
+              },
+            )
           }
           options={[
             { value: 'all', label: 'Pour toutes les modifications' },
@@ -1015,14 +1171,23 @@ function PageForm({
         footer={
           <Button
             type="button"
-            onClick={() =>
+            isLoading={movePage.isPending}
+            onClick={() => {
               void movePage
                 .mutateAsync({
                   pageId,
                   patch: { parent_page_id: parentPageId === 'root' ? null : parentPageId },
                 })
-                .then(() => setMoveOpen(false))
-            }
+                .then((saved) => {
+                  loadedAtRef.current = saved.updated_at;
+                  setLoadedAt(saved.updated_at);
+                  setMoveOpen(false);
+                  setMessage('Page déplacée.');
+                })
+                .catch((error: unknown) =>
+                  setMessage(error instanceof Error ? error.message : 'Le déplacement a échoué.'),
+                );
+            }}
           >
             Déplacer
           </Button>

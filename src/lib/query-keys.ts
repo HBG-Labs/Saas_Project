@@ -180,6 +180,8 @@ export const qk = {
     all: ['workspace'] as const,
     spaces: (organizationId: string) => [...qk.workspace.all, organizationId, 'spaces'] as const,
     pages: (spaceId: string) => [...qk.workspace.all, 'space', spaceId, 'pages'] as const,
+    archivedPages: (organizationId: string) =>
+      [...qk.workspace.all, organizationId, 'archived-pages'] as const,
     page: (pageId: string) => [...qk.workspace.all, 'page', pageId] as const,
     preference: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'preference'] as const,
     revisions: (pageId: string) => [...qk.workspace.all, 'page', pageId, 'revisions'] as const,

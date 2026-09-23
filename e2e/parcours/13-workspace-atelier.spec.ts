@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Request } from '@playwright/test';
 
 import {
   DATE,
@@ -8,6 +8,16 @@ import {
   PAGE_ID,
   pageDocument,
 } from './workspace-atelier-support';
+
+function postDataHas(request: Request, key: string, expected: unknown): boolean {
+  const body: unknown = request.postDataJSON();
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    key in body &&
+    (body as Record<string, unknown>)[key] === expected
+  );
+}
 
 test.describe('Workspace Atelier', () => {
   test('ouvre une page et conserve le contenu et la version attendue à la sauvegarde', async ({
@@ -70,6 +80,53 @@ test.describe('Workspace Atelier', () => {
     await expect(page).toHaveURL(new RegExp(PAGE_ID + '$'));
     await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toBeVisible();
     expect(errors).toEqual([]);
+  });
+
+  test('les options de présentation, le partage et la corbeille répondent vraiment', async ({
+    page,
+    isMobile,
+  }) => {
+    await installeWorkspace(page);
+    await page.goto('/workspace/pages/' + PAGE_ID);
+    const refuseCookies = page.getByRole('button', { name: 'Tout refuser' });
+    if (await refuseCookies.isVisible()) await refuseCookies.click();
+
+    await page.getByRole('button', { name: 'Options de la page' }).click();
+    const styleRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/rest/v1/workspace_pages') &&
+        request.method() === 'PATCH' &&
+        postDataHas(request, 'font_family', 'serif'),
+    );
+    await page.getByRole('button', { name: /Sérif/ }).click();
+    expect((await styleRequest).postDataJSON()).toMatchObject({ font_family: 'serif' });
+    await expect(page.locator('.workspace-editor')).toHaveClass(/font-serif/);
+
+    await page.getByRole('button', { name: 'Personnaliser la page' }).click();
+    const customizeDialog = page.getByRole('dialog', { name: 'Personnaliser la page' });
+    const colorRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/rest/v1/workspace_pages') &&
+        request.method() === 'PATCH' &&
+        postDataHas(request, 'accent_color', 'amber'),
+    );
+    await customizeDialog.getByRole('button', { name: 'Couleur Ciel' }).click();
+    expect((await colorRequest).postDataJSON()).toMatchObject({ accent_color: 'amber' });
+    await expect(page.getByTestId('workspace-page-accent')).toHaveClass(/bg-signal-cyan/);
+    await customizeDialog.getByRole('button', { name: 'Fermer' }).click();
+
+    await page.getByRole('button', { name: 'Partager' }).click();
+    const shareDialog = page.getByRole('dialog', { name: 'Partager cette page' });
+    await expect(shareDialog.getByLabel('Lien de la page')).toHaveValue(page.url());
+    await expect(shareDialog.getByRole('button', { name: 'Copier le lien' })).toBeVisible();
+    await shareDialog.getByRole('button', { name: 'Fermer' }).click();
+
+    await page.goto('/workspace/pages');
+    if (isMobile) await page.getByRole('button', { name: 'Espaces et pages', exact: true }).click();
+    await page.getByRole('button', { name: 'Corbeille', exact: false }).click();
+    const trashDialog = page.getByRole('dialog', { name: 'Corbeille des pages' });
+    await expect(trashDialog.getByText('Ancienne procédure')).toBeVisible();
+    await expect(trashDialog.getByRole('button', { name: 'Restaurer' })).toBeVisible();
   });
 
   test('le bloc-notes conserve la frappe et sa sauvegarde après sélection mobile', async ({
