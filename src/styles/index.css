@@ -830,12 +830,14 @@ html.compact-mode {
   .atelier-menu-item {
     min-height: 44px;
   }
-  /* Les champs visuels restent plus fins que les boutons de navigation. Le
-     texte demeure à 16 px, donc iOS ne zoome pas à la prise de focus. */
+  /* Les champs sont touchés directement : contrairement aux boutons, un
+     pseudo-élément ne peut pas agrandir de façon fiable la cible d'un input.
+     Leur hauteur réelle atteint donc le plancher tactile de 44 px. Le texte
+     demeure à 16 px, donc iOS ne zoome pas à la prise de focus. */
   input.atelier-field,
   button.atelier-field {
-    height: 40px;
-    min-height: 40px;
+    height: 44px;
+    min-height: 44px;
   }
   .atelier-icon-control {
     min-width: 44px;
@@ -895,20 +897,13 @@ html.compact-mode {
 }
 
 /*
-   La fiche profil utilise les mêmes champs compacts que le reste du produit.
-   Cette règle est hors des layers afin de l'emporter sur les anciennes
+   La fiche profil utilise le même plancher tactile que les autres champs.
+   Cette règle est hors des layers afin de l'emporter sur ses anciennes
    hauteurs locales sans modifier la typographie de saisie.
 */
 input.profile-form-field {
-  height: 40px;
-  min-height: 40px;
-}
-
-@media (min-width: 640px) {
-  input.profile-form-field {
-    height: 44px;
-    min-height: 44px;
-  }
+  height: 44px;
+  min-height: 44px;
 }
 
 /* Mouvements courts : les panneaux latéraux utilisent aussi l'axe horizontal. */

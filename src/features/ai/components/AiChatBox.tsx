@@ -314,7 +314,7 @@ export function AiChatBox({
                 }
                 rows={1}
                 disabled={isGenerating || isQuotaExceeded}
-                className="text-foreground placeholder:text-subtle-foreground max-h-[120px] min-h-10 w-full resize-none border-none bg-transparent p-0 py-2 text-xs leading-relaxed focus:ring-0 focus:outline-none sm:min-h-0 sm:py-0 sm:text-sm"
+                className="text-foreground placeholder:text-subtle-foreground min-h-touch max-h-[120px] w-full resize-none border-none bg-transparent p-0 py-2 text-xs leading-relaxed focus:ring-0 focus:outline-none sm:min-h-0 sm:py-0 sm:text-sm"
               />
             </div>
 
@@ -322,7 +322,7 @@ export function AiChatBox({
             <button
               type="submit"
               disabled={!input.trim() || isGenerating || isQuotaExceeded}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover disabled:bg-surface-hover disabled:text-subtle-foreground flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition-[color,background-color,transform] active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
+              className="bg-primary text-primary-foreground hover:bg-primary-hover disabled:bg-surface-hover disabled:text-subtle-foreground size-touch flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-[color,background-color,transform] active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
               title="Envoyer le message"
               aria-label="Envoyer"
             >
