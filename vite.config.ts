@@ -35,10 +35,10 @@ export default defineConfig({
     // Utilisé par le garde-fou de bundle pour distinguer le chemin critique
     // des écrans réellement chargés à la demande.
     manifest: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         /*
-          UNE EXCEPTION AU « PAS DE manualChunks », ET POURQUOI.
+          DÉCOUPAGE MANUEL MESURÉ, ET POURQUOI.
 
           Ce fichier affirmait qu'ajouter manualChunks serait une optimisation
           prématurée. Mesuré sur le build réel, ça ne l'était plus : 281
@@ -48,8 +48,8 @@ export default defineConfig({
           t=e('check',[['path',{d:'M20 6 9 17l-5-5'}]])`).
 
           Le fautif n'est pas la façon dont le code importe ces icônes
-          (imports nommés, tree-shakables) : c'est l'algorithme par défaut de
-          Rollup, qui extrait tout module partagé par 2+ chunks asynchrones
+          (imports nommés, tree-shakables) : c'est l'algorithme par défaut du
+          bundler, qui extrait tout module partagé par 2+ chunks asynchrones
           dans son propre fichier — pour ne pas le dupliquer. Comme chaque
           icône Lucide est déjà son propre module source, et que des dizaines
           de pages chargées en différé en partagent, chaque icône commune
@@ -65,16 +65,39 @@ export default defineConfig({
           Regrouper `lucide-react` en un seul chunk collapse ~95 requêtes de
           quelques centaines d'octets en une seule, mise en cache une fois
           pour toute la session : 281 fichiers → 175, pour 20,9 Ko gzippés.
+
+          Les priorités rendent les groupes mutuellement cohérents : React et
+          les icônes sont attribués avant les groupes de l'éditeur, sans
+          dupliquer leurs dépendances ni ajouter de wrappers d'exécution.
         */
-        manualChunks(id) {
-          if (id.includes('node_modules/lucide-react')) return 'icons';
-          // L'éditeur Workspace est chargé uniquement sur sa route. Séparer
-          // son moteur ProseMirror et ses extensions évite qu'une page
-          // fonctionnelle mais rarement ouverte forme un chunk monolithique.
-          if (id.includes('node_modules/@tiptap/pm') || id.includes('node_modules/prosemirror-'))
-            return 'editor-engine';
-          if (id.includes('node_modules/@tiptap/react')) return 'editor-react';
-          if (id.includes('node_modules/@tiptap/')) return 'editor-extensions';
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: /node_modules[\\/](?:react|react-dom|scheduler|use-sync-external-store)(?:[\\/]|$)/,
+              priority: 100,
+            },
+            {
+              name: 'icons',
+              test: /node_modules[\\/]lucide-react[\\/]/,
+              priority: 80,
+            },
+            {
+              name: 'editor-engine',
+              test: /node_modules[\\/](?:@tiptap[\\/]pm|prosemirror-)/,
+              priority: 60,
+            },
+            {
+              name: 'editor-react',
+              test: /node_modules[\\/]@tiptap[\\/]react[\\/]/,
+              priority: 50,
+            },
+            {
+              name: 'editor-extensions',
+              test: /node_modules[\\/]@tiptap[\\/]/,
+              priority: 40,
+            },
+          ],
         },
       },
     },
