@@ -32,6 +32,9 @@ export default defineConfig({
     // Le découpage vient du lazy loading par route (src/app/router.tsx).
     sourcemap: false,
     target: 'es2022',
+    // Utilisé par le garde-fou de bundle pour distinguer le chemin critique
+    // des écrans réellement chargés à la demande.
+    manifest: true,
     rollupOptions: {
       output: {
         /*

@@ -1,7 +1,14 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { CommandBar } from './CommandBar';
 import { CommandBarContext, type CommandBarContextValue } from './command-bar-context';
+
+const LazyCommandBar = lazy(async () => {
+  // Le registre et la palette ne sont nécessaires qu'au premier Ctrl/⌘ + K.
+  // Les charger au boot ajoutait leur graphe complet au chemin critique, même
+  // lorsqu'un utilisateur n'ouvrait jamais la recherche globale.
+  const [, commandBarModule] = await Promise.all([import('@/tools'), import('./CommandBar')]);
+  return { default: commandBarModule.CommandBar };
+});
 
 /**
  * Rend la palette de commandes disponible dans TOUTE l'application.
@@ -46,7 +53,11 @@ export function CommandBarProvider({ children }: { children: ReactNode }) {
   return (
     <CommandBarContext value={value}>
       {children}
-      <CommandBar open={open} onOpenChange={setOpen} />
+      {open ? (
+        <Suspense fallback={null}>
+          <LazyCommandBar open onOpenChange={setOpen} />
+        </Suspense>
+      ) : null}
     </CommandBarContext>
   );
 }

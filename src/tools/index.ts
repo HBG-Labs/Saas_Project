@@ -3,9 +3,9 @@ import { registerTool, type ToolDefinition } from '@/features/tools/registry';
 /**
  * Auto-découverte des outils.
  *
- * Chaque `src/tools/<slug>/index.ts` est chargé au démarrage et enregistré
- * automatiquement. Ajouter un outil = créer un dossier. AUCUN fichier du cœur
- * applicatif n'est à modifier.
+ * Chaque `src/tools/<slug>/index.ts` est chargé à la demande avant les écrans
+ * qui consultent le registre, puis enregistré automatiquement. Ajouter un
+ * outil = créer un dossier. AUCUN fichier du cœur applicatif n'est à modifier.
  *
  * Les dossiers préfixés par `_` (gabarits) ainsi que les outils masqués sont exclus.
  */

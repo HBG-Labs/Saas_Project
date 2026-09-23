@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 
 import { CommandBarProvider } from '@/features/search/CommandBarProvider';
-import { useCatalogReconciliation } from '@/features/tools';
+import { useCatalogReconciliation } from '@/features/tools/useCatalogReconciliation';
 import { useMetaPixel } from '@/lib/use-meta-pixel';
 
 /**

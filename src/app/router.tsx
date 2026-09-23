@@ -17,13 +17,16 @@ import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
 import { RequirePortalSession } from '@/features/portal';
 import { FEATURES } from '@/features/billing';
 import { PERMISSIONS } from '@/features/organizations';
-import DashboardPage from '@/pages/DashboardPage';
-
-// Imports directs des pages principales pour un rechargement HMR instantané
-import LandingPage from '@/pages/LandingPage';
 
 function lazyPage(load: () => Promise<{ default: ComponentType }>) {
   return async () => ({ Component: (await load()).default });
+}
+
+function lazyToolPage(load: () => Promise<{ default: ComponentType }>) {
+  return async () => {
+    const [, pageModule] = await Promise.all([import('@/tools'), load()]);
+    return { Component: pageModule.default };
+  };
 }
 
 export const routes: RouteObject[] = [
@@ -35,8 +38,7 @@ export const routes: RouteObject[] = [
       {
         element: <PublicLayout />,
         children: [
-          // LandingPage en import direct pour HMR instantané
-          { index: true, Component: LandingPage },
+          { index: true, lazy: lazyPage(() => import('@/pages/LandingPage')) },
           { path: ROUTES.features, lazy: lazyPage(() => import('@/pages/FeaturesPage')) },
           { path: ROUTES.pricing, lazy: lazyPage(() => import('@/pages/PricingPage')) },
           { path: '/tarifs', lazy: lazyPage(() => import('@/pages/PricingPage')) },
@@ -115,8 +117,14 @@ export const routes: RouteObject[] = [
           // `tools_select_visible` ouvre déjà ces lignes au rôle `anon` — le
           // routage ne fait que refléter ce que la base autorise.
           { path: ROUTES.tools, lazy: lazyPage(() => import('@/pages/ToolsPage')) },
-          { path: ROUTE_PATTERNS.tool, lazy: lazyPage(() => import('@/pages/ToolDetailPage')) },
-          { path: ROUTE_PATTERNS.category, lazy: lazyPage(() => import('@/pages/CategoryPage')) },
+          {
+            path: ROUTE_PATTERNS.tool,
+            lazy: lazyToolPage(() => import('@/pages/ToolDetailPage')),
+          },
+          {
+            path: ROUTE_PATTERNS.category,
+            lazy: lazyToolPage(() => import('@/pages/CategoryPage')),
+          },
           { path: ROUTES.references, lazy: lazyPage(() => import('@/pages/ReferencesPage')) },
           {
             path: ROUTES.tutorials,
@@ -175,7 +183,10 @@ export const routes: RouteObject[] = [
               // Écrans de travail : ils n'affichent que des données
               // d'entreprise, que la RLS refuserait à une session absente. Les
               // laisser publics ne montrerait qu'une coquille vide.
-              { path: ROUTES.dashboard, Component: DashboardPage },
+              {
+                path: ROUTES.dashboard,
+                lazy: lazyPage(() => import('@/pages/DashboardPage')),
+              },
               { path: ROUTES.map, lazy: lazyPage(() => import('@/pages/map/MapPage')) },
               // Le bloc-notes est personnel : ni organisation ni formule requises.
               { path: ROUTES.notes, lazy: lazyPage(() => import('@/pages/notes/NotesPage')) },
@@ -634,7 +645,10 @@ export const routes: RouteObject[] = [
                 ],
               },
 
-              { path: ROUTES.favorites, lazy: lazyPage(() => import('@/pages/FavoritesPage')) },
+              {
+                path: ROUTES.favorites,
+                lazy: lazyToolPage(() => import('@/pages/FavoritesPage')),
+              },
               { path: ROUTES.history, lazy: lazyPage(() => import('@/pages/HistoryPage')) },
               { path: ROUTES.profile, lazy: lazyPage(() => import('@/pages/ProfilePage')) },
               { path: ROUTES.settings, lazy: lazyPage(() => import('@/pages/SettingsPage')) },

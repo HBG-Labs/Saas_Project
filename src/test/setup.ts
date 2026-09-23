@@ -12,6 +12,7 @@ afterEach(() => {
 // jsdom n'implémente pas le défilement ; les changements de route l'appellent.
 // Éviter ses messages asynchrones pendant la fermeture des workers Vitest.
 window.scrollTo = vi.fn();
+Element.prototype.scrollIntoView = vi.fn();
 
 // jsdom n'implémente pas matchMedia, utilisé par les requêtes de préférences
 // système (prefers-reduced-motion, thème).

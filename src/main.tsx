@@ -52,9 +52,6 @@ async function boot(): Promise<void> {
         import('@/features/theme/theme-script'),
         import('@/lib/purge-demo-storage'),
         import('@/lib/migrate-storage-keys'),
-        // Enregistre tous les outils présents dans src/tools/ (auto-découverte).
-        // Doit précéder le premier rendu : le catalogue lit le registry.
-        import('@/tools'),
       ]);
 
     // AVANT TOUT LE RESTE : les préférences écrites sous l'ancien nom de marque

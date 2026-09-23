@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
@@ -33,10 +33,14 @@ describe('routing', () => {
     renderAt('/');
 
     expect(
-      await screen.findByRole('heading', {
-        name: /pilotez votre activité de terrain en toute simplicité/i,
-        level: 1,
-      }),
+      await screen.findByRole(
+        'heading',
+        {
+          name: /pilotez votre activité de terrain en toute simplicité/i,
+          level: 1,
+        },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     // La landing utilise l'ossature publique, pas la navigation applicative.
     expect(screen.getByRole('navigation', { name: 'Navigation du site' })).toBeInTheDocument();
@@ -55,6 +59,34 @@ describe('routing', () => {
         { timeout: 5000 },
       ),
     ).toBeInTheDocument();
+  });
+
+  it('initialise le registre avant une route outil ouverte directement', async () => {
+    renderAt('/tools/subnet-calculator');
+
+    expect(
+      await screen.findByRole(
+        'heading',
+        { name: 'Calculateur IPv4 / CIDR', level: 1 },
+        { timeout: 10_000 },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('charge la palette et son catalogue seulement à la première ouverture', async () => {
+    renderAt('/');
+    await screen.findByRole(
+      'heading',
+      { name: /pilotez votre activité de terrain en toute simplicité/i, level: 1 },
+      { timeout: 5000 },
+    );
+
+    fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
+
+    await screen.findByPlaceholderText('Rechercher un outil, une page…', undefined, {
+      timeout: 10_000,
+    });
+    expect(screen.getByText('Calculateur IPv4 / CIDR')).toBeInTheDocument();
   });
 
   it('affiche le centre de formation sans session', async () => {

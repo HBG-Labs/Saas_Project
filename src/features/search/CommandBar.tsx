@@ -5,12 +5,7 @@ import { useNavigate } from 'react-router';
 
 import { FALLBACK_NAV_ICON, NAV_ICONS } from '@/components/layout/nav-icons';
 import { FALLBACK_TOOL_ICON, TOOL_ICONS } from '@/components/ui/icons';
-import {
-  ACCOUNT_NAV,
-  ROOT_NAV,
-  SIDEBAR_GROUPS,
-  type ResolvedNavItem,
-} from '@/config/navigation';
+import { ACCOUNT_NAV, ROOT_NAV, SIDEBAR_GROUPS, type ResolvedNavItem } from '@/config/navigation';
 import { ROUTES } from '@/config/routes';
 import { useVisibleNavGroups } from '@/features/organizations';
 import { CATEGORY_METADATA, listTools } from '@/features/tools';
@@ -56,11 +51,14 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
   // Le tableau de bord et le compte n'appartiennent à aucune formule : ils sont
   // marqués ouverts explicitement, sinon le type de la liste se réduirait au
   // plus petit dénominateur et le cadenas disparaîtrait pour tout le monde.
-  const destinations: readonly ResolvedNavItem[] = [
+  const allDestinations: readonly ResolvedNavItem[] = [
     ...ROOT_NAV.map((item) => ({ ...item, locked: false })),
     ...visibleGroups.flatMap((group) => group.items),
     ...ACCOUNT_NAV.map((item) => ({ ...item, locked: false })),
   ];
+  const destinations = allDestinations.filter(
+    (item, index) => allDestinations.findIndex((candidate) => candidate.to === item.to) === index,
+  );
 
   const go = (path: string) => {
     onOpenChange(false);
@@ -160,7 +158,7 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                         {item.label}
                       </span>
                       {item.locked ? (
-                        <span className="text-subtle-foreground ml-auto flex items-center gap-1 text-3xs">
+                        <span className="text-subtle-foreground text-3xs ml-auto flex items-center gap-1">
                           <Lock className="size-3" aria-hidden="true" />
                           Formule supérieure
                         </span>
