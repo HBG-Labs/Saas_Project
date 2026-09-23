@@ -9,6 +9,7 @@ import {
   createSpace,
   createTask,
   deletePage,
+  emptyPageTrash,
   deleteTask,
   getPage,
   getPagePreference,
@@ -244,6 +245,17 @@ export function useDeletePage() {
         queryClient.invalidateQueries({ queryKey: qk.workspace.pages(spaceId) }),
         queryClient.invalidateQueries({ queryKey: qk.workspace.all }),
       ]);
+    },
+  });
+}
+
+export function useEmptyPageTrash() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (organizationId: string) => emptyPageTrash(organizationId),
+    onSuccess: async (_deletedPageIds, organizationId) => {
+      await queryClient.invalidateQueries({ queryKey: qk.workspace.all });
+      queryClient.setQueryData(qk.workspace.archivedPages(organizationId), []);
     },
   });
 }
@@ -511,6 +523,14 @@ export function useRecordings(pageId: string | undefined) {
       query.state.data?.some((r) => r.status === 'pending' || r.status === 'processing')
         ? 5_000
         : false,
+    // Sur Android/Capacitor, la WebView ne restitue pas toujours un événement
+    // `focus` après une mise en arrière-plan. Tant qu'un traitement est actif,
+    // le minuteur doit donc continuer et toute reprise réseau/fenêtre force une
+    // lecture serveur. Le polling s'arrête dès qu'il n'y a plus de statut actif.
+    refetchIntervalInBackground: true,
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
+    refetchOnWindowFocus: 'always',
   });
 }
 

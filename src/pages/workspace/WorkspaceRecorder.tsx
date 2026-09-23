@@ -61,6 +61,8 @@ const serverApi: RecorderServerApi = {
   updateNotes: (id, notes) => updateRecordingNotes(id, notes),
 };
 
+const COMPLETED_DOCK_VISIBLE_MS = 3_000;
+
 function recorderErrorMessage(message: string): { title: string; help: string } {
   const normalized = message.toLocaleLowerCase('fr');
   if (/notallowed|permission|autorisation|refus/u.test(normalized)) {
@@ -375,6 +377,12 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
 
   const focusedRecording =
     (recordings.data ?? []).find((recording) => recording.id === focusedRecordingId) ?? null;
+
+  useEffect(() => {
+    if (focusedRecording?.status !== 'done') return;
+    const timer = window.setTimeout(() => setDockDismissed(true), COMPLETED_DOCK_VISIBLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [focusedRecording?.id, focusedRecording?.status]);
   const active = recorder.status === 'recording' || recorder.status === 'paused';
   const localProcessing =
     recorder.status === 'requesting' ||
@@ -783,16 +791,27 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(15rem,0.7fr)] sm:items-center">
-              <div>
-                <p className="font-bold">
-                  {recorder.status === 'requesting'
-                    ? 'Accès au microphone…'
-                    : (focusedTimeline?.label ?? 'Traitement de la note vocale')}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Vous pouvez continuer à écrire. La progression affichée correspond aux états
-                  réellement reçus.
-                </p>
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">
+                    {recorder.status === 'requesting'
+                      ? 'Accès au microphone…'
+                      : (focusedTimeline?.label ?? 'Traitement de la note vocale')}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Vous pouvez continuer à écrire. La progression affichée correspond aux états
+                    réellement reçus.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Masquer la progression de REZO Voice"
+                  onClick={() => setDockDismissed(true)}
+                >
+                  <X aria-hidden />
+                </Button>
               </div>
               <ProcessingSteps
                 localStatus={recorder.status}

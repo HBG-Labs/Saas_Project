@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -224,6 +224,30 @@ describe('REZO Voice dans le Workspace', () => {
         name: /Voir la transcription/u,
       }),
     ).toBeInTheDocument();
+  });
+
+  it('retire automatiquement le panneau flottant après la confirmation finale', async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.recordings = [recording()];
+      const view = renderRecorder();
+
+      mocks.recordings = [
+        recording({
+          status: 'done',
+          transcript: 'Intervention terminée.',
+          transcribed_at: '2026-09-23T10:01:00.000Z',
+        }),
+      ];
+      view.rerender(<WorkspaceRecorder page={page} />);
+
+      expect(screen.getByLabelText('REZO Voice')).toBeInTheDocument();
+      await act(() => vi.advanceTimersByTimeAsync(3_000));
+      expect(screen.queryByLabelText('REZO Voice')).not.toBeInTheDocument();
+      expect(screen.getByText('Dernière transcription prête')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('sort de l’échec avec une relance explicite quand l’audio existe encore', async () => {

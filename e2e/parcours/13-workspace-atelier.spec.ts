@@ -1,5 +1,7 @@
 import { expect, test, type Request } from '@playwright/test';
 
+import { ORGANISATION_ID } from '../fixtures/donnees';
+
 import {
   DATE,
   ESPACE_ID,
@@ -62,6 +64,75 @@ test.describe('Workspace Atelier', () => {
     await expect(
       recorder.getByRole('button', { name: 'Enregistrer une note vocale', exact: true }),
     ).toBeEnabled();
+  });
+
+  test('la barre de mise en forme conserve la sélection sans dupliquer le texte', async ({
+    page,
+    isMobile,
+  }) => {
+    await installeWorkspace(page);
+    await page.route('**/rest/v1/rpc/save_workspace_page', async (route) => {
+      const body = route.request().postDataJSON() as {
+        p_content: typeof pageDocument.content;
+        p_title: string;
+      };
+      await route.fulfill({
+        json: {
+          ...pageDocument,
+          title: body.p_title,
+          content: body.p_content,
+          updated_at: '2026-09-20T09:00:00.000Z',
+        },
+      });
+    });
+    await page.goto('/workspace/pages/' + PAGE_ID);
+
+    const editor = page.locator('.workspace-rich-editor .ProseMirror');
+    await expect(editor).toBeVisible();
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/rpc/save_workspace_page') &&
+        response.request().method() === 'POST',
+    );
+    await editor.click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Texte unique');
+    await saved;
+
+    await expect
+      .poll(
+        async () =>
+          (await editor.locator('p').allTextContents()).filter((text) => text === 'Texte unique')
+            .length,
+      )
+      .toBe(1);
+
+    const lastParagraph = editor.locator('p').last();
+    await lastParagraph.evaluate((element) => {
+      const editable = element.closest<HTMLElement>('[contenteditable="true"]');
+      const selection = window.getSelection();
+      if (!editable || !selection) throw new Error('Éditeur ou sélection indisponible.');
+      editable.focus();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.dispatchEvent(new Event('selectionchange', { bubbles: true }));
+    });
+
+    const bold = page.getByRole('button', { name: 'Gras' });
+    if (isMobile) await bold.tap();
+    else await bold.click();
+    await expect(bold).toHaveAttribute('aria-pressed', 'true');
+    await expect(lastParagraph.locator('strong')).toHaveText('Texte unique');
+
+    const italic = page.getByRole('button', { name: 'Italique' });
+    if (isMobile) await italic.tap();
+    else await italic.click();
+    await expect(italic).toHaveAttribute('aria-pressed', 'true');
+    await expect(lastParagraph.locator('em')).toHaveText('Texte unique');
+    await expect(editor).toContainText('Texte unique');
   });
 
   test('le choix de modèle reste utilisable et crée dans le bon espace', async ({
@@ -148,6 +219,16 @@ test.describe('Workspace Atelier', () => {
     const trashDialog = page.getByRole('dialog', { name: 'Corbeille des pages' });
     await expect(trashDialog.getByText('Ancienne procédure')).toBeVisible();
     await expect(trashDialog.getByRole('button', { name: 'Restaurer' })).toBeVisible();
+    page.once('dialog', (dialog) => void dialog.accept());
+    const emptyTrashRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/rest/v1/workspace_pages') && request.method() === 'DELETE',
+    );
+    await trashDialog.getByRole('button', { name: 'Vider la corbeille' }).click();
+    const emptyTrashUrl = new URL((await emptyTrashRequest).url());
+    expect(emptyTrashUrl.searchParams.get('organization_id')).toBe(`eq.${ORGANISATION_ID}`);
+    expect(emptyTrashUrl.searchParams.get('archived_at')).toBe('not.is.null');
+    await expect(trashDialog.getByText('La corbeille est vide.')).toBeVisible();
   });
 
   test('le bloc-notes conserve la frappe et sa sauvegarde après sélection mobile', async ({

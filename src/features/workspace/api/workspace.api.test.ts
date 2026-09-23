@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 */
 const rpc = vi.hoisted(() => vi.fn());
 const insertions = vi.hoisted(() => [] as unknown[]);
+const suppressions = vi.hoisted(() => [] as Array<[string, string, unknown]>);
 const from = vi.hoisted(() => vi.fn());
 
 async function deballer(q: PromiseLike<{ data: unknown; error: unknown }>) {
@@ -25,7 +26,7 @@ vi.mock('@/services/supabase', () => ({
   unwrapMaybe: deballer,
 }));
 
-import { createPage, savePage } from './workspace.api';
+import { createPage, emptyPageTrash, savePage } from './workspace.api';
 
 const PAGE = {
   id: 'p-1',
@@ -47,12 +48,27 @@ describe('workspace.api', () => {
     rpc.mockReset();
     from.mockReset();
     insertions.length = 0;
+    suppressions.length = 0;
     rpc.mockResolvedValue({ data: PAGE, error: null });
     from.mockReturnValue({
       insert: (valeurs: unknown) => {
         insertions.push(valeurs);
         return { select: () => ({ single: () => Promise.resolve({ data: PAGE, error: null }) }) };
       },
+      delete: () => ({
+        eq: (column: string, value: unknown) => {
+          suppressions.push(['eq', column, value]);
+          return {
+            not: (notColumn: string, operator: string, notValue: unknown) => {
+              suppressions.push([`not.${operator}`, notColumn, notValue]);
+              return {
+                select: () =>
+                  Promise.resolve({ data: [{ id: 'p-1' }, { id: 'p-2' }], error: null }),
+              };
+            },
+          };
+        },
+      }),
     });
   });
 
@@ -102,5 +118,15 @@ describe('workspace.api', () => {
       parent_page_id: 'p-0',
       position: 2,
     });
+  });
+
+  it('vide uniquement les pages archivées de l’organisation demandée', async () => {
+    await expect(emptyPageTrash('org-1')).resolves.toEqual(['p-1', 'p-2']);
+
+    expect(from).toHaveBeenCalledWith('workspace_pages');
+    expect(suppressions).toEqual([
+      ['eq', 'organization_id', 'org-1'],
+      ['not.is', 'archived_at', null],
+    ]);
   });
 });

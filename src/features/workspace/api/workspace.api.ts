@@ -212,6 +212,26 @@ export async function deletePage(pageId: string): Promise<void> {
   await unwrap(supabase.from('workspace_pages').delete().eq('id', pageId).select('id'));
 }
 
+/**
+ * Vide uniquement la corbeille de l'organisation demandée.
+ *
+ * Le filtre `archived_at` est volontairement appliqué côté serveur : même si
+ * l'interface envoyait une mauvaise requête, aucune page active ne pourrait
+ * être supprimée par cette action groupée. La RLS conserve l'isolation entre
+ * organisations.
+ */
+export async function emptyPageTrash(organizationId: string): Promise<string[]> {
+  const deleted = await unwrap(
+    supabase
+      .from('workspace_pages')
+      .delete()
+      .eq('organization_id', organizationId)
+      .not('archived_at', 'is', null)
+      .select('id'),
+  );
+  return deleted.map((page) => page.id);
+}
+
 export async function listPageRevisions(pageId: string): Promise<WorkspacePageRevision[]> {
   return unwrap(
     supabase

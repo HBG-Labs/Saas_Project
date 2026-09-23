@@ -281,7 +281,11 @@ function PageForm({
    * reste un conflit et bloque l'autosave.
    */
   useEffect(() => {
-    if (!editor || loaded.updated_at === loadedAtRef.current) return;
+    // La mutation d'autosauvegarde met le cache React Query à jour avant que
+    // `handleSave` reçoive sa réponse. Sans ce garde, cette propre réponse est
+    // confondue avec un ajout externe et un nouveau paragraphe local peut être
+    // ajouté une seconde fois dans l'éditeur.
+    if (!editor || savingRef.current || loaded.updated_at === loadedAtRef.current) return;
     if (dirty) {
       const appendedBlocks = getAppendOnlySuffix(serverContentRef.current, loaded.content);
       if (!appendedBlocks?.length) return;
@@ -672,7 +676,7 @@ function PageForm({
           <div className="mt-6">
             {canEdit && !presentation.locked && editor ? (
               <div
-                className="border-border bg-surface sticky top-0 z-10 mb-3 flex flex-wrap gap-1 rounded-xl border p-1 shadow-sm"
+                className="border-border bg-surface sticky top-0 z-10 mb-3 flex touch-manipulation flex-wrap gap-1 rounded-xl border p-1 shadow-sm select-none"
                 role="toolbar"
                 aria-label="Mise en forme du contenu"
               >
@@ -682,6 +686,7 @@ function PageForm({
                   variant={editor.isActive('bold') ? 'secondary' : 'ghost'}
                   aria-label="Gras"
                   aria-pressed={editor.isActive('bold')}
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => editor.chain().focus().toggleBold().run()}
                 >
                   <Bold className="size-4" />
@@ -692,6 +697,7 @@ function PageForm({
                   variant={editor.isActive('italic') ? 'secondary' : 'ghost'}
                   aria-label="Italique"
                   aria-pressed={editor.isActive('italic')}
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => editor.chain().focus().toggleItalic().run()}
                 >
                   <Italic className="size-4" />
@@ -702,6 +708,7 @@ function PageForm({
                   variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'ghost'}
                   aria-label="Titre de niveau 2"
                   aria-pressed={editor.isActive('heading', { level: 2 })}
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                 >
                   <Heading2 className="size-4" />
@@ -712,6 +719,7 @@ function PageForm({
                   variant={editor.isActive('bulletList') ? 'secondary' : 'ghost'}
                   aria-label="Liste à puces"
                   aria-pressed={editor.isActive('bulletList')}
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => editor.chain().focus().toggleBulletList().run()}
                 >
                   <List className="size-4" />
@@ -722,6 +730,7 @@ function PageForm({
                   variant={editor.isActive('orderedList') ? 'secondary' : 'ghost'}
                   aria-label="Liste numérotée"
                   aria-pressed={editor.isActive('orderedList')}
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 >
                   <ListOrdered className="size-4" />

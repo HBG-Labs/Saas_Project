@@ -19,6 +19,7 @@ import {
   useCreatePage,
   useCreatePageFromTemplate,
   useDeletePage,
+  useEmptyPageTrash,
   useFavorites,
   useMovePage,
   usePages,
@@ -141,6 +142,7 @@ export default function WorkspacePagesPage() {
   const createFromTemplate = useCreatePageFromTemplate();
   const movePage = useMovePage();
   const deletePage = useDeletePage();
+  const emptyTrash = useEmptyPageTrash();
   const toggleFavorite = useToggleFavorite();
 
   const [query, setQuery] = useState('');
@@ -269,6 +271,32 @@ export default function WorkspacePagesPage() {
       setTrashMessage(`« ${page.title} » a été supprimée définitivement.`);
     } catch (error) {
       setTrashMessage(error instanceof Error ? error.message : 'La suppression a échoué.');
+    }
+  };
+
+  const permanentlyEmptyTrash = async () => {
+    const count = archivedPages.data?.length ?? 0;
+    if (!organizationId || count === 0) return;
+    if (
+      !window.confirm(
+        `Vider la corbeille et supprimer définitivement ${String(count)} ${count > 1 ? 'pages' : 'page'} ? Cette action est irréversible.`,
+      )
+    )
+      return;
+    setTrashMessage(null);
+    try {
+      const deleted = await emptyTrash.mutateAsync(organizationId);
+      setTrashMessage(
+        deleted.length > 1
+          ? `${String(deleted.length)} pages ont été supprimées définitivement.`
+          : deleted.length === 1
+            ? 'La page a été supprimée définitivement.'
+            : 'La corbeille était déjà vide.',
+      );
+    } catch (error) {
+      setTrashMessage(
+        error instanceof Error ? error.message : 'La corbeille n’a pas pu être vidée.',
+      );
     }
   };
 
@@ -516,6 +544,24 @@ export default function WorkspacePagesPage() {
         size="lg"
       >
         <div className="space-y-3">
+          {canManage && (archivedPages.data?.length ?? 0) > 0 ? (
+            <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+              <p className="text-muted-foreground text-xs">
+                {String(archivedPages.data?.length ?? 0)}{' '}
+                {(archivedPages.data?.length ?? 0) > 1 ? 'pages supprimées' : 'page supprimée'}
+              </p>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                isLoading={emptyTrash.isPending}
+                disabled={movePage.isPending || deletePage.isPending}
+                onClick={() => void permanentlyEmptyTrash()}
+              >
+                <Trash2 className="size-4" aria-hidden /> Vider la corbeille
+              </Button>
+            </div>
+          ) : null}
           {trashMessage ? (
             <p
               role="status"
@@ -551,7 +597,7 @@ export default function WorkspacePagesPage() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    disabled={movePage.isPending || deletePage.isPending}
+                    disabled={movePage.isPending || deletePage.isPending || emptyTrash.isPending}
                     onClick={() => void restorePage(page)}
                   >
                     <RotateCcw className="size-4" aria-hidden /> Restaurer
@@ -563,7 +609,7 @@ export default function WorkspacePagesPage() {
                     variant="ghost"
                     size="sm"
                     className="text-error"
-                    disabled={movePage.isPending || deletePage.isPending}
+                    disabled={movePage.isPending || deletePage.isPending || emptyTrash.isPending}
                     onClick={() => void permanentlyDeletePage(page)}
                   >
                     <Trash2 className="size-4" aria-hidden /> Supprimer
