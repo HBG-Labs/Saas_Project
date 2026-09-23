@@ -220,6 +220,7 @@ function PageForm({
   const importInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const assistantSectionRef = useRef<HTMLElement>(null);
+  const titleFieldRef = useRef<HTMLTextAreaElement>(null);
 
   const markDirty = useCallback(() => {
     revisionRef.current += 1;
@@ -258,6 +259,13 @@ function PageForm({
   useEffect(() => {
     editor?.setEditable(canEdit && !presentation.locked);
   }, [canEdit, editor, presentation.locked]);
+
+  useEffect(() => {
+    const field = titleFieldRef.current;
+    if (!field) return;
+    field.style.height = 'auto';
+    field.style.height = `${String(field.scrollHeight)}px`;
+  }, [title]);
 
   const hasExternalConflict = dirty && loaded.updated_at !== loadedAt;
   const displayedMessage = hasExternalConflict
@@ -639,16 +647,23 @@ function PageForm({
               }}
               className="w-14 border-0 bg-transparent text-4xl outline-none disabled:opacity-70"
             />
-            <input
+            <textarea
+              ref={titleFieldRef}
               aria-label="Titre"
               value={title}
+              rows={1}
               disabled={!canEdit || presentation.locked}
               onChange={(event) => {
-                setTitle(event.target.value);
+                setTitle(event.target.value.replace(/[\r\n]+/g, ' '));
                 markDirty();
               }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                editor?.chain().focus('start').run();
+              }}
               placeholder="Sans titre"
-              className="text-foreground min-w-0 flex-1 border-0 bg-transparent text-3xl font-black tracking-tight outline-none disabled:opacity-70 sm:text-4xl"
+              className="text-foreground min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent text-2xl leading-tight font-black tracking-tight outline-none disabled:opacity-70 sm:text-4xl"
             />
           </div>
 
