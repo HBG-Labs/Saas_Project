@@ -4,7 +4,9 @@ import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { ROUTES } from '@/config/routes';
 import { useAuth } from '@/features/auth';
 import { useCurrentOrganization } from '@/features/organizations';
-import { estUtilisateurPortail } from '@/features/portal';
+// Import feuille volontaire : le barrel du portail expose aussi ses écrans et
+// ses requêtes. Ce garde n'a besoin que du marqueur de compte, au démarrage.
+import { estUtilisateurPortail } from '@/features/portal/portal-user';
 
 /**
  * Réserve une branche de routes aux membres d'une organisation.
@@ -40,9 +42,7 @@ export function RequireOrganization() {
     }
     // L'origine est conservée pour revenir là où l'utilisateur allait une fois
     // l'entreprise créée — même convention que `ProtectedRoute`.
-    return (
-      <Navigate to={ROUTES.organizationNew} state={{ from: location.pathname }} replace />
-    );
+    return <Navigate to={ROUTES.organizationNew} state={{ from: location.pathname }} replace />;
   }
 
   return <Outlet />;

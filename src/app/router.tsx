@@ -14,7 +14,6 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { ROUTE_PATTERNS, ROUTES } from '@/config/routes';
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
-import { RequirePortalSession } from '@/features/portal';
 import { FEATURES } from '@/features/billing';
 import { PERMISSIONS } from '@/features/organizations';
 
@@ -76,7 +75,15 @@ export const routes: RouteObject[] = [
         lazy: lazyPage(() => import('@/pages/portal/PortalLoginPage')),
       },
       {
-        element: <RequirePortalSession />,
+        // Le portail possède son propre contexte, ses requêtes et sa mise en
+        // page. Charger son garde statiquement ajoutait tout ce graphe au
+        // démarrage de l'accueil et du produit principal, alors qu'aucune de
+        // ces routes n'en dépend. React Router ne résout ce module que lorsque
+        // la branche `/portail` correspond réellement à l'URL.
+        lazy: async () => {
+          const { RequirePortalSession } = await import('@/features/portal');
+          return { Component: RequirePortalSession };
+        },
         children: [
           { path: ROUTES.portal, lazy: lazyPage(() => import('@/pages/portal/PortalHomePage')) },
           {

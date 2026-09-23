@@ -1,5 +1,5 @@
 import { Building2, Download, LogOut, Menu, Search, Settings, User, WifiOff } from 'lucide-react';
-import { Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
@@ -13,7 +13,6 @@ import { ROUTES } from '@/config/routes';
 import { TECHNICIAN_SIDEBAR_GROUPS } from '@/config/technician-navigation';
 import { EmailConfirmationBanner, useAuth } from '@/features/auth';
 import { TrialBanner } from '@/features/billing';
-import { NotificationBell } from '@/features/notifications';
 import { useCurrentOrganization, usePermission } from '@/features/organizations';
 import { OrganizationSwitcher } from '@/features/organizations/components/OrganizationSwitcher';
 import { useMigrateLegacyAvatar, useMyProfile } from '@/features/profile';
@@ -26,6 +25,11 @@ import { MobileDrawer } from './MobileDrawer';
 import { MobileNav } from './MobileNav';
 import { Sidebar } from './Sidebar';
 import { displayNameOf } from './user-display';
+
+const NotificationBell = lazy(async () => {
+  const { NotificationBell: Component } = await import('@/features/notifications');
+  return { default: Component };
+});
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -239,7 +243,14 @@ export function AppLayout() {
                 Mode Hors-ligne (PWA)
               </span>
             )}
-            {isAuthenticated && <NotificationBell />}
+            {isAuthenticated && (
+              // Le centre de notifications agrège plusieurs domaines (dont le
+              // portail client). Il se charge indépendamment : la barre et la
+              // page courante n'attendent pas ce module secondaire.
+              <Suspense fallback={null}>
+                <NotificationBell />
+              </Suspense>
+            )}
             <ThemeToggle />
 
             {isAuthenticated ? (

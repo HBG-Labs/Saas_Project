@@ -21,8 +21,8 @@ const limits = {
   cssChunk: Number(process.env['BUNDLE_MAX_CSS_CHUNK_GZIP_KIB'] ?? 45) * KIB,
   jsTotal: Number(process.env['BUNDLE_MAX_JS_TOTAL_GZIP_KIB'] ?? 1150) * KIB,
   cssTotal: Number(process.env['BUNDLE_MAX_CSS_TOTAL_GZIP_KIB'] ?? 50) * KIB,
-  startupJs: Number(process.env['BUNDLE_MAX_STARTUP_JS_GZIP_KIB'] ?? 520) * KIB,
-  startupRequests: Number(process.env['BUNDLE_MAX_STARTUP_JS_REQUESTS'] ?? 68),
+  startupJs: Number(process.env['BUNDLE_MAX_STARTUP_JS_GZIP_KIB'] ?? 375) * KIB,
+  startupRequests: Number(process.env['BUNDLE_MAX_STARTUP_JS_REQUESTS'] ?? 54),
 };
 
 if (!existsSync(assetDirectory)) {
