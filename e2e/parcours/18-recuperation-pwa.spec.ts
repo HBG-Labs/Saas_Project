@@ -38,9 +38,9 @@ test.describe('Récupération PWA', () => {
         getComputedStyle(document.documentElement).getPropertyValue('--app-styles-ready').trim(),
       ),
     ).toBe('v20260921');
-    await expect(
-      page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Le chargement s’est interrompu' })).toHaveCount(
+      0,
+    );
   });
 
   test('une feuille principale perdue est rechargée au lieu d’afficher du HTML brut', async ({
@@ -73,9 +73,9 @@ test.describe('Récupération PWA', () => {
     await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
     await expect(page.locator('html')).toHaveClass(/rezo360-app-ready/);
     await expect(page.locator('#rezo360-style-boot')).toBeHidden();
-    await expect(
-      page.getByRole('heading', { name: 'L’application n’a pas pu démarrer' }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Le chargement s’est interrompu' })).toHaveCount(
+      0,
+    );
   });
 
   test('le worker ignore un CSS empoisonné dans Cache Storage', async ({ page }) => {
@@ -140,5 +140,24 @@ test.describe('Récupération PWA', () => {
     await expect(page.locator('html')).toHaveClass(/rezo360-styles-ready/);
     await expect(page.locator('html')).toHaveClass(/rezo360-app-ready/);
     await expect(page.locator('#rezo360-style-boot')).toBeHidden();
+  });
+
+  test('une panne de démarrage non récupérable affiche un secours discret', async ({ page }) => {
+    await page.route(/\/assets\/App-[^/]+\.js(?:\?.*)?$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/javascript',
+        body: 'throw new Error("Erreur de démarrage simulée");',
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('heading', { name: 'Le chargement s’est interrompu' }),
+    ).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('Vos données restent en sécurité');
+    await expect(page.locator('.rezo-boot-orbit')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible();
   });
 });
