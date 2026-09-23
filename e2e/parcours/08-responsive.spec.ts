@@ -78,9 +78,9 @@ test.describe('Responsive', () => {
       if (boite === null) continue;
       // 44 px est le minimum retenu par le produit (Apple HIG, WCAG 2.5.5).
       expect(
-        Math.max(boite.width, boite.height),
+        Math.min(boite.width, boite.height),
         `entrée ${index} mesure ${Math.round(boite.width)}×${Math.round(boite.height)} px`,
-      ).toBeGreaterThanOrEqual(40);
+      ).toBeGreaterThanOrEqual(44);
     }
 
     const active = barre.getByRole('link', { name: 'Accueil' });

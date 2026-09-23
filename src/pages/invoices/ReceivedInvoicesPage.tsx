@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import {
@@ -45,7 +46,7 @@ export default function ReceivedInvoicesPage() {
     setFilters({ ...filters, sortBy: next.column, sortDirection: next.direction, page: 0 });
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <PageShell width="5xl">
       <PageHeader
         title="Factures reçues"
         description="Les factures électroniques de vos fournisseurs, relevées auprès de SUPER PDP."
@@ -90,6 +91,6 @@ export default function ReceivedInvoicesPage() {
           )}
         </>
       )}
-    </div>
+    </PageShell>
   );
 }

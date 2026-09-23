@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/config/routes';
@@ -128,7 +129,7 @@ export default function StockConsumablesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       <PageHeader
         title="Stocks & fournitures"
         description="Pilotez vos articles, seuils d’alerte, prix d’achat et quantités disponibles."
@@ -216,6 +217,6 @@ export default function StockConsumablesPage() {
           initialType={selectedMovementType}
         />
       ) : null}
-    </div>
+    </PageShell>
   );
 }

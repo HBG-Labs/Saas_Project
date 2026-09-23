@@ -5,6 +5,7 @@ import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataView } from '@/components/ui/DataView';
@@ -51,7 +52,7 @@ export default function InvoicesPage() {
   const invoices = invoicesQuery.data ?? [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <PageShell width="4xl">
       <PageHeader
         title="Factures"
         description="Vos factures et avoirs, avec leur statut et leur montant."
@@ -197,6 +198,6 @@ export default function InvoicesPage() {
           }}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

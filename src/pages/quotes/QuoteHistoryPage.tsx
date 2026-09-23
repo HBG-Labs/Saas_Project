@@ -5,6 +5,7 @@ import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataView } from '@/components/ui/DataView';
@@ -45,7 +46,7 @@ export default function QuoteHistoryPage() {
   const quotes = quotesQuery.data ?? [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <PageShell width="4xl">
       <PageHeader
         title="Historique des devis"
         description="Tous les devis enregistrés par votre organisation, avec leur statut et leur montant."
@@ -165,6 +166,6 @@ export default function QuoteHistoryPage() {
           }}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

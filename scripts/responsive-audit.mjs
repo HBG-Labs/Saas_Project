@@ -10,7 +10,7 @@
  * largeurs réelles des téléphones vendus, et signale TOUT élément plus large
  * que sa fenêtre.
  *
- * Il vérifie aussi les cibles tactiles : un bouton de moins de 40 px de côté
+ * Il vérifie aussi les cibles tactiles : un bouton de moins de 44 px de côté
  * est raté une fois sur trois par un pouce, ganté ou non.
  * ─────────────────────────────────────────────────────────────────────────────
  *
@@ -175,12 +175,16 @@ const TOUCH_PROBE = () => {
     // Les éléments réservés aux lecteurs d'écran n'ont pas de cible tactile :
     // le lien d'évitement ne devient visible qu'au focus clavier.
     if (style.clipPath === 'inset(50%)' || el.className.toString().includes('sr-only')) continue;
-    if (Math.min(rect.width, rect.height) >= 40) continue;
+    const after = getComputedStyle(el, '::after');
+    const inset = (value) => Math.max(0, -(Number.parseFloat(value) || 0));
+    const targetWidth = rect.width + inset(after.left) + inset(after.right);
+    const targetHeight = rect.height + inset(after.top) + inset(after.bottom);
+    if (Math.min(targetWidth, targetHeight) >= 44) continue;
 
     small.push({
       tag: el.tagName.toLowerCase(),
       label: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 34),
-      size: `${Math.round(rect.width)}×${Math.round(rect.height)}`,
+      size: `${Math.round(targetWidth)}×${Math.round(targetHeight)}`,
     });
   }
   return small.slice(0, 6);
@@ -243,5 +247,5 @@ for (const viewport of VIEWPORTS) {
 }
 
 await browser.close();
-console.log(`\n${overflowCount} débordement(s), ${touchCount} cible(s) sous 40px.`);
+console.log(`\n${overflowCount} débordement(s), ${touchCount} cible(s) sous 44px.`);
 process.exit(overflowCount > 0 ? 1 : 0);

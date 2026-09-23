@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useCurrentOrganization } from '@/features/organizations';
@@ -109,7 +110,7 @@ export default function SuppliersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       <PageHeader
         title="Fournisseurs & grossistes"
         description="Centralisez vos contacts partenaires, leurs conditions de règlement et vos commandes directes."
@@ -174,6 +175,6 @@ export default function SuppliersPage() {
           initialSupplierId={selectedSupplier?.id}
         />
       ) : null}
-    </div>
+    </PageShell>
   );
 }

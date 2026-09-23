@@ -225,7 +225,7 @@ test.describe('Finalisation Atelier', () => {
             const inset = (value: string) => Math.max(0, -(Number.parseFloat(value) || 0));
             const targetWidth = rect.width + inset(after.left) + inset(after.right);
             const targetHeight = rect.height + inset(after.top) + inset(after.bottom);
-            if (Math.min(targetWidth, targetHeight) < 40) {
+            if (Math.min(targetWidth, targetHeight) < 44) {
               smallTargets.push(
                 `${descriptor(element)} ${Math.round(rect.width)}×${Math.round(rect.height)}`,
               );

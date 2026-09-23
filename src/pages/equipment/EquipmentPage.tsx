@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -247,18 +248,18 @@ export default function EquipmentPage() {
 
   if (equipmentQuery.isError) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 pb-12">
+      <PageShell>
         <PageHeader
           title="Parc Matériel & Outillage"
           description="Inventaire des appareils de mesure, soudeuses optiques, outils électriques et état d'étalonnage."
         />
         <ErrorState error={equipmentQuery.error} onRetry={() => void equipmentQuery.refetch()} />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       <PageHeader
         title="Parc Matériel & Outillage"
         description="Inventaire en direct des appareils de mesure, soudeuses optiques, outils électriques et état d'étalonnage."
@@ -847,6 +848,6 @@ export default function EquipmentPage() {
           technicien avant de continuer.
         </p>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

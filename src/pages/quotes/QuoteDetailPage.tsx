@@ -14,6 +14,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -101,31 +102,31 @@ export default function QuoteDetailPage() {
 
   if (quoteQuery.isError) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6 pb-12">
+      <PageShell width="4xl">
         <PageHeader title="Devis" />
         <ErrorState error={quoteQuery.error} onRetry={() => void quoteQuery.refetch()} />
-      </div>
+      </PageShell>
     );
   }
 
   if (quoteQuery.isPending) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6 pb-12" aria-hidden="true">
+      <PageShell width="4xl" aria-hidden="true">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </PageShell>
     );
   }
 
   if (quote === null) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6 pb-12">
+      <PageShell width="4xl">
         <PageHeader title="Devis introuvable" />
         <ErrorState
           error={new Error('Ce devis n’existe pas ou a été supprimé.')}
           title="Devis introuvable"
         />
-      </div>
+      </PageShell>
     );
   }
 
@@ -155,7 +156,7 @@ export default function QuoteDetailPage() {
     : [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <PageShell width="4xl">
       <Link
         to={ROUTES.quotesHistory}
         className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
@@ -689,6 +690,6 @@ export default function QuoteDetailPage() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -136,7 +137,7 @@ export default function AiDocumentsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <PageShell width="5xl">
       <PageHeader
         title="Documents de l’Assistant IA"
         description="Les PDF déposés ici (notices, procédures, normes) sont indexés et consultés par l’assistant pour répondre à partir de votre propre documentation, avec citation de la source."
@@ -408,6 +409,6 @@ export default function AiDocumentsPage() {
           <FormError error={deleteDocument.error} />
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

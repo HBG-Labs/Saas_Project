@@ -15,6 +15,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -157,7 +158,7 @@ export default function InvoiceDetailPage() {
   const libelle = estAvoir ? 'AVOIR' : 'FACTURE';
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <PageShell width="4xl">
       <Link
         to={ROUTES.invoices}
         className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium transition-colors print:hidden"
@@ -853,6 +854,6 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -198,7 +199,7 @@ export default function PurchaseOrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       <PageHeader
         title="Commandes fournisseurs"
         description="Préparez vos bons de commande, suivez les livraisons et réceptionnez les articles en stock."
@@ -334,6 +335,6 @@ export default function PurchaseOrdersPage() {
           ) : null}
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

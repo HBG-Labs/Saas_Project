@@ -5,6 +5,7 @@ import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -136,7 +137,7 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       {/* Page Header */}
       <PageHeader
         title="Flotte & Véhicules d'intervention"
@@ -389,6 +390,6 @@ export default function VehiclesPage() {
           onAddRecord={addMaintenanceRecord}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

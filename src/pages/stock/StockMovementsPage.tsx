@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { exportToCsv } from '@/lib/csv-export';
@@ -75,7 +76,7 @@ export default function StockMovementsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <PageShell>
       <PageHeader
         title="Mouvements de stock"
         description="Retrouvez chaque entrée, sortie chantier, transfert véhicule et correction d’inventaire."
@@ -136,6 +137,6 @@ export default function StockMovementsPage() {
           consumables={consumables}
         />
       ) : null}
-    </div>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@ import { Bell, Building2, Calendar, Check, ChevronRight, Palette, Shield } from 
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageShell } from '@/components/layout/PageShell';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
 import {
   AppearanceSettingsTab,
@@ -47,7 +48,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <PageShell width="5xl">
       <PageHeader
         title="Paramètres & Cockpit"
         description="Personnalisez votre interface, vos options cartographiques, vos alertes et vos accès de sécurité."
@@ -119,6 +120,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
