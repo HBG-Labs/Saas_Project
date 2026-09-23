@@ -26,6 +26,7 @@ describe('ErrorFallback', () => {
     expect(screen.getByRole('heading', { name: 'Actualisation nécessaire' })).toBeInTheDocument();
     expect(screen.getByText(/Vos données sont conservées/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Actualiser REZO360' })).toBeInTheDocument();
+    expect(document.querySelector('[data-status-visual="refresh"]')).toBeInTheDocument();
     expect(screen.queryByText(/Page-old\.js/)).not.toBeInTheDocument();
   });
 
