@@ -117,7 +117,7 @@ export function AiChatBox({
       {/* Barre supérieure minimale & discrète (fixée en haut) */}
       <div className="border-border bg-surface/95 z-10 flex shrink-0 items-center justify-between border-b px-3 py-2 text-xs backdrop-blur-xs sm:px-4">
         <div className="flex items-center gap-2">
-          <div className="text-foreground flex items-center gap-1.5 font-bold">
+          <h1 className="text-foreground flex items-center gap-1.5 font-bold">
             {/* La pastille dit l'état réel de la liaison. Verte et clignotante
                 alors que rien n'est branché, elle affirmait une connexion. */}
             <span
@@ -125,9 +125,10 @@ export function AiChatBox({
                 'size-2 rounded-full',
                 isDegraded === true ? 'bg-warning' : 'bg-success animate-pulse',
               )}
+              aria-hidden="true"
             />
             <span className="truncate">Assistant REZO360 IA</span>
-          </div>
+          </h1>
           <span className="border-border bg-surface-hover text-3xs text-muted-foreground hidden rounded-md border px-1.5 py-0.5 font-medium sm:inline-block">
             {isDegraded === true ? 'Non relié aux données' : 'Lecture seule · Sécurisé'}
           </span>

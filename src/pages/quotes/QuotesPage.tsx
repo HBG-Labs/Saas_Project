@@ -398,12 +398,15 @@ export default function QuotesPage() {
         <SalesNavTabs />
       </div>
 
-      <header className="border-border bg-surface/95 sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur lg:flex">
-        <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
-          <Link to={ROUTES.quotesHistory} aria-label="Fermer l’éditeur de devis">
-            <X className="size-5" aria-hidden="true" />
-          </Link>
-        </Button>
+      <header className="border-border bg-surface/95 sticky top-0 z-30 hidden h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b px-6 backdrop-blur lg:grid">
+        <div className="flex min-w-0 items-center gap-2">
+          <Button asChild variant="ghost" size="sm" aria-label="Fermer l’éditeur de devis">
+            <Link to={ROUTES.quotesHistory} aria-label="Fermer l’éditeur de devis">
+              <X className="size-5" aria-hidden="true" />
+            </Link>
+          </Button>
+          <h1 className="text-foreground truncate text-sm font-bold">Nouveau devis</h1>
+        </div>
 
         <div className="text-center">
           <p className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
@@ -416,6 +419,7 @@ export default function QuotesPage() {
           type="button"
           variant="outline"
           size="icon"
+          className="justify-self-end"
           onClick={() => setDesktopOptionsOpen((open) => !open)}
           aria-label={
             desktopOptionsOpen ? 'Fermer les options du devis' : 'Ouvrir les options du devis'

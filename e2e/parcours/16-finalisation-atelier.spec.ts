@@ -285,10 +285,66 @@ test.describe('Finalisation Atelier', () => {
           }
         }
 
+        const brokenAriaReferences: string[] = [];
+        for (const element of root.querySelectorAll(
+          '[aria-labelledby], [aria-describedby], [aria-errormessage]',
+        )) {
+          for (const attribute of ['aria-labelledby', 'aria-describedby', 'aria-errormessage']) {
+            const references = element.getAttribute(attribute)?.trim().split(/\s+/) ?? [];
+            for (const reference of references) {
+              if (reference && !document.getElementById(reference)) {
+                brokenAriaReferences.push(`${descriptor(element)} → ${attribute}="${reference}"`);
+              }
+            }
+          }
+        }
+
+        const duplicateIds = [...document.querySelectorAll<HTMLElement>('[id]')]
+          .map((element) => element.id)
+          .filter((id, index, ids) => id !== '' && ids.indexOf(id) !== index)
+          .filter((id, index, ids) => ids.indexOf(id) === index);
+
+        const hiddenFocusable: string[] = [];
+        for (const hiddenRoot of document.querySelectorAll('[aria-hidden="true"]')) {
+          const candidates = hiddenRoot.matches(
+            'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          )
+            ? [hiddenRoot]
+            : [];
+          candidates.push(
+            ...hiddenRoot.querySelectorAll(
+              'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+            ),
+          );
+          for (const candidate of candidates) {
+            if (visible(candidate) && !(candidate as HTMLButtonElement).disabled) {
+              hiddenFocusable.push(descriptor(candidate));
+            }
+          }
+        }
+
+        const keyboardInaccessible: string[] = [];
+        for (const element of root.querySelectorAll(
+          '[role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"]',
+        )) {
+          if (!visible(element)) continue;
+          const nativeInteractive = element.matches(
+            'a[href], button, input, select, textarea, summary',
+          );
+          if (!nativeInteractive && (element as HTMLElement).tabIndex < 0) {
+            keyboardInaccessible.push(descriptor(element));
+          }
+        }
+
         return {
           unnamed: unnamed.slice(0, 8),
           smallTargets: smallTargets.slice(0, 8),
           clippedContent: clippedContent.slice(0, 8),
+          brokenAriaReferences: brokenAriaReferences.slice(0, 8),
+          duplicateIds: duplicateIds.slice(0, 8),
+          hiddenFocusable: hiddenFocusable.slice(0, 8),
+          keyboardInaccessible: keyboardInaccessible.slice(0, 8),
+          h1Count: [...root.querySelectorAll('h1')].filter(visible).length,
           scrollWidth: document.documentElement.scrollWidth,
           viewportWidth: window.innerWidth,
         };
@@ -307,6 +363,23 @@ test.describe('Finalisation Atelier', () => {
       }
       for (const item of audit.clippedContent) {
         interfaceErrors.push(`${route}: texte hors de sa commande — ${item}`);
+      }
+      for (const item of audit.brokenAriaReferences) {
+        interfaceErrors.push(`${route}: référence ARIA absente — ${item}`);
+      }
+      for (const item of audit.duplicateIds) {
+        interfaceErrors.push(`${route}: identifiant HTML dupliqué — #${item}`);
+      }
+      for (const item of audit.hiddenFocusable) {
+        interfaceErrors.push(
+          `${route}: commande focalisable masquée aux aides techniques — ${item}`,
+        );
+      }
+      for (const item of audit.keyboardInaccessible) {
+        interfaceErrors.push(`${route}: commande inaccessible au clavier — ${item}`);
+      }
+      if (audit.h1Count !== 1) {
+        interfaceErrors.push(`${route}: ${String(audit.h1Count)} titre h1 visible (attendu : 1)`);
       }
     }
 

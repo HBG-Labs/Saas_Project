@@ -51,7 +51,9 @@ describe('AiChatBox', () => {
       />,
     );
 
-    expect(screen.getByText('Assistant REZO360 IA')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Assistant REZO360 IA' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Bonjour ! Comment puis-je vous aider ?')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Historique/ })).toBeInTheDocument();
     expect(
