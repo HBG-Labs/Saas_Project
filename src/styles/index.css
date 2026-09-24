@@ -77,6 +77,9 @@
     --signal-cyan: #39cede;
     --signal-orange: #f97316;
     --signal-lime: #b9f442;
+    --signal-violet: #7657d6;
+    --signal-coral: #e66976;
+    --signal-apricot: #e99a69;
 
     --accent: #0f62c4;
     --accent-foreground: #ffffff;
@@ -179,6 +182,9 @@
     --signal-cyan: #39cede;
     --signal-orange: #f97316;
     --signal-lime: #b9f442;
+    --signal-violet: #a894f0;
+    --signal-coral: #f18b96;
+    --signal-apricot: #f0ae82;
 
     --accent: #6fb0f0;
     --accent-foreground: #17213b;
@@ -262,6 +268,9 @@
   --color-signal-cyan: var(--signal-cyan);
   --color-signal-orange: var(--signal-orange);
   --color-signal-lime: var(--signal-lime);
+  --color-signal-violet: var(--signal-violet);
+  --color-signal-coral: var(--signal-coral);
+  --color-signal-apricot: var(--signal-apricot);
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
@@ -1191,7 +1200,81 @@ input.profile-form-field {
   max-width: 100%;
 }
 .atelier-illustration {
+  --atelier-plan-ink: var(--primary);
+  --atelier-plan-route: var(--signal-cyan);
+  --atelier-plan-zone: var(--primary-subtle);
   animation: atelier-illustration-enter 180ms ease-out both;
+}
+/* Workspace : connaissance, voix et collaboration. */
+.atelier-illustration:is(
+  [data-atelier-illustration='favorites'],
+  [data-atelier-illustration='library'],
+  [data-atelier-illustration='messages'],
+  [data-atelier-illustration='notes'],
+  [data-atelier-illustration='pages']
+) {
+  --atelier-plan-route: var(--signal-violet);
+  --atelier-plan-zone: color-mix(in srgb, var(--signal-violet) 14%, transparent);
+}
+/* Finance : documents commerciaux et flux matériels. */
+.atelier-illustration:is(
+  [data-atelier-illustration='invoices'],
+  [data-atelier-illustration='purchases'],
+  [data-atelier-illustration='quotes'],
+  [data-atelier-illustration='stock']
+) {
+  --atelier-plan-route: var(--signal-coral);
+  --atelier-plan-zone: color-mix(in srgb, var(--signal-apricot) 18%, transparent);
+}
+/* Humain : clients, techniciens et équipes. */
+.atelier-illustration:is(
+  [data-atelier-illustration='customers'],
+  [data-atelier-illustration='invitations'],
+  [data-atelier-illustration='teams'],
+  [data-atelier-illustration='technicians']
+) {
+  --atelier-plan-route: var(--signal-apricot);
+  --atelier-plan-zone: color-mix(in srgb, var(--signal-apricot) 18%, transparent);
+}
+.atelier-illustration-plan {
+  position: absolute;
+  inset-block: 0.25rem;
+  inset-inline: -0.75rem;
+  z-index: -10;
+  overflow: hidden;
+  border-radius: 2rem;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--atelier-plan-ink) 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--atelier-plan-ink) 9%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 72% 78% at center, #000 42%, transparent 100%);
+}
+.atelier-illustration-plan::before,
+.atelier-illustration-plan::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+.atelier-illustration-plan::before {
+  background: var(--atelier-plan-zone);
+  clip-path: polygon(12% 66%, 27% 45%, 46% 50%, 58% 23%, 88% 38%, 80% 76%, 54% 87%, 28% 80%);
+  opacity: 0.7;
+}
+.atelier-illustration-plan::after {
+  background: var(--atelier-plan-route);
+  clip-path: inset(0 100% 0 0);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 280'%3E%3Cpath d='M30 215c42-4 48-59 92-56 48 4 39-72 91-72 42 0 48 52 111 26' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-dasharray='9 7'/%3E%3Ccircle cx='30' cy='215' r='5'/%3E%3Ccircle cx='324' cy='113' r='7'/%3E%3C/svg%3E");
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  animation: atelier-plan-route-draw 760ms cubic-bezier(0.22, 1, 0.36, 1) 90ms forwards;
 }
 @keyframes atelier-illustration-enter {
   from {
@@ -1203,9 +1286,18 @@ input.profile-form-field {
     transform: translateY(0);
   }
 }
+@keyframes atelier-plan-route-draw {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .atelier-illustration {
+  .atelier-illustration,
+  .atelier-illustration-plan::after {
     animation: none;
+  }
+  .atelier-illustration-plan::after {
+    clip-path: inset(0 0 0 0);
   }
 }
 @media (forced-colors: active) {

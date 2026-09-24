@@ -43,12 +43,14 @@ const illustrations = {
   vehicles,
 };
 
+type IllustrationSubject = keyof typeof illustrations;
+
 /** Décor de premier usage : le texte adjacent porte le sens et l'action. */
 export function AtelierIllustration({
   subject,
   className,
 }: {
-  subject: keyof typeof illustrations;
+  subject: IllustrationSubject;
   className?: string;
 }) {
   return (
@@ -60,10 +62,7 @@ export function AtelierIllustration({
         className,
       )}
     >
-      <span
-        data-atelier-orbit="true"
-        className="border-primary/20 absolute inset-x-5 inset-y-8 -z-10 rotate-12 rounded-full border"
-      />
+      <span data-atelier-orbit="true" className="atelier-illustration-plan" />
       <img
         src={illustrations[subject]}
         alt=""
