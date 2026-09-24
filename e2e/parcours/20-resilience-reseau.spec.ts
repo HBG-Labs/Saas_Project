@@ -14,7 +14,8 @@ async function relanceEtVerifie(
   const alerte = page.getByRole('alert').filter({ hasText: titre });
   await expect(alerte).toBeVisible();
   const avant = nombreAppels(appels, table);
-  await alerte.getByRole('button', { name: 'Réessayer' }).click();
+  const retry = alerte.getByRole('button', { name: 'Réessayer' });
+  await retry.click();
   await expect.poll(() => nombreAppels(appels, table)).toBeGreaterThan(avant);
 }
 

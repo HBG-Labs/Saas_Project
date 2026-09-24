@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ErrorState } from './ErrorState';
@@ -27,5 +27,32 @@ describe('états de feedback', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('signale et verrouille une nouvelle tentative tant qu’elle est en cours', async () => {
+    let termine: (() => void) | undefined;
+    const retry = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          termine = resolve;
+        }),
+    );
+
+    render(<ErrorState error={new Error('indisponible')} onRetry={retry} />);
+
+    const button = screen.getByRole('button', { name: /Réessayer/ });
+    fireEvent.click(button);
+
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveAccessibleName(/Nouvelle tentative en cours/);
+
+    await act(async () => {
+      termine?.();
+      await Promise.resolve();
+    });
+
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute('aria-busy');
   });
 });

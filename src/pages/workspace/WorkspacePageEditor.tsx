@@ -152,11 +152,7 @@ export function WorkspacePageEditor({
   if (page.isLoading) return <ListSkeleton rows={6} />;
   if (page.isError) {
     return (
-      <ErrorState
-        error={page.error}
-        title="Page inaccessible"
-        onRetry={() => void page.refetch()}
-      />
+      <ErrorState error={page.error} title="Page inaccessible" onRetry={() => page.refetch()} />
     );
   }
   if (!page.data) return <ErrorState error={null} title="Page introuvable" />;

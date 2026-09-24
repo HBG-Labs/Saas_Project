@@ -305,7 +305,7 @@ export default function WorkspacePagesPage() {
       <ErrorState
         error={spaces.error}
         title="Workspace indisponible"
-        onRetry={() => void spaces.refetch()}
+        onRetry={() => spaces.refetch()}
       />
     );
   }
@@ -583,7 +583,7 @@ export default function WorkspacePagesPage() {
             <ErrorState
               error={archivedPages.error}
               title="Corbeille inaccessible"
-              onRetry={() => void archivedPages.refetch()}
+              onRetry={() => archivedPages.refetch()}
             />
           ) : null}
           {(archivedPages.data ?? []).map((page) => (

@@ -134,7 +134,7 @@ export default function VehiclesPage() {
   }
 
   if (error !== null && vehicles.length === 0) {
-    return <ErrorState error={error} onRetry={() => void refetch()} />;
+    return <ErrorState error={error} onRetry={() => refetch()} />;
   }
 
   return (

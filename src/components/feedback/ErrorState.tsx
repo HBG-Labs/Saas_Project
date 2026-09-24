@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import { toAppError } from '@/lib/errors';
@@ -6,7 +8,7 @@ import { StatusVisual } from './StatusVisual';
 
 export interface ErrorStateProps {
   error: unknown;
-  onRetry?: (() => void) | undefined;
+  onRetry?: (() => unknown) | undefined;
   title?: string;
   className?: string;
 }
@@ -27,6 +29,20 @@ export function ErrorState({
   className,
 }: ErrorStateProps) {
   const appError = toAppError(error);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    if (!onRetry || isRetrying) return;
+
+    setIsRetrying(true);
+    try {
+      await onRetry();
+    } catch {
+      // L'erreur actualisée reste présentée par le composant appelant.
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   return (
     <div
@@ -44,7 +60,14 @@ export function ErrorState({
       </div>
 
       {onRetry ? (
-        <Button variant="outline" size="sm" onClick={onRetry} className="sm:self-center">
+        <Button
+          variant="outline"
+          size="sm"
+          isLoading={isRetrying}
+          loadingLabel="Nouvelle tentative en cours"
+          onClick={() => void handleRetry()}
+          className="sm:self-center"
+        >
           Réessayer
         </Button>
       ) : null}
