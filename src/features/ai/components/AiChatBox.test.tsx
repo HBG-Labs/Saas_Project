@@ -57,6 +57,9 @@ describe('AiChatBox', () => {
     expect(screen.getByText('Bonjour ! Comment puis-je vous aider ?')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Historique/ })).toBeInTheDocument();
     expect(
+      screen.getByRole('textbox', { name: 'Votre message à l’assistant' }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByPlaceholderText(/Poser une question sur vos interventions/),
     ).toBeInTheDocument();
   });

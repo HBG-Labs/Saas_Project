@@ -154,9 +154,12 @@ export function MissionFormFields({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-foreground text-xs font-semibold">
+            <label
+              htmlFor="mission-location-label"
+              className="text-foreground text-xs font-semibold"
+            >
               Précision de lieu / Adresse
-            </span>
+            </label>
             {setValue && (
               <MapLocationPickerDialog
                 initialAddress={watch ? watch('locationLabel') : ''}
@@ -171,6 +174,7 @@ export function MissionFormFields({
             )}
           </div>
           <Input
+            id="mission-location-label"
             placeholder="Armoire PM 12, trottoir pair ou adresse exacte"
             hint="Complète l’adresse du site — ou cliquez pour pointer sur la carte GPS."
             {...register('locationLabel')}

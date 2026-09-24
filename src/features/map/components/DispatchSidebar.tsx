@@ -84,15 +84,15 @@ export function DispatchSidebar({
   };
 
   return (
-    <aside className="w-full h-full flex flex-col bg-surface-subtle/50 rounded-2xl border border-border overflow-hidden shadow-xs">
+    <aside className="bg-surface-subtle/50 border-border flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-xs">
       {/* 1. Header de Recherche & Filtres */}
-      <div className="p-3 border-b border-border bg-surface space-y-2.5">
+      <div className="border-border bg-surface space-y-2.5 border-b p-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <h3 className="font-extrabold text-xs text-foreground tracking-tight truncate">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <h3 className="text-foreground truncate text-xs font-extrabold tracking-tight">
               Chantiers & Clients
             </h3>
-            <Badge variant="outline" className="font-mono font-bold px-1.5 py-0">
+            <Badge variant="outline" className="px-1.5 py-0 font-mono font-bold">
               {filtered.length}
             </Badge>
           </div>
@@ -104,7 +104,7 @@ export function DispatchSidebar({
               size="sm"
               onClick={onLocateUser}
               disabled={isLocatingUser}
-              className="text-3xs h-6 px-2 gap-1 text-primary hover:text-primary hover:bg-primary/10"
+              className="text-3xs text-primary hover:text-primary hover:bg-primary/10 h-6 gap-1 px-2"
               title="Calculer les distances depuis ma position"
             >
               <Crosshair className={cn('size-2.5', isLocatingUser && 'animate-spin')} />
@@ -114,12 +114,12 @@ export function DispatchSidebar({
         </div>
 
         {/* Onglets Filtres */}
-        <div className="grid grid-cols-3 gap-1 p-0.5 bg-surface-subtle rounded-xl border border-border text-3xs">
+        <div className="bg-surface-subtle border-border text-3xs grid grid-cols-3 gap-1 rounded-xl border p-0.5">
           <button
             type="button"
             onClick={() => setActiveTab('all')}
             className={cn(
-              'py-1 font-semibold rounded-lg transition-all text-center truncate px-1',
+              'truncate rounded-lg px-1 py-1 text-center font-semibold transition-all',
               activeTab === 'all'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -131,7 +131,7 @@ export function DispatchSidebar({
             type="button"
             onClick={() => setActiveTab('missions')}
             className={cn(
-              'py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1 truncate px-1',
+              'flex items-center justify-center gap-1 truncate rounded-lg px-1 py-1 text-center font-semibold transition-all',
               activeTab === 'missions'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -144,7 +144,7 @@ export function DispatchSidebar({
             type="button"
             onClick={() => setActiveTab('clients')}
             className={cn(
-              'py-1 font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1 truncate px-1',
+              'flex items-center justify-center gap-1 truncate rounded-lg px-1 py-1 text-center font-semibold transition-all',
               activeTab === 'clients'
                 ? 'bg-primary text-primary-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
@@ -156,21 +156,23 @@ export function DispatchSidebar({
         </div>
 
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-muted-foreground pointer-events-none" />
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3 -translate-y-1/2" />
           <Input
             type="search"
+            label="Filtrer la carte"
+            hideLabel
             placeholder="Filtrer par réf, client, ville..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="text-xs pl-7 h-7 bg-surface"
+            className="bg-surface h-7 pl-7 text-xs"
           />
         </div>
       </div>
       {/* 2. Liste des éléments */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
+      <div className="flex-1 space-y-2 overflow-y-auto p-2.5">
         {filtered.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MapPin className="size-6 mx-auto mb-1.5 opacity-40" />
+          <div className="text-muted-foreground py-8 text-center">
+            <MapPin className="mx-auto mb-1.5 size-6 opacity-40" />
             <p className="text-xs font-medium">Aucun lieu géolocalisé</p>
             <p className="text-3xs mt-0.5">
               {searchTerm
@@ -192,18 +194,18 @@ export function DispatchSidebar({
                 onClick={() => onSelectSite(site.id)}
                 onKeyDown={activateOnKey(() => onSelectSite(site.id))}
                 className={cn(
-                  'w-full text-left p-3 rounded-xl border transition-all cursor-pointer space-y-2',
+                  'w-full cursor-pointer space-y-2 rounded-xl border p-3 text-left transition-all',
                   isSelected
                     ? isClient
-                      ? 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/40'
-                      : 'bg-primary/10 border-primary shadow-xs ring-1 ring-primary/40'
+                      ? 'bg-primary/10 border-primary ring-primary/40 shadow-xs ring-1'
+                      : 'bg-primary/10 border-primary ring-primary/40 shadow-xs ring-1'
                     : 'bg-surface hover:border-border-strong hover:bg-surface-hover/50 border-border/70',
                 )}
               >
                 <div className="flex items-start justify-between gap-1.5">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono text-3xs font-bold text-foreground">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-3xs text-foreground font-mono font-bold">
                         {site.reference}
                       </span>
                       <Badge
@@ -213,15 +215,12 @@ export function DispatchSidebar({
                         {isClient ? '🏢 Client' : getPriorityLabel(site.priority)}
                       </Badge>
                       {distance && (
-                        <Badge
-                          variant="success"
-                          className="px-1.5 py-0 font-bold"
-                        >
+                        <Badge variant="success" className="px-1.5 py-0 font-bold">
                           📍 {distance}
                         </Badge>
                       )}
                     </div>
-                    <h4 className="text-xs font-bold text-foreground truncate mt-1">
+                    <h4 className="text-foreground mt-1 truncate text-xs font-bold">
                       {site.title}
                     </h4>
                   </div>
@@ -229,18 +228,16 @@ export function DispatchSidebar({
 
                 <div className="text-3xs text-muted-foreground space-y-0.5">
                   {!isClient && (
-                    <p className="font-medium text-foreground truncate">{site.clientName}</p>
+                    <p className="text-foreground truncate font-medium">{site.clientName}</p>
                   )}
-                  <p className="flex items-start gap-1 text-muted-foreground truncate">
-                    <MapPin className="size-2.5 mt-0.5 shrink-0 opacity-70" />
+                  <p className="text-muted-foreground flex items-start gap-1 truncate">
+                    <MapPin className="mt-0.5 size-2.5 shrink-0 opacity-70" />
                     <span className="truncate">{site.address}</span>
                   </p>
-                  {site.phone && (
-                    <p className="text-muted-foreground truncate">📞 {site.phone}</p>
-                  )}
+                  {site.phone && <p className="text-muted-foreground truncate">📞 {site.phone}</p>}
                 </div>
 
-                <div className="flex items-center gap-1.5 pt-1 border-t border-border/50">
+                <div className="border-border/50 flex items-center gap-1.5 border-t pt-1">
                   <Button
                     type="button"
                     variant="outline"
@@ -253,10 +250,10 @@ export function DispatchSidebar({
                         address: site.address,
                       });
                     }}
-                    className="text-3xs h-6 px-2 flex-1 justify-center gap-1"
+                    className="text-3xs h-6 flex-1 justify-center gap-1 px-2"
                     title="Lancer l'application de navigation GPS"
                   >
-                    <Navigation className="size-2.5 text-primary" />
+                    <Navigation className="text-primary size-2.5" />
                     <span>Itinéraire</span>
                   </Button>
 
@@ -266,12 +263,12 @@ export function DispatchSidebar({
                         asChild
                         variant="outline"
                         size="sm"
-                        className="text-3xs h-6 px-2 gap-1"
+                        className="text-3xs h-6 gap-1 px-2"
                         onClick={(e) => e.stopPropagation()}
                         title="Créer une mission pour ce client"
                       >
                         <Link to={ROUTES.missionNew}>
-                          <PlusCircle className="size-2.5 text-primary" />
+                          <PlusCircle className="text-primary size-2.5" />
                           <span>Mission</span>
                         </Link>
                       </Button>

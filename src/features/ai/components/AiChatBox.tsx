@@ -305,6 +305,7 @@ export function AiChatBox({
             <div className="relative flex-1 py-1">
               <textarea
                 ref={textareaRef}
+                aria-label="Votre message à l’assistant"
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}

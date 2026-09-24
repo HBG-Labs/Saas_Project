@@ -95,6 +95,7 @@ describe('MapPage', () => {
 
     expect(screen.getByText('Cartographie & Chantiers')).toBeInTheDocument();
     expect(screen.getByText('Autour de moi')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Filtrer la carte' })).toBeInTheDocument();
     expect(screen.getByTestId('google-map-view')).toBeInTheDocument();
   });
 });

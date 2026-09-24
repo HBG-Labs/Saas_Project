@@ -209,8 +209,7 @@ test.describe('Finalisation Atelier', () => {
             field.labels?.length ||
             field.getAttribute('aria-label') ||
             field.getAttribute('aria-labelledby') ||
-            field.getAttribute('title') ||
-            field.getAttribute('placeholder');
+            field.getAttribute('title');
           if (!named) unnamed.push(descriptor(element));
         }
 
