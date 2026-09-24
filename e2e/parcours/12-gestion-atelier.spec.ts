@@ -97,6 +97,57 @@ test.describe('Gestion Atelier', () => {
     await page.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
   });
 
+  test('la création d’équipe protège les informations déjà saisies', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/equipes');
+
+    await page.getByRole('button', { name: 'Nouvelle équipe' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nouvelle équipe' });
+    const name = dialog.getByLabel('Nom de l’équipe');
+    await name.fill('Équipe à conserver');
+    await page.keyboard.press('Escape');
+
+    const confirmation = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(name).toHaveValue('Équipe à conserver');
+
+    await dialog.getByRole('button', { name: 'Annuler' }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+  });
+
+  test('les accès collaborateur protègent invitation et création directe', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/organisation/membres');
+
+    await page.getByRole('button', { name: 'Inviter', exact: true }).click();
+    const inviteDialog = page.getByRole('dialog', { name: 'Inviter un membre' });
+    const inviteEmail = inviteDialog.getByLabel('Adresse e-mail');
+    await inviteEmail.fill('collegue@entreprise.fr');
+    await page.keyboard.press('Escape');
+    let confirmation = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(inviteEmail).toHaveValue('collegue@entreprise.fr');
+    await inviteDialog.getByRole('button', { name: 'Fermer' }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+
+    await page.getByRole('button', { name: 'Créer un compte' }).click();
+    const accountDialog = page.getByRole('dialog', {
+      name: 'Créer le compte d’un collaborateur',
+    });
+    const accountEmail = accountDialog.getByLabel(/Adresse e-mail/);
+    await accountEmail.fill('terrain@entreprise.fr');
+    await page.keyboard.press('Escape');
+    confirmation = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(accountEmail).toHaveValue('terrain@entreprise.fr');
+    await accountDialog.getByRole('button', { name: 'Fermer' }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+  });
+
   test('les vues du planning restent accessibles avec la journée initiale sur téléphone', async ({
     page,
     isMobile,

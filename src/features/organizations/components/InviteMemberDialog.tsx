@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/cn';
 import type { OrgRole } from '@/types/database';
 import type { OrganizationInvitation } from '@/types/domain';
@@ -45,7 +45,7 @@ export function InviteMemberDialog({
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<InviteMemberValues>({
     resolver: zodResolver(inviteMemberSchema),
     defaultValues: { email: '', role: 'technician' },
@@ -77,10 +77,17 @@ export function InviteMemberDialog({
   };
 
   return (
-    <Modal
+    <UnsavedFormModal
       open={open}
       onOpenChange={close}
-      title={created === null ? 'Inviter un membre' : emailSent ? 'Invitation envoyée' : 'Invitation créée'}
+      dirty={created === null && (isDirty || role !== 'technician')}
+      title={
+        created === null
+          ? 'Inviter un membre'
+          : emailSent
+            ? 'Invitation envoyée'
+            : 'Invitation créée'
+      }
       {...(created === null
         ? {
             description:
@@ -105,7 +112,7 @@ export function InviteMemberDialog({
                 <p className="text-foreground font-semibold">
                   Siège supplémentaire à l’acceptation (+5,00 € / mois)
                 </p>
-                <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
+                <p className="text-muted-foreground text-2xs mt-0.5 leading-relaxed">
                   Vous avez atteint les utilisateurs inclus dans votre formule.{' '}
                   <strong>Rien n’est facturé aujourd’hui</strong> : une invitation en attente ne
                   coûte rien. Le siège devient payable <strong>+5 € / mois</strong>, au prorata, le
@@ -153,7 +160,9 @@ export function InviteMemberDialog({
             role="status"
             className={cn(
               'rounded-xl border p-4',
-              emailSent ? 'border-success/40 bg-success-subtle' : 'border-warning/40 bg-warning-subtle',
+              emailSent
+                ? 'border-success/40 bg-success-subtle'
+                : 'border-warning/40 bg-warning-subtle',
             )}
           >
             <p className="text-foreground text-sm font-medium">
@@ -199,6 +208,6 @@ export function InviteMemberDialog({
           </div>
         </div>
       )}
-    </Modal>
+    </UnsavedFormModal>
   );
 }

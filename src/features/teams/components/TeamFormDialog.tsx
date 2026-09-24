@@ -4,9 +4,9 @@ import { useId, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { listCategories } from '@/features/catalog';
@@ -37,6 +37,7 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [slugEdited, setSlugEdited] = useState(false);
   const [categoryId, setCategoryId] = useState(team?.category_id ?? '');
+  const [savedCategoryId, setSavedCategoryId] = useState(team?.category_id ?? '');
 
   const createTeam = useCreateTeam();
   const updateTeam = useUpdateTeam(team?.id ?? '');
@@ -62,7 +63,7 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
     setValue,
     setError,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<TeamValues>({
     resolver: zodResolver(teamSchema),
     defaultValues: {
@@ -99,8 +100,16 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
           ...(color !== undefined && color !== '' ? { color } : {}),
           ...(categoryId !== '' ? { categoryId } : {}),
         });
-        reset();
       }
+      if (isEdit) {
+        reset(values);
+        setSavedCategoryId(categoryId);
+      } else {
+        reset();
+        setCategoryId('');
+        setSavedCategoryId('');
+      }
+      setSlugEdited(false);
       setOpen(false);
     } catch (error) {
       // `unique (organization_id, slug)` est la seule contrainte d'unicité
@@ -115,24 +124,25 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
   });
 
   return (
-    <Modal
+    <UnsavedFormModal
       presentation="drawer"
-      footer={
+      dirty={isDirty || categoryId !== savedCategoryId}
+      onDiscard={() => {
+        reset();
+        setCategoryId(savedCategoryId);
+        setSlugEdited(false);
+        setSubmitError(null);
+      }}
+      renderFooter={(requestClose) => (
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={requestClose}>
             Annuler
           </Button>
           <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer l’équipe'}
           </Button>
         </div>
-      }
+      )}
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
@@ -201,6 +211,6 @@ export function TeamFormDialog({ organizationId, team, trigger }: TeamFormDialog
           {...register('color')}
         />
       </form>
-    </Modal>
+    </UnsavedFormModal>
   );
 }

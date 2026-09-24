@@ -8,7 +8,11 @@ interface UnsavedFormModalProps extends Omit<ModalProps, 'footer' | 'onOpenChang
   dirty: boolean;
   onOpenChange: (open: boolean) => void;
   onDiscard?: () => void;
-  renderFooter: (requestClose: () => void) => ReactNode;
+  renderFooter?: (requestClose: () => void) => ReactNode;
+  closeConfirmationTitle?: string;
+  closeConfirmationDescription?: string;
+  closeConfirmationContinueAction?: string;
+  closeConfirmationAction?: string;
 }
 
 /**
@@ -25,6 +29,10 @@ export function UnsavedFormModal({
   onOpenChange,
   onDiscard,
   renderFooter,
+  closeConfirmationTitle = 'Quitter sans enregistrer ?',
+  closeConfirmationDescription = 'Vos modifications non enregistrées seront perdues.',
+  closeConfirmationContinueAction = 'Continuer à modifier',
+  closeConfirmationAction = 'Quitter sans enregistrer',
   title,
   description,
   children,
@@ -63,7 +71,7 @@ export function UnsavedFormModal({
       {...modalProps}
       open={open}
       onOpenChange={handleOpenChange}
-      title={confirmingClose ? 'Quitter sans enregistrer ?' : title}
+      title={confirmingClose ? closeConfirmationTitle : title}
       {...(!confirmingClose && description !== undefined ? { description } : {})}
       footer={
         confirmingClose ? (
@@ -76,22 +84,20 @@ export function UnsavedFormModal({
                 setConfirmingClose(false);
               }}
             >
-              Continuer à modifier
+              {closeConfirmationContinueAction}
             </Button>
             <Button type="button" variant="danger" className="w-full sm:w-auto" onClick={discard}>
-              Quitter sans enregistrer
+              {closeConfirmationAction}
             </Button>
           </div>
         ) : (
-          renderFooter(requestClose)
+          renderFooter?.(requestClose)
         )
       }
     >
       <div hidden={confirmingClose}>{children}</div>
       {confirmingClose ? (
-        <p className="text-muted-foreground text-sm">
-          Vos modifications non enregistrées seront perdues.
-        </p>
+        <p className="text-muted-foreground text-sm">{closeConfirmationDescription}</p>
       ) : null}
     </Modal>
   );

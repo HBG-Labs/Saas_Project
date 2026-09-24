@@ -2,9 +2,9 @@ import { Check, Copy, KeyRound, Sparkles, UserCheck, UserPlus } from 'lucide-rea
 import { useState } from 'react';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import type { OrgRole } from '@/types/database';
 
 import type { CreatedMemberAccount } from '../api/organizations.api';
@@ -101,9 +101,26 @@ export function AddMemberDialog({
   };
 
   return (
-    <Modal
+    <UnsavedFormModal
       open={open}
       onOpenChange={close}
+      dirty={
+        account !== null ||
+        email !== '' ||
+        displayName !== '' ||
+        jobTitle !== '' ||
+        password !== '' ||
+        role !== 'technician'
+      }
+      {...(account === null
+        ? {}
+        : {
+            closeConfirmationTitle: 'Fermer sans conserver les accès ?',
+            closeConfirmationDescription:
+              'Ce mot de passe n’est affiché qu’une fois. Copiez les accès avant de fermer.',
+            closeConfirmationContinueAction: 'Revenir aux accès',
+            closeConfirmationAction: 'Fermer quand même',
+          })}
       title={account === null ? 'Créer le compte d’un collaborateur' : 'Compte créé'}
       description={
         account === null
@@ -119,8 +136,8 @@ export function AddMemberDialog({
     >
       {account !== null ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-success/40 bg-success/10 p-4">
-            <div className="flex items-center gap-2 text-base font-semibold text-success">
+          <div className="border-success/40 bg-success/10 rounded-xl border p-4">
+            <div className="text-success flex items-center gap-2 text-base font-semibold">
               <UserCheck className="size-5" />
               <span>{displayName.trim() === '' ? account.email : displayName}</span>
             </div>
@@ -136,7 +153,7 @@ export function AddMemberDialog({
               </div>
               <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-3">
                 <dt className="text-muted-foreground">Mot de passe</dt>
-                <dd className="text-success break-all font-bold tracking-wider">
+                <dd className="text-success font-bold tracking-wider break-all">
                   {account.password}
                 </dd>
               </div>
@@ -144,9 +161,9 @@ export function AddMemberDialog({
           </div>
 
           <p className="text-muted-foreground text-2xs leading-relaxed">
-            Ce mot de passe est provisoire et n’est affiché qu’une fois. Invitez votre
-            collaborateur à le changer depuis son profil — ou à utiliser « mot de passe oublié »,
-            qui fonctionne dès maintenant sur cette adresse.
+            Ce mot de passe est provisoire et n’est affiché qu’une fois. Invitez votre collaborateur
+            à le changer depuis son profil — ou à utiliser « mot de passe oublié », qui fonctionne
+            dès maintenant sur cette adresse.
           </p>
 
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -167,9 +184,13 @@ export function AddMemberDialog({
             <div className="border-primary/40 bg-primary/10 flex items-start gap-2.5 rounded-xl border p-3 text-xs">
               <Sparkles className="text-primary mt-0.5 size-4 shrink-0" />
               <div>
-                <p className="text-foreground font-semibold">Siège supplémentaire (+5,00 € / mois)</p>
-                <p className="text-muted-foreground mt-0.5 text-2xs leading-relaxed">
-                  Vous avez atteint les utilisateurs inclus dans votre formule. L&apos;ajout de ce membre sera facturé <strong>+5 € / mois</strong> ajusté au prorata sur votre abonnement.
+                <p className="text-foreground font-semibold">
+                  Siège supplémentaire (+5,00 € / mois)
+                </p>
+                <p className="text-muted-foreground text-2xs mt-0.5 leading-relaxed">
+                  Vous avez atteint les utilisateurs inclus dans votre formule. L&apos;ajout de ce
+                  membre sera facturé <strong>+5 € / mois</strong> ajusté au prorata sur votre
+                  abonnement.
                 </p>
               </div>
             </div>
@@ -236,6 +257,6 @@ export function AddMemberDialog({
           </Button>
         </form>
       )}
-    </Modal>
+    </UnsavedFormModal>
   );
 }

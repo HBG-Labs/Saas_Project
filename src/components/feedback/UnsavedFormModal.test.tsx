@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/Button';
 
 import { UnsavedFormModal } from './UnsavedFormModal';
 
-function TestFormModal({ onDiscard = vi.fn() }: { onDiscard?: () => void }) {
+function TestFormModal({
+  onDiscard = vi.fn(),
+  customConfirmation = false,
+}: {
+  onDiscard?: () => void;
+  customConfirmation?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
 
@@ -24,6 +30,14 @@ function TestFormModal({ onDiscard = vi.fn() }: { onDiscard?: () => void }) {
           setValue('');
           onDiscard();
         }}
+        {...(customConfirmation
+          ? {
+              closeConfirmationTitle: 'Fermer sans copier ?',
+              closeConfirmationDescription: 'Cette information ne sera plus affichée.',
+              closeConfirmationContinueAction: 'Revenir à l’information',
+              closeConfirmationAction: 'Fermer quand même',
+            }
+          : {})}
         title="Modifier la fiche"
         renderFooter={(requestClose) => (
           <Button variant="outline" onClick={requestClose}>
@@ -72,5 +86,20 @@ describe('UnsavedFormModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
     expect(screen.getByRole('textbox', { name: 'Nom' })).toHaveValue('');
+  });
+
+  it('adapte la confirmation aux informations sensibles affichées une seule fois', async () => {
+    const user = userEvent.setup();
+    render(<TestFormModal customConfirmation />);
+
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    await user.type(screen.getByRole('textbox', { name: 'Nom' }), 'secret provisoire');
+    await user.click(screen.getByRole('button', { name: 'Fermer' }));
+
+    expect(screen.getByRole('dialog', { name: 'Fermer sans copier ?' })).toBeVisible();
+    expect(screen.getByText('Cette information ne sera plus affichée.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Fermer quand même' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Revenir à l’information' }));
+    expect(screen.getByRole('textbox', { name: 'Nom' })).toHaveValue('secret provisoire');
   });
 });

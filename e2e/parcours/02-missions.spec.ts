@@ -63,6 +63,26 @@ test.describe('Missions', () => {
     );
   });
 
+  test('une modification commencée reste protégée dans le panneau mission', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto(`/missions/${MISSION_ID}`);
+
+    await page.getByRole('button', { name: 'Modifier', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Modifier la mission' });
+    const title = dialog.getByLabel('Intitulé');
+    await title.fill('Mission modifiée à conserver');
+    await page.keyboard.press('Escape');
+
+    const confirmation = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(title).toHaveValue('Mission modifiée à conserver');
+
+    await dialog.getByRole('button', { name: 'Annuler' }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+  });
+
   /*
     LES DEUX TESTS QUI COMPTENT.
 

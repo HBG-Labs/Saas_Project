@@ -4,8 +4,8 @@ import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import { forwardGeocode } from '@/features/geo';
 import type { MissionPriority } from '@/types/database';
 import type { MissionWithRelations } from '@/types/domain';
@@ -32,20 +32,29 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
   const [priority, setPriority] = useState<MissionPriority>(mission.priority);
   const [customerId, setCustomerId] = useState<string | null>(mission.customer_id);
   const [siteId, setSiteId] = useState<string | null>(mission.site_id);
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+  const initialCoords =
     mission.latitude != null && mission.longitude != null
       ? { latitude: mission.latitude, longitude: mission.longitude }
-      : null,
+      : null;
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    initialCoords,
   );
+  const [savedControls, setSavedControls] = useState({
+    priority: mission.priority,
+    customerId: mission.customer_id,
+    siteId: mission.site_id,
+    coords: initialCoords,
+  });
 
   const updateMission = useUpdateMission(mission.id);
 
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<MissionValues>({
     resolver: zodResolver(missionSchema),
     defaultValues: {
@@ -99,31 +108,46 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
         longitude: finalLng,
       });
 
+      const nextCoords =
+        finalLat != null && finalLng != null ? { latitude: finalLat, longitude: finalLng } : null;
+      reset(values);
+      setCoords(nextCoords);
+      setSavedControls({ priority, customerId, siteId, coords: nextCoords });
       setOpen(false);
     } catch (error) {
       setSubmitError(error);
     }
   });
 
+  const controlsDirty =
+    priority !== savedControls.priority ||
+    customerId !== savedControls.customerId ||
+    siteId !== savedControls.siteId ||
+    coords?.latitude !== savedControls.coords?.latitude ||
+    coords?.longitude !== savedControls.coords?.longitude;
+
   return (
-    <Modal
+    <UnsavedFormModal
       presentation="drawer"
-      footer={
+      dirty={isDirty || controlsDirty}
+      onDiscard={() => {
+        reset();
+        setPriority(savedControls.priority);
+        setCustomerId(savedControls.customerId);
+        setSiteId(savedControls.siteId);
+        setCoords(savedControls.coords);
+        setSubmitError(null);
+      }}
+      renderFooter={(requestClose) => (
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={requestClose}>
             Annuler
           </Button>
           <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </div>
-      }
+      )}
       open={open}
       onOpenChange={setOpen}
       size="lg"
@@ -156,6 +180,6 @@ export function MissionEditDialog({ mission, organizationId }: MissionEditDialog
           }
         />
       </form>
-    </Modal>
+    </UnsavedFormModal>
   );
 }
