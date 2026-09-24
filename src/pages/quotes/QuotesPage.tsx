@@ -20,6 +20,7 @@ import { Link, useLocation } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedChangesGuard } from '@/components/feedback/UnsavedChangesGuard';
 import { DocumentWizardStepper } from '@/components/finance/DocumentWizardStepper';
 import { SalesNavTabs } from '@/components/finance/SalesNavTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -177,12 +178,15 @@ export default function QuotesPage() {
   const [items, setItems] = useState<QuoteLineItem[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [desktopOptionsOpen, setDesktopOptionsOpen] = useState(false);
-  const [documentOptions, setDocumentOptions] = useState<DocumentOptions>({
+  const [initialDocumentOptions] = useState<DocumentOptions>(() => ({
     ...DEFAULT_DOCUMENT_OPTIONS,
     showFreeField: calculationNote.length > 0,
     showAcceptanceTerms: true,
     showSignature: true,
-  });
+  }));
+  const [documentOptions, setDocumentOptions] = useState<DocumentOptions>(
+    () => initialDocumentOptions,
+  );
   const [numberingOpen, setNumberingOpen] = useState(false);
   const [discountRate, setDiscountRate] = useState(0);
   const [documentTitle, setDocumentTitle] = useState('');
@@ -285,11 +289,26 @@ export default function QuotesPage() {
   const quoteNumber = savedReference ?? 'brouillon non enregistré';
   // Initialiseurs paresseux : la date d'émission d'un devis est fixée à
   // l'ouverture de l'écran, elle ne doit pas se recalculer à chaque rendu.
-  const [issueDateIso, setIssueDateIso] = useState(() => localIsoDate(new Date()));
+  const [initialIssueDate] = useState(() => localIsoDate(new Date()));
+  const [issueDateIso, setIssueDateIso] = useState(() => initialIssueDate);
   const [validityDays, setValidityDays] = useState(60);
   const validUntilIso = addCalendarDays(issueDateIso, validityDays);
   const issueDateLabel = formatDocumentDate(issueDateIso);
   const validUntilDate = formatDocumentDate(validUntilIso);
+  const hasUnsavedDraft =
+    savedQuoteId === null &&
+    (customerId !== null ||
+      siteId !== null ||
+      clientName.trim() !== '' ||
+      siteName.trim() !== '' ||
+      items.length > 0 ||
+      documentTitle.trim() !== '' ||
+      freeField.trim() !== '' ||
+      discountRate !== 0 ||
+      vatInput !== String(organizationVatRate) ||
+      issueDateIso !== initialIssueDate ||
+      validityDays !== 60 ||
+      JSON.stringify(documentOptions) !== JSON.stringify(initialDocumentOptions));
   const sellerNameInput =
     documentOptions.sellerName ?? organization?.name ?? organization?.legal_name ?? 'REZO360 Pro';
   const sellerName = documentSellerName(
@@ -382,6 +401,11 @@ export default function QuotesPage() {
 
   return (
     <div className="lg:bg-surface-sunken mx-auto max-w-6xl space-y-6 pb-12 lg:fixed lg:inset-0 lg:z-50 lg:max-w-none lg:space-y-0 lg:overflow-y-auto lg:pb-24">
+      <UnsavedChangesGuard
+        when={hasUnsavedDraft}
+        title="Quitter le devis non enregistré ?"
+        description="Le client, les prestations et les conditions saisies dans ce brouillon seront perdus."
+      />
       <div className="lg:hidden">
         <PageHeader
           title="Nouveau devis"

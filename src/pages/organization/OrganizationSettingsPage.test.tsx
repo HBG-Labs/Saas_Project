@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import OrganizationSettingsPage from './OrganizationSettingsPage';
@@ -65,6 +65,11 @@ vi.mock('@/features/industries', () => ({
   }),
 }));
 
+function renderPage() {
+  const router = createMemoryRouter([{ path: '*', element: <OrganizationSettingsPage /> }]);
+  return render(<RouterProvider router={router} />);
+}
+
 describe('OrganizationSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,11 +80,7 @@ describe('OrganizationSettingsPage', () => {
   });
 
   it('affiche le formulaire des paramètres avec les valeurs actuelles', () => {
-    render(
-      <MemoryRouter>
-        <OrganizationSettingsPage />
-      </MemoryRouter>,
-    );
+    renderPage();
 
     expect(screen.getByText("Paramètres de l'entreprise")).toBeInTheDocument();
     expect(screen.getByDisplayValue('HBZIndustrie')).toBeInTheDocument();
@@ -89,11 +90,7 @@ describe('OrganizationSettingsPage', () => {
     mockMutateAsync.mockResolvedValueOnce({ ...mockOrg, name: 'HBZIndustrie Updated' });
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <OrganizationSettingsPage />
-      </MemoryRouter>,
-    );
+    renderPage();
 
     const nameInput = screen.getByLabelText(/Nom de l’entreprise/i);
     await user.clear(nameInput);
@@ -140,11 +137,7 @@ describe('OrganizationSettingsPage', () => {
     );
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <OrganizationSettingsPage />
-      </MemoryRouter>,
-    );
+    renderPage();
 
     const nameInput = screen.getByLabelText(/Nom de l’entreprise/i);
     await user.clear(nameInput);
@@ -185,11 +178,7 @@ describe('OrganizationSettingsPage', () => {
     );
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <OrganizationSettingsPage />
-      </MemoryRouter>,
-    );
+    renderPage();
 
     const siretInput = screen.getByLabelText('SIRET');
     await user.clear(siretInput);

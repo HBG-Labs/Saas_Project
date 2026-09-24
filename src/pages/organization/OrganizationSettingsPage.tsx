@@ -5,6 +5,8 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { FormError } from '@/components/feedback/FormError';
+import { UnsavedChangesGuard } from '@/components/feedback/UnsavedChangesGuard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +15,6 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Textarea } from '@/components/ui/Textarea';
-import { FormError } from '@/components/feedback/FormError';
 import { ROUTES } from '@/config/routes';
 import { useIndustries } from '@/features/industries';
 import {
@@ -242,6 +243,10 @@ export default function OrganizationSettingsPage() {
 
   return (
     <PageShell width="3xl">
+      <UnsavedChangesGuard
+        when={canUpdate && isDirty && !saved}
+        title="Quitter les paramètres non enregistrés ?"
+      />
       <PageHeader
         title="Paramètres de l'entreprise"
         description={
@@ -364,7 +369,11 @@ export default function OrganizationSettingsPage() {
                     />
                   )}
                 />
-                <Input label="N° TVA intracommunautaire" disabled={!canUpdate} {...register('vatNumber')} />
+                <Input
+                  label="N° TVA intracommunautaire"
+                  disabled={!canUpdate}
+                  {...register('vatNumber')}
+                />
                 <Input
                   label="Taux TVA par défaut (%)"
                   type="number"
@@ -373,7 +382,9 @@ export default function OrganizationSettingsPage() {
                   max="100"
                   hint="Appliqué aux devis et chiffrages"
                   disabled={!canUpdate}
-                  {...(errors.defaultVatRate?.message ? { error: errors.defaultVatRate.message } : {})}
+                  {...(errors.defaultVatRate?.message
+                    ? { error: errors.defaultVatRate.message }
+                    : {})}
                   {...register('defaultVatRate')}
                 />
               </div>
@@ -458,7 +469,8 @@ export default function OrganizationSettingsPage() {
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <span className="text-subtle-foreground text-3xs font-medium">Suggestions :</span>
                   {PAYMENT_TERMS_PRESETS.map((preset) => {
-                    const isActive = (paymentTermsValue || DEFAULT_QUOTE_PAYMENT_TERMS) === preset.text;
+                    const isActive =
+                      (paymentTermsValue || DEFAULT_QUOTE_PAYMENT_TERMS) === preset.text;
                     return (
                       <button
                         key={preset.label}
@@ -467,7 +479,7 @@ export default function OrganizationSettingsPage() {
                         onClick={() => applyPaymentTermsPreset(preset.text)}
                         aria-pressed={isActive}
                         className={cn(
-                          'min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:text-2xs',
+                          'sm:text-2xs min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8',
                           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                           'disabled:cursor-not-allowed disabled:opacity-50',
                           isActive
@@ -506,7 +518,7 @@ export default function OrganizationSettingsPage() {
                         onClick={() => togglePaymentMethod(method)}
                         aria-pressed={isActive}
                         className={cn(
-                          'min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:text-2xs',
+                          'sm:text-2xs min-h-11 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:min-h-8',
                           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
                           'disabled:cursor-not-allowed disabled:opacity-50',
                           isActive
@@ -527,7 +539,9 @@ export default function OrganizationSettingsPage() {
                 hint="Un devis envoyé au client depuis REZO360 et resté sans réponse est relancé dans le même fil à ces échéances, jamais après sa date de validité. Laissez vide pour ne jamais relancer. Cinq échéances au plus."
                 disabled={!canUpdate}
                 inputMode="numeric"
-                {...(errors.quoteReminderDays?.message ? { error: errors.quoteReminderDays.message } : {})}
+                {...(errors.quoteReminderDays?.message
+                  ? { error: errors.quoteReminderDays.message }
+                  : {})}
                 {...register('quoteReminderDays')}
               />
             </CardContent>
@@ -557,7 +571,7 @@ export default function OrganizationSettingsPage() {
               </div>
               {saved && !isDirty ? (
                 <span className="text-success animate-in fade-in flex items-center gap-1.5 text-sm font-semibold">
-                  <Check className="size-4 text-success" />
+                  <Check className="text-success size-4" />
                   <span>Modifications enregistrées. Fermeture…</span>
                 </span>
               ) : null}

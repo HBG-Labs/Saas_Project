@@ -109,6 +109,36 @@ test.describe('Devis', () => {
     expect(overflow).toBeLessThanOrEqual(1);
   });
 
+  test('un brouillon commencé demande confirmation avant de quitter', async ({
+    page,
+    isMobile,
+  }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/devis');
+
+    const client = page.getByLabel(isMobile ? 'Ou nom du client (hors base)' : 'Nom libre');
+    await client.fill('Client à conserver');
+
+    const quitter = isMobile
+      ? page.getByRole('link', { name: 'Devis', exact: true })
+      : page.getByRole('link', { name: 'Fermer l’éditeur de devis' });
+
+    await quitter.click();
+    const confirmation = page.getByRole('dialog', {
+      name: 'Quitter le devis non enregistré ?',
+    });
+    await expect(confirmation).toBeVisible();
+    await expect(page).toHaveURL(/\/devis$/);
+
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(confirmation).toBeHidden();
+    await expect(client).toHaveValue('Client à conserver');
+
+    await quitter.click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(page).toHaveURL(/\/devis\/historique$/);
+  });
+
   test('un devis accepté propose d’être facturé', async ({ page }) => {
     await installeSupabase(page, {
       role: 'owner',
