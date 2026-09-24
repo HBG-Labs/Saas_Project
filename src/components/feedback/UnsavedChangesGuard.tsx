@@ -18,7 +18,7 @@ interface UnsavedChangesGuardProps {
 export function UnsavedChangesGuard({
   when,
   title = 'Quitter sans enregistrer ?',
-  description = 'Vos dernières modifications seront perdues si vous quittez cette page.',
+  description = 'Vos modifications non enregistrées seront perdues.',
 }: UnsavedChangesGuardProps) {
   const shouldBlock = useCallback(
     ({
@@ -46,11 +46,9 @@ export function UnsavedChangesGuard({
     ),
   );
 
-  const blocked = blocker.state === 'blocked';
-
   return (
     <Modal
-      open={blocked}
+      open={blocker.state === 'blocked'}
       onOpenChange={(open) => {
         if (!open && blocker.state === 'blocked') blocker.reset();
       }}

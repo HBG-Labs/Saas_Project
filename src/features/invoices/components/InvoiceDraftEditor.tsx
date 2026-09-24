@@ -7,12 +7,13 @@ import {
   Settings2,
   Trash2,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedChangesGuard } from '@/components/feedback/UnsavedChangesGuard';
 import { DocumentWizardStepper } from '@/components/finance/DocumentWizardStepper';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -107,7 +108,17 @@ const INVOICE_STEPS = [
 const formatMoney = (value: number) =>
   value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: () => void }) {
+function DraftForm({
+  invoice,
+  onCancel,
+  onSaved,
+  onDirtyChange,
+}: {
+  invoice: InvoiceWithItems;
+  onCancel: () => void;
+  onSaved: () => void;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
   const save = useSaveInvoiceDraft(invoice.id);
   const customer = useCustomer(invoice.customer_id ?? undefined);
   const organizationQuery = useOrganization(invoice.organization_id);
@@ -190,6 +201,8 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
       })),
     },
   });
+  const hasUnsavedChanges = isDirty || presentationIsDirty;
+  useEffect(() => onDirtyChange(hasUnsavedChanges), [hasUnsavedChanges, onDirtyChange]);
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const [customerType, country, registrationNumber, vatNumber] = useWatch({
     control,
@@ -292,7 +305,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             vatExemptionReason: item.exemption,
           })),
         });
-        onClose();
+        onSaved();
       } catch {
         /* L'erreur reste visible ; aucune saisie n'est effacée. */
       }
@@ -366,7 +379,10 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
               <div className="min-w-0 space-y-3">
                 <DocumentLogoEditor
                   src={organization?.logo_url}
-                  size={{ width: documentOptions.logoWidth, height: documentOptions.logoHeight }}
+                  size={{
+                    width: documentOptions.logoWidth,
+                    height: documentOptions.logoHeight,
+                  }}
                   onSizeChange={updateLogoSize}
                   onUpload={(file) => uploadLogo.mutateAsync(file)}
                 />
@@ -1011,7 +1027,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
             Retour
           </Button>
         ) : (
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Annuler
           </Button>
         )}
@@ -1038,7 +1054,7 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
         )}
       </div>
       <div className="border-border bg-surface/95 sticky bottom-0 -mx-5 -mb-5 hidden items-center justify-end gap-3 border-t px-6 py-3 backdrop-blur lg:flex">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Annuler
         </Button>
         <Button
@@ -1053,6 +1069,68 @@ function DraftForm({ invoice, onClose }: { invoice: InvoiceWithItems; onClose: (
   );
 }
 
+function OpenInvoiceDraftEditor({
+  invoice,
+  onOpenChange,
+}: {
+  invoice: InvoiceWithItems;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [dirty, setDirty] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const close = () => onOpenChange(false);
+  const requestClose = () => (dirty ? setConfirmClose(true) : close());
+
+  return (
+    <>
+      <UnsavedChangesGuard when={dirty} />
+      <Modal
+        open
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) requestClose();
+        }}
+        size={confirmClose ? 'sm' : 'xl'}
+        title={confirmClose ? 'Quitter sans enregistrer ?' : 'Corriger le brouillon'}
+        description={
+          confirmClose
+            ? 'Vos modifications non enregistrées seront perdues.'
+            : 'Complétez le destinataire, le règlement et les prestations avant l’émission.'
+        }
+        {...(!confirmClose
+          ? {
+              className:
+                'lg:inset-0 lg:h-dvh lg:max-h-none lg:w-screen lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:border-0',
+            }
+          : {})}
+      >
+        <div className={confirmClose ? 'hidden' : undefined}>
+          <DraftForm
+            invoice={invoice}
+            onCancel={requestClose}
+            onSaved={close}
+            onDirtyChange={setDirty}
+          />
+        </div>
+        {confirmClose ? (
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setConfirmClose(false)}
+            >
+              Continuer à modifier
+            </Button>
+            <Button type="button" variant="danger" className="w-full sm:w-auto" onClick={close}>
+              Quitter sans enregistrer
+            </Button>
+          </div>
+        ) : null}
+      </Modal>
+    </>
+  );
+}
+
 export function InvoiceDraftEditor({
   invoice,
   open,
@@ -1062,16 +1140,6 @@ export function InvoiceDraftEditor({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      size="xl"
-      title="Corriger le brouillon"
-      description="Complétez le destinataire, le règlement et les prestations avant l’émission."
-      className="lg:inset-0 lg:h-dvh lg:max-h-none lg:w-screen lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:border-0"
-    >
-      {open && <DraftForm key={invoice.id} invoice={invoice} onClose={() => onOpenChange(false)} />}
-    </Modal>
-  );
+  if (!open) return null;
+  return <OpenInvoiceDraftEditor invoice={invoice} onOpenChange={onOpenChange} />;
 }

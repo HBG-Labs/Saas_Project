@@ -205,6 +205,33 @@ test.describe('Factures', () => {
     await expect(dialog.getByRole('navigation', { name: 'Correction de la facture' })).toBeHidden();
   });
 
+  test('la fermeture d’un brouillon modifié demande confirmation', async ({ page }) => {
+    await installeSupabase(page, {
+      role: 'owner',
+      donnees: {
+        invoices: [facture()],
+        invoice_totals: [factureTotaux()],
+      },
+    });
+
+    await page.goto(`/factures/${FACTURE_ID}`);
+    await page.getByRole('button', { name: 'Modifier le brouillon' }).click();
+
+    const editor = page.getByRole('dialog', { name: 'Corriger le brouillon' });
+    const clientName = editor.getByLabel('Nom du client');
+    await clientName.fill('Saisie à conserver');
+    await editor.getByRole('button', { name: 'Fermer' }).click();
+
+    const confirmation = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(clientName).toHaveValue('Saisie à conserver');
+
+    await editor.getByRole('button', { name: 'Fermer' }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(editor).toBeHidden();
+  });
+
   /*
     Le montant n'est pas dans la table : il vient de la vue `invoice_totals`,
     recollée côté client par `invoice_id`. Si cette jointure casse, la liste

@@ -3,10 +3,12 @@ import {
   render as renderWithTestingLibrary,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from '@/lib/errors';
 import type { InvoiceWithItems } from '@/types/domain';
@@ -16,9 +18,16 @@ function render(ui: ReactNode) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return renderWithTestingLibrary(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  const router = createMemoryRouter(
+    [
+      {
+        path: '*',
+        element: <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+      },
+    ],
+    { initialEntries: ['/factures/invoice-1'] },
   );
+  return renderWithTestingLibrary(<RouterProvider router={router} />);
 }
 
 const state = vi.hoisted(() => ({ save: vi.fn(), error: null as Error | null }));
@@ -227,5 +236,32 @@ describe('correction d’un brouillon', () => {
     expect(close).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Nom du client')).toHaveValue('Nom sur le brouillon corrigé');
     expect(screen.getByText('Ce brouillon a été modifié.')).toBeInTheDocument();
+  });
+
+  it('demande confirmation avant de fermer un brouillon modifié', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    const clientName = screen.getByLabelText('Nom du client');
+    await user.clear(clientName);
+    await user.type(clientName, 'Saisie à conserver');
+    await user.click(screen.getByRole('button', { name: 'Fermer' }));
+
+    const confirmation = await screen.findByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    expect(close).not.toHaveBeenCalled();
+
+    await user.click(within(confirmation).getByRole('button', { name: 'Continuer à modifier' }));
+    expect(clientName).toHaveValue('Saisie à conserver');
+    expect(close).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Fermer' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'Quitter sans enregistrer ?' })).getByRole(
+        'button',
+        { name: 'Quitter sans enregistrer' },
+      ),
+    );
+
+    expect(close).toHaveBeenCalledWith(false);
   });
 });
