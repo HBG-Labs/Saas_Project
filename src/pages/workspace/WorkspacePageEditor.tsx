@@ -150,7 +150,15 @@ export function WorkspacePageEditor({
 }) {
   const page = usePage(pageId);
   if (page.isLoading) return <ListSkeleton rows={6} />;
-  if (page.isError) return <ErrorState error={page.error} title="Page inaccessible" />;
+  if (page.isError) {
+    return (
+      <ErrorState
+        error={page.error}
+        title="Page inaccessible"
+        onRetry={() => void page.refetch()}
+      />
+    );
+  }
   if (!page.data) return <ErrorState error={null} title="Page introuvable" />;
   // Le formulaire naît avec la page chargée : son état initial vient des
   // props, sans effet. Le parent le remonte à chaque changement de page (`key`).

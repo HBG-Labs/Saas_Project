@@ -34,6 +34,7 @@ export default function VehiclesPage() {
     vehicles,
     isLoading,
     error,
+    refetch,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -133,7 +134,7 @@ export default function VehiclesPage() {
   }
 
   if (error !== null && vehicles.length === 0) {
-    return <ErrorState error={error} />;
+    return <ErrorState error={error} onRetry={() => void refetch()} />;
   }
 
   return (

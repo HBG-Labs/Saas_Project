@@ -81,9 +81,7 @@ export function useVehicles(organizationId: string | null) {
     const members = membersQuery.data ?? [];
     if (members.length === 0) return rawVehicles;
 
-    const membersMap = new Map(
-      members.map((m) => [m.id, memberDisplayName(m)]),
-    );
+    const membersMap = new Map(members.map((m) => [m.id, memberDisplayName(m)]));
 
     return rawVehicles.map((v) => ({
       ...v,
@@ -128,6 +126,7 @@ export function useVehicles(organizationId: string | null) {
     vehicles,
     isLoading: query.isPending && organizationId !== null,
     error: ajout.error ?? modification.error ?? suppression.error ?? entretien.error ?? query.error,
+    refetch: query.refetch,
     addVehicle,
     updateVehicle,
     deleteVehicle,

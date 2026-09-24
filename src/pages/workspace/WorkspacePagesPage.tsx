@@ -300,7 +300,15 @@ export default function WorkspacePagesPage() {
     }
   };
 
-  if (spaces.isError) return <ErrorState error={spaces.error} title="Workspace indisponible" />;
+  if (spaces.isError) {
+    return (
+      <ErrorState
+        error={spaces.error}
+        title="Workspace indisponible"
+        onRetry={() => void spaces.refetch()}
+      />
+    );
+  }
 
   return (
     <div className="workspace-atelier space-y-5">
@@ -572,7 +580,11 @@ export default function WorkspacePagesPage() {
           ) : null}
           {archivedPages.isLoading ? <ListSkeleton rows={3} /> : null}
           {archivedPages.isError ? (
-            <ErrorState error={archivedPages.error} title="Corbeille inaccessible" />
+            <ErrorState
+              error={archivedPages.error}
+              title="Corbeille inaccessible"
+              onRetry={() => void archivedPages.refetch()}
+            />
           ) : null}
           {(archivedPages.data ?? []).map((page) => (
             <div
