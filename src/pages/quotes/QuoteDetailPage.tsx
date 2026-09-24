@@ -616,6 +616,9 @@ export default function QuoteDetailPage() {
               size="sm"
               className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={createInvoice.isPending}
+              isLoading={createInvoice.isPending}
+              loadingLabel="Création de la facture"
+              leadingIcon={<ReceiptText className="size-3.5" aria-hidden="true" />}
               onClick={() => {
                 if (!quote.organization_id) return;
                 createInvoice.mutate(
@@ -635,7 +638,6 @@ export default function QuoteDetailPage() {
                 );
               }}
             >
-              <ReceiptText className="size-3.5" aria-hidden="true" />
               {createInvoice.isPending ? 'Création…' : 'Créer la facture'}
             </Button>
           </CardContent>
@@ -682,10 +684,12 @@ export default function QuoteDetailPage() {
           <Button
             variant="danger-outline"
             disabled={deleteQuote.isPending}
+            isLoading={deleteQuote.isPending}
+            loadingLabel="Suppression définitive du devis"
+            leadingIcon={<Trash2 className="size-3.5" aria-hidden="true" />}
             onClick={handleDelete}
             className="w-full gap-1.5 sm:w-auto"
           >
-            <Trash2 className="size-3.5" aria-hidden="true" />
             {deleteQuote.isPending ? 'Suppression…' : 'Supprimer définitivement'}
           </Button>
         </div>

@@ -25,7 +25,7 @@ export function SalesNavTabs() {
   return (
     <nav
       aria-label="Navigation des ventes"
-      className="border-border -mx-4 grid grid-cols-3 gap-1.5 border-b px-4 pb-2.5 sm:mx-0 sm:flex sm:px-0"
+      className="border-border grid grid-cols-3 gap-1.5 border-b pb-2.5 sm:flex"
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;

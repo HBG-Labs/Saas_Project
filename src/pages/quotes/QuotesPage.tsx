@@ -1429,7 +1429,7 @@ export default function QuotesPage() {
         />
       ) : null}
 
-      <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 -mx-4 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border lg:hidden">
+      <div className="border-border bg-surface-raised/95 sticky bottom-16 z-20 flex items-center justify-between gap-3 rounded-xl border px-4 py-3 backdrop-blur md:bottom-0 lg:hidden">
         {currentStep > 0 ? (
           <Button variant="outline" onClick={() => goToStep(currentStep - 1)} className="gap-1.5">
             <ChevronLeft className="size-4" aria-hidden="true" />

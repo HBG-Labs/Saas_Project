@@ -340,9 +340,11 @@ export default function InvoiceDetailPage() {
               size="sm"
               className="w-full justify-center gap-1.5 text-xs sm:w-auto"
               disabled={updateInvoice.isPending}
+              isLoading={updateInvoice.isPending}
+              loadingLabel="Mise à jour du statut de la facture"
+              leadingIcon={<Send className="size-3.5" aria-hidden="true" />}
               onClick={() => updateInvoice.mutate({ status: 'sent' })}
             >
-              <Send className="size-3.5" aria-hidden="true" />
               Marquer comme envoyée
             </Button>
           )}
@@ -363,13 +365,17 @@ export default function InvoiceDetailPage() {
             size="sm"
             className="border-success/40 text-success hover:bg-success/10 w-full justify-center gap-1.5 text-xs sm:w-auto"
             disabled={updateInvoice.isPending || recordPayment.isPending}
+            isLoading={updateInvoice.isPending || recordPayment.isPending}
+            loadingLabel={
+              estAvoir ? 'Enregistrement de l’imputation' : 'Enregistrement du paiement'
+            }
+            leadingIcon={<CheckCircle2 className="size-3.5" aria-hidden="true" />}
             onClick={() =>
               estAvoir
                 ? updateInvoice.mutate({ status: 'paid' })
                 : recordPayment.mutate({ invoiceId: invoice.id })
             }
           >
-            <CheckCircle2 className="size-3.5" aria-hidden="true" />
             {estAvoir ? 'Marquer comme remboursé / imputé' : 'Marquer comme payée'}
           </Button>
 
@@ -418,6 +424,9 @@ export default function InvoiceDetailPage() {
                 size="sm"
                 className="w-full justify-center gap-1.5 text-xs sm:w-auto"
                 disabled={preparationEnvoi || updateInvoice.isPending}
+                isLoading={preparationEnvoi}
+                loadingLabel="Préparation du PDF pour l’envoi"
+                leadingIcon={<Send className="size-3.5" aria-hidden="true" />}
                 onClick={() => {
                   void (async () => {
                     setPreparationEnvoi(true);
@@ -440,7 +449,6 @@ export default function InvoiceDetailPage() {
                   })();
                 }}
               >
-                <Send className="size-3.5" aria-hidden="true" />
                 {preparationEnvoi ? 'Préparation du PDF…' : 'Envoyer au client'}
               </Button>
               <SendToClientDialog
@@ -806,6 +814,10 @@ export default function InvoiceDetailPage() {
               variant="primary"
               className="w-full sm:w-auto"
               disabled={issueInvoice.isPending || !verdict.emissionPossible}
+              isLoading={issueInvoice.isPending}
+              loadingLabel={
+                estAvoir ? 'Émission définitive de l’avoir' : 'Émission définitive de la facture'
+              }
               onClick={() => {
                 issueInvoice.mutate(invoice.updated_at, {
                   onSuccess: () => setConfirmationEmission(false),
@@ -840,6 +852,8 @@ export default function InvoiceDetailPage() {
               variant="danger"
               className="w-full sm:w-auto"
               disabled={deleteInvoice.isPending}
+              isLoading={deleteInvoice.isPending}
+              loadingLabel="Suppression du brouillon de facture"
               onClick={() => {
                 deleteInvoice.mutate(invoice.id, {
                   onSuccess: () => {

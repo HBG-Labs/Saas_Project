@@ -270,11 +270,15 @@ function ConversationThread({
             variant="ghost"
             size="sm"
             disabled={close.isPending}
+            isLoading={close.isPending}
+            loadingLabel={
+              isClosed ? 'Réouverture de la conversation' : 'Clôture de la conversation'
+            }
+            leadingIcon={isClosed ? <LockOpen className="size-4" /> : <Lock className="size-4" />}
             onClick={() => {
               close.mutate({ conversationId: conversation.id, closed: !isClosed });
             }}
           >
-            {isClosed ? <LockOpen className="size-4" /> : <Lock className="size-4" />}
             {isClosed ? 'Rouvrir' : 'Clore'}
           </Button>
         ) : null}
@@ -393,8 +397,10 @@ function ConversationThread({
               type="submit"
               size="sm"
               disabled={isClosed || send.isPending || draft.trim().length === 0}
+              isLoading={send.isPending}
+              loadingLabel="Envoi du message au client"
+              leadingIcon={<Send className="size-4" />}
             >
-              <Send className="size-4" />
               {send.isPending ? 'Envoi…' : 'Envoyer'}
             </Button>
           </div>
