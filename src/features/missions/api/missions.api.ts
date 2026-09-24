@@ -33,6 +33,7 @@ import type {
 const MISSION_SELECT = `
   *,
   category:categories(id, slug, name),
+  intervention_type:intervention_types(id, code, label, icon),
   assigned_team:teams(id, name, color),
   assigned_member:organization_members(
     *, profile:profiles(id, display_name, avatar_id)

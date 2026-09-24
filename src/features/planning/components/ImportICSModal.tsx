@@ -35,6 +35,7 @@ interface ImportICSModalProps {
   members: readonly MemberWithProfile[];
   submitting: boolean;
   onImport: (submission: ImportSubmission) => void;
+  timeZone?: string | undefined;
 }
 
 export function ImportICSModal({
@@ -43,6 +44,7 @@ export function ImportICSModal({
   members,
   submitting,
   onImport,
+  timeZone = 'Europe/Paris',
 }: ImportICSModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [parsedEvents, setParsedEvents] = useState<ParsedICSEvent[]>([]);
@@ -70,7 +72,7 @@ export function ImportICSModal({
     reader.onload = (event) => {
       const content = event.target?.result as string;
       if (content) {
-        const events = parseICS(content);
+        const events = parseICS(content, timeZone);
         if (events.length === 0) {
           setErrorMsg('Aucun événement détecté dans ce fichier iCalendar.');
         } else {
@@ -217,7 +219,13 @@ export function ImportICSModal({
                     <span className="text-foreground truncate font-semibold">{evt.title}</span>
                     <span className="text-3xs text-primary flex shrink-0 items-center gap-1 font-mono font-semibold">
                       <Calendar className="size-3" aria-hidden="true" />
-                      {evt.date}
+                      {evt.scheduledStart
+                        ? new Date(evt.scheduledStart).toLocaleString('fr-FR', {
+                            timeZone,
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })
+                        : evt.date}
                     </span>
                   </div>
                   {evt.details && (

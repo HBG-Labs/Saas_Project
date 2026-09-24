@@ -28,8 +28,8 @@ test.describe('Missions', () => {
     await expect(
       page.getByRole('heading', { name: 'Tirage fibre bâtiment C', level: 1 }),
     ).toBeVisible();
-    await expect(page.getByText('MIS-0413').first()).toBeVisible();
-    await expect(page.getByText('SCI Les Alizés').first()).toBeVisible();
+    await expect(page.getByText('MIS-0413').filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText('SCI Les Alizés').filter({ visible: true }).first()).toBeVisible();
   });
 
   /*

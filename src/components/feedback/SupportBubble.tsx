@@ -9,6 +9,8 @@ import { useAuth } from '@/features/auth';
 import { submitSupportRequest } from '@/features/support';
 import { cn } from '@/lib/cn';
 
+import { OPEN_SUPPORT_EVENT } from './support-dialog-events';
+
 const STORAGE_KEY = 'rezo360_support_bubble_pos';
 
 /** Côté de la pastille, et marge minimale avec les bords. */
@@ -107,6 +109,12 @@ export function SupportBubble() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const open = () => setIsOpen(true);
+    window.addEventListener(OPEN_SUPPORT_EVENT, open);
+    return () => window.removeEventListener(OPEN_SUPPORT_EVENT, open);
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -236,7 +244,7 @@ export function SupportBubble() {
       <div
         style={position ? { left: `${position.x}px`, top: `${position.y}px` } : undefined}
         className={cn(
-          'fixed z-40 touch-none select-none',
+          'fixed z-40 hidden touch-none select-none md:block',
           !position && 'right-6 bottom-6 max-md:right-4 max-md:bottom-20',
         )}
       >

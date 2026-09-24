@@ -14,6 +14,7 @@ import type {
   RecurringTask,
   StaffLeaveBalance,
 } from './types';
+import { organizationDateKey, organizationTime } from './date-utils';
 
 /**
  * Passage des lignes de la base aux formes attendues par les écrans.
@@ -137,13 +138,6 @@ export function toRecurringTask(row: RecurringTaskWithRefs): RecurringTask {
   };
 }
 
-const PRIORITY_MAP: Record<string, PlanningCalendarEvent['priority']> = {
-  low: 'low',
-  normal: 'medium',
-  high: 'high',
-  urgent: 'urgent',
-};
-
 /**
  * Le calendrier n'a pas de table : il compose trois sources.
  *
@@ -156,8 +150,10 @@ export function buildCalendarEvents(params: {
   missions: readonly MissionWithRelations[];
   leaves: readonly LeaveRequestWithMember[];
   holidays: readonly PublicHoliday[];
+  timeZone?: string;
 }): PlanningCalendarEvent[] {
   const events: PlanningCalendarEvent[] = [];
+  const timeZone = params.timeZone ?? 'Europe/Paris';
 
   for (const mission of params.missions) {
     if (mission.scheduled_start === null) continue;
@@ -165,15 +161,9 @@ export function buildCalendarEvents(params: {
     const member = mission.assigned_member;
     const name = member === null ? undefined : memberDisplayName(member);
 
-    const startTime = new Date(mission.scheduled_start).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const startTime = organizationTime(mission.scheduled_start, timeZone);
     const endTime = mission.scheduled_end
-      ? new Date(mission.scheduled_end).toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+      ? organizationTime(mission.scheduled_end, timeZone)
       : undefined;
 
     const address =
@@ -187,21 +177,42 @@ export function buildCalendarEvents(params: {
       missionId: mission.id,
       reference: mission.reference,
       title: mission.title,
-      date: mission.scheduled_start.slice(0, 10),
+      date: organizationDateKey(mission.scheduled_start, timeZone),
       type: 'intervention',
       status: mission.status,
-      priority: PRIORITY_MAP[mission.priority] ?? 'medium',
+      priority: mission.priority,
       clientName: mission.customer?.name ?? mission.customer_name ?? undefined,
+      siteName: mission.site?.name ?? mission.location_label ?? undefined,
       address,
       phone: mission.customer_phone ?? undefined,
       latitude: mission.latitude,
       longitude: mission.longitude,
       startTime,
       endTime,
+      scheduledStart: mission.scheduled_start,
+      ...(mission.scheduled_end !== null ? { scheduledEnd: mission.scheduled_end } : {}),
       time: endTime ? `${startTime} - ${endTime}` : startTime,
       details: mission.customer?.name ?? mission.customer_name ?? undefined,
-      ...(mission.scheduled_end !== null ? { endDate: mission.scheduled_end.slice(0, 10) } : {}),
-      ...(member !== null ? { technicianId: member.id } : {}),
+      ...(mission.scheduled_end !== null
+        ? { endDate: organizationDateKey(mission.scheduled_end, timeZone) }
+        : {}),
+      ...(mission.assigned_team !== null
+        ? {
+            teamId: mission.assigned_team.id,
+            teamName: mission.assigned_team.name,
+            teamColor: mission.assigned_team.color,
+          }
+        : {}),
+      ...(mission.intervention_type != null
+        ? {
+            interventionTypeId: mission.intervention_type.id,
+            interventionTypeLabel: mission.intervention_type.label,
+            interventionTypeIcon: mission.intervention_type.icon,
+          }
+        : {}),
+      ...(member !== null
+        ? { technicianId: member.id, technicianAvatarId: member.profile?.avatar_id }
+        : {}),
       ...(name !== undefined ? { technicianName: name, technicianInitials: initialsOf(name) } : {}),
     });
   }

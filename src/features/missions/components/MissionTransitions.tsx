@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { FormError } from '@/components/feedback/FormError';
 import { Button } from '@/components/ui/Button';
+import { successFeedback } from '@/lib/mobile-feedback';
 import type { OrgRole } from '@/types/database';
 import type { MissionWithRelations } from '@/types/domain';
 
@@ -100,6 +101,7 @@ export function MissionTransitions({ mission, role, isAssignee }: MissionTransit
             onClick={() => {
               setError(null);
               changeStatus.mutate(rule.to, {
+                onSuccess: successFeedback,
                 onError: (mutationError) => {
                   setError(mutationError);
                 },

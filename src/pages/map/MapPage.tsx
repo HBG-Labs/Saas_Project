@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { Compass, Map as MapIcon, List, Crosshair, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -32,6 +32,8 @@ export default function MapPage() {
   const { organization } = useCurrentOrganization();
   const { code: industry, label: industryLabel } = useCurrentIndustry();
   const organizationId = organization?.id ?? null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handledLocateIntent = useRef(false);
 
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [layerMode, setLayerMode] = useState<MapLayerMode>('roadmap');
@@ -153,6 +155,18 @@ export default function MapPage() {
     error: geoError,
     requestPosition: locateUser,
   } = useGeolocation();
+
+  // Le paramètre est posé par le bouton explicite « Ma position » du planning.
+  // Il déclenche une seule lecture ponctuelle, puis disparaît de l'URL : aucun
+  // suivi ni relance silencieuse au prochain rendu.
+  useEffect(() => {
+    if (searchParams.get('locate') !== '1' || handledLocateIntent.current) return;
+    handledLocateIntent.current = true;
+    const next = new URLSearchParams(searchParams);
+    next.delete('locate');
+    setSearchParams(next, { replace: true });
+    void locateUser();
+  }, [locateUser, searchParams, setSearchParams]);
 
   // 4. Conversion et agrégation de TOUS les points cartographiques (Missions + Sites + Clients)
   const allInterventions = useMemo<InterventionSite[]>(() => {

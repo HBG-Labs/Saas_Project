@@ -1,9 +1,20 @@
-import { Building2, Download, LogOut, Menu, Search, Settings, User, WifiOff } from 'lucide-react';
+import {
+  Building2,
+  Download,
+  HelpCircle,
+  LogOut,
+  Menu,
+  Search,
+  Settings,
+  User,
+  WifiOff,
+} from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 import { PwaInstallBanner } from '@/components/feedback/PwaInstallPrompt';
+import { openSupportDialog } from '@/components/feedback/support-dialog-events';
 import { usePwaInstall } from '@/components/feedback/usePwaInstall';
 import { Button } from '@/components/ui/Button';
 import { Dropdown, DropdownItem, DropdownLabel, DropdownSeparator } from '@/components/ui/Dropdown';
@@ -163,7 +174,7 @@ export function AppLayout() {
       </a>
 
       {/* ---------------------------------------------------- BARRE SUPÉRIEURE (HEADER) */}
-      <header className="border-border bg-surface h-app-header fixed inset-x-0 top-0 z-30 border-b">
+      <header className="border-border bg-surface fixed inset-x-0 top-0 z-30 h-[calc(var(--spacing-app-header)+var(--safe-top))] border-b pt-[var(--safe-top)]">
         {/*
           Trois zones, dont une seule est élastique.
 
@@ -251,7 +262,9 @@ export function AppLayout() {
                 <NotificationBell />
               </Suspense>
             )}
-            <ThemeToggle />
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
 
             {isAuthenticated ? (
               <Dropdown
@@ -294,6 +307,11 @@ export function AppLayout() {
                 )}
                 <DropdownSeparator />
                 <div className="sm:hidden">
+                  <DropdownItem onSelect={openSupportDialog}>
+                    <HelpCircle />
+                    Aide & support
+                  </DropdownItem>
+                  <DropdownSeparator />
                   <DropdownLabel>Apparence</DropdownLabel>
                   <ThemeMenuItems />
                   <DropdownSeparator />
@@ -330,7 +348,7 @@ export function AppLayout() {
       {/* ---------------------------------------------------- BARRE LATÉRALE DESKTOP */}
       <aside
         className={cn(
-          'border-border bg-surface top-app-header fixed inset-y-0 left-0 z-20 hidden border-r transition-all duration-200 lg:block',
+          'border-border bg-surface fixed inset-y-0 top-[calc(var(--spacing-app-header)+var(--safe-top))] left-0 z-20 hidden border-r transition-all duration-200 lg:block',
           sidebarCollapsed ? 'w-sidebar-rail' : 'w-sidebar',
         )}
       >
@@ -348,11 +366,13 @@ export function AppLayout() {
         // elle disparaît à `md`, où 80 px de vide n'avaient plus de raison
         // d'être. `safe-x` écarte le contenu des bords arrondis en paysage.
         className={cn(
-          'safe-x px-4 pb-24 transition-all duration-200 sm:px-6 sm:pt-[5rem] md:pb-10 lg:px-7',
+          'safe-x px-3 pb-[calc(6rem+var(--safe-bottom))] transition-all duration-200 sm:px-6 sm:pt-[calc(5rem+var(--safe-top))] md:pb-10 lg:px-7',
           // Le bandeau du profil est une continuité visuelle de la topbar sur
           // mobile. Les autres pages gardent les 20 px de respiration prévus
           // sous l'en-tête ; le bureau conserve aussi cet espacement.
-          isProfilePage ? 'pt-app-header' : 'pt-[5rem]',
+          isProfilePage
+            ? 'pt-[calc(var(--spacing-app-header)+var(--safe-top))]'
+            : 'pt-[calc(5rem+var(--safe-top))]',
           sidebarCollapsed
             ? 'lg:pl-[calc(var(--spacing-sidebar-rail)+1.75rem)]'
             : 'lg:pl-[calc(var(--spacing-sidebar)+1.75rem)]',

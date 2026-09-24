@@ -1,10 +1,6 @@
-export type LeaveType =
-  | 'paid_leave'
-  | 'rtt'
-  | 'sick_leave'
-  | 'unpaid'
-  | 'family'
-  | 'recovery';
+import type { MissionPriority, MissionStatus } from '@/types/database';
+
+export type LeaveType = 'paid_leave' | 'rtt' | 'sick_leave' | 'unpaid' | 'family' | 'recovery';
 
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
@@ -48,17 +44,27 @@ export interface PlanningCalendarEvent {
   technicianId?: string | undefined;
   technicianName?: string | undefined;
   technicianInitials?: string | undefined;
+  technicianAvatarId?: string | null | undefined;
+  teamId?: string | undefined;
+  teamName?: string | undefined;
+  teamColor?: string | null | undefined;
   tradeLabel?: string | undefined;
   trade?: string | undefined;
+  interventionTypeId?: string | undefined;
+  interventionTypeLabel?: string | undefined;
+  interventionTypeIcon?: string | null | undefined;
   time?: string | undefined;
   startTime?: string | undefined;
   endTime?: string | undefined;
+  scheduledStart?: string | undefined;
+  scheduledEnd?: string | undefined;
   details?: string | undefined;
-  status?: string | undefined;
-  priority?: ('low' | 'medium' | 'high' | 'urgent') | undefined;
+  status?: MissionStatus | LeaveStatus | undefined;
+  priority?: MissionPriority | undefined;
   missionId?: string | undefined;
   reference?: string | undefined;
   clientName?: string | undefined;
+  siteName?: string | undefined;
   address?: string | undefined;
   phone?: string | undefined;
   latitude?: number | null | undefined;
@@ -79,13 +85,7 @@ export interface RecurringTask {
 }
 
 export type HolidayTerritory =
-  | 'metropole'
-  | 'martinique'
-  | 'guadeloupe'
-  | 'guyane'
-  | 'reunion'
-  | 'mayotte'
-  | 'alsace_moselle';
+  'metropole' | 'martinique' | 'guadeloupe' | 'guyane' | 'reunion' | 'mayotte' | 'alsace_moselle';
 
 export interface PublicHoliday {
   date: string;

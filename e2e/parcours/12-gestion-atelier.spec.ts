@@ -64,25 +64,37 @@ test.describe('Gestion Atelier', () => {
     await expect(dialog.getByLabel('Nom du client')).toHaveValue('Client conservé');
   });
 
-  test('les vues du planning restent accessibles avec un agenda initial sur téléphone', async ({
+  test('les vues du planning restent accessibles avec la journée initiale sur téléphone', async ({
     page,
     isMobile,
   }) => {
     await installeSupabase(page, { role: 'owner' });
     await page.goto('/planning');
     const calendar = page.locator('.gestion-calendar');
-    const agenda = calendar.getByRole('button', { name: 'Agenda', exact: true });
-    await expect(agenda).toHaveAttribute('aria-pressed', String(isMobile));
-    await calendar.getByRole('button', { name: 'Mois', exact: true }).click();
-    await expect(calendar.getByRole('button', { name: 'Mois', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await agenda.click();
-    await expect(agenda).toHaveAttribute('aria-pressed', 'true');
-    await expect(
-      calendar.getByRole('textbox', { name: 'Rechercher dans le planning' }),
-    ).toBeVisible();
+    if (isMobile) {
+      const day = calendar.getByRole('button', { name: 'Jour', exact: true });
+      await expect(day).toHaveAttribute('aria-pressed', 'true');
+      await calendar.getByRole('button', { name: 'Mois', exact: true }).click();
+      await expect(calendar.getByRole('button', { name: 'Mois', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await day.click();
+      await expect(day).toHaveAttribute('aria-pressed', 'true');
+      await calendar.getByRole('button', { name: /ouvrir les filtres/i }).click();
+      await expect(page.getByRole('dialog', { name: 'Filtres' })).toBeVisible();
+      await expect(page.getByPlaceholder('Rechercher…')).toBeVisible();
+      await page.keyboard.press('Escape');
+    } else {
+      const agenda = calendar.getByRole('button', { name: 'Agenda', exact: true });
+      await expect(agenda).toHaveAttribute('aria-pressed', 'false');
+      await calendar.getByRole('button', { name: 'Mois', exact: true }).click();
+      await agenda.click();
+      await expect(agenda).toHaveAttribute('aria-pressed', 'true');
+      await expect(
+        calendar.getByRole('textbox', { name: 'Rechercher dans le planning' }),
+      ).toBeVisible();
+    }
     const overflow = await page
       .locator('main')
       .evaluate((element) => element.scrollWidth - element.clientWidth);

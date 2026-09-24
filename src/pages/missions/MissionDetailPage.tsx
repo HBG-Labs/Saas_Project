@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   Clock3,
@@ -12,7 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -143,6 +144,7 @@ function toDialable(phone: string): string {
 export default function MissionDetailPage() {
   const { missionId } = useParams<{ missionId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { organization, membership } = useCurrentOrganization();
   const { can, role } = usePermission();
 
@@ -194,6 +196,12 @@ export default function MissionDetailPage() {
   }
 
   const data = mission.data;
+  const requestedBack = (location.state as { from?: unknown } | null)?.from;
+  const backTarget =
+    typeof requestedBack === 'string' && requestedBack.startsWith(ROUTES.planning)
+      ? requestedBack
+      : ROUTES.missions;
+  const backLabel = backTarget.startsWith(ROUTES.planning) ? 'Planning' : 'Missions';
 
   /** Adresse telle qu'affichée — peut rester vide, la mission n'en exige pas. */
   const address = formatAddress(data);
@@ -231,30 +239,129 @@ export default function MissionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to={ROUTES.missions}>
+      <div className="space-y-3 md:hidden">
+        <Link
+          to={backTarget}
+          className="text-muted-foreground focus-visible:ring-ring min-h-touch -ml-1 inline-flex items-center gap-1 rounded-lg px-1 text-xs font-bold focus-visible:ring-2 focus-visible:outline-none"
+        >
           <ArrowLeft className="size-4" />
-          Missions
+          {backLabel}
         </Link>
-      </Button>
 
-      <PageHeader
-        title={data.title}
-        {...(data.description !== null && data.description !== ''
-          ? { description: data.description }
-          : {})}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/*
-              Réservé à `mission.update`. Le trigger `enforce_mission_assignee_scope`
-              interdit à l'intervenant de modifier tout ce que ce formulaire
-              touche : lui ouvrir la fenêtre reviendrait à le laisser saisir dix
-              champs pour se voir refuser à l'enregistrement.
-            */}
+        <section className="border-border bg-surface-raised overflow-hidden rounded-2xl border shadow-xs">
+          <div className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <MissionStatusBadge status={data.status} />
+              <span className="text-muted-foreground text-2xs font-mono font-bold">
+                {data.reference}
+              </span>
+            </div>
+            <div>
+              {data.intervention_type ? (
+                <p className="text-primary text-3xs font-bold tracking-wide uppercase">
+                  {data.intervention_type.label}
+                </p>
+              ) : null}
+              <h1 className="text-foreground mt-1 text-xl leading-tight font-extrabold tracking-tight">
+                {data.title}
+              </h1>
+              {data.customer?.name || data.customer_name ? (
+                <p className="text-foreground mt-2 text-sm font-semibold">
+                  {data.customer?.name ?? data.customer_name}
+                </p>
+              ) : null}
+              {data.site?.name || address ? (
+                <p className="text-muted-foreground mt-1 flex items-start gap-1.5 text-xs">
+                  <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  <span>{joinParts([data.site?.name, address])}</span>
+                </p>
+              ) : null}
+            </div>
+
+            {data.scheduled_start ? (
+              <div className="bg-surface-subtle text-muted-foreground flex items-center gap-2 rounded-xl px-3 py-2 text-xs tabular-nums">
+                <CalendarDays className="text-primary size-4" aria-hidden />
+                <span>
+                  {new Date(data.scheduled_start).toLocaleString('fr-FR', {
+                    timeZone: organization?.timezone ?? 'Europe/Paris',
+                    dateStyle: 'full',
+                    timeStyle: 'short',
+                  })}
+                  {data.scheduled_end
+                    ? ` – ${new Date(data.scheduled_end).toLocaleTimeString('fr-FR', {
+                        timeZone: organization?.timezone ?? 'Europe/Paris',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}`
+                    : ''}
+                </span>
+              </div>
+            ) : null}
+
+            <MissionTransitions mission={data} role={role} isAssignee={isAssignee} />
+          </div>
+
+          <div className="border-border grid grid-cols-3 border-t">
+            <NavigationButton
+              destination={{
+                latitude: data.latitude,
+                longitude: data.longitude,
+                address: mapsDestination,
+                label: data.title,
+              }}
+              className="text-2xs min-h-14 justify-center rounded-none border-0"
+              label="Itinéraire GPS"
+            />
+            {data.customer_phone !== null && data.customer_phone !== '' ? (
+              <a
+                href={`tel:${toDialable(data.customer_phone)}`}
+                className="border-border text-foreground focus-visible:ring-ring text-2xs flex min-h-14 flex-col items-center justify-center gap-1 border-l font-bold focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <Phone className="size-4" aria-hidden />
+                Appeler
+              </a>
+            ) : (
+              <a
+                href="#interventions-mission"
+                className="border-border text-foreground focus-visible:ring-ring text-2xs flex min-h-14 flex-col items-center justify-center gap-1 border-l font-bold focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <ClipboardList className="size-4" aria-hidden />
+                Interventions
+              </a>
+            )}
+            <a
+              href="#details-mission"
+              className="border-border text-foreground focus-visible:ring-ring text-2xs flex min-h-14 flex-col items-center justify-center gap-1 border-l font-bold focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <User className="size-4" aria-hidden />
+              Détails
+            </a>
+          </div>
+        </section>
+
+        <div
+          className="bg-surface-subtle grid grid-cols-2 rounded-xl p-1"
+          aria-label="Sections de la mission"
+        >
+          <a
+            href="#details-mission"
+            className="bg-surface text-foreground flex min-h-10 items-center justify-center rounded-lg text-xs font-bold shadow-xs"
+          >
+            Détails
+          </a>
+          <a
+            href="#interventions-mission"
+            className="text-muted-foreground flex min-h-10 items-center justify-center rounded-lg text-xs font-bold"
+          >
+            Interventions
+          </a>
+        </div>
+
+        {can(PERMISSIONS.missionUpdate) || canAssign || canDelete ? (
+          <div className="flex flex-wrap gap-2">
             {can(PERMISSIONS.missionUpdate) ? (
               <MissionEditDialog mission={data} organizationId={organization?.id ?? null} />
             ) : null}
-
             {canAssign ? (
               <AssignMissionDialog
                 missionId={data.id}
@@ -264,60 +371,105 @@ export default function MissionDetailPage() {
                 currentMemberId={data.assigned_user_id}
               />
             ) : null}
-
             {canDelete ? (
-              <>
-                <div className="bg-border mx-1 h-4 w-px" aria-hidden="true" />
-                <Button
-                  variant="danger-outline"
-                  size="sm"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  disabled={deleteMission.isPending}
-                >
-                  <Trash2 className="size-4" />
-                  Supprimer
-                </Button>
-
-                <Modal
-                  open={isDeleteModalOpen}
-                  onOpenChange={setIsDeleteModalOpen}
-                  title="Supprimer la mission"
-                  description={`Êtes-vous sûr de vouloir supprimer définitivement la mission "${data.title}" (${data.reference}) ?`}
-                  footer={
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsDeleteModalOpen(false)}
-                        disabled={deleteMission.isPending}
-                      >
-                        Annuler
-                      </Button>
-                      <Button
-                        variant="danger-outline"
-                        size="sm"
-                        onClick={() => void handleDelete()}
-                        disabled={deleteMission.isPending}
-                      >
-                        {deleteMission.isPending ? 'Suppression…' : 'Supprimer la mission'}
-                      </Button>
-                    </div>
-                  }
-                >
-                  <p className="text-muted-foreground text-sm">
-                    Cette action est irréversible. La mission et son historique seront
-                    définitivement retirés de votre entreprise.
-                  </p>
-                </Modal>
-              </>
+              <Button variant="danger-outline" size="sm" onClick={() => setIsDeleteModalOpen(true)}>
+                <Trash2 className="size-4" />
+                Supprimer
+              </Button>
             ) : null}
           </div>
-        }
-      />
+        ) : null}
+      </div>
+
+      <Button asChild variant="ghost" size="sm" className="-ml-2 hidden md:inline-flex">
+        <Link to={backTarget}>
+          <ArrowLeft className="size-4" />
+          {backLabel}
+        </Link>
+      </Button>
+
+      <div className="hidden md:block">
+        <PageHeader
+          title={data.title}
+          {...(data.description !== null && data.description !== ''
+            ? { description: data.description }
+            : {})}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              {/*
+              Réservé à `mission.update`. Le trigger `enforce_mission_assignee_scope`
+              interdit à l'intervenant de modifier tout ce que ce formulaire
+              touche : lui ouvrir la fenêtre reviendrait à le laisser saisir dix
+              champs pour se voir refuser à l'enregistrement.
+            */}
+              {can(PERMISSIONS.missionUpdate) ? (
+                <MissionEditDialog mission={data} organizationId={organization?.id ?? null} />
+              ) : null}
+
+              {canAssign ? (
+                <AssignMissionDialog
+                  missionId={data.id}
+                  teams={teams.data ?? []}
+                  members={members.data ?? []}
+                  currentTeamId={data.assigned_team_id}
+                  currentMemberId={data.assigned_user_id}
+                />
+              ) : null}
+
+              {canDelete ? (
+                <>
+                  <div className="bg-border mx-1 h-4 w-px" aria-hidden="true" />
+                  <Button
+                    variant="danger-outline"
+                    size="sm"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    disabled={deleteMission.isPending}
+                  >
+                    <Trash2 className="size-4" />
+                    Supprimer
+                  </Button>
+
+                  <Modal
+                    open={isDeleteModalOpen}
+                    onOpenChange={setIsDeleteModalOpen}
+                    title="Supprimer la mission"
+                    description={`Êtes-vous sûr de vouloir supprimer définitivement la mission "${data.title}" (${data.reference}) ?`}
+                    footer={
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsDeleteModalOpen(false)}
+                          disabled={deleteMission.isPending}
+                        >
+                          Annuler
+                        </Button>
+                        <Button
+                          variant="danger-outline"
+                          size="sm"
+                          onClick={() => void handleDelete()}
+                          disabled={deleteMission.isPending}
+                        >
+                          {deleteMission.isPending ? 'Suppression…' : 'Supprimer la mission'}
+                        </Button>
+                      </div>
+                    }
+                  >
+                    <p className="text-muted-foreground text-sm">
+                      Cette action est irréversible. La mission et son historique seront
+                      définitivement retirés de votre entreprise.
+                    </p>
+                  </Modal>
+                </>
+              ) : null}
+            </div>
+          }
+        />
+      </div>
 
       <section
         aria-labelledby="mission-progress-title"
-        className="border-primary/20 bg-primary-subtle/35 grid gap-4 rounded-xl border p-4 sm:p-5 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-center"
+        className="border-primary/20 bg-primary-subtle/35 hidden gap-4 rounded-xl border p-4 sm:p-5 md:grid lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:items-center"
       >
         <div>
           <p
@@ -369,7 +521,7 @@ export default function MissionDetailPage() {
         états avançait mais aucune intervention n'existait — le chronomètre et
         le compte rendu restaient inatteignables.
       */}
-      <Card variant="section">
+      <Card id="interventions-mission" variant="section" className="scroll-mt-24">
         <CardHeader>
           <CardTitle>Interventions</CardTitle>
         </CardHeader>
@@ -383,7 +535,7 @@ export default function MissionDetailPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div id="details-mission" className="grid scroll-mt-24 gap-6 lg:grid-cols-2">
         <Card variant="section">
           <CardHeader>
             <CardTitle>Lieu et client</CardTitle>

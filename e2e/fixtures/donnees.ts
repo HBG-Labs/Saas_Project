@@ -51,8 +51,7 @@ const MAINTENANT = '2026-09-19T08:00:00.000Z';
  * fait alors refuser par TypeScript, sans que le message dise pourquoi. Chaque
  * table absente du jeu de référence passe donc par ici.
  */
-const vide = <T = Record<string, unknown>,>(): T[] => [];
-
+const vide = <T = Record<string, unknown>>(): T[] => [];
 
 /**
  * Construit le jeu de tables pour un rôle donné.
@@ -217,6 +216,7 @@ export function donneesPour(role: RoleTest) {
           au premier essai de ce parcours).
         */
         category: null,
+        intervention_type: null,
         assigned_team: null,
         assigned_member: null,
         site: null,

@@ -1,5 +1,13 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+import type { GeolocationPlugin } from '@capacitor/geolocation';
+
 import { GeoError } from './types';
 import type { GeoPosition, NavigationDestination } from './types';
+
+// Le navigateur garde son API native ci-dessous. Seul le pont Capacitor est
+// enregistré ici, ce qui évite de charger un second fallback Web.
+const NativeGeolocation =
+  registerPlugin<Pick<GeolocationPlugin, 'getCurrentPosition'>>('Geolocation');
 
 /**
  * Service GPS centralisé et ponctuel pour REZO360.
@@ -26,7 +34,37 @@ const DEFAULT_OPTIONS: PositionOptions = {
 /**
  * Récupère UNE SEULE position GPS ponctuelle à la demande.
  */
-export function getCurrentPosition(options: PositionOptions = DEFAULT_OPTIONS): Promise<GeoPosition> {
+export async function getCurrentPosition(
+  options: PositionOptions = DEFAULT_OPTIONS,
+): Promise<GeoPosition> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const position = await NativeGeolocation.getCurrentPosition({
+        enableHighAccuracy: options.enableHighAccuracy ?? true,
+        timeout: options.timeout ?? 12_000,
+        maximumAge: options.maximumAge ?? 0,
+      });
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: position.timestamp,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (/denied|permission/i.test(message)) {
+        throw new GeoError(
+          'PERMISSION_DENIED',
+          'Autorisation GPS refusée. Activez la localisation dans les réglages du téléphone.',
+        );
+      }
+      throw new GeoError(
+        'POSITION_UNAVAILABLE',
+        'Position indisponible. Vérifiez que la localisation de votre téléphone est activée.',
+      );
+    }
+  }
+
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
       reject(
@@ -64,7 +102,8 @@ export function getCurrentPosition(options: PositionOptions = DEFAULT_OPTIONS): 
             break;
           case geoError.TIMEOUT:
             code = 'TIMEOUT';
-            message = 'Délai d’attente dépassé pour la recherche du signal GPS. Veuillez réessayer.';
+            message =
+              'Délai d’attente dépassé pour la recherche du signal GPS. Veuillez réessayer.';
             break;
         }
 

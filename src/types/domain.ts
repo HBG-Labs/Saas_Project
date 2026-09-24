@@ -77,6 +77,7 @@ export type MissionStatusTransition = Tables<'mission_status_transitions'>;
 /** Mission enrichie des libellés attendus par les listes et le planning. */
 export interface MissionWithRelations extends Mission {
   category: Pick<Category, 'id' | 'slug' | 'name'> | null;
+  intervention_type: Pick<Tables<'intervention_types'>, 'id' | 'code' | 'label' | 'icon'> | null;
   assigned_team: Pick<Team, 'id' | 'name' | 'color'> | null;
   assigned_member: MemberWithProfile | null;
   /**

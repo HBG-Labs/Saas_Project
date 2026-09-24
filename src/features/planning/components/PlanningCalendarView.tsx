@@ -1,5 +1,5 @@
 import { SelectField } from '@/components/ui/SelectField';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   Calendar as CalendarIcon,
@@ -29,8 +29,10 @@ import { openNavigationApp } from '@/features/geo';
 import { memberDisplayName } from '@/features/organizations';
 import { activateOnKey } from '@/lib/activate-on-key';
 import { cn } from '@/lib/cn';
+import { useMediaQuery } from '@/lib/use-media-query';
 import type { MemberWithProfile } from '@/types/domain';
 import type { LeaveRequest, PlanningCalendarEvent, PublicHoliday } from '../types';
+import { MobilePlanningView } from './MobilePlanningView';
 
 export interface PlanningCalendarViewProps {
   events: PlanningCalendarEvent[];
@@ -39,6 +41,20 @@ export interface PlanningCalendarViewProps {
   members?: readonly MemberWithProfile[];
   canCreateMission?: boolean;
   onNewMissionAtDate?: (dateStr: string) => void;
+  teamMembersByTeam?: ReadonlyMap<string, readonly MemberWithProfile[]>;
+  ownMemberId?: string | null;
+  ownTeamIds?: readonly string[];
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
+  onVisibleRangeChange?: (range: { from: string; to: string }) => void;
+  onOpenLeaves?: () => void;
+  onOpenTasks?: () => void;
+  onOpenHolidays?: () => void;
+  onImportICS?: () => void;
+  onExportICS?: () => void;
+  canImportICS?: boolean;
+  timeZone?: string;
 }
 
 type CalendarViewMode = 'month' | 'week' | 'list';
@@ -102,12 +118,46 @@ export function PlanningCalendarView({
   holidays,
   members = [],
   canCreateMission = true,
+  ...mobileProps
+}: PlanningCalendarViewProps) {
+  const isMobile = useMediaQuery('(max-width: 767px)');
+
+  if (isMobile) {
+    return (
+      <MobilePlanningView
+        events={events}
+        leaves={leaves}
+        holidays={holidays}
+        members={members}
+        canCreateMission={canCreateMission}
+        {...mobileProps}
+      />
+    );
+  }
+
+  return (
+    <DesktopPlanningCalendarView
+      events={events}
+      leaves={leaves}
+      holidays={holidays}
+      members={members}
+      canCreateMission={canCreateMission}
+      {...mobileProps}
+    />
+  );
+}
+
+function DesktopPlanningCalendarView({
+  events,
+  leaves,
+  holidays,
+  members = [],
+  canCreateMission = true,
   onNewMissionAtDate,
+  onVisibleRangeChange,
 }: PlanningCalendarViewProps) {
   // Vue active (Mois par défaut)
-  const [viewMode, setViewMode] = useState<CalendarViewMode>(() =>
-    window.matchMedia('(max-width: 639px)').matches ? 'list' : 'month',
-  );
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
 
   // Date de référence (initialisée sur la date du jour réelle)
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
@@ -301,6 +351,19 @@ export function PlanningCalendarView({
     }
     return days;
   }, [currentDate]);
+
+  useEffect(() => {
+    if (!onVisibleRangeChange) return;
+    if (viewMode === 'week') {
+      const first = weekDays[0];
+      const last = weekDays[6];
+      if (first && last) onVisibleRangeChange({ from: first.dateStr, to: last.dateStr });
+      return;
+    }
+    const first = monthDaysGrid[0];
+    const last = monthDaysGrid.at(-1);
+    if (first && last) onVisibleRangeChange({ from: first.dateStr, to: last.dateStr });
+  }, [monthDaysGrid, onVisibleRangeChange, viewMode, weekDays]);
 
   // 4. Calcul des jours avec activités pour la vue Agenda / Liste
   const agendaGroupedDays = useMemo(() => {
@@ -1081,7 +1144,7 @@ export function PlanningCalendarView({
                                   {
                                     {
                                       low: 'Basse',
-                                      medium: 'Normale',
+                                      normal: 'Normale',
                                       high: 'Haute',
                                       urgent: 'Urgente',
                                     }[evt.priority]

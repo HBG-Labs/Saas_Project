@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
 import { useToast } from '@/components/feedback/toast-context';
@@ -17,22 +17,31 @@ import { formatNewNoun, useLabel } from '@/features/industries';
 import {
   MissionFormFields,
   missionSchema,
-  toIsoOrUndefined,
   useCreateMission,
   type MissionValues,
 } from '@/features/missions';
 import { useCurrentOrganization } from '@/features/organizations';
+import { zonedLocalDateTimeToIso } from '@/features/planning';
 import { useDocumentTitle } from '@/lib/use-document-title';
+import { successFeedback } from '@/lib/mobile-feedback';
 import type { MissionPriority } from '@/types/database';
 
 export default function MissionCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { organization } = useCurrentOrganization();
   const toast = useToast();
   const createMission = useCreateMission();
   const job = useLabel('job');
   const titleText = formatNewNoun(job);
+  const requestedDate = searchParams.get('date');
+  const requestedBack = searchParams.get('from');
+  const backTarget =
+    requestedBack?.startsWith(ROUTES.planning) === true ? requestedBack : ROUTES.missions;
+  const backLabel = backTarget.startsWith(ROUTES.planning) ? 'Planning' : 'Missions';
+  const initialScheduledStart =
+    requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? `${requestedDate}T09:00` : '';
 
   useDocumentTitle(titleText);
 
@@ -57,7 +66,7 @@ export default function MissionCreatePage() {
       title: '',
       description: '',
       priority: 'normal',
-      scheduledStart: '',
+      scheduledStart: initialScheduledStart,
       scheduledEnd: '',
       locationLabel: '',
       notes: '',
@@ -72,8 +81,18 @@ export default function MissionCreatePage() {
       const description = values.description?.trim();
       const notes = values.notes?.trim();
       const locationLabel = values.locationLabel?.trim();
-      const scheduledStart = toIsoOrUndefined(values.scheduledStart);
-      const scheduledEnd = toIsoOrUndefined(values.scheduledEnd);
+      const toOrganizationIso = (value: string | null | undefined) => {
+        if (!value) return undefined;
+        const [date, time] = value.split('T');
+        if (!date || !time) return undefined;
+        return zonedLocalDateTimeToIso(
+          date,
+          time.length === 5 ? `${time}:00` : time,
+          organization.timezone,
+        );
+      };
+      const scheduledStart = toOrganizationIso(values.scheduledStart);
+      const scheduledEnd = toOrganizationIso(values.scheduledEnd);
 
       let finalLat = coords?.latitude ?? null;
       let finalLng = coords?.longitude ?? null;
@@ -118,7 +137,8 @@ export default function MissionCreatePage() {
         avait abouti.
       */
       toast.succes(`${job} créée`, mission.reference);
-      await navigate(ROUTES.mission(mission.id));
+      successFeedback();
+      await navigate(ROUTES.mission(mission.id), { state: { from: backTarget } });
     } catch (error) {
       setSubmitError(error);
     }
@@ -127,9 +147,9 @@ export default function MissionCreatePage() {
   return (
     <PageShell width="2xl">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to={ROUTES.missions}>
+        <Link to={backTarget}>
           <ArrowLeft className="size-4" />
-          Missions
+          {backLabel}
         </Link>
       </Button>
 
@@ -170,7 +190,7 @@ export default function MissionCreatePage() {
 
         <div className="border-border bg-surface safe-bottom sticky bottom-0 z-10 flex flex-wrap justify-end gap-2 border-t py-3">
           <Button asChild variant="outline">
-            <Link to={ROUTES.missions}>Annuler</Link>
+            <Link to={backTarget}>Annuler</Link>
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Création…' : 'Créer la mission'}

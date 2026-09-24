@@ -1,12 +1,18 @@
 export * from './types';
 export * from './adapters';
+export * from './date-utils';
 export {
   getHolidaysForTerritory,
   getNationalHolidays,
   holidayDateSet,
   HOLIDAY_TERRITORIES,
 } from './public-holidays';
-export { exportEventsToICS, parseICS, type ParsedICSEvent } from './utils/ical';
+export {
+  exportEventsToICS,
+  parseICS,
+  zonedLocalDateTimeToIso,
+  type ParsedICSEvent,
+} from './utils/ical';
 export * from './hooks/usePlanning';
 export { PlanningCalendarView } from './components/PlanningCalendarView';
 export { LeavesManagementTab } from './components/LeavesManagementTab';
