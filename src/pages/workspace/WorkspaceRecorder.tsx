@@ -116,7 +116,7 @@ function SignalWaveform({ level, paused }: { level: number | null; paused: boole
             paused && 'opacity-45',
             !measured && 'opacity-25',
           )}
-          style={{ height: `${String(Math.round(7 + normalized * factor * 29))}px` }}
+          style={{ height: `${Math.round(7 + normalized * factor * 29)}px` }}
           aria-hidden="true"
         />
       ))}
@@ -191,7 +191,7 @@ function ProcessingSteps({
         }
       >
         {localStatus === 'uploading' && uploadProgress !== null
-          ? `Envoi sécurisé — ${String(Math.round(uploadProgress * 100))} %`
+          ? `Envoi sécurisé — ${Math.round(uploadProgress * 100)} %`
           : localStatus === 'submitting'
             ? 'Confirmation de l’envoi…'
             : 'Envoi sécurisé'}
@@ -248,7 +248,7 @@ function RecordingOverflow({
   return (
     <Dropdown
       trigger={
-        <Button type="button" variant="ghost" size="icon" aria-label="Plus d’actions">
+        <Button variant="ghost" size="icon" aria-label="Plus d’actions">
           <Ellipsis aria-hidden />
         </Button>
       }
@@ -305,13 +305,12 @@ function RecordingHistoryRow({
         ) : null}
       </div>
       {recording.status === 'done' ? (
-        <Button type="button" size="sm" variant="secondary" onClick={() => onView('transcript')}>
+        <Button size="sm" variant="secondary" onClick={() => onView('transcript')}>
           <FileText aria-hidden /> Voir
         </Button>
       ) : null}
       {recording.status === 'failed' && recording.audio_deleted_at === null ? (
         <Button
-          type="button"
           size="sm"
           variant="secondary"
           isLoading={retry.isPending}
@@ -447,7 +446,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               </div>
             </div>
             <Button
-              type="button"
               className="min-h-11 w-full justify-center sm:w-auto"
               disabled={!canRecord}
               isLoading={recorder.status === 'requesting'}
@@ -469,7 +467,7 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 {quota.data
                   ? quota.data.unlimited
                     ? 'Transcription illimitée'
-                    : `${String(remaining ?? 0)} min restantes ce mois-ci`
+                    : `${remaining ?? 0} min restantes ce mois-ci`
                   : 'Vérification du quota…'}
               </p>
             </div>
@@ -529,12 +527,7 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                   L’audio déjà capté n’est pas supprimé. Relancez le suivi de la transcription.
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => void recordings.refetch()}
-              >
+              <Button size="sm" variant="secondary" onClick={() => void recordings.refetch()}>
                 <RotateCcw aria-hidden /> Réessayer
               </Button>
             </div>
@@ -550,7 +543,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 L’enregistrement est temporairement désactivé pour éviter un échec silencieux.
               </p>
               <Button
-                type="button"
                 size="sm"
                 variant="secondary"
                 className="mt-2"
@@ -572,11 +564,10 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                       {pending.interrupted ? 'interrompu — audio conservé' : 'en attente d’envoi'}
                     </p>
                   </div>
-                  <Button type="button" size="sm" onClick={() => void recorder.retry(pending.key)}>
+                  <Button size="sm" onClick={() => void recorder.retry(pending.key)}>
                     <RotateCcw aria-hidden /> Réessayer
                   </Button>
                   <Button
-                    type="button"
                     size="sm"
                     variant="ghost"
                     onClick={() => {
@@ -608,7 +599,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 </p>
               </div>
               <Button
-                type="button"
                 size="sm"
                 variant="secondary"
                 onClick={() => setDetails({ recording: latestDone, mode: 'transcript' })}
@@ -621,7 +611,7 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
           {(recordings.data?.length ?? 0) > 0 ? (
             <details className="group border-border border-t pt-3">
               <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-semibold">
-                Historique des notes vocales ({String(recordings.data?.length ?? 0)})
+                Historique des notes vocales ({recordings.data?.length ?? 0})
               </summary>
               <ul className="mt-2">
                 {(recordings.data ?? []).map((recording) => (
@@ -667,7 +657,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               <div className="ml-auto flex items-center gap-2">
                 {recorder.status === 'recording' ? (
                   <Button
-                    type="button"
                     variant="secondary"
                     size="icon"
                     aria-label="Mettre l’enregistrement en pause"
@@ -677,7 +666,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                   </Button>
                 ) : (
                   <Button
-                    type="button"
                     variant="secondary"
                     size="icon"
                     aria-label="Reprendre l’enregistrement"
@@ -687,7 +675,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                   </Button>
                 )}
                 <Button
-                  type="button"
                   variant="danger"
                   size="icon"
                   aria-label="Terminer l’enregistrement"
@@ -696,7 +683,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                   <Square aria-hidden />
                 </Button>
                 <Button
-                  type="button"
                   variant="ghost"
                   size="icon"
                   aria-label="Annuler l’enregistrement"
@@ -728,7 +714,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 </p>
               </div>
               <Button
-                type="button"
                 size="sm"
                 onClick={() => setDetails({ recording: focusedRecording, mode: 'transcript' })}
               >
@@ -736,7 +721,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               </Button>
               {focusedRecording.summary ? (
                 <Button
-                  type="button"
                   size="sm"
                   variant="secondary"
                   onClick={() => setDetails({ recording: focusedRecording, mode: 'summary' })}
@@ -750,7 +734,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 onListen={() => setListenTarget(focusedRecording)}
               />
               <Button
-                type="button"
                 variant="ghost"
                 size="icon"
                 aria-label="Fermer REZO Voice"
@@ -770,7 +753,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
               </div>
               {focusedRecording.audio_deleted_at === null ? (
                 <Button
-                  type="button"
                   size="sm"
                   variant="secondary"
                   isLoading={retryTranscription.isPending}
@@ -780,7 +762,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                 </Button>
               ) : null}
               <Button
-                type="button"
                 variant="ghost"
                 size="icon"
                 aria-label="Fermer REZO Voice"
@@ -804,7 +785,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
                   </p>
                 </div>
                 <Button
-                  type="button"
                   variant="ghost"
                   size="icon"
                   aria-label="Masquer la progression de REZO Voice"
@@ -889,7 +869,6 @@ export function WorkspaceRecorder({ page }: { page: WorkspacePage }) {
         title="Renommer la note vocale"
         footer={
           <Button
-            type="button"
             disabled={renameValue.trim().length === 0}
             isLoading={renameRecording.isPending}
             onClick={() => {

@@ -1109,6 +1109,162 @@ input.profile-form-field {
 .rezo-voice-success {
   animation: rezo-voice-success-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+/*
+  Plan vivant — REZO Voice. Les phases sont déduites des éléments déjà rendus :
+  aucun état audio n'est dupliqué dans la couche visuelle.
+*/
+.rezo-voice-morph[aria-label='Enregistrement vocal'] {
+  position: relative;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--signal-violet) 24%, var(--color-border));
+  background:
+    radial-gradient(
+      circle at 7% 18%,
+      color-mix(in srgb, var(--signal-violet) 13%, transparent) 0 2.75rem,
+      transparent 2.8rem
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--signal-violet) 7%, var(--color-surface-subtle)),
+      var(--color-surface-subtle) 52%,
+      color-mix(in srgb, var(--signal-cyan) 6%, var(--color-surface-subtle))
+    );
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal']::before,
+.rezo-voice-dock::after {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  left: 1rem;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--signal-violet),
+    var(--signal-cyan),
+    var(--signal-apricot)
+  );
+  content: '';
+  pointer-events: none;
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal']
+  > div
+  > div:first-child
+  > div:first-child
+  > span:first-child {
+  position: relative;
+  color: var(--signal-violet);
+  background: color-mix(in srgb, var(--signal-violet) 13%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--signal-violet) 14%, transparent);
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal']
+  > div
+  > div:first-child
+  > div:first-child
+  > span:first-child::after {
+  position: absolute;
+  inset: -0.3rem;
+  z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--signal-violet) 24%, transparent);
+  border-radius: 1rem;
+  content: '';
+  transform: rotate(6deg);
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal'] button:not(:disabled):has(svg.lucide-mic) {
+  border-color: color-mix(in srgb, var(--signal-violet) 62%, var(--primary));
+  background: color-mix(in srgb, var(--signal-violet) 72%, var(--primary));
+  box-shadow: 0 0.45rem 1rem color-mix(in srgb, var(--signal-violet) 18%, transparent);
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal']
+  button:not(:disabled):has(svg.lucide-mic):hover {
+  background: color-mix(in srgb, var(--signal-violet) 82%, var(--primary));
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal'] details > summary {
+  border-radius: 0.55rem;
+  transition:
+    color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+.rezo-voice-morph[aria-label='Enregistrement vocal'] details > summary:hover {
+  background: color-mix(in srgb, var(--signal-violet) 7%, transparent);
+}
+
+.rezo-voice-dock {
+  isolation: isolate;
+  max-height: min(32rem, calc(100dvh - 7rem - var(--safe-bottom)));
+  overflow: auto;
+  border-color: color-mix(in srgb, var(--signal-violet) 32%, var(--color-border));
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      color-mix(in srgb, var(--signal-cyan) 12%, transparent),
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--signal-violet) 3%, var(--color-surface-raised));
+  box-shadow:
+    0 1.2rem 3rem color-mix(in srgb, var(--workspace-foreground) 15%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
+}
+.rezo-voice-dock::after {
+  right: 1.25rem;
+  left: 1.25rem;
+  background-size: 180% 100%;
+  animation: rezo-voice-flow 4s linear infinite;
+}
+.rezo-voice-dock:has(.rezo-voice-recording-dot) {
+  border-color: color-mix(in srgb, var(--signal-coral) 42%, var(--color-border));
+  background:
+    radial-gradient(
+      circle at 0 50%,
+      color-mix(in srgb, var(--signal-coral) 11%, transparent),
+      transparent 44%
+    ),
+    color-mix(in srgb, var(--signal-coral) 3%, var(--color-surface-raised));
+}
+.rezo-voice-dock:has(.rezo-voice-recording-dot)::after {
+  background: linear-gradient(90deg, var(--signal-coral), var(--signal-apricot));
+}
+.rezo-voice-dock:has(.rezo-voice-recording-dot) [role='meter'] > span {
+  background: var(--signal-coral);
+}
+.rezo-voice-dock:has(.rezo-voice-success) {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--color-border));
+  background:
+    radial-gradient(
+      circle at 0 50%,
+      color-mix(in srgb, var(--success) 10%, transparent),
+      transparent 45%
+    ),
+    var(--color-surface-raised);
+}
+.rezo-voice-dock:has(.rezo-voice-success)::after {
+  background: linear-gradient(90deg, var(--success), var(--signal-cyan));
+}
+.rezo-voice-dock:has(.text-error)::after {
+  background: linear-gradient(90deg, var(--error), var(--signal-coral));
+}
+.rezo-voice-dock ol[aria-label='Progression de la note vocale'] {
+  position: relative;
+  padding-left: 0.15rem;
+}
+.rezo-voice-dock ol[aria-label='Progression de la note vocale'] > li {
+  position: relative;
+}
+.rezo-voice-dock ol[aria-label='Progression de la note vocale'] > li:not(:last-child)::after {
+  position: absolute;
+  top: 1.15rem;
+  bottom: -0.65rem;
+  left: 0.58rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--signal-violet) 22%, var(--color-border));
+  content: '';
+}
+@keyframes rezo-voice-flow {
+  to {
+    background-position: 180% 0;
+  }
+}
 @keyframes rezo-voice-dock-enter {
   from {
     opacity: 0;
@@ -1190,6 +1346,7 @@ input.profile-form-field {
   .rezo-voice-dock,
   .rezo-voice-recording-dot,
   .rezo-voice-success,
+  .rezo-voice-dock::after,
   .rezo-status-orbit,
   .rezo-status-wave > span {
     animation: none;
