@@ -4,9 +4,9 @@ import { useId, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
@@ -53,7 +53,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
     reset,
     setValue,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<CustomerValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -184,8 +184,9 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
           ...defined('notes', omitEmpty(values.notes)),
           ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
-        reset();
       }
+      if (isEdit) reset(values);
+      else reset();
       setCoords(null);
       setOpen(false);
     } catch (error) {
@@ -203,28 +204,28 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
     : '';
 
   return (
-    <Modal
+    <UnsavedFormModal
       presentation="drawer"
       open={open}
       onOpenChange={setOpen}
+      dirty={isDirty || coords !== null}
+      onDiscard={() => {
+        reset();
+        setCoords(null);
+        setSubmitError(null);
+      }}
       trigger={trigger}
       size="lg"
-      footer={
+      renderFooter={(requestClose) => (
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={requestClose}>
             Annuler
           </Button>
           <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer le client'}
           </Button>
         </div>
-      }
+      )}
       title={isEdit ? 'Modifier le client' : 'Nouveau client'}
       {...(isEdit
         ? {}
@@ -374,7 +375,7 @@ export function CustomerFormDialog({ organizationId, customer, trigger }: Custom
           />
         </FormSection>
       </form>
-    </Modal>
+    </UnsavedFormModal>
   );
 }
 

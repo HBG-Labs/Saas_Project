@@ -7,11 +7,11 @@ import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
-import { Modal } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { MapLocationPickerDialog, forwardGeocode } from '@/features/geo';
 import type { Site } from '@/types/domain';
@@ -156,10 +156,15 @@ function SiteFormDialog({
   const formId = useId();
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+  const initialCoords =
     site?.latitude != null && site?.longitude != null
       ? { latitude: site.latitude, longitude: site.longitude }
-      : null,
+      : null;
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    initialCoords,
+  );
+  const [savedCoords, setSavedCoords] = useState<{ latitude: number; longitude: number } | null>(
+    initialCoords,
   );
   const createSite = useCreateSite(customerId);
   const updateSite = useUpdateSite(customerId);
@@ -171,7 +176,7 @@ function SiteFormDialog({
     reset,
     setValue,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<SiteValues>({
     resolver: zodResolver(siteSchema),
     defaultValues: {
@@ -237,7 +242,17 @@ function SiteFormDialog({
           ...(accessNotes !== undefined ? { accessNotes } : {}),
           ...(finalLat != null ? { latitude: finalLat, longitude: finalLng } : {}),
         });
+      }
+      const nextCoords =
+        finalLat != null && finalLng != null ? { latitude: finalLat, longitude: finalLng } : null;
+      if (isEdit) {
+        reset(values);
+        setSavedCoords(nextCoords);
+        setCoords(nextCoords);
+      } else {
         reset();
+        setSavedCoords(null);
+        setCoords(null);
       }
       setOpen(false);
     } catch (error) {
@@ -253,26 +268,28 @@ function SiteFormDialog({
   const initialAddress = addressLine1
     ? `${addressLine1} ${postalCode ?? ''} ${city ?? ''}`.trim()
     : '';
+  const locationIsDirty =
+    coords?.latitude !== savedCoords?.latitude || coords?.longitude !== savedCoords?.longitude;
 
   return (
-    <Modal
+    <UnsavedFormModal
       presentation="drawer"
-      footer={
+      dirty={isDirty || locationIsDirty}
+      onDiscard={() => {
+        reset();
+        setCoords(savedCoords);
+        setSubmitError(null);
+      }}
+      renderFooter={(requestClose) => (
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={requestClose}>
             Annuler
           </Button>
           <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter le site'}
           </Button>
         </div>
-      }
+      )}
       open={open}
       onOpenChange={setOpen}
       title={isEdit ? 'Modifier le site' : 'Nouveau site d’intervention'}
@@ -346,6 +363,6 @@ function SiteFormDialog({
           {...register('accessNotes')}
         />
       </form>
-    </Modal>
+    </UnsavedFormModal>
   );
 }

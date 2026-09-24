@@ -59,9 +59,42 @@ test.describe('Gestion Atelier', () => {
     expect(geometry.actionTop).toBeGreaterThan(0);
     expect(geometry.actionBottom).toBeLessThanOrEqual(geometry.height);
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(dialog.getByLabel('Nom du client')).toHaveValue('Client conservé');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
     await expect(trigger).toBeFocused();
     await trigger.click();
-    await expect(dialog.getByLabel('Nom du client')).toHaveValue('Client conservé');
+    await expect(dialog.getByLabel('Nom du client')).toHaveValue('');
+  });
+
+  test('les formulaires site et contact protègent aussi une saisie commencée', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto(`/clients/${CLIENT_ID}`);
+
+    await page.getByRole('tab', { name: /Sites d.intervention/ }).click();
+    await page.getByRole('button', { name: 'Nouveau site' }).click();
+    const siteDialog = page.getByRole('dialog', { name: 'Nouveau site d’intervention' });
+    await siteDialog.getByLabel('Nom du site').fill('Atelier protégé');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(siteDialog.getByLabel('Nom du site')).toHaveValue('Atelier protégé');
+    await siteDialog.getByRole('button', { name: 'Annuler' }).click();
+    await page.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+
+    await page.getByRole('tab', { name: 'Contacts' }).click();
+    await page.getByRole('button', { name: 'Ajouter un contact' }).click();
+    const contactDialog = page.getByRole('dialog', { name: 'Nouvel interlocuteur' });
+    const contactName = contactDialog.getByRole('textbox', { name: /^Nom/ });
+    await contactName.fill('Interlocuteur protégé');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(contactName).toHaveValue('Interlocuteur protégé');
+    await contactDialog.getByRole('button', { name: 'Annuler' }).click();
+    await page.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
   });
 
   test('les vues du planning restent accessibles avec la journée initiale sur téléphone', async ({

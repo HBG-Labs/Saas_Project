@@ -7,11 +7,11 @@ import { AtelierIllustration } from '@/components/feedback/AtelierIllustration';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedFormModal } from '@/components/feedback/UnsavedFormModal';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
-import { Modal } from '@/components/ui/Modal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ContactPortalSwitch } from '@/features/client-portal';
 
@@ -193,7 +193,7 @@ function ContactFormDialog({
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<ContactValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -235,8 +235,9 @@ function ContactFormDialog({
           ...(email !== undefined ? { email } : {}),
           ...(phone !== undefined ? { phone } : {}),
         });
-        reset();
       }
+      if (isEdit) reset(values);
+      else reset();
       setOpen(false);
     } catch (error) {
       setSubmitError(error);
@@ -244,24 +245,23 @@ function ContactFormDialog({
   });
 
   return (
-    <Modal
+    <UnsavedFormModal
       presentation="drawer"
-      footer={
+      dirty={isDirty}
+      onDiscard={() => {
+        reset();
+        setSubmitError(null);
+      }}
+      renderFooter={(requestClose) => (
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={requestClose}>
             Annuler
           </Button>
           <Button type="submit" form={formId} variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter'}
           </Button>
         </div>
-      }
+      )}
       open={open}
       onOpenChange={setOpen}
       title={isEdit ? 'Modifier l’interlocuteur' : 'Nouvel interlocuteur'}
@@ -308,6 +308,6 @@ function ContactFormDialog({
           />
         </div>
       </form>
-    </Modal>
+    </UnsavedFormModal>
   );
 }
