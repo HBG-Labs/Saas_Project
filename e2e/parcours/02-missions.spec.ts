@@ -32,6 +32,37 @@ test.describe('Missions', () => {
     await expect(page.getByText('SCI Les Alizés').filter({ visible: true }).first()).toBeVisible();
   });
 
+  test('une mission commencée demande confirmation avant de quitter', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/missions/nouvelle');
+
+    const title = page.getByLabel('Intitulé');
+    await title.fill('Intervention à conserver');
+    await page.getByRole('link', { name: 'Annuler', exact: true }).click();
+
+    const confirmation = page.getByRole('dialog', { name: 'Quitter sans créer la mission ?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Continuer à modifier' }).click();
+    await expect(title).toHaveValue('Intervention à conserver');
+
+    await page.getByRole('link', { name: 'Annuler', exact: true }).click();
+    await confirmation.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(page).toHaveURL(/\/missions$/);
+  });
+
+  test('une création réussie navigue sans avertissement de perte', async ({ page }) => {
+    await installeSupabase(page, { role: 'owner' });
+    await page.goto('/missions/nouvelle');
+
+    await page.getByLabel('Intitulé').fill('Maintenance préventive');
+    await page.getByRole('button', { name: 'Créer la mission' }).click();
+
+    await expect(page).toHaveURL(/\/missions\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole('dialog', { name: 'Quitter sans créer la mission ?' })).toHaveCount(
+      0,
+    );
+  });
+
   /*
     LES DEUX TESTS QUI COMPTENT.
 

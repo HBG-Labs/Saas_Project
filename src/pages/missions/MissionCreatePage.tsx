@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { FormError } from '@/components/feedback/FormError';
+import { UnsavedChangesGuard } from '@/components/feedback/UnsavedChangesGuard';
 import { useToast } from '@/components/feedback/toast-context';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageShell } from '@/components/layout/PageShell';
@@ -53,13 +54,14 @@ export default function MissionCreatePage() {
   const [assignedMemberId, setAssignedMemberId] = useState<string | null>(null);
   const [interventionTypeId, setInterventionTypeId] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [createdMissionId, setCreatedMissionId] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<MissionValues>({
     resolver: zodResolver(missionSchema),
     defaultValues: {
@@ -72,6 +74,22 @@ export default function MissionCreatePage() {
       notes: '',
     },
   });
+
+  const hasUnsavedChanges =
+    createdMissionId === null &&
+    (isDirty ||
+      customerId !== null ||
+      siteId !== null ||
+      priority !== 'normal' ||
+      assignedTeamId !== null ||
+      assignedMemberId !== null ||
+      interventionTypeId !== null ||
+      coords !== null);
+
+  useEffect(() => {
+    if (createdMissionId === null) return;
+    void navigate(ROUTES.mission(createdMissionId), { state: { from: backTarget } });
+  }, [backTarget, createdMissionId, navigate]);
 
   const onSubmit = handleSubmit(async (values) => {
     if (organization === null || user === null) return;
@@ -138,7 +156,7 @@ export default function MissionCreatePage() {
       */
       toast.succes(`${job} créée`, mission.reference);
       successFeedback();
-      await navigate(ROUTES.mission(mission.id), { state: { from: backTarget } });
+      setCreatedMissionId(mission.id);
     } catch (error) {
       setSubmitError(error);
     }
@@ -146,6 +164,7 @@ export default function MissionCreatePage() {
 
   return (
     <PageShell width="2xl">
+      <UnsavedChangesGuard when={hasUnsavedChanges} title="Quitter sans créer la mission ?" />
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to={backTarget}>
           <ArrowLeft className="size-4" />
