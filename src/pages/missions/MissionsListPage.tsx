@@ -235,7 +235,7 @@ export default function MissionsListPage() {
             return (
               <div
                 key={mission.id}
-                className="hover:bg-surface-hover group grid min-w-0 gap-3 p-4 transition-colors xl:grid-cols-[minmax(0,1fr)_13rem_9rem] xl:items-center xl:gap-5 xl:py-3"
+                className="plan-row hover:bg-surface-hover group grid min-w-0 gap-3 p-4 transition-colors xl:grid-cols-[minmax(0,1fr)_13rem_9rem] xl:items-center xl:gap-5 xl:py-3"
               >
                 {/* Ligne 1 : Badges, Réf, Date & Statut */}
                 <div className="flex flex-wrap items-center justify-between gap-2 xl:order-2 xl:flex-col xl:items-start">

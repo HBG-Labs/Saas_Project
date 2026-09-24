@@ -1305,6 +1305,124 @@ input.profile-form-field {
     display: none;
   }
 }
+
+/* Plan chromatique : les accents identifient un domaine, jamais une gravité. */
+.plan-metrics > :nth-child(-n + 2) {
+  --metric-card-accent: var(--signal-cyan);
+  --metric-card-ink: var(--primary);
+}
+.plan-metrics > :nth-child(n + 3) {
+  --metric-card-accent: var(--signal-apricot);
+  --metric-card-ink: var(--warning);
+}
+.plan-metrics > :not(.bg-warning-subtle)::before {
+  background: var(--metric-card-accent);
+}
+.plan-metrics > :not(.bg-warning-subtle) > div:first-child > span:first-child {
+  color: var(--metric-card-ink);
+  background: color-mix(in srgb, var(--metric-card-accent) 17%, var(--surface));
+}
+
+/* Le statut donne sa couleur au point du parcours ; le texte conserve son badge. */
+.plan-row,
+.plan-feature {
+  --mission-plan-color: var(--border-strong);
+}
+.plan-row:has([data-state='assigned'], [data-state='accepted'], [data-state='in_progress']),
+.plan-feature:has([data-state='assigned'], [data-state='accepted'], [data-state='in_progress']) {
+  --mission-plan-color: var(--signal-cyan);
+}
+.plan-row:has([data-state='submitted']),
+.plan-feature:has([data-state='submitted']) {
+  --mission-plan-color: var(--warning);
+}
+.plan-row:has([data-state='completed'], [data-state='approved'], [data-state='closed']),
+.plan-feature:has([data-state='completed'], [data-state='approved'], [data-state='closed']) {
+  --mission-plan-color: var(--success);
+}
+.plan-row:has([data-state='rejected'], [data-state='cancelled']),
+.plan-feature:has([data-state='rejected'], [data-state='cancelled']) {
+  --mission-plan-color: var(--error);
+}
+.plan-row {
+  position: relative;
+  padding-inline-start: 1.75rem;
+}
+.plan-row::before {
+  position: absolute;
+  top: 1.25rem;
+  left: 0.65rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid var(--surface);
+  border-radius: 9999px;
+  background: var(--mission-plan-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mission-plan-color) 65%, transparent);
+  content: '';
+  animation: mission-plan-node-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.plan-row::after {
+  position: absolute;
+  top: 1.95rem;
+  bottom: -1px;
+  left: 0.88rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--mission-plan-color) 38%, var(--border));
+  transform-origin: top;
+  content: '';
+  animation: mission-plan-line-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.plan-row:last-child::after,
+.plan-row-sm::after {
+  display: none;
+}
+.plan-row-sm {
+  padding-inline-start: 1.35rem;
+}
+.plan-row-sm::before {
+  top: 1.05rem;
+  left: 0.25rem;
+}
+.plan-feature {
+  position: relative;
+  overflow: hidden;
+  border-left-color: var(--mission-plan-color);
+}
+.plan-feature::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--mission-plan-color) 8%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mission-plan-color) 8%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 24px 24px;
+  mask-image: linear-gradient(90deg, transparent, #000 72%);
+  content: '';
+}
+@keyframes mission-plan-node-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+}
+@keyframes mission-plan-line-enter {
+  from {
+    transform: scaleY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-row::before,
+  .plan-row::after {
+    animation: none;
+  }
+}
 @media (max-width: 639px) {
   .workspace-rich-editor .ProseMirror {
     min-height: 12rem;

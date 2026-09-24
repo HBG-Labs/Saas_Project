@@ -53,7 +53,7 @@ export function ManagerDashboard() {
       />
 
       {/* Ce qui attend une action d'abord, le volume ensuite. */}
-      <div className="border-border bg-surface grid grid-cols-1 overflow-hidden rounded-lg border sm:grid-cols-3">
+      <div className="plan-metrics border-border bg-surface grid grid-cols-1 overflow-hidden rounded-lg border sm:grid-cols-3">
         <MetricCard
           layout="strip"
           label="Comptes rendus à contrôler"
@@ -128,7 +128,7 @@ export function ManagerDashboard() {
                 <li key={m.id}>
                   <Link
                     to={ROUTES.mission(m.id)}
-                    className="hover:bg-surface-hover min-h-touch -mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors sm:min-h-0"
+                    className="plan-row plan-row-sm hover:bg-surface-hover min-h-touch -mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors sm:min-h-0"
                   >
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2">

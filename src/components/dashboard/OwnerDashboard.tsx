@@ -159,7 +159,7 @@ export function OwnerDashboard() {
       {/* ------------------------------------------------------ 1. CE QUI ATTEND */}
       <section
         aria-label="Indicateurs clés"
-        className="border-border bg-surface grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4"
+        className="plan-metrics border-border bg-surface grid grid-cols-2 overflow-hidden rounded-lg border lg:grid-cols-4"
       >
         <MetricCard
           layout="strip"
@@ -306,7 +306,7 @@ export function OwnerDashboard() {
                   <li key={m.id}>
                     <Link
                       to={ROUTES.mission(m.id)}
-                      className="hover:bg-surface-hover -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
+                      className="plan-row plan-row-sm hover:bg-surface-hover -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2">

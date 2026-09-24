@@ -27,7 +27,11 @@ const STATUS_VARIANTS: Record<MissionStatus, NonNullable<BadgeProps['variant']>>
 };
 
 export function MissionStatusBadge({ status }: { status: MissionStatus }) {
-  return <Badge variant={STATUS_VARIANTS[status]}>{MISSION_STATUS_LABELS[status]}</Badge>;
+  return (
+    <Badge data-state={status} variant={STATUS_VARIANTS[status]}>
+      {MISSION_STATUS_LABELS[status]}
+    </Badge>
+  );
 }
 
 const PRIORITY_VARIANTS: Record<MissionPriority, NonNullable<BadgeProps['variant']>> = {

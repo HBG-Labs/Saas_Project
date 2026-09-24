@@ -160,7 +160,7 @@ export function TechnicianDashboard() {
             <div className="space-y-4">
               <Link
                 to={ROUTES.mission(nextMission.id)}
-                className="border-primary/25 bg-primary-subtle/35 hover:bg-primary-subtle group block rounded-lg border-l-4 p-4 transition-colors sm:p-5"
+                className="plan-feature border-primary/25 bg-primary-subtle/35 hover:bg-primary-subtle group block rounded-lg border-l-4 p-4 transition-colors sm:p-5"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge variant="outline" className="bg-surface text-2xs shrink-0 font-mono">
@@ -215,7 +215,7 @@ export function TechnicianDashboard() {
                       <li key={mission.id}>
                         <Link
                           to={ROUTES.mission(mission.id)}
-                          className="hover:bg-surface-hover group min-h-touch flex items-center gap-3 rounded-lg py-2.5 transition-colors sm:min-h-0"
+                          className="plan-row plan-row-sm hover:bg-surface-hover group min-h-touch flex items-center gap-3 rounded-lg py-2.5 transition-colors sm:min-h-0"
                         >
                           <Badge variant="outline" className="text-2xs shrink-0 font-mono">
                             {mission.reference}
