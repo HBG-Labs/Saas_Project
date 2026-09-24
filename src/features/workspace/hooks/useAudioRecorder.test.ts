@@ -518,11 +518,14 @@ describe('useAudioRecorder — zéro perte', () => {
     vi.useFakeTimers();
     try {
       const h = fabriquer({ muted: true });
-      const demarrage = act(() => h.result.current.start({ title: 'x', consentConfirmed: true }));
+      let demarrage!: Promise<void>;
+      act(() => {
+        demarrage = h.result.current.start({ title: 'x', consentConfirmed: true });
+      });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
+        await demarrage;
       });
-      await demarrage;
       expect(h.result.current.status).toBe('idle');
       expect(h.result.current.error).toMatch(/micro est coupé/);
       expect(h.recorders).toHaveLength(0);

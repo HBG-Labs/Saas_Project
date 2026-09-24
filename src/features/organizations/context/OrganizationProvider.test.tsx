@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useContext, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -106,7 +106,9 @@ describe('OrganizationProvider', () => {
     const { result } = renderProvider();
     await waitFor(() => expect(result.current?.status).toBe('ready'));
 
-    result.current?.select('org-b');
+    act(() => {
+      result.current?.select('org-b');
+    });
 
     await waitFor(() => expect(result.current?.organization?.id).toBe('org-b'));
     await waitFor(() => expect(result.current?.status).toBe('ready'));
