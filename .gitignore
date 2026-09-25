@@ -82,5 +82,10 @@ desktop.ini
 # Build dedie aux parcours E2E (origine Supabase factice figee a la compilation)
 dist-e2e/
 
+# Captures marketing : build fictif et originaux, jamais livrés au public.
+/dist-captures/
+/artifacts/product-captures/
+/artifacts/higgsfield/
+
 # Corpus du benchmark STT : audio, références et résultats restent locaux
 benchmark/stt/

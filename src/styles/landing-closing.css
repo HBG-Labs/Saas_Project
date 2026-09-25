@@ -1,0 +1,102 @@
+/* A real Higgsfield video, scrubbed rather than autoplayed. */
+.lp-final:has(.lp-closing-scene) {
+  padding-top: 48px;
+  overflow: clip;
+}
+.lp-closing-scene {
+  position: relative;
+  width: min(1600px, calc(100% - 80px));
+  margin: 0 auto 70px;
+}
+.lp-closing-stage {
+  position: sticky;
+  top: 90px;
+}
+.lp-closing-travel {
+  height: 75svh;
+}
+.lp-closing-photo {
+  position: relative;
+  height: clamp(280px, 58svh, 680px);
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #183644;
+}
+.lp-closing-photo > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 45% 55%;
+}
+.lp-closing-photo > video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.lp-closing-photo > video.is-ready {
+  opacity: 1;
+}
+.lp-closing-controls {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #dae3ff;
+  font-size: 13px;
+}
+.lp-closing-controls input {
+  display: block;
+  width: 180px;
+  height: 44px;
+  accent-color: #fff;
+  cursor: ew-resize;
+}
+.lp-closing-controls input:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+.lp-closing-scene.is-still .lp-closing-stage {
+  position: relative;
+  top: 0;
+}
+@media (max-width: 640px) {
+  .lp-final:has(.lp-closing-scene) {
+    padding-top: 24px;
+  }
+  .lp-closing-scene {
+    width: calc(100% - 32px);
+    margin-bottom: 45px;
+  }
+  .lp-closing-stage {
+    top: 78px;
+  }
+  .lp-closing-photo {
+    height: clamp(220px, 43svh, 360px);
+    border-radius: 14px;
+  }
+  .lp-closing-photo > :is(img, video) {
+    object-position: 38% center;
+  }
+  .lp-closing-controls {
+    min-height: 80px;
+    display: block;
+    padding-top: 12px;
+    font-size: 11px;
+  }
+  .lp-closing-controls input {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-closing-stage {
+    position: relative;
+    top: 0;
+  }
+  .lp-closing-travel,
+  .lp-closing-photo > video {
+    display: none;
+  }
+}

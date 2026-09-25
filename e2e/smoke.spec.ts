@@ -14,11 +14,12 @@ test.describe('Parcours de base & navigation marketing', () => {
     await page.goto('/');
     await expect(
       page.getByRole('heading', {
-        name: 'Pilotez votre activité de terrain en toute simplicité',
+        level: 1,
+        name: 'Votre activité en mieux. Tout simplement.',
         exact: true,
       }),
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: /commencer/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /essayer gratuitement/i }).first()).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 

@@ -1,1391 +1,715 @@
-import {
-  ArrowRight,
-  CalendarClock,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ClipboardCheck,
-  FileCheck2,
-  Gauge,
-  Handshake,
-  LockKeyhole,
-  MapPinned,
-  MessageSquareText,
-  NotebookPen,
-  PackageSearch,
-  PenTool,
-  PhoneCall,
-  Radio,
-  Repeat2,
-  ShieldCheck,
-  Smartphone,
-  UsersRound,
-  Wrench,
-  Zap,
-} from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArrowDown, ArrowRight, Check, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { Faq } from '@/components/marketing/Faq';
+import { ClosingScene } from '@/components/marketing/ClosingScene';
+import { FieldFilm } from '@/components/marketing/FieldFilm';
+import { FinanceNarrative, VoiceNarrative } from '@/components/marketing/LandingNarratives';
 import { Pricing } from '@/components/marketing/Pricing';
-import { ScrollRevealSection } from '@/components/marketing/ScrollRevealSection';
-import { Button } from '@/components/ui/Button';
+import { ProductFrame } from '@/components/marketing/ProductFrame';
 import { ROUTES } from '@/config/routes';
 
-/**
- * Repli d'un pixel transparent, pour les deux `<picture>` du hero.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * `display:none` N'EMPÊCHE PAS UN TÉLÉCHARGEMENT
- *
- * Les deux photos du hero vivaient chacune dans un conteneur masqué à l'autre
- * palier — `hidden lg:block` pour celle d'ordinateur, `lg:hidden` pour celle de
- * téléphone. On pouvait croire l'affaire réglée : ce qui n'est pas affiché
- * n'est pas chargé.
- *
- * C'est faux. Le navigateur récupère les images d'un conteneur en
- * `display:none`. Mesuré sur un iPhone SE simulé, avant ce changement :
- *
- *     786 Ko  /images/landing-hero-4k.jpg   ← JAMAIS AFFICHÉE À CETTE LARGEUR
- *     226 Ko  /images/landing-hero-v2.jpg   ← la seule réellement visible
- *
- * Pire que le gaspillage : la photo invisible portait `fetchPriority="high"`.
- * Elle entrait donc en concurrence avec celle qu'on cherchait à afficher vite,
- * et retardait le plus grand rendu de contenu sur les seuls appareils dont la
- * bande passante est comptée — c'est-à-dire sur le trafic acheté en publicité.
- *
- * `<picture>` règle cela à la racine : le navigateur évalue les `media` À
- * L'ANALYSE, avant toute requête, et ne télécharge QUE la source retenue.
- * L'`<img>` sert de repli obligatoire ; il pointe donc sur ce pixel, qui ne
- * coûte rien puisqu'il est en ligne dans le document.
- *
- * Deux `<picture>` distincts, et non une seule : les deux photos ne sont pas
- * deux tailles d'un même visuel. Celle de téléphone porte le logo et l'accroche
- * gravés, l'autre est volontairement muette — elles occupent des places
- * différentes dans la page et ne se remplacent pas l'une l'autre.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-const PIXEL_VIDE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+import '@/styles/landing-premium.css';
+import '@/styles/landing-scenes.css';
 
-const REASSURANCES = [
-  '14 jours d’essai sur les formules payantes',
-  'Aucun débit aujourd’hui',
-  'Sans engagement',
-  'Application web installable',
-] as const;
-
-const TOOL_GROUPS = [
-  { name: 'Instruments terrain', detail: 'Lampe, loupe, niveau, boussole, chrono', icon: Wrench },
-  { name: 'Calculateurs', detail: 'Dimensionnements et calculs techniques', icon: Gauge },
-  { name: 'Conversions', detail: 'Unités et valeurs utiles sur site', icon: Radio },
-  { name: 'Notes & mémos', detail: 'Relevés et informations de terrain', icon: PenTool },
-] as const;
-
-const COCKPIT_POINTS = [
-  { label: 'Priorités du jour', icon: CalendarDays },
-  { label: 'Coordination des équipes', icon: UsersRound },
-  { label: 'Suivi des missions', icon: MapPinned },
-  { label: 'Continuité bureau-terrain', icon: Smartphone },
-] as const;
-
-const FINAL_POINTS = [
-  { label: 'Missions suivies', icon: ClipboardCheck },
-  { label: 'Rapports contrôlés', icon: FileCheck2 },
-  { label: 'Matériel relié', icon: PackageSearch },
-] as const;
-
-/**
- * Quatre faits vérifiables, à la place de quatre adjectifs.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * CE QUI MANQUE ICI, ET POURQUOI ON NE L'INVENTE PAS
- *
- * La confiance se gagne normalement par des témoignages, des logos clients et
- * des compteurs d'usage. REZO360 se lance : il n'en a aucun de vrai, et en
- * fabriquer serait mentir à des artisans à qui l'on demande ensuite leur carte
- * bancaire.
- *
- * Reste ce qui est VÉRIFIABLE par le visiteur lui-même. « Infrastructure
- * évolutive » et « services reconnus » ne l'étaient pas : ce sont des
- * adjectifs, et n'importe quel site peut les écrire. Un SIRET se recherche sur
- * l'annuaire des entreprises en dix secondes ; c'est ce qui distingue un
- * éditeur réel d'une page montée en un week-end.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * LA LOCALISATION DES DONNÉES EST EXACTE, PAS FLATTEUSE
- *
- * « Hébergement européen » aurait mieux sonné. C'est faux : le projet tourne en
- * `ca-central-1`, à Montréal — vérifié auprès de l'API Supabase, et consigné
- * dans `config/legal.ts` → `SOUS_TRAITANTS`.
- *
- * Le Canada bénéficie d'une décision d'adéquation de la Commission européenne,
- * ce qui rend le transfert licite. Le dire ainsi est à la fois honnête et
- * rassurant ; l'annoncer « européen » serait une erreur de fait sur un point
- * que l'article 13 du RGPD rend opposable — un client professionnel recopie
- * cette ligne dans son propre registre de traitements.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-const INFRASTRUCTURE_POINTS = [
+const PRODUCT = '/images/product/premium/';
+const JOURNEY = [
+  { title: 'Planning', image: 'planning', detail: 'Une équipe. Le bon endroit. Le bon moment.' },
   {
-    title: 'Éditeur identifié',
-    detail: 'HBG Labs, entreprise française — SIRET 109 198 440 00017',
-    icon: Handshake,
-    iconClassName: 'bg-orange-50 text-orange-600',
+    title: 'Intervention',
+    image: 'missions',
+    detail: 'Le contexte est déjà là. Le terrain peut avancer.',
   },
-  {
-    title: 'Vos données au Canada',
-    detail: 'Sous décision d’adéquation de la Commission européenne',
-    icon: ShieldCheck,
-    iconClassName: 'bg-blue-50 text-blue-600',
-  },
-  {
-    title: 'Paiements sécurisés',
-    detail: 'Transactions traitées par Stripe, jamais par nous',
-    icon: LockKeyhole,
-    iconClassName: 'bg-violet-50 text-violet-600',
-  },
-  {
-    title: 'Sans engagement',
-    detail: 'Résiliable en deux clics depuis votre espace',
-    icon: Zap,
-    iconClassName: 'bg-emerald-50 text-emerald-600',
-  },
+  { title: 'Compte rendu', image: 'report', detail: 'Le travail réalisé rejoint le dossier.' },
+  { title: 'Facture', image: 'invoice', detail: 'La suite de l’intervention, au même endroit.' },
+  { title: 'Paiement', image: 'payment', detail: 'Une vue claire, jusqu’au dernier règlement.' },
 ] as const;
 
-type AnnotationTone = 'cyan' | 'orange' | 'violet' | 'lime';
-type AnnotationArrow = 'curve-left' | 'curve-right' | 'loop-left';
-type DoodleVariant = 'sparkles' | 'loop' | 'zigzag';
-type TechnicianSketchVariant = 'electrical' | 'network' | 'measurement';
-
-const ANNOTATION_TONES: Record<AnnotationTone, string> = {
-  cyan: 'text-cyan-300',
-  orange: 'text-orange-500',
-  violet: 'text-violet-500',
-  lime: 'text-emerald-600',
-};
-
-function DecorativeDoodle({ variant, className }: { variant: DoodleVariant; className: string }) {
-  return (
-    <svg
-      viewBox="0 0 96 96"
-      className={`pointer-events-none absolute ${className}`}
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {variant === 'sparkles' ? (
-        <>
-          <path d="M28 8c1 13 6 19 18 21-12 2-17 8-18 22-2-14-7-20-19-22 12-2 17-8 19-21Z" />
-          <path d="M69 42c1 9 4 13 13 15-9 1-12 6-13 15-1-9-5-14-13-15 8-2 12-6 13-15Z" />
-          <path d="M44 66c1 6 3 9 9 10-6 1-8 4-9 11-1-7-4-10-10-11 6-1 9-4 10-10Z" />
-        </>
-      ) : null}
-      {variant === 'loop' ? (
-        <>
-          <path d="M82 39C73 12 25 8 11 34-3 60 28 84 61 75c30-8 38-34 20-48" />
-          <path d="m77 18 5 9-10 2" />
-          <circle cx="19" cy="76" r="3" fill="currentColor" stroke="none" />
-          <circle cx="87" cy="64" r="2" fill="currentColor" stroke="none" />
-        </>
-      ) : null}
-      {variant === 'zigzag' ? (
-        <>
-          <path d="m7 57 17-22 14 27 18-32 14 26 19-23" />
-          <path d="M13 73c20 7 47 7 70-1" />
-        </>
-      ) : null}
-    </svg>
-  );
+function useLandingSeo() {
+  useEffect(() => {
+    const previous = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousHref = previous?.href;
+    const canonical = previous ?? document.createElement('link');
+    canonical.rel = 'canonical';
+    canonical.href = 'https://rezo360.com/';
+    if (!previous) document.head.append(canonical);
+    return () => {
+      if (!previous) canonical.remove();
+      else if (previousHref) canonical.href = previousHref;
+    };
+  }, []);
 }
 
-function TechnicianSketch({
-  variant,
-  className,
+/** One observer for the page; content remains present when JavaScript or motion is unavailable. */
+function useReveals() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (media.matches || !('IntersectionObserver' in window)) return;
+    const elements = root.current?.querySelectorAll<HTMLElement>('[data-reveal]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.08 },
+    );
+    elements?.forEach((element) => {
+      element.classList.add('will-reveal');
+      observer.observe(element);
+    });
+    const showAll = () => elements?.forEach((element) => element.classList.add('is-revealed'));
+    media.addEventListener('change', showAll);
+    return () => {
+      observer.disconnect();
+      media.removeEventListener('change', showAll);
+    };
+  }, []);
+  return root;
+}
+
+function Cta({
+  children = 'Essayer gratuitement',
+  light = false,
 }: {
-  variant: TechnicianSketchVariant;
-  className: string;
+  children?: ReactNode;
+  light?: boolean;
 }) {
   return (
-    <svg
-      viewBox="0 0 220 140"
-      className={`pointer-events-none absolute ${className}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ fontFamily: 'var(--font-hand)' }}
-    >
-      {variant === 'electrical' ? (
-        <>
-          <text x="16" y="22" fill="currentColor" stroke="none" fontSize="17">
-            U = R × I
-          </text>
-          <text x="126" y="126" fill="currentColor" stroke="none" fontSize="15">
-            P = U × I
-          </text>
-          <path d="M20 66h32l8-12 12 24 12-24 12 24 9-12h28" />
-          <path d="M133 66h19m28 0h20v42H20V66" />
-          <path d="M158 51v30m12-22v14" />
-          <circle cx="176" cy="30" r="14" />
-          <path d="m166 20 20 20m0-20-20 20M176 10V4m0 52v-6m20-20h6m-52 0h6" />
-        </>
-      ) : null}
-      {variant === 'network' ? (
-        <>
-          <rect x="18" y="50" width="52" height="34" rx="4" />
-          <rect x="150" y="50" width="52" height="34" rx="4" />
-          <circle cx="110" cy="68" r="18" />
-          <path d="M70 67h22m36 0h22" strokeDasharray="5 5" />
-          <path d="m84 61 8 6-8 6m52-12-8 6 8 6" />
-          <path d="M101 61c5-5 13-5 18 0m-14 5c3-3 7-3 10 0" />
-          <circle cx="110" cy="72" r="2" fill="currentColor" stroke="none" />
-          <text x="17" y="105" fill="currentColor" stroke="none" fontSize="14">
-            bureau
-          </text>
-          <text x="151" y="105" fill="currentColor" stroke="none" fontSize="14">
-            terrain
-          </text>
-          <path d="M28 39c8-12 22-17 34-12m130 12c-8-12-22-17-34-12" />
-        </>
-      ) : null}
-      {variant === 'measurement' ? (
-        <>
-          <path d="M35 104h132L167 28 35 104Z" />
-          <path d="M154 104v-13h13" />
-          <path d="M35 116h132m-126-6-6 6 6 6m120-12 6 6-6 6" />
-          <path d="M180 104V28m-6 7 6-7 6 7m-12 62 6 7 6-7" />
-          <text x="91" y="136" fill="currentColor" stroke="none" fontSize="14">
-            L
-          </text>
-          <text x="190" y="70" fill="currentColor" stroke="none" fontSize="14">
-            h
-          </text>
-          <text x="43" y="93" fill="currentColor" stroke="none" fontSize="14">
-            α
-          </text>
-          <text x="30" y="22" fill="currentColor" stroke="none" fontSize="17">
-            S = L × l
-          </text>
-        </>
-      ) : null}
-    </svg>
+    <Link className={light ? 'lp-cta lp-cta--light' : 'lp-cta'} to={ROUTES.register}>
+      {children}
+      <ArrowRight aria-hidden="true" />
+    </Link>
   );
 }
 
-function HandwrittenAnnotation({
-  children,
-  className,
-  tone,
-  arrow,
-}: {
-  children: ReactNode;
-  className: string;
-  tone: AnnotationTone;
-  arrow: AnnotationArrow;
-}) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute z-20 hidden select-none ${ANNOTATION_TONES[tone]} ${className}`}
-      style={{ fontFamily: 'var(--font-hand)' }}
-    >
-      <span className="block text-center text-[1.05rem] leading-snug font-semibold italic drop-shadow-sm">
-        {children}
-      </span>
-      <svg
-        viewBox="0 0 112 58"
-        className="mt-1 h-12 w-full overflow-visible"
-        fill="none"
-        aria-hidden="true"
-      >
-        {arrow === 'curve-left' ? (
-          <>
-            <path d="M101 5C69 5 29 16 13 49" stroke="currentColor" strokeWidth="2.4" />
-            <path d="M13 49 14 36M13 49l13-4" stroke="currentColor" strokeWidth="2.4" />
-          </>
-        ) : null}
-        {arrow === 'curve-right' ? (
-          <>
-            <path d="M10 5c33 1 72 15 91 44" stroke="currentColor" strokeWidth="2.4" />
-            <path d="m101 49-2-13m2 13-13-2" stroke="currentColor" strokeWidth="2.4" />
-          </>
-        ) : null}
-        {arrow === 'loop-left' ? (
-          <>
-            <path
-              d="M99 7C75-2 34 1 33 22c-1 17 29 21 42 7 8-9-1-19-14-13-17 8-31 23-45 37"
-              stroke="currentColor"
-              strokeWidth="2.4"
-            />
-            <path d="m16 53 3-13m-3 13 13-3" stroke="currentColor" strokeWidth="2.4" />
-          </>
-        ) : null}
-      </svg>
-    </div>
-  );
+function Eyebrow({ children }: { children: ReactNode }) {
+  return <p className="lp-eyebrow">{children}</p>;
 }
 
-function ChapterLabel({ number, children }: { number: string; children: ReactNode }) {
+function Phone({ className = '', priority = false }: { className?: string; priority?: boolean }) {
   return (
-    <div className="mb-5 flex items-center gap-3">
-      <span className="text-primary font-mono text-sm font-bold tracking-[0.18em]">{number}</span>
-      <span className="bg-primary h-px w-10" aria-hidden="true" />
-      <span className="text-muted-foreground text-sm font-semibold tracking-[0.12em] uppercase">
-        {children}
-      </span>
-    </div>
-  );
-}
-
-function ProductCapture({
-  src,
-  alt,
-  className = '',
-  eager = false,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  eager?: boolean;
-}) {
-  return (
-    <figure
-      className={`border-border bg-surface shadow-overlay overflow-hidden border ${className}`}
-    >
+    <div className={`lp-phone ${className}`}>
       <img
-        src={src}
-        alt={alt}
-        className="block h-auto w-full"
-        loading={eager ? 'eager' : 'lazy'}
+        src={`${PRODUCT}mobile.webp`}
+        width="390"
+        height="844"
+        alt="Une mission dans la véritable application mobile REZO360"
+        loading={priority ? 'eager' : 'lazy'}
         decoding="async"
       />
-      <figcaption className="sr-only">
-        Écran réel de REZO360 avec données de démonstration.
-      </figcaption>
-    </figure>
+    </div>
   );
 }
 
-/**
- * Cinq scènes du quotidien, et ce qu'elles deviennent.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * L'OBJECTION QUI N'ÉTAIT TRAITÉE NULLE PART
- *
- * La page expliquait très bien ce que fait REZO360. Elle ne répondait jamais à
- * la question que se pose vraiment un artisan devant un logiciel de gestion :
- * « pourquoi changer, puisque je m'en sors ? »
- *
- * C'est l'objection numéro un, et elle précède toutes les autres. Tant qu'elle
- * tient, aucune fonctionnalité ne convainc — elles ressemblent à des solutions
- * pour un problème qu'on n'a pas.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * NE PAS MOQUER LA MÉTHODE ACTUELLE
- *
- * Le carnet, le tableur et WhatsApp ne sont pas des erreurs : ce sont des
- * outils qui MARCHENT, et qui ont porté l'entreprise jusqu'ici. Une page qui
- * les tourne en ridicule vexe exactement la personne qu'elle veut convaincre —
- * elle lui dit qu'elle travaille mal.
- *
- * La colonne de gauche décrit donc des situations, sans jugement. Ce qui les
- * disqualifie n'est pas leur bêtise, c'est leur coût : la même information
- * ressaisie trois fois, et la paperasse repoussée au dimanche.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * DES SCÈNES, PAS DES FONCTIONNALITÉS
- *
- * « Gestion centralisée des documents » ne reconnaît personne. « Les photos du
- * chantier dorment dans une conversation WhatsApp » fait dire « c'est
- * exactement ça ». C'est cette reconnaissance qui fait lire la suite.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-/**
- * Cinq scènes du quotidien, chacune avec sa teinte.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * LA COULEUR RELIE LE PROBLÈME À SA RÉSOLUTION
- *
- * Chaque paire porte une teinte unique, qui traverse les trois éléments de la
- * ligne : l'icône de l'outil à gauche, la flèche au milieu, la validation à
- * droite. L'œil suit la couleur d'un bout à l'autre et rattache les deux
- * cartes sans avoir à les lire.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * SATURÉE À DROITE, SOURDE À GAUCHE — ET PAS L'INVERSE
- *
- * La tentation serait de colorer la colonne « aujourd'hui », qui est la plus
- * pittoresque : le carnet, WhatsApp, le dimanche soir. Ce serait une faute de
- * hiérarchie — on rendrait le problème plus séduisant que sa solution.
- *
- * La couleur ne s'allume donc qu'en passant à droite. La gauche garde des tons
- * éteints sur une bordure en pointillés ; c'est le monde qu'on quitte.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-const SCENES_QUOTIDIEN = [
-  {
-    icon: NotebookPen,
-    outil: 'Le carnet',
-    avant: 'Notée sur un carnet, retapée dans un tableur, ressaisie pour la facture.',
-    apres: 'Saisie une fois sur le terrain, elle suit d’elle-même jusqu’à la facture.',
-    // Ambre : la couleur du papier et du crayon.
-    iconTon: 'bg-amber-100/70 text-amber-700/70',
-    flecheTon: 'bg-amber-500 text-white',
-    barreTon: 'bg-amber-500',
-    checkTon: 'text-amber-600',
-  },
-  {
-    icon: MessageSquareText,
-    outil: 'WhatsApp',
-    avant: 'Les photos dorment dans une conversation, introuvables six mois plus tard.',
-    apres: 'Attachées à l’intervention, avec le compte rendu et la signature du client.',
-    // Vert : celui de la messagerie dont on parle, reconnaissable au premier
-    // coup d'œil sans avoir à écrire son nom.
-    iconTon: 'bg-emerald-100/70 text-emerald-700/70',
-    flecheTon: 'bg-emerald-500 text-white',
-    barreTon: 'bg-emerald-500',
-    checkTon: 'text-emerald-600',
-  },
-  {
-    icon: PhoneCall,
-    outil: 'Le téléphone',
-    avant: '« Vous passez quand ? » — il faut appeler le technicien pour le savoir.',
-    apres: 'Le planning montre où en est chaque mission, sans déranger personne.',
-    // Orange : la couleur de l'interruption.
-    iconTon: 'bg-orange-100/70 text-orange-700/70',
-    flecheTon: 'bg-orange-500 text-white',
-    barreTon: 'bg-orange-500',
-    checkTon: 'text-orange-600',
-  },
-  {
-    icon: Repeat2,
-    outil: 'La mémoire',
-    avant: 'Le devis se refait de tête, et les prix varient d’un chantier à l’autre.',
-    apres: 'Il reprend vos prestations déjà chiffrées, au même tarif qu’en janvier.',
-    iconTon: 'bg-violet-100/70 text-violet-700/70',
-    flecheTon: 'bg-violet-500 text-white',
-    barreTon: 'bg-violet-500',
-    checkTon: 'text-violet-600',
-  },
-  {
-    icon: CalendarClock,
-    outil: 'Le dimanche',
-    avant: 'La soirée passe dans la paperasse en retard.',
-    apres: 'Le compte rendu part du chantier, avant de remonter dans le camion.',
-    // Cyan, la teinte de signature du produit : la dernière ligne est celle
-    // qu'on retient, elle revient donc à la marque.
-    iconTon: 'bg-cyan-100/70 text-cyan-700/70',
-    flecheTon: 'bg-cyan-500 text-white',
-    barreTon: 'bg-cyan-500',
-    checkTon: 'text-cyan-600',
-  },
-] as const;
-
-/**
- * Le carnet, et la boucle qui en sort pour y revenir.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * POURQUOI UN DESSIN DE PLUS, ET PAS UN DES TROIS EXISTANTS
- *
- * `TechnicianSketch` dessine un circuit électrique, un schéma réseau et une
- * figure de géométrie. Ce sont les croquis du CATALOGUE D'OUTILS : ils
- * accompagnent bien les sections qui en parlent, et n'ont rien à dire ici.
- *
- * Cette section-ci parle du carnet, du tableur et de l'information ressaisie
- * trois fois. Son illustration devait donc montrer cela, sinon elle ne serait
- * qu'un remplissage de marge — exactement ce qu'on vient de retirer avec
- * l'annotation mal placée.
- *
- * La boucle qui quitte le carnet et y revient EST l'argument de la section,
- * dessiné : ce qu'on note ici, on le renote ailleurs, puis encore ailleurs.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * TRACÉ À MAIN LEVÉE, VOLONTAIREMENT
- *
- * Les côtés du carnet ne sont pas droits et les lignes n'ont pas la même
- * longueur. Un rectangle parfait avec quatre traits réguliers aurait l'air d'un
- * pictogramme d'interface, pas d'un dessin — et la page emploie déjà le
- * registre manuscrit ailleurs.
- *
- * Réservé aux très grands écrans : en dessous de 1700 px, la marge n'existe
- * pas, et le croquis chevaucherait le contenu.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-function CarnetSketch({ className }: { className: string }) {
+function Hero() {
   return (
-    <svg
-      viewBox="0 0 190 215"
-      className={`pointer-events-none absolute ${className}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* Le corps du carnet. */}
-      <path d="M26 44c-2 42-3 84-1 130 1 9 3 12 11 12 24 1 57 1 84-1 8 0 10-3 10-11 1-45 1-87-1-130" />
-      <path d="M26 44c29-3 60-3 103-1" />
-
-      {/* La reliure. */}
-      <path d="M40 28c-6 6-6 15 0 21M61 26c-6 6-6 15 0 21M82 27c-6 6-6 15 0 21M103 26c-6 6-6 15 0 21" />
-
-      {/* Ce qu'on y écrit — des lignes inégales, comme une écriture réelle. */}
-      <path d="M42 80c17-2 38-3 59-1" />
-      <path d="M42 99c25-2 38-2 48-1" />
-      <path d="M42 118c13-1 33-2 55-1" />
-      <path d="M42 137c21-1 30-1 38 0" />
-
-      {/* La boucle : ce qui sort du carnet y revient. */}
-      <path d="M143 86c26 10 30 42 8 57-19 13-45 3-46-15" />
-      <path d="m106 125 6-12m-6 12 13 3" />
-
-      {/* Deux points de ponctuation, pour l'aspect croquis. */}
-      <circle cx="160" cy="70" r="2.4" fill="currentColor" stroke="none" />
-      <circle cx="20" cy="176" r="2" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function MethodeActuelleSection() {
-  return (
-    /*
-      LE FOND ENCODE LE PROPOS.
-
-      Un dégradé HORIZONTAL, de l'ardoise tiède à gauche vers le bleu du
-      produit à droite. Il ne décore pas : il suit exactement le sens de
-      lecture des paires ci-dessous, et fait ressentir le passage avant qu'on
-      ait lu la première ligne.
-    */
-    <section className="border-border border-y bg-gradient-to-r from-slate-100 via-white to-blue-50/70 py-12 sm:py-24">
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/*
-          Dans la MARGE, pas dans le contenu : `-left-56` le pousse hors du
-          conteneur, là où il n'y a rien. Il n'apparaît qu'au-delà de 1700 px,
-          largeur en deçà de laquelle cette marge n'existe pas.
-        */}
-        <CarnetSketch className="top-44 -left-56 hidden h-52 w-44 -rotate-6 text-amber-600 opacity-25 min-[1700px]:block" />
-
-        {/*
-          Même rythme d'en-tête que la section « Le cockpit » : le titre à
-          gauche, le développement à droite. Reprendre la grille existante
-          plutôt qu'en inventer une évite que cette section, ajoutée après
-          coup, se voie comme une pièce rapportée.
-        */}
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-          <div className="lg:col-span-6">
-            {/*
-              LE LIBELLÉ NOMME UN SUJET, IL NE DONNE PAS D'INSTRUCTION.
-
-              Il disait « Avant de changer d'outil ». Trois défauts pour trois
-              mots : il nommait l'EFFORT — migration, réapprentissage — au lieu
-              du bénéfice ; il présupposait une décision que le visiteur n'a pas
-              prise ; et il contredisait la dernière ligne de la section, qui
-              promet précisément qu'il n'y a rien à migrer.
-
-              « Le point de départ » situe le lecteur là où il est, sans rien
-              exiger de lui — et s'accorde au registre des autres chapitres,
-              qui nomment un sujet plutôt qu'une consigne.
-
-              Le numéro 00 reste : cette section précède les trois autres, et le
-              zéro le dit mieux qu'un mot.
-            */}
-            <ChapterLabel number="00">Le point de départ</ChapterLabel>
-            <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
-              Votre méthode actuelle fonctionne. C’est ce qu’elle vous coûte qui pose problème.
-            </h2>
-          </div>
-          <div className="lg:col-span-5 lg:col-start-8">
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              Le carnet, le tableur et WhatsApp ont porté votre entreprise jusqu’ici. Ils ne
-              tiennent plus dès qu’elle grossit : la même information est ressaisie trois fois, et
-              le reste attend.
-            </p>
-          </div>
-        </div>
-
-        {/*
-          ELLE POINTE VERS LE CONTENU, PAS VERS LA MARGE.
-
-          La première version employait `curve-right`, dont la flèche descend
-          vers la DROITE. Posée au coin haut-droit de la section, elle désignait
-          donc le vide au-delà du cadre — et le texte, privé de référent, ne
-          commentait plus personne.
-
-          `curve-left` descend vers la gauche : depuis ce même coin, elle ramène
-          l'œil sur le paragraphe qui vient d'énoncer la thèse.
-
-          Le texte AJOUTE quelque chose au lieu de répéter. Le titre dit ce que
-          la méthode actuelle coûte ; l'annotation nomme la raison pour laquelle
-          ce coût reste invisible — il n'apparaît sur aucune facture.
-        */}
-        <HandwrittenAnnotation
-          className="top-1 right-2 w-48 -rotate-2 xl:block"
-          tone="orange"
-          arrow="curve-left"
-        >
-          Et personne ne compte ces heures-là
-        </HandwrittenAnnotation>
-
-        <div className="mt-8 sm:mt-14">
-          {/* Intitulés de colonnes, calés sur la même grille que les paires.
-              Masqués sur téléphone, où chaque paire se lit de haut en bas et
-              où les répéter n'apprendrait rien. */}
-          <div className="mb-3 hidden items-center gap-5 sm:grid sm:grid-cols-[1fr_2rem_1fr]">
-            <span className="text-muted-foreground/80 font-mono text-xs font-bold tracking-widest uppercase">
-              Aujourd’hui
-            </span>
-            <span aria-hidden="true" />
-            <span className="text-primary font-mono text-xs font-bold tracking-widest uppercase">
-              Avec REZO360
-            </span>
-          </div>
-
-          <ul className="space-y-3">
-            {SCENES_QUOTIDIEN.map((scene) => {
-              const Icon = scene.icon;
-              return (
-                <li
-                  key={scene.outil}
-                  /*
-                    UNE SEULE CARTE SUR TÉLÉPHONE, DEUX EN VIS-À-VIS AU-DELÀ.
-
-                    Empilées, les deux cartes coûtaient deux bordures, deux
-                    rembourrages et une pastille sur sa propre ligne : 252 px
-                    par paire, mesurés, soit près de deux mille pixels pour la
-                    seule section.
-
-                    Le vis-à-vis n'a de sens qu'en vis-à-vis. Sur une colonne
-                    unique, la même idée se dit mieux en un seul bloc coupé par
-                    un filet : ce qui est au-dessus du filet, c'est aujourd'hui ;
-                    ce qui est en dessous, c'est après.
-                  */
-                  className="border-border/70 bg-surface/60 overflow-hidden rounded-xl border sm:grid sm:grid-cols-[1fr_2.25rem_1fr] sm:items-center sm:gap-4 sm:rounded-none sm:border-0 sm:bg-transparent"
-                >
-                  {/*
-                    Le pointillé ne subsiste qu'en vis-à-vis : sur téléphone, la
-                    carte est commune aux deux moitiés, une bordure intérieure
-                    en pointillés ne délimiterait plus rien.
-                  */}
-                  <div className="sm:border-border/70 sm:bg-surface/60 flex items-start gap-3 p-3.5 sm:rounded-xl sm:border sm:border-dashed sm:p-4">
-                    <span
-                      className={`flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9 ${scene.iconTon}`}
-                    >
-                      <Icon className="size-4 sm:size-4.5" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-muted-foreground/70 text-2xs block font-bold tracking-wide uppercase">
-                        {scene.outil}
-                      </span>
-                      <p className="text-muted-foreground mt-0.5 text-sm leading-relaxed">
-                        {scene.avant}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/*
-                    Le passage. Filet traversant sur téléphone — il sépare les
-                    deux moitiés d'une même carte ; pastille centrée au-delà, où
-                    il relie deux cartes distinctes.
-                  */}
-                  <div className="flex items-center gap-2 px-3.5 sm:block sm:px-0">
-                    <span className="bg-border/70 h-px flex-1 sm:hidden" aria-hidden="true" />
-                    <span
-                      aria-hidden="true"
-                      className={`flex size-6 shrink-0 items-center justify-center rounded-full shadow-sm sm:mx-auto sm:size-8 ${scene.flecheTon}`}
-                    >
-                      <ArrowRight className="size-3 rotate-90 sm:size-4 sm:rotate-0" />
-                    </span>
-                    <span className="bg-border/70 h-px flex-1 sm:hidden" aria-hidden="true" />
-                  </div>
-
-                  {/*
-                    La barre de couleur borde la moitié basse sur téléphone, et
-                    la carte entière en vis-à-vis. Dans les deux cas elle referme
-                    le trajet commencé par l'icône.
-                  */}
-                  <div className="border-border/60 sm:bg-surface sm:shadow-raised relative flex items-start gap-3 py-3.5 pr-3.5 pl-5 sm:overflow-hidden sm:rounded-xl sm:border sm:py-4 sm:pr-4">
-                    <span
-                      aria-hidden="true"
-                      className={`absolute inset-y-0 left-0 w-1 ${scene.barreTon}`}
-                    />
-                    <CheckCircle2
-                      className={`mt-0.5 size-4 shrink-0 sm:size-4.5 ${scene.checkTon}`}
-                      aria-hidden="true"
-                    />
-                    <p className="text-foreground text-sm leading-relaxed font-medium">
-                      {scene.apres}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <p className="text-muted-foreground mt-6 text-sm">
-          Rien à réinstaller, rien à migrer le premier jour : vous commencez par une intervention,
-          et vous voyez.
+    <section className="lp-hero" aria-labelledby="lp-title">
+      <div className="lp-container lp-hero-copy">
+        <Eyebrow>Le terrain. Le bureau. Enfin réunis.</Eyebrow>
+        <h1 id="lp-title">
+          Votre activité en mieux. <br />
+          <span>Tout simplement.</span>
+        </h1>
+        <p className="lp-hero-lead">
+          Clients, équipes, interventions et factures.
+          <br className="lp-desktop-break" /> Toute l’activité de votre entreprise de terrain, au
+          même endroit.
         </p>
+        <div className="lp-actions">
+          <Cta />
+          <a className="lp-text-link" href="#produit">
+            Voir REZO360 en action
+            <ArrowDown aria-hidden="true" />
+          </a>
+        </div>
+        <p className="lp-hero-note">Un compte gratuit pour découvrir. Aucun engagement.</p>
       </div>
     </section>
   );
 }
 
-function InfrastructureSection() {
+function ProductIntro() {
+  return (
+    <section className="lp-product-intro" aria-label="REZO360, du bureau au terrain">
+      <div className="lp-hero-stage">
+        <img
+          className="lp-hero-atmosphere"
+          src="/images/landing/hero-light.webp"
+          alt=""
+          width="1600"
+          height="905"
+          loading="lazy"
+          fetchPriority="low"
+          decoding="async"
+        />
+        <div className="lp-hero-product" data-reveal>
+          <ProductFrame
+            src={`${PRODUCT}dashboard.webp`}
+            alt="Le véritable tableau de bord REZO360 : activité, missions et suivi de l’équipe"
+            label="Votre activité, en un regard"
+            width={1440}
+            height={960}
+          />
+          <Phone className="lp-hero-phone" />
+        </div>
+        <div className="lp-hero-caption">
+          <span>GESTION</span>
+          <i />
+          <span>WORKSPACE</span>
+          <i />
+          <span>FINANCE</span>
+        </div>
+      </div>
+      <p className="lp-demo-note">Interfaces réelles de REZO360 · Données de démonstration</p>
+    </section>
+  );
+}
+
+function ProductSequence() {
+  const section = useRef<HTMLElement>(null);
+  const [active, setActive] = useState(0);
+  const [scrollLinked, setScrollLinked] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia(
+      '(min-width: 1024px) and (min-height: 760px) and (prefers-reduced-motion: no-preference)',
+    );
+    const updateMode = () => setScrollLinked(media.matches);
+    updateMode();
+    media.addEventListener('change', updateMode);
+    return () => media.removeEventListener('change', updateMode);
+  }, []);
+  useEffect(() => {
+    if (!scrollLinked || !('IntersectionObserver' in window)) return;
+    let frame = 0;
+    let visible = false;
+    const update = () => {
+      frame = 0;
+      const element = section.current;
+      if (!element || !visible) return;
+      const rect = element.getBoundingClientRect();
+      const progress = Math.max(
+        0,
+        Math.min(0.999, (100 - rect.top) / (rect.height - window.innerHeight)),
+      );
+      setActive(Math.floor(progress * JOURNEY.length));
+    };
+    const schedule = () => {
+      if (!frame && visible) frame = requestAnimationFrame(update);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry?.isIntersecting ?? false;
+      schedule();
+    });
+    if (section.current) observer.observe(section.current);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [scrollLinked]);
+
+  function select(index: number) {
+    setActive(index);
+    if (scrollLinked && section.current) {
+      const start = section.current.getBoundingClientRect().top + window.scrollY;
+      const travel = section.current.offsetHeight - window.innerHeight;
+      window.scrollTo({
+        top: start - 100 + ((index + 0.25) / JOURNEY.length) * travel,
+        behavior: 'instant',
+      });
+    }
+  }
+
   return (
     <section
-      id="infrastructure"
-      aria-labelledby="infrastructure-title"
-      className="relative overflow-hidden border-y border-blue-100/70 bg-gradient-to-b from-white via-blue-50/45 to-white py-14 sm:py-20"
+      id="produit"
+      ref={section}
+      className={scrollLinked ? 'lp-sequence lp-sequence--scroll' : 'lp-sequence'}
+      aria-labelledby="lp-sequence-title"
     >
-      <div
-        className="absolute -top-32 -right-32 size-80 rounded-full bg-blue-100/45 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-24 -left-32 size-72 rounded-full bg-cyan-100/35 blur-3xl"
-        aria-hidden="true"
-      />
-      <TechnicianSketch
-        variant="network"
-        className="top-14 left-4 hidden h-28 w-44 -rotate-6 text-cyan-700 opacity-30 xl:block"
-      />
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2
-            id="infrastructure-title"
-            className="text-brand-night text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl"
-          >
-            Qui est{' '}
-            <span className="from-primary bg-gradient-to-r to-blue-500 bg-clip-text text-transparent">
-              derrière REZO360
-            </span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Une entreprise identifiée, des données localisées, des paiements confiés à Stripe. Rien
-            de tout cela n’est à nous croire sur parole : chacun de ces points se vérifie.
+      <div className="lp-sequence-sticky lp-container">
+        <div className="lp-sequence-heading">
+          <h2 id="lp-sequence-title">Tout s’enchaîne.</h2>
+          <p>
+            Un dossier qui vous suit.
+            <br />
+            Du premier rendez-vous au paiement.
           </p>
         </div>
-
-        <div className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-3 md:gap-6">
-          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
-            <div
-              className="text-brand-night flex items-center justify-start gap-3 md:justify-center"
-              aria-label="Supabase"
+        <div className="lp-sequence-nav" aria-label="Étapes du produit">
+          {JOURNEY.map((step, index) => (
+            <button
+              key={step.title}
+              type="button"
+              aria-pressed={active === index}
+              aria-controls="lp-sequence-screen"
+              onClick={() => select(index)}
             >
-              <svg
-                className="h-9 w-8 md:h-10 md:w-9"
-                viewBox="0 0 40 48"
-                role="img"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient
-                    id="supabase-mark-a"
-                    x1="7"
-                    y1="4"
-                    x2="28"
-                    y2="34"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#3ECF8E" />
-                    <stop offset="1" stopColor="#1BAA73" />
-                  </linearGradient>
-                  <linearGradient
-                    id="supabase-mark-b"
-                    x1="18"
-                    y1="17"
-                    x2="35"
-                    y2="43"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#7DE8BC" />
-                    <stop offset="1" stopColor="#3ECF8E" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M22.3 3.8c.9-2.1 4-1.5 4 .8v17.1H37c2.1 0 3.1 2.6 1.6 4.1L17.7 45.2c-1.5 1.4-3.9.3-3.6-1.8l2.3-17.1H3.1c-2.2 0-3.1-2.7-1.5-4.2L22.3 3.8Z"
-                  fill="url(#supabase-mark-a)"
-                />
-                <path
-                  d="M26.3 21.7H37c2.1 0 3.1 2.6 1.6 4.1L17.7 45.2c-1.5 1.4-3.9.3-3.6-1.8l12.2-21.7Z"
-                  fill="url(#supabase-mark-b)"
-                />
-              </svg>
-              <span className="text-xl font-bold tracking-tight md:text-3xl">supabase</span>
-            </div>
-            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
-              Base de données sécurisée et évolutive
-            </p>
-          </article>
-
-          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
-            <div
-              className="flex items-center justify-start gap-3 text-black md:justify-center"
-              aria-label="Vercel"
-            >
-              <svg className="size-8 md:size-9" viewBox="0 0 48 48" role="img" aria-hidden="true">
-                <path d="M24 7 45 43H3L24 7Z" fill="currentColor" />
-              </svg>
-              <span className="text-2xl font-bold tracking-tight md:text-3xl">Vercel</span>
-            </div>
-            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
-              Hébergement performant et fiable
-            </p>
-          </article>
-
-          <article className="shadow-raised grid grid-cols-[1fr_0.85fr] items-center gap-4 rounded-2xl border border-white/90 bg-white/90 px-5 py-5 text-left backdrop-blur-sm md:flex md:min-h-40 md:flex-col md:justify-center md:rounded-3xl md:px-6 md:py-6 md:text-center">
-            <div
-              className="text-[2rem] leading-none font-bold tracking-[-0.06em] text-[#635BFF] md:text-[2.4rem]"
-              aria-label="Stripe"
-            >
-              stripe
-            </div>
-            <p className="text-sm leading-5 text-slate-600 md:mt-4 md:max-w-64 md:text-[0.95rem] md:leading-6">
-              Paiements traités de manière sécurisée
-            </p>
-          </article>
+              <span>0{index + 1}</span>
+              {step.title}
+            </button>
+          ))}
         </div>
-
-        <div className="mt-8 grid gap-x-5 gap-y-6 border-t border-blue-100/80 pt-8 sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:divide-x lg:divide-blue-100/90">
-          {INFRASTRUCTURE_POINTS.map(({ title, detail, icon: Icon, iconClassName }) => (
-            <div key={title} className="flex items-center gap-4 lg:px-5 first:lg:pl-0 last:lg:pr-0">
-              <span
-                className={`flex size-11 shrink-0 items-center justify-center rounded-full ${iconClassName}`}
-              >
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <div>
-                <h3 className="text-brand-night text-sm font-bold sm:text-base">{title}</h3>
-                <p className="mt-1 text-sm leading-snug text-slate-600">{detail}</p>
-              </div>
+        <div id="lp-sequence-screen" className="lp-sequence-screen" aria-live="off">
+          {JOURNEY.map((step, index) => (
+            <div
+              key={step.image}
+              className={active === index ? 'lp-sequence-layer is-active' : 'lp-sequence-layer'}
+              aria-hidden={active !== index}
+            >
+              <ProductFrame
+                src={`${PRODUCT}${step.image}.webp`}
+                alt={`Interface réelle REZO360 — ${step.title}`}
+                label={step.title}
+                width={1440}
+                height={960}
+              />
             </div>
           ))}
         </div>
+        <div className="lp-sequence-caption">
+          <p>{JOURNEY[active]?.detail}</p>
+          <span>{String(active + 1).padStart(2, '0')} / 05</span>
+        </div>
+        <div className="lp-sequence-mobile-controls">
+          <button
+            type="button"
+            onClick={() => select(Math.max(0, active - 1))}
+            disabled={active === 0}
+            aria-label="Écran précédent"
+          >
+            <ChevronLeft />
+          </button>
+          <span>Explorez les vrais écrans</span>
+          <button
+            type="button"
+            onClick={() => select(Math.min(4, active + 1))}
+            disabled={active === 4}
+            aria-label="Écran suivant"
+          >
+            <ChevronRight />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FieldSection() {
+  return (
+    <section className="lp-field" aria-labelledby="lp-field-title">
+      <div className="lp-container lp-editorial-heading" data-reveal>
+        <div>
+          <Eyebrow>Le logiciel suit le métier</Eyebrow>
+          <h2 id="lp-field-title">
+            Tout commence
+            <br />
+            <span className="lp-muted">sur le terrain.</span>
+          </h2>
+        </div>
+        <p>
+          Un site, une équipe, un travail à réaliser.
+          <br />
+          REZO360 garde le contexte à portée de main.
+        </p>
+      </div>
+      <figure className="lp-field-photo" data-reveal>
+        <div className="lp-field-art">
+          <img
+            src="/images/landing/field-work.webp"
+            srcSet="/images/landing/field-work-small.webp 800w, /images/landing/field-work.webp 1800w"
+            sizes="(max-width: 640px) 100vw, 92vw"
+            width="1800"
+            height="1195"
+            alt="Une professionnelle consulte sa mission REZO360 sur son smartphone dans un local technique"
+            loading="lazy"
+            decoding="async"
+          />
+          <div className="lp-field-screen" aria-hidden="true">
+            <img
+              src={`${PRODUCT}mobile.webp`}
+              width="390"
+              height="844"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+        <figcaption>La bonne information. Là où le travail se fait.</figcaption>
+      </figure>
+    </section>
+  );
+}
+
+const UNIVERSES = [
+  {
+    number: '01',
+    title: 'Gestion',
+    subtitle: 'Une vue d’ensemble.\nDes équipes qui avancent.',
+    description: 'Du client au compte rendu signé, retrouvez le contexte de chaque intervention.',
+    image: 'planning',
+    detail: ['Clients & sites', 'Équipes & planning', 'Missions & rapports'],
+    id: 'gestion',
+  },
+  {
+    number: '02',
+    title: 'Workspace',
+    subtitle: 'Le savoir de l’équipe.\nÀ sa place.',
+    description:
+      'Pages, notes, tâches et documents restent proches du travail qu’ils accompagnent.',
+    image: 'workspace',
+    detail: ['Pages & tâches', 'Documents', 'Bibliothèque technique'],
+    id: 'workspace',
+  },
+  {
+    number: '03',
+    title: 'Finance',
+    subtitle: 'Le travail est fait.\nLa suite est claire.',
+    description: 'Devis, factures, paiements et relances partagent le même fil client.',
+    image: 'quotes',
+    detail: ['Devis', 'Factures & paiements', 'Relances'],
+    id: 'finance-univers',
+  },
+] as const;
+
+function Universes() {
+  return (
+    <section id="univers" className="lp-universes" aria-labelledby="lp-universes-title">
+      <div className="lp-container lp-universes-intro" data-reveal>
+        <Eyebrow>Trois univers. Un même quotidien.</Eyebrow>
+        <h2 id="lp-universes-title">
+          Toute votre entreprise.
+          <br />
+          <span className="lp-muted">Sans changer de rythme.</span>
+        </h2>
+      </div>
+      {UNIVERSES.map((universe) => (
+        <article
+          id={universe.id}
+          className={`lp-universe lp-universe--${universe.id}`}
+          key={universe.id}
+        >
+          <div className="lp-container">
+            <div className="lp-universe-heading" data-reveal>
+              <span className="lp-universe-number">{universe.number}</span>
+              <h3>{universe.title}</h3>
+              <p>{universe.subtitle}</p>
+            </div>
+            <div className="lp-universe-body">
+              <div className="lp-universe-copy" data-reveal>
+                <p>{universe.description}</p>
+                <ul>
+                  {universe.detail.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <Link to={ROUTES.features} className="lp-text-link">
+                  Explorer les fonctionnalités
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+              <div className="lp-universe-visual" data-reveal>
+                <ProductFrame
+                  src={`${PRODUCT}${universe.image}.webp`}
+                  alt={`Véritable espace ${universe.title} de REZO360`}
+                  label={`REZO360 · ${universe.title}`}
+                  width={1440}
+                  height={960}
+                />
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+const WORKFLOW = [
+  ['Client', 'Le contexte est posé.'],
+  ['Devis', 'La proposition prend forme.'],
+  ['Planning', 'L’équipe sait où aller.'],
+  ['Intervention', 'Le terrain enrichit le dossier.'],
+  ['Rapport signé', 'Le travail est documenté.'],
+  ['Facture', 'Les informations sont réunies.'],
+  ['Paiement', 'Le suivi se poursuit.'],
+] as const;
+
+function Workflow() {
+  const [active, setActive] = useState(0);
+  const steps = useRef<(HTMLLIElement | null)[]>([]);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function' || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(Number((entry.target as HTMLElement).dataset.step));
+        });
+      },
+      { rootMargin: '-35% 0px -35% 0px', threshold: 0 },
+    );
+    steps.current.forEach((step) => {
+      if (step) observer.observe(step);
+    });
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <section className="lp-workflow" aria-labelledby="lp-workflow-title">
+      <div className="lp-container lp-workflow-grid">
+        <div className="lp-workflow-copy">
+          <Eyebrow>Un dossier. Du début à la fin.</Eyebrow>
+          <h2 id="lp-workflow-title">
+            L’information
+            <br />
+            avance avec vous.
+          </h2>
+          <p>
+            Le client, le site, les documents.
+            <br />
+            Gardez le fil, à chaque étape.
+          </p>
+          <div className="lp-dossier" aria-hidden="true">
+            <span>DOSSIER DE DÉMONSTRATION</span>
+            <strong>Maintenance · Les Alizés</strong>
+            <div>
+              <i />
+              {WORKFLOW[active]?.[0]}
+            </div>
+            <small>Le même contexte, toujours disponible.</small>
+          </div>
+        </div>
+        <ol className="lp-workflow-steps">
+          {WORKFLOW.map(([title, detail], index) => (
+            <li
+              ref={(node) => {
+                steps.current[index] = node;
+              }}
+              data-step={index}
+              key={title}
+              className={index <= active ? 'is-passed' : ''}
+            >
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{detail}</p>
+              </div>
+              <Check aria-hidden="true" />
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function WorkspaceSection() {
+  return (
+    <section className="lp-workspace" aria-labelledby="lp-workspace-title">
+      <div className="lp-container">
+        <div className="lp-workspace-title" data-reveal>
+          <Eyebrow>Un espace pour ce que vous savez</Eyebrow>
+          <h2 id="lp-workspace-title">
+            Les idées passent.
+            <br />
+            <span className="lp-muted">Le savoir reste.</span>
+          </h2>
+          <p>
+            Une consigne, une page de chantier, une documentation.
+            <br />
+            La bonne ressource n’est jamais loin.
+          </p>
+        </div>
+        <figure className="lp-workspace-photo" data-reveal>
+          <img
+            src="/images/landing/workspace-team-1800.webp"
+            srcSet="/images/landing/workspace-team-800.webp 800w, /images/landing/workspace-team-1800.webp 1800w"
+            sizes="(max-width: 640px) 100vw, 90vw"
+            width="1800"
+            height="1013"
+            loading="lazy"
+            decoding="async"
+            alt="Deux professionnels réunissent leurs plans et documents dans un atelier"
+          />
+          <figcaption>Les bonnes idées se construisent ensemble.</figcaption>
+        </figure>
+        <div className="lp-workspace-composition" data-reveal>
+          <ProductFrame
+            src={`${PRODUCT}workspace.webp`}
+            alt="Une page de préparation de chantier dans le véritable éditeur Workspace REZO360"
+            label="Workspace · Pages de l’équipe"
+            width={1440}
+            height={960}
+          />
+          <div className="lp-library-inset">
+            <ProductFrame
+              src={`${PRODUCT}library.webp`}
+              alt="La bibliothèque technique REZO360 avec dossiers et documents"
+              label="Bibliothèque technique"
+              width={1440}
+              height={960}
+            />
+          </div>
+        </div>
+        <div className="lp-workspace-labels">
+          <span>Pages</span>
+          <span>Tâches</span>
+          <span>Documents</span>
+          <span>Bibliothèque</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileSection() {
+  const stage = useRef<HTMLDivElement>(null);
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function' || !('IntersectionObserver' in window)) return;
+    if (!stage.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setMobile(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(stage.current);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <section className="lp-mobile" aria-labelledby="lp-mobile-title">
+      <div className="lp-container lp-mobile-grid">
+        <div className="lp-mobile-copy" data-reveal>
+          <Eyebrow>Le bureau tient dans la poche</Eyebrow>
+          <h2 id="lp-mobile-title">
+            Même dossier.
+            <br />
+            <span className="lp-muted">Autre point de vue.</span>
+          </h2>
+          <p>
+            Consultez une mission, ajoutez vos informations et retrouvez vos documents depuis votre
+            smartphone.
+          </p>
+          <p className="lp-mobile-install">
+            <Smartphone aria-hidden="true" />
+            Une application web installable sur Android et iPhone.
+          </p>
+          <Cta />
+        </div>
+        <div
+          ref={stage}
+          className={mobile ? 'lp-mobile-transform is-mobile' : 'lp-mobile-transform'}
+        >
+          <div className="lp-mobile-desktop">
+            <ProductFrame
+              src={`${PRODUCT}missions.webp`}
+              alt="Vue des missions REZO360 sur ordinateur"
+              label="Au bureau"
+              width={1440}
+              height={960}
+            />
+          </div>
+          <Phone className="lp-mobile-phone" />
+          <span className="lp-mobile-caption">Du bureau au terrain.</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Proofs() {
+  return (
+    <section className="lp-proofs" aria-labelledby="lp-proofs-title">
+      <div className="lp-container">
+        <div data-reveal>
+          <Eyebrow>Du concret, dès le départ</Eyebrow>
+          <h2 id="lp-proofs-title">
+            Un outil de travail.
+            <br />
+            Des bases claires.
+          </h2>
+        </div>
+        <div className="lp-proof-list">
+          <div>
+            <strong>Un produit, trois univers</strong>
+            <p>Gestion, Workspace et Finance dans la même application.</p>
+          </div>
+          <div>
+            <strong>Web et mobile</strong>
+            <p>Un accès depuis votre navigateur. Une application installable.</p>
+          </div>
+          <div>
+            <strong>Des tarifs affichés</strong>
+            <p>Une facturation mensuelle et des utilisateurs inclus dans chaque formule.</p>
+          </div>
+          <div>
+            <strong>Vos documents, disponibles</strong>
+            <p>Comptes rendus et exports pour prolonger le travail hors de REZO360.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCta() {
+  return (
+    <section id="dernier-geste" className="lp-final" aria-labelledby="lp-final-title">
+      <ClosingScene />
+      <div className="lp-container">
+        <Eyebrow>Et si tout devenait plus simple ?</Eyebrow>
+        <h2 id="lp-final-title">
+          Votre activité
+          <br />
+          en mieux.
+          <br />
+          <span>Tout simplement.</span>
+        </h2>
+        <Cta light>Essayer REZO360</Cta>
+        <p>Votre prochain espace de travail commence ici.</p>
+        <span className="lp-final-wordmark" aria-hidden="true">
+          REZO360
+        </span>
       </div>
     </section>
   );
 }
 
 export default function LandingPage() {
+  useLandingSeo();
+  const root = useReveals();
   return (
-    <>
-      <section className="relative overflow-hidden bg-white">
-        <DecorativeDoodle
-          variant="sparkles"
-          className="top-14 left-[45%] z-10 hidden size-14 rotate-6 stroke-orange-400 stroke-[2.2] opacity-75 xl:block"
-        />
-        <div className="absolute top-0 right-0 hidden aspect-video w-[74.5%] overflow-hidden lg:block xl:w-[74vw] xl:max-w-[79.5rem]">
-          {/*
-            DEUX PHOTOS, ET CE N'EST PAS UN OUBLI.
-
-            Sur grand écran, le titre est du VRAI texte posé à gauche, sur un
-            dégradé : la photo ne doit donc porter aucun mot, sinon ils se
-            répondent en double. C'est le rôle de celle-ci.
-
-            La version mobile, plus bas, porte au contraire le logo et
-            l'accroche gravés — voir le commentaire qui l'accompagne.
-          */}
-          <picture>
-            <source media="(min-width: 1024px)" srcSet="/images/landing-hero-4k.jpg" />
-            <img
-              src={PIXEL_VIDE}
-              alt=""
-              className="absolute inset-0 h-full w-full translate-x-3 object-cover"
-              width="3840"
-              height="2160"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </picture>
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(90deg, #fff 0%, #fff 7%, rgba(255,255,255,0.65) 12%, rgba(255,255,255,0) 20%)',
-            }}
-            aria-hidden="true"
-          />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:min-h-[33.5rem] lg:px-8 xl:min-h-[clamp(33.5rem,41.625vw,44.71875rem)]">
-          <div className="relative z-10 max-w-xl py-10 sm:py-12 lg:w-[43%] lg:pt-14 lg:pb-0">
-            {/*
-              LA DOULEUR AVANT LA PROMESSE.
-
-              La page ouvrait directement sur la solution. Le visiteur venu
-              d'une publicité qui lui parlait de son problème — la ressaisie,
-              les photos perdues, la paperasse du dimanche soir — devait faire
-              lui-même le raccord entre ce qu'il venait de lire et ce qu'il
-              découvrait. Beaucoup ne le font pas : ils repartent.
-
-              Une seule phrase, interrogative, et volontairement CONCRÈTE. « Vos
-              process sont-ils optimaux ? » ne reconnaît personne ; un carnet,
-              WhatsApp et un dimanche soir, si. C'est la scène qu'il faut, pas
-              le concept.
-
-              Placée en amorce plutôt qu'en paragraphe : elle tient sur une
-              ligne, ne repousse donc presque pas l'appel à l'action, et le
-              titre juste en dessous y répond immédiatement.
-
-              MANUSCRITE, ET LA POLICE EST AUTO-HÉBERGÉE.
-
-              L'écriture à la main convient à cette phrase : c'est la voix du
-              lecteur qu'on lui prête, pas celle du produit. Mais elle n'y
-              convient QU'À UNE CONDITION — que tout le monde la voie.
-
-              La pile système employée ailleurs sur la page (« Segoe Print »,
-              « Bradley Hand », « Comic Sans MS ») n'existe sous Android sous
-              aucune de ces trois formes : l'effet y disparaissait, sur le
-              trafic mobile qu'on achète précisément en publicité. Caveat est
-              servie avec la page, donc identique partout.
-
-              Taille relevée à `text-xl` : une écriture manuscrite à la taille
-              d'un texte courant devient illisible à bout de bras.
-            */}
-            <p className="text-primary font-hand text-center text-xl leading-tight font-bold text-balance sm:text-2xl lg:text-left">
-              Le devis sur un carnet, les photos dans WhatsApp, la facture le dimanche soir&nbsp;?
-            </p>
-
-            <h1 className="text-brand-night mt-2 max-w-2xl text-center text-[2.5rem] leading-[1.08] font-bold tracking-tight text-balance sm:text-[3.125rem] lg:text-left lg:text-[3.5rem] lg:leading-[1.05]">
-              Pilotez votre activité de terrain en toute simplicité
-            </h1>
-
-            <p className="text-muted-foreground mt-4 max-w-xl text-base leading-[1.55] sm:text-lg">
-              REZO360 est la plateforme tout-en-un pour les entreprises, artisans et professionnels
-              de terrain. De l’organisation des interventions à la facturation électronique,
-              centralisez toute votre activité au même endroit.
-            </p>
-
-            <ul className="text-foreground mt-4 space-y-2.5 text-sm font-medium sm:text-base">
-              {['Simple à prendre en main', 'Adapté à tous les métiers de terrain'].map((item) => (
-                <li key={item} className="flex items-center gap-2.5">
-                  <CheckCircle2 className="text-primary size-5 shrink-0" aria-hidden="true" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-h-touch px-6">
-                <Link to={ROUTES.register}>
-                  Commencer gratuitement
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="min-h-touch px-6">
-                <Link to={ROUTES.pricing}>Voir les tarifs</Link>
-              </Button>
-            </div>
-
-            <p className="text-muted-foreground mt-3 text-xs sm:text-sm">
-              Formule gratuite sans carte · 14 jours d’essai sur les offres payantes
-            </p>
-          </div>
-
-          <div className="relative -mx-4 aspect-video w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:hidden">
-            {/*
-              La version mobile porte le logo et l'accroche GRAVÉS dans
-              l'image. Assumé : sur téléphone, la photo passe sous le bloc de
-              texte, elle ne lui fait donc pas concurrence — elle prolonge le
-              message au lieu de le doubler.
-
-              Conséquence à connaître : ces mots-là ne sont ni traduisibles,
-              ni lus par un lecteur d'écran, ni agrandis par les réglages
-              d'accessibilité. D'où un `alt` qui les reprend intégralement —
-              c'est le seul endroit où ils existent en texte.
-            */}
-            <picture>
-              <source media="(max-width: 1023.98px)" srcSet="/images/landing-hero-v2.jpg" />
-              <img
-                src={PIXEL_VIDE}
-                alt="REZO360 — Votre activité en mieux. Tout simplement. Un technicien devant son véhicule présente l’application sur son téléphone."
-                className="absolute inset-0 h-full w-full object-cover"
-                width="1672"
-                height="941"
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-              />
-            </picture>
-          </div>
-        </div>
-      </section>
-
-      <section aria-label="Engagements REZO360" className="border-border bg-surface border-y">
-        <div className="divide-border mx-auto grid max-w-7xl divide-y px-4 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:px-6 lg:grid-cols-4 lg:px-8">
-          {REASSURANCES.map((item) => (
-            <div key={item} className="flex min-h-16 items-center gap-3 px-3 py-4 lg:px-5">
-              <CheckCircle2 className="text-primary size-5 shrink-0" aria-hidden="true" />
-              <span className="text-foreground text-sm font-medium">{item}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <ScrollRevealSection>
-        <MethodeActuelleSection />
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <section className="bg-brand-night relative overflow-hidden py-16 text-white sm:py-24">
-          <DecorativeDoodle
-            variant="zigzag"
-            className="top-20 left-[45%] hidden size-16 -rotate-6 stroke-lime-300 stroke-[2.5] opacity-70 xl:block"
-          />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
-              <div className="lg:col-span-5">
-                <div className="mb-5 flex items-center gap-3">
-                  <span className="text-signal-lime font-mono text-sm font-bold tracking-[0.18em]">
-                    01
-                  </span>
-                  <span className="bg-signal-lime h-px w-10" aria-hidden="true" />
-                  <span className="text-sm font-semibold tracking-[0.12em] text-cyan-100 uppercase">
-                    Le cockpit
-                  </span>
-                </div>
-                <h2 className="text-4xl leading-tight font-bold text-balance sm:text-5xl">
-                  Tout voir. Tout décider. Sans courir après l’info.
-                </h2>
-              </div>
-              <div className="space-y-4 text-base leading-relaxed text-blue-100 lg:col-span-6 lg:col-start-7">
-                <p>
-                  Le tableau de bord rassemble les priorités du jour, les missions actives et les
-                  comptes rendus en attente. Le bureau sait où agir ; le terrain sait quoi faire.
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {COCKPIT_POINTS.map(({ label, icon: Icon }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 text-sm font-medium text-white"
-                    >
-                      <Icon className="text-signal-cyan size-4" aria-hidden="true" />
-                      {label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative mt-12 lg:mt-16">
-              <HandwrittenAnnotation
-                className="top-16 -right-28 w-32 rotate-3 min-[1400px]:block min-[1450px]:-right-40"
-                tone="cyan"
-                arrow="curve-left"
-              >
-                Vos priorités, d’un seul coup d’œil
-              </HandwrittenAnnotation>
-              <ProductCapture
-                src="/images/product/dashboard.png"
-                alt="Tableau de bord REZO360 montrant les priorités, indicateurs et missions récentes"
-                eager
-                className="border-white/15 bg-white"
-              />
-              <div className="text-brand-night shadow-modal mt-4 rounded-2xl border border-white/20 bg-white p-4 sm:absolute sm:right-6 sm:-bottom-8 sm:mt-0 sm:w-[22rem]">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-primary font-mono text-xs font-bold">2026-0142</span>
-                  <span className="bg-signal-lime rounded-full px-2.5 py-1 text-xs font-bold">
-                    En cours
-                  </span>
-                </div>
-                <p className="font-display mt-3 text-lg font-bold">Maintenance préventive CVC</p>
-                <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
-                  <span>Site Horizon · 08:30</span>
-                  <span className="text-primary font-medium">Mission active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <section className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/35 to-cyan-50/30 py-16 sm:py-24">
-          <DecorativeDoodle
-            variant="loop"
-            className="top-16 right-[7%] hidden size-16 rotate-6 stroke-blue-300 stroke-[2] opacity-60 xl:block"
-          />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <ChapterLabel number="02">Le parcours d’intervention</ChapterLabel>
-              <h2 className="text-foreground text-4xl leading-tight font-bold text-balance sm:text-5xl">
-                Une intervention, du planning au rapport signé.
-              </h2>
-              <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
-                Chaque étape reprend la même information. La mission planifiée devient une
-                intervention suivie, puis un compte rendu contrôlé — sans rupture entre les écrans.
-              </p>
-            </div>
-
-            <div className="mt-10 space-y-10 sm:mt-14 sm:space-y-16">
-              <div className="grid items-center gap-8 lg:grid-cols-12">
-                <div className="relative lg:col-span-8">
-                  <ProductCapture
-                    src="/images/product/missions.png"
-                    alt="Liste réelle des missions REZO360 avec statuts, priorités et accès aux fiches"
-                  />
-                </div>
-                <div className="relative lg:col-span-4">
-                  <HandwrittenAnnotation
-                    className="-top-64 left-0 w-52 -rotate-2 lg:block"
-                    tone="orange"
-                    arrow="loop-left"
-                  >
-                    Du bureau au terrain, sans ressaisie
-                  </HandwrittenAnnotation>
-                  <span className="text-signal-orange font-mono text-xs font-bold tracking-widest uppercase">
-                    Planifier & affecter
-                  </span>
-                  <h3 className="text-foreground mt-3 text-2xl font-bold">
-                    Le travail part avec un cadre clair.
-                  </h3>
-                  <p className="text-muted-foreground mt-4 text-base leading-relaxed">
-                    Référence, priorité, horaire, site et intervenant restent visibles avant même
-                    d’ouvrir la fiche. Le planning et la carte sont accessibles depuis le même flux.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid items-center gap-8 lg:grid-cols-12">
-                <div className="lg:col-span-3">
-                  <span className="text-signal-orange font-mono text-xs font-bold tracking-widest uppercase">
-                    Rendre compte
-                  </span>
-                  <h3 className="text-foreground mt-3 text-2xl font-bold">
-                    Le terrain documente pendant que c’est frais.
-                  </h3>
-                  <p className="text-muted-foreground mt-4 text-base leading-relaxed">
-                    L’intervention ouverte mène au compte rendu complet, aux pièces jointes et aux
-                    signatures. Le responsable retrouve ensuite la soumission dans sa file de
-                    contrôle.
-                  </p>
-                  <ul className="text-foreground mt-5 space-y-3 text-sm">
-                    {[
-                      'Intervention en cours',
-                      'Compte rendu structuré',
-                      'Contrôle et validation',
-                    ].map((item) => (
-                      <li key={item} className="flex items-center gap-2">
-                        <Check className="text-primary size-4" aria-hidden="true" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="lg:col-span-9">
-                  <ProductCapture
-                    src="/images/product/reports.png"
-                    alt="Écran réel REZO360 de sélection d’une intervention et de rédaction du compte rendu"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-10 flex justify-center sm:mt-12">
-              <Button asChild size="lg" className="min-h-touch px-6">
-                <Link to={ROUTES.register}>
-                  Essayer REZO360 gratuitement
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <section className="relative overflow-hidden bg-gradient-to-bl from-slate-50 via-blue-50/45 to-white py-16 sm:py-24">
-          <TechnicianSketch
-            variant="electrical"
-            className="bottom-9 left-[47%] hidden h-28 w-44 -rotate-3 text-blue-600 opacity-45 xl:block"
-          />
-          <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
-            <div className="lg:col-span-7">
-              <ChapterLabel number="03">La boîte à outils</ChapterLabel>
-              <h2 className="text-foreground max-w-3xl text-4xl leading-tight font-bold text-balance sm:text-5xl">
-                Les outils métier, comme une boîte à outils vivante.
-              </h2>
-              <p className="text-muted-foreground mt-5 max-w-2xl text-lg leading-relaxed">
-                Des outils rapides pour le chantier, regroupés avec les calculateurs, conversions et
-                notes que les techniciens utilisent au quotidien.
-              </p>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {TOOL_GROUPS.map(({ name, detail, icon: Icon }) => (
-                  <div
-                    key={name}
-                    className="border-border bg-surface shadow-raised rounded-2xl border p-5"
-                  >
-                    <div className="flex items-start gap-4">
-                      <span className="bg-primary-subtle text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
-                        <Icon className="size-5" aria-hidden="true" />
-                      </span>
-                      <div>
-                        <h3 className="text-foreground text-base font-bold">{name}</h3>
-                        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                          {detail}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button asChild variant="outline" size="lg" className="min-h-touch mt-8">
-                <Link to={ROUTES.tools}>
-                  Explorer le catalogue
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:justify-self-end">
-              <HandwrittenAnnotation
-                className="-top-8 -left-36 w-40 -rotate-5 lg:block"
-                tone="violet"
-                arrow="curve-right"
-              >
-                Toute la boîte à outils dans la poche
-              </HandwrittenAnnotation>
-              <ProductCapture
-                src="/images/product/tools-mobile.png"
-                alt="Catalogue mobile réel des outils et instruments de terrain REZO360"
-              />
-            </div>
-          </div>
-        </section>
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <section className="bg-gradient-to-b from-white via-slate-50/60 to-blue-50/35 py-16 sm:py-24">
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <HandwrittenAnnotation
-              className="-top-20 right-16 w-48 rotate-3 lg:block"
-              tone="lime"
-              arrow="curve-left"
-            >
-              Le chantier reste connecté
-            </HandwrittenAnnotation>
-            <div className="bg-brand-night relative min-h-[32rem] overflow-hidden rounded-3xl">
-              {/*
-                WebP et non PNG : la même image passe de 1 930 Ko à 97 Ko, soit
-                95 % de moins, sans différence visible.
-
-                Le PNG était le pire choix possible ici. Ce format est sans
-                perte — pensé pour des aplats et des captures d'écran, pas pour
-                une photographie de 1945 pixels de large, recouverte aux trois
-                quarts par un dégradé sombre.
-
-                Le PNG d'origine reste dans `public/images/backgrounds/` : plus
-                aucun code ne le référence.
-              */}
-              <img
-                src="/images/backgrounds/field-technician-industrial.webp"
-                alt="Technicien de maintenance industrielle utilisant une tablette dans un local technique"
-                className="absolute inset-0 h-full w-full object-cover object-[70%_center] sm:object-center"
-                loading="lazy"
-                decoding="async"
-              />
-              <div
-                className="from-brand-night via-brand-night/90 to-brand-night/15 absolute inset-0 bg-gradient-to-r"
-                aria-hidden="true"
-              />
-              <div className="relative flex min-h-[32rem] max-w-2xl flex-col justify-end p-7 text-white sm:p-12 lg:p-16">
-                <span className="text-signal-cyan font-mono text-sm font-bold tracking-[0.16em] uppercase">
-                  Sur le terrain
-                </span>
-                <h2 className="mt-4 text-4xl leading-tight font-bold text-balance sm:text-5xl">
-                  L’information utile, là où le travail se fait.
-                </h2>
-                <p className="mt-5 max-w-xl text-lg leading-relaxed text-blue-100">
-                  REZO360 reste lisible sur mobile pour retrouver une mission, renseigner
-                  l’intervention et transmettre le compte rendu depuis le chantier.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <InfrastructureSection />
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <Pricing />
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <Faq />
-      </ScrollRevealSection>
-
-      <ScrollRevealSection>
-        <section className="py-16 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="bg-brand-night shadow-modal relative overflow-hidden rounded-3xl px-6 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
-              <div
-                className="border-signal-cyan/20 absolute -top-20 -right-16 size-64 rounded-full border-[3rem]"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute right-32 -bottom-24 size-56 rounded-full border-[2.5rem] border-white/10"
-                aria-hidden="true"
-              />
-              <TechnicianSketch
-                variant="measurement"
-                className="right-12 bottom-10 hidden h-36 w-52 rotate-3 text-cyan-300 opacity-40 xl:block"
-              />
-              <div className="relative max-w-3xl">
-                <span className="text-signal-lime font-mono text-sm font-bold tracking-[0.16em] uppercase">
-                  Prêt pour le prochain départ
-                </span>
-                <h2 className="mt-4 text-4xl leading-tight font-bold text-balance sm:text-5xl">
-                  Vos opérations, enfin dans le même tempo.
-                </h2>
-                <p className="mt-5 max-w-2xl text-lg leading-relaxed text-blue-100">
-                  Commencez avec la formule Free ou testez pendant quatorze jours les fonctions
-                  d’équipe d’une formule payante.
-                </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="min-h-touch border-signal-lime bg-signal-lime text-brand-night px-6 hover:border-white hover:bg-white"
-                  >
-                    <Link to={ROUTES.register}>
-                      Créer mon compte
-                      <ArrowRight className="size-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="min-h-touch border-white/60 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white"
-                  >
-                    <Link to={ROUTES.pricing}>Comparer les formules</Link>
-                  </Button>
-                </div>
-                <ul className="mt-8 grid gap-3 border-t border-white/20 pt-6 text-sm text-blue-50 sm:grid-cols-3">
-                  {FINAL_POINTS.map(({ label, icon: Icon }) => (
-                    <li key={label} className="flex items-center gap-2">
-                      <Icon className="text-signal-lime size-4" aria-hidden="true" />
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-      </ScrollRevealSection>
-    </>
+    <div className="landing-premium" ref={root} style={{ '--lp-blue': '#1b44c8' } as CSSProperties}>
+      <Hero />
+      <FieldFilm />
+      <ProductIntro />
+      <ProductSequence />
+      <FieldSection />
+      <Universes />
+      <Workflow />
+      <WorkspaceSection />
+      <VoiceNarrative />
+      <MobileSection />
+      <FinanceNarrative />
+      <Proofs />
+      <Pricing />
+      <Faq />
+      <FinalCta />
+    </div>
   );
 }

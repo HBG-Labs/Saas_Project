@@ -88,7 +88,7 @@
     -->
     <meta
       name="description"
-      content="Clients, interventions, planning, comptes rendus et facturation au même endroit. REZO360 est la plateforme tout-en-un des entreprises, artisans et professionnels de terrain."
+      content="Clients, planning, interventions, Workspace et facturation au même endroit. REZO360 centralise l’activité des entreprises et professionnels de terrain."
     />
     <!-- Polices auto-hébergées : voir les imports @fontsource de src/styles/index.css. -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -125,10 +125,10 @@
     <meta property="og:site_name" content="REZO360" />
     <meta property="og:url" content="https://rezo360.com/" />
     <meta property="og:locale" content="fr_FR" />
-    <meta property="og:title" content="Pilotez votre activité de terrain en toute simplicité" />
+    <meta property="og:title" content="Votre activité en mieux. Tout simplement. — REZO360" />
     <meta
       property="og:description"
-      content="Clients, interventions, planning, comptes rendus et facturation au même endroit — pour les entreprises, artisans et professionnels de terrain."
+      content="Du terrain au compte rendu signé, puis à la facture. REZO360 réunit la gestion, le Workspace et la finance des entreprises de terrain."
     />
     <meta property="og:image" content="https://rezo360.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -138,12 +138,37 @@
       content="REZO360 affiché sur un ordinateur portable et un téléphone : tableau de bord des missions et des interventions."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pilotez votre activité de terrain en toute simplicité" />
+    <meta name="twitter:title" content="Votre activité en mieux. Tout simplement. — REZO360" />
     <meta
       name="twitter:description"
-      content="Clients, interventions, planning, comptes rendus et facturation au même endroit."
+      content="Votre gestion, votre Workspace et votre facturation au même endroit — du bureau au terrain."
     />
     <meta name="twitter:image" content="https://rezo360.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Aperçu de REZO360 sur ordinateur et smartphone." />
+
+    <!-- Données structurées sobres : aucune note, aucun volume client ni promesse inventés. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "REZO360",
+        "url": "https://rezo360.com/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "fr-FR",
+        "description": "Plateforme pour les entreprises et professionnels de terrain : gestion des clients, planning, interventions et comptes rendus ; Workspace collaboratif ; devis, factures et paiements.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "description": "Formule gratuite disponible sans carte bancaire."
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "HBG Labs"
+        }
+      }
+    </script>
 
     <!--
       Ne jamais exposer l'interface HTML brute.
@@ -233,7 +258,7 @@
       favoris et dans un résultat de recherche. Un nom de marque inconnu n'y
       dit rien de ce que fait le produit ni à qui il s'adresse.
     -->
-    <title>REZO360 — Pilotez votre activité de terrain</title>
+    <title>REZO360 — Votre activité en mieux. Tout simplement.</title>
   </head>
   <body>
     <div id="rezo360-style-boot" role="status" aria-live="polite">

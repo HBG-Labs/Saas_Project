@@ -32,16 +32,8 @@ describe('routing', () => {
   it("affiche la page d'accueil publique sur /", async () => {
     renderAt('/');
 
-    expect(
-      await screen.findByRole(
-        'heading',
-        {
-          name: /pilotez votre activité de terrain en toute simplicité/i,
-          level: 1,
-        },
-        { timeout: 5000 },
-      ),
-    ).toBeInTheDocument();
+    const heading = await screen.findByRole('heading', { level: 1 }, { timeout: 5000 });
+    expect(heading).toHaveAccessibleName('Votre activité en mieux. Tout simplement.');
     // La landing utilise l'ossature publique, pas la navigation applicative.
     expect(screen.getByRole('navigation', { name: 'Navigation du site' })).toBeInTheDocument();
   });
@@ -77,7 +69,7 @@ describe('routing', () => {
     renderAt('/');
     await screen.findByRole(
       'heading',
-      { name: /pilotez votre activité de terrain en toute simplicité/i, level: 1 },
+      { name: 'Votre activité en mieux. Tout simplement.', level: 1 },
       { timeout: 5000 },
     );
 

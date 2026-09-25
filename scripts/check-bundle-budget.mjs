@@ -20,7 +20,11 @@ const limits = {
   jsChunk: Number(process.env['BUNDLE_MAX_JS_CHUNK_GZIP_KIB'] ?? 75) * KIB,
   cssChunk: Number(process.env['BUNDLE_MAX_CSS_CHUNK_GZIP_KIB'] ?? 45) * KIB,
   jsTotal: Number(process.env['BUNDLE_MAX_JS_TOTAL_GZIP_KIB'] ?? 1151) * KIB,
-  cssTotal: Number(process.env['BUNDLE_MAX_CSS_TOTAL_GZIP_KIB'] ?? 50) * KIB,
+  // Scènes photographiques + film au scroll : 52,3 Kio toutes routes,
+  // dont 10,1 Kio isolés dans LandingPage. Marge courte après cet ajout :
+  // l'application ne charge pas ces styles marketing sur ses routes privées.
+  cssTotal: Number(process.env['BUNDLE_MAX_CSS_TOTAL_GZIP_KIB'] ?? 53) * KIB,
+  landingCss: Number(process.env['BUNDLE_MAX_LANDING_CSS_GZIP_KIB'] ?? 11) * KIB,
   startupJs: Number(process.env['BUNDLE_MAX_STARTUP_JS_GZIP_KIB'] ?? 375) * KIB,
   startupRequests: Number(process.env['BUNDLE_MAX_STARTUP_JS_REQUESTS'] ?? 54),
 };
@@ -91,6 +95,11 @@ for (const asset of js) {
 for (const asset of css) {
   if (asset.gzipBytes > limits.cssChunk) {
     problems.push(`${asset.name} pèse ${kib(asset.gzipBytes)} (budget ${kib(limits.cssChunk)})`);
+  }
+  if (asset.name.startsWith('LandingPage-') && asset.gzipBytes > limits.landingCss) {
+    problems.push(
+      `les styles landing pèsent ${kib(asset.gzipBytes)} (budget ${kib(limits.landingCss)})`,
+    );
   }
 }
 

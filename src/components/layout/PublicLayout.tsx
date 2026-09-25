@@ -30,6 +30,12 @@ const MARKETING_LINKS = [
   { to: ROUTES.faq, label: 'FAQ' },
 ] as const;
 
+const LANDING_LINKS = [
+  { to: '#produit', label: 'Le produit' },
+  { to: '#univers', label: 'Les univers' },
+  { to: '#tarifs', label: 'Tarifs' },
+] as const;
+
 /**
  * Coque des pages publiques.
  *
@@ -84,6 +90,8 @@ export function PublicLayout() {
   */
   const { pathname } = useLocation();
   const pageEnClair = PAGES_EN_CLAIR.includes(pathname);
+  const isLandingPage = pathname === ROUTES.home;
+  const navigationLinks = isLandingPage ? LANDING_LINKS : MARKETING_LINKS;
 
   // Le défilement ne pilote plus l'apparition de la bordure — voir le
   // commentaire de l'en-tête — mais l'opacité et le flou de fond : la barre
@@ -103,6 +111,7 @@ export function PublicLayout() {
       className={cn(
         'public-shell bg-background text-foreground flex min-h-dvh flex-col',
         pageEnClair && 'theme-jour-verrouille',
+        isLandingPage && 'landing-shell',
       )}
     >
       <a
@@ -115,7 +124,7 @@ export function PublicLayout() {
       {/* ---------------------------------------------------- NAVBAR */}
       <header
         className={cn(
-          'sticky top-0 z-50 transition-colors duration-200',
+          'public-header sticky top-0 z-50 transition-colors duration-200',
           /*
             `bg-surface` ET NON `bg-white`.
 
@@ -148,16 +157,17 @@ export function PublicLayout() {
           isScrolled ? 'bg-surface/95 backdrop-blur-md' : 'bg-surface',
         )}
       >
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
-          <Logo className="min-h-touch shrink-0 text-base sm:text-lg" />
+        <div className="public-header__inner mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
+          <Logo className="min-h-touch shrink-0 text-base sm:text-lg" showIcon={isLandingPage} />
 
           <nav aria-label="Navigation du site" className="hidden lg:block">
             <ul className="flex items-center gap-1">
-              {MARKETING_LINKS.map((link) => (
+              {navigationLinks.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex h-9 items-center rounded-lg px-3.5 text-sm font-medium transition-colors"
+                    reloadDocument={isLandingPage}
+                    className="text-muted-foreground hover:bg-surface-hover hover:text-foreground flex min-h-11 items-center rounded-lg px-3.5 text-sm font-medium transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -195,8 +205,10 @@ export function PublicLayout() {
                 </Button>
                 <Button asChild size="sm">
                   <Link to={ROUTES.register}>
-                    <span className="lg:hidden">Commencer</span>
-                    <span className="hidden lg:inline">Commencer gratuitement</span>
+                    <span className="lg:hidden">{isLandingPage ? 'Essayer' : 'Commencer'}</span>
+                    <span className="hidden lg:inline">
+                      {isLandingPage ? 'Essayer gratuitement' : 'Commencer gratuitement'}
+                    </span>
                   </Link>
                 </Button>
               </>
@@ -205,29 +217,39 @@ export function PublicLayout() {
             {/* Burger mobile */}
             <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
               <Dialog.Trigger
-                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch -mr-1 flex cursor-pointer items-center justify-center rounded-lg sm:size-9 lg:hidden"
+                className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch -mr-1 flex cursor-pointer items-center justify-center rounded-lg lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="size-5" aria-hidden="true" />
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] lg:hidden" />
-                <Dialog.Content className="border-border bg-surface-raised shadow-modal fixed inset-x-0 top-0 z-50 rounded-b-2xl border-b p-4 lg:hidden">
+                <Dialog.Content
+                  className={cn(
+                    'public-mobile-menu border-border bg-surface-raised shadow-modal fixed inset-x-0 top-0 z-50 max-h-dvh overflow-y-auto rounded-b-2xl border-b p-4 lg:hidden',
+                    pageEnClair && 'theme-jour-verrouille',
+                    isLandingPage && 'landing-mobile-menu',
+                  )}
+                >
                   <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
+                  <Dialog.Description className="sr-only">
+                    Explorez REZO360, accédez à votre compte ou installez l’application.
+                  </Dialog.Description>
                   <div className="border-border mb-2 flex items-center justify-between border-b pb-3">
                     <Logo className="text-base" />
                     <Dialog.Close
-                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch flex cursor-pointer items-center justify-center rounded-lg sm:size-9"
+                      className="text-muted-foreground hover:bg-surface-hover hover:text-foreground size-touch flex cursor-pointer items-center justify-center rounded-lg"
                       aria-label="Fermer le menu"
                     >
                       <X className="size-5" />
                     </Dialog.Close>
                   </div>
                   <ul className="space-y-1">
-                    {MARKETING_LINKS.map((link) => (
+                    {navigationLinks.map((link) => (
                       <li key={link.to}>
                         <Link
                           to={link.to}
+                          reloadDocument={isLandingPage}
                           onClick={() => setMenuOpen(false)}
                           className="text-foreground hover:bg-surface-hover min-h-touch flex items-center rounded-lg px-3 text-sm font-medium"
                         >
@@ -236,6 +258,34 @@ export function PublicLayout() {
                       </li>
                     ))}
                     <li className="border-border mt-2 border-t pt-2">
+                      {isAuthenticated ? (
+                        <Link
+                          to={ROUTES.dashboard}
+                          onClick={() => setMenuOpen(false)}
+                          className="bg-primary text-primary-foreground min-h-touch flex items-center justify-center rounded-xl px-4 text-sm font-semibold"
+                        >
+                          Ouvrir l’application
+                        </Link>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Link
+                            to={ROUTES.login}
+                            onClick={() => setMenuOpen(false)}
+                            className="border-border text-foreground min-h-touch flex items-center justify-center rounded-xl border px-3 text-sm font-semibold"
+                          >
+                            Connexion
+                          </Link>
+                          <Link
+                            to={ROUTES.register}
+                            onClick={() => setMenuOpen(false)}
+                            className="bg-primary text-primary-foreground min-h-touch flex items-center justify-center rounded-xl px-3 text-center text-sm font-semibold"
+                          >
+                            {isLandingPage ? 'Essayer gratuitement' : 'Commencer'}
+                          </Link>
+                        </div>
+                      )}
+                    </li>
+                    <li>
                       <button
                         type="button"
                         onClick={() => {
@@ -307,13 +357,13 @@ const FOOTER_SECTIONS = [
 
 function PublicFooter() {
   return (
-    <footer className="border-border bg-surface relative z-10 border-t py-8">
+    <footer className="public-footer border-border bg-surface relative z-10 border-t py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-5 lg:gap-6">
           <div className="space-y-3 lg:col-span-2">
             <Logo className="text-base" />
             <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
-              Plateforme SaaS dédiée aux techniciens et entreprises techniques.
+              L’activité des entreprises de terrain, réunie au même endroit.
             </p>
             {/* Réseaux sociaux */}
             <div className="flex items-center gap-3" aria-label="Nos réseaux sociaux">
@@ -322,7 +372,7 @@ function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="REZO360 sur Instagram"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
               >
                 {/* Instagram — lucide-react ne l'inclut plus, SVG officiel simplifié */}
                 <svg
@@ -346,7 +396,7 @@ function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="REZO360 sur TikTok"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
               >
                 {/* TikTok n'est pas dans lucide-react — SVG officiel simplifié */}
                 <svg
@@ -362,8 +412,7 @@ function PublicFooter() {
             </div>
           </div>
 
-          {/* Les trois groupes tiennent sur une ligne, mobile compris. */}
-          <div className="grid grid-cols-3 gap-4 lg:col-span-3 lg:gap-6">
+          <div className="public-footer__links grid grid-cols-2 gap-6 min-[430px]:grid-cols-3 lg:col-span-3">
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title} className="space-y-2">
                 <h2 className="text-foreground text-xs font-semibold tracking-wider uppercase">
@@ -374,7 +423,7 @@ function PublicFooter() {
                     <li key={link.to}>
                       <Link
                         to={link.to}
-                        className="text-muted-foreground hover:text-foreground block truncate py-0.5 text-sm transition-colors"
+                        className="text-muted-foreground hover:text-foreground flex min-h-11 items-center rounded-sm py-2 text-sm leading-snug transition-colors"
                       >
                         {link.label}
                       </Link>

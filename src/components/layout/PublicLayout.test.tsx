@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/config/routes';
@@ -55,8 +56,50 @@ describe('PublicLayout', () => {
     expect(screen.getByLabelText('Changer de thème')).toBeInTheDocument();
   });
 
-  it('garde la navigation marketing sur les deux', () => {
+  it('relie la navigation de la landing à ses sections et conserve les routes du footer', () => {
     renderWithProviders(<PublicLayout />, { route: ROUTES.home });
-    expect(screen.getAllByText('Tarifs').length).toBeGreaterThan(0);
+    const navigation = within(screen.getByRole('navigation', { name: 'Navigation du site' }));
+    expect(navigation.getByRole('link', { name: 'Le produit' })).toHaveAttribute(
+      'href',
+      '/#produit',
+    );
+    expect(navigation.getByRole('link', { name: 'Les univers' })).toHaveAttribute(
+      'href',
+      '/#univers',
+    );
+    expect(navigation.getByRole('link', { name: 'Tarifs' })).toHaveAttribute('href', '/#tarifs');
+    const footer = within(screen.getByRole('contentinfo'));
+    expect(footer.getByRole('link', { name: 'Tarifs' })).toHaveAttribute('href', ROUTES.pricing);
+    expect(footer.getByRole('link', { name: 'Connexion' })).toHaveAttribute('href', ROUTES.login);
+  });
+
+  it('conserve les routes marketing sur les autres pages', () => {
+    renderWithProviders(<PublicLayout />, { route: ROUTES.pricing });
+    const navigation = within(screen.getByRole('navigation', { name: 'Navigation du site' }));
+    expect(navigation.getByRole('link', { name: 'Fonctionnalités' })).toHaveAttribute(
+      'href',
+      ROUTES.features,
+    );
+    expect(navigation.getByRole('link', { name: 'Tarifs' })).toHaveAttribute(
+      'href',
+      ROUTES.pricing,
+    );
+  });
+
+  it('garde le menu de la landing en clair et annonce son rôle', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PublicLayout />, { route: ROUTES.home });
+    await user.click(screen.getByRole('button', { name: 'Ouvrir le menu' }));
+    const dialog = screen.getByRole('dialog', { name: 'Menu de navigation' });
+    expect(dialog).toHaveClass('theme-jour-verrouille');
+    expect(dialog).toHaveAccessibleDescription(
+      'Explorez REZO360, accédez à votre compte ou installez l’application.',
+    );
+    expect(within(dialog).getByRole('link', { name: 'Essayer gratuitement' })).toHaveAttribute(
+      'href',
+      ROUTES.register,
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Fermer le menu' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
