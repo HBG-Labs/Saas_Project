@@ -71,7 +71,7 @@ test('le vrai film du final suit le scroll et le clavier dans les deux sens', as
     ),
   ).toBe(true);
   await expect(
-    page.locator('.lp-final').getByRole('link', { name: 'Essayer REZO360' }),
+    page.locator('.lp-final').getByRole('link', { name: 'Créer mon compte gratuit' }),
   ).toHaveAttribute('href', '/register');
   expect(errors).toEqual([]);
 });

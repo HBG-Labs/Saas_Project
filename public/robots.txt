@@ -5,6 +5,7 @@
 # les déclarer évite de laisser des URL internes apparaître dans un index.
 
 User-agent: *
+Sitemap: https://rezo360.com/sitemap.xml
 Allow: /$
 Allow: /pricing
 Allow: /features

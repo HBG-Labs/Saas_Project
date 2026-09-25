@@ -95,7 +95,7 @@ describe('PublicLayout', () => {
     expect(dialog).toHaveAccessibleDescription(
       'Explorez REZO360, accédez à votre compte ou installez l’application.',
     );
-    expect(within(dialog).getByRole('link', { name: 'Essayer gratuitement' })).toHaveAttribute(
+    expect(within(dialog).getByRole('link', { name: 'Créer mon compte gratuit' })).toHaveAttribute(
       'href',
       ROUTES.register,
     );

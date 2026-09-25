@@ -6,15 +6,22 @@ export function FieldFilm() {
   const video = useRef<HTMLVideoElement>(null);
   const [loadFilm, setLoadFilm] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(
+    () =>
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function' ||
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const [failed, setFailed] = useState(false);
   const [filmSource, setFilmSource] = useState('');
   const desiredTime = useRef(0);
   const manualControl = useRef(false);
 
   useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(media.matches);
+    const update = () => setReduced(typeof IntersectionObserver === 'undefined' || media.matches);
     update();
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
@@ -126,16 +133,14 @@ export function FieldFilm() {
           />
         )}
         <div className="lp-film__copy">
-          <p className="lp-eyebrow">À votre rythme. Sur votre terrain.</p>
+          <p className="lp-eyebrow">Là où votre métier se passe</p>
           <h2 id="lp-film-title">
-            Vous avancez.
-            <br />
-            <span>Tout suit.</span>
+            Le bon dossier. <br />
+            <span>Sur le terrain.</span>
           </h2>
           <p>
-            Le bon dossier.
-            <br />
-            Au moment où vous en avez besoin.
+            La mission, les informations, les documents.
+            <br />À portée de main, au bon moment.
           </p>
         </div>
         <div className="lp-film__bottom">

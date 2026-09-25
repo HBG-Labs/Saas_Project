@@ -12,6 +12,7 @@ import { cn } from '@/lib/cn';
 
 import { DownloadAppModal } from './DownloadAppModal';
 import { Logo } from './Logo';
+import '@/styles/public-conversion.css';
 
 /** Vitrine et tunnel d'inscription : voir le commentaire dans `PublicLayout`. */
 const PAGES_EN_CLAIR: readonly string[] = [
@@ -91,6 +92,7 @@ export function PublicLayout() {
   const { pathname } = useLocation();
   const pageEnClair = PAGES_EN_CLAIR.includes(pathname);
   const isLandingPage = pathname === ROUTES.home;
+  const isConversionPage = pageEnClair || pathname === ROUTES.pricing;
   const navigationLinks = isLandingPage ? LANDING_LINKS : MARKETING_LINKS;
 
   // Le défilement ne pilote plus l'apparition de la bordure — voir le
@@ -112,11 +114,12 @@ export function PublicLayout() {
         'public-shell bg-background text-foreground flex min-h-dvh flex-col',
         pageEnClair && 'theme-jour-verrouille',
         isLandingPage && 'landing-shell',
+        isConversionPage && 'conversion-shell',
       )}
     >
       <a
         href="#contenu-principal"
-        className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
+        className="public-skip-link bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100]"
       >
         Aller au contenu principal
       </a>
@@ -158,7 +161,7 @@ export function PublicLayout() {
         )}
       >
         <div className="public-header__inner mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-6 lg:px-8">
-          <Logo className="min-h-touch shrink-0 text-base sm:text-lg" showIcon={isLandingPage} />
+          <Logo className="min-h-touch shrink-0 text-base sm:text-lg" showIcon={isConversionPage} />
 
           <nav aria-label="Navigation du site" className="hidden lg:block">
             <ul className="flex items-center gap-1">
@@ -182,7 +185,7 @@ export function PublicLayout() {
               variant="ghost"
               size="sm"
               onClick={() => setIsDownloadModalOpen(true)}
-              className="hidden sm:inline-flex"
+              className={isConversionPage ? 'hidden' : 'hidden sm:inline-flex'}
               aria-label="Installer l'application sur votre appareil"
             >
               <Smartphone className="size-4 shrink-0" />
@@ -205,10 +208,8 @@ export function PublicLayout() {
                 </Button>
                 <Button asChild size="sm">
                   <Link to={ROUTES.register}>
-                    <span className="lg:hidden">{isLandingPage ? 'Essayer' : 'Commencer'}</span>
-                    <span className="hidden lg:inline">
-                      {isLandingPage ? 'Essayer gratuitement' : 'Commencer gratuitement'}
-                    </span>
+                    <span className="lg:hidden">Créer un compte</span>
+                    <span className="hidden lg:inline">Créer mon compte gratuit</span>
                   </Link>
                 </Button>
               </>
@@ -280,7 +281,7 @@ export function PublicLayout() {
                             onClick={() => setMenuOpen(false)}
                             className="bg-primary text-primary-foreground min-h-touch flex items-center justify-center rounded-xl px-3 text-center text-sm font-semibold"
                           >
-                            {isLandingPage ? 'Essayer gratuitement' : 'Commencer'}
+                            Créer mon compte gratuit
                           </Link>
                         </div>
                       )}
@@ -307,7 +308,7 @@ export function PublicLayout() {
       </header>
 
       {/* ---------------------------------------------------- CONTENU PRINCIPAL */}
-      <main id="contenu-principal" className="flex-1">
+      <main id="contenu-principal" tabIndex={-1} className="flex-1">
         <Suspense fallback={<LoadingScreen />}>
           <Outlet />
         </Suspense>
@@ -365,6 +366,12 @@ function PublicFooter() {
             <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
               L’activité des entreprises de terrain, réunie au même endroit.
             </p>
+            <a
+              href="mailto:contact@rezo360.fr"
+              className="inline-flex min-h-11 items-center text-sm underline underline-offset-4"
+            >
+              contact@rezo360.fr
+            </a>
             {/* Réseaux sociaux */}
             <div className="flex items-center gap-3" aria-label="Nos réseaux sociaux">
               <a

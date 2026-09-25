@@ -1,0 +1,50 @@
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2') format('woff2');
+}
+.conversion-shell {
+  --font-sans: 'Archivo Variable', Arial, sans-serif;
+  --font-display: 'Archivo Variable', Arial, sans-serif;
+  --font-brand: 'Archivo Variable', Arial, sans-serif;
+  font-family: 'Archivo Variable', Arial, sans-serif;
+}
+.conversion-shell .public-header__inner {
+  min-height: 68px;
+}
+.conversion-shell .public-header a[href='/register'] {
+  min-height: 44px;
+  padding-inline: 18px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.conversion-shell .public-header nav a {
+  font-size: 14px;
+}
+.public-skip-link:focus {
+  z-index: 100;
+  outline: 3px solid white;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px #1b44c8;
+}
+.conversion-shell .public-footer {
+  padding-block: 48px 24px;
+}
+.conversion-shell input {
+  border-radius: 8px;
+}
+.conversion-shell main button[type='submit'] {
+  border-radius: 8px;
+  min-height: 48px;
+}
+@media (max-width: 359px) {
+  .conversion-shell .public-header a[href='/register'] {
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+  .conversion-shell .public-header__inner {
+    gap: 6px;
+  }
+}

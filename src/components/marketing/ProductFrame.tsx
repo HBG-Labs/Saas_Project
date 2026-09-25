@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn';
 
 interface ProductFrameProps {
   src: string;
+  mobileSrc?: string | undefined;
   alt: string;
   label: string;
   className?: string;
@@ -20,6 +21,7 @@ interface ProductFrameProps {
  */
 export function ProductFrame({
   src,
+  mobileSrc,
   alt,
   label,
   className,
@@ -41,16 +43,19 @@ export function ProductFrame({
         <span className="lp-product-frame__secure">REZO360</span>
       </div>
       <div className="lp-product-frame__canvas">
-        <img
-          src={src}
-          alt={alt}
-          className={cn('lp-product-frame__image', imageClassName)}
-          width={width}
-          height={height}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'auto'}
-          decoding="async"
-        />
+        <picture>
+          {mobileSrc && <source media="(max-width: 640px)" srcSet={mobileSrc} />}
+          <img
+            src={src}
+            alt={alt}
+            className={cn('lp-product-frame__image', imageClassName)}
+            width={width}
+            height={height}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            decoding="async"
+          />
+        </picture>
         {children}
       </div>
       <figcaption className="sr-only">Capture réelle de l’application REZO360.</figcaption>

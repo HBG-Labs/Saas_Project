@@ -20,59 +20,24 @@ async function openLanding(page: Page, reducedMotion: 'reduce' | 'no-preference'
 }
 
 test.describe('Landing — narration et mesures de laboratoire', () => {
-  test('le défilement desktop fait avancer le vrai produit sans changer de route', async ({
-    page,
-    isMobile,
-  }) => {
-    test.skip(isMobile, 'La version tactile utilise les commandes explicites du produit.');
+  test('les écrans changent à la demande sans déplacement forcé', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 960 });
     await openLanding(page, 'no-preference');
-    await page
-      .getByRole('navigation', { name: 'Navigation du site' })
-      .getByRole('link', { name: 'Le produit', exact: true })
-      .click();
-    await expect
-      .poll(() =>
-        page
-          .locator('#produit')
-          .evaluate((section) => Math.abs(section.getBoundingClientRect().top - 100)),
-      )
-      .toBeLessThan(5);
-    const sequence = page.locator('#produit');
-    await expect(sequence).toHaveClass(/lp-sequence--scroll/);
-    const bounds = await sequence.evaluate((element) => ({
-      top: element.getBoundingClientRect().top + window.scrollY,
-      travel: element.clientHeight - window.innerHeight,
-    }));
-    expect(bounds.travel).toBeGreaterThan(0);
-
-    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), bounds.top);
-    await expect(page.getByRole('button', { name: '01 Planning', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await page.evaluate(
-      (top) => window.scrollTo({ top, behavior: 'instant' }),
-      bounds.top + bounds.travel * 0.92,
-    );
-    await expect(sequence.locator('.lp-sequence-nav button').last()).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await expect(sequence.getByRole('img')).toHaveCount(1);
+    await page.getByRole('link', { name: 'Explorer les écrans' }).click();
+    const invoice = page.getByRole('button', { name: '04 Facture', exact: true });
+    await invoice.scrollIntoViewIfNeeded();
+    const before = await page.evaluate(() => window.scrollY);
+    await invoice.click();
+    await expect(invoice).toHaveAttribute('aria-pressed', 'true');
     await expect(
-      sequence.getByRole('img', {
-        name: 'Interface réelle REZO360 — Paiement',
-        exact: true,
-      }),
+      page.getByRole('img', { name: 'Interface réelle REZO360 — Facture', exact: true }),
     ).toBeVisible();
-    await expect(page).toHaveURL(/\/#produit$/);
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(before, 0);
+    await expect(page.locator('#produit')).not.toHaveClass(/lp-sequence--scroll/);
+    await expect(page).toHaveURL(/#produit$/);
   });
 
-  test('les démonstrations voix et finance respectent pause, reprise et rejeu', async ({
-    page,
-    isMobile,
-  }) => {
+  test('la démonstration vocale respecte pause, reprise et rejeu', async ({ page, isMobile }) => {
     test.setTimeout(45_000);
     await page.setViewportSize(
       isMobile ? { width: 390, height: 844 } : { width: 1440, height: 960 },
@@ -106,46 +71,15 @@ test.describe('Landing — narration et mesures de laboratoire', () => {
     await page
       .getByRole('button', { name: 'Mettre en pause la démonstration vocale', exact: true })
       .click();
-
-    await page.locator('#finance').scrollIntoViewIfNeeded();
-    await page
-      .getByRole('button', { name: 'Rejouer la démonstration financière', exact: true })
-      .click();
-    await page
-      .getByRole('button', { name: 'Mettre en pause la démonstration financière', exact: true })
-      .click();
-    const financeStatus = page.locator('.ln-finance-status');
-    await expect(financeStatus).toContainText('Devis envoyé');
-    // Cross its 1500 ms frame interval; a paused illustration must stay readable.
-    await page.waitForTimeout(1700);
-    await expect(financeStatus).toContainText('Devis envoyé');
-    await page
-      .getByRole('button', { name: 'Reprendre la démonstration financière', exact: true })
-      .click();
-    await expect(financeStatus).toContainText('Devis accepté', { timeout: 3500 });
-    await page
-      .getByRole('button', { name: 'Rejouer la démonstration financière', exact: true })
-      .click();
-    await expect(financeStatus).toContainText('Devis envoyé');
-    await page.getByRole('button', { name: 'Afficher l’étape Payée', exact: true }).click();
-    await expect(page.locator('.ln-finance-receipt')).toHaveAttribute('data-complete', 'true');
-    await expect(financeStatus).toContainText('Facture payée');
-    const mobileStage = page.locator('.lp-mobile-transform');
-    await mobileStage.scrollIntoViewIfNeeded();
-    await expect(mobileStage).toHaveClass(/(?:^|\s)is-mobile(?:\s|$)/);
-    await expect(mobileStage.locator('.lp-mobile-phone')).toHaveCSS('opacity', '1');
   });
 
   test('reduced motion garde les récits complets et aucune animation active', async ({ page }) => {
     await openLanding(page, 'reduce');
     await expect(page.locator('#produit')).not.toHaveClass(/lp-sequence--scroll/);
-    await expect(page.locator('.ln-motion-note')).toHaveCount(2);
+    await expect(page.locator('.ln-motion-note')).toHaveCount(1);
     await page.locator('#voix').scrollIntoViewIfNeeded();
     await expect(page.locator('.ln-voice-stage')).toHaveAttribute('data-stage', '4');
     await expect(page.locator('.ln-voice-stage')).toHaveAttribute('data-running', 'false');
-    await page.locator('#finance').scrollIntoViewIfNeeded();
-    await expect(page.locator('.ln-finance-receipt')).toHaveAttribute('data-complete', 'true');
-    await expect(page.locator('.ln-finance-status')).toContainText('Facture payée');
     const runningAnimations = await page.locator('main').evaluate((element) =>
       element
         .getAnimations({ subtree: true })

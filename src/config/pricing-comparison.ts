@@ -87,7 +87,7 @@ export const COMPARISON_FEATURES: readonly ComparisonRow[] = [
     enterprise: true,
   },
   {
-    name: 'Calculateurs Métiers certifiés (Fibre, Élec, BTP...)',
+    name: 'Calculateurs métiers (Fibre, Élec, BTP...)',
     free: false,
     starter: false,
     pro: true,
@@ -131,7 +131,7 @@ export const COMPARISON_FEATURES: readonly ComparisonRow[] = [
     enterprise: 'Illimité',
   },
   {
-    name: 'Export de bilans (PDF certifié & CSV)',
+    name: 'Export de bilans (PDF & CSV)',
     free: false,
     starter: true,
     pro: true,
@@ -163,7 +163,7 @@ export const COMPARISON_FEATURES: readonly ComparisonRow[] = [
     enterprise: true,
   },
   {
-    name: 'Devis & facturation certifiée',
+    name: 'Devis & facturation',
     free: false,
     starter: true,
     pro: true,

@@ -24,5 +24,11 @@ describe('Tarifs de la landing', () => {
     );
     expect(screen.queryByText('Le plus choisi')).not.toBeInTheDocument();
     expect(screen.getByText(/Une carte est demandée pour les offres payantes/)).toBeInTheDocument();
+    expect(screen.getByText('Tout Starter inclus')).toBeInTheDocument();
+    expect(screen.getByText('Tout Pro inclus')).toBeInTheDocument();
+    expect(screen.getByText('Tout Business inclus')).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Une formule adaptée à votre équipe.' }),
+    ).toBeInTheDocument();
   });
 });

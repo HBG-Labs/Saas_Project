@@ -31,7 +31,7 @@ export function Logo({
       {showIcon && (
         <img
           src="/icon-192.png"
-          alt="REZO360"
+          alt=""
           className="size-6 shrink-0 rounded-lg shadow-2xs sm:size-7"
           width="28"
           height="28"

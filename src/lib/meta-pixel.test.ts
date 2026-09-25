@@ -26,6 +26,7 @@ const {
   trackInscription,
   trackInscriptionSiCompteNeuf,
   trackPageView,
+  trackLandingAction,
 } = await import('@/lib/meta-pixel');
 
 const ID = '123456789012345';
@@ -61,6 +62,23 @@ afterEach(() => {
 });
 
 describe('pixel Meta — inerte tant que tout n’est pas réuni', () => {
+  it('ne transmet les actions de la landing qu’avec le consentement marketing', () => {
+    faux.pixelId = ID;
+    refuseAllCookies();
+    trackLandingAction('signup', 'hero');
+    expect(scriptsInjectes()).toHaveLength(0);
+    acceptAllCookies();
+    trackLandingAction('signup', 'hero');
+    expect(evenementsEnvoyes()).toContainEqual([
+      'trackCustom',
+      'LandingAction',
+      { action: 'signup', placement: 'hero' },
+    ]);
+    refuseAllCookies();
+    const previous = evenementsEnvoyes().length;
+    trackLandingAction('plan', 'business');
+    expect(evenementsEnvoyes()).toHaveLength(previous);
+  });
   it('ne charge rien sans identifiant, même avec le consentement', () => {
     /*
       C'est l'état de tous les postes de développement et de toute la suite de

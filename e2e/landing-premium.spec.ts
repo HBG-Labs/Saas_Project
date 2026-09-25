@@ -34,12 +34,12 @@ async function expectLandingReady(page: Page) {
 async function loadEveryLandingImage(page: Page) {
   // Inactive screenshots are intentionally hidden and lazy. Visit each real
   // screen before checking its image; do not defeat production lazy loading.
-  for (const button of await page.locator('.lp-sequence-nav button').all()) {
+  for (const button of await page.locator('.lp-journey-steps button').all()) {
     await button.click();
     await expect
       .poll(() =>
         page
-          .locator('.lp-sequence-layer.is-active img')
+          .locator('.lp-journey-shot img')
           .evaluate(
             (image) =>
               (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0,
@@ -47,7 +47,7 @@ async function loadEveryLandingImage(page: Page) {
       )
       .toBe(true);
   }
-  await page.locator('.lp-sequence-nav button').first().click();
+  await page.locator('.lp-journey-steps button').first().click();
   await page.evaluate(async () => {
     const step = Math.max(window.innerHeight * 0.75, 500);
     for (let position = 0; position < document.body.scrollHeight; position += step) {
@@ -89,17 +89,17 @@ test.describe('Landing premium REZO360', () => {
 
     await expectLandingReady(page);
     const openingOrder = await page
-      .locator('.landing-premium > section')
+      .locator('.landing-premium > *')
       .evaluateAll((sections) => sections.slice(0, 4).map((section) => section.classList[0]));
-    expect(openingOrder).toEqual(['lp-hero', 'lp-film', 'lp-product-intro', 'lp-sequence']);
+    expect(openingOrder).toEqual(['lp-hero', 'lp-journey', 'lp-field-experience', 'ln-section']);
     await expect(page.locator('.lp-hero h1')).toBeVisible();
     await expect(page.locator('.lp-hero .lp-cta')).toHaveAttribute('href', '/register');
-    await expect(page.locator('.lp-hero .lp-hero-stage')).toHaveCount(0);
+    await expect(page.locator('.lp-hero .lp-hero-stage')).toHaveCount(1);
     await expect(page.locator('.lp-product-intro .lp-hero-stage')).toHaveCount(1);
     await expect(
-      page.getByRole('link', { name: 'Essayer gratuitement', exact: true }).first(),
+      page.getByRole('link', { name: 'Créer mon compte gratuit', exact: true }).first(),
     ).toHaveAttribute('href', '/register');
-    await expect(page.getByRole('link', { name: 'Voir REZO360 en action' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Explorer les écrans' })).toHaveAttribute(
       'href',
       '#produit',
     );
@@ -110,13 +110,16 @@ test.describe('Landing premium REZO360', () => {
     await expect(
       page.getByRole('img', { name: 'Interface réelle REZO360 — Facture', exact: true }),
     ).toBeVisible();
+    await page.getByRole('button', { name: 'Agrandir l’écran' }).click();
+    await expect(page.getByRole('dialog', { name: 'Facture · REZO360' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Agrandir l’écran' })).toBeFocused();
+    await page.getByRole('button', { name: '02 Workspace' }).click();
     await expect(
       page.getByRole('img', { name: 'Véritable espace Workspace de REZO360' }),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Afficher l’étape Payée' }).click();
-    await expect(page.locator('.ln-finance-status')).toHaveText(/Facture payée/);
 
-    const firstFaq = page.getByRole('button', { name: /Qu’est-ce que REZO360/ });
+    const firstFaq = page.getByRole('button', { name: /Que puis-je faire avec le compte gratuit/ });
     await firstFaq.click();
     await expect(firstFaq).toHaveAttribute('aria-expanded', 'false');
     await firstFaq.click();
@@ -137,7 +140,7 @@ test.describe('Landing premium REZO360', () => {
     await expect(menu.getByRole('link', { name: 'Tarifs' })).toHaveAttribute('href', '/#tarifs');
     await expect(menu.getByRole('link', { name: 'Connexion' })).toHaveAttribute('href', '/login');
     await expect(
-      menu.getByRole('link', { name: 'Essayer gratuitement', exact: true }),
+      menu.getByRole('link', { name: 'Créer mon compte gratuit', exact: true }),
     ).toHaveAttribute('href', '/register');
     await page.getByRole('button', { name: 'Fermer le menu', exact: true }).click();
     await expect(menu).toBeHidden();
@@ -185,11 +188,11 @@ test.describe('Landing premium REZO360', () => {
       ['hero', '.lp-hero'],
       ['opening-film', '.lp-film'],
       ['product-intro', '.lp-product-intro'],
-      ['field', '.lp-field'],
+      ['product-journey', '.lp-journey'],
       ['pricing', '.lp-pricing'],
       ['voice', '#voix'],
-      ['mobile', '.lp-mobile'],
-      ['finance', '#finance'],
+      ['universes', '#univers'],
+      ['proofs', '.lp-evidence'],
       ['closing', '.lp-final'],
     ] as const) {
       await page.locator(selector).screenshot({
@@ -214,13 +217,13 @@ test.describe('Landing premium REZO360', () => {
       'src',
       /voice-technician/,
     );
-    await expect(page.locator('.lp-mobile img')).toHaveCount(2);
-    for (const image of await page.locator('.lp-mobile img').all()) {
-      await expect(image).toHaveAttribute('src', /^\/images\/product\/premium\//);
-    }
+    await expect(page.locator('.lp-hero-phone img')).toHaveAttribute(
+      'src',
+      '/images/product/premium/mobile.webp',
+    );
     await expect(page.locator('.lp-final .lp-cta')).toHaveClass(/lp-cta--light/);
-    await page.getByRole('link', { name: 'Voir REZO360 en action' }).focus();
-    await expect(page.getByRole('link', { name: 'Voir REZO360 en action' })).toBeFocused();
+    await page.getByRole('link', { name: 'Explorer les écrans' }).focus();
+    await expect(page.getByRole('link', { name: 'Explorer les écrans' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#produit$/);
     await expect(page.getByRole('button', { name: '01 Planning' })).toBeVisible();

@@ -6,9 +6,9 @@ import { cn } from '@/lib/cn';
 const FAQS = [
   {
     id: '1',
-    question: 'Qu’est-ce que REZO360 réunit ?',
+    question: 'Que puis-je faire avec le compte gratuit ?',
     answer:
-      'Vos clients, sites, équipes, interventions et comptes rendus, avec un Workspace pour les connaissances et un espace Finance pour les devis, factures et paiements. Les informations restent rattachées à votre activité.',
+      'Le compte Free donne accès aux calculatrices et outils techniques pour un utilisateur, sans carte ni limite de durée. La gestion des missions, les comptes rendus et la facturation sont disponibles dans les offres payantes, à partir de Starter.',
   },
   {
     id: '2',
@@ -24,9 +24,21 @@ const FAQS = [
   },
   {
     id: '4',
-    question: 'Comment fonctionne l’essai gratuit ?',
+    question: 'Quand commence l’essai et faut-il une carte ?',
     answer:
-      'Vous créez un compte Free sans carte bancaire. Depuis votre espace, vous pouvez activer 14 jours d’essai d’une offre payante, dont Business. Une carte est alors demandée ; aucun débit n’a lieu avant la fin de l’essai. L’abonnement se résilie en ligne.',
+      'L’essai ne commence pas à la création du compte. Vous l’activez depuis votre espace en choisissant une offre payante, dont Business. Une carte est alors demandée. L’essai dure 14 jours et aucun débit n’a lieu avant son échéance. Vous pouvez résilier en ligne. L’essai est accordé une fois par entreprise et moyen de paiement, selon les conditions générales.',
+  },
+  {
+    id: '7',
+    question: 'Comment choisir la bonne formule ?',
+    answer:
+      'Commencez par le nombre de personnes et les fonctions dont vous avez besoin. Starter inclut 2 utilisateurs, Pro 5, Business 10 et Enterprise 20. Le comparateur de tarifs détaille les fonctions et permet de simuler les utilisateurs supplémentaires à 5 € par mois.',
+  },
+  {
+    id: '8',
+    question: 'À qui poser mes questions avant de commencer ?',
+    answer:
+      'Écrivez-nous à contact@rezo360.fr en précisant votre métier, la taille de votre équipe et les tâches que vous souhaitez centraliser. Vous pouvez aussi utiliser le bouton d’assistance présent sur le site.',
   },
   {
     id: '5',
@@ -51,9 +63,8 @@ export function Faq() {
         <div className="lp-faq__heading">
           <p className="lp-eyebrow">Avant de commencer</p>
           <h2 id="lp-faq-title">
-            Tout simplement.{' '}
-            <br />
-            Vraiment.
+            Avant de créer <br />
+            votre compte.
           </h2>
           <p>Quelques réponses pour faire le premier pas.</p>
         </div>

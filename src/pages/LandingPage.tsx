@@ -1,29 +1,65 @@
-import { ArrowDown, ArrowRight, Check, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { ArrowDown, ArrowRight, ChevronLeft, ChevronRight, Expand, Smartphone } from 'lucide-react';
+import { Dialog } from 'radix-ui';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
-import { Faq } from '@/components/marketing/Faq';
+import { DownloadAppModal } from '@/components/layout/DownloadAppModal';
 import { ClosingScene } from '@/components/marketing/ClosingScene';
+import { Faq } from '@/components/marketing/Faq';
 import { FieldFilm } from '@/components/marketing/FieldFilm';
-import { FinanceNarrative, VoiceNarrative } from '@/components/marketing/LandingNarratives';
+import { VoiceNarrative } from '@/components/marketing/LandingNarratives';
 import { Pricing } from '@/components/marketing/Pricing';
 import { ProductFrame } from '@/components/marketing/ProductFrame';
 import { ROUTES } from '@/config/routes';
+import { trackLandingAction } from '@/lib/meta-pixel';
 
 import '@/styles/landing-premium.css';
 import '@/styles/landing-scenes.css';
+import '@/styles/landing-conversion.css';
 
 const PRODUCT = '/images/product/premium/';
 const JOURNEY = [
-  { title: 'Planning', image: 'planning', detail: 'Une équipe. Le bon endroit. Le bon moment.' },
+  {
+    title: 'Planning',
+    image: 'planning',
+    mobile: 'mobile-planning',
+    crop: 'planning',
+    action: 'Préparer la journée',
+    detail: 'Retrouvez les missions, les équipes et les créneaux dans le planning.',
+  },
   {
     title: 'Intervention',
-    image: 'missions',
-    detail: 'Le contexte est déjà là. Le terrain peut avancer.',
+    image: 'mobile',
+    mobile: 'mobile',
+    crop: 'phone',
+    action: 'Intervenir avec le bon contexte',
+    detail: 'Sur le site, consultez la mission et complétez le dossier depuis votre téléphone.',
   },
-  { title: 'Compte rendu', image: 'report', detail: 'Le travail réalisé rejoint le dossier.' },
-  { title: 'Facture', image: 'invoice', detail: 'La suite de l’intervention, au même endroit.' },
-  { title: 'Paiement', image: 'payment', detail: 'Une vue claire, jusqu’au dernier règlement.' },
+  {
+    title: 'Compte rendu',
+    image: 'report',
+    mobile: '',
+    crop: 'report',
+    action: 'Garder une trace du travail',
+    detail:
+      'Renseignez les travaux et observations avant la signature et le contrôle du compte rendu.',
+  },
+  {
+    title: 'Facture',
+    image: 'invoice',
+    mobile: '',
+    crop: 'invoice',
+    action: 'Préparer la facturation',
+    detail: 'Retrouvez le client, les prestations et les montants dans votre facture.',
+  },
+  {
+    title: 'Paiement',
+    image: 'payment',
+    mobile: '',
+    crop: 'invoice',
+    action: 'Suivre le règlement',
+    detail: 'Consultez les paiements enregistrés. Les validations restent sous votre contrôle.',
+  },
 ] as const;
 
 function useLandingSeo() {
@@ -41,13 +77,12 @@ function useLandingSeo() {
   }, []);
 }
 
-/** One observer for the page; content remains present when JavaScript or motion is unavailable. */
 function useReveals() {
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
+    if (typeof window.matchMedia !== 'function' || !('IntersectionObserver' in window)) return;
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (media.matches || !('IntersectionObserver' in window)) return;
+    if (media.matches) return;
     const elements = root.current?.querySelectorAll<HTMLElement>('[data-reveal]');
     const observer = new IntersectionObserver(
       (entries) => {
@@ -74,36 +109,23 @@ function useReveals() {
 }
 
 function Cta({
-  children = 'Essayer gratuitement',
+  children = 'Créer mon compte gratuit',
   light = false,
+  placement,
 }: {
   children?: ReactNode;
   light?: boolean;
+  placement: string;
 }) {
   return (
-    <Link className={light ? 'lp-cta lp-cta--light' : 'lp-cta'} to={ROUTES.register}>
+    <Link
+      className={light ? 'lp-cta lp-cta--light' : 'lp-cta'}
+      to={ROUTES.register}
+      onClick={() => trackLandingAction('signup', placement)}
+    >
       {children}
       <ArrowRight aria-hidden="true" />
     </Link>
-  );
-}
-
-function Eyebrow({ children }: { children: ReactNode }) {
-  return <p className="lp-eyebrow">{children}</p>;
-}
-
-function Phone({ className = '', priority = false }: { className?: string; priority?: boolean }) {
-  return (
-    <div className={`lp-phone ${className}`}>
-      <img
-        src={`${PRODUCT}mobile.webp`}
-        width="390"
-        height="844"
-        alt="Une mission dans la véritable application mobile REZO360"
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-      />
-    </div>
   );
 }
 
@@ -111,521 +133,319 @@ function Hero() {
   return (
     <section className="lp-hero" aria-labelledby="lp-title">
       <div className="lp-container lp-hero-copy">
-        <Eyebrow>Le terrain. Le bureau. Enfin réunis.</Eyebrow>
+        <p className="lp-eyebrow">Le logiciel des entreprises de terrain</p>
         <h1 id="lp-title">
           Votre activité en mieux. <br />
           <span>Tout simplement.</span>
         </h1>
         <p className="lp-hero-lead">
-          Clients, équipes, interventions et factures.
-          <br className="lp-desktop-break" /> Toute l’activité de votre entreprise de terrain, au
-          même endroit.
+          Planifiez vos interventions. Retrouvez vos dossiers.
+          <br className="lp-desktop-break" /> Préparez vos comptes rendus, devis et factures au même
+          endroit.
         </p>
         <div className="lp-actions">
-          <Cta />
-          <a className="lp-text-link" href="#produit">
-            Voir REZO360 en action
+          <Cta placement="hero" />
+          <a
+            className="lp-text-link"
+            href="#produit"
+            onClick={() => trackLandingAction('explore', 'hero')}
+          >
+            Explorer les écrans
             <ArrowDown aria-hidden="true" />
           </a>
         </div>
-        <p className="lp-hero-note">Un compte gratuit pour découvrir. Aucun engagement.</p>
+        <p className="lp-hero-note">
+          Compte Free sans carte, pour les outils techniques.
+          <br className="lp-mobile-break" /> Gestion d’interventions dès Starter.{' '}
+          <a href="#tarifs">Voir les offres et l’essai de 14 jours.</a>
+        </p>
       </div>
-    </section>
-  );
-}
-
-function ProductIntro() {
-  return (
-    <section className="lp-product-intro" aria-label="REZO360, du bureau au terrain">
-      <div className="lp-hero-stage">
-        <img
-          className="lp-hero-atmosphere"
-          src="/images/landing/hero-light.webp"
-          alt=""
-          width="1600"
-          height="905"
-          loading="lazy"
-          fetchPriority="low"
-          decoding="async"
-        />
-        <div className="lp-hero-product" data-reveal>
-          <ProductFrame
-            src={`${PRODUCT}dashboard.webp`}
-            alt="Le véritable tableau de bord REZO360 : activité, missions et suivi de l’équipe"
-            label="Votre activité, en un regard"
-            width={1440}
-            height={960}
+      <div className="lp-product-intro" aria-label="REZO360, du bureau au terrain">
+        <div className="lp-hero-stage">
+          <img
+            className="lp-hero-atmosphere"
+            src="/images/landing/hero-light.webp"
+            alt=""
+            width="1600"
+            height="905"
+            loading="lazy"
+            decoding="async"
           />
-          <Phone className="lp-hero-phone" />
+          <div className="lp-hero-product">
+            <ProductFrame
+              src={PRODUCT + 'dashboard.webp'}
+              alt="Tableau de bord réel REZO360 : missions, équipes et comptes rendus à valider"
+              label="Votre activité, en un regard"
+              priority
+            />
+            <div className="lp-phone lp-hero-phone">
+              <img
+                src={PRODUCT + 'mobile.webp'}
+                width="390"
+                height="844"
+                alt="Une intervention REZO360 sur smartphone"
+                decoding="async"
+              />
+            </div>
+          </div>
+          <div className="lp-hero-caption">
+            <span>GESTION</span>
+            <i />
+            <span>WORKSPACE</span>
+            <i />
+            <span>FINANCE</span>
+          </div>
         </div>
-        <div className="lp-hero-caption">
-          <span>GESTION</span>
-          <i />
-          <span>WORKSPACE</span>
-          <i />
-          <span>FINANCE</span>
-        </div>
+        <p className="lp-demo-note">Interfaces réelles de REZO360 · Données de démonstration</p>
       </div>
-      <p className="lp-demo-note">Interfaces réelles de REZO360 · Données de démonstration</p>
     </section>
   );
 }
 
 function ProductSequence() {
-  const section = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const [scrollLinked, setScrollLinked] = useState(false);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
-    const media = window.matchMedia(
-      '(min-width: 1024px) and (min-height: 760px) and (prefers-reduced-motion: no-preference)',
-    );
-    const updateMode = () => setScrollLinked(media.matches);
-    updateMode();
-    media.addEventListener('change', updateMode);
-    return () => media.removeEventListener('change', updateMode);
-  }, []);
-  useEffect(() => {
-    if (!scrollLinked || !('IntersectionObserver' in window)) return;
-    let frame = 0;
-    let visible = false;
-    const update = () => {
-      frame = 0;
-      const element = section.current;
-      if (!element || !visible) return;
-      const rect = element.getBoundingClientRect();
-      const progress = Math.max(
-        0,
-        Math.min(0.999, (100 - rect.top) / (rect.height - window.innerHeight)),
-      );
-      setActive(Math.floor(progress * JOURNEY.length));
-    };
-    const schedule = () => {
-      if (!frame && visible) frame = requestAnimationFrame(update);
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      visible = entry?.isIntersecting ?? false;
-      schedule();
-    });
-    if (section.current) observer.observe(section.current);
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-    };
-  }, [scrollLinked]);
-
+  const step = JOURNEY[active]!;
   function select(index: number) {
     setActive(index);
-    if (scrollLinked && section.current) {
-      const start = section.current.getBoundingClientRect().top + window.scrollY;
-      const travel = section.current.offsetHeight - window.innerHeight;
-      window.scrollTo({
-        top: start - 100 + ((index + 0.25) / JOURNEY.length) * travel,
-        behavior: 'instant',
-      });
-    }
+    trackLandingAction('product_step', JOURNEY[index]!.image);
   }
-
   return (
-    <section
-      id="produit"
-      ref={section}
-      className={scrollLinked ? 'lp-sequence lp-sequence--scroll' : 'lp-sequence'}
-      aria-labelledby="lp-sequence-title"
-    >
-      <div className="lp-sequence-sticky lp-container">
-        <div className="lp-sequence-heading">
-          <h2 id="lp-sequence-title">Tout s’enchaîne.</h2>
+    <section id="produit" className="lp-journey" aria-labelledby="lp-sequence-title">
+      <div className="lp-container">
+        <div className="lp-journey-heading" data-reveal>
+          <div>
+            <p className="lp-eyebrow">Du bureau au terrain, puis au règlement</p>
+            <h2 id="lp-sequence-title">
+              Gardez le fil.
+              <br />
+              <span className="lp-muted">À chaque étape.</span>
+            </h2>
+          </div>
           <p>
-            Un dossier qui vous suit.
-            <br />
-            Du premier rendez-vous au paiement.
+            Une intervention de maintenance, du planning au suivi financier. Explorez les vrais
+            écrans, à votre rythme.
           </p>
         </div>
-        <div className="lp-sequence-nav" aria-label="Étapes du produit">
-          {JOURNEY.map((step, index) => (
-            <button
-              key={step.title}
-              type="button"
-              aria-pressed={active === index}
-              aria-controls="lp-sequence-screen"
-              onClick={() => select(index)}
-            >
-              <span>0{index + 1}</span>
-              {step.title}
-            </button>
-          ))}
-        </div>
-        <div id="lp-sequence-screen" className="lp-sequence-screen" aria-live="off">
-          {JOURNEY.map((step, index) => (
+        <div className="lp-journey-layout">
+          <div className="lp-journey-navigation">
+            <p className="lp-journey-case">
+              PARCOURS DE DÉMONSTRATION
+              <br />
+              <strong>Maintenance · Atelier Horizon</strong>
+            </p>
+            <div className="lp-journey-steps" aria-label="Étapes du produit">
+              {JOURNEY.map((item, index) => (
+                <button
+                  key={item.image}
+                  type="button"
+                  aria-label={`${String(index + 1).padStart(2, '0')} ${item.title}`}
+                  aria-pressed={index === active}
+                  aria-controls="lp-sequence-screen"
+                  onClick={() => select(index)}
+                >
+                  <span>0{index + 1}</span>
+                  {item.title}
+                  <ArrowRight aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+            <p className="lp-journey-scope">
+              Captures de démonstration. Le passage d’une étape à l’autre illustre le parcours, pas
+              une automatisation.
+            </p>
+          </div>
+          <div className="lp-journey-display">
             <div
-              key={step.image}
-              className={active === index ? 'lp-sequence-layer is-active' : 'lp-sequence-layer'}
-              aria-hidden={active !== index}
+              id="lp-sequence-screen"
+              className={'lp-journey-shot lp-journey-shot--' + step.crop}
             >
               <ProductFrame
-                src={`${PRODUCT}${step.image}.webp`}
-                alt={`Interface réelle REZO360 — ${step.title}`}
+                key={step.image}
+                src={PRODUCT + step.image + '.webp'}
+                mobileSrc={step.mobile ? PRODUCT + step.mobile + '.webp' : undefined}
+                alt={'Interface réelle REZO360 — ' + step.title}
                 label={step.title}
-                width={1440}
-                height={960}
+                width={step.image === 'mobile' ? 390 : 1440}
+                height={step.image === 'mobile' ? 844 : 960}
               />
             </div>
-          ))}
+            <div className="lp-journey-caption" aria-live="polite" aria-atomic="true">
+              <h3>{step.action}</h3>
+              <p>{step.detail}</p>
+            </div>
+            <div className="lp-journey-controls">
+              <button
+                type="button"
+                onClick={() => select(Math.max(0, active - 1))}
+                disabled={active === 0}
+                aria-label="Écran précédent"
+              >
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <span>
+                {active + 1} / {JOURNEY.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => select(Math.min(JOURNEY.length - 1, active + 1))}
+                disabled={active === JOURNEY.length - 1}
+                aria-label="Écran suivant"
+              >
+                <ChevronRight aria-hidden="true" />
+              </button>
+              <Dialog.Root>
+                <Dialog.Trigger className="lp-enlarge">
+                  <Expand aria-hidden="true" />
+                  Agrandir l’écran
+                </Dialog.Trigger>
+                <Dialog.Portal>
+                  <Dialog.Overlay className="lp-screen-overlay" />
+                  <Dialog.Content className="lp-screen-dialog">
+                    <div className="lp-screen-dialog-heading">
+                      <Dialog.Title>{step.title} · REZO360</Dialog.Title>
+                      <Dialog.Close aria-label="Fermer l’aperçu">Fermer</Dialog.Close>
+                    </div>
+                    <Dialog.Description>
+                      Capture réelle, avec des données de démonstration. Faites défiler pour
+                      explorer l’écran complet.
+                    </Dialog.Description>
+                    {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- Keyboard access to the explicitly scrollable screenshot. */}
+                    <div
+                      className="lp-screen-dialog-image"
+                      tabIndex={0}
+                      role="region"
+                      aria-label="Capture agrandie"
+                    >
+                      <img
+                        src={PRODUCT + step.image + '.webp'}
+                        alt={'Écran complet : ' + step.title}
+                        width={step.image === 'mobile' ? 390 : 1440}
+                        height={step.image === 'mobile' ? 844 : 960}
+                      />
+                    </div>
+                    {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
+            </div>
+          </div>
         </div>
-        <div className="lp-sequence-caption">
-          <p>{JOURNEY[active]?.detail}</p>
-          <span>{String(active + 1).padStart(2, '0')} / 05</span>
-        </div>
-        <div className="lp-sequence-mobile-controls">
-          <button
-            type="button"
-            onClick={() => select(Math.max(0, active - 1))}
-            disabled={active === 0}
-            aria-label="Écran précédent"
-          >
-            <ChevronLeft />
-          </button>
-          <span>Explorez les vrais écrans</span>
-          <button
-            type="button"
-            onClick={() => select(Math.min(4, active + 1))}
-            disabled={active === 4}
-            aria-label="Écran suivant"
-          >
-            <ChevronRight />
-          </button>
+        <div className="lp-journey-conversion">
+          <p>
+            Votre prochain dossier commence ici.
+            <span>Créez votre compte, puis choisissez votre formule.</span>
+          </p>
+          <Cta placement="journey" />
         </div>
       </div>
     </section>
   );
 }
 
-function FieldSection() {
+function FieldExperience() {
+  const [install, setInstall] = useState(false);
   return (
-    <section className="lp-field" aria-labelledby="lp-field-title">
-      <div className="lp-container lp-editorial-heading" data-reveal>
+    <div className="lp-field-experience">
+      <FieldFilm />
+      <div className="lp-field-companion lp-container">
+        <Smartphone aria-hidden="true" />
         <div>
-          <Eyebrow>Le logiciel suit le métier</Eyebrow>
-          <h2 id="lp-field-title">
-            Tout commence
-            <br />
-            <span className="lp-muted">sur le terrain.</span>
-          </h2>
+          <h3>Le même dossier, aussi sur mobile.</h3>
+          <p>
+            Consultez la mission, ajoutez vos informations et retrouvez vos documents sur Android et
+            iPhone.
+          </p>
         </div>
-        <p>
-          Un site, une équipe, un travail à réaliser.
-          <br />
-          REZO360 garde le contexte à portée de main.
-        </p>
+        <button className="lp-text-link" onClick={() => setInstall(true)} type="button">
+          Installer l’application
+          <ArrowRight aria-hidden="true" />
+        </button>
       </div>
-      <figure className="lp-field-photo" data-reveal>
-        <div className="lp-field-art">
-          <img
-            src="/images/landing/field-work.webp"
-            srcSet="/images/landing/field-work-small.webp 800w, /images/landing/field-work.webp 1800w"
-            sizes="(max-width: 640px) 100vw, 92vw"
-            width="1800"
-            height="1195"
-            alt="Une professionnelle consulte sa mission REZO360 sur son smartphone dans un local technique"
-            loading="lazy"
-            decoding="async"
-          />
-          <div className="lp-field-screen" aria-hidden="true">
-            <img
-              src={`${PRODUCT}mobile.webp`}
-              width="390"
-              height="844"
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        </div>
-        <figcaption>La bonne information. Là où le travail se fait.</figcaption>
-      </figure>
-    </section>
+      <DownloadAppModal isOpen={install} onClose={() => setInstall(false)} />
+    </div>
   );
 }
 
 const UNIVERSES = [
   {
-    number: '01',
-    title: 'Gestion',
-    subtitle: 'Une vue d’ensemble.\nDes équipes qui avancent.',
-    description: 'Du client au compte rendu signé, retrouvez le contexte de chaque intervention.',
-    image: 'planning',
-    detail: ['Clients & sites', 'Équipes & planning', 'Missions & rapports'],
     id: 'gestion',
-  },
-  {
-    number: '02',
-    title: 'Workspace',
-    subtitle: 'Le savoir de l’équipe.\nÀ sa place.',
+    title: 'Gestion',
+    image: 'planning',
+    heading: 'Organisez le travail de l’équipe.',
     description:
-      'Pages, notes, tâches et documents restent proches du travail qu’ils accompagnent.',
-    image: 'workspace',
-    detail: ['Pages & tâches', 'Documents', 'Bibliothèque technique'],
-    id: 'workspace',
+      'Clients, sites, planning et interventions : préparez la journée et retrouvez le contexte de chaque mission.',
+    detail: 'Clients & sites · Équipes · Missions & rapports',
   },
   {
-    number: '03',
+    id: 'workspace',
+    title: 'Workspace',
+    image: 'workspace',
+    heading: 'Retrouvez ce que votre équipe sait.',
+    description:
+      'Réunissez pages, tâches et documents. Gardez les procédures et la bibliothèque technique à portée de main.',
+    detail: 'Pages & tâches · Documents · Bibliothèque technique',
+  },
+  {
+    id: 'finance',
     title: 'Finance',
-    subtitle: 'Le travail est fait.\nLa suite est claire.',
-    description: 'Devis, factures, paiements et relances partagent le même fil client.',
     image: 'quotes',
-    detail: ['Devis', 'Factures & paiements', 'Relances'],
-    id: 'finance-univers',
+    heading: 'Suivez le travail jusqu’au règlement.',
+    description:
+      'Préparez les devis et factures, consultez les paiements et organisez les relances dans votre espace Finance.',
+    detail: 'Devis · Factures & paiements · Relances',
   },
 ] as const;
 
 function Universes() {
-  return (
-    <section id="univers" className="lp-universes" aria-labelledby="lp-universes-title">
-      <div className="lp-container lp-universes-intro" data-reveal>
-        <Eyebrow>Trois univers. Un même quotidien.</Eyebrow>
-        <h2 id="lp-universes-title">
-          Toute votre entreprise.
-          <br />
-          <span className="lp-muted">Sans changer de rythme.</span>
-        </h2>
-      </div>
-      {UNIVERSES.map((universe) => (
-        <article
-          id={universe.id}
-          className={`lp-universe lp-universe--${universe.id}`}
-          key={universe.id}
-        >
-          <div className="lp-container">
-            <div className="lp-universe-heading" data-reveal>
-              <span className="lp-universe-number">{universe.number}</span>
-              <h3>{universe.title}</h3>
-              <p>{universe.subtitle}</p>
-            </div>
-            <div className="lp-universe-body">
-              <div className="lp-universe-copy" data-reveal>
-                <p>{universe.description}</p>
-                <ul>
-                  {universe.detail.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <Link to={ROUTES.features} className="lp-text-link">
-                  Explorer les fonctionnalités
-                  <ArrowRight aria-hidden="true" />
-                </Link>
-              </div>
-              <div className="lp-universe-visual" data-reveal>
-                <ProductFrame
-                  src={`${PRODUCT}${universe.image}.webp`}
-                  alt={`Véritable espace ${universe.title} de REZO360`}
-                  label={`REZO360 · ${universe.title}`}
-                  width={1440}
-                  height={960}
-                />
-              </div>
-            </div>
-          </div>
-        </article>
-      ))}
-    </section>
-  );
-}
-
-const WORKFLOW = [
-  ['Client', 'Le contexte est posé.'],
-  ['Devis', 'La proposition prend forme.'],
-  ['Planning', 'L’équipe sait où aller.'],
-  ['Intervention', 'Le terrain enrichit le dossier.'],
-  ['Rapport signé', 'Le travail est documenté.'],
-  ['Facture', 'Les informations sont réunies.'],
-  ['Paiement', 'Le suivi se poursuit.'],
-] as const;
-
-function Workflow() {
   const [active, setActive] = useState(0);
-  const steps = useRef<(HTMLLIElement | null)[]>([]);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function' || !('IntersectionObserver' in window)) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(Number((entry.target as HTMLElement).dataset.step));
-        });
-      },
-      { rootMargin: '-35% 0px -35% 0px', threshold: 0 },
-    );
-    steps.current.forEach((step) => {
-      if (step) observer.observe(step);
-    });
-    return () => observer.disconnect();
-  }, []);
+  const universe = UNIVERSES[active]!;
   return (
-    <section className="lp-workflow" aria-labelledby="lp-workflow-title">
-      <div className="lp-container lp-workflow-grid">
-        <div className="lp-workflow-copy">
-          <Eyebrow>Un dossier. Du début à la fin.</Eyebrow>
-          <h2 id="lp-workflow-title">
-            L’information
-            <br />
-            avance avec vous.
-          </h2>
-          <p>
-            Le client, le site, les documents.
-            <br />
-            Gardez le fil, à chaque étape.
-          </p>
-          <div className="lp-dossier" aria-hidden="true">
-            <span>DOSSIER DE DÉMONSTRATION</span>
-            <strong>Maintenance · Les Alizés</strong>
-            <div>
-              <i />
-              {WORKFLOW[active]?.[0]}
-            </div>
-            <small>Le même contexte, toujours disponible.</small>
-          </div>
-        </div>
-        <ol className="lp-workflow-steps">
-          {WORKFLOW.map(([title, detail], index) => (
-            <li
-              ref={(node) => {
-                steps.current[index] = node;
-              }}
-              data-step={index}
-              key={title}
-              className={index <= active ? 'is-passed' : ''}
-            >
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <div>
-                <h3>{title}</h3>
-                <p>{detail}</p>
-              </div>
-              <Check aria-hidden="true" />
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-function WorkspaceSection() {
-  return (
-    <section className="lp-workspace" aria-labelledby="lp-workspace-title">
+    <section id="univers" className="lp-universes-compact" aria-labelledby="lp-universes-title">
       <div className="lp-container">
-        <div className="lp-workspace-title" data-reveal>
-          <Eyebrow>Un espace pour ce que vous savez</Eyebrow>
-          <h2 id="lp-workspace-title">
-            Les idées passent.
+        <div className="lp-universes-intro" data-reveal>
+          <p className="lp-eyebrow">Un rôle clair pour chaque espace</p>
+          <h2 id="lp-universes-title">
+            Trois univers.
             <br />
-            <span className="lp-muted">Le savoir reste.</span>
+            Une activité réunie.
           </h2>
-          <p>
-            Une consigne, une page de chantier, une documentation.
-            <br />
-            La bonne ressource n’est jamais loin.
-          </p>
         </div>
-        <figure className="lp-workspace-photo" data-reveal>
-          <img
-            src="/images/landing/workspace-team-1800.webp"
-            srcSet="/images/landing/workspace-team-800.webp 800w, /images/landing/workspace-team-1800.webp 1800w"
-            sizes="(max-width: 640px) 100vw, 90vw"
-            width="1800"
-            height="1013"
-            loading="lazy"
-            decoding="async"
-            alt="Deux professionnels réunissent leurs plans et documents dans un atelier"
-          />
-          <figcaption>Les bonnes idées se construisent ensemble.</figcaption>
-        </figure>
-        <div className="lp-workspace-composition" data-reveal>
-          <ProductFrame
-            src={`${PRODUCT}workspace.webp`}
-            alt="Une page de préparation de chantier dans le véritable éditeur Workspace REZO360"
-            label="Workspace · Pages de l’équipe"
-            width={1440}
-            height={960}
-          />
-          <div className="lp-library-inset">
-            <ProductFrame
-              src={`${PRODUCT}library.webp`}
-              alt="La bibliothèque technique REZO360 avec dossiers et documents"
-              label="Bibliothèque technique"
-              width={1440}
-              height={960}
-            />
-          </div>
-        </div>
-        <div className="lp-workspace-labels">
-          <span>Pages</span>
-          <span>Tâches</span>
-          <span>Documents</span>
-          <span>Bibliothèque</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function MobileSection() {
-  const stage = useRef<HTMLDivElement>(null);
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function' || !('IntersectionObserver' in window)) return;
-    if (!stage.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setMobile(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(stage.current);
-    return () => observer.disconnect();
-  }, []);
-  return (
-    <section className="lp-mobile" aria-labelledby="lp-mobile-title">
-      <div className="lp-container lp-mobile-grid">
-        <div className="lp-mobile-copy" data-reveal>
-          <Eyebrow>Le bureau tient dans la poche</Eyebrow>
-          <h2 id="lp-mobile-title">
-            Même dossier.
-            <br />
-            <span className="lp-muted">Autre point de vue.</span>
-          </h2>
-          <p>
-            Consultez une mission, ajoutez vos informations et retrouvez vos documents depuis votre
-            smartphone.
-          </p>
-          <p className="lp-mobile-install">
-            <Smartphone aria-hidden="true" />
-            Une application web installable sur Android et iPhone.
-          </p>
-          <Cta />
+        <div className="lp-universe-switch" aria-label="Explorer les trois univers">
+          {UNIVERSES.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-label={`${String(index + 1).padStart(2, '0')} ${item.title}`}
+              aria-pressed={active === index}
+              aria-controls="lp-universe-panel"
+              onClick={() => {
+                setActive(index);
+                trackLandingAction('universe', item.id);
+              }}
+            >
+              <span>0{index + 1}</span>
+              {item.title}
+            </button>
+          ))}
         </div>
         <div
-          ref={stage}
-          className={mobile ? 'lp-mobile-transform is-mobile' : 'lp-mobile-transform'}
+          id="lp-universe-panel"
+          className={'lp-universe-panel lp-universe-panel--' + universe.id}
         >
-          <div className="lp-mobile-desktop">
-            <ProductFrame
-              src={`${PRODUCT}missions.webp`}
-              alt="Vue des missions REZO360 sur ordinateur"
-              label="Au bureau"
-              width={1440}
-              height={960}
-            />
+          <div className="lp-universe-summary">
+            <h3>{universe.heading}</h3>
+            <p>{universe.description}</p>
+            <p className="lp-universe-detail">{universe.detail}</p>
+            <Link to={ROUTES.features} className="lp-text-link">
+              Toutes les fonctionnalités
+              <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
-          <Phone className="lp-mobile-phone" />
-          <span className="lp-mobile-caption">Du bureau au terrain.</span>
+          <ProductFrame
+            src={PRODUCT + universe.image + '.webp'}
+            alt={'Véritable espace ' + universe.title + ' de REZO360'}
+            label={universe.title}
+          />
         </div>
       </div>
     </section>
@@ -634,33 +454,51 @@ function MobileSection() {
 
 function Proofs() {
   return (
-    <section className="lp-proofs" aria-labelledby="lp-proofs-title">
-      <div className="lp-container">
+    <section className="lp-evidence" aria-labelledby="lp-proofs-title">
+      <div className="lp-container lp-evidence-grid">
         <div data-reveal>
-          <Eyebrow>Du concret, dès le départ</Eyebrow>
+          <p className="lp-eyebrow">Avant de vous engager</p>
           <h2 id="lp-proofs-title">
-            Un outil de travail.
-            <br />
-            Des bases claires.
+            Du concret.
+            <br />À vérifier vous-même.
           </h2>
+          <p>
+            Explorez le produit, comparez les fonctions et posez vos questions. Les données des
+            aperçus sont des exemples, pas des témoignages clients.
+          </p>
         </div>
-        <div className="lp-proof-list">
-          <div>
-            <strong>Un produit, trois univers</strong>
-            <p>Gestion, Workspace et Finance dans la même application.</p>
-          </div>
-          <div>
-            <strong>Web et mobile</strong>
-            <p>Un accès depuis votre navigateur. Une application installable.</p>
-          </div>
-          <div>
-            <strong>Des tarifs affichés</strong>
-            <p>Une facturation mensuelle et des utilisateurs inclus dans chaque formule.</p>
-          </div>
-          <div>
-            <strong>Vos documents, disponibles</strong>
-            <p>Comptes rendus et exports pour prolonger le travail hors de REZO360.</p>
-          </div>
+        <div className="lp-evidence-links">
+          <a href={PRODUCT + 'report.webp'} target="_blank" rel="noreferrer">
+            <span>01</span>
+            <div>
+              <h3>Regardez un vrai écran de compte rendu</h3>
+              <p>
+                Travaux réalisés, observations et documents. Capture de démonstration, dans un
+                nouvel onglet.
+              </p>
+            </div>
+            <ArrowRight aria-hidden="true" />
+          </a>
+          <Link to={ROUTES.pricing}>
+            <span>02</span>
+            <div>
+              <h3>Calculez le prix de votre équipe</h3>
+              <p>Le simulateur inclut les utilisateurs et les sièges supplémentaires.</p>
+            </div>
+            <ArrowRight aria-hidden="true" />
+          </Link>
+          <a href="mailto:contact@rezo360.fr">
+            <span>03</span>
+            <div>
+              <h3>Posez-nous vos questions</h3>
+              <p>contact@rezo360.fr · Pour parler de votre activité et de vos besoins.</p>
+            </div>
+            <ArrowRight aria-hidden="true" />
+          </a>
+          <Link to={ROUTES.privacy} className="lp-evidence-privacy">
+            Consulter la politique de confidentialité
+            <ArrowRight aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </section>
@@ -672,16 +510,14 @@ function FinalCta() {
     <section id="dernier-geste" className="lp-final" aria-labelledby="lp-final-title">
       <ClosingScene />
       <div className="lp-container">
-        <Eyebrow>Et si tout devenait plus simple ?</Eyebrow>
+        <p className="lp-eyebrow">Prêt pour votre prochain dossier ?</p>
         <h2 id="lp-final-title">
-          Votre activité
-          <br />
-          en mieux.
+          Votre activité en mieux.
           <br />
           <span>Tout simplement.</span>
         </h2>
-        <Cta light>Essayer REZO360</Cta>
-        <p>Votre prochain espace de travail commence ici.</p>
+        <Cta light placement="closing" />
+        <p>Compte Free sans carte. Essai d’une offre payante à activer ensuite, avec carte.</p>
         <span className="lp-final-wordmark" aria-hidden="true">
           REZO360
         </span>
@@ -694,18 +530,12 @@ export default function LandingPage() {
   useLandingSeo();
   const root = useReveals();
   return (
-    <div className="landing-premium" ref={root} style={{ '--lp-blue': '#1b44c8' } as CSSProperties}>
+    <div className="landing-premium landing-conversion" ref={root}>
       <Hero />
-      <FieldFilm />
-      <ProductIntro />
       <ProductSequence />
-      <FieldSection />
-      <Universes />
-      <Workflow />
-      <WorkspaceSection />
+      <FieldExperience />
       <VoiceNarrative />
-      <MobileSection />
-      <FinanceNarrative />
+      <Universes />
       <Proofs />
       <Pricing />
       <Faq />

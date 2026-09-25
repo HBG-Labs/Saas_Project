@@ -183,6 +183,14 @@ export function trackPageView() {
   envoyer('track', 'PageView');
 }
 
+/** Public funnel events: no personal data; the existing consent gate applies. */
+export function trackLandingAction(
+  action: 'signup' | 'explore' | 'product_step' | 'universe' | 'plan',
+  placement: string,
+) {
+  envoyer('trackCustom', 'LandingAction', { action, placement });
+}
+
 /**
  * Un compte vient d'être créé.
  *

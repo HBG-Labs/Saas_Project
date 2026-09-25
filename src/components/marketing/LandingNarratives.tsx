@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import '@/styles/landing-narratives.css';
 
 const VOICE_TIMINGS = [1800, 650, 650, 650, 950, 850, 850, 900] as const;
-const FINANCE_TIMINGS = [1500, 1500, 1500, 1500] as const;
 
 /** A finite, visibility-aware story. Its clock stops when the story cannot be seen. */
 function useNarrative(timings: readonly number[], sectionRef: RefObject<HTMLElement | null>) {
@@ -20,10 +19,9 @@ function useNarrative(timings: readonly number[], sectionRef: RefObject<HTMLElem
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
   const [frame, setFrame] = useState(0);
-  const [manualFrame, setManualFrame] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [run, setRun] = useState(0);
-  const displayFrame = reducedMotion ? (manualFrame ?? timings.length) : frame;
+  const displayFrame = reducedMotion ? timings.length : frame;
   const complete = displayFrame === timings.length;
   const running = inView && pageVisible && !paused && !complete && !reducedMotion;
 
@@ -74,17 +72,8 @@ function useNarrative(timings: readonly number[], sectionRef: RefObject<HTMLElem
     generation.current += 1;
     remaining.current = null;
     setFrame(0);
-    setManualFrame(null);
     setPaused(false);
     setRun((current) => current + 1);
-  }
-
-  function selectFrame(nextFrame: number) {
-    generation.current += 1;
-    remaining.current = null;
-    setFrame(nextFrame);
-    setManualFrame(nextFrame);
-    setPaused(true);
   }
 
   return {
@@ -94,7 +83,6 @@ function useNarrative(timings: readonly number[], sectionRef: RefObject<HTMLElem
     complete,
     reducedMotion,
     replay,
-    selectFrame,
     togglePause: () => setPaused((current) => !current),
   };
 }
@@ -146,24 +134,20 @@ export function VoiceNarrative() {
   const stage = frame === 0 ? 0 : frame <= 3 ? 1 : frame <= 6 ? 2 : frame === 7 ? 3 : 4;
 
   return (
-    <section
-      id="voix"
-      className="ln-section ln-voice"
-      aria-labelledby="ln-voice-title"
-    >
+    <section id="voix" className="ln-section ln-voice" aria-labelledby="ln-voice-title">
       <div className="ln-container">
         <div className="ln-heading">
           <div>
             <p className="ln-eyebrow">La voix devient une trace écrite</p>
             <h2 id="ln-voice-title">
-              Vous racontez.
+              Dictez vos notes.
               <br />
-              <span>Le travail prend forme.</span>
+              <span>Préparez votre compte rendu.</span>
             </h2>
           </div>
           <p>
-            Capturez ce qui compte, tant que c’est frais. Retrouvez votre transcription, puis
-            préparez un document à relire et à partager.
+            Les détails sont encore frais. Enregistrez-les, retrouvez la transcription et structurez
+            votre document. Vous le relisez avant de le partager.
           </p>
         </div>
 
@@ -180,20 +164,17 @@ export function VoiceNarrative() {
           />
           <figcaption>
             <span>Sur le terrain</span>
-            <p>
-              Votre voix.
-              <br />
-              Le contexte en plus.
-            </p>
-            <p>
-              Les détails sont encore frais.
-              <br />
-              Dites-les, puis retrouvez-les.
-            </p>
+            <p>Moins de notes à reprendre.</p>
+            <p>De la parole au document, vous gardez la main.</p>
           </figcaption>
         </figure>
 
-        <div ref={stageRef} className="ln-voice-stage" data-running={narrative.running} data-stage={stage}>
+        <div
+          ref={stageRef}
+          className="ln-voice-stage"
+          data-running={narrative.running}
+          data-stage={stage}
+        >
           <div className="ln-voice-toolbar">
             <span className="ln-voice-brand">
               <span aria-hidden="true" /> REZO Voice
@@ -295,128 +276,6 @@ export function VoiceNarrative() {
         </div>
         <p className="ln-footnote">
           Exemple de mise en forme. Vous gardez la main sur le contenu et sa validation.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-const financeStages = [
-  {
-    label: 'Devis',
-    status: 'Devis envoyé',
-    detail: 'La proposition est prête. Le montant est posé.',
-    amountLabel: 'Montant du devis',
-    amount: '4 320 €',
-  },
-  {
-    label: 'Accepté',
-    status: 'Devis accepté',
-    detail: 'L’accord est enregistré. Le dossier avance.',
-    amountLabel: 'Montant accepté',
-    amount: '4 320 €',
-  },
-  {
-    label: 'Facture',
-    status: 'Facture émise',
-    detail: 'La facturation s’inscrit dans la continuité du dossier.',
-    amountLabel: 'À encaisser',
-    amount: '4 320 €',
-  },
-  {
-    label: 'Paiement',
-    status: 'Paiement enregistré',
-    detail: 'Le règlement est suivi au même endroit.',
-    amountLabel: 'Paiement reçu',
-    amount: '4 320 €',
-  },
-  {
-    label: 'Payée',
-    status: 'Facture payée',
-    detail: 'Le dossier est à jour. Vous voyez où vous en êtes.',
-    amountLabel: 'Reste à encaisser',
-    amount: '0 €',
-  },
-] as const;
-
-export function FinanceNarrative() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const narrative = useNarrative(FINANCE_TIMINGS, sectionRef);
-  const current = financeStages[narrative.frame] ?? financeStages[4];
-
-  return (
-    <section
-      id="finance"
-      ref={sectionRef}
-      className="ln-section ln-finance"
-      aria-labelledby="ln-finance-title"
-    >
-      <div className="ln-container">
-        <div className="ln-heading">
-          <div>
-            <p className="ln-eyebrow">Du travail réalisé au paiement</p>
-            <h2 id="ln-finance-title">
-              L’activité avance.
-              <br />
-              <span>La finance suit.</span>
-            </h2>
-          </div>
-          <p>
-            Devis, factures, règlements et relances. Une suite logique, avec une vue claire sur ce
-            qui reste à encaisser.
-          </p>
-        </div>
-
-        <div className="ln-finance-sequence">
-          <ol aria-label="Parcours de facturation illustré">
-            {financeStages.map((step, index) => (
-              <li key={step.label} className={narrative.frame >= index ? 'is-reached' : ''}>
-                <button
-                  type="button"
-                  onClick={() => narrative.selectFrame(index)}
-                  aria-current={narrative.frame === index ? 'step' : undefined}
-                  aria-label={`Afficher l’étape ${step.label}`}
-                >
-                  <span>0{index + 1}</span>
-                  {step.label}
-                </button>
-              </li>
-            ))}
-          </ol>
-          <PlaybackControls narrative={narrative} name="la démonstration financière" />
-        </div>
-
-        <div className="ln-finance-stage">
-          <figure className="ln-finance-product">
-            <img
-              src="/images/product/premium/invoice.webp"
-              alt="Interface réelle REZO360 : consultation d’une facture et suivi de son règlement"
-              width="1440"
-              height="960"
-              loading="lazy"
-              decoding="async"
-            />
-            <figcaption className="ln-finance-caption">La facturation dans REZO360</figcaption>
-          </figure>
-          <div className="ln-finance-receipt" data-complete={narrative.complete}>
-            <p className="ln-demo-label">Exemple de parcours · 4 320 €</p>
-            <div className="ln-finance-receipt-content" key={narrative.frame}>
-              <p className="ln-finance-status">
-                <span aria-hidden="true">{narrative.complete ? '✓' : '↗'}</span>
-                {current.status}
-              </p>
-              <p className="ln-finance-amount-label">{current.amountLabel}</p>
-              <p className="ln-finance-amount">{current.amount}</p>
-              <p className="ln-finance-detail">{current.detail}</p>
-            </div>
-            <div className="ln-finance-meter" aria-hidden="true">
-              <span style={{ width: `${(narrative.frame + 1) * 20}%` }} />
-            </div>
-          </div>
-        </div>
-        <p className="ln-footnote">
-          Montants et étapes présentés à titre d’illustration. Les règlements restent sous votre
-          contrôle.
         </p>
       </div>
     </section>

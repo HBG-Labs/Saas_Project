@@ -15,13 +15,16 @@ export function ClosingScene() {
   const [failed, setFailed] = useState(false);
   const [reduced, setReduced] = useState(
     () =>
-      typeof window !== 'undefined' &&
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function' ||
+      typeof IntersectionObserver === 'undefined' ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
 
   useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const change = () => setReduced(media.matches);
+    const change = () => setReduced(typeof IntersectionObserver === 'undefined' || media.matches);
     media.addEventListener('change', change);
     return () => media.removeEventListener('change', change);
   }, []);

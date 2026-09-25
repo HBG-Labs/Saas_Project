@@ -115,8 +115,8 @@ export default function RegisterPage() {
       title="Créer un compte"
       description={
         activePlanInfo.priceMonthly === 0
-          ? 'Gratuit à vie. Accédez à vos outils techniques et calculs certifiés.'
-          : `Rejoignez REZO360 avec la formule ${activePlanInfo.name} pour équiper votre entreprise.`
+          ? 'Créez votre compte Free pour découvrir les outils techniques. Choisissez ensuite votre formule pour gérer vos interventions.'
+          : `Première étape : créez votre compte gratuit. Vous pourrez ensuite activer l’essai ${activePlanInfo.name} depuis votre espace.`
       }
       footer={
         <>
