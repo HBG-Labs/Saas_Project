@@ -126,6 +126,7 @@ export function PublicLayout() {
 
       {/* ---------------------------------------------------- NAVBAR */}
       <header
+        data-scrolled={isScrolled}
         className={cn(
           'public-header sticky top-0 z-50 transition-colors duration-200',
           /*

@@ -48,27 +48,39 @@ async function loadEveryLandingImage(page: Page) {
       .toBe(true);
   }
   await page.locator('.lp-journey-steps button').first().click();
-  await page.evaluate(async () => {
-    const step = Math.max(window.innerHeight * 0.75, 500);
-    for (let position = 0; position < document.body.scrollHeight; position += step) {
-      window.scrollTo(0, position);
-      await new Promise((resolve) => window.setTimeout(resolve, 40));
-    }
-    window.scrollTo(0, 0);
-  });
+  // Wait in the viewport for native lazy loading, including the final <picture>.
+  // A rapid full-page sweep can leave mobile images before Chromium schedules them.
+  for (const image of await page.locator('main img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (element) =>
+            (element as HTMLImageElement).complete &&
+            (element as HTMLImageElement).naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+  }
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 
   await expect
     .poll(async () =>
       page
         .locator('main img')
         .evaluateAll((images) =>
-          images.every(
-            (image) =>
-              (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0,
-          ),
+          images
+            .filter(
+              (image) =>
+                !(image as HTMLImageElement).complete ||
+                (image as HTMLImageElement).naturalWidth === 0,
+            )
+            .map(
+              (image) => (image as HTMLImageElement).currentSrc || (image as HTMLImageElement).src,
+            ),
         ),
     )
-    .toBe(true);
+    .toEqual([]);
 }
 
 test.describe('Landing premium REZO360', () => {
@@ -89,13 +101,13 @@ test.describe('Landing premium REZO360', () => {
 
     await expectLandingReady(page);
     const openingOrder = await page
-      .locator('.landing-premium > *')
+      .locator('.landing-alive > *')
       .evaluateAll((sections) => sections.slice(0, 4).map((section) => section.classList[0]));
     expect(openingOrder).toEqual(['lp-hero', 'lp-journey', 'lp-field-experience', 'ln-section']);
     await expect(page.locator('.lp-hero h1')).toBeVisible();
     await expect(page.locator('.lp-hero .lp-cta')).toHaveAttribute('href', '/register');
-    await expect(page.locator('.lp-hero .lp-hero-stage')).toHaveCount(1);
-    await expect(page.locator('.lp-product-intro .lp-hero-stage')).toHaveCount(1);
+    await expect(page.locator('.lp-hero-landscape img')).toBeVisible();
+    await expect(page.locator('.landing-alive video')).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: 'Créer mon compte gratuit', exact: true }).first(),
     ).toHaveAttribute('href', '/register');
@@ -168,6 +180,7 @@ test.describe('Landing premium REZO360', () => {
   });
 
   test('produit une capture de contrôle lisible', async ({ page }, testInfo) => {
+    test.setTimeout(60_000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize(
       testInfo.project.name === 'chromium'
@@ -186,8 +199,7 @@ test.describe('Landing premium REZO360', () => {
     });
     for (const [name, selector] of [
       ['hero', '.lp-hero'],
-      ['opening-film', '.lp-film'],
-      ['product-intro', '.lp-product-intro'],
+      ['field', '.lp-field-experience'],
       ['product-journey', '.lp-journey'],
       ['pricing', '.lp-pricing'],
       ['voice', '#voix'],
@@ -213,15 +225,11 @@ test.describe('Landing premium REZO360', () => {
     );
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-image/);
     await expect(page.locator('.ln-voice-stage')).toHaveAttribute('data-stage', '4');
-    await expect(page.locator('#voix .ln-voice-scene img')).toHaveAttribute(
-      'src',
-      /voice-technician/,
-    );
-    await expect(page.locator('.lp-hero-phone img')).toHaveAttribute(
+    await expect(page.locator('.lp-field-phone img')).toHaveAttribute(
       'src',
       '/images/product/premium/mobile.webp',
     );
-    await expect(page.locator('.lp-final .lp-cta')).toHaveClass(/lp-cta--light/);
+    await expect(page.locator('.lp-final .lp-cta')).toHaveAttribute('href', '/register');
     await page.getByRole('link', { name: 'Explorer les écrans' }).focus();
     await expect(page.getByRole('link', { name: 'Explorer les écrans' })).toBeFocused();
     await page.keyboard.press('Enter');

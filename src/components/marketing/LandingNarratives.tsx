@@ -83,6 +83,11 @@ function useNarrative(timings: readonly number[], sectionRef: RefObject<HTMLElem
     complete,
     reducedMotion,
     replay,
+    finish: () => {
+      generation.current += 1;
+      remaining.current = null;
+      setFrame(timings.length);
+    },
     togglePause: () => setPaused((current) => !current),
   };
 }
@@ -127,14 +132,19 @@ const waveform = [
 ];
 const voiceStages = ['Enregistrer', 'Transcrire', 'Structurer', 'Compte rendu', 'Document'];
 
-export function VoiceNarrative() {
+export function VoiceNarrative({ compact = false }: { compact?: boolean }) {
+  const [mobileView, setMobileView] = useState<'note' | 'document'>('note');
   const stageRef = useRef<HTMLDivElement>(null);
   const narrative = useNarrative(VOICE_TIMINGS, stageRef);
   const { frame } = narrative;
   const stage = frame === 0 ? 0 : frame <= 3 ? 1 : frame <= 6 ? 2 : frame === 7 ? 3 : 4;
 
   return (
-    <section id="voix" className="ln-section ln-voice" aria-labelledby="ln-voice-title">
+    <section
+      id="voix"
+      className={compact ? 'ln-section ln-voice ln-voice--compact' : 'ln-section ln-voice'}
+      aria-labelledby="ln-voice-title"
+    >
       <div className="ln-container">
         <div className="ln-heading">
           <div>
@@ -142,7 +152,7 @@ export function VoiceNarrative() {
             <h2 id="ln-voice-title">
               Dictez vos notes.
               <br />
-              <span>Préparez votre compte rendu.</span>
+              <span>{compact ? 'Le détail reste.' : 'Préparez votre compte rendu.'}</span>
             </h2>
           </div>
           <p>
@@ -151,23 +161,25 @@ export function VoiceNarrative() {
           </p>
         </div>
 
-        <figure className="ln-voice-scene">
-          <img
-            src="/images/landing/voice-technician-1800.webp"
-            srcSet="/images/landing/voice-technician-800.webp 800w, /images/landing/voice-technician-1800.webp 1800w"
-            sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1600px) 58vw, 900px"
-            width="1800"
-            height="1200"
-            loading="lazy"
-            decoding="async"
-            alt="Une technicienne dicte une note vocale sur son smartphone à la fin d’une intervention"
-          />
-          <figcaption>
-            <span>Sur le terrain</span>
-            <p>Moins de notes à reprendre.</p>
-            <p>De la parole au document, vous gardez la main.</p>
-          </figcaption>
-        </figure>
+        {!compact && (
+          <figure className="ln-voice-scene">
+            <img
+              src="/images/landing/voice-technician-1800.webp"
+              srcSet="/images/landing/voice-technician-800.webp 800w, /images/landing/voice-technician-1800.webp 1800w"
+              sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1600px) 58vw, 900px"
+              width="1800"
+              height="1200"
+              loading="lazy"
+              decoding="async"
+              alt="Une technicienne dicte une note vocale sur son smartphone à la fin d’une intervention"
+            />
+            <figcaption>
+              <span>Sur le terrain</span>
+              <p>Moins de notes à reprendre.</p>
+              <p>De la parole au document, vous gardez la main.</p>
+            </figcaption>
+          </figure>
+        )}
 
         <div
           ref={stageRef}
@@ -181,8 +193,31 @@ export function VoiceNarrative() {
             </span>
             <span className="ln-demo-label">Démonstration illustrée</span>
           </div>
-          <div className="ln-voice-workspace">
-            <div className="ln-recording">
+          {compact && (
+            <div className="ln-mobile-switch" aria-label="Explorer la démonstration vocale">
+              <button
+                type="button"
+                aria-pressed={mobileView === 'note'}
+                aria-controls="ln-note-panel"
+                onClick={() => setMobileView('note')}
+              >
+                Note vocale
+              </button>
+              <button
+                type="button"
+                aria-pressed={mobileView === 'document'}
+                aria-controls="ln-document-panel"
+                onClick={() => {
+                  setMobileView('document');
+                  narrative.finish();
+                }}
+              >
+                Compte rendu
+              </button>
+            </div>
+          )}
+          <div className="ln-voice-workspace" data-mobile-view={mobileView}>
+            <div className="ln-recording" id="ln-note-panel">
               <div className="ln-recording-meta">
                 <span>Note de terrain</span>
                 <span>00:18</span>
@@ -220,7 +255,7 @@ export function VoiceNarrative() {
               </div>
             </div>
 
-            <div className="ln-document-area">
+            <div className="ln-document-area" id="ln-document-panel">
               <article
                 className="ln-document"
                 aria-label="Exemple de compte rendu structuré à partir de la note vocale"
@@ -271,7 +306,16 @@ export function VoiceNarrative() {
                 </li>
               ))}
             </ol>
-            <PlaybackControls narrative={narrative} name="la démonstration vocale" />
+            <PlaybackControls
+              narrative={{
+                ...narrative,
+                replay: () => {
+                  setMobileView('note');
+                  narrative.replay();
+                },
+              }}
+              name="la démonstration vocale"
+            />
           </div>
         </div>
         <p className="ln-footnote">

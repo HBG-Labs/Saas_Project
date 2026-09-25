@@ -30,16 +30,9 @@ export function Pricing() {
 
         <div className="lp-pricing__trial-explainer" aria-label="Du compte gratuit à l’essai">
           <p>
-            <strong>1. Créez votre compte Free</strong>Sans carte, pour découvrir les outils
-            techniques. La gestion des interventions est disponible dès Starter.
-          </p>
-          <p>
-            <strong>2. Activez votre essai</strong>Choisissez une offre payante depuis votre espace
-            : 14 jours d’essai, avec carte bancaire.
-          </p>
-          <p>
-            <strong>3. Gardez la main</strong>Aucun débit avant la fin de l’essai. Vous pouvez
-            résilier en ligne avant l’échéance.
+            <strong>14 jours pour essayer une offre payante.</strong>
+            Après l’inscription gratuite, activez votre essai depuis votre espace, avec carte
+            bancaire. Aucun débit avant la fin de l’essai. Résiliation en ligne.
           </p>
         </div>
         <div className="lp-pricing__grid">
@@ -131,10 +124,8 @@ export function Pricing() {
         ) : null}
 
         <p className="lp-pricing__footnote">
-          L’inscription est gratuite. Activez ensuite votre essai de 14 jours depuis votre espace.
-          Une carte est demandée pour les offres payantes ; aucun débit avant la fin de l’essai.
-          Sans engagement, résiliable en ligne. Prix mensuels en euros, hors taxes le cas échéant.
-          L’essai est soumis aux <Link to={ROUTES.terms}>conditions générales</Link>.
+          Sans engagement. Prix mensuels en euros, hors taxes le cas échéant. L’essai est soumis aux{' '}
+          <Link to={ROUTES.terms}>conditions générales</Link>.
         </p>
       </div>
     </section>

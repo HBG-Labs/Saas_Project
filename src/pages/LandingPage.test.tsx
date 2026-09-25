@@ -4,19 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/utils';
 import LandingPage from './LandingPage';
 
-// Film seeking is checked in the browser; these tests cover conversion contracts.
-vi.mock('@/components/marketing/FieldFilm', () => ({
-  FieldFilm: () => <div data-testid="terrain-film" />,
-}));
-vi.mock('@/components/marketing/ClosingScene', () => ({
-  ClosingScene: () => <div data-testid="closing-film" />,
-}));
+// Scroll synchronization is checked in the browser; these tests cover conversion contracts.
 vi.mock('@/components/marketing/LandingNarratives', () => ({
   VoiceNarrative: () => <section id="voix" />,
 }));
 
-describe('Landing — parcours resserré', () => {
-  it('présente le produit dans le hero et explicite le compte gratuit', () => {
+describe('Landing ALIVE', () => {
+  it('explicite le compte gratuit et garde le produit accessible depuis le hero', () => {
     const { container } = renderWithProviders(<LandingPage />);
     const hero = within(
       screen.getByRole('region', { name: 'Votre activité en mieux. Tout simplement.' }),
@@ -29,15 +23,19 @@ describe('Landing — parcours resserré', () => {
       'href',
       '#produit',
     );
-    expect(hero.getByRole('img', { name: /Tableau de bord réel/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Interface réelle REZO360 — Planning' }),
+    ).toBeInTheDocument();
     expect(
       hero.getByText(/Compte Free sans carte, pour les outils techniques/),
     ).toBeInTheDocument();
     expect(container.querySelector('.lp-workflow')).toBeNull();
     expect(container.querySelector('.lp-mobile')).toBeNull();
     expect(container.querySelector('.ln-finance')).toBeNull();
-    expect(screen.getByTestId('terrain-film')).toBeInTheDocument();
-    expect(screen.getByTestId('closing-film')).toBeInTheDocument();
+    expect(container.querySelector('video')).toBeNull();
+    expect(
+      screen.getByRole('img', { name: 'Une intervention REZO360 sur smartphone' }),
+    ).toBeInTheDocument();
   });
 
   it('explore les écrans et leur agrandissement sans déplacer la page', async () => {

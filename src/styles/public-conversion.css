@@ -35,6 +35,85 @@
 .conversion-shell input {
   border-radius: 8px;
 }
+/* ALIVE is a scoped brand palette. It never changes the user's application theme. */
+.landing-shell,
+.landing-mobile-menu {
+  --background: #09131e;
+  --surface: #0c1927;
+  --surface-raised: #112132;
+  --surface-hover: #1b2c3e;
+  --foreground: #f7f8fb;
+  --muted-foreground: #a9b6c5;
+  --border: #293747;
+  --primary: #1b44c8;
+  --primary-foreground: #ffffff;
+  color: var(--foreground);
+  background: var(--background);
+  color-scheme: dark;
+}
+.landing-shell .public-header {
+  border-color: transparent;
+  background: transparent;
+}
+.landing-shell .public-header[data-scrolled='true'] {
+  background: rgb(9 19 30 / 96%);
+  border-color: rgb(255 255 255 / 10%);
+}
+.landing-shell .public-header__inner {
+  height: 80px;
+  max-width: 1408px;
+  padding-inline: 48px;
+}
+.landing-shell .public-header a[href='/'] img {
+  display: none;
+}
+.landing-shell .public-header a[href='/'] {
+  font-size: 23px;
+  letter-spacing: -0.045em;
+}
+.landing-shell .public-header a[href='/'] .text-primary,
+.landing-shell .public-footer a[href='/'] .text-primary,
+.landing-mobile-menu a[href='/'] .text-primary {
+  color: #91aaff;
+}
+.landing-shell .public-header a[href='/register'] {
+  background: #1b44c8;
+  color: white;
+}
+.landing-shell .public-footer {
+  background: #09131e;
+  padding-block: 64px 28px;
+}
+.landing-shell .public-footer > div {
+  max-width: 1408px;
+  padding-inline: 48px;
+}
+.landing-mobile-menu {
+  border-radius: 0 0 12px 12px;
+}
+@media (max-width: 760px) {
+  .landing-shell .public-header__inner {
+    height: 68px;
+    padding-inline: 20px;
+  }
+  .landing-shell .public-header a[href='/'] {
+    font-size: 20px;
+  }
+  .landing-shell .public-header a[href='/register'] {
+    padding-inline: 12px;
+    font-size: 12px;
+  }
+  .landing-shell .public-footer > div {
+    padding-inline: 24px;
+  }
+  .landing-shell .public-footer__links {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .landing-shell .public-footer__links a {
+    font-size: 12px;
+  }
+}
 .conversion-shell main button[type='submit'] {
   border-radius: 8px;
   min-height: 48px;

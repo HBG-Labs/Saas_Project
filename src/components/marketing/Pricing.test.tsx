@@ -23,7 +23,12 @@ describe('Tarifs de la landing', () => {
       '/register',
     );
     expect(screen.queryByText('Le plus choisi')).not.toBeInTheDocument();
-    expect(screen.getByText(/Une carte est demandée pour les offres payantes/)).toBeInTheDocument();
+    const trial = within(screen.getByLabelText('Du compte gratuit à l’essai'));
+    expect(trial.getByText(/14 jours pour essayer une offre payante/)).toBeInTheDocument();
+    expect(
+      trial.getByText(/activez votre essai depuis votre espace, avec carte bancaire/),
+    ).toBeInTheDocument();
+    expect(trial.getByText(/Aucun débit avant la fin de l’essai/)).toBeInTheDocument();
     expect(screen.getByText('Tout Starter inclus')).toBeInTheDocument();
     expect(screen.getByText('Tout Pro inclus')).toBeInTheDocument();
     expect(screen.getByText('Tout Business inclus')).toBeInTheDocument();
