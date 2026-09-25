@@ -214,6 +214,111 @@
   letter-spacing: 0.11em;
 }
 
+/* A quiet daylight pause: the ecosystem is proof, never decoration. */
+.lp-technologies {
+  --technology-gap: clamp(66px, 6.2vw, 112px);
+  overflow: clip;
+  padding-block: 58px 66px;
+  border-block: 1px solid #e6e9ee;
+  background: #fbfbfa;
+  color: #111923;
+}
+.lp-technologies-heading {
+  text-align: center;
+}
+.lp-technologies-kicker {
+  margin-bottom: 10px !important;
+  color: #707983;
+  font-size: 10px;
+  font-weight: 560;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.landing-alive .lp-technologies h2 {
+  color: #17202a;
+  font-size: clamp(17px, 1.45vw, 21px);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.018em;
+}
+.lp-technology-viewport {
+  width: min(1520px, 100%);
+  margin: 45px auto 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+.lp-technology-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: lp-technology-marquee 32s linear infinite;
+}
+.lp-technology-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--technology-gap);
+  margin: 0;
+  padding: 0 var(--technology-gap) 0 0;
+  list-style: none;
+}
+.lp-technology-item {
+  display: flex;
+  width: clamp(142px, 11.5vw, 180px);
+  height: 54px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+.lp-technology-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 30px;
+  opacity: 0.6;
+  filter: grayscale(1);
+  transform: translateZ(0);
+  transition:
+    opacity 240ms ease,
+    filter 240ms ease,
+    transform 240ms ease;
+}
+.lp-technology-logo--github {
+  height: 34px;
+}
+.lp-technology-logo--vercel {
+  height: 29px;
+}
+.lp-technology-logo--supabase {
+  height: 32px;
+}
+.lp-technology-logo--stripe {
+  height: 31px;
+}
+.lp-technology-logo--openai {
+  height: 46px;
+}
+.lp-technology-logo--superpdp {
+  height: 27px;
+}
+@keyframes lp-technology-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .lp-technology-viewport:hover .lp-technology-track {
+    animation-play-state: paused;
+  }
+  .lp-technology-item:hover .lp-technology-logo {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.025) translateZ(0);
+  }
+}
+
 /* One mission; the actual screens remain the hero of this sequence. */
 .lp-journey {
   padding-block: 110px 72px;
@@ -1255,6 +1360,9 @@
   }
 }
 @media (max-width: 1100px) {
+  .lp-technologies {
+    --technology-gap: clamp(54px, 6vw, 78px);
+  }
   .lp-journey-layout {
     grid-template-columns: 200px minmax(0, 1fr);
     gap: 30px;
@@ -1367,6 +1475,46 @@
     max-width: 290px;
     font-size: 11px;
     line-height: 1.6;
+  }
+  .lp-technologies {
+    --technology-gap: 42px;
+    padding-block: 43px 49px;
+  }
+  .lp-technologies-kicker {
+    margin-bottom: 8px !important;
+    font-size: 9px;
+  }
+  .landing-alive .lp-technologies h2 {
+    max-width: 310px;
+    margin-inline: auto;
+    font-size: 16px;
+  }
+  .lp-technology-viewport {
+    margin-top: 32px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
+  }
+  .lp-technology-item {
+    width: 118px;
+    height: 46px;
+  }
+  .lp-technology-logo--github {
+    height: 28px;
+  }
+  .lp-technology-logo--vercel {
+    height: 24px;
+  }
+  .lp-technology-logo--supabase {
+    height: 27px;
+  }
+  .lp-technology-logo--stripe {
+    height: 27px;
+  }
+  .lp-technology-logo--openai {
+    height: 40px;
+  }
+  .lp-technology-logo--superpdp {
+    height: 23px;
   }
   .lp-journey {
     padding-block: 66px 44px;
@@ -1873,5 +2021,39 @@
   .landing-alive [data-reveal].will-reveal {
     opacity: 1;
     transform: none;
+  }
+  .lp-technology-viewport {
+    width: min(1280px, calc(100% - 96px));
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .lp-technology-track {
+    width: 100%;
+    will-change: auto;
+    animation: none;
+    transform: none;
+  }
+  .lp-technology-group {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 28px;
+    padding-right: 0;
+  }
+  .lp-technology-group[aria-hidden='true'] {
+    display: none;
+  }
+  .lp-technology-item {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 760px) {
+  .lp-technology-viewport {
+    width: calc(100% - 48px);
+  }
+  .lp-technology-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 28px;
   }
 }

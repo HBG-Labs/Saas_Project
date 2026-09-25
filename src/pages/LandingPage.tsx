@@ -17,6 +17,7 @@ import { FieldScrollVideo } from '@/components/marketing/FieldScrollVideo';
 import { VoiceNarrative } from '@/components/marketing/LandingNarratives';
 import { Pricing } from '@/components/marketing/Pricing';
 import { ProductFrame } from '@/components/marketing/ProductFrame';
+import { TechnologyMarquee } from '@/components/marketing/TechnologyMarquee';
 import { ROUTES } from '@/config/routes';
 import { trackLandingAction } from '@/lib/meta-pixel';
 
@@ -623,6 +624,7 @@ export default function LandingPage() {
   return (
     <div className="landing-alive" ref={root}>
       <Hero />
+      <TechnologyMarquee />
       <ProductSequence />
       <FieldExperience />
       <VoiceNarrative compact />
