@@ -624,7 +624,6 @@ export default function LandingPage() {
   return (
     <div className="landing-alive" ref={root}>
       <Hero />
-      <TechnologyMarquee />
       <ProductSequence />
       <FieldExperience />
       <VoiceNarrative compact />
@@ -633,6 +632,7 @@ export default function LandingPage() {
       <Pricing />
       <Faq />
       <FinalCta />
+      <TechnologyMarquee />
     </div>
   );
 }
