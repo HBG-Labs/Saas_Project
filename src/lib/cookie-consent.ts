@@ -84,16 +84,15 @@ export function subscribeCookiePreferencesRequest(fn: () => void): () => void {
 
 /** Prêt pour le jour où un outil de mesure d'audience est ajouté. */
 export function hasAnalyticsConsent(): boolean {
-  return getCookieConsent()?.analytics ?? false;
+  return getCookieConsent()?.analytics === true;
 }
 
 /**
  * Gouverne le chargement du pixel Meta. Fermé par défaut — voir l'en-tête.
  *
- * `?? false` n'est pas une commodité d'écriture : c'est la garantie qu'un
- * stockage vide, inaccessible ou corrompu se traduit par un refus, jamais par
- * une acceptation implicite.
+ * Seul le booléen true autorise le chargement : une chaîne ou un autre
+ * contenu invalide du stockage ne constitue pas un accord.
  */
 export function hasMarketingConsent(): boolean {
-  return getCookieConsent()?.marketing ?? false;
+  return getCookieConsent()?.marketing === true;
 }

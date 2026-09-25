@@ -158,6 +158,15 @@ export function initMetaPixel(): () => void {
       chargerScript(id);
       initialise = true;
     }
+    if (window.fbq) {
+      if (!hasMarketingConsent() && !window.fbq.callMethod) {
+        // Un retrait pendant le téléchargement doit aussi annuler les envois en attente.
+        window.fbq.queue = window.fbq.queue.filter(
+          (appel) => !Array.isArray(appel) || !['track', 'trackCustom'].includes(String(appel[0])),
+        );
+      }
+      window.fbq('consent', hasMarketingConsent() ? 'grant' : 'revoke');
+    }
   };
 
   appliquer();
@@ -201,7 +210,8 @@ export function trackLandingAction(
  * événements dire deux choses distinctes, au lieu de compter deux fois la même.
  */
 export function trackInscription() {
-  envoyer('track', 'Lead');
+  // L'inscription n'est pas un achat : aucune valeur de revenu fictive.
+  envoyer('track', 'Lead', { currency: 'EUR' });
 }
 
 /**
@@ -224,20 +234,22 @@ export function trackInscription() {
  * instant où le navigateur est encore de la partie, pour les confier aux
  * métadonnées de l'abonnement Stripe. Voir `_shared/meta-capi.ts`.
  *
- * Absents si le consentement marketing n'a pas été donné : le pixel n'a alors
- * jamais été chargé, et ces cookies n'existent pas. La conversion partira sans
- * eux, avec le seul e-mail haché — ce qui est la conséquence normale d'un
- * refus, pas une anomalie.
+ * Un cookie ancien peut subsister après un refus. Le consentement courant
+ * est donc vérifié avant toute lecture ; son absence interdit l'attribution.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export function identifiantsAttributionMeta(): { fbp?: string; fbc?: string } {
-  if (typeof document === 'undefined') return {};
+  if (typeof document === 'undefined' || !hasMarketingConsent()) return {};
 
   const lire = (nom: string): string | undefined => {
     // Le nom est encadré pour ne pas confondre `_fbc` avec un cookie dont le
     // nom se terminerait par `_fbc`.
     const trouve = new RegExp(`(?:^|;\\s*)${nom}=([^;]*)`).exec(document.cookie);
-    return trouve?.[1] === undefined ? undefined : decodeURIComponent(trouve[1]);
+    try {
+      return trouve?.[1] === undefined ? undefined : decodeURIComponent(trouve[1]);
+    } catch {
+      return undefined;
+    }
   };
 
   const fbp = lire('_fbp');
@@ -293,7 +305,9 @@ export function trackInscriptionSiCompteNeuf(
 
   const creeLe = Date.parse(utilisateur.created_at);
   if (Number.isNaN(creeLe)) return;
-  if (Date.now() - creeLe > FENETRE_COMPTE_NEUF_MS) return;
+  const age = Date.now() - creeLe;
+  if (age < 0 || age > FENETRE_COMPTE_NEUF_MS) return;
+  if (!metaPixelEstActif()) return;
 
   inscriptionsDeclarees.add(utilisateur.id);
   trackInscription();

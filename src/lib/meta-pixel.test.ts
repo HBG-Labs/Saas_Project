@@ -59,6 +59,7 @@ beforeEach(() => {
 afterEach(() => {
   __resetMetaPixelPourTests();
   localStorage.clear();
+  Reflect.deleteProperty(document, 'cookie');
 });
 
 describe('pixel Meta — inerte tant que tout n’est pas réuni', () => {
@@ -132,6 +133,14 @@ describe('pixel Meta — inerte tant que tout n’est pas réuni', () => {
 
     expect(scriptsInjectes()).toHaveLength(0);
   });
+
+  it('refuse une valeur de consentement qui n’est pas un booléen', () => {
+    faux.pixelId = ID;
+    localStorage.setItem('rezo360_cookie_consent', JSON.stringify({ marketing: 'false' }));
+    initMetaPixel();
+    trackInscription();
+    expect(scriptsInjectes()).toHaveLength(0);
+  });
 });
 
 describe('pixel Meta — chargement après consentement', () => {
@@ -188,21 +197,26 @@ describe('pixel Meta — chargement après consentement', () => {
     acceptAllCookies();
     initMetaPixel();
     trackPageView();
-    const avant = evenementsDeType('PageView').length;
 
     refuseAllCookies();
     trackPageView();
     trackInscription();
 
-    // Le script déjà injecté ne peut pas être retiré du document, mais plus
-    // rien ne lui est transmis.
-    expect(evenementsDeType('PageView')).toHaveLength(avant);
+    expect(evenementsDeType('PageView')).toHaveLength(0);
+    expect(evenementsEnvoyes()).toContainEqual(['consent', 'revoke']);
     expect(evenementsDeType('Lead')).toHaveLength(0);
     expect(metaPixelEstActif()).toBe(false);
+  });
+
+  it('déclare la devise d’une inscription sans lui attribuer un revenu', () => {
+    acceptAllCookies();
+    trackInscription();
+    expect(evenementsDeType('Lead')).toEqual([['track', 'Lead', { currency: 'EUR' }]]);
   });
 });
 
 describe('identifiants d’attribution transmis au paiement', () => {
+  beforeEach(() => acceptAllCookies());
   /*
     Ces deux cookies sont le seul lien entre la publicité cliquée et
     l'abonnement confirmé quatorze jours plus tard par un webhook Stripe, sur
@@ -216,6 +230,17 @@ describe('identifiants d’attribution transmis au paiement', () => {
       writable: true,
     });
   }
+
+  it('ignore les cookies résiduels après un refus', () => {
+    poser('_fbp=fb.1.170.ancien; _fbc=fb.1.170.ancien');
+    refuseAllCookies();
+    expect(identifiantsAttributionMeta()).toEqual({});
+  });
+
+  it('ignore un cookie mal encodé sans bloquer le paiement', () => {
+    poser('_fbp=%E0%A4%A; _fbc=fb.1.170.valide');
+    expect(identifiantsAttributionMeta()).toEqual({ fbc: 'fb.1.170.valide' });
+  });
 
   it('lit les deux cookies quand ils sont là', () => {
     poser('_fbp=fb.1.1700000000000.AbCd; _fbc=fb.1.1700000000000.IwAR123');

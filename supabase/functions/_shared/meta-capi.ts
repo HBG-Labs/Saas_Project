@@ -37,6 +37,10 @@ const VERSION_API = 'v21.0';
 export type EvenementConversion = 'StartTrial' | 'Purchase';
 
 export interface DonneesConversion {
+  /** Vérification serveur du consentement courant, jamais déduite d'un cookie ou d'un e-mail. */
+  consentementMarketingVerifie?: boolean;
+  /** Purchase exige un paiement effectivement encaissé, pas un statut active. */
+  paiementEncaisseVerifie?: boolean;
   evenement: EvenementConversion;
   /** Identifiant d'abonnement Stripe — sert à rendre l'événement déduplicable. */
   referenceStripe: string;
@@ -144,6 +148,10 @@ async function sha256Hex(valeur: string): Promise<string> {
  * part depuis un environnement qui n'a pas été explicitement équipé.
  */
 export async function envoyerConversionMeta(donnees: DonneesConversion): Promise<void> {
+  // Fermé par défaut. Le webhook actuel ne dispose pas encore d'une preuve
+  // de consentement révocable : ses envois restent suspendus, même avec des clés.
+  if (donnees.consentementMarketingVerifie !== true) return;
+  if (donnees.evenement === 'Purchase' && donnees.paiementEncaisseVerifie !== true) return;
   const pixelId = secret('META_PIXEL_ID');
   const jeton = secret('META_CAPI_ACCESS_TOKEN');
 
@@ -160,9 +168,8 @@ export async function envoyerConversionMeta(donnees: DonneesConversion): Promise
       Stripe, faute de quoi ils seraient perdus à la redirection vers la page
       de paiement hébergée.
 
-      L'e-mail haché est le filet : il permet l'appariement quand les cookies
-      manquent (navigateur restrictif, refus du consentement côté cookies mais
-      compte créé). Meta exige un SHA-256 de l'adresse normalisée ; l'adresse
+      L'e-mail haché permet l'appariement quand les cookies manquent, uniquement
+      après vérification du consentement. Meta exige un SHA-256 de l'adresse normalisée ; l'adresse
       en clair ne quitte jamais ce serveur.
     */
     const userData: Record<string, unknown> = {};

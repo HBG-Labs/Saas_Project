@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
 
-import { assainirIdentifiantMeta, conversionADeclarer } from './meta-capi.ts';
+import { assainirIdentifiantMeta, conversionADeclarer, envoyerConversionMeta } from './meta-capi.ts';
+
+Deno.test('sans consentement vérifié, aucune lecture de secrets ni requête réseau', async () => {
+  // Sans --allow-env ni --allow-net : un accès externe fait échouer le test.
+  await envoyerConversionMeta({ evenement: 'StartTrial', referenceStripe: 'sub_test', email: 'test@example.com' });
+  await envoyerConversionMeta({ evenement: 'Purchase', referenceStripe: 'sub_test', consentementMarketingVerifie: false });
+});
+
+Deno.test('un achat sans preuve d’encaissement ne part pas même avec consentement', async () => {
+  await envoyerConversionMeta({ evenement: 'Purchase', referenceStripe: 'sub_test', consentementMarketingVerifie: true });
+});
 
 /*
   Ces tests tournent SANS permission Deno — ni réseau, ni disque, ni variables
