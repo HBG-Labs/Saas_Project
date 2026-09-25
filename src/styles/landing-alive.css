@@ -573,6 +573,15 @@
   border: 1px solid #718299;
   box-shadow: 0 18px 45px #0008;
 }
+.lp-field-video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.lp-field-video.is-ready {
+  opacity: 1;
+}
 .lp-field-phone img {
   display: block;
   width: 100%;
@@ -1184,8 +1193,22 @@
     linear-gradient(90deg, #06111cd1, #06111c1a 85%),
     linear-gradient(0deg, #09131e, transparent 35%);
 }
+.lp-final-landscape {
+  container-type: size;
+}
 .lp-final-landscape img {
-  object-position: center 58%;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  /* Half the former cover scale, preserving the photograph's 3:2 ratio. */
+  width: max(50cqw, 75cqh);
+  height: auto;
+  max-width: none;
+  transform: translateY(-50%);
+  mask-image:
+    linear-gradient(90deg, transparent, #000 28%),
+    linear-gradient(180deg, transparent, #000 10%, #000 88%, transparent);
+  mask-composite: intersect;
 }
 .landing-alive .lp-final h2 {
   font-size: clamp(44px, 5.2vw, 76px);
@@ -1479,18 +1502,11 @@
     height: 400px;
   }
   .lp-field-photo {
-    width: 92%;
+    width: 100%;
     object-position: 53% center;
   }
   .lp-field-phone {
-    width: 150px;
-    right: 0;
-    bottom: 22px;
-    border-radius: 17px;
-    padding: 4px;
-  }
-  .lp-field-phone img {
-    border-radius: 12px;
+    display: none;
   }
   .lp-field-caption {
     left: 14px;
@@ -1789,7 +1805,9 @@
     line-height: 1.12;
   }
   .lp-final-landscape img {
-    object-position: 88% center;
+    top: auto;
+    bottom: 0;
+    transform: none;
   }
   .lp-final::after {
     background:
@@ -1835,9 +1853,6 @@
   }
   .lp-field-visual {
     height: 350px;
-  }
-  .lp-field-phone {
-    width: 135px;
   }
   .landing-alive .ln-recording,
   .landing-alive .ln-document-area {

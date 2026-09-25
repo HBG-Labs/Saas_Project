@@ -13,6 +13,7 @@ import { Link } from 'react-router';
 
 import { DownloadAppModal } from '@/components/layout/DownloadAppModal';
 import { Faq } from '@/components/marketing/Faq';
+import { FieldScrollVideo } from '@/components/marketing/FieldScrollVideo';
 import { VoiceNarrative } from '@/components/marketing/LandingNarratives';
 import { Pricing } from '@/components/marketing/Pricing';
 import { ProductFrame } from '@/components/marketing/ProductFrame';
@@ -381,10 +382,11 @@ function ProductSequence() {
 
 function FieldExperience() {
   const [install, setInstall] = useState(false);
+  const visual = useRef<HTMLDivElement>(null);
   return (
     <section className="lp-field-experience" aria-labelledby="lp-field-title">
       <div className="lp-container lp-field-layout">
-        <div className="lp-field-visual">
+        <div className="lp-field-visual" ref={visual}>
           <img
             className="lp-field-photo"
             src="/images/landing/technician-male-1800.webp"
@@ -396,6 +398,7 @@ function FieldExperience() {
             decoding="async"
             alt="Un technicien consulte son téléphone sur son lieu d’intervention"
           />
+          <FieldScrollVideo target={visual} />
           <div className="lp-field-phone">
             <img
               src={PRODUCT + 'mobile.webp'}

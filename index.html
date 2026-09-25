@@ -184,6 +184,11 @@
       }
 
       #rezo360-style-boot {
+        --boot-background: var(--background, #f7f8fa);
+        --boot-ink: var(--foreground, #243247);
+        --boot-muted: var(--muted-foreground, #5b677a);
+        --boot-blue: var(--primary, #1b44c8);
+        --boot-track: var(--border, #e2e6ec);
         position: fixed;
         inset: 0;
         z-index: 2147483647;
@@ -192,62 +197,107 @@
         justify-content: center;
         box-sizing: border-box;
         padding: 24px;
-        background: #f7f8fa;
-        color: #243247;
-        font-family:
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          sans-serif;
+        background: var(--boot-background);
+        color: var(--boot-ink);
+        font-family: 'Archivo Variable', Arial, sans-serif;
+      }
+
+      html.dark #rezo360-style-boot {
+        --boot-background: var(--background, #1c2947);
+        --boot-ink: var(--foreground, #f7f8ff);
+        --boot-muted: var(--muted-foreground, #b7c2da);
+        --boot-blue: var(--primary, #7fa0ff);
+        --boot-track: var(--border, #3b4c73);
       }
 
       html.rezo360-styles-ready.rezo360-app-ready #rezo360-style-boot {
         display: none;
       }
 
-      .rezo360-style-boot-card {
-        width: min(100%, 360px);
+      .rezo360-style-boot-signature {
+        width: min(100%, 240px);
         box-sizing: border-box;
-        padding: 28px 24px;
-        border: 1px solid #e2e6ec;
-        border-radius: 20px;
-        background: #ffffff;
-        box-shadow: 0 10px 30px rgb(36 50 71 / 8%);
         text-align: center;
       }
 
       .rezo360-style-boot-logo {
-        margin: 0 0 12px;
-        color: #2451d1;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: -0.5px;
+        margin: 0 0 10px;
+        font-size: 20px;
+        line-height: 1;
+        font-weight: 650;
+        letter-spacing: -1.1px;
+      }
+
+      .rezo360-style-boot-logo span {
+        color: var(--boot-blue);
       }
 
       .rezo360-style-boot-message {
         margin: 0;
-        color: #657185;
-        font-size: 15px;
+        color: var(--boot-muted);
+        font-size: 12px;
         line-height: 1.5;
+      }
+
+      .rezo360-style-boot-track {
+        width: min(100%, 148px);
+        height: 2px;
+        margin: 14px auto 0;
+        overflow: hidden;
+        border-radius: 1px;
+        background: var(--boot-track);
+      }
+
+      .rezo360-style-boot-track::after {
+        content: '';
+        display: block;
+        width: 35%;
+        height: 100%;
+        background: var(--boot-blue);
+        transform: translateX(90%);
+        animation: rezo360-boot-travel 1.4s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+      }
+
+      @keyframes rezo360-boot-travel {
+        from {
+          transform: translateX(-105%);
+        }
+        to {
+          transform: translateX(390%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .rezo360-style-boot-track::after {
+          animation: none;
+        }
       }
 
       #rezo360-style-retry {
         display: none;
-        width: 100%;
         margin-top: 18px;
         padding: 12px 18px;
         border: 0;
-        border-radius: 999px;
-        background: #2451d1;
+        border-radius: 6px;
+        background: #1b44c8;
         color: #ffffff;
         font: inherit;
-        font-weight: 700;
+        font-size: 13px;
+        font-weight: 500;
         cursor: pointer;
       }
 
       #rezo360-style-boot[data-failed='true'] #rezo360-style-retry {
-        display: block;
+        display: inline-block;
+      }
+
+      #rezo360-style-retry:focus-visible {
+        outline: 2px solid var(--boot-blue);
+        outline-offset: 4px;
+      }
+
+      #rezo360-style-boot[data-failed='true'] .rezo360-style-boot-track {
+        display: none;
       }
     </style>
 
@@ -262,11 +312,12 @@
   </head>
   <body>
     <div id="rezo360-style-boot" role="status" aria-live="polite">
-      <div class="rezo360-style-boot-card">
+      <div class="rezo360-style-boot-signature">
         <p class="rezo360-style-boot-logo">REZO<span>360</span></p>
         <p id="rezo360-style-message" class="rezo360-style-boot-message">
-          Chargement de l’interface…
+          Ouverture de votre espace…
         </p>
+        <div class="rezo360-style-boot-track" aria-hidden="true"></div>
         <button id="rezo360-style-retry" type="button">Réparer et recharger</button>
       </div>
     </div>

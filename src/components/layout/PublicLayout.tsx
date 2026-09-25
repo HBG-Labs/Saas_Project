@@ -23,6 +23,14 @@ const PAGES_EN_CLAIR: readonly string[] = [
   ROUTES.resetPassword,
 ];
 
+const AUTH_PAGES: readonly string[] = [
+  ROUTES.login,
+  ROUTES.register,
+  ROUTES.forgotPassword,
+  ROUTES.resetPassword,
+  ROUTES.authCallback,
+];
+
 const MARKETING_LINKS = [
   { to: ROUTES.features, label: 'Fonctionnalités' },
   { to: ROUTES.tools, label: 'Outils' },
@@ -107,6 +115,25 @@ export function PublicLayout() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auth screens own their full-height composition and navigation back home.
+  if (AUTH_PAGES.includes(pathname)) {
+    return (
+      <div className="public-shell conversion-shell theme-jour-verrouille bg-background text-foreground min-h-dvh">
+        <a
+          href="#contenu-principal"
+          className="public-skip-link bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100]"
+        >
+          Aller au contenu principal
+        </a>
+        <main id="contenu-principal" tabIndex={-1}>
+          <Suspense fallback={<LoadingScreen />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div

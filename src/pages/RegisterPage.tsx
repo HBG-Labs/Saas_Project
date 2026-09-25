@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router';
@@ -94,6 +94,7 @@ export default function RegisterPage() {
   if (emailSent) {
     return (
       <AuthCard
+        variant="register"
         title="Vérifiez votre boîte mail"
         description="Un lien de confirmation vous a été envoyé."
       >
@@ -112,10 +113,11 @@ export default function RegisterPage() {
 
   return (
     <AuthCard
+      variant="register"
       title="Créer un compte"
       description={
         activePlanInfo.priceMonthly === 0
-          ? 'Créez votre compte Free pour découvrir les outils techniques. Choisissez ensuite votre formule pour gérer vos interventions.'
+          ? 'Découvrez les outils techniques avec Free. Choisissez ensuite votre formule pour gérer vos interventions.'
           : `Première étape : créez votre compte gratuit. Vous pourrez ensuite activer l’essai ${activePlanInfo.name} depuis votre espace.`
       }
       footer={
@@ -143,32 +145,6 @@ export default function RegisterPage() {
           produit, une fois qu'on a vu à quoi il ressemble — c'est-à-dire au
           moment où l'on peut le faire en connaissance de cause.
         */}
-        <div className="border-border/80 bg-surface/60 space-y-1.5 rounded-xl border p-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-foreground flex items-center gap-1.5 text-xs font-bold">
-              <Sparkles className="text-primary size-3.5" aria-hidden="true" />
-              Inscription gratuite
-            </span>
-            <Link to={ROUTES.pricing} className="text-primary text-3xs font-normal hover:underline">
-              Voir les formules ↗
-            </Link>
-          </div>
-          <p className="text-2xs text-muted-foreground leading-relaxed">
-            {viseUnePayante ? (
-              <>
-                Vous pourrez activer la formule{' '}
-                <strong className="text-foreground">{activePlanInfo.name}</strong> et ses 14 jours
-                d’essai depuis votre espace. Aucun paiement à cette étape.
-              </>
-            ) : (
-              <>
-                Aucune carte bancaire demandée. Vous entrez immédiatement dans votre espace, et
-                choisirez une formule plus tard si vous en avez besoin.
-              </>
-            )}
-          </p>
-        </div>
-
         <FormError error={submitError} />
 
         <GoogleAuthButton
@@ -177,12 +153,8 @@ export default function RegisterPage() {
           onClick={() => void onGoogleSignIn()}
         />
 
-        <div className="flex items-center gap-3" aria-hidden="true">
-          <span className="bg-border h-px flex-1" />
-          <span className="text-3xs text-muted-foreground font-medium">
-            ou s’inscrire avec une adresse e-mail
-          </span>
-          <span className="bg-border h-px flex-1" />
+        <div className="auth-alive__divider" aria-hidden="true">
+          ou par e-mail
         </div>
 
         <form onSubmit={onSubmit} noValidate className="space-y-4 pt-1">
@@ -278,16 +250,35 @@ export default function RegisterPage() {
             Créer mon compte gratuit
           </Button>
 
-          <p className="text-3xs text-muted-foreground text-center">
+          <p className="text-3xs text-muted-foreground">
             {/*
               La mention « après confirmation de votre e-mail » decrivait un
               parcours qui n'existe plus : l'acces est desormais immediat, et
               la confirmation n'est exigee qu'avant d'inviter un collegue ou
               de souscrire. Voir `features/auth/email-confirmation.ts`.
             */}
-            Sans carte bancaire. Vous entrez dans votre espace immédiatement.
+            Sans carte bancaire. Inscription gratuite.
           </p>
         </form>
+        <div className="auth-alive__plan">
+          <div>
+            <strong>À votre rythme.</strong>
+            <Link to={ROUTES.pricing}>Voir les formules ↗</Link>
+          </div>
+          <p>
+            {viseUnePayante ? (
+              <>
+                Vous pourrez activer la formule <strong>{activePlanInfo.name}</strong> et ses 14
+                jours d’essai depuis votre espace. Aucun paiement à cette étape.
+              </>
+            ) : (
+              <>
+                Les interventions et la facturation sont disponibles avec une offre payante. Vous
+                pourrez la choisir depuis votre espace.
+              </>
+            )}
+          </p>
+        </div>
       </div>
     </AuthCard>
   );

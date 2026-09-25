@@ -41,7 +41,7 @@ export function GoogleAuthButton({
       type="button"
       variant="outline"
       size="lg"
-      className="bg-surface w-full font-semibold shadow-xs"
+      className="auth-google bg-surface w-full font-semibold shadow-xs"
       leadingIcon={<GoogleMark />}
       isLoading={isLoading}
       loadingLabel="Ouverture de Google"

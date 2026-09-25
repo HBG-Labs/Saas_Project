@@ -416,7 +416,7 @@ export function AppLayout() {
 
           <PwaInstallBanner />
 
-          <Suspense fallback={<LoadingScreen />}>
+          <Suspense fallback={<LoadingScreen appearance="workspace" />}>
             <Outlet />
           </Suspense>
         </div>

@@ -121,3 +121,48 @@ test('les scènes chargent des images légères et la palette reste limitée à 
   await expect(page.locator('.public-shell')).not.toHaveClass(/landing-shell/);
   await expect(page.locator('.public-shell')).not.toHaveCSS('background-color', 'rgb(9, 19, 30)');
 });
+
+test('le film terrain mobile suit le scroll sans téléphone ni curseur et respecte le mouvement réduit', async ({
+  page,
+}) => {
+  await open(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const visual = page.locator('.lp-field-visual');
+  const film = visual.locator('video');
+  await expect(film).toHaveCount(0); // No film download before approaching the section.
+
+  const moveSceneTo = async (viewportFraction: number) => {
+    await visual.evaluate((element, position) => {
+      window.scrollTo({
+        top: window.scrollY + element.getBoundingClientRect().top - innerHeight * position,
+        behavior: 'instant',
+      });
+    }, viewportFraction);
+  };
+  await moveSceneTo(0.65);
+  await expect(visual.locator('.lp-field-phone')).toBeHidden();
+  await expect(film).toBeVisible();
+  await expect(film).toHaveClass(/is-ready/);
+  await expect
+    .poll(() => film.evaluate((element) => (element as HTMLVideoElement).currentTime))
+    .toBeGreaterThan(0.1);
+  const firstTime = await film.evaluate((element) => (element as HTMLVideoElement).currentTime);
+  await moveSceneTo(0.15);
+  await expect
+    .poll(() => film.evaluate((element) => (element as HTMLVideoElement).currentTime))
+    .toBeGreaterThan(firstTime + 0.3);
+  await moveSceneTo(0.65);
+  await expect
+    .poll(() => film.evaluate((element) => (element as HTMLVideoElement).currentTime))
+    .toBeLessThan(firstTime + 0.1);
+  expect(await film.evaluate((element) => (element as HTMLVideoElement).controls)).toBe(false);
+  await expect(visual.getByRole('slider')).toHaveCount(0);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(film).toHaveCount(0);
+  await expect(visual.locator('img.lp-field-photo')).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(visual.locator('.lp-field-phone')).toBeVisible();
+  await expect(film).toHaveCount(0);
+});

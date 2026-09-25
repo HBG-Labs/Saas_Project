@@ -32,7 +32,7 @@ export function RequirePortalSession() {
   if (status === 'unauthenticated') {
     return <Navigate to={ROUTES.portalLogin} state={{ from: location.pathname }} replace />;
   }
-  if (context.isPending) return <LoadingScreen label="Ouverture de votre espace…" />;
+  if (context.isPending) return <LoadingScreen appearance="workspace" />;
   if (context.isError) {
     return (
       <div className="mx-auto max-w-lg p-6">

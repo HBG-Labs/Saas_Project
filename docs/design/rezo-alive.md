@@ -21,7 +21,9 @@ Les prix et liens proviennent toujours de `src/config/pricing.ts`. Les quatre of
 
 Sur les écrans d’au moins 1 100 × 760 px, le défilement sélectionne successivement les cinq écrans dans un cadre sticky. Aucune interception de la molette ni aucun déplacement imposé. Une sélection manuelle suspend la synchronisation ; un bouton permet de la reprendre.
 
-Sur mobile et en mouvement réduit, le parcours est statique et pilotable par boutons. La démonstration vocale est finie, se suspend hors écran et dispose de commandes pause/reprise/rejeu. Sur téléphone, deux vues permettent de consulter la note puis le compte rendu sans empiler les deux panneaux. Le mode réduit présente le contenu terminé. Les photos remplacent les anciens films MP4 sur la landing.
+Sur mobile et en mouvement réduit, le parcours est statique et pilotable par boutons. La démonstration vocale est finie, se suspend hors écran et dispose de commandes pause/reprise/rejeu. Sur téléphone, deux vues permettent de consulter la note puis le compte rendu sans empiler les deux panneaux. Le mode réduit présente le contenu terminé.
+
+Dans « Votre bureau. Dans la poche. », le téléphone superposé est masqué jusqu’à 760 px. La vidéo `technician-scroll-mobile.mp4` (1,19 Mo) est chargée à l’approche de la section et sa position suit le scroll dans les deux sens, sans lecture automatique, curseur ni contrôles natifs. Le défilement reste libre. Le mode réduit, l’absence d’IntersectionObserver ou une erreur de chargement conservent la photographie. Le desktop garde la photo et le téléphone superposé, sans télécharger cette vidéo.
 
 La palette reste limitée à `.landing-shell` et au menu associé ; elle ne modifie pas le thème enregistré de l’application ni la palette du formulaire d’inscription.
 

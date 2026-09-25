@@ -31,7 +31,7 @@ export function RequireOrganization() {
   const location = useLocation();
 
   if (status === 'loading') {
-    return <LoadingScreen label="Chargement de votre espace de travail…" />;
+    return <LoadingScreen appearance="workspace" />;
   }
 
   if (status === 'none') {

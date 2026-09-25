@@ -58,7 +58,7 @@ export default function LoginPage() {
   return (
     <AuthCard
       title="Connexion"
-      description="Accédez à vos outils, favoris et historique."
+      description="Retrouvez votre espace. La journée peut commencer."
       footer={
         <>
           Pas encore de compte ?{' '}
@@ -77,12 +77,8 @@ export default function LoginPage() {
           onClick={() => void onGoogleSignIn()}
         />
 
-        <div className="flex items-center gap-3" aria-hidden="true">
-          <span className="bg-border h-px flex-1" />
-          <span className="text-3xs text-muted-foreground font-medium">
-            ou se connecter avec une adresse e-mail
-          </span>
-          <span className="bg-border h-px flex-1" />
+        <div className="auth-alive__divider" aria-hidden="true">
+          ou par e-mail
         </div>
       </div>
 

@@ -1,51 +1,95 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { Logo } from '@/components/layout/Logo';
 import { ROUTES } from '@/config/routes';
+import '@/styles/auth-alive.css';
+import { useAuthPhotograph } from './auth-photographs';
 
 interface AuthCardProps {
   title: string;
   description: string;
   children: ReactNode;
-  /** Lien de bas de carte, ex. « Pas encore de compte ? ». */
   footer?: ReactNode;
+  variant?: 'login' | 'register';
 }
 
-export function AuthCard({ title, description, children, footer }: AuthCardProps) {
+/** Presentation only: authentication and validation stay in each page. */
+export function AuthCard({
+  title,
+  description,
+  children,
+  footer,
+  variant = 'login',
+}: AuthCardProps) {
+  const isRegistration = variant === 'register';
+  const photograph = useAuthPhotograph();
+
   return (
-    <div className="relative flex items-start justify-center px-4 py-8 sm:min-h-[calc(100dvh-4rem)] sm:items-center sm:py-12">
-      {/* Fond motif grille technique */}
-      <div
-        className="bg-tech-grid pointer-events-none absolute inset-0 -z-10 opacity-30"
-        aria-hidden="true"
-      />
-
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center sm:mb-8">
-          <div className="inline-block">
-            <Logo className="text-2xl" to={ROUTES.home} />
-          </div>
-          <h1 className="text-foreground mt-4 text-2xl font-extrabold tracking-tight sm:mt-6 sm:text-3xl">
-            {title}
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">{description}</p>
-        </div>
-
-        <div className="bg-surface/90 border-border/80 shadow-modal rounded-2xl border p-6 sm:p-8">
-          {children}
-        </div>
-
-        {footer ? (
-          <div className="text-muted-foreground mt-6 text-center text-sm">{footer}</div>
-        ) : null}
-
-        <p className="text-subtle-foreground mt-6 text-center text-xs sm:mt-8">
-          <Link to={ROUTES.home} className="hover:text-foreground font-medium transition-colors">
-            ← Retour à l&apos;accueil
+    <div className={`auth-alive auth-alive--${variant}`}>
+      <section className="auth-alive__panel" aria-labelledby="auth-title">
+        <header className="auth-alive__brand">
+          <Logo to={ROUTES.home} />
+          <Link className="auth-alive__home" to={ROUTES.home}>
+            Retour à l’accueil <span aria-hidden="true">↗</span>
           </Link>
-        </p>
-      </div>
+        </header>
+
+        <div className="auth-alive__content">
+          <div className="auth-alive__intro">
+            <p className="auth-alive__eyebrow">
+              {isRegistration ? 'Votre activité commence ici' : 'Votre espace de travail'}
+            </p>
+            <h1 id="auth-title">{title}</h1>
+            <p className="auth-alive__description">{description}</p>
+          </div>
+
+          <div className="auth-alive__form">{children}</div>
+          {footer ? <div className="auth-alive__switch">{footer}</div> : null}
+        </div>
+
+        <footer className="auth-alive__help">
+          <span>Une question ?</span>
+          <a href="mailto:contact@rezo360.fr">
+            Contactez-nous <span aria-hidden="true">↗</span>
+          </a>
+        </footer>
+      </section>
+
+      <figure
+        className="auth-alive__visual"
+        style={{ '--auth-photo-position': photograph.position } as CSSProperties}
+      >
+        <picture>
+          <source media="(max-width: 900px)" srcSet={`/images/auth/${photograph.id}-800.webp`} />
+          <img
+            src={`/images/auth/${photograph.id}-1536.webp`}
+            width="1536"
+            height="1024"
+            alt=""
+            decoding="async"
+          />
+        </picture>
+        <figcaption className="auth-alive__caption">
+          <p className="auth-alive__scene-label">REZO360 · Au plus près du terrain</p>
+          <p className="auth-alive__scene-title">
+            {isRegistration ? (
+              <>
+                Une nouvelle journée.
+                <br />
+                De nouvelles possibilités.
+              </>
+            ) : (
+              <>
+                Votre journée reprend.
+                <br />
+                Tout est à sa place.
+              </>
+            )}
+          </p>
+          <p className="auth-alive__scene-signature">Votre activité en mieux. Tout simplement.</p>
+        </figcaption>
+      </figure>
     </div>
   );
 }
