@@ -216,9 +216,9 @@
 
 /* A quiet daylight pause: the ecosystem is proof, never decoration. */
 .lp-technologies {
-  --technology-gap: clamp(66px, 6.2vw, 112px);
+  --technology-gap: clamp(40px, 3.7vw, 67px);
   overflow: clip;
-  padding-block: 58px 66px;
+  padding-block: 35px 40px;
   border-block: 1px solid #e6e9ee;
   background: #fbfbfa;
   color: #111923;
@@ -227,7 +227,7 @@
   text-align: center;
 }
 .lp-technologies-kicker {
-  margin-bottom: 10px !important;
+  margin-bottom: 6px !important;
   color: #707983;
   font-size: 10px;
   font-weight: 560;
@@ -244,7 +244,7 @@
 }
 .lp-technology-viewport {
   width: min(1520px, 100%);
-  margin: 45px auto 0;
+  margin: 27px auto 0;
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
@@ -266,8 +266,8 @@
 }
 .lp-technology-item {
   display: flex;
-  width: clamp(142px, 11.5vw, 180px);
-  height: 54px;
+  width: clamp(85px, 6.9vw, 108px);
+  height: 32px;
   flex: none;
   align-items: center;
   justify-content: center;
@@ -286,22 +286,22 @@
     transform 240ms ease;
 }
 .lp-technology-logo--github {
-  height: 34px;
+  height: 20px;
 }
 .lp-technology-logo--vercel {
-  height: 29px;
+  height: 17px;
 }
 .lp-technology-logo--supabase {
-  height: 32px;
+  height: 19px;
 }
 .lp-technology-logo--stripe {
-  height: 31px;
+  height: 19px;
 }
 .lp-technology-logo--openai {
-  height: 46px;
+  height: 28px;
 }
 .lp-technology-logo--superpdp {
-  height: 27px;
+  height: 16px;
 }
 @keyframes lp-technology-marquee {
   to {
@@ -1361,7 +1361,7 @@
 }
 @media (max-width: 1100px) {
   .lp-technologies {
-    --technology-gap: clamp(54px, 6vw, 78px);
+    --technology-gap: clamp(32px, 3.6vw, 47px);
   }
   .lp-journey-layout {
     grid-template-columns: 200px minmax(0, 1fr);
@@ -1477,11 +1477,11 @@
     line-height: 1.6;
   }
   .lp-technologies {
-    --technology-gap: 42px;
-    padding-block: 43px 49px;
+    --technology-gap: 25px;
+    padding-block: 26px 29px;
   }
   .lp-technologies-kicker {
-    margin-bottom: 8px !important;
+    margin-bottom: 5px !important;
     font-size: 9px;
   }
   .landing-alive .lp-technologies h2 {
@@ -1490,31 +1490,31 @@
     font-size: 16px;
   }
   .lp-technology-viewport {
-    margin-top: 32px;
+    margin-top: 19px;
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
   }
   .lp-technology-item {
-    width: 118px;
-    height: 46px;
-  }
-  .lp-technology-logo--github {
+    width: 71px;
     height: 28px;
   }
+  .lp-technology-logo--github {
+    height: 17px;
+  }
   .lp-technology-logo--vercel {
-    height: 24px;
+    height: 14px;
   }
   .lp-technology-logo--supabase {
-    height: 27px;
+    height: 16px;
   }
   .lp-technology-logo--stripe {
-    height: 27px;
+    height: 16px;
   }
   .lp-technology-logo--openai {
-    height: 40px;
+    height: 24px;
   }
   .lp-technology-logo--superpdp {
-    height: 23px;
+    height: 14px;
   }
   .lp-journey {
     padding-block: 66px 44px;
