@@ -1359,7 +1359,6 @@ input.profile-form-field {
 .atelier-illustration {
   --atelier-plan-ink: var(--primary);
   --atelier-plan-route: var(--signal-cyan);
-  --atelier-plan-zone: var(--primary-subtle);
   animation: atelier-illustration-enter 180ms ease-out both;
 }
 /* Workspace : connaissance, voix et collaboration. */
@@ -1371,7 +1370,6 @@ input.profile-form-field {
   [data-atelier-illustration='pages']
 ) {
   --atelier-plan-route: var(--signal-violet);
-  --atelier-plan-zone: color-mix(in srgb, var(--signal-violet) 14%, transparent);
 }
 /* Finance : documents commerciaux et flux matériels. */
 .atelier-illustration:is(
@@ -1381,7 +1379,6 @@ input.profile-form-field {
   [data-atelier-illustration='stock']
 ) {
   --atelier-plan-route: var(--signal-coral);
-  --atelier-plan-zone: color-mix(in srgb, var(--signal-apricot) 18%, transparent);
 }
 /* Humain : clients, techniciens et équipes. */
 .atelier-illustration:is(
@@ -1391,7 +1388,6 @@ input.profile-form-field {
   [data-atelier-illustration='technicians']
 ) {
   --atelier-plan-route: var(--signal-apricot);
-  --atelier-plan-zone: color-mix(in srgb, var(--signal-apricot) 18%, transparent);
 }
 .atelier-illustration-plan {
   position: absolute;
@@ -1413,16 +1409,10 @@ input.profile-form-field {
   background-size: 22px 22px;
   mask-image: radial-gradient(ellipse 72% 78% at center, #000 42%, transparent 100%);
 }
-.atelier-illustration-plan::before,
 .atelier-illustration-plan::after {
   position: absolute;
   inset: 0;
   content: '';
-}
-.atelier-illustration-plan::before {
-  background: var(--atelier-plan-zone);
-  clip-path: polygon(12% 66%, 27% 45%, 46% 50%, 58% 23%, 88% 38%, 80% 76%, 54% 87%, 28% 80%);
-  opacity: 0.7;
 }
 .atelier-illustration-plan::after {
   background: var(--atelier-plan-route);
