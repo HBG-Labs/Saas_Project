@@ -1,4 +1,13 @@
-import { Bell, Building2, Calendar, Check, ChevronRight, Palette, Shield } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  Calendar,
+  Check,
+  ChevronRight,
+  Palette,
+  PlugZap,
+  Shield,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -6,6 +15,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { PERMISSIONS, usePermission } from '@/features/organizations';
 import {
   AppearanceSettingsTab,
+  IntegrationsSettingsTab,
   NotificationsSettingsTab,
   OrganizationBillingSettingsTab,
   PlanningMapSettingsTab,
@@ -15,7 +25,12 @@ import { cn } from '@/lib/cn';
 import { useEphemeralFlag } from '@/lib/use-ephemeral-flag';
 
 type SettingsTab =
-  'appearance' | 'planning_gps' | 'notifications' | 'organization_billing' | 'security';
+  | 'appearance'
+  | 'planning_gps'
+  | 'notifications'
+  | 'integrations'
+  | 'organization_billing'
+  | 'security';
 
 const ALL_TABS: {
   id: SettingsTab;
@@ -25,6 +40,7 @@ const ALL_TABS: {
   { id: 'appearance', label: 'Apparence & Cockpit', icon: Palette },
   { id: 'planning_gps', label: 'Planning & Cartographie', icon: Calendar },
   { id: 'notifications', label: 'Alertes & Notifications', icon: Bell },
+  { id: 'integrations', label: 'Intégrations', icon: PlugZap },
   { id: 'organization_billing', label: 'Entreprise & Facturation', icon: Building2 },
   { id: 'security', label: 'Sécurité & Accès', icon: Shield },
 ];
@@ -113,6 +129,8 @@ export default function SettingsPage() {
             {activeTab === 'notifications' && (
               <NotificationsSettingsTab onSaved={triggerSavedFeedback} />
             )}
+
+            {activeTab === 'integrations' && <IntegrationsSettingsTab />}
 
             {activeTab === 'organization_billing' && <OrganizationBillingSettingsTab />}
 

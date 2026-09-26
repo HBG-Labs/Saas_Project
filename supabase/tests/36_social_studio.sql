@@ -22,8 +22,10 @@ insert into t_ids (k, v) values
   ('admin',        '00000000-0000-4000-8000-000000360002'),
   ('manager',      '00000000-0000-4000-8000-000000360003'),
   ('technicien',   '00000000-0000-4000-8000-000000360004'),
-  ('patron_b',     '00000000-0000-4000-8000-000000360005'),
-  ('starter_owner','00000000-0000-4000-8000-000000360006');
+  ('chef',         '00000000-0000-4000-8000-000000360005'),
+  ('employe',      '00000000-0000-4000-8000-000000360006'),
+  ('patron_b',     '00000000-0000-4000-8000-000000360007'),
+  ('starter_owner','00000000-0000-4000-8000-000000360008');
 select pg_temp.creer_comptes();
 
 create temporary table t_ctx (
@@ -47,6 +49,8 @@ values (
 select pg_temp.ajouter_membre(org_id, 'admin', 'admin') from t_ctx;
 select pg_temp.ajouter_membre(org_id, 'manager', 'manager') from t_ctx;
 select pg_temp.ajouter_membre(org_id, 'technicien', 'technician') from t_ctx;
+select pg_temp.ajouter_membre(org_id, 'chef', 'team_leader') from t_ctx;
+select pg_temp.ajouter_membre(org_id, 'employe', 'employee') from t_ctx;
 
 -- =============================================================================
 do $$ begin raise notice '=== PARTIE 1 — feature gate et RBAC ==='; end $$;
@@ -97,10 +101,30 @@ do $$ begin
     'le manager prépare les 7 contenus READY');
 
   perform pg_temp.refuses(
+    format($q$insert into public.social_accounts (
+                organization_id, provider_account_id, username, status
+              )
+              values (%L, '17841400000036199', 'manager.rezo', 'connected')$q$,
+           (select org_id from t_ctx)),
+    'le manager ne peut pas créer ni connecter un compte Instagram');
+
+  perform pg_temp.refuses(
+    format($q$update public.social_accounts
+              set status = 'disconnected'
+              where id = %L$q$, (select account_id from t_ctx)),
+    'le manager ne peut pas modifier la connexion Instagram');
+
+  perform pg_temp.refuses(
     format($q$update public.social_weeks
               set status = 'scheduled', approved_by = %L, approved_at = now()
               where id = %L$q$, pg_temp.uid('manager'), (select week_id from t_ctx)),
     'le manager ne peut pas valider/programmer la semaine : social.publish manque');
+
+  perform pg_temp.refuses(
+    format($q$update public.social_posts
+              set scheduled_at = timestamp with time zone '2026-09-28 20:00:00+00'
+              where week_id = %L and slot_index = 1$q$, (select week_id from t_ctx)),
+    'le manager ne peut pas contourner la publication via scheduled_at direct');
 end $$;
 reset role;
 
@@ -109,6 +133,18 @@ do $$ begin
   perform pg_temp.ok((select count(*) from public.social_accounts) = 0, 'un technicien ne voit pas Social Studio');
   perform pg_temp.ok((select count(*) from public.social_weeks) = 0, 'ni les semaines éditoriales');
   perform pg_temp.ok((select count(*) from public.social_posts) = 0, 'ni les posts');
+end $$;
+reset role;
+
+select pg_temp.login('chef'); set local role authenticated;
+do $$ begin
+  perform pg_temp.ok((select count(*) from public.social_accounts) = 0, 'un chef d’équipe ne voit pas Social Studio');
+end $$;
+reset role;
+
+select pg_temp.login('employe'); set local role authenticated;
+do $$ begin
+  perform pg_temp.ok((select count(*) from public.social_accounts) = 0, 'un employé ne voit pas Social Studio');
 end $$;
 reset role;
 
@@ -149,6 +185,24 @@ do $$ begin
   perform pg_temp.ok(
     (select count(*) from public.social_posts where status = 'scheduled') = 7,
     'les 7 posts deviennent SCHEDULED après validation hebdomadaire');
+
+  update public.social_accounts
+  set last_synced_at = now()
+  where id = (select account_id from t_ctx);
+
+  perform pg_temp.ok(
+    (select last_synced_at is not null from public.social_accounts where id = (select account_id from t_ctx)),
+    'un admin peut synchroniser la connexion Instagram');
+end $$;
+reset role;
+
+select pg_temp.login('manager'); set local role authenticated;
+do $$ begin
+  perform pg_temp.refuses(
+    format($q$update public.social_posts
+              set caption = caption || ' Mise à jour tardive.'
+              where week_id = %L and slot_index = 1$q$, (select week_id from t_ctx)),
+    'le manager ne modifie pas un post déjà programmé');
 end $$;
 reset role;
 
@@ -176,6 +230,13 @@ do $$ begin
               values (%L, %L, date '2026-10-05')$q$,
            (select org_id from t_ctx), (select autre_account_id from t_ctx)),
     'une semaine ne peut pas pointer vers un compte Instagram d’un autre tenant');
+
+  update public.social_accounts
+  set status = 'disconnected'
+  where id = (select autre_account_id from t_ctx);
+
+  delete from public.social_accounts
+  where id = (select autre_account_id from t_ctx);
 
   perform pg_temp.refuses(
     format($q$update public.social_posts set organization_id = %L
@@ -230,6 +291,9 @@ do $$ begin
   perform pg_temp.ok(
     not exists (select 1 from storage.objects where bucket_id = 'social-media-assets'),
     'et ne peut pas lire l’objet Storage référencé');
+  perform pg_temp.ok(
+    (select status = 'connected' from public.social_accounts where id = (select autre_account_id from t_ctx)),
+    'un UPDATE/DELETE cross-tenant direct n’a pas affecté le compte Instagram de l’autre organisation');
 end $$;
 reset role;
 

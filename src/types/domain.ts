@@ -175,6 +175,7 @@ export type InvoiceTotals = Database['public']['Views']['invoice_totals']['Row']
 export type InvoiceTransmission = Tables<'invoice_transmissions'>;
 export type InvoiceTransmissionEvent = Tables<'invoice_transmission_events'>;
 export type EinvoicingProviderConnection = Tables<'einvoicing_provider_connections'>;
+export type SocialAccount = Tables<'social_accounts'>;
 
 /** Facture fournisseur reçue via SUPER PDP (Phase 3/4 réception). */
 export type ReceivedInvoice = Tables<'received_invoices'>;

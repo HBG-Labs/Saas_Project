@@ -5,3 +5,4 @@ export * from './components/PlanningMapSettingsTab';
 export * from './components/NotificationsSettingsTab';
 export * from './components/OrganizationBillingSettingsTab';
 export * from './components/SecuritySettingsTab';
+export * from './components/IntegrationsSettingsTab';

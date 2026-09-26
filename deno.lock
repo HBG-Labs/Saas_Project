@@ -9,6 +9,8 @@
     "npm:@capacitor/android@7": "7.6.9_@capacitor+core@7.6.9",
     "npm:@capacitor/cli@7": "7.6.9",
     "npm:@capacitor/core@7": "7.6.9",
+    "npm:@capacitor/geolocation@7.1.8": "7.1.8_@capacitor+core@7.6.9",
+    "npm:@capacitor/haptics@7.0.5": "7.0.5_@capacitor+core@7.6.9",
     "npm:@fontsource-variable/archivo@^5.3.0": "5.3.0",
     "npm:@fontsource-variable/caveat@^5.3.0": "5.3.0",
     "npm:@fontsource-variable/ibm-plex-sans@^5.3.0": "5.3.0",
@@ -299,6 +301,22 @@
       "dependencies": [
         "tslib"
       ]
+    },
+    "@capacitor/geolocation@7.1.8_@capacitor+core@7.6.9": {
+      "integrity": "sha512-x/rJieD2N2zlGvXFRD3ru4ArJWTwXAIYmyhfo5zg4F1DKGos7mCCOvIOSVMdfQmt14SCsmJeO9Qe8EtDGNGCrw==",
+      "dependencies": [
+        "@capacitor/core",
+        "@capacitor/synapse"
+      ]
+    },
+    "@capacitor/haptics@7.0.5_@capacitor+core@7.6.9": {
+      "integrity": "sha512-ujXuUkL8UG1YLhuJo/q+jiHr0K5JmclGZHmV1RttmiUBRG1XpC4Fc4gXUJyEX+6IoyfwWhgtPvJFRUB31HYnRQ==",
+      "dependencies": [
+        "@capacitor/core"
+      ]
+    },
+    "@capacitor/synapse@1.0.4": {
+      "integrity": "sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw=="
     },
     "@csstools/color-helpers@6.1.1": {
       "integrity": "sha512-gLNsunvwf3mCi5u5o46/Z/JcJMnhbHSaZ69rkgPzNM3J4s8hWwpPUQB6/tt0EDFyCiWzxANlx+2LJwpYj4zS1w=="
@@ -5533,6 +5551,8 @@
         "npm:@capacitor/android@7",
         "npm:@capacitor/cli@7",
         "npm:@capacitor/core@7",
+        "npm:@capacitor/geolocation@7.1.8",
+        "npm:@capacitor/haptics@7.0.5",
         "npm:@fontsource-variable/archivo@^5.3.0",
         "npm:@fontsource-variable/caveat@^5.3.0",
         "npm:@fontsource-variable/ibm-plex-sans@^5.3.0",

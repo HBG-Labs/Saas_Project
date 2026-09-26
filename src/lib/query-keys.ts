@@ -231,6 +231,14 @@ export const qk = {
       [...qk.einvoicing.all, 'received', 'detail', receivedInvoiceId] as const,
   },
 
+  social: {
+    all: ['social'] as const,
+    instagramAccount: (organizationId: string) =>
+      [...qk.social.all, 'instagram', organizationId, 'account'] as const,
+    instagramReadiness: (organizationId: string) =>
+      [...qk.social.all, 'instagram', organizationId, 'readiness'] as const,
+  },
+
   // ------------------------------------------------------------------- achats
   purchases: {
     all: ['purchases'] as const,

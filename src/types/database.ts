@@ -165,6 +165,8 @@ export type EinvoicingConnectionStatus =
 export type EinvoicingReceptionStatus =
   'not_requested' | 'pending_verification' | 'active' | 'failed';
 
+export type SocialAccountStatus = 'disconnected' | 'connected' | 'needs_reconnect' | 'error';
+
 /** Triage métier d'une facture reçue — seul champ modifiable côté client. */
 export type ReceivedInvoiceInternalStatus = 'new' | 'viewed' | 'archived' | 'disputed';
 
@@ -3002,6 +3004,75 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: 'einvoicing_oauth_states_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      social_accounts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          provider: 'instagram';
+          provider_account_id: string | null;
+          username: string | null;
+          display_name: string | null;
+          profile_picture_url: string | null;
+          account_type: string | null;
+          status: SocialAccountStatus;
+          granted_permissions: string[];
+          last_synced_at: string | null;
+          publishing_suspended_at: string | null;
+          publishing_suspended_by: string | null;
+          created_by: string | null;
+          connected_by: string | null;
+          connected_at: string | null;
+          last_error_code: string | null;
+          last_error_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          provider?: 'instagram';
+          provider_account_id?: string | null;
+          username?: string | null;
+          display_name?: string | null;
+          profile_picture_url?: string | null;
+          account_type?: string | null;
+          status?: SocialAccountStatus;
+          granted_permissions?: string[];
+          last_synced_at?: string | null;
+          publishing_suspended_at?: string | null;
+          publishing_suspended_by?: string | null;
+          created_by?: string | null;
+          connected_by?: string | null;
+          connected_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Update: {
+          provider_account_id?: string | null;
+          username?: string | null;
+          display_name?: string | null;
+          profile_picture_url?: string | null;
+          account_type?: string | null;
+          status?: SocialAccountStatus;
+          granted_permissions?: string[];
+          last_synced_at?: string | null;
+          publishing_suspended_at?: string | null;
+          publishing_suspended_by?: string | null;
+          connected_by?: string | null;
+          connected_at?: string | null;
+          last_error_code?: string | null;
+          last_error_message?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'social_accounts_organization_id_fkey';
             columns: ['organization_id'];
             referencedRelation: 'organizations';
             referencedColumns: ['id'];

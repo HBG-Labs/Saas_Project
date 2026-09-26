@@ -13,6 +13,7 @@ vi.mock('@/features/organizations', () => ({
 
 vi.mock('@/features/settings', () => ({
   AppearanceSettingsTab: () => <p>Contenu apparence</p>,
+  IntegrationsSettingsTab: () => <p>Contenu intégrations</p>,
   PlanningMapSettingsTab: () => <p>Contenu planning</p>,
   NotificationsSettingsTab: () => <p>Contenu notifications</p>,
   OrganizationBillingSettingsTab: () => <p>Contenu entreprise</p>,
@@ -41,6 +42,14 @@ describe('SettingsPage', () => {
       'true',
     );
     expect(screen.getByText('Contenu notifications')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Intégrations' }));
+
+    expect(screen.getByRole('button', { name: 'Intégrations' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByText('Contenu intégrations')).toBeInTheDocument();
   });
 
   it('masque les paramètres de l’entreprise sans permission', () => {
