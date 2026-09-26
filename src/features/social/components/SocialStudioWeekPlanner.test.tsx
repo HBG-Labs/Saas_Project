@@ -7,6 +7,7 @@ import type { SocialPostWithAssets, SocialStudioWeek } from '../weekly-planning'
 import { SocialStudioWeekPlanner } from './SocialStudioWeekPlanner';
 
 const {
+  useInstagramAccount,
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
   useCancelSocialPost,
@@ -17,6 +18,7 @@ const {
   useUpdateSocialPost,
   useValidateAndScheduleSocialWeek,
 } = vi.hoisted(() => ({
+  useInstagramAccount: vi.fn(),
   useSocialStudioWeek: vi.fn(),
   useCreateDevelopmentSocialWeek: vi.fn(),
   useCancelSocialPost: vi.fn(),
@@ -26,6 +28,10 @@ const {
   useSetSocialWeekPublishingSuspended: vi.fn(),
   useUpdateSocialPost: vi.fn(),
   useValidateAndScheduleSocialWeek: vi.fn(),
+}));
+
+vi.mock('../hooks/useInstagramIntegration', () => ({
+  useInstagramAccount,
 }));
 
 vi.mock('../hooks/useSocialStudioWeek', () => ({
@@ -76,6 +82,10 @@ function post(slot: number, status: SocialPostWithAssets['status']): SocialPostW
     publish_last_error_kind: null,
     publish_reconciliation_required_at: null,
     dry_run_published_at: null,
+    instagram_container_id: null,
+    instagram_container_status: null,
+    instagram_container_checked_at: null,
+    instagram_permalink: null,
     hook: `Hook ${slot} terrain`,
     marketing_angle: null,
     concept: null,
@@ -160,10 +170,12 @@ function renderPlanner({
   data = weekFixture(),
   canManage = true,
   canPublish = true,
+  instagramConnected = false,
 }: {
   data?: SocialStudioWeek | null;
   canManage?: boolean;
   canPublish?: boolean;
+  instagramConnected?: boolean;
 } = {}) {
   useSocialStudioWeek.mockReturnValue({
     data,
@@ -171,6 +183,12 @@ function renderPlanner({
     isError: false,
     error: null,
     refetch: vi.fn(),
+  });
+  useInstagramAccount.mockReturnValue({
+    data: instagramConnected ? { status: 'connected' } : null,
+    isPending: false,
+    isError: false,
+    error: null,
   });
   useCreateDevelopmentSocialWeek.mockReturnValue({
     mutate: createMutate,
@@ -379,6 +397,27 @@ describe('SocialStudioWeekPlanner', () => {
     expect(validateWeekMutate).toHaveBeenCalledWith({
       weekId: 'week-1',
       timezone: expect.any(String),
+      publishMode: 'dry_run',
+    });
+  });
+
+  it('programme en live lorsque Instagram est connecté', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture(sevenStatuses('ready'));
+    week.posts = week.posts.map((item) => ({
+      ...item,
+      assets: [
+        { ...item.assets[0]!, id: `selected-${item.slot_index}`, kind: 'selected' as const },
+      ],
+    }));
+    renderPlanner({ data: week, instagramConnected: true });
+
+    await user.click(screen.getByRole('button', { name: 'Valider et programmer la semaine' }));
+
+    expect(validateWeekMutate).toHaveBeenCalledWith({
+      weekId: 'week-1',
+      timezone: expect.any(String),
+      publishMode: 'live',
     });
   });
 

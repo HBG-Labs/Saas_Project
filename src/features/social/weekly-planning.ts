@@ -43,6 +43,7 @@ export type SocialPostAsset = Tables<'social_post_assets'>;
 export type SocialPostAssetWithPreview = SocialPostAsset & { signedUrl?: string };
 export type SocialPostWithAssets = SocialPost & { assets: SocialPostAssetWithPreview[] };
 export type SocialPublishState = SocialPost['publish_state'];
+export type SocialPublishMode = SocialPost['publish_mode'];
 
 export interface SocialStudioWeek {
   week: SocialWeek;
@@ -131,6 +132,10 @@ export function socialPostFormToPatch(
           publish_next_attempt_at: null,
           publish_last_error_code: null,
           publish_last_error_kind: null,
+          instagram_container_id: null,
+          instagram_container_status: null,
+          instagram_container_checked_at: null,
+          instagram_permalink: null,
           last_error: null,
         }
       : {}),

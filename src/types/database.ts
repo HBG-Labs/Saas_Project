@@ -3186,6 +3186,10 @@ export interface Database {
           publish_last_error_kind: string | null;
           publish_reconciliation_required_at: string | null;
           dry_run_published_at: string | null;
+          instagram_container_id: string | null;
+          instagram_container_status: string | null;
+          instagram_container_checked_at: string | null;
+          instagram_permalink: string | null;
           hook: string | null;
           marketing_angle: string | null;
           concept: string | null;
@@ -3240,6 +3244,10 @@ export interface Database {
           publish_last_error_kind?: string | null;
           publish_reconciliation_required_at?: string | null;
           dry_run_published_at?: string | null;
+          instagram_container_id?: string | null;
+          instagram_container_status?: string | null;
+          instagram_container_checked_at?: string | null;
+          instagram_permalink?: string | null;
           hook?: string | null;
           marketing_angle?: string | null;
           concept?: string | null;
@@ -3290,6 +3298,10 @@ export interface Database {
           publish_last_error_kind?: string | null;
           publish_reconciliation_required_at?: string | null;
           dry_run_published_at?: string | null;
+          instagram_container_id?: string | null;
+          instagram_container_status?: string | null;
+          instagram_container_checked_at?: string | null;
+          instagram_permalink?: string | null;
           hook?: string | null;
           marketing_angle?: string | null;
           concept?: string | null;
@@ -5967,6 +5979,15 @@ export interface Database {
       };
 
       validate_and_schedule_social_week: {
+        Args: { p_organization_id: string; p_week_id: string; p_timezone?: string };
+        Returns: {
+          week_id: string;
+          scheduled_count: number;
+          schedule_status: string;
+          schedule_timezone: string;
+        }[];
+      };
+      validate_and_schedule_social_week_live: {
         Args: { p_organization_id: string; p_week_id: string; p_timezone?: string };
         Returns: {
           week_id: string;

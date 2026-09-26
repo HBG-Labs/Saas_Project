@@ -24,6 +24,7 @@ export interface SocialWorkerConfig {
   randomId?: () => string;
   batchSize?: number;
   maxAttempts?: number;
+  allowLivePublishing?: boolean;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -58,11 +59,28 @@ export function createSocialWorkerHandler(config: SocialWorkerConfig) {
       );
     }
 
-    if (config.publisher.mode !== 'dry_run' || config.publisher.id !== 'mock') {
+    if (
+      config.publisher.mode === 'live' &&
+      (config.publisher.id !== 'meta' || config.allowLivePublishing !== true)
+    ) {
       return json(
         {
-          error: 'SOCIAL_WORKER_DRY_RUN_REQUIRED',
-          message: 'Le worker Social Studio Phase F refuse tout publisher non dry-run.',
+          error: 'SOCIAL_WORKER_LIVE_NOT_ENABLED',
+          message:
+            'Le worker Social Studio refuse la publication live sans activation serveur explicite.',
+        },
+        503,
+      );
+    }
+
+    if (
+      config.publisher.mode === 'dry_run' &&
+      (config.publisher.id !== 'mock' || config.allowLivePublishing === true)
+    ) {
+      return json(
+        {
+          error: 'SOCIAL_WORKER_DRY_RUN_MISCONFIGURED',
+          message: 'Le worker Social Studio dry-run doit utiliser le publisher mock uniquement.',
         },
         503,
       );
@@ -76,6 +94,7 @@ export function createSocialWorkerHandler(config: SocialWorkerConfig) {
     const result = {
       claimed: 0,
       simulated: 0,
+      livePublished: 0,
       retried: 0,
       failed: 0,
       reconciliationRequired: 0,
@@ -95,6 +114,8 @@ export function createSocialWorkerHandler(config: SocialWorkerConfig) {
         limit: boundedInteger(config.batchSize, DEFAULT_BATCH_SIZE, 1, 25),
         workerId,
         nowIso: clock().toISOString(),
+        publishMode: config.publisher.mode,
+        publisher: config.publisher.id,
       });
     } catch (error) {
       console.error('social-worker: claim failed', error instanceof Error ? error.name : 'unknown');
@@ -105,14 +126,14 @@ export function createSocialWorkerHandler(config: SocialWorkerConfig) {
       if (!withinBudget()) break;
       result.claimed += 1;
 
-      if (post.publishMode !== 'dry_run') {
+      if (post.publishMode !== config.publisher.mode) {
         await store.markPublishResult({
           postId: post.postId,
           attemptId: post.attemptId,
           result: 'permanent_failure',
           errorKind: 'configuration',
-          errorCode: 'non_dry_run_claim_refused',
-          errorMessage: 'Le worker Phase F refuse un post non dry-run.',
+          errorCode: 'publish_mode_mismatch',
+          errorMessage: 'Le mode de publication reclame ne correspond pas au worker.',
           nowIso: clock().toISOString(),
           maxAttempts,
         });
@@ -122,6 +143,19 @@ export function createSocialWorkerHandler(config: SocialWorkerConfig) {
 
       try {
         const publishResult = await config.publisher.publish(post);
+        if (publishResult.status === 'success' && config.publisher.mode === 'live') {
+          await store.markLivePublishSuccess({
+            postId: post.postId,
+            attemptId: post.attemptId,
+            mediaId: publishResult.mediaId,
+            permalink: publishResult.permalink ?? null,
+            metadata: publishResult.metadata ?? {},
+            nowIso: clock().toISOString(),
+          });
+          result.livePublished += 1;
+          continue;
+        }
+
         const mark = resultToMark(publishResult);
         await store.markPublishResult({
           postId: post.postId,

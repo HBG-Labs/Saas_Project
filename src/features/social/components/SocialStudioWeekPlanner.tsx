@@ -47,6 +47,7 @@ import {
   useUpdateSocialPost,
   useValidateAndScheduleSocialWeek,
 } from '../hooks/useSocialStudioWeek';
+import { useInstagramAccount } from '../hooks/useInstagramIntegration';
 
 import { InstagramPostPreview } from './InstagramPostPreview';
 import { SocialPostEditorModal } from './SocialPostEditorModal';
@@ -307,6 +308,7 @@ export function SocialStudioWeekPlanner({
   const [selectedPost, setSelectedPost] = useState<SocialPostWithAssets | null>(null);
   const [imageGenerationPostId, setImageGenerationPostId] = useState<string | null>(null);
   const weekQuery = useSocialStudioWeek(organizationId, startsOn);
+  const instagramAccount = useInstagramAccount(organizationId);
   const createMockWeek = useCreateDevelopmentSocialWeek(organizationId, startsOn);
   const generateWeek = useGenerateSocialStudioWeek(organizationId, startsOn);
   const generateImages = useGenerateSocialPostImages(organizationId, startsOn);
@@ -337,6 +339,8 @@ export function SocialStudioWeekPlanner({
     )[0];
   const issues = validationIssues(posts);
   const isSuspended = Boolean(week?.week.publishing_suspended_at);
+  const isInstagramConnected = instagramAccount.data?.status === 'connected';
+  const targetPublishMode = isInstagramConnected ? 'live' : 'dry_run';
   const canCreateMockWeek = canManage && !isProduction;
   const canGenerateWeek = canManage;
   const canValidateWeek = canPublish && issues.length === 0;
@@ -374,11 +378,17 @@ export function SocialStudioWeekPlanner({
   const validateAndSchedule = () => {
     if (!week || !canValidateWeek) return;
     const confirmed = window.confirm(
-      'Valider et programmer les 7 publications de cette semaine en dry-run ?',
+      isInstagramConnected
+        ? 'Valider et programmer les 7 publications de cette semaine pour publication Instagram réelle ?'
+        : 'Valider et programmer les 7 publications de cette semaine en dry-run ?',
     );
     if (!confirmed) return;
 
-    validateWeek.mutate({ weekId: week.week.id, timezone: browserTimeZone() });
+    validateWeek.mutate({
+      weekId: week.week.id,
+      timezone: browserTimeZone(),
+      publishMode: targetPublishMode,
+    });
   };
 
   const toggleSuspension = () => {
@@ -520,14 +530,20 @@ export function SocialStudioWeekPlanner({
               <div>
                 <p className="font-medium">
                   {issues.length === 0 && canPublish
-                    ? 'La semaine est prête à être programmée en dry-run.'
+                    ? isInstagramConnected
+                      ? 'La semaine est prête à être programmée pour Instagram.'
+                      : 'La semaine est prête à être programmée en dry-run.'
                     : 'Validation hebdomadaire bloquée.'}
                 </p>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs">
                   {issues.length > 0 ? (
                     issues.map((issue) => <li key={issue}>{issue}</li>)
                   ) : (
-                    <li>Les 7 publications READY seront programmées ensemble.</li>
+                    <li>
+                      {isInstagramConnected
+                        ? 'Les 7 publications READY seront programmées ensemble en mode live.'
+                        : 'Les 7 publications READY seront programmées ensemble en dry-run.'}
+                    </li>
                   )}
                   {!canPublish ? <li>Votre rôle ne permet pas la publication.</li> : null}
                 </ul>

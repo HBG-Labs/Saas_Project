@@ -1,6 +1,14 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.112.2';
 
-import type { ClaimedSocialPost, InstagramPublishResult } from './social-publisher.ts';
+import { decryptSecret } from '../../../src/features/social/instagram-platform.ts';
+import type {
+  ClaimedSocialPost,
+  InstagramPublishResult,
+  MetaInstagramCredential,
+  MetaInstagramPublisherStore,
+} from './social-publisher.ts';
+
+const SOCIAL_MEDIA_BUCKET = 'social-media-assets';
 
 function objectValue(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -37,13 +45,25 @@ export interface MarkPublishResultInput {
   maxAttempts: number;
 }
 
+export interface MarkLivePublishSuccessInput {
+  postId: string;
+  attemptId: string;
+  mediaId: string;
+  permalink?: string | null;
+  metadata?: Record<string, unknown>;
+  nowIso: string;
+}
+
 export interface SocialWorkerStore {
   claimDuePosts(input: {
     limit: number;
     workerId: string;
     nowIso: string;
+    publishMode: 'dry_run' | 'live';
+    publisher: string;
   }): Promise<ClaimedSocialPost[]>;
   markPublishResult(input: MarkPublishResultInput): Promise<void>;
+  markLivePublishSuccess(input: MarkLivePublishSuccessInput): Promise<void>;
 }
 
 function assertNoError(error: unknown) {
@@ -74,11 +94,13 @@ export function resultToMark(
 
 export function createSocialWorkerStore(admin: SupabaseClient): SocialWorkerStore {
   return {
-    async claimDuePosts({ limit, workerId, nowIso }) {
-      const { data, error } = await admin.rpc('claim_due_social_posts', {
+    async claimDuePosts({ limit, workerId, nowIso, publishMode, publisher }) {
+      const { data, error } = await admin.rpc('claim_due_social_posts_for_publisher', {
         p_limit: limit,
         p_worker_id: workerId,
         p_now: nowIso,
+        p_publish_mode: publishMode,
+        p_publisher: publisher,
       });
       assertNoError(error);
       return ((data ?? []) as Record<string, unknown>[]).map(normalizeClaim);
@@ -94,6 +116,83 @@ export function createSocialWorkerStore(admin: SupabaseClient): SocialWorkerStor
         p_error_message: input.errorMessage ?? null,
         p_now: input.nowIso,
         p_max_attempts: input.maxAttempts,
+      });
+      assertNoError(error);
+    },
+
+    async markLivePublishSuccess(input) {
+      const { error } = await admin.rpc('mark_social_post_publish_live_success', {
+        p_post_id: input.postId,
+        p_attempt_id: input.attemptId,
+        p_media_id: input.mediaId,
+        p_permalink: input.permalink ?? null,
+        p_provider_metadata: input.metadata ?? {},
+        p_now: input.nowIso,
+      });
+      assertNoError(error);
+    },
+  };
+}
+
+function tokenContext(organizationId: string, providerAccountId: string) {
+  return `${organizationId}:instagram:${providerAccountId}`;
+}
+
+export function createMetaInstagramPublisherStore(input: {
+  admin: SupabaseClient;
+  encryptionKey: string;
+}): MetaInstagramPublisherStore {
+  return {
+    async loadCredential(post): Promise<MetaInstagramCredential | null> {
+      if (!post.accountId) return null;
+      const { data, error } = await input.admin
+        .schema('app')
+        .from('social_account_credentials')
+        .select(
+          'account_id,organization_id,provider_account_id,access_token_ciphertext,access_token_expires_at,granted_permissions',
+        )
+        .eq('account_id', post.accountId)
+        .eq('organization_id', post.organizationId)
+        .eq('provider', 'instagram')
+        .maybeSingle();
+      assertNoError(error);
+      if (!data) return null;
+      const providerAccountId = stringValue(data.provider_account_id);
+      const ciphertext = stringValue(data.access_token_ciphertext);
+      const expiresAt = stringValue(data.access_token_expires_at);
+      if (!providerAccountId || !ciphertext || !expiresAt) return null;
+      return {
+        providerAccountId,
+        accessToken: await decryptSecret(
+          ciphertext,
+          input.encryptionKey,
+          tokenContext(post.organizationId, providerAccountId),
+        ),
+        expiresAt,
+        grantedPermissions: Array.isArray(data.granted_permissions)
+          ? data.granted_permissions.filter(
+              (permission): permission is string => typeof permission === 'string',
+            )
+          : [],
+      };
+    },
+
+    async createSignedAssetUrl(storagePath, expiresInSeconds) {
+      const { data, error } = await input.admin.storage
+        .from(SOCIAL_MEDIA_BUCKET)
+        .createSignedUrl(storagePath, expiresInSeconds);
+      assertNoError(error);
+      if (!data?.signedUrl) throw new Error('URL signee Social Studio indisponible.');
+      return data.signedUrl;
+    },
+
+    async markContainer({ postId, attemptId, containerId, status, nowIso }) {
+      const { error } = await input.admin.rpc('mark_social_post_instagram_container', {
+        p_post_id: postId,
+        p_attempt_id: attemptId,
+        p_container_id: containerId,
+        p_status: status,
+        p_now: nowIso,
       });
       assertNoError(error);
     },

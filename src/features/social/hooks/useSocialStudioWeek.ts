@@ -18,6 +18,7 @@ import {
   type SocialPost,
   type SocialPostFormValues,
   type SocialPostSaveIntent,
+  type SocialPublishMode,
 } from '../weekly-planning';
 
 export function useSocialStudioWeek(
@@ -94,8 +95,15 @@ export function useUpdateSocialPost(organizationId: string, startsOn: string) {
 export function useValidateAndScheduleSocialWeek(organizationId: string, startsOn: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ weekId, timezone }: { weekId: string; timezone: string }) =>
-      validateAndScheduleSocialWeek(organizationId, weekId, timezone),
+    mutationFn: ({
+      weekId,
+      timezone,
+      publishMode,
+    }: {
+      weekId: string;
+      timezone: string;
+      publishMode: SocialPublishMode;
+    }) => validateAndScheduleSocialWeek(organizationId, weekId, timezone, publishMode),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
     },

@@ -74,9 +74,11 @@ function setup(
     claims?: ClaimedSocialPost[];
     publisher?: InstagramPublisher;
     missing?: string[];
+    allowLivePublishing?: boolean;
   } = {},
 ) {
   const marks: MarkPublishResultInput[] = [];
+  const liveMarks: Array<{ postId: string; attemptId: string; mediaId: string }> = [];
   let claimedOnce = false;
   const store: SocialWorkerStore = {
     claimDuePosts: async () => {
@@ -88,6 +90,14 @@ function setup(
     markPublishResult: async (input) => {
       await Promise.resolve();
       marks.push(input);
+    },
+    markLivePublishSuccess: async (input) => {
+      await Promise.resolve();
+      liveMarks.push({
+        postId: input.postId,
+        attemptId: input.attemptId,
+        mediaId: input.mediaId,
+      });
     },
   };
 
@@ -101,9 +111,10 @@ function setup(
     now: () => NOW,
     randomId: () => '00000000-0000-4000-8000-00000000dddd',
     maxAttempts: 5,
+    allowLivePublishing: options.allowLivePublishing,
   } satisfies SocialWorkerConfig);
 
-  return { handler, marks, store };
+  return { handler, marks, liveMarks, store };
 }
 
 Deno.test(
@@ -120,6 +131,30 @@ Deno.test(
     const response = await live.handler(request());
     assertEquals(response.status, 503);
     assertEquals(livePublisher.calls, 0, 'aucun appel live Meta ne peut partir en Phase F');
+  },
+);
+
+Deno.test(
+  'social-worker publie un claim live seulement quand le mode live est active',
+  async () => {
+    const livePublisher = new LivePublisher();
+    const live = setup({
+      publisher: livePublisher,
+      allowLivePublishing: true,
+      claims: [
+        claim(1, {
+          accountId: '00000000-0000-4000-8000-00000000a001',
+          publishMode: 'live',
+        }),
+      ],
+    });
+    const payload = await (await live.handler(request())).json();
+
+    assertEquals(payload.claimed, 1);
+    assertEquals(payload.livePublished, 1);
+    assertEquals(livePublisher.calls, 1);
+    assertEquals(live.liveMarks[0]?.mediaId, 'real-media');
+    assertEquals(live.marks.length, 0);
   },
 );
 
