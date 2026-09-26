@@ -9,6 +9,7 @@ import {
   SOCIAL_OBJECTIVES,
   SOCIAL_WEEK_DAYS,
   addDays,
+  browserTimeZone,
   currentWeekStartsOn,
   localDateTimeToIso,
   socialPostFormToPatch,
@@ -63,6 +64,27 @@ const generateImagesResponse = z.object({
     })
     .optional(),
 });
+
+const scheduleWeekResponse = z
+  .array(
+    z.object({
+      week_id: z.string().uuid(),
+      scheduled_count: z.number().int().min(0).max(7),
+      schedule_status: z.enum(['scheduled', 'already_scheduled']),
+      schedule_timezone: z.string().min(1),
+    }),
+  )
+  .min(1);
+
+const suspendWeekResponse = z
+  .array(
+    z.object({
+      week_id: z.string().uuid(),
+      suspended: z.boolean(),
+      skipped_count: z.number().int().min(0).max(7),
+    }),
+  )
+  .min(1);
 
 const SOCIAL_MEDIA_BUCKET = 'social-media-assets';
 
@@ -415,6 +437,68 @@ export async function selectSocialPostAsset(
       .select('id')
       .single(),
   );
+}
+
+export async function validateAndScheduleSocialWeek(
+  organizationId: string,
+  weekId: string,
+  timezone = browserTimeZone(),
+): Promise<z.infer<typeof scheduleWeekResponse>[number]> {
+  z.object({
+    organizationId: z.string().uuid(),
+    weekId: z.string().uuid(),
+    timezone: z.string().min(1).max(80),
+  }).parse({ organizationId, weekId, timezone });
+
+  const data = await unwrap(
+    supabase.rpc('validate_and_schedule_social_week', {
+      p_organization_id: organizationId,
+      p_week_id: weekId,
+      p_timezone: timezone,
+    }),
+  );
+  const parsed = scheduleWeekResponse.safeParse(data);
+  if (!parsed.success) throw new Error('La réponse de validation Social Studio est incomplète.');
+  return parsed.data[0]!;
+}
+
+export async function setSocialWeekPublishingSuspended(
+  organizationId: string,
+  weekId: string,
+  suspended: boolean,
+): Promise<z.infer<typeof suspendWeekResponse>[number]> {
+  z.object({
+    organizationId: z.string().uuid(),
+    weekId: z.string().uuid(),
+    suspended: z.boolean(),
+  }).parse({ organizationId, weekId, suspended });
+
+  const data = await unwrap(
+    supabase.rpc('set_social_week_publishing_suspended', {
+      p_organization_id: organizationId,
+      p_week_id: weekId,
+      p_suspended: suspended,
+    }),
+  );
+  const parsed = suspendWeekResponse.safeParse(data);
+  if (!parsed.success) throw new Error('La réponse de suspension Social Studio est incomplète.');
+  return parsed.data[0]!;
+}
+
+export async function cancelSocialPost(
+  organizationId: string,
+  postId: string,
+): Promise<SocialPostWithAssets> {
+  postImageInput.parse({ organizationId, postId });
+
+  const updated = await unwrap(
+    supabase.rpc('cancel_social_post', {
+      p_organization_id: organizationId,
+      p_post_id: postId,
+    }),
+  );
+  const assets = await listAssetsForPosts(updated.organization_id, [updated]);
+  return { ...updated, assets };
 }
 
 export async function createDevelopmentSocialWeek(

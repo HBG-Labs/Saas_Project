@@ -9,26 +9,35 @@ import { SocialStudioWeekPlanner } from './SocialStudioWeekPlanner';
 const {
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
+  useCancelSocialPost,
   useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
   useSelectSocialPostAsset,
+  useSetSocialWeekPublishingSuspended,
   useUpdateSocialPost,
+  useValidateAndScheduleSocialWeek,
 } = vi.hoisted(() => ({
-    useSocialStudioWeek: vi.fn(),
-    useCreateDevelopmentSocialWeek: vi.fn(),
-    useGenerateSocialPostImages: vi.fn(),
-    useGenerateSocialStudioWeek: vi.fn(),
-    useSelectSocialPostAsset: vi.fn(),
-    useUpdateSocialPost: vi.fn(),
-  }));
+  useSocialStudioWeek: vi.fn(),
+  useCreateDevelopmentSocialWeek: vi.fn(),
+  useCancelSocialPost: vi.fn(),
+  useGenerateSocialPostImages: vi.fn(),
+  useGenerateSocialStudioWeek: vi.fn(),
+  useSelectSocialPostAsset: vi.fn(),
+  useSetSocialWeekPublishingSuspended: vi.fn(),
+  useUpdateSocialPost: vi.fn(),
+  useValidateAndScheduleSocialWeek: vi.fn(),
+}));
 
 vi.mock('../hooks/useSocialStudioWeek', () => ({
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
+  useCancelSocialPost,
   useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
   useSelectSocialPostAsset,
+  useSetSocialWeekPublishingSuspended,
   useUpdateSocialPost,
+  useValidateAndScheduleSocialWeek,
 }));
 
 const updateMutate = vi.fn();
@@ -36,6 +45,9 @@ const createMutate = vi.fn();
 const generateMutate = vi.fn();
 const generateImagesMutate = vi.fn();
 const selectAssetMutate = vi.fn();
+const validateWeekMutate = vi.fn();
+const suspendWeekMutate = vi.fn();
+const cancelPostMutate = vi.fn();
 
 function post(slot: number, status: SocialPostWithAssets['status']): SocialPostWithAssets {
   const plannedAt = new Date('2026-09-28T18:30:00');
@@ -50,6 +62,20 @@ function post(slot: number, status: SocialPostWithAssets['status']): SocialPostW
     status,
     format: 'image',
     scheduled_at: null,
+    publish_mode: 'dry_run',
+    publish_state: 'not_scheduled',
+    selected_asset_id: null,
+    schedule_timezone: null,
+    approved_snapshot: {},
+    publish_attempt_id: null,
+    publish_attempts: 0,
+    publish_locked_at: null,
+    publish_lock_token: null,
+    publish_next_attempt_at: null,
+    publish_last_error_code: null,
+    publish_last_error_kind: null,
+    publish_reconciliation_required_at: null,
+    dry_run_published_at: null,
     hook: `Hook ${slot} terrain`,
     marketing_angle: null,
     concept: null,
@@ -88,7 +114,7 @@ function post(slot: number, status: SocialPostWithAssets['status']): SocialPostW
         mime_type: 'image/webp',
         size_bytes: null,
         width: 1080,
-        height: 1080,
+        height: 1350,
         alt_text: null,
         provider: 'phase-c-mock',
         created_by: null,
@@ -99,7 +125,9 @@ function post(slot: number, status: SocialPostWithAssets['status']): SocialPostW
   };
 }
 
-function weekFixture(statuses: SocialPostWithAssets['status'][] = Array(7).fill('draft')) {
+function weekFixture(
+  statuses: SocialPostWithAssets['status'][] = Array.from({ length: 7 }, () => 'draft' as const),
+): SocialStudioWeek {
   return {
     week: {
       id: 'week-1',
@@ -111,6 +139,9 @@ function weekFixture(statuses: SocialPostWithAssets['status'][] = Array(7).fill(
       audience: 'Artisans',
       zone: 'France + DOM',
       strategy: {},
+      timezone: 'Europe/Paris',
+      publishing_suspended_at: null,
+      publishing_suspended_by: null,
       created_by: null,
       approved_by: null,
       approved_at: null,
@@ -118,7 +149,11 @@ function weekFixture(statuses: SocialPostWithAssets['status'][] = Array(7).fill(
       updated_at: '2026-09-26T00:00:00.000Z',
     },
     posts: statuses.map((status, index) => post(index + 1, status)),
-  } satisfies SocialStudioWeek;
+  };
+}
+
+function sevenStatuses(status: SocialPostWithAssets['status']) {
+  return Array.from({ length: 7 }, () => status);
 }
 
 function renderPlanner({
@@ -161,8 +196,23 @@ function renderPlanner({
     isPending: false,
     error: null,
   });
+  useValidateAndScheduleSocialWeek.mockReturnValue({
+    mutate: validateWeekMutate,
+    isPending: false,
+    error: null,
+  });
+  useSetSocialWeekPublishingSuspended.mockReturnValue({
+    mutate: suspendWeekMutate,
+    isPending: false,
+    error: null,
+  });
+  useCancelSocialPost.mockReturnValue({
+    mutate: cancelPostMutate,
+    isPending: false,
+    error: null,
+  });
 
-  render(
+  return render(
     <SocialStudioWeekPlanner
       organizationId="00000000-0000-0000-0000-000000000001"
       startsOn="2026-09-28"
@@ -174,6 +224,7 @@ function renderPlanner({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
 describe('SocialStudioWeekPlanner', () => {
@@ -181,10 +232,16 @@ describe('SocialStudioWeekPlanner', () => {
     renderPlanner();
 
     for (const day of ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']) {
-      expect(screen.getByText(new RegExp(day))).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(day))).toBeDefined();
     }
-    expect(screen.getByText(/0\/7 prêts · 7 à compléter/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Valider la semaine' })).toBeDisabled();
+    expect(screen.getByText(/0\/7 prêts · 7 à compléter/)).toBeDefined();
+    expect(
+      screen
+        .getByRole('button', {
+          name: 'Valider et programmer la semaine',
+        })
+        .hasAttribute('disabled'),
+    ).toBe(true);
   });
 
   it('lance Social Studio AI uniquement sur action explicite', async () => {
@@ -213,13 +270,13 @@ describe('SocialStudioWeekPlanner', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Modifier' })[0]!);
     const dialog = screen.getByRole('dialog', { name: 'Modifier la publication' });
-    expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText('Texte sur le visuel')).toBeInTheDocument();
+    expect(dialog).toBeDefined();
+    expect(within(dialog).getByText('Texte sur le visuel')).toBeDefined();
 
     await user.clear(screen.getByLabelText('Hook'));
     await user.click(screen.getByRole('button', { name: 'Marquer READY' }));
 
-    expect(screen.getByText('Hook requis pour passer en READY')).toBeInTheDocument();
+    expect(screen.getByText('Hook requis pour passer en READY')).toBeDefined();
     expect(updateMutate).not.toHaveBeenCalled();
   });
 
@@ -249,15 +306,17 @@ describe('SocialStudioWeekPlanner', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Modifier' })[0]!);
 
-    expect(screen.getByLabelText('Date')).toBeDisabled();
-    expect(screen.getByLabelText('Heure')).toBeDisabled();
-    expect(screen.getByText(/managers peuvent préparer le contenu/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Date').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByLabelText('Heure').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByText(/managers peuvent préparer le contenu/i)).toBeDefined();
   });
 
   it('bloque les actions de modification sans social.manage', () => {
     renderPlanner({ canManage: false });
 
-    expect(screen.getAllByRole('button', { name: 'Modifier' })[0]).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Modifier' })[0]?.hasAttribute('disabled')).toBe(
+      true,
+    );
   });
 
   it('declenche la generation visuelle pour un brouillon sans publication', async () => {
@@ -302,5 +361,89 @@ describe('SocialStudioWeekPlanner', () => {
       postId: 'post-1',
       assetId: 'asset-generated-2',
     });
+  });
+
+  it('valide et programme les 7 publications READY en une seule action', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture(sevenStatuses('ready'));
+    week.posts = week.posts.map((item) => ({
+      ...item,
+      assets: [
+        { ...item.assets[0]!, id: `selected-${item.slot_index}`, kind: 'selected' as const },
+      ],
+    }));
+    renderPlanner({ data: week });
+
+    await user.click(screen.getByRole('button', { name: 'Valider et programmer la semaine' }));
+
+    expect(validateWeekMutate).toHaveBeenCalledWith({
+      weekId: 'week-1',
+      timezone: expect.any(String),
+    });
+  });
+
+  it('refuse la validation tant que 1 publication manque', () => {
+    const week = weekFixture(['ready', 'ready', 'ready', 'ready', 'ready', 'ready', 'draft']);
+    week.posts = week.posts.map((item) => ({
+      ...item,
+      assets: [
+        { ...item.assets[0]!, id: `selected-${item.slot_index}`, kind: 'selected' as const },
+      ],
+    }));
+
+    renderPlanner({ data: week });
+
+    expect(
+      screen
+        .getByRole('button', {
+          name: 'Valider et programmer la semaine',
+        })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(screen.getByText('Chaque publication doit être READY.')).toBeDefined();
+  });
+
+  it('permet de suspendre puis reprendre une semaine programmée', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture(sevenStatuses('scheduled'));
+    week.week.status = 'scheduled';
+    week.posts = week.posts.map((item) => ({
+      ...item,
+      publish_state: 'scheduled',
+      scheduled_at:
+        item.content && typeof item.content === 'object' && !Array.isArray(item.content)
+          ? String((item.content as { planned_for?: string }).planned_for)
+          : null,
+    }));
+    const view = renderPlanner({ data: week });
+
+    await user.click(screen.getByRole('button', { name: 'Suspendre les publications' }));
+    expect(suspendWeekMutate).toHaveBeenCalledWith({ weekId: 'week-1', suspended: true });
+
+    suspendWeekMutate.mockClear();
+    week.week.publishing_suspended_at = '2026-09-28T18:00:00.000Z';
+    view.unmount();
+    renderPlanner({ data: week });
+    await user.click(screen.getByRole('button', { name: 'Reprendre les publications' }));
+    expect(suspendWeekMutate).toHaveBeenCalledWith({ weekId: 'week-1', suspended: false });
+  });
+
+  it('annule une publication programmée avant traitement', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture(sevenStatuses('scheduled'));
+    week.week.status = 'scheduled';
+    week.posts = week.posts.map((item) => ({
+      ...item,
+      publish_state: 'scheduled',
+      scheduled_at:
+        item.content && typeof item.content === 'object' && !Array.isArray(item.content)
+          ? String((item.content as { planned_for?: string }).planned_for)
+          : null,
+    }));
+    renderPlanner({ data: week });
+
+    await user.click(screen.getAllByRole('button', { name: 'Annuler cette publication' })[0]!);
+
+    expect(cancelPostMutate).toHaveBeenCalledWith({ postId: 'post-1' });
   });
 });

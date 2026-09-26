@@ -6,7 +6,9 @@ import {
   Images,
   PauseCircle,
   Pencil,
+  PlayCircle,
   Plus,
+  XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,22 +24,28 @@ import { cn } from '@/lib/cn';
 import {
   SOCIAL_WEEK_DAYS,
   addDays,
+  browserTimeZone,
   formatShortDate,
   formatTime,
+  isFinalInstagramAsset,
   postAudience,
   postObjective,
   postPlannedFor,
+  selectedFinalSocialPostAsset,
   type SocialPostFormValues,
   type SocialPostSaveIntent,
   type SocialPostWithAssets,
 } from '../weekly-planning';
 import {
   useCreateDevelopmentSocialWeek,
+  useCancelSocialPost,
   useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
   useSelectSocialPostAsset,
+  useSetSocialWeekPublishingSuspended,
   useSocialStudioWeek,
   useUpdateSocialPost,
+  useValidateAndScheduleSocialWeek,
 } from '../hooks/useSocialStudioWeek';
 
 import { InstagramPostPreview } from './InstagramPostPreview';
@@ -56,15 +64,42 @@ const STATUS_META: Record<
   cancelled: { label: 'CANCELLED', variant: 'neutral' },
 };
 
+const PUBLISH_STATE_META: Partial<
+  Record<
+    SocialPostWithAssets['publish_state'],
+    { label: string; variant: NonNullable<BadgeProps['variant']> }
+  >
+> = {
+  scheduled: { label: 'PROGRAMMÉ', variant: 'info' },
+  processing: { label: 'PROCESSING', variant: 'warning' },
+  published_simulated: { label: 'PUBLIÉ SIMULÉ', variant: 'success' },
+  published_live: { label: 'PUBLISHED', variant: 'success' },
+  failed: { label: 'FAILED', variant: 'error' },
+  skipped: { label: 'À REPROGRAMMER', variant: 'warning' },
+  reconciliation_required: { label: 'RÉCONCILIATION', variant: 'error' },
+};
+
+function statusMeta(post: SocialPostWithAssets) {
+  return PUBLISH_STATE_META[post.publish_state] ?? STATUS_META[post.status];
+}
+
 function weekRange(startsOn: string) {
   const end = addDays(startsOn, 6);
   return `${formatShortDate(startsOn)} - ${formatShortDate(end)}`;
 }
 
 function completionLabel(posts: SocialPostWithAssets[]) {
-  const ready = posts.filter((post) => post.status === 'ready').length;
+  const ready = posts.filter(
+    (post) => post.status === 'ready' || post.status === 'scheduled',
+  ).length;
   const missing = 7 - ready;
   return missing === 0 ? '7/7 prêts' : `${ready}/7 prêts · ${missing} à compléter`;
+}
+
+function scheduledOrPlannedFor(post: SocialPostWithAssets) {
+  return post.status === 'scheduled' || post.publish_state === 'scheduled'
+    ? (post.scheduled_at ?? postPlannedFor(post))
+    : postPlannedFor(post);
 }
 
 function validationIssues(posts: SocialPostWithAssets[]) {
@@ -73,14 +108,32 @@ function validationIssues(posts: SocialPostWithAssets[]) {
   if (posts.some((post) => post.status !== 'ready')) {
     issues.push('Chaque publication doit être READY.');
   }
-  if (posts.some((post) => post.assets.length === 0)) {
-    issues.push('Chaque publication devra avoir un asset image sélectionné.');
+  if (posts.some((post) => !post.hook?.trim() || !post.caption?.trim() || !post.cta?.trim())) {
+    issues.push('Chaque publication doit avoir un hook, une légende et un CTA valides.');
+  }
+  if (posts.some((post) => !isFinalInstagramAsset(selectedFinalSocialPostAsset(post)))) {
+    issues.push('Chaque publication doit avoir un asset final sélectionné en 1080×1350.');
   }
   if (posts.some((post) => postPlannedFor(post) === null)) {
-    issues.push('Chaque publication devra avoir une date et une heure valides.');
+    issues.push('Chaque publication doit avoir une date et une heure valides.');
   }
-  issues.push('La programmation réelle sera activée en Phase F.');
   return issues;
+}
+
+function isEditablePost(post: SocialPostWithAssets, canManage: boolean, canPublish: boolean) {
+  if (post.status === 'processing' || post.status === 'published' || post.status === 'cancelled') {
+    return false;
+  }
+  if (post.status === 'scheduled' || post.publish_state === 'scheduled') return canPublish;
+  return canManage;
+}
+
+function canCancelPost(post: SocialPostWithAssets, canPublish: boolean) {
+  return (
+    canPublish &&
+    (post.status === 'scheduled' || post.publish_state === 'scheduled') &&
+    post.status !== 'processing'
+  );
 }
 
 function WeekPostCard({
@@ -89,26 +142,34 @@ function WeekPostCard({
   canEdit,
   isGeneratingImages,
   isSelectingAsset,
+  canCancel,
+  isCancelling,
   onEdit,
   onGenerateImages,
   onSelectAsset,
+  onCancel,
 }: {
   post: SocialPostWithAssets;
   startsOn: string;
   canEdit: boolean;
   isGeneratingImages: boolean;
   isSelectingAsset: boolean;
+  canCancel: boolean;
+  isCancelling: boolean;
   onEdit: (post: SocialPostWithAssets) => void;
   onGenerateImages: (post: SocialPostWithAssets) => void;
   onSelectAsset: (post: SocialPostWithAssets, assetId: string) => void;
+  onCancel: (post: SocialPostWithAssets) => void;
 }) {
   const dayIndex = post.slot_index - 1;
   const dayDate = addDays(startsOn, dayIndex);
-  const status = STATUS_META[post.status];
+  const status = statusMeta(post);
   const generatedAssets = post.assets.filter(
     (asset) => asset.kind === 'generated' || asset.kind === 'selected',
   );
   const hasGeneratedAssets = generatedAssets.length > 0;
+  const canGenerateImages =
+    canEdit && !['scheduled', 'processing', 'published', 'cancelled'].includes(post.status);
 
   return (
     <Card className="overflow-hidden">
@@ -120,7 +181,9 @@ function WeekPostCard({
             </p>
             <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
               <Clock className="size-3.5" aria-hidden="true" />
-              {formatTime(postPlannedFor(post))}
+              {post.status === 'scheduled'
+                ? `Programmé ${formatTime(scheduledOrPlannedFor(post))}`
+                : formatTime(postPlannedFor(post))}
             </p>
           </div>
           <Badge variant={status.variant}>{status.label}</Badge>
@@ -152,13 +215,15 @@ function WeekPostCard({
             <p className="text-muted-foreground text-3xs font-medium uppercase">Variantes image</p>
             <div className="grid grid-cols-3 gap-2">
               {generatedAssets.map((asset, index) => {
-                const selected = asset.kind === 'selected' || (index === 0 && generatedAssets.every((item) => item.kind !== 'selected'));
+                const selected =
+                  asset.kind === 'selected' ||
+                  (index === 0 && generatedAssets.every((item) => item.kind !== 'selected'));
                 return (
                   <button
                     key={asset.id}
                     type="button"
                     onClick={() => onSelectAsset(post, asset.id)}
-                    disabled={!canEdit || isSelectingAsset}
+                    disabled={!canGenerateImages || isSelectingAsset}
                     aria-pressed={selected}
                     className={cn(
                       'border-border bg-surface hover:bg-surface-raised focus-visible:ring-ring overflow-hidden rounded-md border text-left transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60',
@@ -175,7 +240,7 @@ function WeekPostCard({
                         />
                       ) : null}
                     </span>
-                    <span className="text-muted-foreground block px-2 py-1 text-3xs">
+                    <span className="text-muted-foreground text-3xs block px-2 py-1">
                       Variante {index + 1}
                     </span>
                   </button>
@@ -201,7 +266,7 @@ function WeekPostCard({
             size="sm"
             className="w-full"
             onClick={() => onGenerateImages(post)}
-            disabled={!canEdit}
+            disabled={!canGenerateImages}
             isLoading={isGeneratingImages}
             loadingLabel="Génération"
             leadingIcon={<Images />}
@@ -209,6 +274,20 @@ function WeekPostCard({
             {hasGeneratedAssets ? 'Régénérer le visuel' : 'Générer le visuel'}
           </Button>
         </div>
+
+        {canCancel ? (
+          <Button
+            variant="danger-outline"
+            size="sm"
+            className="w-full"
+            onClick={() => onCancel(post)}
+            isLoading={isCancelling}
+            loadingLabel="Annulation"
+            leadingIcon={<XCircle />}
+          >
+            Annuler cette publication
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -233,6 +312,9 @@ export function SocialStudioWeekPlanner({
   const generateImages = useGenerateSocialPostImages(organizationId, startsOn);
   const selectAsset = useSelectSocialPostAsset(organizationId, startsOn);
   const updatePost = useUpdateSocialPost(organizationId, startsOn);
+  const validateWeek = useValidateAndScheduleSocialWeek(organizationId, startsOn);
+  const suspendWeek = useSetSocialWeekPublishingSuspended(organizationId, startsOn);
+  const cancelPost = useCancelSocialPost(organizationId, startsOn);
 
   if (weekQuery.isPending) return <LoadingScreen label="Chargement de Social Studio…" />;
 
@@ -249,11 +331,15 @@ export function SocialStudioWeekPlanner({
   const week = weekQuery.data ?? null;
   const posts = week?.posts ?? [];
   const nextPost = posts
-    .filter((post) => post.status === 'ready' || post.status === 'draft')
-    .sort((a, b) => String(postPlannedFor(a)).localeCompare(String(postPlannedFor(b))))[0];
+    .filter((post) => post.status === 'scheduled' && post.publish_state === 'scheduled')
+    .sort((a, b) =>
+      String(scheduledOrPlannedFor(a)).localeCompare(String(scheduledOrPlannedFor(b))),
+    )[0];
   const issues = validationIssues(posts);
+  const isSuspended = Boolean(week?.week.publishing_suspended_at);
   const canCreateMockWeek = canManage && !isProduction;
   const canGenerateWeek = canManage;
+  const canValidateWeek = canPublish && issues.length === 0;
 
   const savePost = (
     post: SocialPostWithAssets,
@@ -285,6 +371,27 @@ export function SocialStudioWeekPlanner({
     selectAsset.mutate({ postId: post.id, assetId });
   };
 
+  const validateAndSchedule = () => {
+    if (!week || !canValidateWeek) return;
+    const confirmed = window.confirm(
+      'Valider et programmer les 7 publications de cette semaine en dry-run ?',
+    );
+    if (!confirmed) return;
+
+    validateWeek.mutate({ weekId: week.week.id, timezone: browserTimeZone() });
+  };
+
+  const toggleSuspension = () => {
+    if (!week || !canPublish) return;
+    suspendWeek.mutate({ weekId: week.week.id, suspended: !isSuspended });
+  };
+
+  const cancelScheduledPost = (post: SocialPostWithAssets) => {
+    const confirmed = window.confirm('Annuler cette publication programmée ?');
+    if (!confirmed) return;
+    cancelPost.mutate({ postId: post.id });
+  };
+
   return (
     <section className="space-y-6" aria-labelledby="social-week-title">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -299,7 +406,7 @@ export function SocialStudioWeekPlanner({
         <div className="border-border bg-surface rounded-lg border p-4">
           <p className="text-muted-foreground text-xs">Prochaine publication</p>
           <p className="text-foreground mt-1 text-lg font-semibold">
-            {nextPost ? formatTime(postPlannedFor(nextPost)) : 'Aucune'}
+            {nextPost ? formatTime(scheduledOrPlannedFor(nextPost)) : 'Aucune'}
           </p>
         </div>
       </div>
@@ -369,28 +476,41 @@ export function SocialStudioWeekPlanner({
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
-                disabled
-                leadingIcon={<PauseCircle />}
+                disabled={!canPublish || suspendWeek.isPending || week.week.status !== 'scheduled'}
+                isLoading={suspendWeek.isPending}
+                loadingLabel={isSuspended ? 'Reprise' : 'Suspension'}
+                leadingIcon={isSuspended ? <PlayCircle /> : <PauseCircle />}
+                onClick={toggleSuspension}
                 className="w-full sm:w-auto"
               >
-                Suspendre les publications
+                {isSuspended ? 'Reprendre les publications' : 'Suspendre les publications'}
               </Button>
               <Button
-                disabled
+                disabled={!canValidateWeek}
+                isLoading={validateWeek.isPending}
+                loadingLabel="Programmation"
+                onClick={validateAndSchedule}
                 leadingIcon={<CheckCircle2 />}
                 className="w-full sm:w-auto"
                 aria-describedby="weekly-validation-reasons"
               >
-                Valider la semaine
+                Valider et programmer la semaine
               </Button>
             </div>
           </div>
+
+          {isSuspended ? (
+            <div className="border-warning/30 bg-warning/5 text-warning rounded-lg border p-4 text-sm font-medium">
+              Publications suspendues. À la reprise, les posts dont l’horaire est dépassé seront
+              marqués à reprogrammer.
+            </div>
+          ) : null}
 
           <div
             id="weekly-validation-reasons"
             className={cn(
               'rounded-lg border p-4 text-sm',
-              issues.length === 1 && canPublish
+              issues.length === 0 && canPublish
                 ? 'border-success/30 bg-success/5 text-success'
                 : 'border-warning/30 bg-warning/5 text-warning',
             )}
@@ -398,11 +518,17 @@ export function SocialStudioWeekPlanner({
             <div className="flex gap-2">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium">Validation hebdomadaire prête pour la phase de programmation.</p>
+                <p className="font-medium">
+                  {issues.length === 0 && canPublish
+                    ? 'La semaine est prête à être programmée en dry-run.'
+                    : 'Validation hebdomadaire bloquée.'}
+                </p>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs">
-                  {issues.map((issue) => (
-                    <li key={issue}>{issue}</li>
-                  ))}
+                  {issues.length > 0 ? (
+                    issues.map((issue) => <li key={issue}>{issue}</li>)
+                  ) : (
+                    <li>Les 7 publications READY seront programmées ensemble.</li>
+                  )}
                   {!canPublish ? <li>Votre rôle ne permet pas la publication.</li> : null}
                 </ul>
               </div>
@@ -415,12 +541,15 @@ export function SocialStudioWeekPlanner({
                 key={post.id}
                 post={post}
                 startsOn={week.week.starts_on}
-                canEdit={canManage}
+                canEdit={isEditablePost(post, canManage, canPublish)}
                 isGeneratingImages={generateImages.isPending && imageGenerationPostId === post.id}
                 isSelectingAsset={selectAsset.isPending}
+                canCancel={canCancelPost(post, canPublish)}
+                isCancelling={cancelPost.isPending}
                 onEdit={setSelectedPost}
                 onGenerateImages={generatePostImages}
                 onSelectAsset={selectPostAsset}
+                onCancel={cancelScheduledPost}
               />
             ))}
           </div>
@@ -446,6 +575,30 @@ export function SocialStudioWeekPlanner({
               {updatePost.error instanceof Error
                 ? updatePost.error.message
                 : 'La publication n’a pas pu être enregistrée.'}
+            </p>
+          ) : null}
+
+          {validateWeek.error ? (
+            <p role="alert" className="text-error text-sm">
+              {validateWeek.error instanceof Error
+                ? validateWeek.error.message
+                : 'La semaine n’a pas pu être programmée.'}
+            </p>
+          ) : null}
+
+          {suspendWeek.error ? (
+            <p role="alert" className="text-error text-sm">
+              {suspendWeek.error instanceof Error
+                ? suspendWeek.error.message
+                : 'Le statut de suspension n’a pas pu être modifié.'}
+            </p>
+          ) : null}
+
+          {cancelPost.error ? (
+            <p role="alert" className="text-error text-sm">
+              {cancelPost.error instanceof Error
+                ? cancelPost.error.message
+                : 'La publication n’a pas pu être annulée.'}
             </p>
           ) : null}
 

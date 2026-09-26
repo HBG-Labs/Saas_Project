@@ -42,6 +42,7 @@ export type SocialPost = Tables<'social_posts'>;
 export type SocialPostAsset = Tables<'social_post_assets'>;
 export type SocialPostAssetWithPreview = SocialPostAsset & { signedUrl?: string };
 export type SocialPostWithAssets = SocialPost & { assets: SocialPostAssetWithPreview[] };
+export type SocialPublishState = SocialPost['publish_state'];
 
 export interface SocialStudioWeek {
   week: SocialWeek;
@@ -111,9 +112,28 @@ export function socialPostFormToPatch(
   intent: SocialPostSaveIntent,
 ): TablesUpdate<'social_posts'> {
   const plannedFor = localDateTimeToIso(values.plannedDate, values.plannedTime);
+  const wasScheduled = post.status === 'scheduled' || post.publish_state === 'scheduled';
 
   return {
     status: intent === 'ready' ? 'ready' : 'draft',
+    ...(wasScheduled
+      ? {
+          scheduled_at: null,
+          approved_by: null,
+          approved_at: null,
+          selected_asset_id: null,
+          schedule_timezone: null,
+          approved_snapshot: {},
+          publish_state: 'not_scheduled' as const,
+          publish_attempt_id: null,
+          publish_locked_at: null,
+          publish_lock_token: null,
+          publish_next_attempt_at: null,
+          publish_last_error_code: null,
+          publish_last_error_kind: null,
+          last_error: null,
+        }
+      : {}),
     hook: values.hook.trim() || null,
     visual_text: values.visualText.trim() || null,
     caption: values.caption.trim() || null,
@@ -177,6 +197,10 @@ export function formatTime(value: string | null | undefined): string {
   return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
+export function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris';
+}
+
 export function postPlannedFor(post: SocialPost): string | null {
   return post.scheduled_at ?? readSocialPostContent(post.content).planned_for ?? null;
 }
@@ -189,11 +213,30 @@ export function postAudience(post: SocialPost, week?: SocialWeek): string {
   return readSocialPostContent(post.content).audience ?? week?.audience ?? 'Audience a definir';
 }
 
-export function preferredSocialPostAsset(post: SocialPostWithAssets): SocialPostAssetWithPreview | null {
+export function preferredSocialPostAsset(
+  post: SocialPostWithAssets,
+): SocialPostAssetWithPreview | null {
   return (
     post.assets.find((asset) => asset.kind === 'selected') ??
     post.assets.find((asset) => asset.kind === 'generated') ??
     post.assets[0] ??
     null
+  );
+}
+
+export function selectedFinalSocialPostAsset(
+  post: SocialPostWithAssets,
+): SocialPostAssetWithPreview | null {
+  return post.assets.find((asset) => asset.kind === 'selected') ?? null;
+}
+
+export function isFinalInstagramAsset(asset: SocialPostAssetWithPreview | null): boolean {
+  return (
+    asset !== null &&
+    asset.kind === 'selected' &&
+    asset.width === 1080 &&
+    asset.height === 1350 &&
+    ['image/png', 'image/jpeg', 'image/webp'].includes(asset.mime_type ?? '') &&
+    (asset.size_bytes === null || asset.size_bytes > 0)
   );
 }

@@ -3093,6 +3093,9 @@ export interface Database {
           account_id: string | null;
           starts_on: string;
           status: SocialWeekStatus;
+          timezone: string;
+          publishing_suspended_at: string | null;
+          publishing_suspended_by: string | null;
           objective: string | null;
           audience: string | null;
           zone: string | null;
@@ -3109,6 +3112,9 @@ export interface Database {
           account_id?: string | null;
           starts_on: string;
           status?: SocialWeekStatus;
+          timezone?: string;
+          publishing_suspended_at?: string | null;
+          publishing_suspended_by?: string | null;
           objective?: string | null;
           audience?: string | null;
           zone?: string | null;
@@ -3121,6 +3127,9 @@ export interface Database {
           account_id?: string | null;
           starts_on?: string;
           status?: SocialWeekStatus;
+          timezone?: string;
+          publishing_suspended_at?: string | null;
+          publishing_suspended_by?: string | null;
           objective?: string | null;
           audience?: string | null;
           zone?: string | null;
@@ -3154,6 +3163,29 @@ export interface Database {
           status: SocialPostStatus;
           format: SocialPostFormat;
           scheduled_at: string | null;
+          publish_mode: 'dry_run' | 'live';
+          publish_state:
+            | 'not_scheduled'
+            | 'scheduled'
+            | 'processing'
+            | 'published_simulated'
+            | 'published_live'
+            | 'failed'
+            | 'cancelled'
+            | 'skipped'
+            | 'reconciliation_required';
+          selected_asset_id: string | null;
+          schedule_timezone: string | null;
+          approved_snapshot: Json;
+          publish_attempt_id: string | null;
+          publish_attempts: number;
+          publish_locked_at: string | null;
+          publish_lock_token: string | null;
+          publish_next_attempt_at: string | null;
+          publish_last_error_code: string | null;
+          publish_last_error_kind: string | null;
+          publish_reconciliation_required_at: string | null;
+          dry_run_published_at: string | null;
           hook: string | null;
           marketing_angle: string | null;
           concept: string | null;
@@ -3185,6 +3217,29 @@ export interface Database {
           status?: SocialPostStatus;
           format?: SocialPostFormat;
           scheduled_at?: string | null;
+          publish_mode?: 'dry_run' | 'live';
+          publish_state?:
+            | 'not_scheduled'
+            | 'scheduled'
+            | 'processing'
+            | 'published_simulated'
+            | 'published_live'
+            | 'failed'
+            | 'cancelled'
+            | 'skipped'
+            | 'reconciliation_required';
+          selected_asset_id?: string | null;
+          schedule_timezone?: string | null;
+          approved_snapshot?: Json;
+          publish_attempt_id?: string | null;
+          publish_attempts?: number;
+          publish_locked_at?: string | null;
+          publish_lock_token?: string | null;
+          publish_next_attempt_at?: string | null;
+          publish_last_error_code?: string | null;
+          publish_last_error_kind?: string | null;
+          publish_reconciliation_required_at?: string | null;
+          dry_run_published_at?: string | null;
           hook?: string | null;
           marketing_angle?: string | null;
           concept?: string | null;
@@ -3212,6 +3267,29 @@ export interface Database {
           status?: SocialPostStatus;
           format?: SocialPostFormat;
           scheduled_at?: string | null;
+          publish_mode?: 'dry_run' | 'live';
+          publish_state?:
+            | 'not_scheduled'
+            | 'scheduled'
+            | 'processing'
+            | 'published_simulated'
+            | 'published_live'
+            | 'failed'
+            | 'cancelled'
+            | 'skipped'
+            | 'reconciliation_required';
+          selected_asset_id?: string | null;
+          schedule_timezone?: string | null;
+          approved_snapshot?: Json;
+          publish_attempt_id?: string | null;
+          publish_attempts?: number;
+          publish_locked_at?: string | null;
+          publish_lock_token?: string | null;
+          publish_next_attempt_at?: string | null;
+          publish_last_error_code?: string | null;
+          publish_last_error_kind?: string | null;
+          publish_reconciliation_required_at?: string | null;
+          dry_run_published_at?: string | null;
           hook?: string | null;
           marketing_angle?: string | null;
           concept?: string | null;
@@ -3311,6 +3389,53 @@ export interface Database {
             foreignKeyName: 'social_post_assets_post_id_fkey';
             columns: ['post_id'];
             referencedRelation: 'social_posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      social_publish_attempts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          week_id: string | null;
+          post_id: string;
+          attempt_id: string;
+          mode: 'dry_run' | 'live';
+          publisher: string;
+          status:
+            | 'claimed'
+            | 'published_simulated'
+            | 'published_live'
+            | 'temporary_failure'
+            | 'permanent_failure'
+            | 'reconciliation_required';
+          error_kind: string | null;
+          error_code: string | null;
+          error_message: string | null;
+          metadata: Json;
+          started_at: string;
+          completed_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'social_publish_attempts_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_publish_attempts_post_id_fkey';
+            columns: ['post_id'];
+            referencedRelation: 'social_posts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_publish_attempts_week_id_fkey';
+            columns: ['week_id'];
+            referencedRelation: 'social_weeks';
             referencedColumns: ['id'];
           },
         ];
@@ -5839,6 +5964,28 @@ export interface Database {
           p_content: TiptapDocument;
         };
         Returns: Database['public']['Tables']['workspace_pages']['Row'];
+      };
+
+      validate_and_schedule_social_week: {
+        Args: { p_organization_id: string; p_week_id: string; p_timezone?: string };
+        Returns: {
+          week_id: string;
+          scheduled_count: number;
+          schedule_status: string;
+          schedule_timezone: string;
+        }[];
+      };
+      set_social_week_publishing_suspended: {
+        Args: { p_organization_id: string; p_week_id: string; p_suspended: boolean };
+        Returns: {
+          week_id: string;
+          suspended: boolean;
+          skipped_count: number;
+        }[];
+      };
+      cancel_social_post: {
+        Args: { p_organization_id: string; p_post_id: string };
+        Returns: Database['public']['Tables']['social_posts']['Row'];
       };
 
       // -----------------------------------------------------------------------

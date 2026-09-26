@@ -3,12 +3,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { qk } from '@/lib/query-keys';
 
 import {
+  cancelSocialPost,
   createDevelopmentSocialWeek,
   generateSocialPostImages,
   generateSocialStudioWeek,
   getSocialStudioWeek,
   selectSocialPostAsset,
+  setSocialWeekPublishingSuspended,
   updateSocialPostDraft,
+  validateAndScheduleSocialWeek,
 } from '../api/weekly-planning.api';
 import {
   currentWeekStartsOn,
@@ -82,6 +85,38 @@ export function useUpdateSocialPost(organizationId: string, startsOn: string) {
       values: SocialPostFormValues;
       intent: SocialPostSaveIntent;
     }) => updateSocialPostDraft(post, values, intent),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useValidateAndScheduleSocialWeek(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ weekId, timezone }: { weekId: string; timezone: string }) =>
+      validateAndScheduleSocialWeek(organizationId, weekId, timezone),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useSetSocialWeekPublishingSuspended(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ weekId, suspended }: { weekId: string; suspended: boolean }) =>
+      setSocialWeekPublishingSuspended(organizationId, weekId, suspended),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useCancelSocialPost(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId }: { postId: string }) => cancelSocialPost(organizationId, postId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
     },

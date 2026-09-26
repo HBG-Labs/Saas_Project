@@ -476,6 +476,11 @@ verify_jwt = false
 [functions.prospecting-worker]
 verify_jwt = false
 
+# Social Studio Phase F : worker interne dry-run, appelé plus tard par cron avec
+# `x-worker-secret`. Aucun cron production n'est créé par cette phase.
+[functions.social-worker]
+verify_jwt = false
+
 # Portail client ---------------------------------------------------------------
 # Resend n'a pas de jeton Supabase : c'est la signature Svix, verifiee dans
 # `handler.ts`, qui authentifie chaque livraison.
