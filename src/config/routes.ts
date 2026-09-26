@@ -82,6 +82,7 @@ export const ROUTES = {
   analytics: '/analytics',
   aiAssistant: '/assistant-ia',
   aiAssistantDocuments: '/assistant-ia/documents',
+  socialStudio: '/studio-social',
   planning: '/planning',
   map: '/carte',
   tools: '/tools',

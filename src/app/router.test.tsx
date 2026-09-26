@@ -1,9 +1,13 @@
+import { isValidElement } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { AppProviders } from './providers';
 import { routes } from './router';
+import { FEATURES } from '@/features/billing';
+import { PERMISSIONS } from '@/features/organizations';
+import { ROUTES } from '@/config/routes';
 
 /**
  * Vérification du routing sur l'arbre de routes RÉEL.
@@ -26,6 +30,27 @@ function renderAt(path: string) {
   );
 
   return router;
+}
+
+function routeTrail(path: string) {
+  const visit = (children: typeof routes, trail: typeof routes): typeof routes | null => {
+    for (const route of children) {
+      const nextTrail = [...trail, route];
+      if (route.path === path) return nextTrail;
+      if (route.children) {
+        const found = visit(route.children, nextTrail);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  return visit(routes, []);
+}
+
+function elementProps(element: unknown): Record<string, unknown> {
+  if (!isValidElement<Record<string, unknown>>(element)) return {};
+  return element.props;
 }
 
 describe('routing', () => {
@@ -135,6 +160,7 @@ describe('routing', () => {
     '/profile',
     '/settings',
     '/assistant-ia',
+    '/studio-social',
     // Prospect Radar (module interne) : `ProtectedRoute` doit déjà bloquer
     // avant même que `RequirePlatformAdmin` n'entre en jeu.
     '/admin/prospection',
@@ -153,6 +179,18 @@ describe('routing', () => {
     renderAt('/cette-page-nexiste-pas');
 
     expect(await screen.findByRole('heading', { name: /page introuvable/i })).toBeInTheDocument();
+  });
+
+  it('protège Social Studio par la formule et la permission social.view', () => {
+    const trail = routeTrail(ROUTES.socialStudio);
+
+    expect(trail, 'route Social Studio introuvable').not.toBeNull();
+    expect(
+      trail?.some((route) => elementProps(route.element).feature === FEATURES.socialStudio),
+    ).toBe(true);
+    expect(
+      trail?.some((route) => elementProps(route.element).permission === PERMISSIONS.socialView),
+    ).toBe(true);
   });
 
   it('affiche un message clair pour un outil non enregistré', async () => {

@@ -166,6 +166,12 @@ export type EinvoicingReceptionStatus =
   'not_requested' | 'pending_verification' | 'active' | 'failed';
 
 export type SocialAccountStatus = 'disconnected' | 'connected' | 'needs_reconnect' | 'error';
+export type SocialWeekStatus =
+  'draft' | 'ready' | 'scheduled' | 'partially_published' | 'published' | 'cancelled';
+export type SocialPostStatus =
+  'draft' | 'ready' | 'scheduled' | 'processing' | 'published' | 'failed' | 'cancelled';
+export type SocialPostFormat = 'image' | 'carousel';
+export type SocialPostAssetKind = 'source' | 'generated' | 'selected';
 
 /** Triage métier d'une facture reçue — seul champ modifiable côté client. */
 export type ReceivedInvoiceInternalStatus = 'new' | 'viewed' | 'archived' | 'disputed';
@@ -3075,6 +3081,236 @@ export interface Database {
             foreignKeyName: 'social_accounts_organization_id_fkey';
             columns: ['organization_id'];
             referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      social_weeks: {
+        Row: {
+          id: string;
+          organization_id: string;
+          account_id: string | null;
+          starts_on: string;
+          status: SocialWeekStatus;
+          objective: string | null;
+          audience: string | null;
+          zone: string | null;
+          strategy: Json;
+          created_by: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          account_id?: string | null;
+          starts_on: string;
+          status?: SocialWeekStatus;
+          objective?: string | null;
+          audience?: string | null;
+          zone?: string | null;
+          strategy?: Json;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+        };
+        Update: {
+          account_id?: string | null;
+          starts_on?: string;
+          status?: SocialWeekStatus;
+          objective?: string | null;
+          audience?: string | null;
+          zone?: string | null;
+          strategy?: Json;
+          approved_by?: string | null;
+          approved_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'social_weeks_account_id_fkey';
+            columns: ['account_id'];
+            referencedRelation: 'social_accounts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_weeks_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      social_posts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          week_id: string | null;
+          account_id: string | null;
+          slot_index: number;
+          status: SocialPostStatus;
+          format: SocialPostFormat;
+          scheduled_at: string | null;
+          hook: string | null;
+          marketing_angle: string | null;
+          concept: string | null;
+          visual_brief: string | null;
+          visual_text: string | null;
+          caption: string | null;
+          cta: string | null;
+          hashtags: string[];
+          image_prompt: string | null;
+          recommendation_reason: string | null;
+          content: Json;
+          approved_by: string | null;
+          approved_at: string | null;
+          cancelled_by: string | null;
+          cancelled_at: string | null;
+          published_at: string | null;
+          instagram_media_id: string | null;
+          last_error: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          week_id?: string | null;
+          account_id?: string | null;
+          slot_index: number;
+          status?: SocialPostStatus;
+          format?: SocialPostFormat;
+          scheduled_at?: string | null;
+          hook?: string | null;
+          marketing_angle?: string | null;
+          concept?: string | null;
+          visual_brief?: string | null;
+          visual_text?: string | null;
+          caption?: string | null;
+          cta?: string | null;
+          hashtags?: string[];
+          image_prompt?: string | null;
+          recommendation_reason?: string | null;
+          content?: Json;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_at?: string | null;
+          published_at?: string | null;
+          instagram_media_id?: string | null;
+          last_error?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          week_id?: string | null;
+          account_id?: string | null;
+          slot_index?: number;
+          status?: SocialPostStatus;
+          format?: SocialPostFormat;
+          scheduled_at?: string | null;
+          hook?: string | null;
+          marketing_angle?: string | null;
+          concept?: string | null;
+          visual_brief?: string | null;
+          visual_text?: string | null;
+          caption?: string | null;
+          cta?: string | null;
+          hashtags?: string[];
+          image_prompt?: string | null;
+          recommendation_reason?: string | null;
+          content?: Json;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_at?: string | null;
+          published_at?: string | null;
+          instagram_media_id?: string | null;
+          last_error?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'social_posts_account_id_fkey';
+            columns: ['account_id'];
+            referencedRelation: 'social_accounts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_posts_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_posts_week_id_fkey';
+            columns: ['week_id'];
+            referencedRelation: 'social_weeks';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      social_post_assets: {
+        Row: {
+          id: string;
+          organization_id: string;
+          post_id: string;
+          kind: SocialPostAssetKind;
+          position: number;
+          storage_path: string;
+          original_filename: string | null;
+          mime_type: string | null;
+          size_bytes: number | null;
+          width: number | null;
+          height: number | null;
+          alt_text: string | null;
+          provider: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          post_id: string;
+          kind?: SocialPostAssetKind;
+          position?: number;
+          storage_path: string;
+          original_filename?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          width?: number | null;
+          height?: number | null;
+          alt_text?: string | null;
+          provider?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          post_id?: string;
+          kind?: SocialPostAssetKind;
+          position?: number;
+          storage_path?: string;
+          original_filename?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          width?: number | null;
+          height?: number | null;
+          alt_text?: string | null;
+          provider?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'social_post_assets_organization_id_fkey';
+            columns: ['organization_id'];
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'social_post_assets_post_id_fkey';
+            columns: ['post_id'];
+            referencedRelation: 'social_posts';
             referencedColumns: ['id'];
           },
         ];

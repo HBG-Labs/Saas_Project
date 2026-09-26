@@ -237,6 +237,8 @@ export const qk = {
       [...qk.social.all, 'instagram', organizationId, 'account'] as const,
     instagramReadiness: (organizationId: string) =>
       [...qk.social.all, 'instagram', organizationId, 'readiness'] as const,
+    week: (organizationId: string, startsOn: string) =>
+      [...qk.social.all, 'week', organizationId, startsOn] as const,
   },
 
   // ------------------------------------------------------------------- achats

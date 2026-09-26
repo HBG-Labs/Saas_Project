@@ -176,6 +176,9 @@ export type InvoiceTransmission = Tables<'invoice_transmissions'>;
 export type InvoiceTransmissionEvent = Tables<'invoice_transmission_events'>;
 export type EinvoicingProviderConnection = Tables<'einvoicing_provider_connections'>;
 export type SocialAccount = Tables<'social_accounts'>;
+export type SocialWeek = Tables<'social_weeks'>;
+export type SocialPost = Tables<'social_posts'>;
+export type SocialPostAsset = Tables<'social_post_assets'>;
 
 /** Facture fournisseur reçue via SUPER PDP (Phase 3/4 réception). */
 export type ReceivedInvoice = Tables<'received_invoices'>;

@@ -9,6 +9,7 @@ import {
   MOBILE_NAV_CANDIDATES,
   MOBILE_NAV_SIZE,
   ORGANIZATION_NAV,
+  SOCIAL_STUDIO_NAV,
   SIDEBAR_GROUPS,
   UNIVERSES,
   type NavItem,
@@ -71,6 +72,15 @@ describe('configuration de navigation', () => {
 
     expect(statistics?.feature).toBe(FEATURES.statistics);
     expect(statistics?.permission).toBe(PERMISSIONS.statisticsView);
+  });
+
+  it('aligne Social Studio sur la formule et la permission du backend', () => {
+    const studio = SOCIAL_STUDIO_NAV[0];
+
+    expect(studio?.to).toBe(ROUTES.socialStudio);
+    expect(studio?.feature).toBe(FEATURES.socialStudio);
+    expect(studio?.permission).toBe(PERMISSIONS.socialView);
+    expect(ORGANIZATION_NAV).toContainEqual(studio);
   });
 
   it("n'exige que des métiers existants", () => {

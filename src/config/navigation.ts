@@ -215,6 +215,17 @@ export const RESOURCES_NAV: readonly NavItem[] = [
   { to: ROUTES.tutorials, label: 'Tutoriels & Formation', icon: 'book', primary: true },
 ];
 
+export const SOCIAL_STUDIO_NAV: readonly NavItem[] = [
+  {
+    to: ROUTES.socialStudio,
+    label: 'Social Studio',
+    icon: 'instagram',
+    feature: 'social_studio',
+    permission: 'social.view',
+    primary: true,
+  },
+];
+
 /*
   LA `feature` DÉCLARÉE ICI EST CELLE QUE LA RLS EXIGE.
 
@@ -401,6 +412,13 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
     items: RESOURCES_NAV,
     universe: 'workspace',
   },
+  {
+    id: 'social-studio',
+    label: 'Croissance',
+    icon: 'trending-up',
+    items: SOCIAL_STUDIO_NAV,
+    universe: 'workspace',
+  },
   // ── Transversal : depuis n'importe où ────────────────────────────────────
   { id: 'outils', label: 'Boîte à outils', icon: 'wrench', items: ALL_TOOLS_NAV },
 ];
@@ -408,6 +426,7 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
 export const PRINCIPAL_NAV: readonly NavItem[] = [
   ...INTERVENTIONS_NAV,
   ...ADMINISTRATION_NAV,
+  ...SOCIAL_STUDIO_NAV,
   ...TOOLS_NAV,
   ...METIERS_TOOLS_NAV,
 ];
@@ -426,6 +445,7 @@ export const ORGANIZATION_NAV: readonly NavItem[] = [
   ...VENTES_NAV,
   ...ACHATS_NAV,
   ...ADMINISTRATION_NAV,
+  ...SOCIAL_STUDIO_NAV,
   ...TOOLS_NAV,
   ...METIERS_TOOLS_NAV,
 ];
@@ -476,6 +496,7 @@ export const MOBILE_NAV_CANDIDATES: readonly NavItem[] = [
   },
   { to: ROUTES.tools, label: 'Outils', icon: 'wrench' },
   { to: ROUTES.customers, label: 'Clients', icon: 'contact', feature: 'customers' },
+  ...SOCIAL_STUDIO_NAV,
   {
     to: ROUTES.review,
     label: 'Rapports',

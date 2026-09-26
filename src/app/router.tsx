@@ -252,6 +252,20 @@ export const routes: RouteObject[] = [
                     ],
                   },
                   {
+                    element: <RequirePlan feature={FEATURES.socialStudio} label="Social Studio" />,
+                    children: [
+                      {
+                        element: <RequirePermission permission={PERMISSIONS.socialView} />,
+                        children: [
+                          {
+                            path: ROUTES.socialStudio,
+                            lazy: lazyPage(() => import('@/pages/SocialStudioPage')),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     element: <RequirePlan feature={FEATURES.workspace} label="Le Workspace" />,
                     children: [
                       {
