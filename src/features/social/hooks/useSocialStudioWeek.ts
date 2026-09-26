@@ -4,8 +4,10 @@ import { qk } from '@/lib/query-keys';
 
 import {
   createDevelopmentSocialWeek,
+  generateSocialPostImages,
   generateSocialStudioWeek,
   getSocialStudioWeek,
+  selectSocialPostAsset,
   updateSocialPostDraft,
 } from '../api/weekly-planning.api';
 import {
@@ -40,6 +42,27 @@ export function useGenerateSocialStudioWeek(organizationId: string, startsOn: st
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => generateSocialStudioWeek(organizationId, startsOn),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useGenerateSocialPostImages(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: string) => generateSocialPostImages(organizationId, postId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useSelectSocialPostAsset(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, assetId }: { postId: string; assetId: string }) =>
+      selectSocialPostAsset(organizationId, postId, assetId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
     },

@@ -14,6 +14,7 @@ import {
   socialPostFormToPatch,
   type SocialPost,
   type SocialPostAsset,
+  type SocialPostAssetWithPreview,
   type SocialPostFormValues,
   type SocialPostSaveIntent,
   type SocialPostWithAssets,
@@ -24,6 +25,11 @@ import {
 const weekInput = z.object({
   organizationId: z.string().uuid(),
   startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const postImageInput = z.object({
+  organizationId: z.string().uuid(),
+  postId: z.string().uuid(),
 });
 
 const generateWeekResponse = z.object({
@@ -41,6 +47,24 @@ const generateWeekResponse = z.object({
     })
     .optional(),
 });
+
+const generateImagesResponse = z.object({
+  status: z.enum(['generated', 'existing']),
+  postId: z.string().uuid(),
+  assetsCount: z.number().int().min(0).max(10),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  usage: z
+    .object({
+      variantCount: z.number().int().min(0).max(10),
+      promptChars: z.number().int().min(0),
+      estimatedCost: z.number().nullable(),
+      latencyMs: z.number().int().min(0),
+    })
+    .optional(),
+});
+
+const SOCIAL_MEDIA_BUCKET = 'social-media-assets';
 
 const MOCK_POSTS = [
   {
@@ -135,11 +159,11 @@ function byPostId(assets: SocialPostAsset[]): Map<string, SocialPostAsset[]> {
 async function listAssetsForPosts(
   organizationId: string,
   posts: SocialPost[],
-): Promise<SocialPostAsset[]> {
+): Promise<SocialPostAssetWithPreview[]> {
   const ids = posts.map((post) => post.id);
   if (ids.length === 0) return [];
 
-  return unwrap(
+  const assets = await unwrap(
     supabase
       .from('social_post_assets')
       .select('*')
@@ -147,6 +171,34 @@ async function listAssetsForPosts(
       .in('post_id', ids)
       .order('position'),
   );
+  return withSignedAssetUrls(assets);
+}
+
+async function withSignedAssetUrls(
+  assets: SocialPostAsset[],
+): Promise<SocialPostAssetWithPreview[]> {
+  const paths = assets.map((asset) => asset.storage_path).filter(Boolean);
+  if (paths.length === 0) return assets;
+
+  const { data, error } = await supabase.storage
+    .from(SOCIAL_MEDIA_BUCKET)
+    .createSignedUrls(paths, 3600);
+  if (error) return assets;
+
+  const signedByPath = new Map<string, string>();
+  for (const row of (data ?? []) as Array<{
+    path?: string | null;
+    signedUrl?: string | null;
+    signedURL?: string | null;
+  }>) {
+    const signedUrl = row.signedUrl ?? row.signedURL ?? null;
+    if (row.path && signedUrl) signedByPath.set(row.path, signedUrl);
+  }
+
+  return assets.map((asset) => {
+    const signedUrl = signedByPath.get(asset.storage_path);
+    return signedUrl ? { ...asset, signedUrl } : asset;
+  });
 }
 
 export async function getSocialStudioWeek(
@@ -305,6 +357,63 @@ export async function generateSocialStudioWeek(
     throw new Error('La semaine générée n’a pas pu être rechargée.');
   }
   return week;
+}
+
+export async function generateSocialPostImages(
+  organizationId: string,
+  postId: string,
+): Promise<z.infer<typeof generateImagesResponse>> {
+  postImageInput.parse({ organizationId, postId });
+
+  const response = await supabase.functions.invoke<unknown>('social-image-generate', {
+    headers: await authenticatedFunctionHeaders(),
+    body: {
+      organizationId,
+      postId,
+      variantCount: 3,
+    },
+  });
+  if (response.error) {
+    throw new Error(
+      await messageDeLaFonction(
+        response.error,
+        'Le moteur visuel Social Studio n’a pas pu générer les visuels.',
+      ),
+    );
+  }
+
+  const parsed = generateImagesResponse.safeParse(response.data);
+  if (!parsed.success) throw new Error('La réponse du moteur visuel Social Studio est incomplète.');
+  return parsed.data;
+}
+
+export async function selectSocialPostAsset(
+  organizationId: string,
+  postId: string,
+  assetId: string,
+): Promise<void> {
+  postImageInput.extend({ assetId: z.string().uuid() }).parse({ organizationId, postId, assetId });
+
+  await unwrap(
+    supabase
+      .from('social_post_assets')
+      .update({ kind: 'generated' })
+      .eq('organization_id', organizationId)
+      .eq('post_id', postId)
+      .eq('kind', 'selected')
+      .select('id'),
+  );
+
+  await unwrap(
+    supabase
+      .from('social_post_assets')
+      .update({ kind: 'selected' })
+      .eq('organization_id', organizationId)
+      .eq('post_id', postId)
+      .eq('id', assetId)
+      .select('id')
+      .single(),
+  );
 }
 
 export async function createDevelopmentSocialWeek(

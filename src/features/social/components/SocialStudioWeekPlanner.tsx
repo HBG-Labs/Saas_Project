@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Images,
   PauseCircle,
   Pencil,
   Plus,
@@ -32,7 +33,9 @@ import {
 } from '../weekly-planning';
 import {
   useCreateDevelopmentSocialWeek,
+  useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
+  useSelectSocialPostAsset,
   useSocialStudioWeek,
   useUpdateSocialPost,
 } from '../hooks/useSocialStudioWeek';
@@ -84,16 +87,28 @@ function WeekPostCard({
   post,
   startsOn,
   canEdit,
+  isGeneratingImages,
+  isSelectingAsset,
   onEdit,
+  onGenerateImages,
+  onSelectAsset,
 }: {
   post: SocialPostWithAssets;
   startsOn: string;
   canEdit: boolean;
+  isGeneratingImages: boolean;
+  isSelectingAsset: boolean;
   onEdit: (post: SocialPostWithAssets) => void;
+  onGenerateImages: (post: SocialPostWithAssets) => void;
+  onSelectAsset: (post: SocialPostWithAssets, assetId: string) => void;
 }) {
   const dayIndex = post.slot_index - 1;
   const dayDate = addDays(startsOn, dayIndex);
   const status = STATUS_META[post.status];
+  const generatedAssets = post.assets.filter(
+    (asset) => asset.kind === 'generated' || asset.kind === 'selected',
+  );
+  const hasGeneratedAssets = generatedAssets.length > 0;
 
   return (
     <Card className="overflow-hidden">
@@ -132,16 +147,68 @@ function WeekPostCard({
           </dl>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => onEdit(post)}
-          disabled={!canEdit}
-          leadingIcon={<Pencil />}
-        >
-          Modifier
-        </Button>
+        {hasGeneratedAssets ? (
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-3xs font-medium uppercase">Variantes image</p>
+            <div className="grid grid-cols-3 gap-2">
+              {generatedAssets.map((asset, index) => {
+                const selected = asset.kind === 'selected' || (index === 0 && generatedAssets.every((item) => item.kind !== 'selected'));
+                return (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onClick={() => onSelectAsset(post, asset.id)}
+                    disabled={!canEdit || isSelectingAsset}
+                    aria-pressed={selected}
+                    className={cn(
+                      'border-border bg-surface hover:bg-surface-raised focus-visible:ring-ring overflow-hidden rounded-md border text-left transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+                      selected && 'border-primary ring-primary/20 ring-2',
+                    )}
+                  >
+                    <span className="bg-surface-sunken block aspect-square">
+                      {asset.signedUrl ? (
+                        <img
+                          src={asset.signedUrl}
+                          alt={asset.alt_text ?? `Variante ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : null}
+                    </span>
+                    <span className="text-muted-foreground block px-2 py-1 text-3xs">
+                      Variante {index + 1}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => onEdit(post)}
+            disabled={!canEdit}
+            leadingIcon={<Pencil />}
+          >
+            Modifier
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => onGenerateImages(post)}
+            disabled={!canEdit || hasGeneratedAssets}
+            isLoading={isGeneratingImages}
+            loadingLabel="Génération"
+            leadingIcon={<Images />}
+          >
+            {hasGeneratedAssets ? 'Visuels prêts' : 'Générer visuels'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -159,9 +226,12 @@ export function SocialStudioWeekPlanner({
   canPublish: boolean;
 }) {
   const [selectedPost, setSelectedPost] = useState<SocialPostWithAssets | null>(null);
+  const [imageGenerationPostId, setImageGenerationPostId] = useState<string | null>(null);
   const weekQuery = useSocialStudioWeek(organizationId, startsOn);
   const createMockWeek = useCreateDevelopmentSocialWeek(organizationId, startsOn);
   const generateWeek = useGenerateSocialStudioWeek(organizationId, startsOn);
+  const generateImages = useGenerateSocialPostImages(organizationId, startsOn);
+  const selectAsset = useSelectSocialPostAsset(organizationId, startsOn);
   const updatePost = useUpdateSocialPost(organizationId, startsOn);
 
   if (weekQuery.isPending) return <LoadingScreen label="Chargement de Social Studio…" />;
@@ -196,6 +266,17 @@ export function SocialStudioWeekPlanner({
         onSuccess: () => setSelectedPost(null),
       },
     );
+  };
+
+  const generatePostImages = (post: SocialPostWithAssets) => {
+    setImageGenerationPostId(post.id);
+    generateImages.mutate(post.id, {
+      onSettled: () => setImageGenerationPostId(null),
+    });
+  };
+
+  const selectPostAsset = (post: SocialPostWithAssets, assetId: string) => {
+    selectAsset.mutate({ postId: post.id, assetId });
   };
 
   return (
@@ -329,10 +410,30 @@ export function SocialStudioWeekPlanner({
                 post={post}
                 startsOn={week.week.starts_on}
                 canEdit={canManage}
+                isGeneratingImages={generateImages.isPending && imageGenerationPostId === post.id}
+                isSelectingAsset={selectAsset.isPending}
                 onEdit={setSelectedPost}
+                onGenerateImages={generatePostImages}
+                onSelectAsset={selectPostAsset}
               />
             ))}
           </div>
+
+          {generateImages.error ? (
+            <p role="alert" className="text-error text-sm">
+              {generateImages.error instanceof Error
+                ? generateImages.error.message
+                : 'Le moteur visuel Social Studio n’a pas pu générer les visuels.'}
+            </p>
+          ) : null}
+
+          {selectAsset.error ? (
+            <p role="alert" className="text-error text-sm">
+              {selectAsset.error instanceof Error
+                ? selectAsset.error.message
+                : 'La variante image n’a pas pu être sélectionnée.'}
+            </p>
+          ) : null}
 
           {updatePost.error ? (
             <p role="alert" className="text-error text-sm">

@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 import {
   postAudience,
   postObjective,
+  preferredSocialPostAsset,
   readSocialPostContent,
   type SocialPostWithAssets,
   type SocialWeek,
@@ -20,7 +21,8 @@ export function InstagramPostPreview({
   compact?: boolean;
 }) {
   const content = readSocialPostContent(post.content);
-  const hasAsset = post.assets.length > 0;
+  const asset = preferredSocialPostAsset(post);
+  const hasAsset = asset !== null;
 
   return (
     <article
@@ -50,18 +52,29 @@ export function InstagramPostPreview({
           content.placeholder_variant === 'slot-6' && 'bg-muted',
         )}
       >
-        <div className="bg-foreground absolute inset-x-0 top-0 h-1" aria-hidden="true" />
-        <div className="max-w-[82%] space-y-3 text-center">
-          <div className="text-muted-foreground border-border bg-surface/80 mx-auto flex size-10 items-center justify-center rounded-full border">
-            <Camera className="size-5" aria-hidden="true" />
-          </div>
-          <p className="text-foreground text-xl leading-tight font-bold sm:text-2xl">
-            {post.visual_text || 'Texte sur le visuel'}
-          </p>
-          <p className="text-muted-foreground text-xs">
-            {hasAsset ? 'Asset image prêt pour prévisualisation' : 'Placeholder image Phase C'}
-          </p>
-        </div>
+        {asset?.signedUrl ? (
+          <img
+            src={asset.signedUrl}
+            alt={asset.alt_text ?? post.visual_text ?? 'Visuel Social Studio'}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <>
+            <div className="bg-foreground absolute inset-x-0 top-0 h-1" aria-hidden="true" />
+            <div className="max-w-[82%] space-y-3 text-center">
+              <div className="text-muted-foreground border-border bg-surface/80 mx-auto flex size-10 items-center justify-center rounded-full border">
+                <Camera className="size-5" aria-hidden="true" />
+              </div>
+              <p className="text-foreground text-xl leading-tight font-bold sm:text-2xl">
+                {post.visual_text || 'Texte sur le visuel'}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {hasAsset ? 'Asset privé sans URL de prévisualisation' : 'Placeholder image Phase C'}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="space-y-3 px-3 py-3">

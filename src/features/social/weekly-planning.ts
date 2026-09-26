@@ -40,7 +40,8 @@ export const SOCIAL_AUDIENCES = [
 export type SocialWeek = Tables<'social_weeks'>;
 export type SocialPost = Tables<'social_posts'>;
 export type SocialPostAsset = Tables<'social_post_assets'>;
-export type SocialPostWithAssets = SocialPost & { assets: SocialPostAsset[] };
+export type SocialPostAssetWithPreview = SocialPostAsset & { signedUrl?: string };
+export type SocialPostWithAssets = SocialPost & { assets: SocialPostAssetWithPreview[] };
 
 export interface SocialStudioWeek {
   week: SocialWeek;
@@ -186,4 +187,13 @@ export function postObjective(post: SocialPost, week?: SocialWeek): string {
 
 export function postAudience(post: SocialPost, week?: SocialWeek): string {
   return readSocialPostContent(post.content).audience ?? week?.audience ?? 'Audience a definir';
+}
+
+export function preferredSocialPostAsset(post: SocialPostWithAssets): SocialPostAssetWithPreview | null {
+  return (
+    post.assets.find((asset) => asset.kind === 'selected') ??
+    post.assets.find((asset) => asset.kind === 'generated') ??
+    post.assets[0] ??
+    null
+  );
 }

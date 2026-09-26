@@ -9,25 +9,33 @@ import { SocialStudioWeekPlanner } from './SocialStudioWeekPlanner';
 const {
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
+  useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
+  useSelectSocialPostAsset,
   useUpdateSocialPost,
 } = vi.hoisted(() => ({
     useSocialStudioWeek: vi.fn(),
     useCreateDevelopmentSocialWeek: vi.fn(),
+    useGenerateSocialPostImages: vi.fn(),
     useGenerateSocialStudioWeek: vi.fn(),
+    useSelectSocialPostAsset: vi.fn(),
     useUpdateSocialPost: vi.fn(),
   }));
 
 vi.mock('../hooks/useSocialStudioWeek', () => ({
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
+  useGenerateSocialPostImages,
   useGenerateSocialStudioWeek,
+  useSelectSocialPostAsset,
   useUpdateSocialPost,
 }));
 
 const updateMutate = vi.fn();
 const createMutate = vi.fn();
 const generateMutate = vi.fn();
+const generateImagesMutate = vi.fn();
+const selectAssetMutate = vi.fn();
 
 function post(slot: number, status: SocialPostWithAssets['status']): SocialPostWithAssets {
   const plannedAt = new Date('2026-09-28T18:30:00');
@@ -85,6 +93,7 @@ function post(slot: number, status: SocialPostWithAssets['status']): SocialPostW
         provider: 'phase-c-mock',
         created_by: null,
         created_at: '2026-09-26T00:00:00.000Z',
+        signedUrl: `https://assets.test/${slot}.webp`,
       },
     ],
   };
@@ -134,6 +143,16 @@ function renderPlanner({
   });
   useGenerateSocialStudioWeek.mockReturnValue({
     mutate: generateMutate,
+    isPending: false,
+    error: null,
+  });
+  useGenerateSocialPostImages.mockReturnValue({
+    mutate: generateImagesMutate,
+    isPending: false,
+    error: null,
+  });
+  useSelectSocialPostAsset.mockReturnValue({
+    mutate: selectAssetMutate,
     isPending: false,
     error: null,
   });
@@ -239,5 +258,46 @@ describe('SocialStudioWeekPlanner', () => {
     renderPlanner({ canManage: false });
 
     expect(screen.getAllByRole('button', { name: 'Modifier' })[0]).toBeDisabled();
+  });
+
+  it('declenche la generation visuelle pour un brouillon sans publication', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture();
+    week.posts[0]!.assets = [];
+    renderPlanner({ data: week });
+
+    await user.click(screen.getAllByRole('button', { name: 'Générer visuels' })[0]!);
+
+    expect(generateImagesMutate).toHaveBeenCalledWith('post-1', expect.any(Object));
+    expect(updateMutate).not.toHaveBeenCalled();
+  });
+
+  it('permet de selectionner une variante image generee', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture();
+    week.posts[0]!.assets = [
+      {
+        ...week.posts[0]!.assets[0]!,
+        id: 'asset-generated-1',
+        kind: 'generated',
+        position: 1,
+        signedUrl: 'https://assets.test/generated-1.png',
+      },
+      {
+        ...week.posts[0]!.assets[0]!,
+        id: 'asset-generated-2',
+        kind: 'generated',
+        position: 2,
+        signedUrl: 'https://assets.test/generated-2.png',
+      },
+    ];
+    renderPlanner({ data: week });
+
+    await user.click(screen.getByRole('button', { name: /Variante 2/i }));
+
+    expect(selectAssetMutate).toHaveBeenCalledWith({
+      postId: 'post-1',
+      assetId: 'asset-generated-2',
+    });
   });
 });
