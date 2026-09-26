@@ -13,6 +13,8 @@ const handler = createSocialImageGenerateHandler({
     provider: Deno.env.get('SOCIAL_IMAGE_PROVIDER'),
     model: Deno.env.get('SOCIAL_IMAGE_MODEL'),
     allowMock: Deno.env.get('SOCIAL_IMAGE_ALLOW_MOCK'),
+    openaiApiKey: Deno.env.get('SOCIAL_OPENAI_IMAGE_API_KEY'),
+    quality: Deno.env.get('SOCIAL_IMAGE_QUALITY'),
     weeklyGenerationLimit: Deno.env.get('SOCIAL_IMAGE_WEEKLY_GENERATION_LIMIT'),
     maxConcurrency: Deno.env.get('SOCIAL_IMAGE_MAX_CONCURRENCY'),
     maxRetries: Deno.env.get('SOCIAL_IMAGE_MAX_RETRIES'),

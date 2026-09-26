@@ -1,11 +1,21 @@
 import { assert, assertEquals } from 'jsr:@std/assert';
 
 import {
+  DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL,
   MockImageGenerationProvider,
+  OpenAIImageGenerationProvider,
+  SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE,
+  SOCIAL_VISUAL_LAYOUTS,
+  SocialImagePromptBuilder,
   SocialImageProviderError,
+  SocialImageValidationError,
+  SocialVisualRenderer,
+  VisualQualityCheck,
   generateRenderedSocialImage,
   type ImageGenerationProvider,
   type SocialImageGenerationInput,
+  type SocialImagePostContext,
+  type SocialVisualLayout,
 } from './social-image-provider.ts';
 import {
   createSocialImageGenerateHandler,
@@ -41,6 +51,45 @@ function post(slotIndex = 1, overrides: Partial<SocialImagePostState> = {}): Soc
 
 function weekPosts(overrides: Partial<SocialImagePostState>[] = []) {
   return Array.from({ length: 7 }, (_, index) => post(index + 1, overrides[index] ?? {}));
+}
+
+function postContext(state: SocialImagePostState, visualText = state.visualText ?? ''): SocialImagePostContext {
+  return {
+    organizationId: state.organizationId,
+    postId: state.id,
+    slotIndex: state.slotIndex,
+    hook: state.hook ?? '',
+    visualText,
+    visualConcept: state.visualConcept ?? '',
+    caption: state.caption ?? '',
+    cta: state.cta,
+    objective: state.objective,
+    audience: state.audience,
+  };
+}
+
+function base64FromBytes(bytes: Uint8Array) {
+  let binary = '';
+  const chunkSize = 32_768;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.slice(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function renderLayout(layout: SocialVisualLayout, visualText: string) {
+  const state = post(SOCIAL_VISUAL_LAYOUTS.indexOf(layout) + 1, { visualText });
+  const context = postContext(state, visualText);
+  const prompt = new SocialImagePromptBuilder().build({
+    post: context,
+    layout,
+    width: 1080,
+    height: 1350,
+  });
+  const background = await new MockImageGenerationProvider().generateBackground({ post: context, prompt });
+  return new VisualQualityCheck().validate(
+    await new SocialVisualRenderer().render({ post: context, background: background.background, layout }),
+  );
 }
 
 function request(body: unknown, token = 'jwt') {
@@ -212,6 +261,131 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assertEquals(result.variants[0]!.mimeType, 'image/png');
   assert(result.variants[0]!.render.safeZoneOk);
   assert(result.variants[0]!.render.contrastRatio >= 4.5);
+  assert(result.variants[0]!.render.fileSizeBytes > 0);
+  assert(result.variants[0]!.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
+});
+
+Deno.test('SocialVisualRenderer rend chaque layout avec logo, crop portrait et safe zones', async () => {
+  for (const layout of SOCIAL_VISUAL_LAYOUTS) {
+    const image = await renderLayout(layout, 'Semaine claire.');
+
+    assertEquals(image.width, 1080);
+    assertEquals(image.height, 1350);
+    assertEquals(image.render.layout, layout);
+    assertEquals(image.render.crop.sourceWidth, 1024);
+    assertEquals(image.render.crop.sourceHeight, 1536);
+    assert(image.render.logoBox.x >= 48);
+    assert(image.render.logoBox.y >= 48);
+    assert(image.render.logoBox.x + image.render.logoBox.width <= 1032);
+    assert(image.render.logoBox.y + image.render.logoBox.height <= 1302);
+    assert(image.render.safeZoneOk);
+    assert(image.render.contrastRatio >= 4.5);
+  }
+});
+
+Deno.test('SocialVisualRenderer ajuste textes courts moyens longs accents apostrophes et ponctuation', async () => {
+  const samples = [
+    'Prêt ?',
+    "L'administratif commence après le chantier.",
+    'Votre planning est encore dans WhatsApp ?',
+    'Équipes, devis, photos : tout reste au même endroit.',
+  ];
+
+  for (const [index, visualText] of samples.entries()) {
+    const image = await renderLayout(index === 0 ? 'SPLIT_VISUAL' : 'TYPOGRAPHIC_HERO', visualText);
+    assert(image.render.lineCount >= 1);
+    assert(image.render.lineCount <= 4);
+    assert(image.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
+    assert(image.bytes.byteLength > 0);
+  }
+});
+
+Deno.test('SocialVisualRenderer refuse un texte impossible a rendre lisible', async () => {
+  let failed: unknown = null;
+  try {
+    await renderLayout(
+      'SPLIT_VISUAL',
+      'Cette phrase volontairement beaucoup trop longue doit depasser la zone typographique et rester illisible meme apres plusieurs tentatives de reduction automatique du moteur de rendu Social Studio.',
+    );
+  } catch (error) {
+    failed = error;
+  }
+
+  assert(failed instanceof SocialImageValidationError);
+  assertEquals((failed as SocialImageValidationError).code, 'text_overflow');
+});
+
+Deno.test('OpenAIImageGenerationProvider prepare un appel image sans appel reel dans les tests', async () => {
+  const state = post();
+  const context = postContext(state, 'Une intervention. Un seul fil clair.');
+  const prompt = new SocialImagePromptBuilder().build({
+    post: context,
+    layout: 'TYPOGRAPHIC_HERO',
+    width: 1080,
+    height: 1350,
+  });
+  const mock = await new MockImageGenerationProvider().generateBackground({ post: context, prompt });
+  const imageBase64 = base64FromBytes(mock.background.bytes);
+  const requests: Array<{ url: string; body: Record<string, unknown>; authorization: string | null }> = [];
+  const provider = new OpenAIImageGenerationProvider({
+    apiKey: 'test-secret-key',
+    model: DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL,
+    quality: 'medium',
+    fetcher: (async (url, init) => {
+      requests.push({
+        url: String(url),
+        body: JSON.parse(String(init?.body)),
+        authorization: init?.headers instanceof Headers
+          ? init.headers.get('authorization')
+          : (init?.headers as Record<string, string> | undefined)?.authorization ?? null,
+      });
+      return new Response(JSON.stringify({ data: [{ b64_json: imageBase64, revised_prompt: 'revised' }] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }) as typeof fetch,
+  });
+
+  const result = await provider.generateBackground({ post: context, prompt });
+
+  assertEquals(requests.length, 1);
+  assertEquals(requests[0]!.url, 'https://api.openai.com/v1/images/generations');
+  assertEquals(requests[0]!.body.model, DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL);
+  assertEquals(requests[0]!.body.quality, 'medium');
+  assertEquals(requests[0]!.body.output_format, 'png');
+  assertEquals(requests[0]!.body.size, '1024x1536');
+  assertEquals(requests[0]!.authorization, 'Bearer test-secret-key');
+  assertEquals(result.background.width, 1024);
+  assertEquals(result.background.height, 1536);
+});
+
+Deno.test('OpenAIImageGenerationProvider mappe les erreurs 429 et 5xx sans exposer de contenu sensible', async () => {
+  const state = post();
+  const context = postContext(state);
+  const prompt = new SocialImagePromptBuilder().build({
+    post: context,
+    layout: 'TYPOGRAPHIC_HERO',
+    width: 1080,
+    height: 1350,
+  });
+  const provider = new OpenAIImageGenerationProvider({
+    apiKey: 'test-secret-key',
+    fetcher: (async () =>
+      new Response(JSON.stringify({ error: { code: 'rate_limit_exceeded' } }), {
+        status: 429,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch,
+  });
+
+  let failed: unknown = null;
+  try {
+    await provider.generateBackground({ post: context, prompt });
+  } catch (error) {
+    failed = error;
+  }
+
+  assert(failed instanceof SocialImageProviderError);
+  assertEquals((failed as SocialImageProviderError).code, 'rate_limit');
 });
 
 Deno.test('social-image-generate exige auth et social.manage', async () => {

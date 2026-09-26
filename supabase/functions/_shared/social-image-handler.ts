@@ -126,6 +126,8 @@ export interface SocialImageGenerateEnv {
   provider?: string | null;
   model?: string | null;
   allowMock?: string | null;
+  openaiApiKey?: string | null;
+  quality?: string | null;
   weeklyGenerationLimit?: string | null;
   maxConcurrency?: string | null;
   maxRetries?: string | null;
@@ -185,6 +187,8 @@ function configuredProvider(options: SocialImageGenerateHandlerOptions): SocialI
     provider: options.env.provider,
     model: options.env.model,
     allowMock: options.env.allowMock,
+    openaiApiKey: options.env.openaiApiKey,
+    quality: options.env.quality,
   });
 }
 
@@ -230,8 +234,10 @@ function errorStatus(error: unknown): {
     return {
       status: 'invalid_response',
       httpStatus: 502,
-      message: 'La reponse du moteur visuel Social Studio est invalide. Aucun asset n’a ete cree.',
-      code: 'invalid_response',
+      message: error.code === 'text_overflow'
+        ? 'Le texte visuel est trop long pour produire une creation lisible.'
+        : 'La reponse du moteur visuel Social Studio est invalide. Aucun asset n’a ete cree.',
+      code: error.code,
     };
   }
   if (error instanceof SocialImageProviderError && error.code === 'timeout') {
@@ -534,6 +540,8 @@ export async function generateSocialImageForPost(input: {
         finalWidth: variant.width,
         finalHeight: variant.height,
         layout: variant.render.layout,
+        renderMs: variant.render.renderMs,
+        fileSizeBytes: variant.render.fileSizeBytes,
       },
     });
 
