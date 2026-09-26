@@ -14,6 +14,7 @@ import {
   createSocialContentGenerateHandler,
   type SocialContentStore,
   type SocialContentWeekState,
+  type SocialWeekVisualGenerator,
 } from './social-content-handler.ts';
 
 const ORG = '00000000-0000-4000-8000-000000000360';
@@ -69,6 +70,7 @@ function setup(options: {
   existingWeek?: SocialContentWeekState | null;
   reserve?: boolean;
   provider?: SocialAIProvider;
+  visualGenerator?: SocialWeekVisualGenerator;
 } = {}) {
   const calls = {
     createdWeeks: [] as Record<string, unknown>[],
@@ -149,6 +151,7 @@ function setup(options: {
   const handler = createSocialContentGenerateHandler({
     store,
     provider,
+    visualGenerator: options.visualGenerator,
     env: { weeklyGenerationLimit: '3' },
     randomId: () => '00000000-0000-4000-8000-00000000feed',
     now: () => new Date('2026-09-26T12:00:00.000Z'),
@@ -224,6 +227,56 @@ Deno.test('SocialStudioAI genere une semaine en un seul appel provider et insere
   assert.equal(calls.inserted.length, 1);
   assert.equal(calls.finalized.at(-1)?.status, 'success');
   assert.equal(JSON.stringify(calls.audits).includes('prompt'), false);
+});
+
+Deno.test('SocialStudioAI declenche la generation visuelle automatique de la semaine', async () => {
+  let visualCalls = 0;
+  const visualGenerator: SocialWeekVisualGenerator = {
+    async generate(input) {
+      visualCalls += 1;
+      assert.equal(input.organizationId, ORG);
+      assert.equal(input.weekId, 'week-generated');
+      assert.equal(input.userId, USER);
+      return { total: 7, generated: 7, existing: 0, failed: 0 };
+    },
+  };
+  const { handler, calls } = setup({ visualGenerator });
+
+  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const body = (await res.json()) as {
+    status: string;
+    visualGeneration: { total: number; generated: number; existing: number; failed: number } | null;
+  };
+
+  assert.equal(res.status, 200);
+  assert.equal(body.status, 'generated');
+  assert.equal(visualCalls, 1);
+  assert.deepEqual(body.visualGeneration, { total: 7, generated: 7, existing: 0, failed: 0 });
+  assert.equal(calls.deletedWeeks.length, 0);
+});
+
+Deno.test('SocialStudioAI conserve la semaine si le moteur visuel echoue', async () => {
+  const visualGenerator: SocialWeekVisualGenerator = {
+    async generate() {
+      throw new Error('visual provider unavailable');
+    },
+  };
+  const { handler, calls } = setup({ visualGenerator });
+
+  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const body = (await res.json()) as {
+    visualGeneration: { total: number; generated: number; existing: number; failed: number } | null;
+  };
+
+  assert.equal(res.status, 200);
+  assert.deepEqual(body.visualGeneration, { total: 7, generated: 0, existing: 0, failed: 7 });
+  assert.equal(calls.inserted.length, 1);
+  assert.equal(calls.deletedWeeks.length, 0);
+  assert.equal(calls.finalized.at(-1)?.status, 'success');
+  assert.equal(
+    calls.audits.some((audit) => audit.action === 'social.image_week_generation_failed'),
+    true,
+  );
 });
 
 Deno.test('SocialStudioAI est idempotent quand la semaine existe deja', async () => {

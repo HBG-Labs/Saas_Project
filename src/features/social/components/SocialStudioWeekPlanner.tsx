@@ -201,12 +201,12 @@ function WeekPostCard({
             size="sm"
             className="w-full"
             onClick={() => onGenerateImages(post)}
-            disabled={!canEdit || hasGeneratedAssets}
+            disabled={!canEdit}
             isLoading={isGeneratingImages}
             loadingLabel="Génération"
             leadingIcon={<Images />}
           >
-            {hasGeneratedAssets ? 'Visuels prêts' : 'Générer visuels'}
+            {hasGeneratedAssets ? 'Régénérer le visuel' : 'Générer le visuel'}
           </Button>
         </div>
       </CardContent>
@@ -270,9 +270,15 @@ export function SocialStudioWeekPlanner({
 
   const generatePostImages = (post: SocialPostWithAssets) => {
     setImageGenerationPostId(post.id);
-    generateImages.mutate(post.id, {
-      onSettled: () => setImageGenerationPostId(null),
-    });
+    generateImages.mutate(
+      {
+        postId: post.id,
+        force: post.assets.some((asset) => asset.kind === 'generated' || asset.kind === 'selected'),
+      },
+      {
+        onSettled: () => setImageGenerationPostId(null),
+      },
+    );
   };
 
   const selectPostAsset = (post: SocialPostWithAssets, assetId: string) => {
@@ -303,7 +309,7 @@ export function SocialStudioWeekPlanner({
           icon={CalendarDays}
           title="Aucune semaine Instagram préparée"
           description={
-            'Social Studio AI prépare une stratégie d’exploration et 7 brouillons image. Les visuels restent des placeholders jusqu’à la phase image.'
+            'Social Studio AI prépare la stratégie, les 7 contenus et les visuels finaux automatiquement.'
           }
           action={
             <div className="flex w-full max-w-sm flex-col items-center gap-3">
@@ -322,7 +328,7 @@ export function SocialStudioWeekPlanner({
                 <div className="border-border bg-surface rounded-lg border px-3 py-2 text-left text-xs">
                   <p className="text-foreground font-medium">Préparation de votre semaine…</p>
                   <p className="text-muted-foreground mt-1">
-                    Analyse des angles · Création des 7 contenus · Finalisation
+                    Création des contenus · Création des visuels · Finalisation
                   </p>
                 </div>
               ) : null}
@@ -375,7 +381,7 @@ export function SocialStudioWeekPlanner({
                 className="w-full sm:w-auto"
                 aria-describedby="weekly-validation-reasons"
               >
-                Valider et programmer la semaine
+                Valider la semaine
               </Button>
             </div>
           </div>
@@ -392,7 +398,7 @@ export function SocialStudioWeekPlanner({
             <div className="flex gap-2">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium">Validation hebdomadaire non active en Phase C.</p>
+                <p className="font-medium">Validation hebdomadaire prête pour la phase de programmation.</p>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs">
                   {issues.map((issue) => (
                     <li key={issue}>{issue}</li>

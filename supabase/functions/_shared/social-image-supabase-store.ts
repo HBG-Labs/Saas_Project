@@ -139,6 +139,43 @@ export function createSocialImageSupabaseStore(input: {
       };
     },
 
+    async listWeekPosts({ organizationId, weekId }) {
+      const { data: posts, error: postsError } = await admin
+        .from('social_posts')
+        .select(
+          'id,organization_id,week_id,slot_index,status,hook,visual_text,visual_brief,caption,cta,content',
+        )
+        .eq('organization_id', organizationId)
+        .eq('week_id', weekId)
+        .order('slot_index');
+      assertNoError(postsError);
+
+      const { data: week, error: weekError } = await admin
+        .from('social_weeks')
+        .select('id,starts_on')
+        .eq('organization_id', organizationId)
+        .eq('id', weekId)
+        .maybeSingle();
+      assertNoError(weekError);
+      if (!week) return [];
+
+      return (posts ?? []).map((post) => ({
+        id: post.id,
+        organizationId: post.organization_id,
+        weekId: post.week_id,
+        startsOn: week.starts_on,
+        slotIndex: post.slot_index,
+        status: post.status,
+        hook: post.hook ?? null,
+        visualText: post.visual_text ?? null,
+        visualConcept: post.visual_brief ?? null,
+        caption: post.caption ?? null,
+        cta: post.cta ?? null,
+        objective: textFromContent(post.content, 'objective'),
+        audience: textFromContent(post.content, 'audience'),
+      }));
+    },
+
     async listAssets({ organizationId, postId }) {
       const { data, error } = await admin
         .from('social_post_assets')
@@ -216,13 +253,21 @@ export function createSocialImageSupabaseStore(input: {
     },
 
     async insertGeneratedAssets({ organizationId, postId, userId, provider, variants }) {
+      const { error: resetSelectionError } = await admin
+        .from('social_post_assets')
+        .update({ kind: 'generated' })
+        .eq('organization_id', organizationId)
+        .eq('post_id', postId)
+        .eq('kind', 'selected');
+      assertNoError(resetSelectionError);
+
       const { data, error } = await admin
         .from('social_post_assets')
         .insert(
           variants.map(({ variant, storagePath, position }) => ({
             organization_id: organizationId,
             post_id: postId,
-            kind: 'generated',
+            kind: 'selected',
             position,
             storage_path: storagePath,
             original_filename: variant.originalFilename,
@@ -243,6 +288,18 @@ export function createSocialImageSupabaseStore(input: {
       })) satisfies StoredSocialImageAsset[];
     },
 
+    async markPostImageStatus({ organizationId, postId, status, lastError }) {
+      const { error } = await admin
+        .from('social_posts')
+        .update({
+          status,
+          last_error: lastError,
+        })
+        .eq('organization_id', organizationId)
+        .eq('id', postId);
+      assertNoError(error);
+    },
+
     async removeStorageObjects(paths) {
       if (paths.length === 0) return;
       const { error } = await admin.storage.from(BUCKET).remove(paths);
@@ -252,7 +309,7 @@ export function createSocialImageSupabaseStore(input: {
     async finalizeUsage({ usageId, organizationId, status, result, errorCode, completedAt }) {
       const patch: Record<string, unknown> = {
         status,
-        variant_count: result?.usage.variantCount ?? 0,
+        variant_count: result?.usage.generationCount ?? 0,
         prompt_chars: result?.usage.promptChars ?? 0,
         estimated_cost: result?.usage.estimatedCost ?? 0,
         latency_ms: result?.usage.latencyMs ?? null,

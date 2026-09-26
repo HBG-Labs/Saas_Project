@@ -5,6 +5,7 @@ import {
   SocialImageProviderError,
   SocialImageValidationError,
   createConfiguredSocialImageProvider,
+  generateRenderedSocialImage,
   validateSocialImageResult,
   type SocialGeneratedImageVariant,
   type SocialImageGenerationResult,
@@ -14,7 +15,9 @@ import {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const REQUEST_MAX_BYTES = 8_192;
-const DEFAULT_WEEKLY_IMAGE_LIMIT = 21;
+const DEFAULT_WEEKLY_IMAGE_LIMIT = 14;
+const DEFAULT_MAX_CONCURRENCY = 2;
+const DEFAULT_MAX_RETRIES = 2;
 const ALLOWED_POST_STATUSES = new Set(['draft', 'ready', 'failed']);
 
 export interface SocialImageAccessContext {
@@ -71,6 +74,7 @@ export interface SocialImageStore {
     | { ok: false; status: number; code: string; message: string }
   >;
   loadPost(input: { organizationId: string; postId: string }): Promise<SocialImagePostState | null>;
+  listWeekPosts(input: { organizationId: string; weekId: string }): Promise<SocialImagePostState[]>;
   listAssets(input: { organizationId: string; postId: string }): Promise<SocialImageAssetState[]>;
   reserveGeneration(input: {
     organizationId: string;
@@ -94,6 +98,12 @@ export interface SocialImageStore {
     provider: string;
     variants: Array<{ variant: SocialGeneratedImageVariant; storagePath: string; position: number }>;
   }): Promise<StoredSocialImageAsset[]>;
+  markPostImageStatus(input: {
+    organizationId: string;
+    postId: string;
+    status: 'ready' | 'failed';
+    lastError: string | null;
+  }): Promise<void>;
   removeStorageObjects(paths: string[]): Promise<void>;
   finalizeUsage(input: {
     usageId: string;
@@ -117,6 +127,8 @@ export interface SocialImageGenerateEnv {
   model?: string | null;
   allowMock?: string | null;
   weeklyGenerationLimit?: string | null;
+  maxConcurrency?: string | null;
+  maxRetries?: string | null;
 }
 
 export interface SocialImageGenerateHandlerOptions {
@@ -130,7 +142,7 @@ export interface SocialImageGenerateHandlerOptions {
 interface ValidRequestBody {
   organizationId: string;
   postId: string;
-  variantCount: number;
+  force: boolean;
 }
 
 function validateRequestBody(value: unknown): { ok: true; value: ValidRequestBody } | { ok: false; message: string } {
@@ -138,7 +150,7 @@ function validateRequestBody(value: unknown): { ok: true; value: ValidRequestBod
     return { ok: false, message: 'Corps de requete invalide.' };
   }
   const body = value as Record<string, unknown>;
-  const allowedKeys = new Set(['organizationId', 'postId', 'variantCount']);
+  const allowedKeys = new Set(['organizationId', 'postId', 'force']);
   if (Object.keys(body).some((key) => !allowedKeys.has(key))) {
     return { ok: false, message: 'Le corps contient des champs non autorises.' };
   }
@@ -148,22 +160,23 @@ function validateRequestBody(value: unknown): { ok: true; value: ValidRequestBod
   if (typeof body.postId !== 'string' || !UUID_PATTERN.test(body.postId)) {
     return { ok: false, message: 'Identifiant de publication invalide.' };
   }
-  const variantCount = body.variantCount === undefined ? 3 : body.variantCount;
-  if (
-    typeof variantCount !== 'number' ||
-    !Number.isInteger(variantCount) ||
-    variantCount < 1 ||
-    variantCount > 3
-  ) {
-    return { ok: false, message: 'Le nombre de variantes doit etre compris entre 1 et 3.' };
+  const force = body.force === undefined ? false : body.force;
+  if (typeof force !== 'boolean') {
+    return { ok: false, message: 'Le mode de regeneration est invalide.' };
   }
-  return { ok: true, value: { organizationId: body.organizationId, postId: body.postId, variantCount } };
+  return { ok: true, value: { organizationId: body.organizationId, postId: body.postId, force } };
 }
 
 function weeklyLimit(value: string | null | undefined): number {
   const parsed = Number(value ?? '');
   if (!Number.isInteger(parsed)) return DEFAULT_WEEKLY_IMAGE_LIMIT;
   return Math.min(Math.max(parsed, 1), 70);
+}
+
+function boundedInteger(value: string | null | undefined, fallback: number, min: number, max: number): number {
+  const parsed = Number(value ?? '');
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(Math.max(parsed, min), max);
 }
 
 function configuredProvider(options: SocialImageGenerateHandlerOptions): SocialImageProvider | null {
@@ -175,18 +188,11 @@ function configuredProvider(options: SocialImageGenerateHandlerOptions): SocialI
   });
 }
 
-function configuredProviderDescriptor(options: SocialImageGenerateHandlerOptions) {
-  return {
-    provider: options.provider?.id ?? (options.env.provider?.trim() || DEFAULT_SOCIAL_IMAGE_PROVIDER),
-    model: options.provider?.model ?? (options.env.model?.trim() || DEFAULT_SOCIAL_IMAGE_MODEL),
-  };
-}
-
 function usableExistingAssets(assets: SocialImageAssetState[]) {
   return assets.filter((asset) => asset.kind === 'generated' || asset.kind === 'selected');
 }
 
-function firstAvailablePosition(assets: SocialImageAssetState[], variantCount: number): number | null {
+function firstAvailablePosition(assets: SocialImageAssetState[], variantCount = 1): number | null {
   const used = new Set(assets.map((asset) => asset.position));
   for (let start = 1; start <= 10 - variantCount + 1; start += 1) {
     if (Array.from({ length: variantCount }, (_, index) => start + index).every((position) => !used.has(position))) {
@@ -250,6 +256,13 @@ function errorStatus(error: unknown): {
     message: 'La generation visuelle est momentanement indisponible.',
     code: 'unknown',
   };
+}
+
+function retryable(error: unknown): boolean {
+  return (
+    error instanceof SocialImageProviderError &&
+    ['timeout', 'rate_limit', 'server_error', 'temporary_unavailable'].includes(error.code)
+  );
 }
 
 async function auditSafe(store: SocialImageStore, input: Parameters<SocialImageStore['audit']>[0]) {
@@ -325,193 +338,320 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
     const postValidation = validatePostForGeneration(post);
     if (!postValidation.ok) return json({ error: 'SOCIAL_IMAGE_POST_NOT_READY', message: postValidation.message }, postValidation.status);
 
-    const existingAssets = await options.store.listAssets(parsed.value);
-    const existingUsableAssets = usableExistingAssets(existingAssets);
-    if (existingUsableAssets.length >= parsed.value.variantCount) {
-      return json({
-        status: 'existing',
-        postId: post.id,
-        assetsCount: existingUsableAssets.length,
-        generated: false,
-      });
-    }
+    const output = await generateSocialImageForPost({
+      store: options.store,
+      provider,
+      env: options.env,
+      post,
+      userId: auth.userId,
+      force: parsed.value.force,
+      now: nowFn,
+      randomId,
+      maxRetries: boundedInteger(options.env.maxRetries, DEFAULT_MAX_RETRIES, 0, 4),
+    });
 
-    const startPosition = firstAvailablePosition(existingAssets, parsed.value.variantCount);
-    if (startPosition === null) {
+    if (output.status === 'existing') {
+      return json({ status: 'existing', postId: post.id, assetsCount: output.assetsCount, generated: false });
+    }
+    if (output.status === 'in_progress') {
       return json(
         {
-          error: 'SOCIAL_IMAGE_ASSET_LIMIT',
-          message: 'Cette publication a deja trop de variantes visuelles.',
+          error: 'SOCIAL_IMAGE_GENERATION_IN_PROGRESS',
+          message: 'Une generation visuelle est deja en cours pour cette publication.',
         },
         409,
       );
     }
-
-    const generationId = randomId();
-    const descriptor = configuredProviderDescriptor(options);
-    let usageId: string | null = null;
-    let resultForUsage: Pick<SocialImageGenerationResult, 'usage' | 'provider' | 'model'> | undefined;
-    const uploadedPaths: string[] = [];
-
-    try {
-      const reservation = await options.store.reserveGeneration({
-        organizationId: parsed.value.organizationId,
-        userId: auth.userId,
-        postId: post.id,
-        generationId,
-        provider: descriptor.provider,
-        model: descriptor.model,
-        weeklyLimit: weeklyLimit(options.env.weeklyGenerationLimit),
-      });
-      if (reservation.status === 'in_progress') {
-        return json(
-          {
-            error: 'SOCIAL_IMAGE_GENERATION_IN_PROGRESS',
-            message: 'Une generation visuelle est deja en cours pour cette publication.',
-          },
-          409,
-        );
-      }
-      if (reservation.status === 'limit_reached' || !reservation.usageId) {
-        return json(
-          {
-            error: 'SOCIAL_IMAGE_WEEKLY_LIMIT_REACHED',
-            message: 'La limite interne de generations visuelles pour cette semaine est atteinte.',
-          },
-          429,
-        );
-      }
-      usageId = reservation.usageId;
-
-      await auditSafe(options.store, {
-        organizationId: parsed.value.organizationId,
-        userId: auth.userId,
-        action: 'social.image_generation_started',
-        entityId: post.id,
-        metadata: {
-          provider: descriptor.provider,
-          model: descriptor.model,
-          variantCount: parsed.value.variantCount,
+    if (output.status === 'limit_reached') {
+      return json(
+        {
+          error: 'SOCIAL_IMAGE_WEEKLY_LIMIT_REACHED',
+          message: 'La limite interne de generations visuelles pour cette semaine est atteinte.',
         },
-      });
-
-      const result = validateSocialImageResult(
-        await provider.generatePostImages({
-          post: {
-            organizationId: post.organizationId,
-            postId: post.id,
-            slotIndex: post.slotIndex,
-            hook: post.hook ?? '',
-            visualText: post.visualText!,
-            visualConcept: post.visualConcept!,
-            caption: post.caption ?? '',
-            cta: post.cta,
-            objective: post.objective,
-            audience: post.audience,
-          },
-          variantCount: parsed.value.variantCount,
-        }),
-        parsed.value.variantCount,
+        429,
       );
-      resultForUsage = { usage: result.usage, provider: result.provider, model: result.model };
+    }
+    if (output.status === 'failed') {
+      return json({ error: 'SOCIAL_IMAGE_GENERATION_FAILED', message: output.message }, output.httpStatus);
+    }
+    return json({
+      status: 'generated',
+      postId: post.id,
+      assetsCount: output.assetsCount,
+      provider: output.provider,
+      model: output.model,
+      usage: output.usage,
+    });
+  };
+}
 
-      const variantsWithPaths: Array<{ variant: SocialGeneratedImageVariant; storagePath: string; position: number }> = [];
-      for (const variant of result.variants) {
-        const storagePath = await options.store.uploadImage({
-          organizationId: parsed.value.organizationId,
-          postId: post.id,
-          generationId,
-          variant,
-        });
-        uploadedPaths.push(storagePath);
-        variantsWithPaths.push({
-          variant,
-          storagePath,
-          position: startPosition + variant.index - 1,
-        });
+export type SocialPostImageGenerationOutput =
+  | { status: 'generated'; postId: string; assetsCount: number; provider: string; model: string; usage: SocialImageGenerationResult['usage'] }
+  | { status: 'existing'; postId: string; assetsCount: number }
+  | { status: 'in_progress'; postId: string }
+  | { status: 'limit_reached'; postId: string }
+  | { status: 'failed'; postId: string; httpStatus: number; message: string; code: string };
+
+export async function generateSocialImageForPost(input: {
+  store: SocialImageStore;
+  provider: SocialImageProvider;
+  env: SocialImageGenerateEnv;
+  post: SocialImagePostState;
+  userId: string;
+  force: boolean;
+  now: () => Date;
+  randomId: () => string;
+  maxRetries: number;
+}): Promise<SocialPostImageGenerationOutput> {
+  const existingAssets = await input.store.listAssets({
+    organizationId: input.post.organizationId,
+    postId: input.post.id,
+  });
+  const existingUsableAssets = usableExistingAssets(existingAssets);
+  if (!input.force && existingUsableAssets.length >= 1) {
+    return { status: 'existing', postId: input.post.id, assetsCount: existingUsableAssets.length };
+  }
+
+  const startPosition = firstAvailablePosition(existingAssets, 1);
+  if (startPosition === null) {
+    return {
+      status: 'failed',
+      postId: input.post.id,
+      httpStatus: 409,
+      message: 'Cette publication a deja trop de variantes visuelles.',
+      code: 'asset_limit',
+    };
+  }
+
+  const generationId = input.randomId();
+  const descriptor = {
+    provider: input.provider.id || DEFAULT_SOCIAL_IMAGE_PROVIDER,
+    model: input.provider.model || DEFAULT_SOCIAL_IMAGE_MODEL,
+  };
+  let usageId: string | null = null;
+  let resultForUsage: Pick<SocialImageGenerationResult, 'usage' | 'provider' | 'model'> | undefined;
+  const uploadedPaths: string[] = [];
+
+  try {
+    const reservation = await input.store.reserveGeneration({
+      organizationId: input.post.organizationId,
+      userId: input.userId,
+      postId: input.post.id,
+      generationId,
+      provider: descriptor.provider,
+      model: descriptor.model,
+      weeklyLimit: weeklyLimit(input.env.weeklyGenerationLimit),
+    });
+    if (reservation.status === 'in_progress') return { status: 'in_progress', postId: input.post.id };
+    if (reservation.status === 'limit_reached' || !reservation.usageId) {
+      return { status: 'limit_reached', postId: input.post.id };
+    }
+    usageId = reservation.usageId;
+
+    await auditSafe(input.store, {
+      organizationId: input.post.organizationId,
+      userId: input.userId,
+      action: 'social.image_generation_started',
+      entityId: input.post.id,
+      metadata: { provider: descriptor.provider, model: descriptor.model, finalAsset: true },
+    });
+
+    let result: SocialImageGenerationResult | null = null;
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt <= input.maxRetries; attempt += 1) {
+      try {
+        result = validateSocialImageResult(
+          await generateRenderedSocialImage({
+            provider: input.provider,
+            post: {
+              organizationId: input.post.organizationId,
+              postId: input.post.id,
+              slotIndex: input.post.slotIndex,
+              hook: input.post.hook ?? '',
+              visualText: input.post.visualText!,
+              visualConcept: input.post.visualConcept!,
+              caption: input.post.caption ?? '',
+              cta: input.post.cta,
+              objective: input.post.objective,
+              audience: input.post.audience,
+            },
+          }),
+          1,
+        );
+        break;
+      } catch (error) {
+        lastError = error;
+        if (!retryable(error) || attempt >= input.maxRetries) throw error;
       }
+    }
+    if (!result) throw lastError ?? new SocialImageProviderError('Generation visuelle indisponible.');
 
-      const assets = await options.store.insertGeneratedAssets({
-        organizationId: parsed.value.organizationId,
-        postId: post.id,
-        userId: auth.userId,
-        provider: result.provider,
-        variants: variantsWithPaths,
-      });
+    resultForUsage = { usage: result.usage, provider: result.provider, model: result.model };
+    const variant = result.variants[0]!;
+    const storagePath = await input.store.uploadImage({
+      organizationId: input.post.organizationId,
+      postId: input.post.id,
+      generationId,
+      variant,
+    });
+    uploadedPaths.push(storagePath);
 
-      await options.store.finalizeUsage({
-        usageId,
-        organizationId: parsed.value.organizationId,
-        status: 'success',
-        result: resultForUsage,
-        completedAt: nowFn().toISOString(),
-      });
+    const assets = await input.store.insertGeneratedAssets({
+      organizationId: input.post.organizationId,
+      postId: input.post.id,
+      userId: input.userId,
+      provider: result.provider,
+      variants: [{ variant, storagePath, position: startPosition }],
+    });
 
-      await auditSafe(options.store, {
-        organizationId: parsed.value.organizationId,
-        userId: auth.userId,
-        action: 'social.image_generation_completed',
-        entityId: post.id,
-        metadata: {
-          provider: result.provider,
-          model: result.model,
-          variantCount: result.variants.length,
-          promptChars: result.usage.promptChars,
-          estimatedCost: result.usage.estimatedCost,
-          latencyMs: result.usage.latencyMs,
-        },
-      });
+    await input.store.markPostImageStatus({
+      organizationId: input.post.organizationId,
+      postId: input.post.id,
+      status: 'ready',
+      lastError: null,
+    });
 
-      return json({
-        status: 'generated',
-        postId: post.id,
-        assetsCount: assets.length,
+    await input.store.finalizeUsage({
+      usageId,
+      organizationId: input.post.organizationId,
+      status: 'success',
+      result: resultForUsage,
+      completedAt: input.now().toISOString(),
+    });
+
+    await auditSafe(input.store, {
+      organizationId: input.post.organizationId,
+      userId: input.userId,
+      action: 'social.image_generation_completed',
+      entityId: input.post.id,
+      metadata: {
         provider: result.provider,
         model: result.model,
-        usage: result.usage,
-      });
-    } catch (error) {
-      const failure = errorStatus(error);
+        generationCount: result.usage.generationCount,
+        promptChars: result.usage.promptChars,
+        estimatedCost: result.usage.estimatedCost,
+        latencyMs: result.usage.latencyMs,
+        finalWidth: variant.width,
+        finalHeight: variant.height,
+        layout: variant.render.layout,
+      },
+    });
 
-      if (uploadedPaths.length > 0) {
-        try {
-          await options.store.removeStorageObjects(uploadedPaths);
-        } catch (cleanupError) {
-          console.error('social image cleanup failed', cleanupError instanceof Error ? cleanupError.name : 'unknown');
-        }
+    return {
+      status: 'generated',
+      postId: input.post.id,
+      assetsCount: assets.length,
+      provider: result.provider,
+      model: result.model,
+      usage: result.usage,
+    };
+  } catch (error) {
+    const failure = errorStatus(error);
+    if (uploadedPaths.length > 0) {
+      try {
+        await input.store.removeStorageObjects(uploadedPaths);
+      } catch (cleanupError) {
+        console.error('social image cleanup failed', cleanupError instanceof Error ? cleanupError.name : 'unknown');
       }
-
-      if (usageId) {
-        try {
-          const validationUsage =
-            error instanceof SocialImageValidationError ? error.result : undefined;
-          await options.store.finalizeUsage({
-            usageId,
-            organizationId: parsed.value.organizationId,
-            status: failure.status,
-            result: resultForUsage ?? validationUsage,
-            errorCode: failure.code,
-            completedAt: nowFn().toISOString(),
-          });
-        } catch (usageError) {
-          console.error('social image usage finalization failed', usageError instanceof Error ? usageError.name : 'unknown');
-        }
-      }
-
-      await auditSafe(options.store, {
-        organizationId: parsed.value.organizationId,
-        userId: auth.userId,
-        action: 'social.image_generation_failed',
-        entityId: post.id,
-        metadata: {
-          provider: descriptor.provider,
-          model: descriptor.model,
-          reason: failure.code,
-        },
-      });
-
-      console.error('social image generation failed', error instanceof Error ? error.name : 'unknown');
-      return json({ error: 'SOCIAL_IMAGE_GENERATION_FAILED', message: failure.message }, failure.httpStatus);
     }
+    if (usageId) {
+      try {
+        const validationUsage = error instanceof SocialImageValidationError ? error.result : undefined;
+        await input.store.finalizeUsage({
+          usageId,
+          organizationId: input.post.organizationId,
+          status: failure.status,
+          result: resultForUsage ?? validationUsage,
+          errorCode: failure.code,
+          completedAt: input.now().toISOString(),
+        });
+      } catch (usageError) {
+        console.error('social image usage finalization failed', usageError instanceof Error ? usageError.name : 'unknown');
+      }
+    }
+    await input.store.markPostImageStatus({
+      organizationId: input.post.organizationId,
+      postId: input.post.id,
+      status: 'failed',
+      lastError: failure.code,
+    });
+    await auditSafe(input.store, {
+      organizationId: input.post.organizationId,
+      userId: input.userId,
+      action: 'social.image_generation_failed',
+      entityId: input.post.id,
+      metadata: { provider: descriptor.provider, model: descriptor.model, reason: failure.code },
+    });
+    console.error('social image generation failed', error instanceof Error ? error.name : 'unknown');
+    return {
+      status: 'failed',
+      postId: input.post.id,
+      httpStatus: failure.httpStatus,
+      message: failure.message,
+      code: failure.code,
+    };
+  }
+}
+
+export async function generateSocialImagesForWeek(input: {
+  store: SocialImageStore;
+  provider: SocialImageProvider;
+  env: SocialImageGenerateEnv;
+  organizationId: string;
+  weekId: string;
+  userId: string;
+  now: () => Date;
+  randomId: () => string;
+}): Promise<{ total: number; generated: number; existing: number; failed: number; results: SocialPostImageGenerationOutput[] }> {
+  const posts = await input.store.listWeekPosts({ organizationId: input.organizationId, weekId: input.weekId });
+  const concurrency = boundedInteger(input.env.maxConcurrency, DEFAULT_MAX_CONCURRENCY, 1, 3);
+  const maxRetries = boundedInteger(input.env.maxRetries, DEFAULT_MAX_RETRIES, 0, 4);
+  const results: SocialPostImageGenerationOutput[] = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < posts.length) {
+      const post = posts[index]!;
+      index += 1;
+      const validation = validatePostForGeneration(post);
+      if (!validation.ok) {
+        await input.store.markPostImageStatus({
+          organizationId: post.organizationId,
+          postId: post.id,
+          status: 'failed',
+          lastError: 'post_not_ready_for_visual_generation',
+        });
+        results.push({
+          status: 'failed',
+          postId: post.id,
+          httpStatus: validation.status,
+          message: validation.message,
+          code: 'post_not_ready',
+        });
+        continue;
+      }
+      results.push(
+        await generateSocialImageForPost({
+          store: input.store,
+          provider: input.provider,
+          env: input.env,
+          post,
+          userId: input.userId,
+          force: false,
+          now: input.now,
+          randomId: input.randomId,
+          maxRetries,
+        }),
+      );
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  return {
+    total: posts.length,
+    generated: results.filter((result) => result.status === 'generated').length,
+    existing: results.filter((result) => result.status === 'existing').length,
+    failed: results.filter((result) => result.status === 'failed').length,
+    results,
   };
 }

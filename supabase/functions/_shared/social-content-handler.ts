@@ -106,10 +106,26 @@ export interface SocialContentGenerateEnv {
   weeklyGenerationLimit?: string | null;
 }
 
+export interface SocialWeekVisualGenerationResult {
+  total: number;
+  generated: number;
+  existing: number;
+  failed: number;
+}
+
+export interface SocialWeekVisualGenerator {
+  generate(input: {
+    organizationId: string;
+    weekId: string;
+    userId: string;
+  }): Promise<SocialWeekVisualGenerationResult>;
+}
+
 export interface SocialContentGenerateHandlerOptions {
   store: SocialContentStore;
   env: SocialContentGenerateEnv;
   provider?: SocialAIProvider;
+  visualGenerator?: SocialWeekVisualGenerator;
   now?: () => Date;
   randomId?: () => string;
 }
@@ -435,6 +451,27 @@ export function createSocialContentGenerateHandler(options: SocialContentGenerat
         nowIso: nowFn().toISOString(),
       });
 
+      let visualGeneration: SocialWeekVisualGenerationResult | null = null;
+      if (options.visualGenerator) {
+        try {
+          visualGeneration = await options.visualGenerator.generate({
+            organizationId: parsed.value.organizationId,
+            weekId,
+            userId: auth.userId,
+          });
+        } catch (visualError) {
+          visualGeneration = { total: 7, generated: 0, existing: 0, failed: 7 };
+          console.error('social visual week generation failed', visualError instanceof Error ? visualError.name : 'unknown');
+          await auditSafe(options.store, {
+            organizationId: parsed.value.organizationId,
+            userId: auth.userId,
+            action: 'social.image_week_generation_failed',
+            entityId: weekId,
+            metadata: { reason: visualError instanceof Error ? visualError.name : 'unknown' },
+          });
+        }
+      }
+
       await options.store.finalizeUsage({
         usageId,
         organizationId: parsed.value.organizationId,
@@ -457,6 +494,7 @@ export function createSocialContentGenerateHandler(options: SocialContentGenerat
           estimatedCost: result.usage.estimatedCost,
           latencyMs: result.usage.latencyMs,
           generatorVersion: result.generatorVersion,
+          visualGeneration,
         },
       });
 
@@ -464,6 +502,7 @@ export function createSocialContentGenerateHandler(options: SocialContentGenerat
         status: 'generated',
         weekId,
         postsCount: 7,
+        visualGeneration,
         provider: result.provider,
         model: result.model,
         usage: result.usage,

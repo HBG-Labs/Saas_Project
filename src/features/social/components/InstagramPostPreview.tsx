@@ -70,7 +70,7 @@ export function InstagramPostPreview({
                 {post.visual_text || 'Texte sur le visuel'}
               </p>
               <p className="text-muted-foreground text-xs">
-                {hasAsset ? 'Asset privé sans URL de prévisualisation' : 'Placeholder image Phase C'}
+                {hasAsset ? 'Asset privé sans URL de prévisualisation' : 'Visuel final en attente'}
               </p>
             </div>
           </>

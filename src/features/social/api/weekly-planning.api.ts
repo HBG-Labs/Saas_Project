@@ -56,7 +56,7 @@ const generateImagesResponse = z.object({
   model: z.string().optional(),
   usage: z
     .object({
-      variantCount: z.number().int().min(0).max(10),
+      generationCount: z.number().int().min(0).max(10),
       promptChars: z.number().int().min(0),
       estimatedCost: z.number().nullable(),
       latencyMs: z.number().int().min(0),
@@ -250,7 +250,7 @@ async function ensureWeek(organizationId: string, startsOn: string): Promise<Soc
         zone: 'France + DOM',
         strategy: {
           source: 'phase_c_mock_week',
-          note: 'Brouillons de developpement remplaces par generateWeeklyContent en Phase D.',
+          note: 'Brouillons de developpement reserves aux tests locaux Social Studio.',
         },
       })
       .select('*')
@@ -285,7 +285,7 @@ function mockPostInsert(
       placeholder_variant: `slot-${slotIndex}`,
     },
     recommendation_reason:
-      'Brouillon Phase C pour tester l’UX. La recommandation IA arrivera en Phase D.',
+      'Brouillon de test local pour verifier l’UX Social Studio sans appeler les providers.',
   };
 }
 
@@ -362,6 +362,7 @@ export async function generateSocialStudioWeek(
 export async function generateSocialPostImages(
   organizationId: string,
   postId: string,
+  force = false,
 ): Promise<z.infer<typeof generateImagesResponse>> {
   postImageInput.parse({ organizationId, postId });
 
@@ -370,7 +371,7 @@ export async function generateSocialPostImages(
     body: {
       organizationId,
       postId,
-      variantCount: 3,
+      force,
     },
   });
   if (response.error) {

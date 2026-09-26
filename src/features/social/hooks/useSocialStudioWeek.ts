@@ -51,7 +51,8 @@ export function useGenerateSocialStudioWeek(organizationId: string, startsOn: st
 export function useGenerateSocialPostImages(organizationId: string, startsOn: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (postId: string) => generateSocialPostImages(organizationId, postId),
+    mutationFn: ({ postId, force }: { postId: string; force?: boolean }) =>
+      generateSocialPostImages(organizationId, postId, force ?? false),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
     },

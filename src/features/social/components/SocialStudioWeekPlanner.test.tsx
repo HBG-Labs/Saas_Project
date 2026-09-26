@@ -184,7 +184,7 @@ describe('SocialStudioWeekPlanner', () => {
       expect(screen.getByText(new RegExp(day))).toBeInTheDocument();
     }
     expect(screen.getByText(/0\/7 prêts · 7 à compléter/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Valider et programmer la semaine' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Valider la semaine' })).toBeDisabled();
   });
 
   it('lance Social Studio AI uniquement sur action explicite', async () => {
@@ -266,9 +266,12 @@ describe('SocialStudioWeekPlanner', () => {
     week.posts[0]!.assets = [];
     renderPlanner({ data: week });
 
-    await user.click(screen.getAllByRole('button', { name: 'Générer visuels' })[0]!);
+    await user.click(screen.getAllByRole('button', { name: 'Générer le visuel' })[0]!);
 
-    expect(generateImagesMutate).toHaveBeenCalledWith('post-1', expect.any(Object));
+    expect(generateImagesMutate).toHaveBeenCalledWith(
+      { postId: 'post-1', force: false },
+      expect.any(Object),
+    );
     expect(updateMutate).not.toHaveBeenCalled();
   });
 
