@@ -152,6 +152,17 @@ describe('moindre privilège', () => {
     }
   });
 
+  it('réserve la publication Social Studio au propriétaire et à l’administrateur', () => {
+    for (const role of ORG_ROLES) {
+      const canPrepare = ['owner', 'admin', 'manager'].includes(role);
+      const canPublish = ['owner', 'admin'].includes(role);
+
+      expect(roleHasPermission(role, PERMISSIONS.socialView)).toBe(canPrepare);
+      expect(roleHasPermission(role, PERMISSIONS.socialManage)).toBe(canPrepare);
+      expect(roleHasPermission(role, PERMISSIONS.socialPublish)).toBe(canPublish);
+    }
+  });
+
   it("ne donne pas la vue globale des missions au chef d'équipe", () => {
     // Il voit les missions de SES équipes — décidé par appartenance dans la
     // policy, pas par une permission générale.
@@ -240,6 +251,7 @@ describe('synchronisation avec le seed SQL', () => {
       MIGRATION_FILES.workspace,
       MIGRATION_FILES.feuilleHeures,
       MIGRATION_FILES.workspaceV2,
+      MIGRATION_FILES.socialStudioFoundations,
     ],
     'role_permissions',
   );

@@ -48,6 +48,8 @@ export const FEATURES = {
   invoicing: 'invoicing',
   planning: 'planning',
   aiAssistant: 'ai_assistant',
+  /** Social Studio / Instagram Growth Engine — V1 image, Pro et au-dessus. */
+  socialStudio: 'social_studio',
   /**
    * Espaces, pages, tâches — supabase/migrations/20260929090000_workspace.sql.
    * Accordée aux CINQ formules : la clé existe et le gating est en place, sans
@@ -136,6 +138,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     documents: null,
     client_portal: null,
     ai_assistant: 100,
+    social_studio: null,
     workspace: null,
     ai_transcription_minutes: 120,
   },
@@ -166,6 +169,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     invoicing: null,
     planning: null,
     ai_assistant: 300,
+    social_studio: null,
     workspace: null,
     ai_transcription_minutes: 600,
   },
@@ -196,6 +200,7 @@ export const PLAN_FEATURES: Record<PlanCode, FeatureMatrix> = {
     invoicing: null,
     planning: null,
     ai_assistant: 1000,
+    social_studio: null,
     workspace: null,
     ai_transcription_minutes: 3000,
   },
