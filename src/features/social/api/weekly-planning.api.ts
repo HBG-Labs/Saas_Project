@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { isProduction } from '@/config/env';
-import { supabase, unwrap, unwrapMaybe } from '@/services/supabase';
+import { messageDeLaFonction, supabase, unwrap, unwrapMaybe } from '@/services/supabase';
 import type { TablesInsert, TablesUpdate } from '@/types/database';
 
 import {
@@ -24,6 +24,22 @@ import {
 const weekInput = z.object({
   organizationId: z.string().uuid(),
   startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const generateWeekResponse = z.object({
+  status: z.enum(['generated', 'existing']),
+  weekId: z.string().uuid(),
+  postsCount: z.number().int().min(0).max(7),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  usage: z
+    .object({
+      inputTokens: z.number().int().min(0),
+      outputTokens: z.number().int().min(0),
+      estimatedCost: z.number().nullable(),
+      latencyMs: z.number().int().min(0),
+    })
+    .optional(),
 });
 
 const MOCK_POSTS = [
@@ -242,6 +258,53 @@ async function ensureMockAssets(organizationId: string, posts: SocialPost[]) {
   }));
 
   await unwrap(supabase.from('social_post_assets').insert(assets).select('id'));
+}
+
+async function authenticatedFunctionHeaders(): Promise<{ Authorization: string }> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) throw new Error('Votre session a expiré. Reconnectez-vous.');
+
+  const expiresAt = data.session.expires_at ?? 0;
+  let session = data.session;
+  if (expiresAt <= Math.floor(Date.now() / 1000) + 120) {
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.error || !refreshed.data.session) {
+      throw new Error('Votre session a expiré. Reconnectez-vous.');
+    }
+    session = refreshed.data.session;
+  }
+
+  return { Authorization: `Bearer ${session.access_token}` };
+}
+
+export async function generateSocialStudioWeek(
+  organizationId: string,
+  startsOn = currentWeekStartsOn(),
+): Promise<SocialStudioWeek> {
+  weekInput.parse({ organizationId, startsOn });
+
+  const response = await supabase.functions.invoke<unknown>('social-content-generate', {
+    headers: await authenticatedFunctionHeaders(),
+    body: {
+      organizationId,
+      startsOn,
+      timezoneOffsetMinutes: new Date().getTimezoneOffset(),
+    },
+  });
+  if (response.error) {
+    throw new Error(
+      await messageDeLaFonction(response.error, 'Social Studio AI n’a pas pu préparer la semaine.'),
+    );
+  }
+
+  const parsed = generateWeekResponse.safeParse(response.data);
+  if (!parsed.success) throw new Error('La réponse Social Studio AI est incomplète.');
+
+  const week = await getSocialStudioWeek(organizationId, startsOn);
+  if (week === null) {
+    throw new Error('La semaine générée n’a pas pu être rechargée.');
+  }
+  return week;
 }
 
 export async function createDevelopmentSocialWeek(

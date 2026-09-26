@@ -4,6 +4,7 @@ import { qk } from '@/lib/query-keys';
 
 import {
   createDevelopmentSocialWeek,
+  generateSocialStudioWeek,
   getSocialStudioWeek,
   updateSocialPostDraft,
 } from '../api/weekly-planning.api';
@@ -29,6 +30,16 @@ export function useCreateDevelopmentSocialWeek(organizationId: string, startsOn:
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => createDevelopmentSocialWeek(organizationId, startsOn),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
+    },
+  });
+}
+
+export function useGenerateSocialStudioWeek(organizationId: string, startsOn: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => generateSocialStudioWeek(organizationId, startsOn),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: qk.social.week(organizationId, startsOn) });
     },

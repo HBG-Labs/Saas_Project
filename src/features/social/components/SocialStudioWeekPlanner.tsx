@@ -32,6 +32,7 @@ import {
 } from '../weekly-planning';
 import {
   useCreateDevelopmentSocialWeek,
+  useGenerateSocialStudioWeek,
   useSocialStudioWeek,
   useUpdateSocialPost,
 } from '../hooks/useSocialStudioWeek';
@@ -159,7 +160,8 @@ export function SocialStudioWeekPlanner({
 }) {
   const [selectedPost, setSelectedPost] = useState<SocialPostWithAssets | null>(null);
   const weekQuery = useSocialStudioWeek(organizationId, startsOn);
-  const createWeek = useCreateDevelopmentSocialWeek(organizationId, startsOn);
+  const createMockWeek = useCreateDevelopmentSocialWeek(organizationId, startsOn);
+  const generateWeek = useGenerateSocialStudioWeek(organizationId, startsOn);
   const updatePost = useUpdateSocialPost(organizationId, startsOn);
 
   if (weekQuery.isPending) return <LoadingScreen label="Chargement de Social Studio…" />;
@@ -181,6 +183,7 @@ export function SocialStudioWeekPlanner({
     .sort((a, b) => String(postPlannedFor(a)).localeCompare(String(postPlannedFor(b))))[0];
   const issues = validationIssues(posts);
   const canCreateMockWeek = canManage && !isProduction;
+  const canGenerateWeek = canManage;
 
   const savePost = (
     post: SocialPostWithAssets,
@@ -219,20 +222,50 @@ export function SocialStudioWeekPlanner({
           icon={CalendarDays}
           title="Aucune semaine Instagram préparée"
           description={
-            isProduction
-              ? 'La préparation automatique sera branchée sur le moteur de contenu serveur en Phase D.'
-              : 'Initialisez 7 brouillons image de développement pour tester le workflow mobile sans IA.'
+            'Social Studio AI prépare une stratégie d’exploration et 7 brouillons image. Les visuels restent des placeholders jusqu’à la phase image.'
           }
           action={
-            <Button
-              onClick={() => createWeek.mutate()}
-              isLoading={createWeek.isPending}
-              loadingLabel="Préparation de la semaine"
-              disabled={!canCreateMockWeek}
-              leadingIcon={<Plus />}
-            >
-              Préparer ma semaine
-            </Button>
+            <div className="flex w-full max-w-sm flex-col items-center gap-3">
+              <Button
+                onClick={() => generateWeek.mutate()}
+                isLoading={generateWeek.isPending}
+                loadingLabel="Préparation de votre semaine"
+                disabled={!canGenerateWeek}
+                leadingIcon={<Plus />}
+                className="w-full"
+              >
+                Préparer ma semaine
+              </Button>
+
+              {generateWeek.isPending ? (
+                <div className="border-border bg-surface rounded-lg border px-3 py-2 text-left text-xs">
+                  <p className="text-foreground font-medium">Préparation de votre semaine…</p>
+                  <p className="text-muted-foreground mt-1">
+                    Analyse des angles · Création des 7 contenus · Finalisation
+                  </p>
+                </div>
+              ) : null}
+
+              {generateWeek.error ? (
+                <p role="alert" className="text-error text-sm">
+                  {generateWeek.error instanceof Error
+                    ? generateWeek.error.message
+                    : 'Social Studio AI n’a pas pu préparer la semaine.'}
+                </p>
+              ) : null}
+
+              {canCreateMockWeek ? (
+                <Button
+                  variant="outline"
+                  onClick={() => createMockWeek.mutate()}
+                  isLoading={createMockWeek.isPending}
+                  loadingLabel="Création des brouillons de test"
+                  className="w-full"
+                >
+                  Créer des brouillons de test
+                </Button>
+              ) : null}
+            </div>
           }
         />
       ) : (

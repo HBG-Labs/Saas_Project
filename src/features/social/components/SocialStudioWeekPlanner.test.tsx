@@ -6,22 +6,28 @@ import type { SocialPostWithAssets, SocialStudioWeek } from '../weekly-planning'
 
 import { SocialStudioWeekPlanner } from './SocialStudioWeekPlanner';
 
-const { useSocialStudioWeek, useCreateDevelopmentSocialWeek, useUpdateSocialPost } = vi.hoisted(
-  () => ({
+const {
+  useSocialStudioWeek,
+  useCreateDevelopmentSocialWeek,
+  useGenerateSocialStudioWeek,
+  useUpdateSocialPost,
+} = vi.hoisted(() => ({
     useSocialStudioWeek: vi.fn(),
     useCreateDevelopmentSocialWeek: vi.fn(),
+    useGenerateSocialStudioWeek: vi.fn(),
     useUpdateSocialPost: vi.fn(),
-  }),
-);
+  }));
 
 vi.mock('../hooks/useSocialStudioWeek', () => ({
   useSocialStudioWeek,
   useCreateDevelopmentSocialWeek,
+  useGenerateSocialStudioWeek,
   useUpdateSocialPost,
 }));
 
 const updateMutate = vi.fn();
 const createMutate = vi.fn();
+const generateMutate = vi.fn();
 
 function post(slot: number, status: SocialPostWithAssets['status']): SocialPostWithAssets {
   const plannedAt = new Date('2026-09-28T18:30:00');
@@ -126,6 +132,11 @@ function renderPlanner({
     mutate: createMutate,
     isPending: false,
   });
+  useGenerateSocialStudioWeek.mockReturnValue({
+    mutate: generateMutate,
+    isPending: false,
+    error: null,
+  });
   useUpdateSocialPost.mockReturnValue({
     mutate: updateMutate,
     isPending: false,
@@ -157,13 +168,24 @@ describe('SocialStudioWeekPlanner', () => {
     expect(screen.getByRole('button', { name: 'Valider et programmer la semaine' })).toBeDisabled();
   });
 
-  it('initialise les brouillons uniquement sur action explicite', async () => {
+  it('lance Social Studio AI uniquement sur action explicite', async () => {
     const user = userEvent.setup();
     renderPlanner({ data: null });
 
-    expect(createMutate).not.toHaveBeenCalled();
+    expect(generateMutate).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Préparer ma semaine' }));
+    expect(generateMutate).toHaveBeenCalledTimes(1);
+    expect(createMutate).not.toHaveBeenCalled();
+  });
+
+  it('conserve un mock de developpement explicite et separé de Social Studio AI', async () => {
+    const user = userEvent.setup();
+    renderPlanner({ data: null });
+
+    await user.click(screen.getByRole('button', { name: 'Créer des brouillons de test' }));
+
     expect(createMutate).toHaveBeenCalledTimes(1);
+    expect(generateMutate).not.toHaveBeenCalled();
   });
 
   it('ouvre l’édition et valide les champs avant READY', async () => {

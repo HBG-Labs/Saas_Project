@@ -86,6 +86,7 @@ jobs:
             supabase/functions/superpdp-oauth-callback/index.ts \
             supabase/functions/instagram-connection/index.ts \
             supabase/functions/instagram-oauth-callback/index.ts \
+            supabase/functions/social-content-generate/index.ts \
             supabase/functions/superpdp-invoice/index.ts \
             supabase/functions/superpdp-worker/index.ts \
             supabase/functions/ai-assistant/index.ts \
@@ -148,6 +149,7 @@ jobs:
             supabase/functions/prospecting-contact-scraper/handler.test.ts \
             supabase/functions/_shared/portal-mail.test.ts \
             supabase/functions/_shared/instagram-connection-handler.test.ts \
+            supabase/functions/_shared/social-content-handler.test.ts \
             supabase/functions/resend-webhook/handler.test.ts \
             supabase/functions/portal-message-send/handler.test.ts \
             supabase/functions/portal-request-access/handler.test.ts \
