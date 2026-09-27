@@ -343,13 +343,39 @@ describe('SocialStudioWeekPlanner', () => {
     week.posts[0]!.assets = [];
     renderPlanner({ data: week });
 
-    await user.click(screen.getAllByRole('button', { name: 'Générer le visuel' })[0]!);
+    await user.click(screen.getByRole('button', { name: 'Générer le visuel pour LUNDI' }));
 
     expect(generateImagesMutate).toHaveBeenCalledWith(
       { postId: 'post-1', force: false },
       expect.any(Object),
     );
     expect(updateMutate).not.toHaveBeenCalled();
+  });
+
+  it('cree une autre proposition pour un seul jour sans supprimer la precedente', async () => {
+    const user = userEvent.setup();
+    const week = weekFixture();
+    week.posts[0]!.assets = [
+      {
+        ...week.posts[0]!.assets[0]!,
+        id: 'asset-generated-1',
+        kind: 'selected',
+        position: 1,
+        signedUrl: 'https://assets.test/generated-1.jpg',
+      },
+    ];
+    renderPlanner({ data: week });
+
+    expect(screen.getByText(/Les précédentes restent disponibles/)).toBeDefined();
+    await user.click(
+      screen.getByRole('button', { name: 'Créer une autre proposition pour LUNDI' }),
+    );
+
+    expect(generateImagesMutate).toHaveBeenCalledWith(
+      { postId: 'post-1', force: true },
+      expect.any(Object),
+    );
+    expect(screen.getByRole('button', { name: /Variante 1/i })).toBeDefined();
   });
 
   it('permet de selectionner une variante image generee', async () => {

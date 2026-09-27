@@ -112,9 +112,11 @@ function request(body: unknown, token = 'jwt') {
 
 class CountingProvider extends MockImageGenerationProvider {
   calls = 0;
+  layouts: SocialVisualLayout[] = [];
 
   override async generateBackground(input: SocialImageGenerationInput) {
     this.calls += 1;
+    this.layouts.push(input.prompt.layout);
     return super.generateBackground(input);
   }
 }
@@ -493,6 +495,43 @@ Deno.test('generation semaine auto cree 7 assets avec concurrence limitee', asyn
   assertEquals(calls.marked.filter((item) => item.status === 'ready').length, 7);
   assert(calls.maxActive <= 2);
   assertEquals(provider.calls, 7);
+  assertEquals(new Set(provider.layouts).size, 7);
+});
+
+Deno.test(
+  'regenerer un jour conserve les variantes et change automatiquement de layout',
+  async () => {
+    const provider = new CountingProvider();
+    const { handler, calls } = setup({
+      provider,
+      assets: [{ postId: POST, id: 'asset-1', kind: 'selected', position: 1 }],
+    });
+
+    const response = await handler(request({ organizationId: ORG, postId: POST, force: true }));
+
+    assertEquals(response.status, 200);
+    assertEquals(provider.calls, 1);
+    assertEquals(provider.layouts[0], 'SPLIT_VISUAL');
+    assertEquals(calls.inserted.length, 1);
+    const insertion = calls.inserted[0] as {
+      variants: Array<{ position: number }>;
+    };
+    assertEquals(insertion.variants[0]?.position, 2);
+  },
+);
+
+Deno.test('une regeneration en echec conserve le post pret et son visuel precedent', async () => {
+  const provider = new PermanentFailureProvider(POST);
+  const { handler, calls } = setup({
+    provider,
+    assets: [{ postId: POST, id: 'asset-1', kind: 'selected', position: 1 }],
+  });
+
+  const response = await handler(request({ organizationId: ORG, postId: POST, force: true }));
+
+  assertEquals(response.status, 502);
+  assertEquals(calls.uploaded.length, 0);
+  assertEquals(calls.marked.at(-1)?.status, 'ready');
 });
 
 Deno.test('generation semaine auto conserve 6 ready et marque 1 failed', async () => {

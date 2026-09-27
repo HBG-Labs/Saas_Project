@@ -4,16 +4,18 @@ import {
   DEFAULT_SOCIAL_IMAGE_PROVIDER,
   SocialImageProviderError,
   SocialImageValidationError,
+  SocialLayoutEngine,
   createConfiguredSocialImageProvider,
   generateRenderedSocialImage,
   validateSocialImageResult,
   type SocialGeneratedImageVariant,
   type SocialImageGenerationResult,
+  type SocialImagePostContext,
   type SocialImageProvider,
+  type SocialVisualLayout,
 } from './social-image-provider.ts';
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const REQUEST_MAX_BYTES = 8_192;
 const DEFAULT_WEEKLY_IMAGE_LIMIT = 14;
 const DEFAULT_MAX_CONCURRENCY = 2;
@@ -96,7 +98,11 @@ export interface SocialImageStore {
     postId: string;
     userId: string;
     provider: string;
-    variants: Array<{ variant: SocialGeneratedImageVariant; storagePath: string; position: number }>;
+    variants: Array<{
+      variant: SocialGeneratedImageVariant;
+      storagePath: string;
+      position: number;
+    }>;
   }): Promise<StoredSocialImageAsset[]>;
   markPostImageStatus(input: {
     organizationId: string;
@@ -147,7 +153,9 @@ interface ValidRequestBody {
   force: boolean;
 }
 
-function validateRequestBody(value: unknown): { ok: true; value: ValidRequestBody } | { ok: false; message: string } {
+function validateRequestBody(
+  value: unknown,
+): { ok: true; value: ValidRequestBody } | { ok: false; message: string } {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return { ok: false, message: 'Corps de requete invalide.' };
   }
@@ -175,13 +183,20 @@ function weeklyLimit(value: string | null | undefined): number {
   return Math.min(Math.max(parsed, 1), 70);
 }
 
-function boundedInteger(value: string | null | undefined, fallback: number, min: number, max: number): number {
+function boundedInteger(
+  value: string | null | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const parsed = Number(value ?? '');
   if (!Number.isInteger(parsed)) return fallback;
   return Math.min(Math.max(parsed, min), max);
 }
 
-function configuredProvider(options: SocialImageGenerateHandlerOptions): SocialImageProvider | null {
+function configuredProvider(
+  options: SocialImageGenerateHandlerOptions,
+): SocialImageProvider | null {
   if (options.provider) return options.provider;
   return createConfiguredSocialImageProvider({
     provider: options.env.provider,
@@ -196,17 +211,53 @@ function usableExistingAssets(assets: SocialImageAssetState[]) {
   return assets.filter((asset) => asset.kind === 'generated' || asset.kind === 'selected');
 }
 
+function imagePostContext(post: SocialImagePostState): SocialImagePostContext {
+  return {
+    organizationId: post.organizationId,
+    postId: post.id,
+    slotIndex: post.slotIndex,
+    hook: post.hook ?? '',
+    visualText: post.visualText ?? '',
+    visualConcept: post.visualConcept ?? '',
+    caption: post.caption ?? '',
+    cta: post.cta,
+    objective: post.objective,
+    audience: post.audience,
+  };
+}
+
+export function planSocialWeekLayouts(
+  posts: SocialImagePostState[],
+): Map<string, SocialVisualLayout> {
+  const engine = new SocialLayoutEngine();
+  const recentLayouts: SocialVisualLayout[] = [];
+  const plan = new Map<string, SocialVisualLayout>();
+
+  for (const post of [...posts].sort((left, right) => left.slotIndex - right.slotIndex)) {
+    const layout = engine.select(imagePostContext(post), recentLayouts);
+    plan.set(post.id, layout);
+    recentLayouts.push(layout);
+  }
+  return plan;
+}
+
 function firstAvailablePosition(assets: SocialImageAssetState[], variantCount = 1): number | null {
   const used = new Set(assets.map((asset) => asset.position));
   for (let start = 1; start <= 10 - variantCount + 1; start += 1) {
-    if (Array.from({ length: variantCount }, (_, index) => start + index).every((position) => !used.has(position))) {
+    if (
+      Array.from({ length: variantCount }, (_, index) => start + index).every(
+        (position) => !used.has(position),
+      )
+    ) {
       return start;
     }
   }
   return null;
 }
 
-function validatePostForGeneration(post: SocialImagePostState): { ok: true } | { ok: false; status: number; message: string } {
+function validatePostForGeneration(
+  post: SocialImagePostState,
+): { ok: true } | { ok: false; status: number; message: string } {
   if (!ALLOWED_POST_STATUSES.has(post.status)) {
     return {
       ok: false,
@@ -234,9 +285,10 @@ function errorStatus(error: unknown): {
     return {
       status: 'invalid_response',
       httpStatus: 502,
-      message: error.code === 'text_overflow'
-        ? 'Le texte visuel est trop long pour produire une creation lisible.'
-        : 'La reponse du moteur visuel Social Studio est invalide. Aucun asset n’a ete cree.',
+      message:
+        error.code === 'text_overflow'
+          ? 'Le texte visuel est trop long pour produire une creation lisible.'
+          : 'La reponse du moteur visuel Social Studio est invalide. Aucun asset n’a ete cree.',
       code: error.code,
     };
   }
@@ -310,7 +362,10 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
     try {
       provider = configuredProvider(options);
     } catch (error) {
-      console.error('social image provider configuration failed', error instanceof Error ? error.name : 'unknown');
+      console.error(
+        'social image provider configuration failed',
+        error instanceof Error ? error.name : 'unknown',
+      );
       return json(
         {
           error: 'SOCIAL_IMAGE_PROVIDER_UNSUPPORTED',
@@ -339,10 +394,15 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
     if (!access.ok) return json({ error: access.code, message: access.message }, access.status);
 
     const post = await options.store.loadPost(parsed.value);
-    if (!post) return json({ error: 'SOCIAL_POST_NOT_FOUND', message: 'Publication introuvable.' }, 404);
+    if (!post)
+      return json({ error: 'SOCIAL_POST_NOT_FOUND', message: 'Publication introuvable.' }, 404);
 
     const postValidation = validatePostForGeneration(post);
-    if (!postValidation.ok) return json({ error: 'SOCIAL_IMAGE_POST_NOT_READY', message: postValidation.message }, postValidation.status);
+    if (!postValidation.ok)
+      return json(
+        { error: 'SOCIAL_IMAGE_POST_NOT_READY', message: postValidation.message },
+        postValidation.status,
+      );
 
     const output = await generateSocialImageForPost({
       store: options.store,
@@ -357,7 +417,12 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
     });
 
     if (output.status === 'existing') {
-      return json({ status: 'existing', postId: post.id, assetsCount: output.assetsCount, generated: false });
+      return json({
+        status: 'existing',
+        postId: post.id,
+        assetsCount: output.assetsCount,
+        generated: false,
+      });
     }
     if (output.status === 'in_progress') {
       return json(
@@ -378,7 +443,10 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
       );
     }
     if (output.status === 'failed') {
-      return json({ error: 'SOCIAL_IMAGE_GENERATION_FAILED', message: output.message }, output.httpStatus);
+      return json(
+        { error: 'SOCIAL_IMAGE_GENERATION_FAILED', message: output.message },
+        output.httpStatus,
+      );
     }
     return json({
       status: 'generated',
@@ -392,7 +460,14 @@ export function createSocialImageGenerateHandler(options: SocialImageGenerateHan
 }
 
 export type SocialPostImageGenerationOutput =
-  | { status: 'generated'; postId: string; assetsCount: number; provider: string; model: string; usage: SocialImageGenerationResult['usage'] }
+  | {
+      status: 'generated';
+      postId: string;
+      assetsCount: number;
+      provider: string;
+      model: string;
+      usage: SocialImageGenerationResult['usage'];
+    }
   | { status: 'existing'; postId: string; assetsCount: number }
   | { status: 'in_progress'; postId: string }
   | { status: 'limit_reached'; postId: string }
@@ -408,6 +483,7 @@ export async function generateSocialImageForPost(input: {
   now: () => Date;
   randomId: () => string;
   maxRetries: number;
+  preferredLayout?: SocialVisualLayout;
 }): Promise<SocialPostImageGenerationOutput> {
   const existingAssets = await input.store.listAssets({
     organizationId: input.post.organizationId,
@@ -429,6 +505,27 @@ export async function generateSocialImageForPost(input: {
     };
   }
 
+  let selectedLayout = input.preferredLayout;
+  if (!selectedLayout) {
+    const weekPosts = await input.store.listWeekPosts({
+      organizationId: input.post.organizationId,
+      weekId: input.post.weekId,
+    });
+    const baseLayout = planSocialWeekLayouts(weekPosts).get(input.post.id);
+    const recentLayouts: SocialVisualLayout[] = baseLayout ? [baseLayout] : [];
+    const engine = new SocialLayoutEngine();
+    const context = imagePostContext(input.post);
+
+    if (startPosition === 1) {
+      selectedLayout = baseLayout ?? engine.select(context);
+    } else {
+      for (let position = 2; position < startPosition; position += 1) {
+        recentLayouts.push(engine.select(context, recentLayouts, position));
+      }
+      selectedLayout = engine.select(context, recentLayouts, startPosition);
+    }
+  }
+
   const generationId = input.randomId();
   const descriptor = {
     provider: input.provider.id || DEFAULT_SOCIAL_IMAGE_PROVIDER,
@@ -448,7 +545,8 @@ export async function generateSocialImageForPost(input: {
       model: descriptor.model,
       weeklyLimit: weeklyLimit(input.env.weeklyGenerationLimit),
     });
-    if (reservation.status === 'in_progress') return { status: 'in_progress', postId: input.post.id };
+    if (reservation.status === 'in_progress')
+      return { status: 'in_progress', postId: input.post.id };
     if (reservation.status === 'limit_reached' || !reservation.usageId) {
       return { status: 'limit_reached', postId: input.post.id };
     }
@@ -469,18 +567,8 @@ export async function generateSocialImageForPost(input: {
         result = validateSocialImageResult(
           await generateRenderedSocialImage({
             provider: input.provider,
-            post: {
-              organizationId: input.post.organizationId,
-              postId: input.post.id,
-              slotIndex: input.post.slotIndex,
-              hook: input.post.hook ?? '',
-              visualText: input.post.visualText!,
-              visualConcept: input.post.visualConcept!,
-              caption: input.post.caption ?? '',
-              cta: input.post.cta,
-              objective: input.post.objective,
-              audience: input.post.audience,
-            },
+            post: imagePostContext(input.post),
+            layout: selectedLayout,
           }),
           1,
         );
@@ -490,7 +578,8 @@ export async function generateSocialImageForPost(input: {
         if (!retryable(error) || attempt >= input.maxRetries) throw error;
       }
     }
-    if (!result) throw lastError ?? new SocialImageProviderError('Generation visuelle indisponible.');
+    if (!result)
+      throw lastError ?? new SocialImageProviderError('Generation visuelle indisponible.');
 
     resultForUsage = { usage: result.usage, provider: result.provider, model: result.model };
     const variant = result.variants[0]!;
@@ -559,12 +648,16 @@ export async function generateSocialImageForPost(input: {
       try {
         await input.store.removeStorageObjects(uploadedPaths);
       } catch (cleanupError) {
-        console.error('social image cleanup failed', cleanupError instanceof Error ? cleanupError.name : 'unknown');
+        console.error(
+          'social image cleanup failed',
+          cleanupError instanceof Error ? cleanupError.name : 'unknown',
+        );
       }
     }
     if (usageId) {
       try {
-        const validationUsage = error instanceof SocialImageValidationError ? error.result : undefined;
+        const validationUsage =
+          error instanceof SocialImageValidationError ? error.result : undefined;
         await input.store.finalizeUsage({
           usageId,
           organizationId: input.post.organizationId,
@@ -574,13 +667,16 @@ export async function generateSocialImageForPost(input: {
           completedAt: input.now().toISOString(),
         });
       } catch (usageError) {
-        console.error('social image usage finalization failed', usageError instanceof Error ? usageError.name : 'unknown');
+        console.error(
+          'social image usage finalization failed',
+          usageError instanceof Error ? usageError.name : 'unknown',
+        );
       }
     }
     await input.store.markPostImageStatus({
       organizationId: input.post.organizationId,
       postId: input.post.id,
-      status: 'failed',
+      status: existingUsableAssets.length > 0 ? 'ready' : 'failed',
       lastError: failure.code,
     });
     await auditSafe(input.store, {
@@ -590,7 +686,10 @@ export async function generateSocialImageForPost(input: {
       entityId: input.post.id,
       metadata: { provider: descriptor.provider, model: descriptor.model, reason: failure.code },
     });
-    console.error('social image generation failed', error instanceof Error ? error.name : 'unknown');
+    console.error(
+      'social image generation failed',
+      error instanceof Error ? error.name : 'unknown',
+    );
     return {
       status: 'failed',
       postId: input.post.id,
@@ -610,10 +709,20 @@ export async function generateSocialImagesForWeek(input: {
   userId: string;
   now: () => Date;
   randomId: () => string;
-}): Promise<{ total: number; generated: number; existing: number; failed: number; results: SocialPostImageGenerationOutput[] }> {
-  const posts = await input.store.listWeekPosts({ organizationId: input.organizationId, weekId: input.weekId });
+}): Promise<{
+  total: number;
+  generated: number;
+  existing: number;
+  failed: number;
+  results: SocialPostImageGenerationOutput[];
+}> {
+  const posts = await input.store.listWeekPosts({
+    organizationId: input.organizationId,
+    weekId: input.weekId,
+  });
   const concurrency = boundedInteger(input.env.maxConcurrency, DEFAULT_MAX_CONCURRENCY, 1, 3);
   const maxRetries = boundedInteger(input.env.maxRetries, DEFAULT_MAX_RETRIES, 0, 4);
+  const layoutPlan = planSocialWeekLayouts(posts);
   const results: SocialPostImageGenerationOutput[] = [];
   let index = 0;
 
@@ -649,6 +758,7 @@ export async function generateSocialImagesForWeek(input: {
           now: input.now,
           randomId: input.randomId,
           maxRetries,
+          preferredLayout: layoutPlan.get(post.id),
         }),
       );
     }

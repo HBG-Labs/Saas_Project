@@ -2,7 +2,7 @@ import { buildRezo360MarketingContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v4-archivo-resvg';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v5-layout-diversity';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
 export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-flare';
@@ -1179,9 +1179,12 @@ export class SocialLayoutEngine {
   select(
     post: SocialImagePostContext,
     recentLayouts: SocialVisualLayout[] = [],
+    variationIndex = 1,
   ): SocialVisualLayout {
-    const text =
-      `${post.visualConcept} ${post.objective ?? ''} ${post.audience ?? ''}`.toLowerCase();
+    const text = `${post.visualConcept} ${post.objective ?? ''} ${post.audience ?? ''}`
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
     const candidates: SocialVisualLayout[] = [];
     if (/terrain|chantier|intervention|technicien|camion|equipe/.test(text))
       candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
@@ -1194,11 +1197,21 @@ export class SocialLayoutEngine {
     candidates.push(SOCIAL_VISUAL_LAYOUTS[(post.slotIndex - 1) % SOCIAL_VISUAL_LAYOUTS.length]!);
     candidates.push(...SOCIAL_VISUAL_LAYOUTS);
 
-    for (const candidate of candidates) {
-      const lastTwo = recentLayouts.slice(-2);
-      if (!lastTwo.includes(candidate)) return candidate;
-    }
-    return candidates[0]!;
+    const uniqueCandidates = [...new Set(candidates)];
+    const rotation = Math.max(0, variationIndex - 1) % uniqueCandidates.length;
+    const orderedCandidates = [
+      ...uniqueCandidates.slice(rotation),
+      ...uniqueCandidates.slice(0, rotation),
+    ];
+    const unusedThisWeek = orderedCandidates.find(
+      (candidate) => !recentLayouts.includes(candidate),
+    );
+    if (unusedThisWeek) return unusedThisWeek;
+
+    const lastTwo = recentLayouts.slice(-2);
+    return (
+      orderedCandidates.find((candidate) => !lastTwo.includes(candidate)) ?? orderedCandidates[0]!
+    );
   }
 }
 
@@ -1492,9 +1505,10 @@ export class VisualQualityCheck {
 export async function generateRenderedSocialImage(input: {
   provider: ImageGenerationProvider;
   post: SocialImagePostContext;
+  layout?: SocialVisualLayout;
 }): Promise<SocialImageGenerationResult> {
   const started = Date.now();
-  const layout = new SocialLayoutEngine().select(input.post);
+  const layout = input.layout ?? new SocialLayoutEngine().select(input.post);
   const prompt = new SocialImagePromptBuilder().build({
     post: input.post,
     layout,

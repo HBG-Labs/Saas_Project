@@ -8,6 +8,7 @@ import {
   Pencil,
   PlayCircle,
   Plus,
+  RefreshCw,
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -213,7 +214,14 @@ function WeekPostCard({
 
         {hasGeneratedAssets ? (
           <div className="space-y-2">
-            <p className="text-muted-foreground text-3xs font-medium uppercase">Variantes image</p>
+            <div>
+              <p className="text-muted-foreground text-3xs font-medium uppercase">
+                Propositions visuelles
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                La proposition sélectionnée sera publiée. Les précédentes restent disponibles.
+              </p>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {generatedAssets.map((asset, index) => {
                 const selected =
@@ -270,9 +278,14 @@ function WeekPostCard({
             disabled={!canGenerateImages}
             isLoading={isGeneratingImages}
             loadingLabel="Génération"
-            leadingIcon={<Images />}
+            leadingIcon={hasGeneratedAssets ? <RefreshCw /> : <Images />}
+            aria-label={
+              hasGeneratedAssets
+                ? `Créer une autre proposition pour ${SOCIAL_WEEK_DAYS[dayIndex]}`
+                : `Générer le visuel pour ${SOCIAL_WEEK_DAYS[dayIndex]}`
+            }
           >
-            {hasGeneratedAssets ? 'Régénérer le visuel' : 'Générer le visuel'}
+            {hasGeneratedAssets ? 'Créer une autre proposition' : 'Générer le visuel'}
           </Button>
         </div>
 
