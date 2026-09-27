@@ -5598,6 +5598,7 @@
         "npm:ffprobe-static@3.1.0",
         "npm:fix-webm-duration@^1.0.6",
         "npm:globals@17.9.0",
+        "npm:jpeg-js@~0.4.4",
         "npm:jsdom@30.0.1",
         "npm:leaflet@^1.9.4",
         "npm:lucide-react@1.30.0",

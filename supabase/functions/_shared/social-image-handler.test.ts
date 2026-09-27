@@ -185,7 +185,7 @@ function setup(options: {
           postId,
           kind: asset.kind,
           position: asset.position,
-          storagePath: `org/generated/${asset.id}.png`,
+          storagePath: `org/generated/${asset.id}.jpg`,
           provider: 'mock',
         })),
     reserveGeneration: async () => ({
@@ -198,7 +198,7 @@ function setup(options: {
     uploadImage: async ({ postId, variant }) => {
       calls.active += 1;
       calls.maxActive = Math.max(calls.maxActive, calls.active);
-      const path = `${ORG}/social-studio/generated/${postId}/generation/final-${variant.index}.png`;
+      const path = `${ORG}/social-studio/generated/${postId}/generation/final-${variant.index}.jpg`;
       calls.uploaded.push(path);
       calls.active -= 1;
       return path;
@@ -258,10 +258,13 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assertEquals(result.variants.length, 1);
   assertEquals(result.variants[0]!.width, 1080);
   assertEquals(result.variants[0]!.height, 1350);
-  assertEquals(result.variants[0]!.mimeType, 'image/png');
+  assertEquals(result.variants[0]!.mimeType, 'image/jpeg');
+  assertEquals(result.variants[0]!.render.masterMimeType, 'image/png');
+  assertEquals(result.variants[0]!.render.publishingMimeType, 'image/jpeg');
   assert(result.variants[0]!.render.safeZoneOk);
   assert(result.variants[0]!.render.contrastRatio >= 4.5);
   assert(result.variants[0]!.render.fileSizeBytes > 0);
+  assert(result.variants[0]!.render.masterFileSizeBytes > 0);
   assert(result.variants[0]!.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
 });
 

@@ -1,4 +1,5 @@
 import { buildRezo360MarketingContext } from './social-marketing-context.ts';
+import jpeg from 'npm:jpeg-js@0.4.4';
 
 export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v3-agency-renderer';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
@@ -14,6 +15,7 @@ export const SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE = 48;
 export const SOCIAL_IMAGE_PROVIDER_TIMEOUT_MS = 60_000;
 
 const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+const JPEG_SIGNATURE = new Uint8Array([0xff, 0xd8, 0xff]);
 const BRAND_BLUE: Rgb = [27, 68, 200];
 const BRAND_NIGHT: Rgb = [10, 27, 67];
 const PAPER: Rgb = [250, 251, 253];
@@ -86,7 +88,7 @@ export interface SocialImageGenerationInput {
 
 export interface SocialRenderedImage {
   bytes: Uint8Array;
-  mimeType: 'image/png';
+  mimeType: 'image/jpeg';
   width: number;
   height: number;
   altText: string;
@@ -107,6 +109,9 @@ export interface SocialRenderedImage {
     crop: CropResult;
     renderMs: number;
     fileSizeBytes: number;
+    masterMimeType: 'image/png';
+    masterFileSizeBytes: number;
+    publishingMimeType: 'image/jpeg';
   };
   promptSummary: string;
 }
@@ -314,6 +319,18 @@ function encodePng(width: number, height: number, raw: Uint8Array): Uint8Array {
 
 function encodePngFromPixels(buffer: PixelBuffer): Uint8Array {
   return encodePng(buffer.width, buffer.height, pixelBufferToRaw(buffer));
+}
+
+function encodeJpegFromPixels(buffer: PixelBuffer, quality = 86): Uint8Array {
+  const rgba = new Uint8Array(buffer.width * buffer.height * 4);
+  for (let source = 0, target = 0; source < buffer.data.length; source += 3, target += 4) {
+    rgba[target] = buffer.data[source]!;
+    rgba[target + 1] = buffer.data[source + 1]!;
+    rgba[target + 2] = buffer.data[source + 2]!;
+    rgba[target + 3] = 255;
+  }
+  const encoded = jpeg.encode({ data: rgba, width: buffer.width, height: buffer.height }, quality);
+  return new Uint8Array(encoded.data);
 }
 
 function readU32(bytes: Uint8Array, offset: number) {
@@ -1191,14 +1208,15 @@ export class SocialVisualRenderer {
     const logoBox = logoBoxFor(spec.logoPlacement);
     drawLogo(buffer, logoBox, spec.textColor === WHITE ? WHITE : BRAND_NIGHT);
 
-    const bytes = encodePngFromPixels(buffer);
+    const masterBytes = encodePngFromPixels(buffer);
+    const bytes = encodeJpegFromPixels(buffer);
     return {
       bytes,
-      mimeType: 'image/png',
+      mimeType: 'image/jpeg',
       width: SOCIAL_FINAL_IMAGE_WIDTH,
       height: SOCIAL_FINAL_IMAGE_HEIGHT,
       altText: `Visuel REZO360 - ${input.post.visualText}`.slice(0, 180),
-      originalFilename: `rezo360-social-${input.post.slotIndex}.png`,
+      originalFilename: `rezo360-social-${input.post.slotIndex}.jpg`,
       promptSummary: input.background.promptSummary,
       render: {
         layout: input.layout,
@@ -1216,6 +1234,9 @@ export class SocialVisualRenderer {
         crop,
         renderMs: Date.now() - started,
         fileSizeBytes: bytes.byteLength,
+        masterMimeType: 'image/png',
+        masterFileSizeBytes: masterBytes.byteLength,
+        publishingMimeType: 'image/jpeg',
       },
     };
   }
@@ -1236,11 +1257,11 @@ export class VisualQualityCheck {
     if (image.width !== SOCIAL_FINAL_IMAGE_WIDTH || image.height !== SOCIAL_FINAL_IMAGE_HEIGHT) {
       throw new SocialImageValidationError('Dimensions finales Instagram invalides.', undefined, 'final_dimensions');
     }
-    if (image.mimeType !== 'image/png') throw new SocialImageValidationError('Format final invalide.', undefined, 'final_format');
-    if (!PNG_SIGNATURE.every((byte, index) => image.bytes[index] === byte)) {
+    if (image.mimeType !== 'image/jpeg') throw new SocialImageValidationError('Format final invalide.', undefined, 'final_format');
+    if (!JPEG_SIGNATURE.every((byte, index) => image.bytes[index] === byte)) {
       throw new SocialImageValidationError('Fichier final corrompu.', undefined, 'final_corrupt');
     }
-    if (image.bytes.byteLength === 0 || image.bytes.byteLength > 10 * 1024 * 1024) {
+    if (image.bytes.byteLength === 0 || image.bytes.byteLength > 8 * 1024 * 1024) {
       throw new SocialImageValidationError('Taille du fichier final invalide.', undefined, 'final_size');
     }
     if (!image.render.safeZoneOk || image.render.lineCount > 4) {
@@ -1320,11 +1341,11 @@ export function validateSocialImageResult(
     if (variant.index < 1 || variant.index > expectedVariantCount) {
       throw new SocialImageValidationError('Index de variante visuelle invalide.', result);
     }
-    if (variant.mimeType !== 'image/png') throw new SocialImageValidationError('Format image final invalide.', result);
+    if (variant.mimeType !== 'image/jpeg') throw new SocialImageValidationError('Format image final invalide.', result);
     if (variant.width !== SOCIAL_FINAL_IMAGE_WIDTH || variant.height !== SOCIAL_FINAL_IMAGE_HEIGHT) {
       throw new SocialImageValidationError('Dimensions image finale invalides.', result);
     }
-    if (variant.bytes.byteLength === 0 || variant.bytes.byteLength > 10 * 1024 * 1024) {
+    if (variant.bytes.byteLength === 0 || variant.bytes.byteLength > 8 * 1024 * 1024) {
       throw new SocialImageValidationError('Taille image Social Studio invalide.', result);
     }
   }

@@ -233,8 +233,7 @@ export function createSocialImageSupabaseStore(input: {
     },
 
     async uploadImage({ organizationId, postId, generationId, variant }) {
-      const extension = variant.mimeType === 'image/png' ? 'png' : variant.mimeType === 'image/webp' ? 'webp' : 'jpg';
-      const storagePath = `${organizationId}/social-studio/generated/${postId}/${generationId}/variant-${variant.index}.${extension}`;
+      const storagePath = `${organizationId}/social-studio/generated/${postId}/${generationId}/variant-${variant.index}.jpg`;
       const body = variant.bytes.buffer.slice(
         variant.bytes.byteOffset,
         variant.bytes.byteOffset + variant.bytes.byteLength,
