@@ -96,7 +96,10 @@ begin
     'Voir REZO360',
     jsonb_build_object(
       'planned_for',
-      (timestamp with time zone '2026-09-28 18:30:00+00' + (g || ' days')::interval)::text,
+      to_char(
+        (timestamp with time zone '2026-09-28 18:30:00+00' + (g || ' days')::interval) at time zone 'UTC',
+        'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+      ),
       'objective',
       'Visites du profil',
       'audience',
@@ -111,7 +114,7 @@ begin
   select
     'social-media-assets',
     post.organization_id::text || '/' || post.id::text || '/final.png',
-    pg_temp.uid('manager')::text,
+    pg_temp.uid('admin')::text,
     '{"mimetype":"image/png","size":"456789"}'::jsonb
   from public.social_posts post
   where post.week_id in (v_week, v_no_account_week);
@@ -197,6 +200,10 @@ do $$ begin
     'la validation live cross-organization est refusee');
 end $$;
 reset role;
+
+do $$ begin
+  perform set_config('request.jwt.claims', '{}'::text, true);
+end $$;
 
 do $$ begin
   perform pg_temp.ok(

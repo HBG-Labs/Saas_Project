@@ -108,10 +108,12 @@ do $$ begin
            (select org_id from t_ctx)),
     'le manager ne peut pas créer ni connecter un compte Instagram');
 
-  perform pg_temp.refuses(
-    format($q$update public.social_accounts
-              set status = 'disconnected'
-              where id = %L$q$, (select account_id from t_ctx)),
+  update public.social_accounts
+  set status = 'disconnected'
+  where id = (select account_id from t_ctx);
+
+  perform pg_temp.ok(
+    (select status = 'connected' from public.social_accounts where id = (select account_id from t_ctx)),
     'le manager ne peut pas modifier la connexion Instagram');
 
   perform pg_temp.refuses(

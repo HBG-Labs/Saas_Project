@@ -125,7 +125,10 @@ begin
     'Voir REZO360',
     jsonb_build_object(
       'planned_for',
-      (timestamp with time zone '2026-09-28 18:30:00+00' + (g || ' days')::interval)::text,
+      to_char(
+        (timestamp with time zone '2026-09-28 18:30:00+00' + (g || ' days')::interval) at time zone 'UTC',
+        'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+      ),
       'objective',
       'Visites du profil',
       'audience',
@@ -181,7 +184,10 @@ begin
     'Voir REZO360',
     jsonb_build_object(
       'planned_for',
-      (timestamp with time zone '2026-10-05 18:30:00+00' + (g || ' days')::interval)::text
+      to_char(
+        (timestamp with time zone '2026-10-05 18:30:00+00' + (g || ' days')::interval) at time zone 'UTC',
+        'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+      )
     ),
     pg_temp.uid('manager')
   from t_ctx, generate_series(1, 7) g;
@@ -254,6 +260,10 @@ end $$;
 reset role;
 
 do $$ begin
+  perform set_config('request.jwt.claims', '{}'::text, true);
+end $$;
+
+do $$ begin
   create temporary table t_claims as
   select *
   from public.claim_due_social_posts(
@@ -261,6 +271,7 @@ do $$ begin
     (select worker_id from t_ctx),
     timestamp with time zone '2026-10-10 18:31:00+00'
   );
+  grant select on t_claims to authenticated;
 
   perform pg_temp.ok((select count(*) from t_claims) = 7, 'worker claim les 7 posts dus');
   perform pg_temp.ok(
