@@ -28,6 +28,8 @@ export default tseslint.config(
       'test-results/**',
       'demo-output/**',
       'supabase/**',
+      // Paquet autonome, avec ses propres dépendances et son propre lint.
+      'motion/**',
       '.codex/**',
       '.claude/**',
       '.codex-remote-attachments/**',
