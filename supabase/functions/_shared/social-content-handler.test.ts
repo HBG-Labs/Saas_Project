@@ -212,6 +212,10 @@ Deno.test('OpenAISocialAIProvider utilise Responses avec un JSON schema strict',
   assert.equal(calledUrl, 'https://api.openai.com/v1/responses');
   assert.equal(calledBody.store, false);
   assert.equal(calledBody.response_format, undefined);
+  const requestText = JSON.stringify(calledBody);
+  assert.equal(requestText.includes('background publicitaire portrait 4:5'), true);
+  assert.equal(requestText.includes('dashboard, interface produit inventée'), true);
+  assert.equal(requestText.includes('fond vide ou simple dégradé flou'), true);
   assert.equal((calledBody.text as { format?: { type?: string } }).format?.type, 'json_schema');
   const schema = (
     calledBody.text as {

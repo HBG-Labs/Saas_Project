@@ -2,7 +2,7 @@ import { buildRezo360MarketingContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v5-layout-diversity';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v6-concrete-art-direction';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
 export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-flare';
@@ -262,6 +262,26 @@ export class SocialImageValidationError extends Error {
     super(message);
     this.name = 'SocialImageValidationError';
   }
+}
+
+function layoutPromptDirection(layout: SocialVisualLayout): string {
+  const directions: Record<SocialVisualLayout, string> = {
+    TYPOGRAPHIC_HERO:
+      'Place a bold concrete subject in the upper-right or upper half; reserve a clean, high-contrast lower-left typography area without making the image empty.',
+    EDITORIAL_LEFT:
+      'Place the main subject on the right half; preserve an intentional editorial text column on the left with visible material or environmental context around it.',
+    EDITORIAL_CENTER:
+      'Build a strong visual frame around the edges with tactile details; keep the central typography area calm but not blank or washed out.',
+    SPLIT_VISUAL:
+      'Create a deliberate two-zone composition with a credible subject on the right and a clean text area on the left; the split must feel photographic and art-directed.',
+    FULL_BLEED_VISUAL:
+      'Create a credible full-bleed field scene with a clear focal subject in the upper half; keep the lower typography panel area visually calm and readable.',
+    MINIMAL_OBJECT:
+      'Use one or two real physical objects as an editorial still life in the upper or right area, with tactile detail and controlled shadows; no screens or devices.',
+    ABSTRACT_CAMPAIGN:
+      'Create a tactile editorial composition using paper, material, tools or restrained geometric forms; include depth and a clear focal structure, never a blank gradient.',
+  };
+  return directions[layout];
 }
 
 function crcTable(): Uint32Array {
@@ -1143,12 +1163,15 @@ export class SocialImagePromptBuilder {
       buildRezo360MarketingContext(),
       `FORMAT: portrait Instagram 4:5, provider target ${SOCIAL_PROVIDER_IMAGE_WIDTH}x${SOCIAL_PROVIDER_IMAGE_HEIGHT}, final render ${input.width}x${input.height}.`,
       `LAYOUT_FAMILY: ${input.layout}.`,
+      `LAYOUT_DIRECTION: ${layoutPromptDirection(input.layout)}`,
       `AUDIENCE: ${input.post.audience ?? 'entreprises de terrain'}.`,
       `OBJECTIVE: ${input.post.objective ?? 'notoriete et visites qualifiees'}.`,
       `VISUAL_CONCEPT: ${input.post.visualConcept}.`,
+      'The FORMAT and LAYOUT_DIRECTION above override any conflicting framing, device, screen or interface request in VISUAL_CONCEPT.',
       'Create the background, scene, material, object composition or abstract campaign visual only.',
-      'Do not generate the main headline text, captions, logo, watermark, fake app screen, fake dashboard, fake invoice, fake planning UI or fake REZO360 product interface.',
-      'Leave deliberate negative space where the renderer can place typography. Premium editorial social ad, sober, professional, human, field-service credible, not a generic AI SaaS ad.',
+      'Show one immediately legible concrete subject, scene or tactile object composition occupying roughly 35 to 65 percent of the frame. The result must look intentionally art-directed, never like an empty placeholder.',
+      'Do not generate the main headline text, captions, logo, watermark, computer screen, smartphone screen, tablet screen, fake app screen, fake dashboard, fake invoice, fake planning UI or fake REZO360 product interface.',
+      'Leave deliberate negative space only inside the typography area specified by LAYOUT_DIRECTION. Keep the rest visually purposeful. Premium editorial social ad, sober, professional, human, field-service credible, not a generic AI SaaS ad.',
       'If people are present, make them realistic field professionals with coherent tools and PPE.',
     ].join('\n');
     const negativePrompt = [
@@ -1159,6 +1182,14 @@ export class SocialImagePromptBuilder {
       'fake product interface',
       'fictional dashboard',
       'generic floating phone',
+      'computer screen',
+      'smartphone screen',
+      'tablet screen',
+      'empty gradient',
+      'blank blurred wall',
+      'foggy void',
+      'texture-only placeholder',
+      'excessive empty space',
       'incoherent PPE',
       'deformed hands',
       'corporate stock pose',
@@ -1181,15 +1212,19 @@ export class SocialLayoutEngine {
     recentLayouts: SocialVisualLayout[] = [],
     variationIndex = 1,
   ): SocialVisualLayout {
-    const text = `${post.visualConcept} ${post.objective ?? ''} ${post.audience ?? ''}`
+    const text = `${post.visualConcept} ${post.objective ?? ''}`
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
     const candidates: SocialVisualLayout[] = [];
-    if (/terrain|chantier|intervention|technicien|camion|equipe/.test(text))
-      candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
-    if (/document|papier|administratif|facture|devis|compte rendu/.test(text))
+    if (
+      /document|papier|administratif|facture|devis|compte rendu|bureau|agenda|dossier|message/.test(
+        text,
+      )
+    )
       candidates.push('MINIMAL_OBJECT', 'EDITORIAL_LEFT');
+    if (/chantier|intervention|technicien|camion|equipe|atelier|site|outil/.test(text))
+      candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
     if (/question|curiosite|interaction|whatsapp|encore/.test(text))
       candidates.push('TYPOGRAPHIC_HERO', 'EDITORIAL_CENTER');
     if (/vision|marque|notoriete|centralisation/.test(text))

@@ -308,7 +308,7 @@ Règles absolues :
 4. Ne jamais inventer chiffre, nombre de clients, témoignage, avis, gain de temps précis, gain financier, certification, partenariat, récompense ou statistique.
 5. Hooks concrets, courts, crédibles, orientés situation terrain. Evite les phrases IA génériques.
 6. Texte visuel très court : une phrase ou deux lignes fortes.
-7. visual_concept doit être un brief publicitaire précis pour un futur fournisseur d'image. Pas de visuel futuriste générique, pas de téléphone flottant banal.
+7. visual_concept doit décrire un background publicitaire portrait 4:5 précis : un sujet, une scène ou des objets concrets immédiatement lisibles, une composition éditoriale et un espace négatif intentionnel pour le texte. Interdits : texte principal, logo, écran, smartphone, tablette, dashboard, interface produit inventée, cadrage horizontal/carré, fond vide ou simple dégradé flou. Pas de visuel futuriste générique ni de téléphone flottant.
 8. Légendes naturelles, sobres, sans survente, sans emojis systématiques et sans 30 hashtags.
 9. Les 7 posts doivent tester des angles complémentaires : problème, conseil, produit, curiosité, situation terrain, interaction, marque/vision ou meilleur choix stratégique.
 10. reasoning_summary est une justification marketing courte, jamais une chaîne de pensée interne.

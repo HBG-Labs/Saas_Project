@@ -7,6 +7,7 @@ import {
   SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE,
   SOCIAL_VISUAL_LAYOUTS,
   SocialImagePromptBuilder,
+  SocialLayoutEngine,
   SocialImageProviderError,
   SocialImageValidationError,
   SocialVisualRenderer,
@@ -344,6 +345,36 @@ Deno.test('SocialVisualRenderer refuse un texte impossible a rendre lisible', as
 
   assert(failed instanceof SocialImageValidationError);
   assertEquals((failed as SocialImageValidationError).code, 'text_overflow');
+});
+
+Deno.test('SocialImagePromptBuilder impose un sujet concret et interdit les fonds vides', () => {
+  const state = post(1, {
+    visualConcept:
+      'Bureau avec ordinateur affichant un planning, cadrage horizontal adaptable au carre.',
+    audience: 'Artisans et entreprises de terrain',
+  });
+  const prompt = new SocialImagePromptBuilder().build({
+    post: postContext(state),
+    layout: 'MINIMAL_OBJECT',
+    width: 1080,
+    height: 1350,
+  });
+
+  assert(prompt.prompt.includes('override any conflicting framing'));
+  assert(prompt.prompt.includes('one immediately legible concrete subject'));
+  assert(prompt.prompt.includes('no screens or devices'));
+  assert(prompt.negativePrompt.includes('blank blurred wall'));
+  assert(prompt.negativePrompt.includes('texture-only placeholder'));
+});
+
+Deno.test('SocialLayoutEngine ne confond pas audience terrain et scene plein cadre', () => {
+  const state = post(1, {
+    visualConcept: 'Photo editoriale de documents papier, agenda et dossier client sur un bureau.',
+    objective: 'Visites du profil',
+    audience: 'Artisans et entreprises de terrain',
+  });
+
+  assertEquals(new SocialLayoutEngine().select(postContext(state)), 'MINIMAL_OBJECT');
 });
 
 Deno.test(
