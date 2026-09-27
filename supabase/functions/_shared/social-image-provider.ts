@@ -2,7 +2,7 @@ import { buildRezo360VisualContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v8-visible-subject';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v9-embedded-background';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
 export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-sunburst';
@@ -23,6 +23,7 @@ const PAPER: Rgb = [250, 251, 253];
 const INK: Rgb = [18, 24, 38];
 const WHITE: Rgb = [255, 255, 255];
 const OUTPUT_FORMAT = 'png';
+const SOCIAL_RENDERER_BACKGROUND_URL = 'https://assets.rezo360.invalid/background.png';
 
 type Rgb = [number, number, number];
 
@@ -412,6 +413,21 @@ function encodeJpegFromPixels(buffer: PixelBuffer, quality = 86): Uint8Array {
   }
   const encoded = jpeg.encode({ data: rgba, width: buffer.width, height: buffer.height }, quality);
   return new Uint8Array(encoded.data);
+}
+
+export function decodeJpeg(bytes: Uint8Array): PixelBuffer {
+  const decoded = jpeg.decode(bytes, { useTArray: true });
+  if (decoded.width <= 0 || decoded.height <= 0 || decoded.data.length === 0) {
+    throw new SocialImageValidationError('JPEG invalide.', undefined, 'invalid_jpeg');
+  }
+
+  const data = new Uint8Array(decoded.width * decoded.height * 3);
+  for (let source = 0, target = 0; source < decoded.data.length; source += 4, target += 3) {
+    data[target] = decoded.data[source]!;
+    data[target + 1] = decoded.data[source + 1]!;
+    data[target + 2] = decoded.data[source + 2]!;
+  }
+  return { width: decoded.width, height: decoded.height, data };
 }
 
 function readU32(bytes: Uint8Array, offset: number) {
@@ -1309,7 +1325,7 @@ function buildSocialVisualSvg(input: {
       </filter>
     </defs>
     <rect width="1080" height="1350" fill="${rgbCss(PAPER)}"/>
-    <image href="rezo360-background.png" x="${-input.crop.cropX}" y="${-input.crop.cropY}" width="${scaledWidth}" height="${scaledHeight}" preserveAspectRatio="none"/>
+    <image href="${SOCIAL_RENDERER_BACKGROUND_URL}" x="${-input.crop.cropX}" y="${-input.crop.cropY}" width="${scaledWidth}" height="${scaledHeight}" preserveAspectRatio="none"/>
     ${svgOverlay(input.spec)}
     ${svgTextProtection(input.spec)}
     ${svgPanel(input.spec)}
@@ -1702,7 +1718,27 @@ export class SocialVisualRenderer {
         sansSerifFamily: 'Archivo',
       },
     });
-    renderer.resolveImage('rezo360-background.png', input.background.bytes);
+    const unresolvedImages = renderer.imagesToResolve() as string[];
+    if (
+      unresolvedImages.length !== 1 ||
+      unresolvedImages[0] !== SOCIAL_RENDERER_BACKGROUND_URL
+    ) {
+      renderer.free();
+      throw new SocialImageValidationError(
+        'Le renderer ne reconnait pas le fond a integrer.',
+        undefined,
+        'background_reference_missing',
+      );
+    }
+    renderer.resolveImage(unresolvedImages[0], input.background.bytes);
+    if (renderer.imagesToResolve().length > 0) {
+      renderer.free();
+      throw new SocialImageValidationError(
+        'Le fond n\'a pas pu etre integre au rendu final.',
+        undefined,
+        'background_not_embedded',
+      );
+    }
     const rendered = renderer.render();
     const masterBytes = rendered.asPng();
     rendered.free();

@@ -14,6 +14,7 @@ import {
   VisualQualityCheck,
   analyzeSocialBackgroundPixels,
   analyzeVisibleSocialBackground,
+  decodeJpeg,
   generateRenderedSocialImage,
   type ImageGenerationProvider,
   type SocialImageGenerationInput,
@@ -290,6 +291,24 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assert(result.variants[0]!.render.fileSizeBytes > 0);
   assert(result.variants[0]!.render.masterFileSizeBytes > 0);
   assert(result.variants[0]!.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
+});
+
+Deno.test('SocialVisualRenderer integre reellement le bitmap provider au fichier final', async () => {
+  const image = await renderLayout('MINIMAL_OBJECT', 'Le chantier est termine.');
+  const renderedPixels = decodeJpeg(image.bytes);
+  const finalVisualQuality = analyzeVisibleSocialBackground(
+    renderedPixels,
+    {
+      sourceWidth: renderedPixels.width,
+      sourceHeight: renderedPixels.height,
+      scale: 1,
+      cropX: 0,
+      cropY: 0,
+    },
+    image.render.visualBox,
+  );
+
+  assert(finalVisualQuality.passes);
 });
 
 Deno.test(
