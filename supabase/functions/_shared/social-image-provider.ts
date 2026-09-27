@@ -1485,14 +1485,20 @@ export class SocialLayoutEngine {
       ...uniqueCandidates.slice(rotation),
       ...uniqueCandidates.slice(0, rotation),
     ];
-    const unusedThisWeek = orderedCandidates.find(
+    const textCompatibleCandidates = orderedCandidates.filter(
+      (candidate) => !fitText(post.visualText, layoutSpec(candidate)).overflow,
+    );
+    const selectableCandidates =
+      textCompatibleCandidates.length > 0 ? textCompatibleCandidates : orderedCandidates;
+    const unusedThisWeek = selectableCandidates.find(
       (candidate) => !recentLayouts.includes(candidate),
     );
     if (unusedThisWeek) return unusedThisWeek;
 
     const lastTwo = recentLayouts.slice(-2);
     return (
-      orderedCandidates.find((candidate) => !lastTwo.includes(candidate)) ?? orderedCandidates[0]!
+      selectableCandidates.find((candidate) => !lastTwo.includes(candidate)) ??
+      selectableCandidates[0]!
     );
   }
 }

@@ -460,6 +460,20 @@ Deno.test('SocialLayoutEngine ne confond pas audience terrain et scene plein cad
   assertEquals(new SocialLayoutEngine().select(postContext(state)), 'MINIMAL_OBJECT');
 });
 
+Deno.test('SocialLayoutEngine choisit un layout lisible avant tout appel provider', async () => {
+  const visualText = 'Les infos d’une intervention, au même endroit.';
+  const state = post(1, {
+    visualText,
+    visualConcept: 'Documents et suivi administratif d’une intervention terrain.',
+  });
+  const layout = new SocialLayoutEngine().select(postContext(state), [], 7);
+  const rendered = await renderLayout(layout, visualText);
+
+  assertEquals(rendered.render.layout, layout);
+  assert(rendered.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
+  assert(rendered.render.lineCount <= 4);
+});
+
 Deno.test(
   'OpenAIImageGenerationProvider prepare un appel image sans appel reel dans les tests',
   async () => {
