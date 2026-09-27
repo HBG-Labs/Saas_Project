@@ -479,6 +479,17 @@ verify_jwt = false
 [functions.prospecting-worker]
 verify_jwt = false
 
+# Social Studio : le renderer final utilise Archivo 700/800 et resvg WASM.
+# Ces fichiers restent cote serveur et sont embarques avec l'Edge Function.
+[functions.social-image-generate]
+static_files = [
+  "./functions/social-image-generate/assets/archivo-latin-700-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-ext-700-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-800-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-ext-800-normal.ttf",
+  "./functions/social-image-generate/assets/resvg.wasm",
+]
+
 # Social Studio Phase F : worker interne dry-run, appelé plus tard par cron avec
 # `x-worker-secret`. Aucun cron production n'est créé par cette phase.
 [functions.social-worker]

@@ -1,7 +1,8 @@
 import { buildRezo360MarketingContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
+import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v3-agency-renderer';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v4-archivo-resvg';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
 export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-flare';
@@ -95,7 +96,8 @@ export interface SocialRenderedImage {
   originalFilename: string;
   render: {
     layout: SocialVisualLayout;
-    fontFamily: 'Nunito' | 'IBM Plex Sans Variable';
+    engine: 'resvg-wasm';
+    fontFamily: 'Archivo';
     fontSize: number;
     minFontSize: number;
     lineHeight: number;
@@ -196,8 +198,56 @@ interface CropResult {
 
 type Fetcher = typeof fetch;
 
+const SOCIAL_RENDERER_ASSET_ROOT = new URL('../social-image-generate/assets/', import.meta.url);
+const SOCIAL_RENDERER_WASM_URL = new URL('resvg.wasm', SOCIAL_RENDERER_ASSET_ROOT);
+const SOCIAL_RENDERER_FONT_LATIN_700_URL = new URL(
+  'archivo-latin-700-normal.ttf',
+  SOCIAL_RENDERER_ASSET_ROOT,
+);
+const SOCIAL_RENDERER_FONT_700_URL = new URL(
+  'archivo-latin-ext-700-normal.ttf',
+  SOCIAL_RENDERER_ASSET_ROOT,
+);
+const SOCIAL_RENDERER_FONT_LATIN_800_URL = new URL(
+  'archivo-latin-800-normal.ttf',
+  SOCIAL_RENDERER_ASSET_ROOT,
+);
+const SOCIAL_RENDERER_FONT_800_URL = new URL(
+  'archivo-latin-ext-800-normal.ttf',
+  SOCIAL_RENDERER_ASSET_ROOT,
+);
+
+let rendererAssetsPromise: Promise<{ fonts: Uint8Array[] }> | null = null;
+
+async function loadRendererAssets(): Promise<{ fonts: Uint8Array[] }> {
+  if (!rendererAssetsPromise) {
+    rendererAssetsPromise = (async () => {
+      const [wasm, fontLatin700, font700, fontLatin800, font800] = await Promise.all([
+        Deno.readFile(SOCIAL_RENDERER_WASM_URL),
+        Deno.readFile(SOCIAL_RENDERER_FONT_LATIN_700_URL),
+        Deno.readFile(SOCIAL_RENDERER_FONT_700_URL),
+        Deno.readFile(SOCIAL_RENDERER_FONT_LATIN_800_URL),
+        Deno.readFile(SOCIAL_RENDERER_FONT_800_URL),
+      ]);
+      await initWasm(wasm);
+      return { fonts: [fontLatin700, font700, fontLatin800, font800] };
+    })().catch((error) => {
+      rendererAssetsPromise = null;
+      throw new SocialImageValidationError(
+        `Renderer Archivo indisponible: ${error instanceof Error ? error.message : 'erreur inconnue'}`,
+        undefined,
+        'renderer_unavailable',
+      );
+    });
+  }
+  return rendererAssetsPromise;
+}
+
 export class SocialImageProviderError extends Error {
-  constructor(message: string, readonly code = 'provider_error') {
+  constructor(
+    message: string,
+    readonly code = 'provider_error',
+  ) {
     super(message);
     this.name = 'SocialImageProviderError';
   }
@@ -279,7 +329,7 @@ function zlibStored(bytes: Uint8Array): Uint8Array {
     header[0] = final ? 1 : 0;
     header[1] = size & 0xff;
     header[2] = (size >>> 8) & 0xff;
-    const inverted = (~size) & 0xffff;
+    const inverted = ~size & 0xffff;
     header[3] = inverted & 0xff;
     header[4] = (inverted >>> 8) & 0xff;
     blocks.push(header, bytes.slice(offset, offset + size));
@@ -338,7 +388,10 @@ function readU32(bytes: Uint8Array, offset: number) {
 }
 
 async function inflateZlib(bytes: Uint8Array): Promise<Uint8Array> {
-  const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const body = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
   const stream = new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
@@ -382,7 +435,11 @@ export async function decodePng(bytes: Uint8Array): Promise<PixelBuffer> {
   }
 
   if (bitDepth !== 8 || ![0, 2, 6].includes(colorType) || width <= 0 || height <= 0) {
-    throw new SocialImageValidationError('PNG non supporte par le renderer.', undefined, 'unsupported_png');
+    throw new SocialImageValidationError(
+      'PNG non supporte par le renderer.',
+      undefined,
+      'unsupported_png',
+    );
   }
 
   const bpp = colorType === 6 ? 4 : colorType === 2 ? 3 : 1;
@@ -408,7 +465,12 @@ export async function decodePng(bytes: Uint8Array): Promise<PixelBuffer> {
       else if (filter === 2) unfiltered[x] = (raw + up) & 0xff;
       else if (filter === 3) unfiltered[x] = (raw + Math.floor((left + up) / 2)) & 0xff;
       else if (filter === 4) unfiltered[x] = (raw + paeth(left, up, upperLeft)) & 0xff;
-      else throw new SocialImageValidationError('Filtre PNG non supporte.', undefined, 'unsupported_png_filter');
+      else
+        throw new SocialImageValidationError(
+          'Filtre PNG non supporte.',
+          undefined,
+          'unsupported_png_filter',
+        );
     }
 
     for (let x = 0; x < width; x += 1) {
@@ -457,11 +519,14 @@ function mix(a: readonly number[], b: readonly number[], amount: number): Rgb {
   ];
 }
 
-function averagePalette(buffer: PixelBuffer, fallbackAccent: Rgb): GeneratedSocialBackground['palette'] {
+function averagePalette(
+  buffer: PixelBuffer,
+  fallbackAccent: Rgb,
+): GeneratedSocialBackground['palette'] {
   let r = 0;
   let g = 0;
   let b = 0;
-  const step = Math.max(1, Math.floor(buffer.width * buffer.height / 8000));
+  const step = Math.max(1, Math.floor((buffer.width * buffer.height) / 8000));
   let count = 0;
   for (let pixel = 0; pixel < buffer.width * buffer.height; pixel += step) {
     const offset = pixel * 3;
@@ -483,14 +548,13 @@ function setPixel(buffer: PixelBuffer, x: number, y: number, color: readonly num
   buffer.data[offset + 2] = color[2]!;
 }
 
-function getPixel(buffer: PixelBuffer, x: number, y: number): Rgb {
-  const clampedX = Math.max(0, Math.min(buffer.width - 1, x));
-  const clampedY = Math.max(0, Math.min(buffer.height - 1, y));
-  const offset = (clampedY * buffer.width + clampedX) * 3;
-  return [buffer.data[offset]!, buffer.data[offset + 1]!, buffer.data[offset + 2]!];
-}
-
-function blendPixel(buffer: PixelBuffer, x: number, y: number, color: readonly number[], alpha: number) {
+function blendPixel(
+  buffer: PixelBuffer,
+  x: number,
+  y: number,
+  color: readonly number[],
+  alpha: number,
+) {
   if (x < 0 || y < 0 || x >= buffer.width || y >= buffer.height) return;
   const offset = (y * buffer.width + x) * 3;
   buffer.data[offset] = Math.round(buffer.data[offset]! * (1 - alpha) + color[0]! * alpha);
@@ -511,14 +575,37 @@ function fillRect(buffer: PixelBuffer, box: Box, color: readonly number[], alpha
   }
 }
 
-function strokeRect(buffer: PixelBuffer, box: Box, color: readonly number[], thickness: number, alpha = 1) {
+function strokeRect(
+  buffer: PixelBuffer,
+  box: Box,
+  color: readonly number[],
+  thickness: number,
+  alpha = 1,
+) {
   fillRect(buffer, { x: box.x, y: box.y, width: box.width, height: thickness }, color, alpha);
-  fillRect(buffer, { x: box.x, y: box.y + box.height - thickness, width: box.width, height: thickness }, color, alpha);
+  fillRect(
+    buffer,
+    { x: box.x, y: box.y + box.height - thickness, width: box.width, height: thickness },
+    color,
+    alpha,
+  );
   fillRect(buffer, { x: box.x, y: box.y, width: thickness, height: box.height }, color, alpha);
-  fillRect(buffer, { x: box.x + box.width - thickness, y: box.y, width: thickness, height: box.height }, color, alpha);
+  fillRect(
+    buffer,
+    { x: box.x + box.width - thickness, y: box.y, width: thickness, height: box.height },
+    color,
+    alpha,
+  );
 }
 
-function fillCircle(buffer: PixelBuffer, cx: number, cy: number, radius: number, color: readonly number[], alpha = 1) {
+function fillCircle(
+  buffer: PixelBuffer,
+  cx: number,
+  cy: number,
+  radius: number,
+  color: readonly number[],
+  alpha = 1,
+) {
   const r2 = radius * radius;
   for (let y = Math.floor(cy - radius); y <= cy + radius; y += 1) {
     for (let x = Math.floor(cx - radius); x <= cx + radius; x += 1) {
@@ -530,25 +617,28 @@ function fillCircle(buffer: PixelBuffer, cx: number, cy: number, radius: number,
   }
 }
 
-function resizeCover(source: PixelBuffer, width: number, height: number, focusX = 0.5, focusY = 0.5): { buffer: PixelBuffer; crop: CropResult } {
-  const scale = Math.max(width / source.width, height / source.height);
-  const scaledWidth = source.width * scale;
-  const scaledHeight = source.height * scale;
+function calculateCoverCrop(
+  sourceWidth: number,
+  sourceHeight: number,
+  width: number,
+  height: number,
+  focusX = 0.5,
+  focusY = 0.5,
+): CropResult {
+  const scale = Math.max(width / sourceWidth, height / sourceHeight);
+  const scaledWidth = sourceWidth * scale;
+  const scaledHeight = sourceHeight * scale;
   const cropX = Math.max(0, Math.min(scaledWidth - width, (scaledWidth - width) * focusX));
   const cropY = Math.max(0, Math.min(scaledHeight - height, (scaledHeight - height) * focusY));
-  const output: PixelBuffer = { width, height, data: new Uint8Array(width * height * 3) };
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const sx = (x + cropX) / scale;
-      const sy = (y + cropY) / scale;
-      setPixel(output, x, y, getPixel(source, Math.round(sx), Math.round(sy)));
-    }
-  }
-  return { buffer: output, crop: { sourceWidth: source.width, sourceHeight: source.height, scale, cropX, cropY } };
+  return { sourceWidth, sourceHeight, scale, cropX, cropY };
 }
 
-function makeMockBackground(width: number, height: number, palette: GeneratedSocialBackground['palette'], layout: SocialVisualLayout): PixelBuffer {
+function makeMockBackground(
+  width: number,
+  height: number,
+  palette: GeneratedSocialBackground['palette'],
+  layout: SocialVisualLayout,
+): PixelBuffer {
   const buffer: PixelBuffer = { width, height, data: new Uint8Array(width * height * 3) };
   const softBlue = mix(palette.base, BRAND_BLUE, 0.08);
   const warm = mix(palette.base, [235, 223, 205], 0.35);
@@ -557,17 +647,31 @@ function makeMockBackground(width: number, height: number, palette: GeneratedSoc
       const gx = x / width;
       const gy = y / height;
       let color = mix(palette.base, softBlue, gx * 0.4 + gy * 0.24);
-      if (layout === 'ABSTRACT_CAMPAIGN' && (x + y) % 71 < 14) color = mix(color, palette.accent, 0.12);
-      if (layout === 'FULL_BLEED_VISUAL' && y > height * 0.58) color = mix(color, [72, 88, 112], 0.24);
-      if (layout === 'MINIMAL_OBJECT' && x > width * 0.55 && y > height * 0.45) color = mix(color, warm, 0.42);
+      if (layout === 'ABSTRACT_CAMPAIGN' && (x + y) % 71 < 14)
+        color = mix(color, palette.accent, 0.12);
+      if (layout === 'FULL_BLEED_VISUAL' && y > height * 0.58)
+        color = mix(color, [72, 88, 112], 0.24);
+      if (layout === 'MINIMAL_OBJECT' && x > width * 0.55 && y > height * 0.45)
+        color = mix(color, warm, 0.42);
       if (layout === 'SPLIT_VISUAL' && x > width * 0.55) color = mix(color, palette.accent, 0.18);
       setPixel(buffer, x, y, color);
     }
   }
 
   if (layout === 'MINIMAL_OBJECT') {
-    fillRect(buffer, { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 }, WHITE, 0.74);
-    strokeRect(buffer, { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 }, palette.accent, 6, 0.52);
+    fillRect(
+      buffer,
+      { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
+      WHITE,
+      0.74,
+    );
+    strokeRect(
+      buffer,
+      { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
+      palette.accent,
+      6,
+      0.52,
+    );
   }
   if (layout === 'ABSTRACT_CAMPAIGN') {
     fillCircle(buffer, width * 0.78, height * 0.22, width * 0.16, palette.accent, 0.18);
@@ -575,7 +679,12 @@ function makeMockBackground(width: number, height: number, palette: GeneratedSoc
   }
   if (layout === 'FULL_BLEED_VISUAL' || layout === 'SPLIT_VISUAL') {
     fillRect(buffer, { x: 0, y: height * 0.68, width, height: height * 0.32 }, [70, 82, 90], 0.16);
-    fillRect(buffer, { x: width * 0.12, y: height * 0.62, width: width * 0.26, height: height * 0.08 }, [54, 60, 66], 0.18);
+    fillRect(
+      buffer,
+      { x: width * 0.12, y: height * 0.62, width: width * 0.26, height: height * 0.08 },
+      [54, 60, 66],
+      0.18,
+    );
     fillCircle(buffer, width * 0.26, height * 0.6, width * 0.055, [52, 58, 64], 0.16);
   }
   return buffer;
@@ -590,92 +699,94 @@ function normalizeDisplayText(value: string): string {
     .toLocaleUpperCase('fr-FR');
 }
 
-const FONT: Record<string, string[]> = {
-  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
-  B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
-  C: ['01111', '10000', '10000', '10000', '10000', '10000', '01111'],
-  D: ['11110', '10001', '10001', '10001', '10001', '10001', '11110'],
-  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
-  F: ['11111', '10000', '10000', '11110', '10000', '10000', '10000'],
-  G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
-  H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
-  I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
-  J: ['00111', '00010', '00010', '00010', '10010', '10010', '01100'],
-  K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
-  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
-  M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
-  N: ['10001', '11001', '10101', '10011', '10001', '10001', '10001'],
-  O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
-  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
-  Q: ['01110', '10001', '10001', '10001', '10101', '10010', '01101'],
-  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
-  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
-  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
-  U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
-  V: ['10001', '10001', '10001', '10001', '01010', '01010', '00100'],
-  W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
-  X: ['10001', '01010', '00100', '00100', '00100', '01010', '10001'],
-  Y: ['10001', '01010', '00100', '00100', '00100', '00100', '00100'],
-  Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
-  '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
-  '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
-  '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
-  '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
-  '4': ['00010', '00110', '01010', '10010', '11111', '00010', '00010'],
-  '5': ['11111', '10000', '10000', '11110', '00001', '00001', '11110'],
-  '6': ['01110', '10000', '10000', '11110', '10001', '10001', '01110'],
-  '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
-  '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
-  '9': ['01110', '10001', '10001', '01111', '00001', '00001', '01110'],
-  '?': ['01110', '10001', '00001', '00010', '00100', '00000', '00100'],
-  '!': ['00100', '00100', '00100', '00100', '00100', '00000', '00100'],
-  '.': ['00000', '00000', '00000', '00000', '00000', '01100', '01100'],
-  ',': ['00000', '00000', '00000', '00000', '01100', '01100', '01000'],
-  "'": ['00100', '00100', '01000', '00000', '00000', '00000', '00000'],
-  '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
-  '/': ['00001', '00010', '00010', '00100', '01000', '01000', '10000'],
-  ':': ['00000', '01100', '01100', '00000', '01100', '01100', '00000'],
-  '+': ['00000', '00100', '00100', '11111', '00100', '00100', '00000'],
-  '&': ['01100', '10010', '10100', '01000', '10101', '10010', '01101'],
-  '(': ['00010', '00100', '01000', '01000', '01000', '00100', '00010'],
-  ')': ['01000', '00100', '00010', '00010', '00010', '00100', '01000'],
+// Avances normalisees extraites de l'Archivo ExtraBold 800 embarquee. Elles
+// rendent le wrapping deterministe sans reposer sur une approximation moyenne.
+const ARCHIVO_800_ADVANCE: Record<string, number> = {
+  '0': 0.625,
+  '1': 0.625,
+  '2': 0.625,
+  '3': 0.625,
+  '4': 0.626,
+  '5': 0.625,
+  '6': 0.625,
+  '7': 0.625,
+  '8': 0.625,
+  '9': 0.625,
+  A: 0.746,
+  À: 0.746,
+  Â: 0.746,
+  Ä: 0.746,
+  B: 0.745,
+  C: 0.752,
+  Ç: 0.752,
+  D: 0.755,
+  E: 0.699,
+  È: 0.699,
+  É: 0.699,
+  Ê: 0.699,
+  Ë: 0.699,
+  F: 0.641,
+  G: 0.815,
+  H: 0.787,
+  I: 0.329,
+  Î: 0.329,
+  Ï: 0.329,
+  J: 0.63,
+  K: 0.77,
+  L: 0.623,
+  M: 0.914,
+  N: 0.787,
+  O: 0.81,
+  Ô: 0.81,
+  Ö: 0.81,
+  Œ: 1.204,
+  P: 0.698,
+  Q: 0.81,
+  R: 0.75,
+  S: 0.697,
+  T: 0.675,
+  U: 0.783,
+  Ù: 0.783,
+  Û: 0.783,
+  Ü: 0.783,
+  V: 0.729,
+  W: 0.979,
+  X: 0.736,
+  Y: 0.732,
+  Ÿ: 0.732,
+  Z: 0.682,
+  '.': 0.318,
+  ',': 0.318,
+  ':': 0.334,
+  '!': 0.314,
+  '?': 0.612,
+  '/': 0.302,
+  '(': 0.374,
+  ')': 0.374,
+  '-': 0.333,
+  "'": 0.263,
+  '+': 0.649,
+  '%': 0.984,
+  '@': 1.005,
+  '&': 0.816,
+  '|': 0.265,
 };
 
-function baseChar(char: string) {
-  return char.normalize('NFD').replace(/\p{Diacritic}/gu, '')[0]?.toLocaleUpperCase('fr-FR') ?? char;
+function charAdvance(char: string, fontSize: number) {
+  if (char === ' ') return fontSize * 0.28;
+  return fontSize * (ARCHIVO_800_ADVANCE[char] ?? 0.75);
 }
 
-function accentOf(char: string): string | null {
-  const mark = char.normalize('NFD').match(/\p{Diacritic}/u)?.[0];
-  if (!mark) return null;
-  if (mark === '\u0301') return 'acute';
-  if (mark === '\u0300') return 'grave';
-  if (mark === '\u0302') return 'circumflex';
-  if (mark === '\u0308') return 'diaeresis';
-  if (mark === '\u0327') return 'cedilla';
-  return null;
+function measureLine(line: string, fontSize: number): number {
+  return Array.from(line).reduce((sum, char) => sum + charAdvance(char, fontSize), 0);
 }
 
-function charPattern(char: string) {
-  return FONT[baseChar(char)] ?? ['00000', '00000', '11111', '00000', '11111', '00000', '00000'];
-}
-
-function charAdvance(char: string, scale: number) {
-  if (char === ' ') return 3.8 * scale;
-  if (char === '.' || char === ',' || char === "'") return 3.6 * scale;
-  return 6.6 * scale;
-}
-
-function measureLine(line: string, scale: number): number {
-  return Array.from(line).reduce((sum, char) => sum + charAdvance(char, scale), 0);
-}
-
-function splitLongWord(word: string, scale: number, maxWidth: number): string[] {
+function splitLongWord(word: string, fontSize: number, maxWidth: number): string[] {
   const chunks: string[] = [];
   let chunk = '';
   for (const char of Array.from(word)) {
     const next = `${chunk}${char}`;
-    if (chunk && measureLine(next, scale) > maxWidth) {
+    if (chunk && measureLine(next, fontSize) > maxWidth) {
       chunks.push(chunk);
       chunk = char;
     } else {
@@ -686,15 +797,16 @@ function splitLongWord(word: string, scale: number, maxWidth: number): string[] 
   return chunks;
 }
 
-function wrapText(text: string, scale: number, maxWidth: number): string[] {
+function wrapText(text: string, fontSize: number, maxWidth: number): string[] {
   const words = normalizeDisplayText(text).split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = '';
   for (const word of words) {
-    const pieces = measureLine(word, scale) > maxWidth ? splitLongWord(word, scale, maxWidth) : [word];
+    const pieces =
+      measureLine(word, fontSize) > maxWidth ? splitLongWord(word, fontSize, maxWidth) : [word];
     for (const piece of pieces) {
       const next = line ? `${line} ${piece}` : piece;
-      if (measureLine(next, scale) <= maxWidth || line.length === 0) {
+      if (measureLine(next, fontSize) <= maxWidth || line.length === 0) {
         line = next;
       } else {
         lines.push(line);
@@ -710,14 +822,14 @@ function fitText(text: string, spec: LayoutSpec): TextFit {
   let fontSize = spec.idealFontSize;
   let attempts = 0;
   let lines: string[] = [];
-  let scale = fontSize / 7;
-  let lineHeight = Math.round(fontSize * 1.06);
+  let scale = fontSize;
+  let lineHeight = Math.round(fontSize * 0.98);
   let width = 0;
   let height = 0;
   while (attempts < SOCIAL_IMAGE_MAX_RENDER_ATTEMPTS) {
     attempts += 1;
-    scale = fontSize / 7;
-    lineHeight = Math.round(fontSize * 1.06);
+    scale = fontSize;
+    lineHeight = Math.round(fontSize * 0.98);
     lines = wrapText(text, scale, spec.textBox.width);
     width = Math.max(...lines.map((line) => measureLine(line, scale)), 0);
     height = lines.length * lineHeight;
@@ -745,82 +857,6 @@ function fitText(text: string, spec: LayoutSpec): TextFit {
     width,
     height,
   };
-}
-
-function drawGlyph(
-  buffer: PixelBuffer,
-  char: string,
-  x: number,
-  y: number,
-  scale: number,
-  color: readonly number[],
-  weight = 1,
-) {
-  const pattern = charPattern(char);
-  const accent = accentOf(char);
-  const roundedScale = Math.max(2, Math.round(scale));
-  if (accent === 'acute') fillRect(buffer, { x: x + roundedScale * 3, y: y - roundedScale * 1.8, width: roundedScale * 2, height: roundedScale }, color);
-  if (accent === 'grave') fillRect(buffer, { x: x + roundedScale, y: y - roundedScale * 1.8, width: roundedScale * 2, height: roundedScale }, color);
-  if (accent === 'circumflex') {
-    fillRect(buffer, { x: x + roundedScale, y: y - roundedScale * 1.8, width: roundedScale, height: roundedScale }, color);
-    fillRect(buffer, { x: x + roundedScale * 3, y: y - roundedScale * 1.8, width: roundedScale, height: roundedScale }, color);
-  }
-  if (accent === 'diaeresis') {
-    fillRect(buffer, { x: x + roundedScale, y: y - roundedScale * 1.8, width: roundedScale, height: roundedScale }, color);
-    fillRect(buffer, { x: x + roundedScale * 4, y: y - roundedScale * 1.8, width: roundedScale, height: roundedScale }, color);
-  }
-  for (let row = 0; row < pattern.length; row += 1) {
-    for (let col = 0; col < pattern[row]!.length; col += 1) {
-      if (pattern[row]![col] === '1') {
-        fillRect(
-          buffer,
-          {
-            x: Math.round(x + col * scale),
-            y: Math.round(y + row * scale),
-            width: Math.ceil(scale + weight),
-            height: Math.ceil(scale + weight),
-          },
-          color,
-        );
-      }
-    }
-  }
-  if (accent === 'cedilla') {
-    fillRect(buffer, { x: x + roundedScale * 2, y: y + roundedScale * 7.4, width: roundedScale * 2, height: roundedScale }, color);
-  }
-}
-
-function drawTextLine(
-  buffer: PixelBuffer,
-  line: string,
-  x: number,
-  y: number,
-  scale: number,
-  color: readonly number[],
-  weight = 1,
-) {
-  let cursor = x;
-  for (const char of Array.from(line)) {
-    if (char !== ' ') drawGlyph(buffer, char, cursor, y, scale, color, weight);
-    cursor += charAdvance(char, scale);
-  }
-}
-
-function drawTextBlock(buffer: PixelBuffer, lines: string[], box: Box, fit: TextFit, alignment: 'left' | 'center', color: readonly number[]) {
-  const totalHeight = lines.length * fit.lineHeight;
-  let y = Math.round(box.y + Math.max(0, (box.height - totalHeight) / 2));
-  for (const line of lines) {
-    const width = measureLine(line, fit.scale);
-    const x = alignment === 'center' ? Math.round(box.x + (box.width - width) / 2) : box.x;
-    drawTextLine(buffer, line, x, y, fit.scale, color, fit.fontSize >= 82 ? 2 : 1);
-    y += fit.lineHeight;
-  }
-}
-
-function drawLogo(buffer: PixelBuffer, box: Box, textColor: readonly number[]) {
-  const scale = box.height / 8;
-  drawTextLine(buffer, 'REZO', box.x, box.y, scale, textColor, 1);
-  drawTextLine(buffer, '360', box.x + 4 * 6.6 * scale + 7, box.y, scale, BRAND_BLUE, 1);
 }
 
 function layoutSpec(layout: SocialVisualLayout): LayoutSpec {
@@ -925,49 +961,143 @@ function logoBoxFor(placement: LayoutSpec['logoPlacement']): Box {
   const height = 34;
   const margin = 72;
   if (placement === 'top-left') return { x: margin, y: margin, width, height };
-  if (placement === 'top-right') return { x: SOCIAL_FINAL_IMAGE_WIDTH - margin - width, y: margin, width, height };
+  if (placement === 'top-right')
+    return { x: SOCIAL_FINAL_IMAGE_WIDTH - margin - width, y: margin, width, height };
   if (placement === 'bottom-right') {
-    return { x: SOCIAL_FINAL_IMAGE_WIDTH - margin - width, y: SOCIAL_FINAL_IMAGE_HEIGHT - margin - height, width, height };
+    return {
+      x: SOCIAL_FINAL_IMAGE_WIDTH - margin - width,
+      y: SOCIAL_FINAL_IMAGE_HEIGHT - margin - height,
+      width,
+      height,
+    };
   }
   return { x: margin, y: SOCIAL_FINAL_IMAGE_HEIGHT - margin - height, width, height };
 }
 
-function applyOverlay(buffer: PixelBuffer, spec: LayoutSpec) {
-  if (spec.overlay === 'vignette') {
-    for (let y = 0; y < buffer.height; y += 1) {
-      const top = y / buffer.height;
-      const alpha = top < 0.22 ? (0.22 - top) * 0.35 : top > 0.63 ? (top - 0.63) * 0.95 : 0;
-      if (alpha <= 0) continue;
-      for (let x = 0; x < buffer.width; x += 1) blendPixel(buffer, x, y, INK, Math.min(0.42, alpha));
-    }
-  }
-  if (spec.overlay === 'light-panel') {
-    fillRect(buffer, spec.visualBox, WHITE, 0.12);
-  }
-  if (spec.overlay === 'blue-wash') {
-    fillCircle(buffer, 850, 260, 230, BRAND_BLUE, 0.12);
-    fillCircle(buffer, 160, 1050, 160, BRAND_NIGHT, 0.08);
-  }
+function rgbCss(color: readonly number[]): string {
+  return `rgb(${color[0]} ${color[1]} ${color[2]})`;
 }
 
-function drawPanel(buffer: PixelBuffer, spec: LayoutSpec) {
+function escapeXml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
+function svgOverlay(spec: LayoutSpec): string {
+  const layers: string[] = [];
+  if (spec.overlay === 'vignette') {
+    layers.push(
+      '<rect width="1080" height="1350" fill="url(#vignette)"/>',
+      '<rect width="1080" height="1350" fill="url(#sideShade)"/>',
+    );
+  }
+  if (spec.overlay === 'light-panel') {
+    layers.push(
+      `<rect x="${spec.visualBox.x}" y="${spec.visualBox.y}" width="${spec.visualBox.width}" height="${spec.visualBox.height}" fill="white" fill-opacity="0.12"/>`,
+    );
+  }
+  if (spec.overlay === 'blue-wash') {
+    layers.push(
+      `<circle cx="850" cy="260" r="230" fill="${rgbCss(BRAND_BLUE)}" fill-opacity="0.12"/>`,
+      `<circle cx="160" cy="1050" r="160" fill="${rgbCss(BRAND_NIGHT)}" fill-opacity="0.08"/>`,
+    );
+  }
+  return layers.join('');
+}
+
+function svgPanel(spec: LayoutSpec): string {
   const box = {
     x: spec.textBox.x - 36,
     y: spec.textBox.y - 34,
     width: spec.textBox.width + 72,
     height: spec.textBox.height + 68,
   };
-  if (spec.panel === 'solid') fillRect(buffer, box, WHITE, 0.92);
-  if (spec.panel === 'soft') fillRect(buffer, box, PAPER, 0.8);
-  if (spec.panel === 'glass') fillRect(buffer, box, WHITE, 0.72);
-  if (spec.panel === 'blue') fillRect(buffer, box, BRAND_NIGHT, 0.84);
+  const panel = {
+    solid: { color: WHITE, opacity: 0.92 },
+    soft: { color: PAPER, opacity: 0.8 },
+    glass: { color: WHITE, opacity: 0.76 },
+    blue: { color: BRAND_NIGHT, opacity: 0.88 },
+    none: null,
+  }[spec.panel];
+  if (!panel) return '';
+  return `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${rgbCss(panel.color)}" fill-opacity="${panel.opacity}"/>`;
 }
 
-function drawAccent(buffer: PixelBuffer, spec: LayoutSpec, accent: readonly number[]) {
-  if (spec.accent === 'bar') fillRect(buffer, { x: spec.textBox.x, y: spec.textBox.y - 58, width: 150, height: 12 }, accent);
-  if (spec.accent === 'rule') fillRect(buffer, { x: spec.textBox.x, y: spec.textBox.y - 34, width: spec.textBox.width * 0.62, height: 5 }, accent, 0.8);
-  if (spec.accent === 'frame') strokeRect(buffer, spec.visualBox, accent, 10, 0.55);
-  if (spec.accent === 'dot') fillCircle(buffer, spec.textBox.x + spec.textBox.width / 2, spec.textBox.y - 50, 12, accent, 0.85);
+function svgAccent(spec: LayoutSpec, accent: readonly number[]): string {
+  const color = rgbCss(accent);
+  if (spec.accent === 'bar') {
+    return `<rect x="${spec.textBox.x}" y="${spec.textBox.y - 58}" width="150" height="12" rx="6" fill="${color}"/>`;
+  }
+  if (spec.accent === 'rule') {
+    return `<rect x="${spec.textBox.x}" y="${spec.textBox.y - 34}" width="${spec.textBox.width * 0.62}" height="5" rx="2.5" fill="${color}" fill-opacity="0.8"/>`;
+  }
+  if (spec.accent === 'frame') {
+    return `<rect x="${spec.visualBox.x}" y="${spec.visualBox.y}" width="${spec.visualBox.width}" height="${spec.visualBox.height}" fill="none" stroke="${color}" stroke-opacity="0.55" stroke-width="10"/>`;
+  }
+  if (spec.accent === 'dot') {
+    return `<circle cx="${spec.textBox.x + spec.textBox.width / 2}" cy="${spec.textBox.y - 50}" r="12" fill="${color}" fill-opacity="0.85"/>`;
+  }
+  return '';
+}
+
+function svgTextBlock(spec: LayoutSpec, fit: TextFit): string {
+  const x = spec.alignment === 'center' ? spec.textBox.x + spec.textBox.width / 2 : spec.textBox.x;
+  const anchor = spec.alignment === 'center' ? 'middle' : 'start';
+  const totalHeight = fit.lines.length * fit.lineHeight;
+  const firstBaseline =
+    spec.textBox.y + Math.max(0, (spec.textBox.height - totalHeight) / 2) + fit.fontSize * 0.8;
+  const lines = fit.lines
+    .map(
+      (line, index) =>
+        `<tspan x="${x}" y="${firstBaseline + index * fit.lineHeight}">${escapeXml(line)}</tspan>`,
+    )
+    .join('');
+  return `<text font-family="Archivo ExtraBold" font-size="${fit.fontSize}" font-weight="800" letter-spacing="0" text-anchor="${anchor}" fill="${rgbCss(spec.textColor)}" filter="url(#textShadow)">${lines}</text>`;
+}
+
+function svgLogo(box: Box, textColor: readonly number[]): string {
+  const baseline = box.y + box.height * 0.82;
+  const primary = rgbCss(textColor);
+  const accent = textColor === WHITE ? 'rgb(143 169 255)' : rgbCss(BRAND_BLUE);
+  return `<text x="${box.x}" y="${baseline}" font-family="Archivo" font-size="${box.height}" font-weight="700" letter-spacing="0" fill="${primary}">REZO<tspan fill="${accent}">360</tspan></text>`;
+}
+
+function buildSocialVisualSvg(input: {
+  background: GeneratedSocialBackground;
+  crop: CropResult;
+  spec: LayoutSpec;
+  fit: TextFit;
+  logoBox: Box;
+}): string {
+  const scaledWidth = input.background.width * input.crop.scale;
+  const scaledHeight = input.background.height * input.crop.scale;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+    <defs>
+      <linearGradient id="vignette" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${rgbCss(INK)}" stop-opacity="0.10"/>
+        <stop offset="0.55" stop-color="${rgbCss(INK)}" stop-opacity="0"/>
+        <stop offset="1" stop-color="${rgbCss(INK)}" stop-opacity="0.52"/>
+      </linearGradient>
+      <linearGradient id="sideShade" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="${rgbCss(INK)}" stop-opacity="0.26"/>
+        <stop offset="0.5" stop-color="${rgbCss(INK)}" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.24"/>
+      </filter>
+    </defs>
+    <rect width="1080" height="1350" fill="${rgbCss(PAPER)}"/>
+    <image href="rezo360-background.png" x="${-input.crop.cropX}" y="${-input.crop.cropY}" width="${scaledWidth}" height="${scaledHeight}" preserveAspectRatio="none"/>
+    ${svgOverlay(input.spec)}
+    ${svgPanel(input.spec)}
+    ${svgAccent(input.spec, input.background.palette.accent)}
+    ${svgTextBlock(input.spec, input.fit)}
+    ${svgLogo(input.logoBox, input.spec.textColor === WHITE ? WHITE : BRAND_NIGHT)}
+  </svg>`;
 }
 
 function focusFor(layout: SocialVisualLayout): [number, number] {
@@ -980,13 +1110,30 @@ function focusFor(layout: SocialVisualLayout): [number, number] {
 
 function validateBackgroundDimensions(background: GeneratedSocialBackground) {
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(background.mimeType)) {
-    throw new SocialImageValidationError('Format background provider invalide.', undefined, 'invalid_background_format');
+    throw new SocialImageValidationError(
+      'Format background provider invalide.',
+      undefined,
+      'invalid_background_format',
+    );
   }
-  if (background.width < 640 || background.height < 640 || background.width > 4096 || background.height > 4096) {
-    throw new SocialImageValidationError('Dimensions background provider invalides.', undefined, 'invalid_background_dimensions');
+  if (
+    background.width < 640 ||
+    background.height < 640 ||
+    background.width > 4096 ||
+    background.height > 4096
+  ) {
+    throw new SocialImageValidationError(
+      'Dimensions background provider invalides.',
+      undefined,
+      'invalid_background_dimensions',
+    );
   }
   if (background.mimeType !== 'image/png') {
-    throw new SocialImageValidationError('Le renderer final requiert un background PNG decodable.', undefined, 'background_requires_png');
+    throw new SocialImageValidationError(
+      'Le renderer final requiert un background PNG decodable.',
+      undefined,
+      'background_requires_png',
+    );
   }
 }
 
@@ -1029,13 +1176,21 @@ export class SocialImagePromptBuilder {
 }
 
 export class SocialLayoutEngine {
-  select(post: SocialImagePostContext, recentLayouts: SocialVisualLayout[] = []): SocialVisualLayout {
-    const text = `${post.visualConcept} ${post.objective ?? ''} ${post.audience ?? ''}`.toLowerCase();
+  select(
+    post: SocialImagePostContext,
+    recentLayouts: SocialVisualLayout[] = [],
+  ): SocialVisualLayout {
+    const text =
+      `${post.visualConcept} ${post.objective ?? ''} ${post.audience ?? ''}`.toLowerCase();
     const candidates: SocialVisualLayout[] = [];
-    if (/terrain|chantier|intervention|technicien|camion|equipe/.test(text)) candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
-    if (/document|papier|administratif|facture|devis|compte rendu/.test(text)) candidates.push('MINIMAL_OBJECT', 'EDITORIAL_LEFT');
-    if (/question|curiosite|interaction|whatsapp|encore/.test(text)) candidates.push('TYPOGRAPHIC_HERO', 'EDITORIAL_CENTER');
-    if (/vision|marque|notoriete|centralisation/.test(text)) candidates.push('ABSTRACT_CAMPAIGN', 'EDITORIAL_CENTER');
+    if (/terrain|chantier|intervention|technicien|camion|equipe/.test(text))
+      candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
+    if (/document|papier|administratif|facture|devis|compte rendu/.test(text))
+      candidates.push('MINIMAL_OBJECT', 'EDITORIAL_LEFT');
+    if (/question|curiosite|interaction|whatsapp|encore/.test(text))
+      candidates.push('TYPOGRAPHIC_HERO', 'EDITORIAL_CENTER');
+    if (/vision|marque|notoriete|centralisation/.test(text))
+      candidates.push('ABSTRACT_CAMPAIGN', 'EDITORIAL_CENTER');
     candidates.push(SOCIAL_VISUAL_LAYOUTS[(post.slotIndex - 1) % SOCIAL_VISUAL_LAYOUTS.length]!);
     candidates.push(...SOCIAL_VISUAL_LAYOUTS);
 
@@ -1047,14 +1202,18 @@ export class SocialLayoutEngine {
   }
 }
 
-function paletteFor(layout: SocialVisualLayout, slotIndex: number): GeneratedSocialBackground['palette'] {
+function paletteFor(
+  layout: SocialVisualLayout,
+  slotIndex: number,
+): GeneratedSocialBackground['palette'] {
   const palettes: GeneratedSocialBackground['palette'][] = [
     { base: [246, 248, 252], accent: BRAND_BLUE, ink: INK },
     { base: [250, 250, 248], accent: [39, 45, 58], ink: [16, 20, 28] },
     { base: [241, 247, 246], accent: [16, 99, 132], ink: [18, 34, 38] },
     { base: [248, 246, 242], accent: [148, 91, 62], ink: [24, 24, 24] },
   ];
-  if (layout === 'ABSTRACT_CAMPAIGN') return { base: [245, 248, 255], accent: BRAND_BLUE, ink: BRAND_NIGHT };
+  if (layout === 'ABSTRACT_CAMPAIGN')
+    return { base: [245, 248, 255], accent: BRAND_BLUE, ink: BRAND_NIGHT };
   if (layout === 'FULL_BLEED_VISUAL') return { base: [52, 62, 75], accent: BRAND_BLUE, ink: WHITE };
   return palettes[(slotIndex - 1) % palettes.length]!;
 }
@@ -1067,7 +1226,12 @@ export class MockImageGenerationProvider implements ImageGenerationProvider {
   generateBackground(input: SocialImageGenerationInput) {
     const started = Date.now();
     const palette = paletteFor(input.prompt.layout, input.post.slotIndex);
-    const background = makeMockBackground(SOCIAL_PROVIDER_IMAGE_WIDTH, SOCIAL_PROVIDER_IMAGE_HEIGHT, palette, input.prompt.layout);
+    const background = makeMockBackground(
+      SOCIAL_PROVIDER_IMAGE_WIDTH,
+      SOCIAL_PROVIDER_IMAGE_HEIGHT,
+      palette,
+      input.prompt.layout,
+    );
     return Promise.resolve({
       background: {
         bytes: encodePngFromPixels(background),
@@ -1110,7 +1274,10 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
   async generateBackground(input: SocialImageGenerationInput) {
     const started = Date.now();
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? SOCIAL_IMAGE_PROVIDER_TIMEOUT_MS);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      this.options.timeoutMs ?? SOCIAL_IMAGE_PROVIDER_TIMEOUT_MS,
+    );
     const fetcher = this.options.fetcher ?? fetch;
     try {
       const response = await fetcher('https://api.openai.com/v1/images/generations', {
@@ -1130,16 +1297,19 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
           n: 1,
         }),
       });
-      const payload = await response.json().catch(() => ({})) as {
+      const payload = (await response.json().catch(() => ({}))) as {
         data?: Array<{ b64_json?: string | null; revised_prompt?: string | null }>;
         error?: { message?: string; code?: string; type?: string };
       };
 
       if (!response.ok) {
         const code = payload.error?.code ?? payload.error?.type ?? 'provider_error';
-        if (response.status === 429) throw new SocialImageProviderError('OpenAI image rate limit.', 'rate_limit');
-        if (response.status >= 500) throw new SocialImageProviderError('OpenAI image server error.', 'server_error');
-        if (/policy|safety|refus/i.test(code)) throw new SocialImageProviderError('OpenAI image prompt refused.', 'prompt_refused');
+        if (response.status === 429)
+          throw new SocialImageProviderError('OpenAI image rate limit.', 'rate_limit');
+        if (response.status >= 500)
+          throw new SocialImageProviderError('OpenAI image server error.', 'server_error');
+        if (/policy|safety|refus/i.test(code))
+          throw new SocialImageProviderError('OpenAI image prompt refused.', 'prompt_refused');
         throw new SocialImageProviderError('OpenAI image request failed.', code);
       }
 
@@ -1188,9 +1358,15 @@ export class SocialVisualRenderer {
   }): Promise<SocialRenderedImage> {
     const started = Date.now();
     validateBackgroundDimensions(input.background);
-    const decoded = await decodePng(input.background.bytes);
     const [focusX, focusY] = focusFor(input.layout);
-    const { buffer, crop } = resizeCover(decoded, SOCIAL_FINAL_IMAGE_WIDTH, SOCIAL_FINAL_IMAGE_HEIGHT, focusX, focusY);
+    const crop = calculateCoverCrop(
+      input.background.width,
+      input.background.height,
+      SOCIAL_FINAL_IMAGE_WIDTH,
+      SOCIAL_FINAL_IMAGE_HEIGHT,
+      focusX,
+      focusY,
+    );
     const spec = layoutSpec(input.layout);
     const fit = fitText(input.post.visualText, spec);
     if (fit.overflow) {
@@ -1201,15 +1377,32 @@ export class SocialVisualRenderer {
       );
     }
 
-    applyOverlay(buffer, spec);
-    drawPanel(buffer, spec);
-    drawAccent(buffer, spec, input.background.palette.accent);
-    drawTextBlock(buffer, fit.lines, spec.textBox, fit, spec.alignment, spec.textColor);
     const logoBox = logoBoxFor(spec.logoPlacement);
-    drawLogo(buffer, logoBox, spec.textColor === WHITE ? WHITE : BRAND_NIGHT);
-
-    const masterBytes = encodePngFromPixels(buffer);
-    const bytes = encodeJpegFromPixels(buffer);
+    const svg = buildSocialVisualSvg({
+      background: input.background,
+      crop,
+      spec,
+      fit,
+      logoBox,
+    });
+    const { fonts } = await loadRendererAssets();
+    const renderer = new Resvg(svg, {
+      shapeRendering: 2,
+      textRendering: 2,
+      imageRendering: 0,
+      font: {
+        fontBuffers: fonts,
+        defaultFontFamily: 'Archivo',
+        sansSerifFamily: 'Archivo',
+      },
+    });
+    renderer.resolveImage('rezo360-background.png', input.background.bytes);
+    const rendered = renderer.render();
+    const masterBytes = rendered.asPng();
+    rendered.free();
+    renderer.free();
+    const master = await decodePng(masterBytes);
+    const bytes = encodeJpegFromPixels(master, 90);
     return {
       bytes,
       mimeType: 'image/jpeg',
@@ -1220,7 +1413,8 @@ export class SocialVisualRenderer {
       promptSummary: input.background.promptSummary,
       render: {
         layout: input.layout,
-        fontFamily: input.layout === 'TYPOGRAPHIC_HERO' ? 'IBM Plex Sans Variable' : 'Nunito',
+        engine: 'resvg-wasm',
+        fontFamily: 'Archivo',
         fontSize: fit.fontSize,
         minFontSize: SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE,
         lineHeight: fit.lineHeight,
@@ -1230,7 +1424,9 @@ export class SocialVisualRenderer {
         visualBox: spec.visualBox,
         logoBox,
         safeZoneOk: isInsideSafeZone(spec.textBox) && isInsideSafeZone(logoBox),
-        contrastRatio: Number(contrastRatio(spec.panel === 'blue' ? BRAND_NIGHT : WHITE, spec.textColor).toFixed(2)),
+        contrastRatio: Number(
+          contrastRatio(spec.panel === 'blue' ? BRAND_NIGHT : WHITE, spec.textColor).toFixed(2),
+        ),
         crop,
         renderMs: Date.now() - started,
         fileSizeBytes: bytes.byteLength,
@@ -1255,14 +1451,23 @@ function isInsideSafeZone(box: Box) {
 export class VisualQualityCheck {
   validate(image: SocialRenderedImage): SocialRenderedImage {
     if (image.width !== SOCIAL_FINAL_IMAGE_WIDTH || image.height !== SOCIAL_FINAL_IMAGE_HEIGHT) {
-      throw new SocialImageValidationError('Dimensions finales Instagram invalides.', undefined, 'final_dimensions');
+      throw new SocialImageValidationError(
+        'Dimensions finales Instagram invalides.',
+        undefined,
+        'final_dimensions',
+      );
     }
-    if (image.mimeType !== 'image/jpeg') throw new SocialImageValidationError('Format final invalide.', undefined, 'final_format');
+    if (image.mimeType !== 'image/jpeg')
+      throw new SocialImageValidationError('Format final invalide.', undefined, 'final_format');
     if (!JPEG_SIGNATURE.every((byte, index) => image.bytes[index] === byte)) {
       throw new SocialImageValidationError('Fichier final corrompu.', undefined, 'final_corrupt');
     }
     if (image.bytes.byteLength === 0 || image.bytes.byteLength > 8 * 1024 * 1024) {
-      throw new SocialImageValidationError('Taille du fichier final invalide.', undefined, 'final_size');
+      throw new SocialImageValidationError(
+        'Taille du fichier final invalide.',
+        undefined,
+        'final_size',
+      );
     }
     if (!image.render.safeZoneOk || image.render.lineCount > 4) {
       throw new SocialImageValidationError('Texte hors zone de securite.', undefined, 'safe_zone');
@@ -1271,7 +1476,11 @@ export class VisualQualityCheck {
       throw new SocialImageValidationError('Typographie trop petite.', undefined, 'font_too_small');
     }
     if (image.render.contrastRatio < 4.5) {
-      throw new SocialImageValidationError('Contraste insuffisant pour le texte.', undefined, 'contrast');
+      throw new SocialImageValidationError(
+        'Contraste insuffisant pour le texte.',
+        undefined,
+        'contrast',
+      );
     }
     if (!isInsideSafeZone(image.render.logoBox)) {
       throw new SocialImageValidationError('Logo hors zone autorisee.', undefined, 'logo_zone');
@@ -1297,17 +1506,25 @@ export async function generateRenderedSocialImage(input: {
     validateBackgroundDimensions(background.background);
   } catch (error) {
     if (error instanceof SocialImageValidationError) {
-      throw new SocialImageValidationError(error.message, {
-        usage: background.usage,
-        provider: background.provider,
-        model: background.model,
-      }, error.code);
+      throw new SocialImageValidationError(
+        error.message,
+        {
+          usage: background.usage,
+          provider: background.provider,
+          model: background.model,
+        },
+        error.code,
+      );
     }
     throw error;
   }
 
   const rendered = new VisualQualityCheck().validate(
-    await new SocialVisualRenderer().render({ post: input.post, background: background.background, layout }),
+    await new SocialVisualRenderer().render({
+      post: input.post,
+      background: background.background,
+      layout,
+    }),
   );
 
   return validateSocialImageResult(
@@ -1341,8 +1558,12 @@ export function validateSocialImageResult(
     if (variant.index < 1 || variant.index > expectedVariantCount) {
       throw new SocialImageValidationError('Index de variante visuelle invalide.', result);
     }
-    if (variant.mimeType !== 'image/jpeg') throw new SocialImageValidationError('Format image final invalide.', result);
-    if (variant.width !== SOCIAL_FINAL_IMAGE_WIDTH || variant.height !== SOCIAL_FINAL_IMAGE_HEIGHT) {
+    if (variant.mimeType !== 'image/jpeg')
+      throw new SocialImageValidationError('Format image final invalide.', result);
+    if (
+      variant.width !== SOCIAL_FINAL_IMAGE_WIDTH ||
+      variant.height !== SOCIAL_FINAL_IMAGE_HEIGHT
+    ) {
       throw new SocialImageValidationError('Dimensions image finale invalides.', result);
     }
     if (variant.bytes.byteLength === 0 || variant.bytes.byteLength > 8 * 1024 * 1024) {

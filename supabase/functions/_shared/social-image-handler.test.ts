@@ -53,7 +53,10 @@ function weekPosts(overrides: Partial<SocialImagePostState>[] = []) {
   return Array.from({ length: 7 }, (_, index) => post(index + 1, overrides[index] ?? {}));
 }
 
-function postContext(state: SocialImagePostState, visualText = state.visualText ?? ''): SocialImagePostContext {
+function postContext(
+  state: SocialImagePostState,
+  visualText = state.visualText ?? '',
+): SocialImagePostContext {
   return {
     organizationId: state.organizationId,
     postId: state.id,
@@ -86,9 +89,16 @@ async function renderLayout(layout: SocialVisualLayout, visualText: string) {
     width: 1080,
     height: 1350,
   });
-  const background = await new MockImageGenerationProvider().generateBackground({ post: context, prompt });
+  const background = await new MockImageGenerationProvider().generateBackground({
+    post: context,
+    prompt,
+  });
   return new VisualQualityCheck().validate(
-    await new SocialVisualRenderer().render({ post: context, background: background.background, layout }),
+    await new SocialVisualRenderer().render({
+      post: context,
+      background: background.background,
+      layout,
+    }),
   );
 }
 
@@ -142,15 +152,17 @@ class InvalidBackgroundProvider extends MockImageGenerationProvider {
   }
 }
 
-function setup(options: {
-  auth?: boolean;
-  authorized?: boolean;
-  provider?: ImageGenerationProvider;
-  posts?: SocialImagePostState[];
-  assets?: Array<{ postId: string; id: string; kind: string; position: number }>;
-  reservation?: 'reserved' | 'in_progress' | 'limit_reached';
-  insertFails?: boolean;
-} = {}) {
+function setup(
+  options: {
+    auth?: boolean;
+    authorized?: boolean;
+    provider?: ImageGenerationProvider;
+    posts?: SocialImagePostState[];
+    assets?: Array<{ postId: string; id: string; kind: string; position: number }>;
+    reservation?: 'reserved' | 'in_progress' | 'limit_reached';
+    insertFails?: boolean;
+  } = {},
+) {
   const posts = options.posts ?? [post()];
   const calls = {
     uploaded: [] as string[],
@@ -190,7 +202,10 @@ function setup(options: {
         })),
     reserveGeneration: async () => ({
       status: options.reservation ?? 'reserved',
-      usageId: options.reservation === 'reserved' || options.reservation === undefined ? crypto.randomUUID() : null,
+      usageId:
+        options.reservation === 'reserved' || options.reservation === undefined
+          ? crypto.randomUUID()
+          : null,
       startsOn: '2026-09-28',
       usedBefore: 0,
       remainingAfter: 13,
@@ -261,6 +276,8 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assertEquals(result.variants[0]!.mimeType, 'image/jpeg');
   assertEquals(result.variants[0]!.render.masterMimeType, 'image/png');
   assertEquals(result.variants[0]!.render.publishingMimeType, 'image/jpeg');
+  assertEquals(result.variants[0]!.render.engine, 'resvg-wasm');
+  assertEquals(result.variants[0]!.render.fontFamily, 'Archivo');
   assert(result.variants[0]!.render.safeZoneOk);
   assert(result.variants[0]!.render.contrastRatio >= 4.5);
   assert(result.variants[0]!.render.fileSizeBytes > 0);
@@ -268,40 +285,49 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assert(result.variants[0]!.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
 });
 
-Deno.test('SocialVisualRenderer rend chaque layout avec logo, crop portrait et safe zones', async () => {
-  for (const layout of SOCIAL_VISUAL_LAYOUTS) {
-    const image = await renderLayout(layout, 'Semaine claire.');
+Deno.test(
+  'SocialVisualRenderer rend chaque layout avec logo, crop portrait et safe zones',
+  async () => {
+    for (const layout of SOCIAL_VISUAL_LAYOUTS) {
+      const image = await renderLayout(layout, 'Semaine claire.');
 
-    assertEquals(image.width, 1080);
-    assertEquals(image.height, 1350);
-    assertEquals(image.render.layout, layout);
-    assertEquals(image.render.crop.sourceWidth, 1024);
-    assertEquals(image.render.crop.sourceHeight, 1536);
-    assert(image.render.logoBox.x >= 48);
-    assert(image.render.logoBox.y >= 48);
-    assert(image.render.logoBox.x + image.render.logoBox.width <= 1032);
-    assert(image.render.logoBox.y + image.render.logoBox.height <= 1302);
-    assert(image.render.safeZoneOk);
-    assert(image.render.contrastRatio >= 4.5);
-  }
-});
+      assertEquals(image.width, 1080);
+      assertEquals(image.height, 1350);
+      assertEquals(image.render.layout, layout);
+      assertEquals(image.render.crop.sourceWidth, 1024);
+      assertEquals(image.render.crop.sourceHeight, 1536);
+      assert(image.render.logoBox.x >= 48);
+      assert(image.render.logoBox.y >= 48);
+      assert(image.render.logoBox.x + image.render.logoBox.width <= 1032);
+      assert(image.render.logoBox.y + image.render.logoBox.height <= 1302);
+      assert(image.render.safeZoneOk);
+      assert(image.render.contrastRatio >= 4.5);
+    }
+  },
+);
 
-Deno.test('SocialVisualRenderer ajuste textes courts moyens longs accents apostrophes et ponctuation', async () => {
-  const samples = [
-    'Prêt ?',
-    "L'administratif commence après le chantier.",
-    'Votre planning est encore dans WhatsApp ?',
-    'Équipes, devis, photos : tout reste au même endroit.',
-  ];
+Deno.test(
+  'SocialVisualRenderer ajuste textes courts moyens longs accents apostrophes et ponctuation',
+  async () => {
+    const samples = [
+      'Prêt ?',
+      "L'administratif commence après le chantier.",
+      'Votre planning est encore dans WhatsApp ?',
+      'Équipes, devis, photos : tout reste au même endroit.',
+    ];
 
-  for (const [index, visualText] of samples.entries()) {
-    const image = await renderLayout(index === 0 ? 'SPLIT_VISUAL' : 'TYPOGRAPHIC_HERO', visualText);
-    assert(image.render.lineCount >= 1);
-    assert(image.render.lineCount <= 4);
-    assert(image.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
-    assert(image.bytes.byteLength > 0);
-  }
-});
+    for (const [index, visualText] of samples.entries()) {
+      const image = await renderLayout(
+        index === 0 ? 'SPLIT_VISUAL' : 'TYPOGRAPHIC_HERO',
+        visualText,
+      );
+      assert(image.render.lineCount >= 1);
+      assert(image.render.lineCount <= 4);
+      assert(image.render.fontSize >= SOCIAL_IMAGE_MIN_READABLE_FONT_SIZE);
+      assert(image.bytes.byteLength > 0);
+    }
+  },
+);
 
 Deno.test('SocialVisualRenderer refuse un texte impossible a rendre lisible', async () => {
   let failed: unknown = null;
@@ -318,85 +344,108 @@ Deno.test('SocialVisualRenderer refuse un texte impossible a rendre lisible', as
   assertEquals((failed as SocialImageValidationError).code, 'text_overflow');
 });
 
-Deno.test('OpenAIImageGenerationProvider prepare un appel image sans appel reel dans les tests', async () => {
-  const state = post();
-  const context = postContext(state, 'Une intervention. Un seul fil clair.');
-  const prompt = new SocialImagePromptBuilder().build({
-    post: context,
-    layout: 'TYPOGRAPHIC_HERO',
-    width: 1080,
-    height: 1350,
-  });
-  const mock = await new MockImageGenerationProvider().generateBackground({ post: context, prompt });
-  const imageBase64 = base64FromBytes(mock.background.bytes);
-  const requests: Array<{ url: string; body: Record<string, unknown>; authorization: string | null }> = [];
-  const provider = new OpenAIImageGenerationProvider({
-    apiKey: 'test-secret-key',
-    model: DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL,
-    quality: 'medium',
-    fetcher: (async (url, init) => {
-      requests.push({
-        url: String(url),
-        body: JSON.parse(String(init?.body)),
-        authorization: init?.headers instanceof Headers
-          ? init.headers.get('authorization')
-          : (init?.headers as Record<string, string> | undefined)?.authorization ?? null,
-      });
-      return new Response(JSON.stringify({ data: [{ b64_json: imageBase64, revised_prompt: 'revised' }] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
-    }) as typeof fetch,
-  });
+Deno.test(
+  'OpenAIImageGenerationProvider prepare un appel image sans appel reel dans les tests',
+  async () => {
+    const state = post();
+    const context = postContext(state, 'Une intervention. Un seul fil clair.');
+    const prompt = new SocialImagePromptBuilder().build({
+      post: context,
+      layout: 'TYPOGRAPHIC_HERO',
+      width: 1080,
+      height: 1350,
+    });
+    const mock = await new MockImageGenerationProvider().generateBackground({
+      post: context,
+      prompt,
+    });
+    const imageBase64 = base64FromBytes(mock.background.bytes);
+    const requests: Array<{
+      url: string;
+      body: Record<string, unknown>;
+      authorization: string | null;
+    }> = [];
+    const provider = new OpenAIImageGenerationProvider({
+      apiKey: 'test-secret-key',
+      model: DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL,
+      quality: 'medium',
+      fetcher: (async (url, init) => {
+        requests.push({
+          url: String(url),
+          body: JSON.parse(String(init?.body)),
+          authorization:
+            init?.headers instanceof Headers
+              ? init.headers.get('authorization')
+              : ((init?.headers as Record<string, string> | undefined)?.authorization ?? null),
+        });
+        return new Response(
+          JSON.stringify({ data: [{ b64_json: imageBase64, revised_prompt: 'revised' }] }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        );
+      }) as typeof fetch,
+    });
 
-  const result = await provider.generateBackground({ post: context, prompt });
+    const result = await provider.generateBackground({ post: context, prompt });
 
-  assertEquals(requests.length, 1);
-  assertEquals(requests[0]!.url, 'https://api.openai.com/v1/images/generations');
-  assertEquals(requests[0]!.body.model, DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL);
-  assertEquals(requests[0]!.body.quality, 'medium');
-  assertEquals(requests[0]!.body.output_format, 'png');
-  assertEquals(requests[0]!.body.size, '1024x1536');
-  assertEquals(requests[0]!.authorization, 'Bearer test-secret-key');
-  assertEquals(result.background.width, 1024);
-  assertEquals(result.background.height, 1536);
-});
+    assertEquals(requests.length, 1);
+    assertEquals(requests[0]!.url, 'https://api.openai.com/v1/images/generations');
+    assertEquals(requests[0]!.body.model, DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL);
+    assertEquals(requests[0]!.body.quality, 'medium');
+    assertEquals(requests[0]!.body.output_format, 'png');
+    assertEquals(requests[0]!.body.size, '1024x1536');
+    assertEquals(requests[0]!.authorization, 'Bearer test-secret-key');
+    assertEquals(result.background.width, 1024);
+    assertEquals(result.background.height, 1536);
+  },
+);
 
-Deno.test('OpenAIImageGenerationProvider mappe les erreurs 429 et 5xx sans exposer de contenu sensible', async () => {
-  const state = post();
-  const context = postContext(state);
-  const prompt = new SocialImagePromptBuilder().build({
-    post: context,
-    layout: 'TYPOGRAPHIC_HERO',
-    width: 1080,
-    height: 1350,
-  });
-  const provider = new OpenAIImageGenerationProvider({
-    apiKey: 'test-secret-key',
-    fetcher: (async () =>
-      new Response(JSON.stringify({ error: { code: 'rate_limit_exceeded' } }), {
-        status: 429,
-        headers: { 'content-type': 'application/json' },
-      })) as typeof fetch,
-  });
+Deno.test(
+  'OpenAIImageGenerationProvider mappe les erreurs 429 et 5xx sans exposer de contenu sensible',
+  async () => {
+    const state = post();
+    const context = postContext(state);
+    const prompt = new SocialImagePromptBuilder().build({
+      post: context,
+      layout: 'TYPOGRAPHIC_HERO',
+      width: 1080,
+      height: 1350,
+    });
+    const provider = new OpenAIImageGenerationProvider({
+      apiKey: 'test-secret-key',
+      fetcher: (async () =>
+        new Response(JSON.stringify({ error: { code: 'rate_limit_exceeded' } }), {
+          status: 429,
+          headers: { 'content-type': 'application/json' },
+        })) as typeof fetch,
+    });
 
-  let failed: unknown = null;
-  try {
-    await provider.generateBackground({ post: context, prompt });
-  } catch (error) {
-    failed = error;
-  }
+    let failed: unknown = null;
+    try {
+      await provider.generateBackground({ post: context, prompt });
+    } catch (error) {
+      failed = error;
+    }
 
-  assert(failed instanceof SocialImageProviderError);
-  assertEquals((failed as SocialImageProviderError).code, 'rate_limit');
-});
+    assert(failed instanceof SocialImageProviderError);
+    assertEquals((failed as SocialImageProviderError).code, 'rate_limit');
+  },
+);
 
 Deno.test('social-image-generate exige auth et social.manage', async () => {
   const unauthenticated = setup({ auth: false });
-  assertEquals((await unauthenticated.handler(request({ organizationId: ORG, postId: POST }))).status, 401);
+  assertEquals(
+    (await unauthenticated.handler(request({ organizationId: ORG, postId: POST }))).status,
+    401,
+  );
 
   const forbidden = setup({ authorized: false });
-  assertEquals((await forbidden.handler(request({ organizationId: ORG, postId: POST }))).status, 403);
+  assertEquals(
+    (await forbidden.handler(request({ organizationId: ORG, postId: POST }))).status,
+    403,
+  );
 });
 
 Deno.test('social-image-generate ne bascule pas silencieusement vers mock', async () => {
@@ -417,10 +466,10 @@ Deno.test('social-image-generate cree un asset final sans publier ni scheduler',
   assertEquals(calls.uploaded.length, 1);
   assertEquals(calls.inserted.length, 1);
   assertEquals(calls.marked.at(-1)?.status, 'ready');
-  assertEquals(calls.audits.map((audit) => audit.action), [
-    'social.image_generation_started',
-    'social.image_generation_completed',
-  ]);
+  assertEquals(
+    calls.audits.map((audit) => audit.action),
+    ['social.image_generation_started', 'social.image_generation_completed'],
+  );
 });
 
 Deno.test('generation semaine auto cree 7 assets avec concurrence limitee', async () => {
@@ -494,7 +543,10 @@ Deno.test('generation visuelle bloque idempotence, quota et nettoie Storage', as
   assertEquals((await limit.handler(request({ organizationId: ORG, postId: POST }))).status, 429);
 
   const cleanup = setup({ insertFails: true });
-  assertEquals((await cleanup.handler(request({ organizationId: ORG, postId: POST, force: true }))).status, 502);
+  assertEquals(
+    (await cleanup.handler(request({ organizationId: ORG, postId: POST, force: true }))).status,
+    502,
+  );
   assertEquals(cleanup.calls.removed[0]?.length, 1);
 });
 
