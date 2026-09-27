@@ -198,7 +198,7 @@ function setup(options: {
     uploadImage: async ({ postId, variant }) => {
       calls.active += 1;
       calls.maxActive = Math.max(calls.maxActive, calls.active);
-      const path = `${ORG}/social-studio/generated/${postId}/generation/final-${variant.index}.jpg`;
+      const path = `${ORG}/${postId}/generated/generation/final-${variant.index}.jpg`;
       calls.uploaded.push(path);
       calls.active -= 1;
       return path;

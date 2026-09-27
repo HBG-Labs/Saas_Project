@@ -327,6 +327,45 @@ do $$ begin
     'le bucket social-media-assets existe et reste privé');
 end $$;
 
+-- Régression : organization_members.role est public.org_role, pas text.
+do $$
+declare
+  v_reservation record;
+begin
+  select * into v_reservation
+  from public.reserve_social_image_generation(
+    (select org_id from t_ctx),
+    pg_temp.uid('manager'),
+    (select post_id from t_ctx),
+    gen_random_uuid(),
+    'mock',
+    'mock-social-image-v1',
+    14
+  );
+
+  perform pg_temp.ok(
+    v_reservation.reservation_status = 'reserved'
+      and v_reservation.usage_id is not null,
+    'la réservation image accepte le rôle enum et crée un suivi dédié'
+  );
+end $$;
+
+select pg_temp.login('manager'); set local role authenticated;
+do $$ begin
+  perform pg_temp.refuses(
+    format(
+      $q$select * from public.reserve_social_image_generation(
+        %L, %L, %L, gen_random_uuid(), 'mock', 'mock-social-image-v1', 14
+      )$q$,
+      (select org_id from t_ctx),
+      pg_temp.uid('manager'),
+      (select post_id from t_ctx)
+    ),
+    'la réservation image reste inaccessible directement au frontend authentifié'
+  );
+end $$;
+reset role;
+
 do $$ begin
   raise notice '';
   raise notice ' TOUS LES TESTS PASSENT';

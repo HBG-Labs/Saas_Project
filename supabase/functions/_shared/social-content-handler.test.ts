@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   MockSocialAIProvider,
+  OpenAISocialAIProvider,
   SocialAIProviderError,
   SocialAIValidationError,
   validateSocialAIWeeklyContent,
@@ -64,14 +65,16 @@ function request(body: unknown, token = 'jwt') {
   });
 }
 
-function setup(options: {
-  auth?: boolean;
-  authorized?: boolean;
-  existingWeek?: SocialContentWeekState | null;
-  reserve?: boolean;
-  provider?: SocialAIProvider;
-  visualGenerator?: SocialWeekVisualGenerator;
-} = {}) {
+function setup(
+  options: {
+    auth?: boolean;
+    authorized?: boolean;
+    existingWeek?: SocialContentWeekState | null;
+    reserve?: boolean;
+    provider?: SocialAIProvider;
+    visualGenerator?: SocialWeekVisualGenerator;
+  } = {},
+) {
   const calls = {
     createdWeeks: [] as Record<string, unknown>[],
     deletedWeeks: [] as Record<string, unknown>[],
@@ -164,7 +167,11 @@ Deno.test('SocialStudioAI valide exactement 7 posts structures', () => {
   assert.equal(validateSocialAIWeeklyContent(generatedWeek()).posts.length, 7);
 
   assert.throws(
-    () => validateSocialAIWeeklyContent({ ...generatedWeek(), posts: generatedWeek().posts.slice(0, 5) }),
+    () =>
+      validateSocialAIWeeklyContent({
+        ...generatedWeek(),
+        posts: generatedWeek().posts.slice(0, 5),
+      }),
     SocialAIValidationError,
   );
 
@@ -173,61 +180,145 @@ Deno.test('SocialStudioAI valide exactement 7 posts structures', () => {
   assert.throws(() => validateSocialAIWeeklyContent(generic), SocialAIValidationError);
 });
 
-Deno.test('SocialStudioAI refuse les requetes sans auth et sans social.manage', async () => {
-  const unauth = setup({ auth: false });
-  assert.equal((await unauth.handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }))).status, 401);
+Deno.test('OpenAISocialAIProvider utilise Responses avec un JSON schema strict', async () => {
+  let calledUrl = '';
+  let calledBody: Record<string, unknown> = {};
+  const provider = new OpenAISocialAIProvider('gpt-5.6-luna', 'test-server-key', (async (
+    input,
+    init,
+  ) => {
+    calledUrl = String(input);
+    calledBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(
+      JSON.stringify({
+        output: [
+          {
+            type: 'message',
+            content: [{ type: 'output_text', text: JSON.stringify(generatedWeek()) }],
+          },
+        ],
+        usage: { input_tokens: 1_234, output_tokens: 2_345 },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  }) as typeof fetch);
 
-  const forbidden = setup({ authorized: false });
-  assert.equal((await forbidden.handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }))).status, 403);
-});
-
-Deno.test('SocialStudioAI ne bascule pas vers mock quand aucun provider reel n’est configure', async () => {
-  const { calls, store } = setup();
-  const noProviderHandler = createSocialContentGenerateHandler({
-    store,
-    env: {},
+  const result = await provider.generateWeeklyContent({
+    organizationId: ORG,
+    startsOn: WEEK,
+    recentContent: [],
   });
 
-  const res = await noProviderHandler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
-
-  assert.equal(res.status, 503);
-  assert.equal(calls.inserted.length, 0);
-});
-
-Deno.test('SocialStudioAI genere une semaine en un seul appel provider et insere 7 brouillons', async () => {
-  let providerCalls = 0;
-  const providerInputs: SocialAIWeeklyInput[] = [];
-  const provider: SocialAIProvider = {
-    id: 'mock',
-    model: 'mock-social-studio-ai',
-    async generateWeeklyContent(input) {
-      providerCalls += 1;
-      providerInputs.push(input);
-      const content = validateSocialAIWeeklyContent(generatedWeek());
-      return {
-        content,
-        provider: 'mock',
-        model: 'mock-social-studio-ai',
-        generatorVersion: 'social-weekly-text-v1',
-        usage: { inputTokens: 1200, outputTokens: 2200, estimatedCost: 0, latencyMs: 42 },
+  assert.equal(calledUrl, 'https://api.openai.com/v1/responses');
+  assert.equal(calledBody.store, false);
+  assert.equal(calledBody.response_format, undefined);
+  assert.equal((calledBody.text as { format?: { type?: string } }).format?.type, 'json_schema');
+  const schema = (
+    calledBody.text as {
+      format?: {
+        schema?: {
+          properties?: {
+            posts?: {
+              minItems?: number;
+              maxItems?: number;
+              items?: { properties?: Record<string, unknown> };
+            };
+          };
+        };
       };
-    },
-  };
-  const { handler, calls } = setup({ provider });
-
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
-  const body = (await res.json()) as { status: string; postsCount: number };
-
-  assert.equal(res.status, 200);
-  assert.equal(body.status, 'generated');
-  assert.equal(body.postsCount, 7);
-  assert.equal(providerCalls, 1);
-  assert.equal(providerInputs[0]?.recentContent[0]?.hook, 'Ancien hook terrain');
-  assert.equal(providerInputs[0]?.performanceContext, undefined);
-  assert.equal(calls.inserted.length, 1);
-  assert.equal(calls.finalized.at(-1)?.status, 'success');
-  assert.equal(JSON.stringify(calls.audits).includes('prompt'), false);
+    }
+  ).format?.schema;
+  assert.equal(schema?.properties?.posts?.minItems, 7);
+  assert.equal(schema?.properties?.posts?.maxItems, 7);
+  assert.deepEqual(schema?.properties?.posts?.items?.properties?.visual_text, {
+    type: 'string',
+    minLength: 3,
+    maxLength: 90,
+  });
+  assert.equal(result.content.posts.length, 7);
+  assert.equal(result.usage.inputTokens, 1_234);
+  assert.equal(result.usage.outputTokens, 2_345);
 });
+
+Deno.test('SocialStudioAI refuse les requetes sans auth et sans social.manage', async () => {
+  const unauth = setup({ auth: false });
+  assert.equal(
+    (
+      await unauth.handler(
+        request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+      )
+    ).status,
+    401,
+  );
+
+  const forbidden = setup({ authorized: false });
+  assert.equal(
+    (
+      await forbidden.handler(
+        request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+      )
+    ).status,
+    403,
+  );
+});
+
+Deno.test(
+  'SocialStudioAI ne bascule pas vers mock quand aucun provider reel n’est configure',
+  async () => {
+    const { calls, store } = setup();
+    const noProviderHandler = createSocialContentGenerateHandler({
+      store,
+      env: {},
+    });
+
+    const res = await noProviderHandler(
+      request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+    );
+
+    assert.equal(res.status, 503);
+    assert.equal(calls.inserted.length, 0);
+  },
+);
+
+Deno.test(
+  'SocialStudioAI genere une semaine en un seul appel provider et insere 7 brouillons',
+  async () => {
+    let providerCalls = 0;
+    const providerInputs: SocialAIWeeklyInput[] = [];
+    const provider: SocialAIProvider = {
+      id: 'mock',
+      model: 'mock-social-studio-ai',
+      async generateWeeklyContent(input) {
+        providerCalls += 1;
+        providerInputs.push(input);
+        const content = validateSocialAIWeeklyContent(generatedWeek());
+        return {
+          content,
+          provider: 'mock',
+          model: 'mock-social-studio-ai',
+          generatorVersion: 'social-weekly-text-v1',
+          usage: { inputTokens: 1200, outputTokens: 2200, estimatedCost: 0, latencyMs: 42 },
+        };
+      },
+    };
+    const { handler, calls } = setup({ provider });
+
+    const res = await handler(
+      request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+    );
+    const body = (await res.json()) as { status: string; postsCount: number };
+
+    assert.equal(res.status, 200);
+    assert.equal(body.status, 'generated');
+    assert.equal(body.postsCount, 7);
+    assert.equal(providerCalls, 1);
+    assert.equal(providerInputs[0]?.recentContent[0]?.hook, 'Ancien hook terrain');
+    assert.equal(providerInputs[0]?.performanceContext, undefined);
+    assert.equal(calls.inserted.length, 1);
+    assert.equal(calls.finalized.at(-1)?.status, 'success');
+    assert.equal(JSON.stringify(calls.audits).includes('prompt'), false);
+  },
+);
 
 Deno.test('SocialStudioAI declenche la generation visuelle automatique de la semaine', async () => {
   let visualCalls = 0;
@@ -242,7 +333,9 @@ Deno.test('SocialStudioAI declenche la generation visuelle automatique de la sem
   };
   const { handler, calls } = setup({ visualGenerator });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
   const body = (await res.json()) as {
     status: string;
     visualGeneration: { total: number; generated: number; existing: number; failed: number } | null;
@@ -263,7 +356,9 @@ Deno.test('SocialStudioAI conserve la semaine si le moteur visuel echoue', async
   };
   const { handler, calls } = setup({ visualGenerator });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
   const body = (await res.json()) as {
     visualGeneration: { total: number; generated: number; existing: number; failed: number } | null;
   };
@@ -289,7 +384,9 @@ Deno.test('SocialStudioAI est idempotent quand la semaine existe deja', async ()
     },
   });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
   const body = (await res.json()) as { status: string; weekId: string };
 
   assert.equal(res.status, 200);
@@ -311,7 +408,9 @@ Deno.test('SocialStudioAI bloque le quota interne avant appel provider', async (
   };
   const { handler, calls } = setup({ reserve: false, provider });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
 
   assert.equal(res.status, 429);
   assert.equal(providerCalls, 0);
@@ -328,7 +427,9 @@ Deno.test('SocialStudioAI nettoie la semaine si le provider echoue', async () =>
   };
   const { handler, calls } = setup({ provider });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
 
   assert.equal(res.status, 502);
   assert.equal(calls.inserted.length, 0);
@@ -350,11 +451,16 @@ Deno.test('SocialStudioAI refuse une sortie invalide sans creer de semaine parti
   };
   const { handler, calls } = setup({ provider });
 
-  const res = await handler(request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }));
+  const res = await handler(
+    request({ organizationId: ORG, startsOn: WEEK, timezoneOffsetMinutes: 240 }),
+  );
 
   assert.equal(res.status, 502);
   assert.equal(calls.inserted.length, 0);
   assert.equal(calls.deletedWeeks.length, 1);
   assert.equal(calls.finalized.at(-1)?.status, 'invalid_response');
-  assert.equal((calls.finalized.at(-1)?.result as SocialAIWeeklyResult | undefined)?.usage?.inputTokens, 100);
+  assert.equal(
+    (calls.finalized.at(-1)?.result as SocialAIWeeklyResult | undefined)?.usage?.inputTokens,
+    100,
+  );
 });

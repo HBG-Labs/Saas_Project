@@ -23,7 +23,8 @@ export async function messageDeLaFonction(error: unknown, repli: string): Promis
 
   if (contexte instanceof Response) {
     try {
-      const corps = (await contexte.clone().json()) as { error?: unknown };
+      const corps = (await contexte.clone().json()) as { error?: unknown; message?: unknown };
+      if (typeof corps.message === 'string' && corps.message !== '') return corps.message;
       if (typeof corps.error === 'string' && corps.error !== '') return corps.error;
     } catch {
       // Corps illisible : le repli reste plus utile qu'une exception ici.

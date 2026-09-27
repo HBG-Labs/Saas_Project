@@ -5,9 +5,10 @@ import {
 
 export const DEFAULT_SOCIAL_AI_PROVIDER = 'openai';
 export const DEFAULT_SOCIAL_AI_MODEL = 'gpt-5.6-luna';
-export const SOCIAL_AI_MAX_OUTPUT_TOKENS = 4_200;
+export const SOCIAL_AI_MAX_OUTPUT_TOKENS = 6_000;
 
-const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
+const SOCIAL_AI_REQUEST_TIMEOUT_MS = 90_000;
 
 const PRICE_BY_MODEL: Record<string, { inputPerMillion: number; outputPerMillion: number }> = {
   // Valeur locale pour le modele Social Studio par defaut. Changer le modele
@@ -94,7 +95,10 @@ export interface SocialAIProvider {
 }
 
 export class SocialAIProviderError extends Error {
-  constructor(message: string, readonly code = 'provider_error') {
+  constructor(
+    message: string,
+    readonly code = 'provider_error',
+  ) {
     super(message);
     this.name = 'SocialAIProviderError';
   }
@@ -239,7 +243,8 @@ export function validateSocialAIWeeklyContent(value: unknown): SocialAIWeeklyCon
     throw new SocialAIValidationError('Les 7 jours doivent être uniques.');
   }
   for (let day = 1; day <= 7; day += 1) {
-    if (!days.has(day)) throw new SocialAIValidationError('Les jours 1 à 7 doivent tous être présents.');
+    if (!days.has(day))
+      throw new SocialAIValidationError('Les jours 1 à 7 doivent tous être présents.');
   }
 
   return {
@@ -313,67 +318,136 @@ Règles absolues :
 function weeklyResponseFormat() {
   return {
     type: 'json_schema',
-    json_schema: {
-      name: 'rezo360_private_social_week',
-      strict: true,
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['week_strategy', 'posts'],
-        properties: {
-          week_strategy: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['primary_goal', 'hypotheses', 'audience_focus', 'experiments', 'notes'],
-            properties: {
-              primary_goal: { type: 'string' },
-              hypotheses: { type: 'array', items: { type: 'string' } },
-              audience_focus: { type: 'array', items: { type: 'string' } },
-              experiments: { type: 'array', items: { type: 'string' } },
-              notes: { type: 'array', items: { type: 'string' } },
+    name: 'rezo360_private_social_week',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['week_strategy', 'posts'],
+      properties: {
+        week_strategy: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['primary_goal', 'hypotheses', 'audience_focus', 'experiments', 'notes'],
+          properties: {
+            primary_goal: { type: 'string', minLength: 8, maxLength: 240 },
+            hypotheses: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 6,
+              items: { type: 'string', minLength: 1, maxLength: 240 },
+            },
+            audience_focus: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 6,
+              items: { type: 'string', minLength: 1, maxLength: 160 },
+            },
+            experiments: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 6,
+              items: { type: 'string', minLength: 1, maxLength: 240 },
+            },
+            notes: {
+              type: 'array',
+              maxItems: 5,
+              items: { type: 'string', minLength: 1, maxLength: 240 },
             },
           },
-          posts: {
-            type: 'array',
-            minItems: 7,
-            maxItems: 7,
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: [
-                'day',
-                'planned_time',
-                'objective',
-                'audience',
-                'angle',
-                'hook',
-                'visual_text',
-                'visual_concept',
-                'caption',
-                'cta',
-                'hashtags',
-                'reasoning_summary',
-              ],
-              properties: {
-                day: { type: 'integer', minimum: 1, maximum: 7 },
-                planned_time: { type: 'string' },
-                objective: { type: 'string' },
-                audience: { type: 'string' },
-                angle: { type: 'string' },
-                hook: { type: 'string' },
-                visual_text: { type: 'string' },
-                visual_concept: { type: 'string' },
-                caption: { type: 'string' },
-                cta: { type: 'string' },
-                hashtags: { type: 'array', items: { type: 'string' } },
-                reasoning_summary: { type: 'string' },
+        },
+        posts: {
+          type: 'array',
+          minItems: 7,
+          maxItems: 7,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'day',
+              'planned_time',
+              'objective',
+              'audience',
+              'angle',
+              'hook',
+              'visual_text',
+              'visual_concept',
+              'caption',
+              'cta',
+              'hashtags',
+              'reasoning_summary',
+            ],
+            properties: {
+              day: { type: 'integer', minimum: 1, maximum: 7 },
+              planned_time: {
+                type: 'string',
+                minLength: 5,
+                maxLength: 5,
+                pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
               },
+              objective: { type: 'string', minLength: 4, maxLength: 120 },
+              audience: { type: 'string', minLength: 3, maxLength: 120 },
+              angle: { type: 'string', minLength: 6, maxLength: 180 },
+              hook: { type: 'string', minLength: 6, maxLength: 140 },
+              visual_text: { type: 'string', minLength: 3, maxLength: 90 },
+              visual_concept: { type: 'string', minLength: 30, maxLength: 800 },
+              caption: { type: 'string', minLength: 30, maxLength: 2_200 },
+              cta: { type: 'string', minLength: 3, maxLength: 160 },
+              hashtags: {
+                type: 'array',
+                maxItems: 8,
+                items: { type: 'string', minLength: 1, maxLength: 40 },
+              },
+              reasoning_summary: { type: 'string', minLength: 10, maxLength: 500 },
             },
           },
         },
       },
     },
   };
+}
+
+interface OpenAIResponsesPayload {
+  output_text?: string;
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      refusal?: string;
+    }>;
+  }>;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+  };
+}
+
+function responseOutputText(payload: OpenAIResponsesPayload): string {
+  if (typeof payload.output_text === 'string' && payload.output_text.trim()) {
+    return payload.output_text;
+  }
+
+  for (const item of payload.output ?? []) {
+    for (const content of item.content ?? []) {
+      if (content.type === 'refusal') {
+        throw new SocialAIProviderError('Social AI provider refused the content.', 'refusal');
+      }
+      if (content.type === 'output_text' && typeof content.text === 'string') {
+        return content.text;
+      }
+    }
+  }
+
+  return '';
+}
+
+function providerErrorCode(status: number): string {
+  if (status === 401 || status === 403) return 'provider_auth';
+  if (status === 404) return 'provider_model_access';
+  if (status === 429) return 'rate_limited';
+  if (status >= 500) return 'provider_unavailable';
+  return 'provider_error';
 }
 
 function weeklyUserPayload(input: SocialAIWeeklyInput) {
@@ -385,7 +459,15 @@ function weeklyUserPayload(input: SocialAIWeeklyInput) {
     brand_context: buildRezo360MarketingContext(),
     brand_principles: {
       primary_color: '#1B44C8',
-      positioning: ['simple', 'moderne', 'professionnel', 'terrain', 'productivite', 'centralisation', 'moins administratif'],
+      positioning: [
+        'simple',
+        'moderne',
+        'professionnel',
+        'terrain',
+        'productivite',
+        'centralisation',
+        'moins administratif',
+      ],
       tone_to_avoid: [
         'Découvrez notre solution révolutionnaire',
         'Boostez votre productivité',
@@ -395,7 +477,8 @@ function weeklyUserPayload(input: SocialAIWeeklyInput) {
       ],
     },
     exploration_mode: true,
-    funnel: 'attirer -> interesser -> visite profil -> abonnement qualifie -> clic -> inscription REZO360',
+    funnel:
+      'attirer -> interesser -> visite profil -> abonnement qualifie -> clic -> inscription REZO360',
     recent_content_context: compactRecentContent(input.recentContent),
     performance_context: input.performanceContext ?? null,
   };
@@ -412,32 +495,35 @@ export class OpenAISocialAIProvider implements SocialAIProvider {
 
   async generateWeeklyContent(input: SocialAIWeeklyInput): Promise<SocialAIWeeklyResult> {
     const started = Date.now();
-    let payload: {
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
+    let payload: OpenAIResponsesPayload;
 
     try {
-      const response = await this.requestFetch(OPENAI_CHAT_COMPLETIONS_URL, {
+      const response = await this.requestFetch(OPENAI_RESPONSES_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
         },
+        signal: AbortSignal.timeout(SOCIAL_AI_REQUEST_TIMEOUT_MS),
         body: JSON.stringify({
           model: this.model,
-          messages: [
+          input: [
             { role: 'system', content: socialAISystemPrompt() },
             { role: 'user', content: JSON.stringify(weeklyUserPayload(input)) },
           ],
-          max_completion_tokens: SOCIAL_AI_MAX_OUTPUT_TOKENS,
-          response_format: weeklyResponseFormat(),
+          max_output_tokens: SOCIAL_AI_MAX_OUTPUT_TOKENS,
+          reasoning: { effort: 'low' },
+          store: false,
+          text: { format: weeklyResponseFormat() },
         }),
       });
 
-      payload = (await response.json()) as typeof payload;
+      payload = (await response.json()) as OpenAIResponsesPayload;
       if (!response.ok) {
-        throw new SocialAIProviderError(`Social AI provider refused request: ${response.status}`);
+        throw new SocialAIProviderError(
+          `Social AI provider refused request: ${response.status}`,
+          providerErrorCode(response.status),
+        );
       }
     } catch (error) {
       if (error instanceof SocialAIProviderError) throw error;
@@ -448,16 +534,16 @@ export class OpenAISocialAIProvider implements SocialAIProvider {
     }
 
     const usage = {
-      inputTokens: payload.usage?.prompt_tokens ?? 0,
-      outputTokens: payload.usage?.completion_tokens ?? 0,
+      inputTokens: payload.usage?.input_tokens ?? 0,
+      outputTokens: payload.usage?.output_tokens ?? 0,
       estimatedCost: estimateSocialAICost(
         this.model,
-        payload.usage?.prompt_tokens ?? 0,
-        payload.usage?.completion_tokens ?? 0,
+        payload.usage?.input_tokens ?? 0,
+        payload.usage?.output_tokens ?? 0,
       ),
       latencyMs: Date.now() - started,
     };
-    const rawContent = payload.choices?.[0]?.message?.content ?? '';
+    const rawContent = responseOutputText(payload);
     if (!rawContent) {
       throw new SocialAIValidationError('Le provider a retourné une réponse vide.', {
         provider: this.id,
