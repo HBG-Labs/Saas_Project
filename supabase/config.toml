@@ -490,6 +490,17 @@ static_files = [
   "./functions/social-image-generate/assets/resvg.wasm",
 ]
 
+# La generation hebdomadaire appelle le meme renderer apres SocialStudioAI.
+# Elle doit donc embarquer les memes assets que la generation unitaire.
+[functions.social-content-generate]
+static_files = [
+  "./functions/social-image-generate/assets/archivo-latin-700-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-ext-700-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-800-normal.ttf",
+  "./functions/social-image-generate/assets/archivo-latin-ext-800-normal.ttf",
+  "./functions/social-image-generate/assets/resvg.wasm",
+]
+
 # Social Studio Phase F : worker interne dry-run, appelé plus tard par cron avec
 # `x-worker-secret`. Aucun cron production n'est créé par cette phase.
 [functions.social-worker]
