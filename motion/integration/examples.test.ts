@@ -66,7 +66,7 @@ describe('la même spec, d’autres styles', () => {
       plan,
       platformPresets: null,
       toolchain: { node: process.version, remotion: null, chromium: null, ffmpeg: null },
-      renderConfig: { width: 1080, height: 1920, fps: 30, codec: 'png-still', crf: null, pixel_format: null },
+      renderConfig: { width: 1080, height: 1920, fps: 30, codec: 'png-still', crf: null, pixel_format: null, color_space: null },
       substitutionReason: 'preuve d’indépendance : même spec, style sans marque',
     });
     expect(manifest.style).toMatchObject({

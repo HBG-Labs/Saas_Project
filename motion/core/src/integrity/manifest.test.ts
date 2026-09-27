@@ -28,7 +28,7 @@ function inputFor(resolved: ResolvedStyle, extra: Partial<ManifestInput> = {}): 
     plan: planFor(resolved),
     platformPresets: presets,
     toolchain: { node: 'v24.19.0', remotion: null, chromium: null, ffmpeg: null },
-    renderConfig: { width: 1080, height: 1920, fps: 30, codec: 'png-still', crf: null, pixel_format: null },
+    renderConfig: { width: 1080, height: 1920, fps: 30, codec: 'png-still', crf: null, pixel_format: null, color_space: null },
     ...extra,
   };
 }
@@ -94,7 +94,7 @@ describe('manifeste de reproductibilité', () => {
       buildReproducibilityManifest(inputFor(ink, { platformPresets: null })),
       buildReproducibilityManifest(inputFor(ink, { toolchain: { node: 'v24.19.0', remotion: '4.0.529', chromium: null, ffmpeg: null } })),
       buildReproducibilityManifest(
-        inputFor(ink, { renderConfig: { width: 1080, height: 1920, fps: 60, codec: 'png-still', crf: null, pixel_format: null } }),
+        inputFor(ink, { renderConfig: { width: 1080, height: 1920, fps: 60, codec: 'png-still', crf: null, pixel_format: null, color_space: null } }),
       ),
     ];
     for (const manifest of variants) expect(manifest.manifest_sha256).not.toBe(reference);

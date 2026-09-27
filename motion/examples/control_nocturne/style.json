@@ -1,6 +1,6 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "control_nocturne",
   "version": "1.0.0",
   "name": "Nocturne (style de contrôle sans marque)",
@@ -87,7 +87,7 @@
     },
     "max_cues_per_video": 3
   },
-  "voice_personality": { "description": "Voix grave et lente, ton de conte nocturne." },
+  "voice_personality": { "description": "Voix grave et lente, ton de conte nocturne.", "pace_wpm": { "calm": 110, "measured": 125, "brisk": 145 } },
   "image_treatment": { "grade": "cool", "contrast": 0.3, "grain": 0.2, "duotone": null },
   "illustration_treatment": { "stroke": "none", "fill": "gradient", "palette_roles": ["color.accent", "color.surface.inverse"] },
   "transition_preferences": { "preferred": ["MATCH_LINE"], "avoid": ["CUT"] },

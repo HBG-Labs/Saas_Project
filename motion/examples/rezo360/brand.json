@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "name": "REZO360",
   "style": {
-    "ref": { "id": "rezo360_style", "version": "1.0.0", "sha256": "f7c16799ab220294ca7c1a03f1aa75192c4e346d4baf301b8aae3292425968d1" },
+    "ref": { "id": "rezo360_style", "version": "1.0.0", "sha256": "88180b7dbf4e03360be41c6050ed812ae5d83fbf7b049f9752e181599a42924a" },
     "src": "pack:style.json"
   },
   "locks": ["palette", "typography.families", "motifs.rule", "forbidden"],

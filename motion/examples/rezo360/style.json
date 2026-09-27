@@ -1,6 +1,6 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "rezo360_style",
   "version": "1.0.0",
   "name": "REZO360 — langage visuel",
@@ -102,7 +102,8 @@
     "max_cues_per_video": 6
   },
   "voice_personality": {
-    "description": "Française native, chaleureuse, assurée et calme ; légèrement cinématographique ; jamais publicitaire ni radio."
+    "description": "Française native, chaleureuse, assurée et calme ; légèrement cinématographique ; jamais publicitaire ni radio.",
+    "pace_wpm": { "calm": 135, "measured": 150, "brisk": 170 }
   },
   "image_treatment": { "grade": "none", "contrast": 0.1, "grain": 0, "duotone": null },
   "illustration_treatment": { "stroke": "thin", "fill": "flat", "palette_roles": ["color.accent", "color.text.primary"] },

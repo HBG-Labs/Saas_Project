@@ -1,6 +1,6 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "fixture_ink",
   "version": "1.0.0",
   "name": "Fixture Ink (contrôle : sombre, sérif, lent)",
@@ -85,7 +85,7 @@
     "cues": { "LOW_HIT": { "src": null, "sha256": null, "gain_db": -12 } },
     "max_cues_per_video": 3
   },
-  "voice_personality": { "description": "Voix posée, grave, narrative." },
+  "voice_personality": { "description": "Voix posée, grave, narrative.", "pace_wpm": { "calm": 120, "measured": 135, "brisk": 155 } },
   "image_treatment": { "grade": "cool", "contrast": 0.2, "grain": 0.15, "duotone": null },
   "illustration_treatment": { "stroke": "thin", "fill": "flat", "palette_roles": ["color.accent", "color.text.primary"] },
   "transition_preferences": { "preferred": ["MATCH_LINE", "CUT"], "avoid": ["CAMERA_PUSH"] },

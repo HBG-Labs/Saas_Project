@@ -1,0 +1,39 @@
+{
+  "name": "@motion-engine/renderer-remotion",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Interprète un Render Plan de @motion-engine/core avec Remotion. Ne décide d'aucune direction artistique.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:render": "vitest run --config vitest.render.config.ts",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "render": "node src/pipeline/cli.ts"
+  },
+  "dependencies": {
+    "@motion-engine/core": "*",
+    "@remotion/bundler": "4.0.529",
+    "@remotion/renderer": "4.0.529",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.529",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.66.0",
+    "vitest": "4.1.11"
+  }
+}

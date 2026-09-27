@@ -1,7 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import type { BrandMotionProfile } from '../contracts/brand-profile.ts';
+import { patternKey } from '../contracts/pattern.ts';
+import type { PatternDefinition, PatternRegistry } from '../contracts/pattern.ts';
 import type { PlatformPresets } from '../contracts/platform.ts';
 import type { SeriesMotionProfile } from '../contracts/series-profile.ts';
 import type { CreativeStyleProfile } from '../contracts/style-profile.ts';
@@ -10,6 +12,7 @@ import { IssueCollector, ValidationFailure } from '../validation/issues.ts';
 import type { ValidationResult } from '../validation/issues.ts';
 import {
   validateBrandProfile,
+  validatePattern,
   validatePlatformPresets,
   validateSeriesProfile,
   validateStyle,
@@ -116,4 +119,22 @@ export function loadSeriesFile(file: string, options: LoadOptions = {}): LoadedS
 
 export function loadPlatformPresetsFile(file: string): PlatformPresets {
   return unwrap(`Presets de plateforme ${file}`, validatePlatformPresets(readJsonFile(file)));
+}
+
+/** Charge tous les patterns d'un ou plusieurs dossiers, dans un ordre déterministe. */
+export function loadPatternPacks(...dirs: string[]): PatternRegistry {
+  const registry = new Map<string, PatternDefinition>();
+  for (const dir of dirs) {
+    const files = readdirSync(dir)
+      .filter((name) => name.endsWith('.json'))
+      .sort();
+    for (const name of files) {
+      const file = path.join(dir, name);
+      const pattern = unwrap(`Pattern ${file}`, validatePattern(readJsonFile(file)));
+      const key = patternKey(pattern.id, pattern.version);
+      if (registry.has(key)) throw new Error(`Pattern ${key} défini deux fois (${file}).`);
+      registry.set(key, pattern);
+    }
+  }
+  return registry;
 }

@@ -1,5 +1,7 @@
 import type { Anchor } from '../contracts/common.ts';
 import type { BehaviorInstance, Layer, MotionSceneSpec, PrimitiveType, Scene } from '../contracts/motion-spec.ts';
+import { patternKey } from '../contracts/pattern.ts';
+import type { PatternRegistry } from '../contracts/pattern.ts';
 import type { ResolvedStyle } from '../contracts/resolved-style.ts';
 import { bindingMatches, describeResolved } from '../style/binding.ts';
 import { findWordMatches } from '../text/voice-words.ts';
@@ -23,6 +25,8 @@ export interface SpecSemanticOptions {
   assetRefs?: ReadonlySet<string>;
   /** Autorise un style différent de la liaison de la spec (substitution tracée). */
   allowStyleSubstitution?: boolean;
+  /** Patterns disponibles : s'ils sont fournis, chaque scène doit référencer un pattern connu. */
+  patterns?: PatternRegistry;
 }
 
 interface LayerVisit {
@@ -158,6 +162,7 @@ export function validateSpecSemantics(
 
   function validateScene(scene: Scene, si: number) {
     const base = `scenes[${si}]`;
+    if (options.patterns) validatePatternUse(scene, base, options.patterns);
     const ownSegments = new Set(
       'voice_segments' in scene.timing.anchor ? scene.timing.anchor.voice_segments : [],
     );
@@ -257,6 +262,33 @@ export function validateSpecSemantics(
       const next = spec.scenes[si + 1];
       if (!next || next.id !== scene.transition_out.to) {
         c.error('transition.target', `${base}.transition_out.to`, 'la transition doit mener à la scène suivante');
+      }
+    }
+  }
+
+  function validatePatternUse(scene: Scene, base: string, patterns: PatternRegistry) {
+    const pattern = patterns.get(patternKey(scene.pattern.id, scene.pattern.version));
+    if (!pattern) {
+      c.error('pattern.unknown', `${base}.pattern`, `pattern ${scene.pattern.id}@${scene.pattern.version} introuvable`);
+      return;
+    }
+    const axes = pattern.variation_axes;
+    const variation = scene.pattern.variation;
+    const checks: [keyof typeof axes, string | undefined][] = [
+      ['layout_variant', variation.layout_variant],
+      ['motion_variant', variation.motion_variant],
+      ['energy', variation.energy],
+      ['hierarchy_variant', variation.hierarchy_variant],
+    ];
+    for (const [axis, value] of checks) {
+      if (value !== undefined && !(axes[axis].values as readonly string[]).includes(value)) {
+        c.error('pattern.variation', `${base}.pattern.variation.${axis}`, `« ${value} » n'est pas une valeur de ${axis}`);
+      }
+    }
+    const layout = pattern.layouts[variation.layout_variant ?? axes.layout_variant.default];
+    for (const { layer, path } of visitLayers(scene.layers, `${base}.layers`)) {
+      if (layer.slot !== undefined && layout && !layout.slots[layer.slot]) {
+        c.error('pattern.slot_unknown', `${path}.slot`, `slot « ${layer.slot} » absent de la mise en page du pattern`);
       }
     }
   }

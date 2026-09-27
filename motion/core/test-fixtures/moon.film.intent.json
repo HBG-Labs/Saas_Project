@@ -1,0 +1,32 @@
+{
+  "schema": "creative-intent",
+  "schema_version": "0.1.0",
+  "intent_id": "moon_film",
+  "locale": "fr-FR",
+  "message": "Une présence familière, puis une question qui la remet en cause.",
+  "objective": "Arrêter le scroll par une question.",
+  "audience": "Grand public curieux",
+  "platforms": ["tiktok", "reels"],
+  "target_duration_s": { "min": 5, "max": 8 },
+  "tension_curve": "calm_then_interruption",
+  "energy": "medium",
+  "beats": [
+    {
+      "id": "b1",
+      "role": "setup",
+      "voice": "Chaque nuit, elle est là.",
+      "on_screen": { "lines": ["Chaque nuit,", "elle est là."], "accent": "là." },
+      "emphasis": ["là"],
+      "pause_after": "breath"
+    },
+    {
+      "id": "b2",
+      "role": "interruption",
+      "voice": "Et si la Lune disparaissait ?",
+      "on_screen": { "lines": ["Et si", "la Lune", "disparaissait ?"], "accent": "disparaissait ?" },
+      "emphasis": ["disparaissait"],
+      "pause_after": "beat"
+    }
+  ],
+  "constraints": ["factual_accuracy_required", "no_invented_numbers"]
+}

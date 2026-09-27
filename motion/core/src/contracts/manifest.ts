@@ -4,7 +4,8 @@ import { DocumentRefSchema, IdSchema, SemVerSchema, Sha256Schema } from './commo
 import { StyleBindingSchema } from './motion-spec.ts';
 
 export const MANIFEST_SCHEMA = 'reproducibility-manifest';
-export const MANIFEST_VERSION = '0.1.0';
+/** 0.2.0 : ajout de render_config.color_space (l'espace colorimétrique change le fichier produit). */
+export const MANIFEST_VERSION = '0.2.0';
 
 /**
  * Tout ce qui détermine le rendu. Deux manifestes d'empreinte égale doivent
@@ -52,6 +53,7 @@ export const ReproducibilityManifestSchema = z.strictObject({
     codec: z.enum(['h264', 'png-still']),
     crf: z.number().int().min(0).max(51).nullable(),
     pixel_format: z.string().nullable(),
+    color_space: z.enum(['bt601', 'bt709', 'bt2020-ncl']).nullable(),
   }),
   manifest_sha256: Sha256Schema,
 });

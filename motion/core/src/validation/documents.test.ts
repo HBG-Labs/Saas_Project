@@ -18,6 +18,7 @@ describe('versionnement', () => {
       'creative-intent',
       'creative-style-profile',
       'motion-scene-spec',
+      'pattern-definition',
       'platform-presets',
       'render-plan',
       'reproducibility-manifest',
@@ -32,6 +33,40 @@ describe('versionnement', () => {
     const doc = clone(readFixture('moon.spec.json'));
     doc.schema_version = '0.9.0';
     expect(codes(readVersioned('motion-scene-spec', doc))).toEqual(['version.unsupported']);
+  });
+  it('refuse un style 0.1.0 : le débit de voix ne se devine pas', () => {
+    const doc = clone(readFixture('profiles/fixture_ink.style.json'));
+    doc.schema_version = '0.1.0';
+    delete doc.voice_personality.pace_wpm;
+    expect(codes(readVersioned('creative-style-profile', doc))).toEqual(['version.unsupported']);
+  });
+  it('migre un manifeste 0.1.0 en 0.2.0 (espace colorimétrique inconnu)', () => {
+    const v1 = {
+      schema: 'reproducibility-manifest',
+      schema_version: '0.1.0',
+      created_at: '2026-09-27T18:00:00+02:00',
+      engine: { name: 'e', version: '0.1.0', git_commit: null },
+      spec: { spec_id: 'moon_question', revision: 1, sha256: 'a'.repeat(64) },
+      style: {
+        binding: { kind: 'style', id: 'fixture_ink', version: '1.0.0' },
+        mode: 'creative',
+        resolved_sha256: 'b'.repeat(64),
+        sources: { style: { id: 'fixture_ink', version: '1.0.0', sha256: 'c'.repeat(64) }, brand: null, series: null },
+        substituted: false,
+        substitution_reason: null,
+      },
+      platform_presets: null,
+      fonts: [],
+      assets: [],
+      render_plan_sha256: 'd'.repeat(64),
+      toolchain: { node: 'v24', remotion: null, chromium: null, ffmpeg: null },
+      render_config: { width: 540, height: 960, fps: 30, codec: 'h264', crf: 20, pixel_format: 'yuv420p' },
+      manifest_sha256: 'e'.repeat(64),
+    };
+    const read = readVersioned('reproducibility-manifest', v1);
+    expect(read.ok && read.migratedFrom).toBe('0.1.0');
+    expect(read.ok && read.value.render_config.color_space).toBeNull();
+    expect(read.ok && read.value.schema_version).toBe('0.2.0');
   });
   it('refuse un document sans version', () => {
     const doc = clone(readFixture('moon.intent.json'));

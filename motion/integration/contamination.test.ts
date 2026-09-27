@@ -117,11 +117,12 @@ export function scan(files: string[], terms: string[]): string[] {
   });
 }
 
-// Périmètre protégé : tout le cœur (code, schémas, fixtures neutres, config)
-// et les packs génériques. Exceptions par chemin uniquement : examples/ et la
+// Périmètre protégé : tout le cœur (code, schémas, fixtures neutres, config),
+// le renderer et les packs génériques. Exceptions par chemin uniquement : examples/ et la
 // bibliothèque de polices (données sous licence, sans code).
 const PROTECTED = [
   ...textFiles(CORE),
+  ...textFiles(path.join(WORKSPACE, 'renderer-remotion')),
   ...textFiles(path.join(WORKSPACE, 'packs', 'patterns', 'generic')),
   ...textFiles(path.join(WORKSPACE, 'packs', 'platforms')),
 ];

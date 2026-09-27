@@ -1,0 +1,46 @@
+name: Moteur de motion design — rendu réel
+
+# Rendu vidéo de bout en bout (Chromium + encodage) sur fixtures neutres.
+# Séparé de quality.yml : il télécharge un navigateur (~110 Mo) et ne
+# concerne que les changements du moteur. Aucun fournisseur payant, aucun secret.
+on:
+  pull_request:
+    paths:
+      - 'motion/**'
+      - '.github/workflows/motion-render.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'motion/**'
+      - '.github/workflows/motion-render.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: motion-render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render-smoke:
+    name: Smoke test de rendu
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: motion
+
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: motion/package-lock.json
+
+      - name: Installer les dépendances du moteur
+        run: npm ci
+
+      - name: Rendre une vidéo de contrôle et la vérifier (ffprobe)
+        run: npm run test:render

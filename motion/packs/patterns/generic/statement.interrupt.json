@@ -1,0 +1,59 @@
+{
+  "schema": "pattern-definition",
+  "schema_version": "0.1.0",
+  "id": "statement.interrupt",
+  "version": "0.1.0",
+  "description": "Affirmation courte lue ligne à ligne ; un mot pivot peut s'accentuer au moment où la voix le prononce ; un trait ponctue la phrase.",
+  "family": "statement",
+  "accepts": {
+    "roles": ["setup", "tension", "interruption", "turn", "resolution"],
+    "max_lines": 3
+  },
+  "variation_axes": {
+    "layout_variant": { "values": ["stack_start", "stack_center"], "default": "stack_start" },
+    "motion_variant": { "values": ["mask_reveal", "fade_reveal"], "default": "mask_reveal" },
+    "energy": { "values": ["low", "medium", "high"], "default": "medium" },
+    "hierarchy_variant": { "values": ["accent_last", "uniform"], "default": "accent_last" }
+  },
+  "layouts": {
+    "stack_start": {
+      "slots": {
+        "statement.primary": { "kind": "region", "x": [0, 1], "y": [0.3, 0.62], "align_x": "start", "align_y": "end" },
+        "statement.rule": { "kind": "follow", "of": "statement.primary", "gap": "md", "align_x": "start" }
+      }
+    },
+    "stack_center": {
+      "slots": {
+        "statement.primary": { "kind": "region", "x": [0, 1], "y": [0.3, 0.62], "align_x": "center", "align_y": "center" },
+        "statement.rule": { "kind": "follow", "of": "statement.primary", "gap": "md", "align_x": "center" }
+      }
+    }
+  },
+  "motions": {
+    "mask_reveal": {
+      "reveal": { "behavior": "REVEAL_TEXT", "variant": "mask_up" },
+      "accent": { "behavior": "ACCENT_WORD", "variant": "color_settle", "offset_beats": -0.25 },
+      "punctuate": { "behavior": "DRAW_PATH" }
+    },
+    "fade_reveal": {
+      "reveal": { "behavior": "REVEAL_TEXT", "variant": "fade_up" },
+      "accent": { "behavior": "ACCENT_WORD", "variant": "color_only", "offset_beats": 0 },
+      "punctuate": { "behavior": "DRAW_PATH" }
+    }
+  },
+  "hierarchies": {
+    "accent_last": { "accent": true },
+    "uniform": { "accent": false }
+  },
+  "energies": {
+    "low": { "lead_in_beats": 0.5, "reveal_beats": 1.5, "stagger_beats": 0.5, "accent_beats": 1, "draw_beats": 1.25, "tail_beats": 1.5, "travel": "lg" },
+    "medium": { "lead_in_beats": 0.25, "reveal_beats": 1, "stagger_beats": 0.25, "accent_beats": 0.75, "draw_beats": 1, "tail_beats": 1, "travel": "md" },
+    "high": { "lead_in_beats": 0, "reveal_beats": 0.6, "stagger_beats": 0.15, "accent_beats": 0.5, "draw_beats": 0.6, "tail_beats": 0.75, "travel": "sm" }
+  },
+  "elements": {
+    "statement": { "slot": "statement.primary", "type": "type.display.m", "color": "color.text.primary", "accent_color": "color.accent" },
+    "rule": { "slot": "statement.rule", "motif": "motif.rule", "stroke": "color.accent", "weight": "stroke.emphasis" }
+  },
+  "background": "color.surface.primary",
+  "subtitles": "off"
+}

@@ -4,16 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Espace de travail du moteur : le cœur (@motion-engine/core), les packs de données, les exemples et les tests d'intégration.",
-  "workspaces": ["core"],
+  "workspaces": [
+    "core",
+    "renderer-remotion"
+  ],
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-    "check": "npm run check -w @motion-engine/core && npm run typecheck && npm run lint && npm run test",
+    "check": "npm run check -w @motion-engine/core && npm run check -w @motion-engine/renderer-remotion && npm run typecheck && npm run lint && npm run test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
-    "fonts:prepare": "node scripts/prepare-fonts.mjs"
+    "fonts:prepare": "node scripts/prepare-fonts.mjs",
+    "test:render": "npm run test:render -w @motion-engine/renderer-remotion"
   },
   "devDependencies": {
     "@fontsource/archivo": "5.3.0",

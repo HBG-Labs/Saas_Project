@@ -1,0 +1,13 @@
+{
+  "name": "master",
+  "description": "Rendu de référence 9:16 pleine résolution.",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "codec": "h264",
+  "crf": 18,
+  "pixel_format": "yuv420p",
+  "color_space": "bt709",
+  "concurrency": 2,
+  "audio": { "target_lufs": -14, "true_peak_dbtp": -1 }
+}

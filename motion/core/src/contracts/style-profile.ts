@@ -16,7 +16,11 @@ import {
 } from './common.ts';
 
 export const STYLE_PROFILE_SCHEMA = 'creative-style-profile';
-export const STYLE_PROFILE_VERSION = '0.1.0';
+/**
+ * 0.2.0 : ajout de `voice_personality.pace_wpm`. Aucune migration depuis
+ * 0.1.0 : le débit d'une voix ne se devine pas, il doit être écrit.
+ */
+export const STYLE_PROFILE_VERSION = '0.2.0';
 
 /** Clé de jeton sans espace de noms : `surface.primary`, `display.xl`. */
 export const TokenKeySchema = z.string().regex(/^[a-z0-9_]+(\.[a-z0-9_]+)*$/, 'clé de jeton attendue');
@@ -156,6 +160,12 @@ export const CreativeStyleProfileSchema = z.strictObject({
 
   voice_personality: z.strictObject({
     description: z.string().min(1).max(400),
+    /** Débit parlé (mots par minute) selon le tempo demandé par la spec. Sert à estimer la voix tant qu'elle n'existe pas. */
+    pace_wpm: z.strictObject({
+      calm: z.number().int().min(60).max(260),
+      measured: z.number().int().min(60).max(260),
+      brisk: z.number().int().min(60).max(260),
+    }),
   }),
 
   image_treatment: z.strictObject({

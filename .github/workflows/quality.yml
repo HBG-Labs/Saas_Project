@@ -229,3 +229,32 @@ jobs:
       - name: Tester et analyser le projet Android
         working-directory: android
         run: ./gradlew testDebugUnitTest lintDebug --no-daemon
+
+  # Moteur de motion design : espace de travail npm autonome (motion/), avec
+  # son propre verrou de dépendances. Ce job ne touche pas à l'application.
+  # `npm run check` enchaîne typecheck, lint et tests du cœur, puis typecheck,
+  # lint et tests d'intégration (contamination, isolement, indépendance).
+  motion:
+    name: Moteur de motion design
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: motion
+
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: motion/package-lock.json
+
+      - name: Installer les dépendances du moteur
+        run: npm ci
+
+      - name: Vérifier le moteur (types, qualité, tests, indépendance)
+        run: npm run check

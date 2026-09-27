@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "name": "Atelier Boréal (marque fictive de test)",
   "style": {
-    "ref": { "id": "fixture_ink", "version": "1.0.0", "sha256": "bdbebec6bc9d5aee0d21bad4be31aad1d04732e90398ef44c28569afc6aa81c6" },
+    "ref": { "id": "fixture_ink", "version": "1.0.0", "sha256": "540446d36837c85895129f66ef83c5b71c576cf6fd3f268b80889b83e107c5c3" },
     "src": "pack:fixture_ink.style.json"
   },
   "locks": ["palette", "typography.families", "forbidden"],

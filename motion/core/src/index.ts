@@ -41,3 +41,16 @@ export { loadBrandFile, loadPlatformPresetsFile, loadSeriesFile, loadStyleFile, 
 export type { LoadedBrand, LoadedSeries, LoadOptions } from './io/load.ts';
 
 export { findWordMatches, normalizeWord, voiceWords } from './text/voice-words.ts';
+
+export * from './contracts/pattern.ts';
+export { validatePattern } from './validation/validate.ts';
+export { loadPatternPacks } from './io/load.ts';
+
+export { buildSpec, SPEC_BUILDER_VERSION } from './builder/build-spec.ts';
+export type { BuildSpecInput } from './builder/build-spec.ts';
+export { compileSpec, COMPILER_VERSION } from './compiler/compile.ts';
+export type { CompileInput, CompileOutput, OutputConfig } from './compiler/compile.ts';
+export { BEHAVIOR_REGISTRY, supportedBehaviors } from './compiler/behaviors.ts';
+export type { SceneTimeline } from './compiler/timeline.ts';
+
+export { cubicBezier, evaluateEasing, mixColor, sampleProperty, sampleTrack, springResponse } from './runtime/index.ts';

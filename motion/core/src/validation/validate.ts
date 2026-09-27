@@ -1,6 +1,8 @@
 import type { BrandMotionProfile } from '../contracts/brand-profile.ts';
 import type { CreativeIntent } from '../contracts/creative-intent.ts';
 import type { MotionSceneSpec } from '../contracts/motion-spec.ts';
+import type { PatternDefinition } from '../contracts/pattern.ts';
+import { validatePatternSemantics } from './semantic-pattern.ts';
 import type { PlatformPresets } from '../contracts/platform.ts';
 import type { RenderPlan } from '../contracts/render-plan.ts';
 import type { ResolvedStyle } from '../contracts/resolved-style.ts';
@@ -67,6 +69,12 @@ export function validatePlatformPresets(input: unknown): ValidationResult<Platfo
     }
   }
   return finish(read.value, issues);
+}
+
+export function validatePattern(input: unknown): ValidationResult<PatternDefinition> {
+  const read = readVersioned('pattern-definition', input);
+  if (!read.ok) return read;
+  return finish(read.value, validatePatternSemantics(read.value));
 }
 
 /** Un style résolu relu depuis un stockage : schéma et empreinte. */

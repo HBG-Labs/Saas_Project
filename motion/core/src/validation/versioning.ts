@@ -8,6 +8,8 @@ import { MANIFEST_SCHEMA, MANIFEST_VERSION, ReproducibilityManifestSchema } from
 import type { ReproducibilityManifest } from '../contracts/manifest.ts';
 import { MOTION_SPEC_SCHEMA, MOTION_SPEC_VERSION, MotionSceneSpecSchema } from '../contracts/motion-spec.ts';
 import type { MotionSceneSpec } from '../contracts/motion-spec.ts';
+import { PATTERN_SCHEMA, PATTERN_VERSION, PatternDefinitionSchema } from '../contracts/pattern.ts';
+import type { PatternDefinition } from '../contracts/pattern.ts';
 import { PLATFORM_PRESETS_SCHEMA, PLATFORM_PRESETS_VERSION, PlatformPresetsSchema } from '../contracts/platform.ts';
 import type { PlatformPresets } from '../contracts/platform.ts';
 import { RENDER_PLAN_SCHEMA, RENDER_PLAN_VERSION, RenderPlanSchema } from '../contracts/render-plan.ts';
@@ -28,6 +30,7 @@ export interface DocumentKinds {
   'series-motion-profile': SeriesMotionProfile;
   'resolved-style': ResolvedStyle;
   'platform-presets': PlatformPresets;
+  'pattern-definition': PatternDefinition;
   'motion-scene-spec': MotionSceneSpec;
   'render-plan': RenderPlan;
   'reproducibility-manifest': ReproducibilityManifest;
@@ -50,9 +53,24 @@ const REGISTRY: { [K in DocumentKind]: KindEntry<DocumentKinds[K]> } = {
   [SERIES_PROFILE_SCHEMA]: { current: SERIES_PROFILE_VERSION, schema: SeriesMotionProfileSchema, migrations: {} },
   [RESOLVED_STYLE_SCHEMA]: { current: RESOLVED_STYLE_VERSION, schema: ResolvedStyleSchema, migrations: {} },
   [PLATFORM_PRESETS_SCHEMA]: { current: PLATFORM_PRESETS_VERSION, schema: PlatformPresetsSchema, migrations: {} },
+  [PATTERN_SCHEMA]: { current: PATTERN_VERSION, schema: PatternDefinitionSchema, migrations: {} },
   [MOTION_SPEC_SCHEMA]: { current: MOTION_SPEC_VERSION, schema: MotionSceneSpecSchema, migrations: {} },
   [RENDER_PLAN_SCHEMA]: { current: RENDER_PLAN_VERSION, schema: RenderPlanSchema, migrations: {} },
-  [MANIFEST_SCHEMA]: { current: MANIFEST_VERSION, schema: ReproducibilityManifestSchema, migrations: {} },
+  [MANIFEST_SCHEMA]: {
+    current: MANIFEST_VERSION,
+    schema: ReproducibilityManifestSchema,
+    migrations: {
+      // Un manifeste 0.1.0 ne disait rien de l'espace colorimétrique : il reste inconnu.
+      // L'empreinte d'origine est conservée telle quelle, elle décrivait le document 0.1.0.
+      '0.1.0': {
+        to: '0.2.0',
+        migrate: (doc) => ({
+          ...doc,
+          render_config: { ...(doc['render_config'] as Record<string, unknown>), color_space: null },
+        }),
+      },
+    },
+  },
 };
 
 export function currentVersion(kind: DocumentKind): string {

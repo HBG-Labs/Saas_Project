@@ -1,0 +1,13 @@
+{
+  "name": "dev",
+  "description": "Rendu de développement : demi-résolution pour itérer vite.",
+  "width": 540,
+  "height": 960,
+  "fps": 30,
+  "codec": "h264",
+  "crf": 20,
+  "pixel_format": "yuv420p",
+  "color_space": "bt709",
+  "concurrency": 2,
+  "audio": { "target_lufs": -14, "true_peak_dbtp": -1 }
+}

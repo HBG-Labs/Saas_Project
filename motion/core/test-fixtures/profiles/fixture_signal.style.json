@@ -1,6 +1,6 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "fixture_signal",
   "version": "1.0.0",
   "name": "Fixture Signal (contrôle : clair, monospace, rapide)",
@@ -86,7 +86,7 @@
     },
     "max_cues_per_video": 8
   },
-  "voice_personality": { "description": "Voix vive, rapide, complice." },
+  "voice_personality": { "description": "Voix vive, rapide, complice.", "pace_wpm": { "calm": 150, "measured": 175, "brisk": 200 } },
   "image_treatment": {
     "grade": "duotone",
     "contrast": 0.6,

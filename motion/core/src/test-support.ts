@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import type { ResolvedStyle } from './contracts/resolved-style.ts';
-import { loadBrandFile, loadSeriesFile, loadStyleFile } from './io/load.ts';
+import { buildSpec } from './builder/build-spec.ts';
+import { compileSpec } from './compiler/compile.ts';
+import type { CompileOutput } from './compiler/compile.ts';
+import type { CreativeIntent } from './contracts/creative-intent.ts';
+import type { MotionSceneSpec } from './contracts/motion-spec.ts';
+import { loadBrandFile, loadPatternPacks, loadPlatformPresetsFile, loadSeriesFile, loadStyleFile } from './io/load.ts';
 import type { LoadedBrand, LoadedSeries } from './io/load.ts';
 import { resolveStyle } from './style/resolve-style.ts';
 import type { ResolveStyleInput } from './style/resolve-style.ts';
@@ -82,4 +87,32 @@ export function minimalPlan(): Json {
       },
     ],
   };
+}
+
+// --- P1.2 : chaîne Intent → Spec → Render Plan sur fixtures neutres ---
+export const loadFixturePatterns = () => loadPatternPacks(path.join(FIXTURES, 'patterns'));
+export const loadFixturePresets = () => loadPlatformPresetsFile(path.join(FIXTURES, 'platforms.json'));
+export const readFilmIntent = (): CreativeIntent => readFixture('moon.film.intent.json') as unknown as CreativeIntent;
+
+export function mustBuild(resolved: ResolvedStyle, intent: CreativeIntent = readFilmIntent()): MotionSceneSpec {
+  const result = buildSpec({ intent, resolved, presets: loadFixturePresets(), patterns: loadFixturePatterns() });
+  if (!result.ok) throw new Error(`Construction refusée :\n${formatIssues(result.issues)}`);
+  return result.value;
+}
+
+export const DEV_OUTPUT = { width: 540, height: 960, fps: 30 };
+export const AUDIO_TARGETS = { target_lufs: -14, true_peak_dbtp: -1 };
+
+export function mustCompile(spec: MotionSceneSpec, resolved: ResolvedStyle, output = DEV_OUTPUT): CompileOutput {
+  const result = compileSpec({
+    spec,
+    resolved,
+    presets: loadFixturePresets(),
+    patterns: loadFixturePatterns(),
+    output,
+    audioTargets: AUDIO_TARGETS,
+    allowStyleSubstitution: true,
+  });
+  if (!result.ok) throw new Error(`Compilation refusée :\n${formatIssues(result.issues)}`);
+  return result.value;
 }
