@@ -9,6 +9,7 @@ import {
   MOBILE_NAV_CANDIDATES,
   MOBILE_NAV_SIZE,
   ORGANIZATION_NAV,
+  PLATFORM_ADMIN_NAV,
   SOCIAL_STUDIO_NAV,
   SIDEBAR_GROUPS,
   UNIVERSES,
@@ -81,6 +82,7 @@ describe('configuration de navigation', () => {
     expect(studio?.feature).toBe(FEATURES.socialStudio);
     expect(studio?.permission).toBe(PERMISSIONS.socialView);
     expect(ORGANIZATION_NAV).toContainEqual(studio);
+    expect(PLATFORM_ADMIN_NAV).toContainEqual(studio);
   });
 
   it("n'exige que des métiers existants", () => {
@@ -128,7 +130,10 @@ describe('configuration de navigation', () => {
 });
 
 describe('sections de la barre latérale', () => {
-  const groupedItems = SIDEBAR_GROUPS.flatMap((group) => group.items);
+  const groupedItems = [
+    ...SIDEBAR_GROUPS.flatMap((group) => group.items),
+    ...PLATFORM_ADMIN_NAV,
+  ];
 
   it('ne range jamais la même destination dans deux sections', () => {
     // Une entrée présente deux fois obligerait à choisir entre deux chemins
@@ -141,6 +146,16 @@ describe('sections de la barre latérale', () => {
   it('donne un identifiant distinct à chaque section', () => {
     const ids = SIDEBAR_GROUPS.map((group) => group.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('range Social Studio dans Administration REZO360, sans volet Croissance', () => {
+    expect(PLATFORM_ADMIN_NAV.map((item) => item.to)).toContain(ROUTES.socialStudio);
+    expect(SIDEBAR_GROUPS.some((group) => group.label === 'Croissance')).toBe(false);
+    expect(
+      SIDEBAR_GROUPS.flatMap((group) => group.items).some(
+        (item) => item.to === ROUTES.socialStudio,
+      ),
+    ).toBe(false);
   });
 
   it('expose chaque entrée d’organisation dans exactement une section', () => {
@@ -275,8 +290,11 @@ describe('univers', () => {
 
   it('ne fait disparaître aucune destination d’organisation', () => {
     // La promesse D6 : tout ce qui était atteignable l'est encore, dans un
-    // univers ou en transversal. `ORGANIZATION_NAV` est la liste de référence.
-    const atteignables = new Set(SIDEBAR_GROUPS.flatMap((g) => g.items).map((i) => i.to));
+    // univers, en transversal ou dans l'administration REZO360.
+    // `ORGANIZATION_NAV` est la liste de référence.
+    const atteignables = new Set(
+      [...SIDEBAR_GROUPS.flatMap((g) => g.items), ...PLATFORM_ADMIN_NAV].map((i) => i.to),
+    );
     for (const item of ORGANIZATION_NAV) {
       expect(atteignables, `« ${item.label} » n'est plus dans aucune section`).toContain(item.to);
     }

@@ -376,6 +376,7 @@ export const ALL_TOOLS_NAV: readonly NavItem[] = [...TOOLS_NAV, ...METIERS_TOOLS
  */
 export const PLATFORM_ADMIN_NAV: readonly NavItem[] = [
   { to: ROUTES.prospecting, label: 'Prospect Radar', icon: 'radar', primary: true },
+  ...SOCIAL_STUDIO_NAV,
 ];
 
 export const SIDEBAR_GROUPS: readonly NavGroup[] = [
@@ -410,13 +411,6 @@ export const SIDEBAR_GROUPS: readonly NavGroup[] = [
     label: 'Documents & formation',
     icon: 'book',
     items: RESOURCES_NAV,
-    universe: 'workspace',
-  },
-  {
-    id: 'social-studio',
-    label: 'Croissance',
-    icon: 'trending-up',
-    items: SOCIAL_STUDIO_NAV,
     universe: 'workspace',
   },
   // ── Transversal : depuis n'importe où ────────────────────────────────────

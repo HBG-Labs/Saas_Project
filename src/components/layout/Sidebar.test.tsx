@@ -49,6 +49,12 @@ describe('Sidebar — volet métier vs administration plateforme', () => {
     expect(screen.queryByText('Interventions')).not.toBeInTheDocument();
     expect(screen.queryByText('Stock')).not.toBeInTheDocument();
     expect(screen.getByText('Administration REZO360')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Prospect Radar' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Social Studio' })).toHaveAttribute(
+      'href',
+      '/studio-social',
+    );
+    expect(screen.queryByText('Croissance')).not.toBeInTheDocument();
     // Sans organisation, le libellé de métier générique ne doit jamais laisser
     // croire à une appartenance qui n'existe pas.
     expect(screen.queryByText('Autre métier de terrain')).not.toBeInTheDocument();
