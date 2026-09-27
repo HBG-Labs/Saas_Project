@@ -445,6 +445,9 @@ verify_jwt = false
 [functions.superpdp-oauth-callback]
 verify_jwt = false
 
+[functions.instagram-oauth-callback]
+verify_jwt = false
+
 [functions.superpdp-invoice]
 verify_jwt = false
 
