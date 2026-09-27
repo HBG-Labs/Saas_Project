@@ -158,6 +158,31 @@ Deno.test(
   },
 );
 
+Deno.test('social-worker garde Meta desactive selon les combinaisons live/dry-run', async () => {
+  const dryRunPublisher = new StaticPublisher();
+  const dryRun = setup({ claims: [claim(1)], publisher: dryRunPublisher });
+  assertEquals((await (await dryRun.handler(request())).json()).simulated, 1);
+  assertEquals(dryRunPublisher.calls.length, 1);
+
+  const liveDisabledPublisher = new LivePublisher();
+  const liveDisabled = setup({
+    publisher: liveDisabledPublisher,
+    claims: [claim(1, { publishMode: 'live' })],
+    allowLivePublishing: false,
+  });
+  assertEquals((await liveDisabled.handler(request())).status, 503);
+  assertEquals(liveDisabledPublisher.calls, 0);
+
+  const dryRunMisconfiguredPublisher = new StaticPublisher();
+  const dryRunMisconfigured = setup({
+    publisher: dryRunMisconfiguredPublisher,
+    claims: [claim(1)],
+    allowLivePublishing: true,
+  });
+  assertEquals((await dryRunMisconfigured.handler(request())).status, 503);
+  assertEquals(dryRunMisconfiguredPublisher.calls.length, 0);
+});
+
 Deno.test('social-worker simule 7 publications dry-run sans appel Meta', async () => {
   const publisher = new StaticPublisher();
   const { handler, marks } = setup({ claims: weekClaims(), publisher });

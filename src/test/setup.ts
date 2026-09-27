@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { afterEach, expect, vi } from 'vitest';
+
+expect.extend(matchers);
 
 // Démonte les composants entre les tests : sans cela, les rendus s'accumulent
 // dans le même document et les requêtes par texte deviennent ambiguës.
