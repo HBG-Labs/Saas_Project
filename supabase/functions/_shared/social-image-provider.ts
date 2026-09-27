@@ -2,7 +2,7 @@ import { buildRezo360VisualContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v7-agency-quality';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v8-visible-subject';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
 export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-sunburst';
@@ -111,6 +111,7 @@ export interface SocialRenderedImage {
     contrastRatio: number;
     crop: CropResult;
     backgroundQuality: SocialBackgroundQuality;
+    visibleBackgroundQuality: SocialBackgroundQuality;
     renderMs: number;
     fileSizeBytes: number;
     masterMimeType: 'image/png';
@@ -287,7 +288,7 @@ function layoutPromptDirection(layout: SocialVisualLayout): string {
     FULL_BLEED_VISUAL:
       'Create a credible full-bleed field scene with a clear focal subject in the upper half; keep the lower typography panel area visually calm and readable.',
     MINIMAL_OBJECT:
-      'Use one or two real physical objects as an editorial still life in the upper or right area, with tactile detail and controlled shadows; no screens or devices.',
+      'Use one or two real physical objects as an editorial still life across the upper half, spanning roughly 45 to 70 percent of the frame width, with tactile detail and controlled shadows; keep every important object above the lower typography zone; no screens or devices.',
     ABSTRACT_CAMPAIGN:
       'Create a tactile editorial composition using paper, material, tools or restrained geometric forms; include depth and a clear focal structure, never a blank gradient.',
   };
@@ -645,6 +646,47 @@ export function analyzeSocialBackgroundPixels(buffer: PixelBuffer): SocialBackgr
   };
 }
 
+/**
+ * Echantillonne la zone qui restera effectivement visible dans le layout final.
+ * Un fond peut etre detaille globalement tout en placant son sujet hors du crop
+ * ou sous la zone typographique : ce controle ferme ce faux positif.
+ */
+export function analyzeVisibleSocialBackground(
+  buffer: PixelBuffer,
+  crop: CropResult,
+  finalBox: Box,
+): SocialBackgroundQuality {
+  const sampleWidth = Math.max(32, Math.min(256, Math.round(finalBox.width / 3)));
+  const sampleHeight = Math.max(32, Math.min(320, Math.round(finalBox.height / 3)));
+  const projected: PixelBuffer = {
+    width: sampleWidth,
+    height: sampleHeight,
+    data: new Uint8Array(sampleWidth * sampleHeight * 3),
+  };
+
+  for (let y = 0; y < sampleHeight; y += 1) {
+    const finalY = finalBox.y + ((y + 0.5) / sampleHeight) * finalBox.height;
+    const sourceY = Math.max(
+      0,
+      Math.min(buffer.height - 1, Math.floor((finalY + crop.cropY) / crop.scale)),
+    );
+    for (let x = 0; x < sampleWidth; x += 1) {
+      const finalX = finalBox.x + ((x + 0.5) / sampleWidth) * finalBox.width;
+      const sourceX = Math.max(
+        0,
+        Math.min(buffer.width - 1, Math.floor((finalX + crop.cropX) / crop.scale)),
+      );
+      const sourceOffset = (sourceY * buffer.width + sourceX) * 3;
+      const targetOffset = (y * sampleWidth + x) * 3;
+      projected.data[targetOffset] = buffer.data[sourceOffset]!;
+      projected.data[targetOffset + 1] = buffer.data[sourceOffset + 1]!;
+      projected.data[targetOffset + 2] = buffer.data[sourceOffset + 2]!;
+    }
+  }
+
+  return analyzeSocialBackgroundPixels(projected);
+}
+
 function setPixel(buffer: PixelBuffer, x: number, y: number, color: readonly number[]) {
   if (x < 0 || y < 0 || x >= buffer.width || y >= buffer.height) return;
   const offset = (y * buffer.width + x) * 3;
@@ -766,19 +808,19 @@ function makeMockBackground(
   if (layout === 'MINIMAL_OBJECT') {
     fillRect(
       buffer,
-      { x: width * 0.59, y: height * 0.55, width: width * 0.28, height: height * 0.18 },
+      { x: width * 0.59, y: height * 0.26, width: width * 0.28, height: height * 0.18 },
       palette.ink,
       0.42,
     );
     fillRect(
       buffer,
-      { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
+      { x: width * 0.56, y: height * 0.23, width: width * 0.28, height: height * 0.18 },
       WHITE,
       0.74,
     );
     strokeRect(
       buffer,
-      { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
+      { x: width * 0.56, y: height * 0.23, width: width * 0.28, height: height * 0.18 },
       palette.accent,
       8,
       0.88,
@@ -1242,20 +1284,20 @@ function buildSocialVisualSvg(input: {
         <stop offset="0.5" stop-color="${rgbCss(INK)}" stop-opacity="0"/>
       </linearGradient>
       <linearGradient id="protectLeftLight" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.96"/>
-        <stop offset="0.42" stop-color="${rgbCss(PAPER)}" stop-opacity="0.82"/>
-        <stop offset="0.7" stop-color="${rgbCss(PAPER)}" stop-opacity="0.18"/>
-        <stop offset="0.88" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.78"/>
+        <stop offset="0.38" stop-color="${rgbCss(PAPER)}" stop-opacity="0.58"/>
+        <stop offset="0.64" stop-color="${rgbCss(PAPER)}" stop-opacity="0.10"/>
+        <stop offset="0.78" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
       </linearGradient>
       <linearGradient id="protectTopLight" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.9"/>
-        <stop offset="0.48" stop-color="${rgbCss(PAPER)}" stop-opacity="0.68"/>
-        <stop offset="0.72" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.72"/>
+        <stop offset="0.42" stop-color="${rgbCss(PAPER)}" stop-opacity="0.46"/>
+        <stop offset="0.64" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
       </linearGradient>
       <linearGradient id="protectBottomLight" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0.42" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
-        <stop offset="0.7" stop-color="${rgbCss(PAPER)}" stop-opacity="0.78"/>
-        <stop offset="1" stop-color="${rgbCss(PAPER)}" stop-opacity="0.98"/>
+        <stop offset="0.55" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+        <stop offset="0.73" stop-color="${rgbCss(PAPER)}" stop-opacity="0.58"/>
+        <stop offset="1" stop-color="${rgbCss(PAPER)}" stop-opacity="0.84"/>
       </linearGradient>
       <linearGradient id="protectBottomDark" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0.35" stop-color="${rgbCss(BRAND_NIGHT)}" stop-opacity="0"/>
@@ -1366,7 +1408,8 @@ export class SocialImagePromptBuilder {
       'The FORMAT and LAYOUT_DIRECTION override every conflicting framing, device, screen, text or interface request in ART_DIRECTION_INPUT.',
       'Generate the visual background only. It must already feel like a premium editorial advertisement before typography is added.',
       'Tell one concrete visual story with a clearly recognizable subject, real materials, controlled light, depth and intentional framing. The focal subject must occupy roughly 35 to 65 percent of the frame.',
-      'Negative space is a deliberate typography zone, not an empty image: preserve environmental detail, material texture and visual tension around it.',
+      'SUBJECT PLACEMENT CONTRACT: the recognizable subject and its strongest physical details must sit inside the visual area described by LAYOUT_DIRECTION and remain visible after a portrait 4:5 crop. Never hide the subject inside the typography zone.',
+      'Negative space is a deliberate typography zone, not an empty image: preserve environmental detail, material texture and visual tension around it. The rest of the frame must still read as a complete photograph or tactile composition, never a blank template.',
       'If a person is useful, show a credible field professional absorbed in the end of a real intervention, never posing. Tools, vehicle, clothing and PPE must be coherent with the trade and location.',
       'If no person is useful, create a tactile editorial still life or visual metaphor using real tools, documents, materials, schedules or intervention objects.',
       'Lighting and color: premium commercial photography, natural or studio-controlled light, neutral whites and charcoal, restrained #1B44C8 accent, subtle filmic contrast, crisp focal detail.',
@@ -1597,10 +1640,11 @@ export class SocialVisualRenderer {
   }): Promise<SocialRenderedImage> {
     const started = Date.now();
     validateBackgroundDimensions(input.background);
+    const decodedBackground = await decodePng(input.background.bytes);
     const backgroundQuality =
       input.backgroundQuality ??
       input.background.quality ??
-      analyzeSocialBackgroundPixels(await decodePng(input.background.bytes));
+      analyzeSocialBackgroundPixels(decodedBackground);
     if (!backgroundQuality.passes) {
       throw new SocialImageValidationError(
         'Le fond genere manque de sujet ou de detail visuel exploitable.',
@@ -1618,6 +1662,18 @@ export class SocialVisualRenderer {
       focusY,
     );
     const spec = layoutSpec(input.layout);
+    const visibleBackgroundQuality = analyzeVisibleSocialBackground(
+      decodedBackground,
+      crop,
+      spec.visualBox,
+    );
+    if (!visibleBackgroundQuality.passes) {
+      throw new SocialImageValidationError(
+        'Le sujet du fond genere est absent de la zone visible du layout.',
+        undefined,
+        'background_subject_missing',
+      );
+    }
     const fit = fitText(input.post.visualText, spec);
     if (fit.overflow) {
       throw new SocialImageValidationError(
@@ -1682,6 +1738,7 @@ export class SocialVisualRenderer {
         ),
         crop,
         backgroundQuality,
+        visibleBackgroundQuality,
         renderMs: Date.now() - started,
         fileSizeBytes: bytes.byteLength,
         masterMimeType: 'image/png',

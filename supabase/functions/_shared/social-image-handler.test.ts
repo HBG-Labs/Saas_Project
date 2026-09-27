@@ -13,6 +13,7 @@ import {
   SocialVisualRenderer,
   VisualQualityCheck,
   analyzeSocialBackgroundPixels,
+  analyzeVisibleSocialBackground,
   generateRenderedSocialImage,
   type ImageGenerationProvider,
   type SocialImageGenerationInput,
@@ -283,6 +284,7 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assertEquals(result.variants[0]!.render.engine, 'resvg-wasm');
   assertEquals(result.variants[0]!.render.fontFamily, 'Archivo');
   assert(result.variants[0]!.render.backgroundQuality.passes);
+  assert(result.variants[0]!.render.visibleBackgroundQuality.passes);
   assert(result.variants[0]!.render.safeZoneOk);
   assert(result.variants[0]!.render.contrastRatio >= 4.5);
   assert(result.variants[0]!.render.fileSizeBytes > 0);
@@ -365,6 +367,7 @@ Deno.test('SocialImagePromptBuilder impose un sujet concret et interdit les fond
   assert(prompt.prompt.includes('override every conflicting framing'));
   assert(prompt.prompt.includes('senior advertising art director'));
   assert(prompt.prompt.includes('one concrete visual story'));
+  assert(prompt.prompt.includes('SUBJECT PLACEMENT CONTRACT'));
   assert(prompt.prompt.includes('no screens or devices'));
   assert(prompt.prompt.includes('MANDATORY AVOID'));
   assert(prompt.prompt.includes('blank blurred wall'));
@@ -395,6 +398,37 @@ Deno.test('background quality refuse un fond lisse et accepte une scene structur
   assertEquals(detailedQuality.passes, true);
   assert(detailedQuality.edgeDensity > flatQuality.edgeDensity);
   assert(detailedQuality.dynamicRange > flatQuality.dynamicRange);
+});
+
+Deno.test('background quality refuse un sujet detaille place hors de la zone visible', () => {
+  const width = 400;
+  const height = 600;
+  const pixels = new Uint8Array(width * height * 3);
+  pixels.fill(244);
+
+  // Le fond global contient des details, mais uniquement tout en bas, hors de
+  // la zone visuelle haute attendue par MINIMAL_OBJECT.
+  for (let y = 470; y < height; y += 1) {
+    for (let x = 30; x < width - 30; x += 1) {
+      const offset = (y * width + x) * 3;
+      const value = (Math.floor(x / 12) + Math.floor(y / 12)) % 2 === 0 ? 30 : 190;
+      pixels[offset] = value;
+      pixels[offset + 1] = value;
+      pixels[offset + 2] = value;
+    }
+  }
+
+  const buffer = { width, height, data: pixels };
+  const crop = { sourceWidth: width, sourceHeight: height, scale: 2.7, cropX: 0, cropY: 135 };
+  const visible = analyzeVisibleSocialBackground(buffer, crop, {
+    x: 92,
+    y: 150,
+    width: 820,
+    height: 530,
+  });
+
+  assertEquals(analyzeSocialBackgroundPixels(buffer).passes, true);
+  assertEquals(visible.passes, false);
 });
 
 Deno.test('SocialLayoutEngine ne confond pas audience terrain et scene plein cadre', () => {

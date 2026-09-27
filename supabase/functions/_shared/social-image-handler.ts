@@ -634,6 +634,10 @@ export async function generateSocialImageForPost(input: {
         backgroundDynamicRange: variant.render.backgroundQuality.dynamicRange,
         backgroundLuminanceStdDev: variant.render.backgroundQuality.luminanceStdDev,
         backgroundEdgeDensity: variant.render.backgroundQuality.edgeDensity,
+        visibleBackgroundDynamicRange: variant.render.visibleBackgroundQuality.dynamicRange,
+        visibleBackgroundLuminanceStdDev:
+          variant.render.visibleBackgroundQuality.luminanceStdDev,
+        visibleBackgroundEdgeDensity: variant.render.visibleBackgroundQuality.edgeDensity,
       },
     });
 
