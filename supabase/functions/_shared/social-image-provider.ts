@@ -1,11 +1,11 @@
-import { buildRezo360MarketingContext } from './social-marketing-context.ts';
+import { buildRezo360VisualContext } from './social-marketing-context.ts';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
 
-export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v6-concrete-art-direction';
+export const SOCIAL_IMAGE_GENERATOR_VERSION = 'social-image-v7-agency-quality';
 export const DEFAULT_SOCIAL_IMAGE_PROVIDER = 'mock';
 export const DEFAULT_SOCIAL_IMAGE_MODEL = 'mock-social-image-background';
-export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-flare';
+export const DEFAULT_OPENAI_SOCIAL_IMAGE_MODEL = 'gpt-image-2.5-sunburst';
 export const DEFAULT_SOCIAL_IMAGE_QUALITY = 'medium';
 export const SOCIAL_FINAL_IMAGE_WIDTH = 1080;
 export const SOCIAL_FINAL_IMAGE_HEIGHT = 1350;
@@ -79,6 +79,7 @@ export interface GeneratedSocialBackground {
     accent: Rgb;
     ink: Rgb;
   };
+  quality?: SocialBackgroundQuality;
   promptSummary: string;
 }
 
@@ -109,6 +110,7 @@ export interface SocialRenderedImage {
     safeZoneOk: boolean;
     contrastRatio: number;
     crop: CropResult;
+    backgroundQuality: SocialBackgroundQuality;
     renderMs: number;
     fileSizeBytes: number;
     masterMimeType: 'image/png';
@@ -182,10 +184,18 @@ interface TextFit {
   height: number;
 }
 
-interface PixelBuffer {
+export interface PixelBuffer {
   width: number;
   height: number;
   data: Uint8Array;
+}
+
+export interface SocialBackgroundQuality {
+  sampledPixels: number;
+  luminanceStdDev: number;
+  dynamicRange: number;
+  edgeDensity: number;
+  passes: boolean;
 }
 
 interface CropResult {
@@ -560,6 +570,81 @@ function averagePalette(
   return { base, accent: fallbackAccent, ink };
 }
 
+function perceivedLuminance(r: number, g: number, b: number): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Rejette les fonds quasi vides avant que le renderer ne masque le probleme.
+ * Le controle reste volontairement conservateur : il mesure une presence
+ * visuelle, pas une appreciation artistique subjective.
+ */
+export function analyzeSocialBackgroundPixels(buffer: PixelBuffer): SocialBackgroundQuality {
+  if (
+    buffer.width <= 0 ||
+    buffer.height <= 0 ||
+    buffer.data.length !== buffer.width * buffer.height * 3
+  ) {
+    return {
+      sampledPixels: 0,
+      luminanceStdDev: 0,
+      dynamicRange: 0,
+      edgeDensity: 0,
+      passes: false,
+    };
+  }
+
+  const stepX = Math.max(1, Math.ceil(buffer.width / 256));
+  const stepY = Math.max(1, Math.ceil(buffer.height / 320));
+  const sampledWidth = Math.ceil(buffer.width / stepX);
+  const luminances: number[] = [];
+  let sum = 0;
+  let sumSquares = 0;
+  let edgeComparisons = 0;
+  let strongEdges = 0;
+
+  for (let y = 0, sampleY = 0; y < buffer.height; y += stepY, sampleY += 1) {
+    for (let x = 0, sampleX = 0; x < buffer.width; x += stepX, sampleX += 1) {
+      const offset = (y * buffer.width + x) * 3;
+      const value = perceivedLuminance(
+        buffer.data[offset]!,
+        buffer.data[offset + 1]!,
+        buffer.data[offset + 2]!,
+      );
+      const sampleIndex = sampleY * sampledWidth + sampleX;
+      luminances.push(value);
+      sum += value;
+      sumSquares += value * value;
+
+      if (sampleX > 0) {
+        edgeComparisons += 1;
+        if (Math.abs(value - luminances[sampleIndex - 1]!) >= 12) strongEdges += 1;
+      }
+      if (sampleY > 0) {
+        edgeComparisons += 1;
+        if (Math.abs(value - luminances[sampleIndex - sampledWidth]!) >= 12) strongEdges += 1;
+      }
+    }
+  }
+
+  const sampledPixels = luminances.length;
+  const mean = sum / sampledPixels;
+  const variance = Math.max(0, sumSquares / sampledPixels - mean * mean);
+  const sorted = [...luminances].sort((left, right) => left - right);
+  const percentile = (ratio: number) => sorted[Math.floor((sorted.length - 1) * ratio)] ?? 0;
+  const luminanceStdDev = Math.sqrt(variance);
+  const dynamicRange = percentile(0.95) - percentile(0.05);
+  const edgeDensity = edgeComparisons > 0 ? strongEdges / edgeComparisons : 0;
+
+  return {
+    sampledPixels,
+    luminanceStdDev: Number(luminanceStdDev.toFixed(2)),
+    dynamicRange: Number(dynamicRange.toFixed(2)),
+    edgeDensity: Number(edgeDensity.toFixed(4)),
+    passes: luminanceStdDev >= 8 && dynamicRange >= 16 && edgeDensity >= 0.0015,
+  };
+}
+
 function setPixel(buffer: PixelBuffer, x: number, y: number, color: readonly number[]) {
   if (x < 0 || y < 0 || x >= buffer.width || y >= buffer.height) return;
   const offset = (y * buffer.width + x) * 3;
@@ -681,6 +766,12 @@ function makeMockBackground(
   if (layout === 'MINIMAL_OBJECT') {
     fillRect(
       buffer,
+      { x: width * 0.59, y: height * 0.55, width: width * 0.28, height: height * 0.18 },
+      palette.ink,
+      0.42,
+    );
+    fillRect(
+      buffer,
       { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
       WHITE,
       0.74,
@@ -689,8 +780,8 @@ function makeMockBackground(
       buffer,
       { x: width * 0.56, y: height * 0.52, width: width * 0.28, height: height * 0.18 },
       palette.accent,
-      6,
-      0.52,
+      8,
+      0.88,
     );
   }
   if (layout === 'ABSTRACT_CAMPAIGN') {
@@ -698,14 +789,48 @@ function makeMockBackground(
     fillCircle(buffer, width * 0.16, height * 0.78, width * 0.11, BRAND_NIGHT, 0.09);
   }
   if (layout === 'FULL_BLEED_VISUAL' || layout === 'SPLIT_VISUAL') {
+    fillCircle(buffer, width * 0.76, height * 0.2, width * 0.19, [238, 196, 126], 0.72);
     fillRect(buffer, { x: 0, y: height * 0.68, width, height: height * 0.32 }, [70, 82, 90], 0.16);
     fillRect(
       buffer,
       { x: width * 0.12, y: height * 0.62, width: width * 0.26, height: height * 0.08 },
-      [54, 60, 66],
-      0.18,
+      [32, 38, 46],
+      0.68,
     );
-    fillCircle(buffer, width * 0.26, height * 0.6, width * 0.055, [52, 58, 64], 0.16);
+    fillCircle(buffer, width * 0.19, height * 0.69, width * 0.045, [24, 30, 38], 0.74);
+    fillCircle(buffer, width * 0.33, height * 0.69, width * 0.045, [24, 30, 38], 0.74);
+    fillCircle(buffer, width * 0.72, height * 0.36, width * 0.075, palette.accent, 0.5);
+    fillRect(
+      buffer,
+      { x: width * 0.68, y: height * 0.42, width: width * 0.09, height: height * 0.27 },
+      [32, 38, 46],
+      0.62,
+    );
+  }
+
+  // Le provider de test conserve assez de structure pour exercer le garde-fou
+  // anti-fond-vide utilise en production.
+  if (!['FULL_BLEED_VISUAL', 'SPLIT_VISUAL', 'MINIMAL_OBJECT'].includes(layout)) {
+    fillRect(
+      buffer,
+      { x: width * 0.66, y: height * 0.22, width: width * 0.2, height: height * 0.46 },
+      mix(palette.ink, palette.base, 0.42),
+      0.28,
+    );
+    fillCircle(buffer, width * 0.76, height * 0.2, width * 0.065, palette.accent, 0.32);
+    for (let index = 0; index < 6; index += 1) {
+      fillRect(
+        buffer,
+        {
+          x: width * (0.61 + index * 0.035),
+          y: height * (0.7 + (index % 2) * 0.035),
+          width: width * 0.022,
+          height: height * 0.12,
+        },
+        palette.ink,
+        0.14,
+      );
+    }
   }
   return buffer;
 }
@@ -883,42 +1008,42 @@ function layoutSpec(layout: SocialVisualLayout): LayoutSpec {
   const specs: Record<SocialVisualLayout, LayoutSpec> = {
     TYPOGRAPHIC_HERO: {
       id: layout,
-      textBox: { x: 92, y: 310, width: 896, height: 500 },
-      visualBox: { x: 72, y: 120, width: 936, height: 1110 },
+      textBox: { x: 82, y: 220, width: 650, height: 470 },
+      visualBox: { x: 570, y: 90, width: 450, height: 1160 },
       logoPlacement: 'bottom-left',
       alignment: 'left',
       maxLines: 3,
       idealFontSize: 104,
       textColor: INK,
-      panel: 'solid',
-      accent: 'bar',
-      overlay: 'light-panel',
+      panel: 'none',
+      accent: 'none',
+      overlay: 'none',
     },
     EDITORIAL_LEFT: {
       id: layout,
-      textBox: { x: 90, y: 260, width: 610, height: 560 },
+      textBox: { x: 82, y: 250, width: 580, height: 560 },
       visualBox: { x: 650, y: 130, width: 360, height: 880 },
       logoPlacement: 'top-left',
       alignment: 'left',
       maxLines: 4,
       idealFontSize: 84,
       textColor: INK,
-      panel: 'soft',
+      panel: 'none',
       accent: 'rule',
-      overlay: 'light-panel',
+      overlay: 'none',
     },
     EDITORIAL_CENTER: {
       id: layout,
-      textBox: { x: 116, y: 315, width: 848, height: 480 },
+      textBox: { x: 116, y: 230, width: 848, height: 440 },
       visualBox: { x: 82, y: 142, width: 916, height: 1040 },
       logoPlacement: 'top-right',
       alignment: 'center',
       maxLines: 3,
       idealFontSize: 90,
       textColor: INK,
-      panel: 'glass',
-      accent: 'dot',
-      overlay: 'vignette',
+      panel: 'none',
+      accent: 'none',
+      overlay: 'none',
     },
     SPLIT_VISUAL: {
       id: layout,
@@ -929,8 +1054,8 @@ function layoutSpec(layout: SocialVisualLayout): LayoutSpec {
       maxLines: 4,
       idealFontSize: 76,
       textColor: INK,
-      panel: 'solid',
-      accent: 'frame',
+      panel: 'none',
+      accent: 'rule',
       overlay: 'none',
     },
     FULL_BLEED_VISUAL: {
@@ -942,7 +1067,7 @@ function layoutSpec(layout: SocialVisualLayout): LayoutSpec {
       maxLines: 3,
       idealFontSize: 78,
       textColor: WHITE,
-      panel: 'blue',
+      panel: 'none',
       accent: 'none',
       overlay: 'vignette',
     },
@@ -957,19 +1082,19 @@ function layoutSpec(layout: SocialVisualLayout): LayoutSpec {
       textColor: INK,
       panel: 'none',
       accent: 'rule',
-      overlay: 'light-panel',
+      overlay: 'none',
     },
     ABSTRACT_CAMPAIGN: {
       id: layout,
-      textBox: { x: 110, y: 360, width: 780, height: 460 },
+      textBox: { x: 110, y: 285, width: 780, height: 440 },
       visualBox: { x: 70, y: 120, width: 940, height: 1060 },
       logoPlacement: 'bottom-right',
       alignment: 'center',
       maxLines: 3,
       idealFontSize: 88,
       textColor: INK,
-      panel: 'glass',
-      accent: 'dot',
+      panel: 'none',
+      accent: 'none',
       overlay: 'blue-wash',
     },
   };
@@ -1015,11 +1140,6 @@ function svgOverlay(spec: LayoutSpec): string {
       '<rect width="1080" height="1350" fill="url(#sideShade)"/>',
     );
   }
-  if (spec.overlay === 'light-panel') {
-    layers.push(
-      `<rect x="${spec.visualBox.x}" y="${spec.visualBox.y}" width="${spec.visualBox.width}" height="${spec.visualBox.height}" fill="white" fill-opacity="0.12"/>`,
-    );
-  }
   if (spec.overlay === 'blue-wash') {
     layers.push(
       `<circle cx="850" cy="260" r="230" fill="${rgbCss(BRAND_BLUE)}" fill-opacity="0.12"/>`,
@@ -1027,6 +1147,19 @@ function svgOverlay(spec: LayoutSpec): string {
     );
   }
   return layers.join('');
+}
+
+function svgTextProtection(spec: LayoutSpec): string {
+  if (spec.id === 'FULL_BLEED_VISUAL') {
+    return '<rect width="1080" height="1350" fill="url(#protectBottomDark)"/>';
+  }
+  if (spec.id === 'MINIMAL_OBJECT') {
+    return '<rect width="1080" height="1350" fill="url(#protectBottomLight)"/>';
+  }
+  if (spec.id === 'EDITORIAL_CENTER' || spec.id === 'ABSTRACT_CAMPAIGN') {
+    return '<rect width="1080" height="1350" fill="url(#protectTopLight)"/>';
+  }
+  return '<rect width="1080" height="1350" fill="url(#protectLeftLight)"/>';
 }
 
 function svgPanel(spec: LayoutSpec): string {
@@ -1071,12 +1204,14 @@ function svgTextBlock(spec: LayoutSpec, fit: TextFit): string {
   const firstBaseline =
     spec.textBox.y + Math.max(0, (spec.textBox.height - totalHeight) / 2) + fit.fontSize * 0.8;
   const lines = fit.lines
-    .map(
-      (line, index) =>
-        `<tspan x="${x}" y="${firstBaseline + index * fit.lineHeight}">${escapeXml(line)}</tspan>`,
-    )
+    .map((line, index) => {
+      const isEmphasis = spec.textColor !== WHITE && index === fit.lines.length - 1;
+      const fill = isEmphasis ? ` fill="${rgbCss(BRAND_BLUE)}"` : '';
+      return `<tspan x="${x}" y="${firstBaseline + index * fit.lineHeight}"${fill}>${escapeXml(line)}</tspan>`;
+    })
     .join('');
-  return `<text font-family="Archivo ExtraBold" font-size="${fit.fontSize}" font-weight="800" letter-spacing="0" text-anchor="${anchor}" fill="${rgbCss(spec.textColor)}" filter="url(#textShadow)">${lines}</text>`;
+  const shadow = spec.textColor === WHITE ? ' filter="url(#textShadow)"' : '';
+  return `<text font-family="Archivo ExtraBold" font-size="${fit.fontSize}" font-weight="800" letter-spacing="0" text-anchor="${anchor}" fill="${rgbCss(spec.textColor)}"${shadow}>${lines}</text>`;
 }
 
 function svgLogo(box: Box, textColor: readonly number[]): string {
@@ -1106,6 +1241,27 @@ function buildSocialVisualSvg(input: {
         <stop offset="0" stop-color="${rgbCss(INK)}" stop-opacity="0.26"/>
         <stop offset="0.5" stop-color="${rgbCss(INK)}" stop-opacity="0"/>
       </linearGradient>
+      <linearGradient id="protectLeftLight" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.96"/>
+        <stop offset="0.42" stop-color="${rgbCss(PAPER)}" stop-opacity="0.82"/>
+        <stop offset="0.7" stop-color="${rgbCss(PAPER)}" stop-opacity="0.18"/>
+        <stop offset="0.88" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="protectTopLight" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${rgbCss(PAPER)}" stop-opacity="0.9"/>
+        <stop offset="0.48" stop-color="${rgbCss(PAPER)}" stop-opacity="0.68"/>
+        <stop offset="0.72" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="protectBottomLight" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0.42" stop-color="${rgbCss(PAPER)}" stop-opacity="0"/>
+        <stop offset="0.7" stop-color="${rgbCss(PAPER)}" stop-opacity="0.78"/>
+        <stop offset="1" stop-color="${rgbCss(PAPER)}" stop-opacity="0.98"/>
+      </linearGradient>
+      <linearGradient id="protectBottomDark" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0.35" stop-color="${rgbCss(BRAND_NIGHT)}" stop-opacity="0"/>
+        <stop offset="0.68" stop-color="${rgbCss(BRAND_NIGHT)}" stop-opacity="0.58"/>
+        <stop offset="1" stop-color="${rgbCss(BRAND_NIGHT)}" stop-opacity="0.94"/>
+      </linearGradient>
       <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
         <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.24"/>
       </filter>
@@ -1113,6 +1269,7 @@ function buildSocialVisualSvg(input: {
     <rect width="1080" height="1350" fill="${rgbCss(PAPER)}"/>
     <image href="rezo360-background.png" x="${-input.crop.cropX}" y="${-input.crop.cropY}" width="${scaledWidth}" height="${scaledHeight}" preserveAspectRatio="none"/>
     ${svgOverlay(input.spec)}
+    ${svgTextProtection(input.spec)}
     ${svgPanel(input.spec)}
     ${svgAccent(input.spec, input.background.palette.accent)}
     ${svgTextBlock(input.spec, input.fit)}
@@ -1157,25 +1314,20 @@ function validateBackgroundDimensions(background: GeneratedSocialBackground) {
   }
 }
 
+function compactPromptValue(value: string | null | undefined, fallback: string, maxLength = 900) {
+  const printable = Array.from(value ?? '', (character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || code === 127 ? ' ' : character;
+  }).join('');
+  const compact = printable.replace(/\s+/g, ' ').trim();
+  return (compact || fallback).slice(0, maxLength);
+}
+
 export class SocialImagePromptBuilder {
   build(input: SocialImagePromptInput): SocialImagePrompt {
-    const prompt = [
-      buildRezo360MarketingContext(),
-      `FORMAT: portrait Instagram 4:5, provider target ${SOCIAL_PROVIDER_IMAGE_WIDTH}x${SOCIAL_PROVIDER_IMAGE_HEIGHT}, final render ${input.width}x${input.height}.`,
-      `LAYOUT_FAMILY: ${input.layout}.`,
-      `LAYOUT_DIRECTION: ${layoutPromptDirection(input.layout)}`,
-      `AUDIENCE: ${input.post.audience ?? 'entreprises de terrain'}.`,
-      `OBJECTIVE: ${input.post.objective ?? 'notoriete et visites qualifiees'}.`,
-      `VISUAL_CONCEPT: ${input.post.visualConcept}.`,
-      'The FORMAT and LAYOUT_DIRECTION above override any conflicting framing, device, screen or interface request in VISUAL_CONCEPT.',
-      'Create the background, scene, material, object composition or abstract campaign visual only.',
-      'Show one immediately legible concrete subject, scene or tactile object composition occupying roughly 35 to 65 percent of the frame. The result must look intentionally art-directed, never like an empty placeholder.',
-      'Do not generate the main headline text, captions, logo, watermark, computer screen, smartphone screen, tablet screen, fake app screen, fake dashboard, fake invoice, fake planning UI or fake REZO360 product interface.',
-      'Leave deliberate negative space only inside the typography area specified by LAYOUT_DIRECTION. Keep the rest visually purposeful. Premium editorial social ad, sober, professional, human, field-service credible, not a generic AI SaaS ad.',
-      'If people are present, make them realistic field professionals with coherent tools and PPE.',
-    ].join('\n');
     const negativePrompt = [
-      'main text',
+      'words or letters anywhere in the image',
+      'main headline text',
       'misspelled typography',
       'invented REZO360 logo',
       'watermark',
@@ -1190,16 +1342,41 @@ export class SocialImagePromptBuilder {
       'foggy void',
       'texture-only placeholder',
       'excessive empty space',
+      'large empty white rectangle',
+      'template card',
+      'generic SaaS advertisement',
       'incoherent PPE',
       'deformed hands',
       'corporate stock pose',
+      'person looking at camera',
       'futuristic SaaS glow',
+      'hologram',
+      'robot',
     ].join(', ');
+    const prompt = [
+      buildRezo360VisualContext(),
+      'ROLE: senior advertising art director creating one finished campaign background for REZO360.',
+      `FORMAT: portrait Instagram 4:5, provider target ${SOCIAL_PROVIDER_IMAGE_WIDTH}x${SOCIAL_PROVIDER_IMAGE_HEIGHT}, final render ${input.width}x${input.height}.`,
+      `LAYOUT_FAMILY: ${input.layout}.`,
+      `LAYOUT_DIRECTION: ${layoutPromptDirection(input.layout)}`,
+      `AUDIENCE: ${compactPromptValue(input.post.audience, 'artisans and field-service companies', 220)}.`,
+      `OBJECTIVE: ${compactPromptValue(input.post.objective, 'qualified profile visits', 220)}.`,
+      `CAMPAIGN_MESSAGE_FOR_SEMANTICS_ONLY: ${compactPromptValue(input.post.visualText, input.post.hook, 320)}. Do not render these words.`,
+      `ART_DIRECTION_INPUT: ${compactPromptValue(input.post.visualConcept, 'A credible field-service moment with one strong visual metaphor.')}.`,
+      'The FORMAT and LAYOUT_DIRECTION override every conflicting framing, device, screen, text or interface request in ART_DIRECTION_INPUT.',
+      'Generate the visual background only. It must already feel like a premium editorial advertisement before typography is added.',
+      'Tell one concrete visual story with a clearly recognizable subject, real materials, controlled light, depth and intentional framing. The focal subject must occupy roughly 35 to 65 percent of the frame.',
+      'Negative space is a deliberate typography zone, not an empty image: preserve environmental detail, material texture and visual tension around it.',
+      'If a person is useful, show a credible field professional absorbed in the end of a real intervention, never posing. Tools, vehicle, clothing and PPE must be coherent with the trade and location.',
+      'If no person is useful, create a tactile editorial still life or visual metaphor using real tools, documents, materials, schedules or intervention objects.',
+      'Lighting and color: premium commercial photography, natural or studio-controlled light, neutral whites and charcoal, restrained #1B44C8 accent, subtle filmic contrast, crisp focal detail.',
+      `MANDATORY AVOID: ${negativePrompt}.`,
+    ].join('\n');
     return {
       prompt,
       negativePrompt,
       layout: input.layout,
-      promptChars: prompt.length + negativePrompt.length,
+      promptChars: prompt.length,
       providerSize: `${SOCIAL_PROVIDER_IMAGE_WIDTH}x${SOCIAL_PROVIDER_IMAGE_HEIGHT}`,
       outputFormat: OUTPUT_FORMAT,
     };
@@ -1222,18 +1399,29 @@ export class SocialLayoutEngine {
         text,
       )
     )
-      candidates.push('MINIMAL_OBJECT', 'EDITORIAL_LEFT');
+      candidates.push('MINIMAL_OBJECT', 'EDITORIAL_LEFT', 'SPLIT_VISUAL', 'TYPOGRAPHIC_HERO');
     if (/chantier|intervention|technicien|camion|equipe|atelier|site|outil/.test(text))
-      candidates.push('FULL_BLEED_VISUAL', 'SPLIT_VISUAL');
+      candidates.push('FULL_BLEED_VISUAL', 'EDITORIAL_LEFT', 'SPLIT_VISUAL', 'TYPOGRAPHIC_HERO');
     if (/question|curiosite|interaction|whatsapp|encore/.test(text))
-      candidates.push('TYPOGRAPHIC_HERO', 'EDITORIAL_CENTER');
+      candidates.push(
+        'TYPOGRAPHIC_HERO',
+        'EDITORIAL_CENTER',
+        'ABSTRACT_CAMPAIGN',
+        'FULL_BLEED_VISUAL',
+      );
     if (/vision|marque|notoriete|centralisation/.test(text))
-      candidates.push('ABSTRACT_CAMPAIGN', 'EDITORIAL_CENTER');
-    candidates.push(SOCIAL_VISUAL_LAYOUTS[(post.slotIndex - 1) % SOCIAL_VISUAL_LAYOUTS.length]!);
-    candidates.push(...SOCIAL_VISUAL_LAYOUTS);
+      candidates.push(
+        'ABSTRACT_CAMPAIGN',
+        'EDITORIAL_CENTER',
+        'FULL_BLEED_VISUAL',
+        'MINIMAL_OBJECT',
+      );
+
+    if (candidates.length === 0) candidates.push(...SOCIAL_VISUAL_LAYOUTS);
 
     const uniqueCandidates = [...new Set(candidates)];
-    const rotation = Math.max(0, variationIndex - 1) % uniqueCandidates.length;
+    const rotation =
+      (Math.max(0, post.slotIndex - 1) + Math.max(0, variationIndex - 1)) % uniqueCandidates.length;
     const orderedCandidates = [
       ...uniqueCandidates.slice(rotation),
       ...uniqueCandidates.slice(0, rotation),
@@ -1287,6 +1475,7 @@ export class MockImageGenerationProvider implements ImageGenerationProvider {
         width: SOCIAL_PROVIDER_IMAGE_WIDTH,
         height: SOCIAL_PROVIDER_IMAGE_HEIGHT,
         palette,
+        quality: analyzeSocialBackgroundPixels(background),
         promptSummary: input.prompt.prompt,
       },
       usage: {
@@ -1375,6 +1564,7 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
           width: decoded.width,
           height: decoded.height,
           palette,
+          quality: analyzeSocialBackgroundPixels(decoded),
           promptSummary: payload.data?.[0]?.revised_prompt ?? input.prompt.prompt,
         },
         usage: {
@@ -1403,9 +1593,21 @@ export class SocialVisualRenderer {
     post: SocialImagePostContext;
     background: GeneratedSocialBackground;
     layout: SocialVisualLayout;
+    backgroundQuality?: SocialBackgroundQuality;
   }): Promise<SocialRenderedImage> {
     const started = Date.now();
     validateBackgroundDimensions(input.background);
+    const backgroundQuality =
+      input.backgroundQuality ??
+      input.background.quality ??
+      analyzeSocialBackgroundPixels(await decodePng(input.background.bytes));
+    if (!backgroundQuality.passes) {
+      throw new SocialImageValidationError(
+        'Le fond genere manque de sujet ou de detail visuel exploitable.',
+        undefined,
+        'background_too_flat',
+      );
+    }
     const [focusX, focusY] = focusFor(input.layout);
     const crop = calculateCoverCrop(
       input.background.width,
@@ -1473,9 +1675,13 @@ export class SocialVisualRenderer {
         logoBox,
         safeZoneOk: isInsideSafeZone(spec.textBox) && isInsideSafeZone(logoBox),
         contrastRatio: Number(
-          contrastRatio(spec.panel === 'blue' ? BRAND_NIGHT : WHITE, spec.textColor).toFixed(2),
+          contrastRatio(
+            spec.id === 'FULL_BLEED_VISUAL' ? BRAND_NIGHT : WHITE,
+            spec.textColor,
+          ).toFixed(2),
         ),
         crop,
+        backgroundQuality,
         renderMs: Date.now() - started,
         fileSizeBytes: bytes.byteLength,
         masterMimeType: 'image/png',
@@ -1530,6 +1736,13 @@ export class VisualQualityCheck {
         'contrast',
       );
     }
+    if (!image.render.backgroundQuality.passes) {
+      throw new SocialImageValidationError(
+        'Fond visuel trop vide ou insuffisamment structure.',
+        undefined,
+        'background_too_flat',
+      );
+    }
     if (!isInsideSafeZone(image.render.logoBox)) {
       throw new SocialImageValidationError('Logo hors zone autorisee.', undefined, 'logo_zone');
     }
@@ -1568,13 +1781,30 @@ export async function generateRenderedSocialImage(input: {
     throw error;
   }
 
-  const rendered = new VisualQualityCheck().validate(
-    await new SocialVisualRenderer().render({
-      post: input.post,
-      background: background.background,
-      layout,
-    }),
-  );
+  let rendered: SocialRenderedImage;
+  try {
+    rendered = new VisualQualityCheck().validate(
+      await new SocialVisualRenderer().render({
+        post: input.post,
+        background: background.background,
+        layout,
+        backgroundQuality: background.background.quality,
+      }),
+    );
+  } catch (error) {
+    if (error instanceof SocialImageValidationError) {
+      throw new SocialImageValidationError(
+        error.message,
+        {
+          usage: background.usage,
+          provider: background.provider,
+          model: background.model,
+        },
+        error.code,
+      );
+    }
+    throw error;
+  }
 
   return validateSocialImageResult(
     {

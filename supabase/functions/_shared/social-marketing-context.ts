@@ -65,3 +65,13 @@ export function buildRezo360MarketingContext(): string {
     ].join(' '),
   ].join('\n');
 }
+
+/** Direction artistique compacte pour les fournisseurs d'images Social Studio. */
+export function buildRezo360VisualContext(): string {
+  return [
+    'BRAND: REZO360.',
+    'VISUAL IDENTITY: premium editorial advertising for field-service companies; modern, sober, professional, human and concrete.',
+    'PALETTE: neutral whites, charcoal and natural field materials, with restrained REZO360 blue #1B44C8 as a single accent.',
+    'QUALITY BAR: art-directed commercial photography or tactile editorial composition, immediately legible on mobile, never a generic SaaS template.',
+  ].join('\n');
+}

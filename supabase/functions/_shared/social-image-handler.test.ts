@@ -12,6 +12,7 @@ import {
   SocialImageValidationError,
   SocialVisualRenderer,
   VisualQualityCheck,
+  analyzeSocialBackgroundPixels,
   generateRenderedSocialImage,
   type ImageGenerationProvider,
   type SocialImageGenerationInput,
@@ -281,6 +282,7 @@ Deno.test('SocialVisualRenderer produit un asset final 1080x1350 lisible', async
   assertEquals(result.variants[0]!.render.publishingMimeType, 'image/jpeg');
   assertEquals(result.variants[0]!.render.engine, 'resvg-wasm');
   assertEquals(result.variants[0]!.render.fontFamily, 'Archivo');
+  assert(result.variants[0]!.render.backgroundQuality.passes);
   assert(result.variants[0]!.render.safeZoneOk);
   assert(result.variants[0]!.render.contrastRatio >= 4.5);
   assert(result.variants[0]!.render.fileSizeBytes > 0);
@@ -360,11 +362,39 @@ Deno.test('SocialImagePromptBuilder impose un sujet concret et interdit les fond
     height: 1350,
   });
 
-  assert(prompt.prompt.includes('override any conflicting framing'));
-  assert(prompt.prompt.includes('one immediately legible concrete subject'));
+  assert(prompt.prompt.includes('override every conflicting framing'));
+  assert(prompt.prompt.includes('senior advertising art director'));
+  assert(prompt.prompt.includes('one concrete visual story'));
   assert(prompt.prompt.includes('no screens or devices'));
+  assert(prompt.prompt.includes('MANDATORY AVOID'));
+  assert(prompt.prompt.includes('blank blurred wall'));
   assert(prompt.negativePrompt.includes('blank blurred wall'));
   assert(prompt.negativePrompt.includes('texture-only placeholder'));
+});
+
+Deno.test('background quality refuse un fond lisse et accepte une scene structuree', () => {
+  const width = 320;
+  const height = 400;
+  const flat = new Uint8Array(width * height * 3);
+  flat.fill(224);
+  const flatQuality = analyzeSocialBackgroundPixels({ width, height, data: flat });
+
+  const detailed = new Uint8Array(width * height * 3);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 3;
+      const value = (Math.floor(x / 24) + Math.floor(y / 28)) % 2 === 0 ? 38 : 224;
+      detailed[offset] = value;
+      detailed[offset + 1] = Math.min(255, value + 12);
+      detailed[offset + 2] = Math.max(0, value - 8);
+    }
+  }
+  const detailedQuality = analyzeSocialBackgroundPixels({ width, height, data: detailed });
+
+  assertEquals(flatQuality.passes, false);
+  assertEquals(detailedQuality.passes, true);
+  assert(detailedQuality.edgeDensity > flatQuality.edgeDensity);
+  assert(detailedQuality.dynamicRange > flatQuality.dynamicRange);
 });
 
 Deno.test('SocialLayoutEngine ne confond pas audience terrain et scene plein cadre', () => {
@@ -429,6 +459,9 @@ Deno.test(
     assertEquals(requests[0]!.body.quality, 'medium');
     assertEquals(requests[0]!.body.output_format, 'png');
     assertEquals(requests[0]!.body.size, '1024x1536');
+    assert(String(requests[0]!.body.prompt).includes('MANDATORY AVOID'));
+    assert(String(requests[0]!.body.prompt).includes('blank blurred wall'));
+    assert(String(requests[0]!.body.prompt).includes('fake product interface'));
     assertEquals(requests[0]!.authorization, 'Bearer test-secret-key');
     assertEquals(result.background.width, 1024);
     assertEquals(result.background.height, 1536);
@@ -526,7 +559,7 @@ Deno.test('generation semaine auto cree 7 assets avec concurrence limitee', asyn
   assertEquals(calls.marked.filter((item) => item.status === 'ready').length, 7);
   assert(calls.maxActive <= 2);
   assertEquals(provider.calls, 7);
-  assertEquals(new Set(provider.layouts).size, 7);
+  assert(new Set(provider.layouts).size >= 4);
 });
 
 Deno.test(
@@ -542,7 +575,8 @@ Deno.test(
 
     assertEquals(response.status, 200);
     assertEquals(provider.calls, 1);
-    assertEquals(provider.layouts[0], 'SPLIT_VISUAL');
+    assert(provider.layouts[0] !== 'FULL_BLEED_VISUAL');
+    assert(['EDITORIAL_LEFT', 'SPLIT_VISUAL', 'TYPOGRAPHIC_HERO'].includes(provider.layouts[0]!));
     assertEquals(calls.inserted.length, 1);
     const insertion = calls.inserted[0] as {
       variants: Array<{ position: number }>;

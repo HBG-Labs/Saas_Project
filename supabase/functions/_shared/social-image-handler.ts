@@ -631,6 +631,9 @@ export async function generateSocialImageForPost(input: {
         layout: variant.render.layout,
         renderMs: variant.render.renderMs,
         fileSizeBytes: variant.render.fileSizeBytes,
+        backgroundDynamicRange: variant.render.backgroundQuality.dynamicRange,
+        backgroundLuminanceStdDev: variant.render.backgroundQuality.luminanceStdDev,
+        backgroundEdgeDensity: variant.render.backgroundQuality.edgeDensity,
       },
     });
 
