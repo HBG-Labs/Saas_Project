@@ -45,7 +45,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   );
   const selectedId = selection.userId === userId ? selection.organizationId : storedSelectedId;
 
-  const { data: organizations, isPending: organizationsPending } = useQuery({
+  const {
+    data: organizations,
+    isPending: organizationsPending,
+    refetch: refetchOrganizations,
+  } = useQuery({
     queryKey: qk.organizations.mine(userId ?? 'anonymous'),
     queryFn: listMyOrganizations,
     enabled: userId !== null,
@@ -90,6 +94,10 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     [userId],
   );
 
+  const refresh = useCallback(async () => {
+    await refetchOrganizations();
+  }, [refetchOrganizations]);
+
   /**
    * Le cache metier est physiquement distinct par compte ET par organisation.
    * Ainsi une cle de detail imparfaite ne peut jamais servir une valeur du
@@ -128,6 +136,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // l'interface proposerait des actions systématiquement rejetées.
       role: membership?.status === 'active' ? membership.role : null,
       select,
+      refresh,
     };
   }, [
     authStatus,
@@ -138,6 +147,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     organization,
     membership,
     select,
+    refresh,
   ]);
 
   return (

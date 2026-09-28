@@ -139,6 +139,29 @@ export async function updateOrganization(
   return unwrap(supabase.from('organizations').update(patch).eq('id', id).select('*').single());
 }
 
+/**
+ * Supprime définitivement une organisation.
+ *
+ * La décision d'autorisation reste entièrement côté PostgreSQL : la policy
+ * `organizations_delete_owner` exige `organization.delete`, permission
+ * réservée au propriétaire. Le trigger de garde refuse aussi la suppression
+ * tant qu'un abonnement externe est encore actif.
+ */
+export async function deleteOrganization(id: string): Promise<void> {
+  const { error } = await supabase.from('organizations').delete().eq('id', id);
+
+  if (error) {
+    if (error.code === '23503') {
+      throw new AppError(
+        'validation',
+        "Cette entreprise contient des documents réglementaires qui doivent être conservés. Contactez le support pour clôturer l'organisation.",
+        { cause: error },
+      );
+    }
+    throw mapPostgrestError(error);
+  }
+}
+
 /** Dépose le logo public utilisé sur les devis et factures. */
 export async function uploadOrganizationLogo(input: {
   organizationId: string;

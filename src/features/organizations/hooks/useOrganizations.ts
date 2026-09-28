@@ -6,6 +6,7 @@ import type { TablesUpdate } from '@/types/database';
 
 import {
   createOrganization,
+  deleteOrganization,
   getOrganization,
   listMyOrganizations,
   updateOrganization,
@@ -73,6 +74,23 @@ export function useUpdateOrganization(organizationId: string) {
         queryClient.invalidateQueries({ queryKey: qk.organizations.detail(organizationId) }),
         queryClient.invalidateQueries({ queryKey: qk.organizations.all }),
       ]);
+    },
+  });
+}
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+  const { refresh } = useCurrentOrganization();
+
+  return useMutation({
+    mutationFn: deleteOrganization,
+    onSuccess: async () => {
+      // La liste des organisations vit dans le QueryClient parent du provider,
+      // tandis que les pages métier utilisent un cache isolé par tenant. Le
+      // rafraîchissement explicite évite de conserver l'organisation supprimée
+      // jusqu'au prochain rechargement complet de l'application.
+      await refresh();
+      await queryClient.invalidateQueries({ queryKey: qk.organizations.all });
     },
   });
 }

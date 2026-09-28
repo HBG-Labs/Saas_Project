@@ -50,6 +50,7 @@ vi.mock('@/features/organizations', async (importOriginal) => {
       },
     },
     OrganizationBillingCard: () => <div data-testid="billing-card">Billing Card</div>,
+    DeleteOrganizationCard: () => null,
     OrganizationNavTabs: () => null,
   };
 });

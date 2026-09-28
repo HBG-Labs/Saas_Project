@@ -114,4 +114,20 @@ describe('OrganizationProvider', () => {
     await waitFor(() => expect(result.current?.status).toBe('ready'));
     expect(result.current?.membership?.organization_id).toBe('org-b');
   });
+
+  it('bascule sur une organisation restante après le rafraîchissement de la liste', async () => {
+    mocks.listMyOrganizations
+      .mockResolvedValueOnce([organization('org-a', 'Alpha'), organization('org-b', 'Beta')])
+      .mockResolvedValueOnce([organization('org-b', 'Beta')]);
+
+    const { result } = renderProvider();
+    await waitFor(() => expect(result.current?.organization?.id).toBe('org-a'));
+
+    await act(async () => {
+      await result.current?.refresh();
+    });
+
+    await waitFor(() => expect(result.current?.organization?.id).toBe('org-b'));
+    await waitFor(() => expect(result.current?.status).toBe('ready'));
+  });
 });

@@ -25,6 +25,8 @@ export interface OrganizationContextValue {
   role: OrgRole | null;
   /** Change d'organisation et mémorise le choix. */
   select: (organizationId: string) => void;
+  /** Recharge la liste serveur après une création, une suppression ou un retrait. */
+  refresh: () => Promise<void>;
 }
 
 export const OrganizationContext = createContext<OrganizationContextValue | null>(null);
