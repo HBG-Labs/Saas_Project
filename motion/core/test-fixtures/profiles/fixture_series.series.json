@@ -2,13 +2,13 @@
   "schema": "series-motion-profile",
   "schema_version": "0.1.0",
   "id": "fixture_series",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Série Horizon (série fictive de test)",
   "style": {
     "ref": {
       "id": "fixture_signal",
-      "version": "1.1.0",
-      "sha256": "4e339f6b83152c9a844d1b495bdd87e32eb85cac62ee9b5c6174110727866f5c"
+      "version": "1.2.0",
+      "sha256": "7d6ab271977a3d69894f866abf5833938bc9d88a117a034106a4d44b11774c8e"
     },
     "src": "pack:fixture_signal.style.json"
   },

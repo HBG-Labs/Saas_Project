@@ -83,7 +83,7 @@ describe('renderer stupide : il exécute le plan, il ne décide rien', () => {
 
   it('la composition ne lit les pistes que par l’échantillonneur du cœur', () => {
     for (const file of sources(path.join(RENDERER, 'src', 'composition'))) {
-      expect(readFileSync(file, 'utf8'), file).not.toMatch(/\.tracks\b|\.keys\b|\bease\b|\bbeats?\b|_ms\b/);
+      expect(readFileSync(file, 'utf8'), file).not.toMatch(/\.tracks\b|\.keys\b|\bease\b|\bbeats?\b|_ms\b|\.voice_only\b/);
     }
     const frameState = readFileSync(path.join(RENDERER, 'src', 'frame-state.ts'), 'utf8');
     expect(frameState).toMatch(/import \{ sampleProperty \} from '@motion-engine\/core\/runtime'/);

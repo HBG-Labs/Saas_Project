@@ -122,6 +122,33 @@ describe('creative style profile', () => {
     doc.forbidden.behaviors.push('CUT');
     expect(codes(validateStyle(doc))).toEqual(expect.arrayContaining(['behavior.contradiction', 'transition.forbidden']));
   });
+  it('refuse, en ERREUR, toute référence à un comportement absent du registre fermé', () => {
+    const policy = clone(readFixture('profiles/fixture_ink.style.json'));
+    policy.motion_personality.behaviors['CAMERA_PUSH'] = { allowed: true, param_bounds: { scale: { min: 1, max: 1.1 } } };
+    expect(codes(validateStyle(policy))).toEqual(['style.behavior_unknown']);
+    const banned = clone(readFixture('profiles/fixture_ink.style.json'));
+    banned.forbidden.behaviors.push('GLITCH');
+    expect(codes(validateStyle(banned))).toEqual(['style.behavior_unknown']);
+    const preferred = clone(readFixture('profiles/fixture_ink.style.json'));
+    preferred.transition_preferences.preferred.push('MASK_WIPE');
+    preferred.transition_preferences.avoid.push('MATCH_LINE');
+    expect(codes(validateStyle(preferred))).toEqual(['style.behavior_unknown', 'style.behavior_unknown']);
+  });
+  it('refuse une variante, un paramètre ou une transition que le registre ne connaît pas', () => {
+    const doc = clone(readFixture('profiles/fixture_ink.style.json'));
+    doc.motion_personality.behaviors['REVEAL_TEXT'].variants.push('spin');
+    doc.motion_personality.behaviors['REVEAL_TEXT'].param_bounds = { wobble: { min: 0, max: 1 } };
+    doc.transition_preferences.preferred.push('SETTLE');
+    expect(codes(validateStyle(doc))).toEqual(
+      expect.arrayContaining(['style.behavior_variant_unknown', 'style.behavior_param_unknown', 'style.transition_not_transition']),
+    );
+  });
+  it('les styles livrés ne référencent que des comportements du registre', () => {
+    for (const name of ['fixture_ink', 'fixture_signal']) {
+      const result = validateStyle(readFixture(`profiles/${name}.style.json`));
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+    }
+  });
   it('refuse un texte illisible et signale un accent peu contrasté', () => {
     const unreadable = clone(readFixture('profiles/fixture_signal.style.json'));
     unreadable.palette['text.primary'] = '#F2D54A';

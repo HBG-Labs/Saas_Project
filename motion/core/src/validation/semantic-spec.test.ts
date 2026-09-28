@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clone, codes, readFixture, resolvedInk, resolvedSignal } from '../test-support.ts';
+import { clone, codes, loadInk, mustResolve, readFixture, resolvedInk, resolvedSignal } from '../test-support.ts';
 import type { Json } from '../test-support.ts';
 import { BEHAVIORS } from '../motion/registry.ts';
 import { validateSpec } from './validate.ts';
@@ -91,19 +91,22 @@ describe('validation sémantique de la spec', () => {
   });
 
   it('applique les interdits, les variantes et les bornes du style résolu', () => {
-    const forbidden = base();
-    forbidden.scenes[0].layers[0].behaviors[0].behavior = 'GLITCH';
-    expect(codes(validateSpec(forbidden, ink))).toContain('behavior.forbidden');
+    const strict = clone(loadInk());
+    strict.motion_personality.behaviors['DRAW_PATH'] = { allowed: false };
+    strict.forbidden.behaviors = ['DRAW_PATH'];
+    strict.motion_personality.behaviors['REVEAL_TEXT']!.param_bounds = { stagger_beats: { min: 0, max: 0.5 } };
+    const strictInk = mustResolve({ style: strict });
+    expect(codes(validateSpec(base(), strictInk))).toContain('behavior.forbidden');
 
     const variant = base();
     variant.scenes[0].layers[0].behaviors[0].variant = 'fade';
     expect(validateSpec(variant, ink).ok).toBe(true);
     expect(codes(validateSpec(variant, signal, { allowStyleSubstitution: true }))).toContain('behavior.variant');
 
-    const push = base();
-    push.scenes[0].layers[1].behaviors[0] = { id: 'bh_push', behavior: 'CAMERA_PUSH', version: '1.0.0', params: { scale: 1.2 }, at: { event: 'scene.start' } };
-    expect(codes(validateSpec(push, ink))).toContain('behavior.param_bounds');
-    expect(codes(validateSpec(push, signal, { allowStyleSubstitution: true }))).toContain('behavior.forbidden');
+    const bounded = base();
+    bounded.scenes[0].layers[0].behaviors[0].params = { stagger_beats: 0.9 };
+    expect(codes(validateSpec(bounded, strictInk))).toContain('behavior.param_bounds');
+    expect(validateSpec(bounded, ink).ok).toBe(true);
   });
 
   it('cible un run existant d’un calque texte', () => {
@@ -119,7 +122,7 @@ describe('validation sémantique de la spec', () => {
     expect(validateSpec(doc, ink, { assetRefs: new Set(['night_sky']) }).ok).toBe(true);
   });
 
-  it('vérifie la continuité MATCH_LINE vers la scène suivante', () => {
+  it('vérifie la continuité (continues_in) vers la scène suivante', () => {
     const doc = base();
     const next = clone(doc.scenes[0]);
     next.id = 'sc_answer';
@@ -134,12 +137,12 @@ describe('validation sémantique de la spec', () => {
     doc.rhythm.sections.push({ id: 'sec_answer', phase: 'REVEAL', scenes: ['sc_answer'] });
     doc.scenes[0].layers[1].behaviors.push({
       id: 'bh_rule_carry',
-      behavior: 'MATCH_LINE',
+      behavior: 'DRAW_PATH',
       version: '1.0.0',
       at: { after: 'bh_rule_draw' },
       continues_in: { scene: 'sc_answer', layer: 'ln_rule_next' },
     });
-    doc.scenes[0].transition_out = { behavior: 'MATCH_LINE', version: '1.0.0', to: 'sc_answer' };
+    doc.scenes[0].transition_out = { behavior: 'CUT', version: '1.0.0', to: 'sc_answer' };
     const result = validateSpec(doc, ink);
     expect(result.ok, JSON.stringify(result)).toBe(true);
 

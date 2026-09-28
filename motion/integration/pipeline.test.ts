@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { hashDocument, sha256Hex } from '@motion-engine/core';
+import { ENGINE_NAME, ENGINE_VERSION, hashDocument, sha256Hex } from '@motion-engine/core';
 import { loadRenderProfile, runPipeline } from '@motion-engine/renderer-remotion';
 import type { PipelineRequest } from '@motion-engine/renderer-remotion';
 
@@ -42,6 +42,7 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     expect(result.manifest.platform_presets).not.toBeNull();
     expect(result.manifest.render_config).toMatchObject({ width: 540, height: 960, fps: 30, codec: 'h264', color_space: 'bt709', reduced_motion: false });
     expect(result.manifest.schema_version).toBe('0.3.0');
+    expect(result.manifest.engine).toMatchObject({ name: ENGINE_NAME, version: ENGINE_VERSION });
     expect(result.manifest.timing_source).toBe('estimated');
     expect(result.manifest.behavior_registry).toEqual(result.plan.provenance.behavior_registry);
     // Chaque police du manifeste correspond octet pour octet au fichier de la bibliothèque.

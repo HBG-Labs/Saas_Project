@@ -10,6 +10,8 @@ import {
   REQUIRED_TYPE_ROLES,
   STYLE_ROLE_CONTRACT_VERSION,
 } from '../contracts/style-roles.ts';
+import { BEHAVIORS } from '../motion/registry.ts';
+import type { BehaviorRegistry } from '../motion/registry.ts';
 import { contrastRatio } from '../style/contrast.ts';
 import { IssueCollector } from './issues.ts';
 import type { ValidationIssue } from './issues.ts';
@@ -18,7 +20,7 @@ function roleKey(ref: string): string {
   return ref.slice(ref.indexOf('.') + 1);
 }
 
-export function validateStyleSemantics(style: CreativeStyleProfile, prefix = ''): ValidationIssue[] {
+export function validateStyleSemantics(style: CreativeStyleProfile, prefix = '', registry: BehaviorRegistry = BEHAVIORS): ValidationIssue[] {
   const c = new IssueCollector();
   const at = (path: string) => (prefix ? `${prefix}.${path}` : path);
 
@@ -76,6 +78,39 @@ export function validateStyleSemantics(style: CreativeStyleProfile, prefix = '')
     if (cue && !style.sound_personality.cues[cue]) {
       c.error('sound.unknown_cue', at(`sound_personality.event_cues.${kind}`), `cue « ${cue} » non défini`);
     }
+  }
+
+  // Le registre fermé est la source de vérité : un style ne peut nommer
+  // (autoriser, interdire, préférer, éviter) qu'un comportement qui existe.
+  // Une intention future (« jamais de glitch ») s'exprime par un style_tag.
+  const known = new Set(registry.ids());
+  const orphan = (id: string, where: string) => {
+    if (!known.has(id)) c.error('style.behavior_unknown', at(where), `${id} n'existe pas dans le registre des comportements ${registry.version}`);
+    return !known.has(id);
+  };
+  for (const [id, policy] of Object.entries(style.motion_personality.behaviors)) {
+    const where = `motion_personality.behaviors.${id}`;
+    if (orphan(id, where)) continue;
+    const definitions = registry.versions(id).map((v) => registry.get(id, v)!);
+    for (const variant of policy.variants ?? []) {
+      if (!definitions.some((d) => variant in d.variants)) {
+        c.error('style.behavior_variant_unknown', at(`${where}.variants`), `variante « ${variant} » inconnue de ${id}`);
+      }
+    }
+    for (const param of Object.keys(policy.param_bounds ?? {})) {
+      if (!definitions.some((d) => param in d.parameters_schema)) {
+        c.error('style.behavior_param_unknown', at(`${where}.param_bounds.${param}`), `paramètre « ${param} » inconnu de ${id}`);
+      }
+    }
+  }
+  style.forbidden.behaviors.forEach((id, i) => orphan(id, `forbidden.behaviors[${i}]`));
+  for (const list of ['preferred', 'avoid'] as const) {
+    style.transition_preferences[list].forEach((id, i) => {
+      const where = `transition_preferences.${list}[${i}]`;
+      if (orphan(id, where)) return;
+      const latest = registry.get(id, registry.versions(id).at(-1)!)!;
+      if (latest.scope !== 'transition') c.error('style.transition_not_transition', at(where), `${id} n'est pas une transition`);
+    });
   }
 
   const forbidden = new Set(style.forbidden.behaviors);

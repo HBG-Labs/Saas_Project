@@ -5,6 +5,8 @@ import type { BehaviorInstance, Layer, MotionSceneSpec, Scene } from '../contrac
 import type { CreativeStyleProfile } from '../contracts/style-profile.ts';
 import type { BehaviorRegistry } from '../motion/registry.ts';
 import { findWordMatches } from '../text/voice-words.ts';
+import { voiceOnlyIntervals } from './activity.ts';
+import type { Interval } from './activity.ts';
 import { readingTime } from './readability.ts';
 import type { ReadingRequirement } from './readability.ts';
 import { estimateSpeech } from './speech.ts';
@@ -83,6 +85,8 @@ export interface TemporalScene {
   /** Plage admissible de la fin de scène (temps local) avant ajustement global. */
   range: { min_ms: number; preferred_ms: number; max_ms: number; fixed: boolean };
   readability: { layer: string; requirement: ReadingRequirement; stable_ms: number }[];
+  /** Annotation dérivée (pas une phase) : la voix continue, aucun comportement visuel actif. */
+  voice_only: Interval[];
   transition_out: { behavior: string; version: string; at_ms: number } | null;
 }
 
@@ -533,8 +537,13 @@ export function resolveTemporalPlan(input: TemporalInput): TemporalPlan {
       hold: { ms: hold, min_ms: local.holdMin, preferred_ms: local.holdPreferred, max_ms: local.holdMax },
       range: local.range,
       readability,
+      voice_only: [],
       transition_out: transition,
     };
+    result.voice_only = voiceOnlyIntervals(
+      result.speech,
+      result.behaviors.filter((b) => b.definition.scope !== 'transition'),
+    );
     cursor += finalEnd;
     return result;
   });

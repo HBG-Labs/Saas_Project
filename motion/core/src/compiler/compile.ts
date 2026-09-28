@@ -23,7 +23,7 @@ import { alignHorizontally, alignVertically, columnsLength, layoutFrame, LayoutE
 import type { LayoutFrame } from './layout.ts';
 
 /** 0.2.0 : mouvement résolu par le registre de comportements et le moteur temporel (P1.3). */
-export const COMPILER_VERSION = '0.2.0';
+export const COMPILER_VERSION = '0.3.0';
 
 export interface OutputConfig {
   width: number;
@@ -341,6 +341,11 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
         ...sceneFrames.get(scene.id)!,
         background: color(style, scene.background.fill),
         nodes: sceneNodes.get(scene.id)!,
+        // Frames depuis le temps absolu, comme les bornes de scène ; intervalles vides écartés.
+        voice_only: temporal.scenes
+          .find((t) => t.id === scene.id)!
+          .voice_only.map((i) => ({ from: msToFrame(i.start_ms, output.fps), to: msToFrame(i.end_ms, output.fps) }))
+          .filter((i) => i.to > i.from),
       })),
     });
     const planIssues = validateRenderPlanSemantics(plan);

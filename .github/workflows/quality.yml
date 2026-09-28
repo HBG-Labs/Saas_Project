@@ -3,7 +3,9 @@ name: Qualité REZO360
 on:
   pull_request:
   push:
-    branches: [main]
+    # feature/social-motion-engine : TEMPORAIRE, pour valider la CI Linux du moteur
+    # de motion design sans ouvrir de PR (autorisé le 27/09/2026). À retirer au merge.
+    branches: [main, feature/social-motion-engine]
 
 concurrency:
   group: quality-${{ github.ref }}

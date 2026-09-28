@@ -114,7 +114,7 @@ describe('resolveStyle — mode série', () => {
     expect(resolved.style.rhythm_personality.tempo.breath_ms).toBe(520);
     expect(resolved.style.rhythm_personality.tempo.beat_ms.CALM).toBe(series.style.rhythm_personality.tempo.beat_ms.CALM);
     expect(resolved.applied_overrides.map((o) => o.path)).toEqual(['palette.accent', 'rhythm_personality.tempo.breath_ms']);
-    expect(resolved.style.forbidden.style_tags).toEqual(['emoji', 'soft_focus']);
+    expect(resolved.style.forbidden.style_tags).toEqual(['camera_push', 'emoji', 'soft_focus']);
     expect(resolved.signature?.sound_signature).toBe('STING');
     expect(resolved.locks).toEqual(['motifs.rule', 'typography.families']);
     expect(resolved.identity.lexicon.map((l) => l.term)).toEqual(['Horizon']);
@@ -182,7 +182,6 @@ describe('resolveStyle — précédence : verrous de marque > série > style', (
   it('cumule les interdits de la marque et de la série', () => {
     const ink = loadInk();
     const resolved = mustResolve({ series: { profile: seriesOnBrand(ink), style: ink }, brand: loadFixtureBrand() });
-    expect(resolved.style.forbidden.behaviors).toContain('GLITCH');
     expect(resolved.style.forbidden.style_tags).toEqual(expect.arrayContaining(['glitch', 'emoji']));
   });
 

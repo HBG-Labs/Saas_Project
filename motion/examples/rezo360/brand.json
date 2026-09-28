@@ -2,13 +2,13 @@
   "schema": "brand-motion-profile",
   "schema_version": "0.1.0",
   "id": "rezo360",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "REZO360",
   "style": {
     "ref": {
       "id": "rezo360_style",
-      "version": "1.1.0",
-      "sha256": "bcf66a3650529bd664324bb357e7caa6edea528b2dd26295e3e5b6d3efb57883"
+      "version": "1.2.0",
+      "sha256": "a61da3c2166e3298983c686fd8245ebfe0672029aab6167d126588c945e05eb5"
     },
     "src": "pack:style.json"
   },

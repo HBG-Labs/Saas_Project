@@ -27,7 +27,7 @@ const text: PlanTextNode = {
 
 const plan: RenderPlan = {
   schema: 'render-plan',
-  schema_version: '0.2.0',
+  schema_version: '0.3.0',
   spec: { spec_id: 's', revision: 1, sha256: 'a'.repeat(64) },
   style: { mode: 'creative', sha256: 'b'.repeat(64) },
   compiler_version: '0.2.0',
@@ -38,12 +38,13 @@ const plan: RenderPlan = {
   fonts: [],
   assets: [],
   scenes: [
-    { id: 'one', from: 0, to: 30, background: '#FFFFFF', nodes: [text] },
+    { id: 'one', from: 0, to: 30, background: '#FFFFFF', nodes: [text], voice_only: [] },
     {
       id: 'two',
       from: 30,
       to: 60,
       background: '#000000',
+      voice_only: [{ from: 45, to: 60 }],
       nodes: [
         {
           id: 'ln',

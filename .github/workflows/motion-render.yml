@@ -12,7 +12,8 @@ on:
       - 'motion/**'
       - '.github/workflows/motion-render.yml'
   push:
-    branches: [main]
+    # feature/social-motion-engine : TEMPORAIRE (validation CI Linux, voir quality.yml).
+    branches: [main, feature/social-motion-engine]
     paths:
       - 'motion/**'
       - '.github/workflows/motion-render.yml'

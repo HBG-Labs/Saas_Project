@@ -49,7 +49,7 @@ describe('la même spec, d’autres styles', () => {
     const spec = pilotSpec() as unknown as MotionSceneSpec;
     const plan = {
       schema: 'render-plan',
-      schema_version: '0.2.0',
+      schema_version: '0.3.0',
       spec: { spec_id: spec.spec_id, revision: spec.revision, sha256: hashDocument(spec) },
       style: { mode: nocturne.mode, sha256: nocturne.sha256 },
       compiler_version: '0.2.0',
@@ -59,7 +59,7 @@ describe('la même spec, d’autres styles', () => {
       canvas: { width: 1080, height: 1920, fps: 30, duration_frames: 30 },
       fonts: [],
       assets: [],
-      scenes: [{ id: 'sc_02', from: 0, to: 30, background: nocturne.style.palette['surface.primary']!, nodes: [] }],
+      scenes: [{ id: 'sc_02', from: 0, to: 30, background: nocturne.style.palette['surface.primary']!, nodes: [], voice_only: [] }],
     } satisfies RenderPlan;
     const manifest = buildReproducibilityManifest({
       createdAt: '2026-09-27T18:00:00+02:00',
@@ -74,7 +74,7 @@ describe('la même spec, d’autres styles', () => {
       substitutionReason: 'preuve d’indépendance : même spec, style sans marque',
     });
     expect(manifest.style).toMatchObject({
-      binding: { kind: 'brand', id: 'rezo360', version: '1.1.0' },
+      binding: { kind: 'brand', id: 'rezo360', version: '1.2.0' },
       mode: 'creative',
       substituted: true,
       sources: { style: { id: 'control_nocturne' }, brand: null, series: null },

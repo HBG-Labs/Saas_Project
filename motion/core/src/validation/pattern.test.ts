@@ -17,6 +17,13 @@ describe('pattern générique', () => {
     expect(codes(validatePattern(doc))).toEqual(['pattern.axis_uncovered']);
   });
 
+  it('refuse un comportement ou une variante absents du registre fermé', () => {
+    const doc = pattern();
+    doc.motions.rise_reveal.exit = { behavior: 'MASK_WIPE' };
+    doc.motions.rise_reveal.reveal.variant = 'spin';
+    expect(codes(validatePattern(doc)).sort()).toEqual(['pattern.behavior_unknown', 'pattern.behavior_variant_unknown']);
+  });
+
   it('refuse un défaut hors des valeurs de l’axe', () => {
     const doc = pattern();
     doc.variation_axes.layout_variant.default = 'diagonal';

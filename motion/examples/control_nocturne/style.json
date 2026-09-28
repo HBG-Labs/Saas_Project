@@ -2,7 +2,7 @@
   "schema": "creative-style-profile",
   "schema_version": "0.3.0",
   "id": "control_nocturne",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Nocturne (style de contrôle sans marque)",
   "origin": "generated",
   "role_contract": "0.1.0",
@@ -190,18 +190,6 @@
       "DRAW_PATH": {
         "allowed": true
       },
-      "MATCH_LINE": {
-        "allowed": true
-      },
-      "CAMERA_PUSH": {
-        "allowed": true,
-        "param_bounds": {
-          "scale": {
-            "min": 1,
-            "max": 1.15
-          }
-        }
-      },
       "EXIT_CLEAR": {
         "allowed": true,
         "variants": [
@@ -315,17 +303,13 @@
     ]
   },
   "transition_preferences": {
-    "preferred": [
-      "MATCH_LINE"
-    ],
+    "preferred": [],
     "avoid": [
       "CUT"
     ]
   },
   "forbidden": {
-    "behaviors": [
-      "STROBE"
-    ],
+    "behaviors": [],
     "style_tags": [
       "strobe"
     ]

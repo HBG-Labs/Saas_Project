@@ -13,6 +13,13 @@ export function validateRenderPlanSemantics(plan: RenderPlan): ValidationIssue[]
     const base = `scenes[${si}]`;
     if (scene.from !== cursor) c.error('plan.scene_gap', base, `la scène commence à ${scene.from}, attendu ${cursor}`);
     if (scene.to <= scene.from) c.error('plan.scene_empty', base, 'scène de durée nulle');
+    let previousEnd = scene.from;
+    scene.voice_only.forEach((interval, k) => {
+      if (interval.from < previousEnd || interval.to <= interval.from || interval.to > scene.to) {
+        c.error('plan.voice_only_range', `${base}.voice_only[${k}]`, `intervalle [${interval.from}, ${interval.to}) invalide ou hors de la scène`);
+      }
+      previousEnd = interval.to;
+    });
     cursor = scene.to;
     const visit = (node: PlanNode, path: string) => {
       if (ids.has(node.id)) c.error('id.duplicate', path, `nœud « ${node.id} » en double`);

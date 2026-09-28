@@ -54,7 +54,7 @@ describe('manifeste de reproductibilité', () => {
   it('trace le style lié, résolu et ses sources, sans substitution', () => {
     const manifest = buildReproducibilityManifest(inputFor(ink));
     expect(manifest.style).toMatchObject({
-      binding: { kind: 'style', id: 'fixture_ink', version: '1.1.0' },
+      binding: { kind: 'style', id: 'fixture_ink', version: '1.2.0' },
       mode: 'creative',
       resolved_sha256: ink.sha256,
       substituted: false,

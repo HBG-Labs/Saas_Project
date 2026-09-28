@@ -68,3 +68,4 @@ export { cubicBezier, evaluateEasing, mixColor, sampleProperty, sampleTrack, spr
 export { appendToLock, checkVersionLock, LOCKED_KINDS, VersionLockSchema } from './integrity/version-lock.ts';
 export type { VersionedDocument, VersionLock } from './integrity/version-lock.ts';
 export { collectVersionedDocuments, loadVersionLock } from './io/load.ts';
+export { ENGINE_NAME, ENGINE_VERSION } from './version.ts';

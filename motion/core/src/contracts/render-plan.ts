@@ -5,7 +5,8 @@ import { EasingSchema } from './style-profile.ts';
 
 export const RENDER_PLAN_SCHEMA = 'render-plan';
 /** 0.2.0 : pistes fusionnées par propriété (sources multiples), provenance des comportements, source du timing. */
-export const RENDER_PLAN_VERSION = '0.2.0';
+/** 0.3.0 : annotation « voix seule » par scène (intervalles en frames, ignorés par les renderers). */
+export const RENDER_PLAN_VERSION = '0.3.0';
 
 const Frame = z.number().int().min(0);
 const Px = z.number().finite();
@@ -172,6 +173,11 @@ export const PlanSceneSchema = z.strictObject({
   to: Frame,
   background: HexColorSchema,
   nodes: z.array(PlanNodeSchema),
+  /**
+   * Annotation (pas une phase) : la parole continue sans aucun comportement
+   * visuel actif. Frames [from, to). Ignorée par les renderers.
+   */
+  voice_only: z.array(z.strictObject({ from: Frame, to: Frame })),
 });
 export type PlanScene = z.infer<typeof PlanSceneSchema>;
 

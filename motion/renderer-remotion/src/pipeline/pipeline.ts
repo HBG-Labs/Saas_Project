@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import {
   buildReproducibilityManifest,
+  ENGINE_NAME,
+  ENGINE_VERSION,
   buildSpec,
   compileSpec,
   formatIssues,
@@ -171,7 +173,7 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
 
   const manifest = buildReproducibilityManifest({
     createdAt: request.createdAt,
-    engine: { name: '@motion-engine/core', version: '0.1.0' },
+    engine: { name: ENGINE_NAME, version: ENGINE_VERSION },
     git: request.git,
     spec,
     resolvedStyle: resolved,

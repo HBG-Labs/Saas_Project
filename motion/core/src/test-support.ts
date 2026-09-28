@@ -52,7 +52,7 @@ export function codes(result: { ok: boolean; issues?: { code: string; severity?:
 export function minimalPlan(): Json {
   return {
     schema: 'render-plan',
-    schema_version: '0.2.0',
+    schema_version: '0.3.0',
     spec: { spec_id: 'moon_question', revision: 1, sha256: 'a'.repeat(64) },
     style: { mode: 'creative', sha256: 'b'.repeat(64) },
     compiler_version: '0.2.0',
@@ -68,6 +68,7 @@ export function minimalPlan(): Json {
         from: 0,
         to: 60,
         background: '#101820',
+        voice_only: [],
         nodes: [
           {
             id: 'tx_question',

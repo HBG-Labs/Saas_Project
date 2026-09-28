@@ -1,9 +1,24 @@
 import type { PatternDefinition } from '../contracts/pattern.ts';
+import { BEHAVIORS } from '../motion/registry.ts';
+import type { BehaviorRegistry } from '../motion/registry.ts';
 import { IssueCollector } from './issues.ts';
 import type { ValidationIssue } from './issues.ts';
 
-export function validatePatternSemantics(pattern: PatternDefinition): ValidationIssue[] {
+export function validatePatternSemantics(pattern: PatternDefinition, registry: BehaviorRegistry = BEHAVIORS): ValidationIssue[] {
   const c = new IssueCollector();
+
+  // Comme un style, un pattern ne nomme que des comportements (et variantes) du registre fermé.
+  for (const [motionId, motion] of Object.entries(pattern.motions)) {
+    for (const [role, call] of Object.entries(motion)) {
+      const path = `motions.${motionId}.${role}`;
+      const definitions = registry.versions(call.behavior).map((v) => registry.get(call.behavior, v)!);
+      if (definitions.length === 0) {
+        c.error('pattern.behavior_unknown', path, `${call.behavior} n'existe pas dans le registre ${registry.version}`);
+      } else if (call.variant !== undefined && !definitions.some((d) => call.variant! in d.variants)) {
+        c.error('pattern.behavior_variant_unknown', path, `variante « ${call.variant} » inconnue de ${call.behavior}`);
+      }
+    }
+  }
   const axes = pattern.variation_axes;
 
   for (const [name, a] of Object.entries(axes) as [string, { values: readonly string[]; default: string }][]) {

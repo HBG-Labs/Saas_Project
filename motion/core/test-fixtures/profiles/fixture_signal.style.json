@@ -2,7 +2,7 @@
   "schema": "creative-style-profile",
   "schema_version": "0.3.0",
   "id": "fixture_signal",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Fixture Signal (contrôle : clair, monospace, rapide)",
   "origin": "generated",
   "role_contract": "0.1.0",
@@ -182,9 +182,6 @@
       "DRAW_PATH": {
         "allowed": true
       },
-      "MASK_WIPE": {
-        "allowed": true
-      },
       "EXIT_CLEAR": {
         "allowed": true,
         "variants": [
@@ -301,17 +298,15 @@
   },
   "transition_preferences": {
     "preferred": [
-      "CUT",
-      "MASK_WIPE"
+      "CUT"
     ],
     "avoid": []
   },
   "forbidden": {
-    "behaviors": [
-      "CAMERA_PUSH"
-    ],
+    "behaviors": [],
     "style_tags": [
-      "soft_focus"
+      "soft_focus",
+      "camera_push"
     ]
   }
 }

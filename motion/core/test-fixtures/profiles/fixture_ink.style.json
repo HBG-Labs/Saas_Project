@@ -2,7 +2,7 @@
   "schema": "creative-style-profile",
   "schema_version": "0.3.0",
   "id": "fixture_ink",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Fixture Ink (contrôle : sombre, sérif, lent)",
   "origin": "authored",
   "role_contract": "0.1.0",
@@ -196,18 +196,6 @@
       },
       "DRAW_PATH": {
         "allowed": true
-      },
-      "MATCH_LINE": {
-        "allowed": true
-      },
-      "CAMERA_PUSH": {
-        "allowed": true,
-        "param_bounds": {
-          "scale": {
-            "min": 1,
-            "max": 1.12
-          }
-        }
       }
     },
     "timing": {
@@ -310,17 +298,12 @@
   },
   "transition_preferences": {
     "preferred": [
-      "MATCH_LINE",
       "CUT"
     ],
-    "avoid": [
-      "CAMERA_PUSH"
-    ]
+    "avoid": []
   },
   "forbidden": {
-    "behaviors": [
-      "GLITCH"
-    ],
+    "behaviors": [],
     "style_tags": [
       "glitch"
     ]

@@ -9,7 +9,7 @@ import type { PlanVideoProps } from './types.ts';
 const emptyProps: PlanVideoProps = {
   plan: {
     schema: 'render-plan',
-    schema_version: '0.2.0',
+    schema_version: '0.3.0',
     spec: { spec_id: 'empty', revision: 1, sha256: '0'.repeat(64) },
     style: { mode: 'creative', sha256: '0'.repeat(64) },
     compiler_version: '0.0.0',
@@ -19,7 +19,7 @@ const emptyProps: PlanVideoProps = {
     canvas: { width: 540, height: 960, fps: 30, duration_frames: 1 },
     fonts: [],
     assets: [],
-    scenes: [{ id: 'empty', from: 0, to: 1, background: '#000000', nodes: [] }],
+    scenes: [{ id: 'empty', from: 0, to: 1, background: '#000000', nodes: [], voice_only: [] }],
   },
   fonts: [],
   audio: null,
