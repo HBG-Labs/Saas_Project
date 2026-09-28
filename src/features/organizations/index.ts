@@ -19,6 +19,7 @@ export {
 export {
   acceptInvitation,
   createOrganization,
+  deleteOrganization,
   getMyMembership,
   getOrganization,
   getOrganizationBySlug,
@@ -44,6 +45,7 @@ export { useVisibleNavGroups, useVisibleNavItems } from './hooks/useVisibleNavIt
 
 export {
   useCreateOrganization,
+  useDeleteOrganization,
   useMyOrganizations,
   useOrganization,
   useUpdateOrganization,
@@ -79,6 +81,7 @@ export { MemberRow } from './components/MemberRow';
 export { OrganizationSwitcher } from './components/OrganizationSwitcher';
 export { OwnershipCard } from './components/OwnershipCard';
 export { OrganizationBillingCard } from './components/OrganizationBillingCard';
+export { DeleteOrganizationCard } from './components/DeleteOrganizationCard';
 export { CompanyLookupInput } from './components/CompanyLookupInput';
 export type { FrenchCompanyCandidate } from './api/company-directory.api';
 export { OrganizationNavTabs } from './components/OrganizationNavTabs';

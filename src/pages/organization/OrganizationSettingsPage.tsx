@@ -20,6 +20,7 @@ import { useIndustries } from '@/features/industries';
 import {
   OrganizationBillingCard,
   CompanyLookupInput,
+  DeleteOrganizationCard,
   OrganizationNavTabs,
   PERMISSIONS,
   type FrenchCompanyCandidate,
@@ -579,6 +580,8 @@ export default function OrganizationSettingsPage() {
           ) : null}
         </form>
       )}
+
+      {data !== null && data !== undefined ? <DeleteOrganizationCard organization={data} /> : null}
     </PageShell>
   );
 }
