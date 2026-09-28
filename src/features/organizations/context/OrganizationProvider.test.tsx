@@ -130,4 +130,20 @@ describe('OrganizationProvider', () => {
     await waitFor(() => expect(result.current?.organization?.id).toBe('org-b'));
     await waitFor(() => expect(result.current?.status).toBe('ready'));
   });
+
+  it('passe à « none » après la suppression de la dernière organisation', async () => {
+    mocks.listMyOrganizations
+      .mockResolvedValueOnce([organization('org-a', 'Alpha')])
+      .mockResolvedValueOnce([]);
+
+    const { result } = renderProvider();
+    await waitFor(() => expect(result.current?.organization?.id).toBe('org-a'));
+
+    await act(async () => {
+      await result.current?.refresh();
+    });
+
+    await waitFor(() => expect(result.current?.status).toBe('none'));
+    expect(result.current?.organization).toBeNull();
+  });
 });
