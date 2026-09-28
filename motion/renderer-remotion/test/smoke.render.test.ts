@@ -53,4 +53,20 @@ describe('smoke test de rendu', () => {
     expect(again.manifest.render_plan_sha256).toBe(result.manifest.render_plan_sha256);
     expect(again.manifest.spec.sha256).toBe(result.manifest.spec.sha256);
   });
+
+  it('P1.4 : image plein cadre, masque, tracé par points ; le navigateur mesure le texte comme le cœur', async () => {
+    const { intentFile: _intent, ...rest } = request({});
+    const result = await runPipeline({
+      ...rest,
+      specFile: path.join(CORE_FIXTURES, 'moon.visual.spec.json'),
+      assetDirs: [path.join(CORE_FIXTURES, 'assets')],
+      substitutionReason: 'smoke P1.4 : spec visuelle, profil Signal',
+      outDir: path.join(out, 'visual'),
+    });
+    const stats = result.stats!;
+    expect(stats.probe.frames).toBe(result.plan.canvas.duration_frames);
+    // Aucune divergence de largeur navigateur / HarfBuzz, aucune police de repli.
+    expect(stats.qc).toEqual([]);
+    expect(result.plan.assets.map((a) => a.ref)).toEqual(['night_moon']);
+  });
 });

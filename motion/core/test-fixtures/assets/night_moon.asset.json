@@ -1,0 +1,22 @@
+{
+  "schema": "asset-definition",
+  "schema_version": "0.1.0",
+  "id": "night_moon",
+  "kind": "image",
+  "file": "pack:night_moon.png",
+  "sha256": "efd5a6a77f8e85dd378a39530e81b57cb25054a1ea4c0080a3d1cec87bda4e88",
+  "format": "png",
+  "width": 720,
+  "height": 1280,
+  "focal_point": { "x": 0.6389, "y": 0.6602 },
+  "regions": {
+    "moon": { "x": 0.4236, "y": 0.5391, "w": 0.4306, "h": 0.2422 },
+    "sky": { "x": 0.04, "y": 0.05, "w": 0.92, "h": 0.38 }
+  },
+  "alt": "Ciel nocturne dégradé, étoiles fines, pleine lune en bas à droite.",
+  "provenance": {
+    "source": "generated",
+    "license": "Domaine public (image procédurale du dépôt)",
+    "method": "node scripts/generate-fixture-image.mjs — ffmpeg lavfi geq, fonction déterministe de (x, y), 720×1280."
+  }
+}

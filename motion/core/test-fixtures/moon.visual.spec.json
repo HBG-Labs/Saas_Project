@@ -1,0 +1,465 @@
+{
+  "schema": "motion-scene-spec",
+  "schema_version": "0.3.0",
+  "spec_id": "moon_visual",
+  "revision": 1,
+  "parent_revision": null,
+  "created_from": {
+    "intent_id": "moon_visual",
+    "builder_version": "0.0.0"
+  },
+  "locale": "fr-FR",
+  "style_binding": {
+    "kind": "style",
+    "id": "fixture_ink",
+    "version": "1.3.0"
+  },
+  "format": {
+    "preset": "vertical_9x16",
+    "platform_safe_zones": [
+      "tiktok",
+      "reels"
+    ]
+  },
+  "system": {
+    "id": "kinetic_statement",
+    "version": "0.1.0"
+  },
+  "rhythm": {
+    "curve": "cold_open_interruption",
+    "sections": [
+      {
+        "id": "sec_open",
+        "phase": "INTERRUPTION",
+        "scenes": [
+          "sc_sky"
+        ]
+      },
+      {
+        "id": "sec_turn",
+        "phase": "REVEAL",
+        "scenes": [
+          "sc_tides"
+        ]
+      }
+    ]
+  },
+  "voice": {
+    "direction": {
+      "persona": "narrator",
+      "intention": "curiosité, puis gravité",
+      "tempo": "measured"
+    },
+    "segments": [
+      {
+        "id": "vo_sky",
+        "text": "Et si la Lune n'était plus là ?",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "plus"
+        ]
+      },
+      {
+        "id": "vo_tides",
+        "text": "Plus de marées, des nuits plus noires, un ciel vide.",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "vide"
+        ]
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "id": "sc_sky",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "hook",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_sky"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "img_sky",
+          "primitive": "image",
+          "asset": "night_moon",
+          "fit": "cover",
+          "bleed": true,
+          "focus": {
+            "region": "moon"
+          },
+          "behaviors": [
+            {
+              "id": "bh_sky_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "tx_sky",
+          "primitive": "text",
+          "region": {
+            "layer": "img_sky",
+            "name": "sky",
+            "align_x": "start",
+            "align_y": "center"
+          },
+          "content": {
+            "runs": [
+              {
+                "id": "r_sky_setup",
+                "text": "Et si la Lune n'était "
+              },
+              {
+                "id": "r_sky_turn",
+                "text": "plus là",
+                "role": "accent"
+              },
+              {
+                "id": "r_sky_mark",
+                "text": " ?"
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.l",
+            "color": "color.text.primary",
+            "accent_color": "color.accent",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_sky_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_sky_accent",
+              "behavior": "ACCENT_WORD",
+              "version": "1.0.0",
+              "variant": "color_scale",
+              "target": {
+                "run": "r_sky_turn"
+              },
+              "at": {
+                "voice_word": {
+                  "segment": "vo_sky",
+                  "match": "plus"
+                },
+                "offset": {
+                  "beats": -0.25
+                }
+              }
+            },
+            {
+              "id": "bh_sky_settle",
+              "behavior": "SETTLE",
+              "version": "1.0.0",
+              "target": {
+                "run": "r_sky_turn"
+              },
+              "at": {
+                "after": "bh_sky_accent"
+              }
+            },
+            {
+              "id": "bh_sky_text_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "id": "ev_sky_open",
+          "kind": "INTERRUPTION",
+          "at": {
+            "event": "scene.start"
+          }
+        },
+        {
+          "id": "ev_sky_impact",
+          "kind": "IMPACT",
+          "at": {
+            "with": "bh_sky_accent"
+          }
+        }
+      ],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      },
+      "transition_out": {
+        "behavior": "CUT",
+        "version": "1.0.0",
+        "to": "sc_tides"
+      }
+    },
+    {
+      "id": "sc_tides",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "reveal",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_tides"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "msk_moon",
+          "primitive": "mask",
+          "placement": {
+            "col": 2,
+            "col_span": 5,
+            "row": 1,
+            "row_span": 5
+          },
+          "clip": {
+            "shape": "ellipse"
+          },
+          "children": [
+            {
+              "id": "img_moon",
+              "primitive": "image",
+              "asset": "night_moon",
+              "fit": "cover",
+              "focus": {
+                "region": "moon",
+                "fill": true
+              },
+              "behaviors": []
+            }
+          ],
+          "behaviors": [
+            {
+              "id": "bh_moon_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "tx_tides",
+          "primitive": "text",
+          "content": {
+            "runs": [
+              {
+                "id": "r_tides_1",
+                "text": "Plus de marées,",
+                "break_after": true
+              },
+              {
+                "id": "r_tides_2",
+                "text": "des nuits plus noires,",
+                "break_after": true
+              },
+              {
+                "id": "r_tides_3",
+                "text": "un ciel \"vide\"...",
+                "role": "accent"
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.m",
+            "color": "color.text.primary",
+            "accent_color": "color.accent",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_tides_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_tides_accent",
+              "behavior": "ACCENT_WORD",
+              "version": "1.0.0",
+              "variant": "color_scale",
+              "target": {
+                "run": "r_tides_3"
+              },
+              "at": {
+                "voice_word": {
+                  "segment": "vo_tides",
+                  "match": "vide"
+                },
+                "offset": {
+                  "beats": -0.25
+                }
+              }
+            },
+            {
+              "id": "bh_tides_settle",
+              "behavior": "SETTLE",
+              "version": "1.0.0",
+              "target": {
+                "run": "r_tides_3"
+              },
+              "at": {
+                "after": "bh_tides_accent"
+              }
+            },
+            {
+              "id": "bh_tides_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ],
+          "slot": "statement.primary"
+        },
+        {
+          "id": "ln_wave",
+          "primitive": "path",
+          "geometry": {
+            "points": [
+              {
+                "x": 0.1,
+                "y": 10.4
+              },
+              {
+                "x": 1.3,
+                "y": 10.8
+              },
+              {
+                "x": 2.5,
+                "y": 10.4
+              },
+              {
+                "x": 3.7,
+                "y": 10.8
+              },
+              {
+                "x": 4.9,
+                "y": 10.4
+              }
+            ]
+          },
+          "style": {
+            "stroke": "color.accent",
+            "weight": "stroke.emphasis",
+            "cap": "round"
+          },
+          "behaviors": [
+            {
+              "id": "bh_wave_draw",
+              "behavior": "DRAW_PATH",
+              "version": "1.0.0",
+              "at": {
+                "after": "bh_tides_settle"
+              }
+            },
+            {
+              "id": "bh_wave_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "with": "bh_tides_out"
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "id": "ev_tides_impact",
+          "kind": "IMPACT",
+          "at": {
+            "with": "bh_tides_accent"
+          }
+        }
+      ],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      }
+    }
+  ]
+}

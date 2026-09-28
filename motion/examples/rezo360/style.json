@@ -1,8 +1,8 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "id": "rezo360_style",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "name": "REZO360 — langage visuel",
   "origin": "authored",
   "role_contract": "0.1.0",
@@ -94,6 +94,10 @@
         "tracking_em": -0.01,
         "case": "upper"
       }
+    },
+    "fit": {
+      "min_scale": 0.85,
+      "scope": "role"
     }
   },
   "grid": {
@@ -324,7 +328,8 @@
     "grade": "none",
     "contrast": 0.1,
     "grain": 0,
-    "duotone": null
+    "duotone": null,
+    "tint": null
   },
   "illustration_treatment": {
     "stroke": "thin",

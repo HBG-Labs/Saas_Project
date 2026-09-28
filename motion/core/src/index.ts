@@ -69,3 +69,18 @@ export { appendToLock, checkVersionLock, LOCKED_KINDS, VersionLockSchema } from 
 export type { VersionedDocument, VersionLock } from './integrity/version-lock.ts';
 export { collectVersionedDocuments, loadVersionLock } from './io/load.ts';
 export { ENGINE_NAME, ENGINE_VERSION } from './version.ts';
+
+// P1.4 — cœur visuel.
+export * from './contracts/asset.ts';
+export { validateAsset } from './validation/validate.ts';
+export { createStyleShaper, imageDimensions, loadAssetDirs, loadAssetFile } from './io/visual.ts';
+export type { LoadedAsset } from './io/visual.ts';
+export { createHarfBuzzShaper } from './text/harfbuzz.ts';
+export type { FontBytesProvider } from './text/harfbuzz.ts';
+export { runInk, ShaperError } from './text/shaper.ts';
+export type { FontMetrics, InkBox, ShapedGlyph, ShapedRun, ShapeRequest, TextShaper } from './text/shaper.ts';
+export { layoutTextBlock, TextFitError } from './text/layout-text.ts';
+export type { TextBlockInput, TextBlockLayout } from './text/layout-text.ts';
+export { applyTypography, applyTypographyToRuns, GLYPH_FALLBACKS, NBSP, NNBSP, TYPOGRAPHY_RULES_VERSION, typographyProvenance } from './text/typography.ts';
+export { fitImage, ImageFitError, resolveTreatment } from './visual/image-fit.ts';
+export type { ImageFit } from './visual/image-fit.ts';

@@ -29,7 +29,11 @@ export const MOTION_SPEC_SCHEMA = 'motion-scene-spec';
  * 0.2.0 : chaque comportement épingle sa version (registre fermé) ; ancres
  * étendues ; cible de durée facultative. Migration depuis 0.1.0 : version 1.0.0.
  */
-export const MOTION_SPEC_VERSION = '0.2.0';
+/*
+ * 0.3.0 : placement dans une région sémantique d'image (`region`), image plein
+ * cadre (`bleed`). Champs facultatifs : migration depuis 0.2.0 sans changement.
+ */
+export const MOTION_SPEC_VERSION = '0.3.0';
 
 const ParamValueSchema = z.union([z.number().finite(), z.string().max(64), z.boolean()]);
 
@@ -65,10 +69,23 @@ export type TextRun = z.infer<typeof TextRunSchema>;
 
 // Les calques sont récursifs (group, mask) : types écrits à la main, schémas
 // annotés, pour que TypeScript suive la récursion.
+/**
+ * Placement dans une région sémantique d'une image déjà placée de la scène
+ * (ex. le « ciel » d'une photo, pour y poser un titre). La région vient des
+ * métadonnées de l'asset ; le compilateur la projette selon le recadrage réel.
+ */
+export interface RegionPlacement {
+  layer: string;
+  name: string;
+  align_x?: 'start' | 'center' | 'end' | undefined;
+  align_y?: 'start' | 'center' | 'end' | undefined;
+}
+
 interface LayerCommon {
   id: string;
   slot?: string | undefined;
   placement?: GridPlacement | undefined;
+  region?: RegionPlacement | undefined;
   opacity?: number | undefined;
   behaviors: BehaviorInstance[];
 }
@@ -97,8 +114,10 @@ export interface ImageLayer extends LayerCommon {
   primitive: 'image';
   asset: string;
   fit: 'cover' | 'contain';
+  /** Plein cadre : l'image couvre tout le canevas, zones sûres ignorées (décor). */
+  bleed?: boolean | undefined;
   focus?:
-    | { region: string }
+    | { region: string; fill?: boolean | undefined }
     | { point: { x: number; y: number } }
     | undefined;
 }
@@ -126,10 +145,15 @@ export type Layer = TextLayer | ShapeLayer | ImageLayer | PathLayer | GroupLayer
 export type PrimitiveType = Layer['primitive'];
 export const PRIMITIVE_TYPES = ['text', 'shape', 'image', 'path', 'group', 'mask'] as const;
 
+const AlignSchema = z.enum(['start', 'center', 'end']);
+
 const layerCommon = {
   id: IdSchema,
   slot: SlotNameSchema.optional(),
   placement: GridPlacementSchema.optional(),
+  region: z
+    .strictObject({ layer: IdSchema, name: SlotNameSchema, align_x: AlignSchema.optional(), align_y: AlignSchema.optional() })
+    .optional(),
   opacity: z.number().min(0).max(1).optional(),
   behaviors: z.array(BehaviorInstanceSchema).max(12),
 };
@@ -164,9 +188,11 @@ const ImageLayerSchema = z.strictObject({
   primitive: z.literal('image'),
   asset: IdSchema,
   fit: z.enum(['cover', 'contain']),
+  bleed: z.boolean().optional(),
   focus: z
     .union([
-      z.strictObject({ region: SlotNameSchema }),
+      // fill : la région remplit le cadre (recadrage serré), au lieu d'y être seulement gardée.
+      z.strictObject({ region: SlotNameSchema, fill: z.boolean().optional() }),
       z.strictObject({
         point: z.strictObject({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }),
       }),

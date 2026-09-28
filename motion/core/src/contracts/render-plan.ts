@@ -6,7 +6,12 @@ import { EasingSchema } from './style-profile.ts';
 export const RENDER_PLAN_SCHEMA = 'render-plan';
 /** 0.2.0 : pistes fusionnées par propriété (sources multiples), provenance des comportements, source du timing. */
 /** 0.3.0 : annotation « voix seule » par scène (intervalles en frames, ignorés par les renderers). */
-export const RENDER_PLAN_VERSION = '0.3.0';
+/**
+ * 0.4.0 : texte mesuré par le compilateur (HarfBuzz) — runs positionnés, glyphes,
+ * lignes de base, encre, ajustement ; images recadrées (point focal, régions,
+ * traitement) ; zone utile du canevas ; provenance typographique.
+ */
+export const RENDER_PLAN_VERSION = '0.4.0';
 
 const Frame = z.number().int().min(0);
 const Px = z.number().finite();
@@ -48,25 +53,48 @@ export const TrackSchema = z.strictObject({
 });
 export type Track = z.infer<typeof TrackSchema>;
 
+/** Glyphe mis en forme : identifiant dans la police, grappe source, position (px, relative au run). */
+export const PlanGlyphSchema = z.strictObject({
+  g: z.number().int().min(0),
+  cl: z.number().int().min(0),
+  x: Px,
+  dx: Px,
+  dy: Px,
+});
+export type PlanGlyph = z.infer<typeof PlanGlyphSchema>;
+
 export const PlanRunSchema = z.strictObject({
+  /** Identifiant du run de la spec ; un run coupé sur deux lignes garde son identifiant. */
   id: IdSchema,
+  /** Texte affiché : typographie de locale et casse appliquées. */
   text: z.string(),
   font: IdSchema,
   weight: z.number().int(),
   size: z.number().positive(),
   tracking_px: Px,
   color: HexColorSchema,
+  /** Origine du run, relative à la boîte du calque (px), mesurée par le compilateur. */
+  x: Px,
+  /** Avance mesurée (px, espacement compris). */
+  width: z.number().min(0),
+  glyphs: z.array(PlanGlyphSchema),
 });
 export type PlanRun = z.infer<typeof PlanRunSchema>;
 
-/** Ligne déjà coupée par le compilateur : le moteur de rendu ne recoupe jamais. */
+const InkSchema = z.strictObject({ x0: Px, x1: Px, y0: Px, y1: Px });
+
+/** Ligne déjà coupée ET positionnée par le compilateur : le renderer ne recoupe ni ne place jamais. */
 export const PlanLineSchema = z.strictObject({
   runs: z.array(PlanRunSchema).min(1),
   /** Haut de la boîte de ligne, relatif à la boîte du calque. */
   top: Px,
   height: z.number().positive(),
-  /** Largeur mesurée par le compilateur (null tant que la mesure n'existe pas). */
-  measured_width: z.number().min(0).nullable(),
+  /** Ligne de base, relative à la boîte du calque (px). */
+  baseline: Px,
+  /** Largeur d'avance du texte visible (espaces de fin exclues). */
+  measured_width: z.number().min(0),
+  /** Encre de la ligne, relative à la boîte du calque. */
+  ink: InkSchema.nullable(),
 });
 export type PlanLine = z.infer<typeof PlanLineSchema>;
 
@@ -83,6 +111,10 @@ export interface PlanTextNode extends PlanNodeCommon {
   type: 'text';
   align: 'start' | 'center' | 'end';
   lines: PlanLine[];
+  /** Ajustement retenu : rôle, rapport à la taille du rôle, taille finale, politique de coupure. */
+  fit: { role: string; ratio: number; size: number; policy: 'explicit' | 'balance' };
+  /** Encre du bloc au repos, coordonnées absolues (null : aucun glyphe dessiné). */
+  ink: Box | null;
 }
 export interface PlanShapeNode extends PlanNodeCommon {
   type: 'shape';
@@ -91,12 +123,25 @@ export interface PlanShapeNode extends PlanNodeCommon {
   fill: string | null;
   stroke: { color: string; width: number } | null;
 }
+export interface PlanImageTreatment {
+  /** 0 : couleur d'origine ; 1 : niveaux de gris. */
+  grayscale: number;
+  /** Multiplicateur de contraste (1 : inchangé). */
+  contrast: number;
+  /** Voile coloré posé sur l'image (étalonnage chaud/froid, duotone approché). */
+  tint: { color: string; opacity: number } | null;
+}
 export interface PlanImageNode extends PlanNodeCommon {
   type: 'image';
   asset: string;
   fit: 'cover' | 'contain';
-  /** Recadrage dans l'image source, en pixels source. */
+  /** Recadrage dans l'image source, en pixels source ; la boîte est la zone réellement dessinée. */
   crop: Box;
+  /** Point focal retenu, en pixels source (traçabilité). */
+  focus: { x: number; y: number };
+  /** Régions sémantiques projetées sur le canevas (coordonnées absolues, découpées à la boîte). */
+  regions: Record<string, Box>;
+  treatment: PlanImageTreatment;
 }
 export interface PlanPathNode extends PlanNodeCommon {
   type: 'path';
@@ -130,6 +175,13 @@ export const PlanNodeSchema: z.ZodType<PlanNode> = z.lazy(() =>
       type: z.literal('text'),
       align: z.enum(['start', 'center', 'end']),
       lines: z.array(PlanLineSchema).min(1),
+      fit: z.strictObject({
+        role: z.string().min(1),
+        ratio: z.number().gt(0).max(1),
+        size: z.number().positive(),
+        policy: z.enum(['explicit', 'balance']),
+      }),
+      ink: BoxSchema.nullable(),
     }),
     z.strictObject({
       ...nodeCommon,
@@ -145,6 +197,13 @@ export const PlanNodeSchema: z.ZodType<PlanNode> = z.lazy(() =>
       asset: IdSchema,
       fit: z.enum(['cover', 'contain']),
       crop: BoxSchema,
+      focus: z.strictObject({ x: Px, y: Px }),
+      regions: z.record(z.string(), BoxSchema),
+      treatment: z.strictObject({
+        grayscale: z.number().min(0).max(1),
+        contrast: z.number().min(0).max(3),
+        tint: z.strictObject({ color: HexColorSchema, opacity: z.number().min(0).max(1) }).nullable(),
+      }),
     }),
     z.strictObject({
       ...nodeCommon,
@@ -197,12 +256,20 @@ export const RenderPlanSchema = z.strictObject({
     behaviors: z.array(
       z.strictObject({ instance: IdSchema, behavior: z.string(), version: SemVerSchema, scene: IdSchema, layer: IdSchema.nullable() }),
     ),
+    /** Règles typographiques de locale, moteur de mesure, et replis de glyphes appliqués. */
+    typography: z.strictObject({
+      rules: z.string().min(1),
+      shaper: z.string().min(1),
+      substitutions: z.array(z.strictObject({ font: Sha256Schema, character: z.string(), replacement: z.string() })),
+    }),
   }),
   canvas: z.strictObject({
     width: z.number().int().positive(),
     height: z.number().int().positive(),
     fps: z.number().int().positive(),
     duration_frames: z.number().int().positive(),
+    /** Zone utile : marges du style ∩ zones sûres des plateformes visées. */
+    safe_area: BoxSchema,
   }),
   fonts: z.array(
     z.strictObject({

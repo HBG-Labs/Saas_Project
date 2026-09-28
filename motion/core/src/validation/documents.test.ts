@@ -14,6 +14,7 @@ import { documentKinds, readVersioned } from './versioning.ts';
 describe('versionnement', () => {
   it('connaît tous les types de documents du moteur', () => {
     expect(documentKinds().sort()).toEqual([
+      'asset-definition',
       'brand-motion-profile',
       'creative-intent',
       'creative-style-profile',
@@ -68,6 +69,30 @@ describe('versionnement', () => {
     expect(read.ok && read.value.render_config.color_space).toBeNull();
     expect(read.ok && read.value.schema_version).toBe('0.3.0');
     expect(read.ok && read.value.reference_eligible).toBe(false);
+  });
+  it('migre un style 0.3.0 en 0.4.0 sans réduction ni voile (comportement antérieur)', () => {
+    const doc = clone(readFixture('profiles/fixture_ink.style.json'));
+    doc.schema_version = '0.3.0';
+    delete doc.typography.fit;
+    delete doc.image_treatment.tint;
+    doc.image_treatment.grade = 'none';
+    const read = readVersioned('creative-style-profile', doc);
+    expect(read.ok && read.migratedFrom).toBe('0.3.0');
+    expect(read.ok && read.value.typography.fit).toEqual({ min_scale: 1, scope: 'role' });
+    expect(read.ok && read.value.image_treatment.tint).toBeNull();
+    // Un étalonnage coloré sans voile déclaré est refusé à la validation (aucune valeur cachée).
+    const cool = clone(doc);
+    cool.image_treatment.grade = 'cool';
+    expect(codes(validateStyle(cool))).toContain('image.tint_missing');
+  });
+  it('migre une spec 0.2.0 en 0.3.0 sans rien transformer', () => {
+    const doc = clone(readFixture('moon.spec.json'));
+    doc.schema_version = '0.2.0';
+    const read = readVersioned('motion-scene-spec', doc);
+    expect(read.ok && read.migratedFrom).toBe('0.2.0');
+    const { schema_version: _a, ...before } = doc;
+    const { schema_version: _b, ...after } = read.ok ? (read.value as Record<string, unknown>) : {};
+    expect(after).toEqual(before);
   });
   it('refuse un document sans version', () => {
     const doc = clone(readFixture('moon.intent.json'));

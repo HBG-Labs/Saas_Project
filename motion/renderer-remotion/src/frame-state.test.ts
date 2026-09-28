@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PlanTextNode, RenderPlan } from '@motion-engine/core/runtime';
+import type { PlanImageNode, PlanMaskNode, PlanTextNode, RenderPlan } from '@motion-engine/core/runtime';
 
-import { lineState, nodeState, pathProgress, runState, sceneAt, unsupportedNodes } from './frame-state.ts';
+import { imageFilter, imageGeometry, lineState, maskRadius, nodeState, pathProgress, runState, sceneAt, unsupportedNodes } from './frame-state.ts';
 
 // Plan écrit à la main : le renderer se teste sans le compilateur ni aucun style.
 const text: PlanTextNode = {
@@ -13,9 +13,11 @@ const text: PlanTextNode = {
   opacity: 1,
   align: 'start',
   lines: [
-    { runs: [{ id: 'r0', text: 'A', font: 'f', weight: 700, size: 40, tracking_px: 0, color: '#111111' }], top: 0, height: 50, measured_width: null },
-    { runs: [{ id: 'r1', text: 'B', font: 'f', weight: 700, size: 40, tracking_px: 0, color: '#111111' }], top: 50, height: 50, measured_width: null },
+    { runs: [{ id: 'r0', text: 'A', font: 'f', weight: 700, size: 40, tracking_px: 0, color: '#111111', x: 0, width: 28, glyphs: [{ g: 1, cl: 0, x: 0, dx: 0, dy: 0 }] }], top: 0, height: 50, baseline: 38, measured_width: 28, ink: null },
+    { runs: [{ id: 'r1', text: 'B', font: 'f', weight: 700, size: 40, tracking_px: 0, color: '#111111', x: 0, width: 28, glyphs: [{ g: 1, cl: 0, x: 0, dx: 0, dy: 0 }] }], top: 50, height: 50, baseline: 88, measured_width: 28, ink: null },
   ],
+  fit: { role: 'display.m', ratio: 1, size: 40, policy: 'explicit' },
+  ink: null,
   tracks: [
     { property: 'clip_top', target: { line: 0 }, keys: [{ frame: 0, value: 1 }, { frame: 10, value: 0 }], sources: ['bh_in'] },
     { property: 'translate_y', target: { line: 0 }, keys: [{ frame: 0, value: 20 }, { frame: 10, value: 0 }], sources: ['bh_in'] },
@@ -27,14 +29,18 @@ const text: PlanTextNode = {
 
 const plan: RenderPlan = {
   schema: 'render-plan',
-  schema_version: '0.3.0',
+  schema_version: '0.4.0',
   spec: { spec_id: 's', revision: 1, sha256: 'a'.repeat(64) },
   style: { mode: 'creative', sha256: 'b'.repeat(64) },
-  compiler_version: '0.2.0',
+  compiler_version: '0.4.0',
   timing_source: 'none',
   reduced_motion: false,
-  provenance: { behavior_registry: { version: '1.0.0', sha256: 'c'.repeat(64) }, behaviors: [] },
-  canvas: { width: 540, height: 960, fps: 30, duration_frames: 60 },
+  provenance: {
+    behavior_registry: { version: '1.1.0', sha256: 'c'.repeat(64) },
+    behaviors: [],
+    typography: { rules: 'none@1.0.0', shaper: 'test', substitutions: [] },
+  },
+  canvas: { width: 540, height: 960, fps: 30, duration_frames: 60, safe_area: { x: 30, y: 60, w: 480, h: 780 } },
   fonts: [],
   assets: [],
   scenes: [
@@ -94,10 +100,48 @@ describe('état d’un nœud à une frame', () => {
     expect(sceneAt(plan, 60)).toBeUndefined();
   });
 
-  it('signale les primitives qu’il ne sait pas encore dessiner', () => {
+  it('sait dessiner toutes les primitives du plan (P1.4)', () => {
     expect(unsupportedNodes(plan)).toEqual([]);
     const withImage = structuredClone(plan);
-    withImage.scenes[0]!.nodes.push({ id: 'img', type: 'image', box: { x: 0, y: 0, w: 1, h: 1 }, origin: { x: 0, y: 0 }, opacity: 1, tracks: [], asset: 'a', fit: 'cover', crop: { x: 0, y: 0, w: 1, h: 1 } });
-    expect(unsupportedNodes(withImage)).toEqual(['img (image)']);
+    withImage.scenes[0]!.nodes.push(image, mask);
+    expect(unsupportedNodes(withImage)).toEqual([]);
+  });
+});
+
+const image: PlanImageNode = {
+  id: 'img',
+  type: 'image',
+  box: { x: 100, y: 200, w: 300, h: 150 },
+  origin: { x: 0.5, y: 0.5 },
+  opacity: 1,
+  tracks: [],
+  asset: 'a',
+  fit: 'cover',
+  crop: { x: 50, y: 100, w: 600, h: 300 },
+  focus: { x: 350, y: 250 },
+  regions: {},
+  treatment: { grayscale: 1, contrast: 1.2, tint: null },
+};
+const mask: PlanMaskNode = {
+  id: 'msk',
+  type: 'mask',
+  box: { x: 10, y: 10, w: 100, h: 100 },
+  origin: { x: 0.5, y: 0.5 },
+  opacity: 1,
+  tracks: [],
+  clip: { shape: 'ellipse', radius: 0 },
+  children: [],
+};
+
+describe('images et masques : pure projection du plan', () => {
+  it('projette le recadrage du plan dans la boîte, sans décider du cadrage', () => {
+    // Recadrage 600×300 dessiné en 300×150 : facteur 0,5 ; origine décalée de −crop.
+    expect(imageGeometry(image, { width: 1000, height: 800 })).toEqual({ left: -25, top: -50, width: 500, height: 400 });
+  });
+
+  it('traduit le traitement résolu en filtre, et la forme du masque en rayon', () => {
+    expect(imageFilter(image)).toBe('grayscale(1) contrast(1.2)');
+    expect(maskRadius(mask)).toBe('50%');
+    expect(maskRadius({ ...mask, clip: { shape: 'rect', radius: 12 } })).toBe('12px');
   });
 });

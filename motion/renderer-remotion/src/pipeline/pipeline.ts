@@ -7,7 +7,9 @@ import {
   ENGINE_VERSION,
   buildSpec,
   compileSpec,
+  createStyleShaper,
   formatIssues,
+  loadAssetDirs,
   loadBrandFile,
   loadPatternPacks,
   loadPlatformPresetsFile,
@@ -30,7 +32,7 @@ import type {
   ValidationResult,
 } from '@motion-engine/core';
 
-import type { FontSource } from '../composition/types.ts';
+import type { FontSource, ImageSource } from '../composition/types.ts';
 import type { RenderProfile } from './profile.ts';
 import { prepareBrowser, renderPlanToMp4 } from './render-video.ts';
 import type { RenderStats } from './render-video.ts';
@@ -58,6 +60,8 @@ export interface PipelineRequest {
   git: { commit: string | null; dirty: boolean | null };
   /** Préférence « mouvement réduit » : chaque comportement applique sa propre stratégie. */
   reducedMotion?: boolean;
+  /** Dossiers d'assets (`*.asset.json` + images) ; chaque image est vérifiée par empreinte et dimensions. */
+  assetDirs?: string[];
   /** Date de création du manifeste, fournie par l'appelant (le pipeline ne lit pas l'horloge pour décider). */
   createdAt: string;
 }
@@ -118,14 +122,28 @@ export function fontSources(plan: RenderPlan, styleDir: string, libraryRoot: str
   });
 }
 
+/** Octets des images du plan, vérifiés par empreinte, en data URL pour le navigateur. */
+export function imageSources(plan: RenderPlan, files: ReadonlyMap<string, string>): ImageSource[] {
+  return plan.assets.map((asset) => {
+    const file = files.get(asset.ref);
+    if (!file) throw new Error(`Image « ${asset.ref} » : fichier introuvable parmi les assets fournis.`);
+    const bytes = readFileSync(file);
+    if (sha256Hex(bytes) !== asset.sha256) throw new Error(`Image ${asset.ref} : empreinte différente du Render Plan.`);
+    const mime = file.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    return { asset: asset.ref, data_url: `data:${mime};base64,${bytes.toString('base64')}` };
+  });
+}
+
 export async function runPipeline(request: PipelineRequest): Promise<PipelineResult> {
   const { resolved, styleDir } = loadStyleSource(request.style);
   const presets = loadPlatformPresetsFile(request.presetsFile);
   const patterns = loadPatternPacks(...request.patternDirs);
+  const assets = loadAssetDirs(request.assetDirs ?? [], request.style.libraryRoot ? { libraryRoot: request.style.libraryRoot } : {});
+  const shaper = createStyleShaper(resolved.style, styleDir, request.style.libraryRoot ? { libraryRoot: request.style.libraryRoot } : {});
 
   let spec: MotionSceneSpec;
   if (request.specFile) {
-    spec = unwrap('Spec', validateSpec(readJson(request.specFile), resolved, { patterns, allowStyleSubstitution: request.substitutionReason !== undefined }));
+    spec = unwrap('Spec', validateSpec(readJson(request.specFile), resolved, { patterns, allowStyleSubstitution: request.substitutionReason !== undefined, assets: assets.registry }));
   } else if (request.intentFile) {
     const intent = unwrap('Creative Intent', validateIntent(readJson(request.intentFile)));
     spec = unwrap('SpecBuilder', buildSpec({ intent, resolved, presets, patterns }));
@@ -144,6 +162,8 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
       audioTargets: request.profile.audio,
       allowStyleSubstitution: request.substitutionReason !== undefined,
       reducedMotion: request.reducedMotion ?? false,
+      shaper,
+      assets: assets.registry,
     }),
   );
 
@@ -166,7 +186,7 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
     const fonts = fontSources(compiled.plan, styleDir, request.style.libraryRoot);
     const output = path.join(request.outDir, 'video.mp4');
     browserPath = (await prepareBrowser()).path;
-    stats = await renderPlanToMp4({ plan: compiled.plan, fonts, audio: null, profile: request.profile, outputFile: output });
+    stats = await renderPlanToMp4({ plan: compiled.plan, fonts, images: imageSources(compiled.plan, assets.files), audio: null, profile: request.profile, outputFile: output });
     files['video.mp4'] = output;
     write('stats.json', stats);
   }

@@ -25,7 +25,11 @@ export const STYLE_PROFILE_SCHEMA = 'creative-style-profile';
  * élastique, énergie, amplitudes, budget d'attention, lisibilité. Aucune
  * migration automatique : une personnalité de mouvement ne se devine pas.
  */
-export const STYLE_PROFILE_VERSION = '0.3.0';
+/*
+ * 0.4.0 : ajustement typographique mesuré (typography.fit). Migration depuis
+ * 0.3.0 : min_scale 1 (aucune réduction, comportement antérieur), portée « role ».
+ */
+export const STYLE_PROFILE_VERSION = '0.4.0';
 
 /** Clé de jeton sans espace de noms : `surface.primary`, `display.xl`. */
 export const TokenKeySchema = z.string().regex(/^[a-z0-9_]+(\.[a-z0-9_]+)*$/, 'clé de jeton attendue');
@@ -107,6 +111,12 @@ export const CreativeStyleProfileSchema = z.strictObject({
       z.strictObject({ css_name: z.string().regex(/^[a-z0-9-]+$/), files: z.array(FontFileSchema).min(1) }),
     ),
     scale: z.record(TokenKeySchema, TypeStyleSchema),
+    /**
+     * Ajustement du texte à sa zone, sur mesures réelles : la taille d'un rôle ne
+     * descend jamais sous `min_scale` × sa taille. `role` : tous les calques d'un
+     * même rôle partagent le rapport le plus petit (échelle cohérente sur la vidéo).
+     */
+    fit: z.strictObject({ min_scale: z.number().min(0.4).max(1), scope: z.enum(['role', 'layer']) }),
   }),
   grid: z.strictObject({
     columns: z.number().int().min(1).max(48),
@@ -208,6 +218,8 @@ export const CreativeStyleProfileSchema = z.strictObject({
     contrast: z.number().min(-1).max(1),
     grain: z.number().min(0).max(1),
     duotone: z.strictObject({ dark: ColorTokenSchema, light: ColorTokenSchema }).nullable(),
+    /** Voile coloré posé sur les images (étalonnage) ; obligatoire pour warm, cool et duotone. */
+    tint: z.strictObject({ color: ColorTokenSchema, opacity: z.number().min(0).max(1) }).nullable(),
   }),
 
   illustration_treatment: z.strictObject({

@@ -1,4 +1,5 @@
 import { anchorKind, ANCHOR_KINDS } from '../contracts/common.ts';
+import type { AssetRegistry } from '../contracts/asset.ts';
 import type { Anchor } from '../contracts/common.ts';
 import type { BehaviorInstance, Layer, MotionSceneSpec, Scene } from '../contracts/motion-spec.ts';
 import type { BehaviorRegistry } from '../motion/registry.ts';
@@ -16,6 +17,8 @@ export interface SpecSemanticOptions {
   registry?: BehaviorRegistry;
   /** Assets disponibles en plus de ceux approuvés par l'identité. */
   assetRefs?: ReadonlySet<string>;
+  /** Métadonnées des assets fournis : leurs identifiants comptent comme disponibles, leurs régions sont vérifiées. */
+  assets?: AssetRegistry;
   /** Autorise un style différent de la liaison de la spec (substitution tracée). */
   allowStyleSubstitution?: boolean;
   /** Patterns disponibles : s'ils sont fournis, chaque scène doit référencer un pattern connu. */
@@ -146,7 +149,7 @@ export function validateSpecSemantics(
     });
   });
 
-  const assetRefs = new Set([...resolved.identity.approved_assets.map((a) => a.ref), ...(options.assetRefs ?? [])]);
+  const assetRefs = new Set([...resolved.identity.approved_assets.map((a) => a.ref), ...(options.assetRefs ?? []), ...(options.assets?.keys() ?? [])]);
   const policies = style.motion_personality.behaviors;
 
   spec.scenes.forEach((scene, si) => {
@@ -216,6 +219,30 @@ export function validateSpecSemantics(
       }
       if (layer.primitive === 'image' && !assetRefs.has(layer.asset)) {
         c.error('asset.unknown', `${path}.asset`, `asset « ${layer.asset} » introuvable`);
+      }
+      const asset = layer.primitive === 'image' ? options.assets?.get(layer.asset) : undefined;
+      if (layer.primitive === 'image' && layer.focus && 'region' in layer.focus && asset && !asset.regions[layer.focus.region]) {
+        c.error('asset.region_unknown', `${path}.focus.region`, `région « ${layer.focus.region} » absente de l'asset « ${asset.id} »`);
+      }
+      const placements = [layer.slot, layer.placement, layer.region].filter((p) => p !== undefined).length;
+      if (placements > 1) c.error('layout.placement_conflict', path, `${layer.id} : un seul placement parmi slot, placement et region`);
+      if (layer.primitive === 'image' && layer.bleed && placements > 0) {
+        c.error('layout.placement_conflict', path, `${layer.id} : une image plein cadre n'a pas d'autre placement`);
+      }
+      if (layer.region) {
+        // La région vient d'une image de la MÊME scène, déclarée avant (placement dans l'ordre des calques).
+        const order = visits.map((v) => v.layer.id);
+        const source = layers.get(layer.region.layer);
+        if (!source || source.primitive !== 'image') {
+          c.error('layout.region_source', `${path}.region.layer`, `« ${layer.region.layer} » n'est pas une image de la scène`);
+        } else if (order.indexOf(source.id) > order.indexOf(layer.id)) {
+          c.error('layout.region_order', `${path}.region.layer`, `l'image « ${source.id} » doit être déclarée avant « ${layer.id} »`);
+        } else {
+          const sourceAsset = options.assets?.get(source.asset);
+          if (sourceAsset && !sourceAsset.regions[layer.region.name]) {
+            c.error('asset.region_unknown', `${path}.region.name`, `région « ${layer.region.name} » absente de l'asset « ${sourceAsset.id} »`);
+          }
+        }
       }
       layer.behaviors.forEach((b, bi) => {
         const bpath = `${path}.behaviors[${bi}]`;

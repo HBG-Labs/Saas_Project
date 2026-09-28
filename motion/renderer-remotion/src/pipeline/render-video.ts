@@ -1,16 +1,16 @@
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { bundle } from '@remotion/bundler';
-import { ensureBrowser, renderMedia, selectComposition } from '@remotion/renderer';
+import { ensureBrowser, openBrowser, renderMedia, selectComposition } from '@remotion/renderer';
 
 import type { RenderPlan } from '@motion-engine/core';
 
-import type { CompositionAudio, FontSource, PlanVideoProps } from '../composition/types.ts';
+import type { CompositionAudio, FontSource, ImageSource, PlanVideoProps } from '../composition/types.ts';
 import { COMPOSITION_ID, QC_PREFIX } from '../composition/types.ts';
 import type { RenderProfile } from './profile.ts';
 import { remotionBinary } from './toolchain.ts';
@@ -128,9 +128,26 @@ export interface RenderStats {
   qc: string[];
 }
 
+const PROFILE_PREFIX = 'puppeteer_dev_chrome_profile-';
+const profileDirs = () => new Set(readdirSync(os.tmpdir()).filter((name) => name.startsWith(PROFILE_PREFIX)));
+
+/** Ouvre un navigateur et retrouve le profil temporaire créé pendant cette ouverture. */
+async function openOwnBrowser(): Promise<{ browser: Awaited<ReturnType<typeof openBrowser>>; profileDirs: string[] }> {
+  const before = profileDirs();
+  const browser = await openBrowser('chrome', { logLevel: 'error' });
+  const created = [...profileDirs()].filter((name) => !before.has(name));
+  return { browser, profileDirs: created.map((name) => path.join(os.tmpdir(), name)) };
+}
+
+/** Suppression patiente : les verrous de fichiers de Chrome tombent peu après la fin du processus. */
+export function removeProfiles(dirs: readonly string[]): void {
+  for (const dir of dirs) rmSync(dir, { recursive: true, force: true, maxRetries: 40, retryDelay: 250 });
+}
+
 export interface RenderRequest {
   plan: RenderPlan;
   fonts: FontSource[];
+  images: ImageSource[];
   audio: CompositionAudio | null;
   profile: RenderProfile;
   outputFile: string;
@@ -144,7 +161,7 @@ export async function renderPlanToMp4(request: RenderRequest): Promise<RenderSta
   const wasCached = bundlePromise !== null;
   const bundled = await bundleComposition();
   const browser = await prepareBrowser();
-  const inputProps: PlanVideoProps = { plan, fonts: request.fonts, audio: request.audio };
+  const inputProps: PlanVideoProps = { plan, fonts: request.fonts, images: request.images, audio: request.audio };
 
   const qc = new Set<string>();
   let peakRss = process.memoryUsage().rss;
@@ -164,9 +181,14 @@ export async function renderPlanToMp4(request: RenderRequest): Promise<RenderSta
   }, 500);
   const cpuBefore = process.cpuUsage();
   const started = performance.now();
+  // Un seul navigateur pour tout le rendu, fermé par nous, puis son profil
+  // temporaire supprimé : sous Windows, Remotion tente la suppression pendant que
+  // Chrome tient encore ses fichiers, et le profil (~56 Mo) reste dans le dossier temporaire.
+  const own = await openOwnBrowser();
   try {
-    const composition = await selectComposition({ serveUrl: bundled.location, id: COMPOSITION_ID, inputProps, logLevel: 'error' });
+    const composition = await selectComposition({ serveUrl: bundled.location, id: COMPOSITION_ID, inputProps, logLevel: 'error', puppeteerInstance: own.browser });
     await renderMedia({
+      puppeteerInstance: own.browser,
       composition,
       serveUrl: bundled.location,
       codec: profile.codec,
@@ -185,6 +207,8 @@ export async function renderPlanToMp4(request: RenderRequest): Promise<RenderSta
     });
   } finally {
     clearInterval(sampler);
+    await own.browser.close({ silent: true });
+    removeProfiles(own.profileDirs);
   }
   const renderMs = performance.now() - started;
   const cpu = process.cpuUsage(cpuBefore);

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { ENGINE_NAME, ENGINE_VERSION, hashDocument, sha256Hex } from '@motion-engine/core';
-import { loadRenderProfile, runPipeline } from '@motion-engine/renderer-remotion';
+import { imageSources, loadRenderProfile, runPipeline } from '@motion-engine/renderer-remotion';
 import type { PipelineRequest } from '@motion-engine/renderer-remotion';
 
 import { CORE, EXAMPLES, WORKSPACE } from './support.ts';
@@ -92,6 +92,27 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     expect(reduced.plan.reduced_motion).toBe(true);
     expect(reduced.plan.canvas.duration_frames).toBe(full.plan.canvas.duration_frames);
     expect(reduced.manifest.render_plan_sha256).not.toBe(full.manifest.render_plan_sha256);
+  });
+
+  it('spec visuelle (P1.4) : assets vérifiés, texte mesuré, images et masque dans le plan', async () => {
+    const { intentFile: _intent, ...withoutIntent } = base;
+    const result = await runPipeline({
+      ...withoutIntent,
+      specFile: path.join(CORE, 'test-fixtures', 'moon.visual.spec.json'),
+      patternDirs: [path.join(WORKSPACE, 'packs', 'patterns', 'generic')],
+      assetDirs: [path.join(CORE, 'test-fixtures', 'assets')],
+      style: nocturne,
+      substitutionReason: 'P1.4 : spec visuelle neutre, profil Nocturne',
+      outDir: path.join(out, 'visual'),
+    });
+    expect(result.plan.assets.map((a) => a.ref)).toEqual(['night_moon']);
+    expect(result.manifest.assets).toEqual([{ ref: 'night_moon', sha256: result.plan.assets[0]!.sha256 }]);
+    expect(result.plan.provenance.typography.rules).toBe('fr@1.0.0');
+    const types = result.plan.scenes.flatMap((s) => s.nodes.map((n) => n.type));
+    expect(types).toEqual(expect.arrayContaining(['image', 'text', 'mask', 'path']));
+    // Le navigateur recevra les octets vérifiés de l'image.
+    const sources = imageSources(result.plan, new Map([['night_moon', path.join(CORE, 'test-fixtures', 'assets', 'night_moon.png')]]));
+    expect(sources[0]!.data_url.startsWith('data:image/png;base64,')).toBe(true);
   });
 
   it('REZO360 passe par le même moteur, en consommateur (mode marque)', async () => {

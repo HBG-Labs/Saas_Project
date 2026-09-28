@@ -18,7 +18,7 @@ describe('cohérence des versions', () => {
     expect(ENGINE_VERSION).toBe(pkg.version);
   });
 
-  it('versions publiées du moteur 0.2.0 (clôture P1.3)', () => {
+  it('versions publiées du moteur 0.3.0 (P1.4)', () => {
     // Toute évolution d'un de ces contrats impose d'incrémenter sa version ici,
     // et de documenter la migration s'il s'agit d'un document persistant.
     expect({
@@ -28,6 +28,6 @@ describe('cohérence des versions', () => {
       render_plan: RENDER_PLAN_VERSION,
       manifest: MANIFEST_VERSION,
       behavior_registry: BEHAVIOR_REGISTRY_VERSION,
-    }).toEqual({ engine: '0.2.0', compiler: '0.3.0', spec: '0.2.0', render_plan: '0.3.0', manifest: '0.3.0', behavior_registry: '1.0.0' });
+    }).toEqual({ engine: '0.3.0', compiler: '0.4.0', spec: '0.3.0', render_plan: '0.4.0', manifest: '0.3.0', behavior_registry: '1.1.0' });
   });
 });

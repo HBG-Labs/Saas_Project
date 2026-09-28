@@ -85,6 +85,10 @@ describe('renderer stupide : il exécute le plan, il ne décide rien', () => {
     for (const file of sources(path.join(RENDERER, 'src', 'composition'))) {
       expect(readFileSync(file, 'utf8'), file).not.toMatch(/\.tracks\b|\.keys\b|\bease\b|\bbeats?\b|_ms\b|\.voice_only\b/);
     }
+    // P1.4 : ni alignement, ni coupure, ni recadrage décidés par le navigateur.
+    for (const file of sources(path.join(RENDERER, 'src', 'composition'))) {
+      expect(readFileSync(file, 'utf8'), file).not.toMatch(/textAlign|textAnchor|text-anchor|objectFit|objectPosition|wordBreak|overflowWrap|hyphens|harfbuzz/);
+    }
     const frameState = readFileSync(path.join(RENDERER, 'src', 'frame-state.ts'), 'utf8');
     expect(frameState).toMatch(/import \{ sampleProperty \} from '@motion-engine\/core\/runtime'/);
     expect(frameState).not.toMatch(/\.keys\b|\bease\b|Math\.(sin|cos|pow|exp)/);

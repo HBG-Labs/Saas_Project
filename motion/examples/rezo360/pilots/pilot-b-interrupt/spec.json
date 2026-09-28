@@ -1,6 +1,6 @@
 {
   "schema": "motion-scene-spec",
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "spec_id": "pilot_b_interrupt",
   "revision": 1,
   "parent_revision": null,
@@ -13,7 +13,7 @@
   "style_binding": {
     "kind": "brand",
     "id": "rezo360",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "format": {
     "preset": "vertical_9x16",
@@ -133,7 +133,7 @@
             {
               "id": "bh_b2_exit",
               "behavior": "EXIT_CLEAR",
-              "version": "1.0.0",
+              "version": "1.1.0",
               "variant": "lift",
               "at": {
                 "before_next": true
@@ -178,7 +178,7 @@
             {
               "id": "bh_b2_rule_exit",
               "behavior": "EXIT_CLEAR",
-              "version": "1.0.0",
+              "version": "1.1.0",
               "variant": "lift",
               "at": {
                 "before_next": true

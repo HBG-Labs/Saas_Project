@@ -1,5 +1,7 @@
 import type { z } from 'zod';
 
+import { ASSET_SCHEMA, ASSET_VERSION, AssetDefinitionSchema } from '../contracts/asset.ts';
+import type { AssetDefinition } from '../contracts/asset.ts';
 import { BRAND_PROFILE_SCHEMA, BRAND_PROFILE_VERSION, BrandMotionProfileSchema } from '../contracts/brand-profile.ts';
 import type { BrandMotionProfile } from '../contracts/brand-profile.ts';
 import { CREATIVE_INTENT_SCHEMA, CREATIVE_INTENT_VERSION, CreativeIntentSchema } from '../contracts/creative-intent.ts';
@@ -24,6 +26,7 @@ import type { ValidationIssue } from './issues.ts';
 import { parseStructure } from './structural.ts';
 
 export interface DocumentKinds {
+  'asset-definition': AssetDefinition;
   'creative-intent': CreativeIntent;
   'creative-style-profile': CreativeStyleProfile;
   'brand-motion-profile': BrandMotionProfile;
@@ -47,8 +50,24 @@ interface KindEntry<T> {
 }
 
 const REGISTRY: { [K in DocumentKind]: KindEntry<DocumentKinds[K]> } = {
+  [ASSET_SCHEMA]: { current: ASSET_VERSION, schema: AssetDefinitionSchema, migrations: {} },
   [CREATIVE_INTENT_SCHEMA]: { current: CREATIVE_INTENT_VERSION, schema: CreativeIntentSchema, migrations: {} },
-  [STYLE_PROFILE_SCHEMA]: { current: STYLE_PROFILE_VERSION, schema: CreativeStyleProfileSchema, migrations: {} },
+  [STYLE_PROFILE_SCHEMA]: {
+    current: STYLE_PROFILE_VERSION,
+    schema: CreativeStyleProfileSchema,
+    migrations: {
+      // Avant 0.4.0, rien n'était mesuré ni réduit : min_scale 1 conserve ce comportement.
+      '0.3.0': {
+        to: '0.4.0',
+        migrate: (doc) => ({
+          ...doc,
+          typography: { ...(doc['typography'] as Record<string, unknown>), fit: { min_scale: 1, scope: 'role' } },
+          // Aucun voile n'était appliqué avant 0.4.0.
+          image_treatment: { ...(doc['image_treatment'] as Record<string, unknown>), tint: null },
+        }),
+      },
+    },
+  },
   [BRAND_PROFILE_SCHEMA]: { current: BRAND_PROFILE_VERSION, schema: BrandMotionProfileSchema, migrations: {} },
   [SERIES_PROFILE_SCHEMA]: { current: SERIES_PROFILE_VERSION, schema: SeriesMotionProfileSchema, migrations: {} },
   [RESOLVED_STYLE_SCHEMA]: { current: RESOLVED_STYLE_VERSION, schema: ResolvedStyleSchema, migrations: {} },
@@ -107,6 +126,8 @@ REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.1.0'] = {
   to: '0.2.0',
   migrate: (doc) => ({ ...doc, scenes: pinBehaviorVersions(doc['scenes']) }),
 };
+/** Spec 0.2.0 → 0.3.0 : ajouts facultatifs (region, bleed), rien à transformer. */
+REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.2.0'] = { to: '0.3.0', migrate: (doc) => doc };
 
 export function currentVersion(kind: DocumentKind): string {
   return REGISTRY[kind].current;

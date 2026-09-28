@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import type { ResolvedStyle } from './contracts/resolved-style.ts';
@@ -12,6 +12,10 @@ import type { LoadedBrand, LoadedSeries } from './io/load.ts';
 import { resolveStyle } from './style/resolve-style.ts';
 import type { ResolveStyleInput } from './style/resolve-style.ts';
 import { formatIssues } from './validation/issues.ts';
+import { sha256Hex } from './integrity/canonical.ts';
+import { createHarfBuzzShaper } from './text/harfbuzz.ts';
+import { loadAssetDirs } from './io/visual.ts';
+import type { TextShaper } from './text/shaper.ts';
 
 // Les tests du cœur n'utilisent que ses fixtures neutres : aucun exemple,
 // aucune marque réelle, aucun pack externe.
@@ -52,14 +56,18 @@ export function codes(result: { ok: boolean; issues?: { code: string; severity?:
 export function minimalPlan(): Json {
   return {
     schema: 'render-plan',
-    schema_version: '0.3.0',
+    schema_version: '0.4.0',
     spec: { spec_id: 'moon_question', revision: 1, sha256: 'a'.repeat(64) },
     style: { mode: 'creative', sha256: 'b'.repeat(64) },
-    compiler_version: '0.2.0',
+    compiler_version: '0.4.0',
     timing_source: 'estimated',
     reduced_motion: false,
-    provenance: { behavior_registry: { version: '1.0.0', sha256: 'd'.repeat(64) }, behaviors: [] },
-    canvas: { width: 1080, height: 1920, fps: 30, duration_frames: 60 },
+    provenance: {
+      behavior_registry: { version: '1.1.0', sha256: 'd'.repeat(64) },
+      behaviors: [],
+      typography: { rules: 'fr@1.0.0', shaper: 'harfbuzz 14.5.0', substitutions: [] },
+    },
+    canvas: { width: 1080, height: 1920, fps: 30, duration_frames: 60, safe_area: { x: 60, y: 120, w: 960, h: 1560 } },
     fonts: [{ id: 'display_900', css_name: 'fixture-ink-serif', weight: 900, style: 'normal', file: 'lib:playfair-display-latin-900.ttf', sha256: 'c'.repeat(64) }],
     assets: [],
     scenes: [
@@ -79,12 +87,35 @@ export function minimalPlan(): Json {
             align: 'start',
             lines: [
               {
-                runs: [{ id: 'r_setup', text: 'Et si la Lune', font: 'display_900', weight: 900, size: 150, tracking_px: 0, color: '#EFE6D2' }],
+                runs: [
+                  {
+                    id: 'r_setup',
+                    text: 'Et si',
+                    font: 'display_900',
+                    weight: 900,
+                    size: 150,
+                    tracking_px: 0,
+                    color: '#EFE6D2',
+                    x: 0,
+                    width: 310,
+                    glyphs: [
+                      { g: 40, cl: 0, x: 0, dx: 0, dy: 0 },
+                      { g: 87, cl: 1, x: 100, dx: 0, dy: 0 },
+                      { g: 3, cl: 2, x: 150, dx: 0, dy: 0 },
+                      { g: 86, cl: 3, x: 190, dx: 0, dy: 0 },
+                      { g: 76, cl: 4, x: 260, dx: 0, dy: 0 },
+                    ],
+                  },
+                ],
                 top: 0,
                 height: 153,
-                measured_width: null,
+                baseline: 118,
+                measured_width: 310,
+                ink: { x0: 0, x1: 308, y0: 12, y1: 120 },
               },
             ],
+            fit: { role: 'display.xl', ratio: 1, size: 150, policy: 'explicit' },
+            ink: { x: 120, y: 772, w: 308, h: 108 },
             tracks: [{ property: 'opacity', keys: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }], sources: ['bh_question_in'] }],
           },
         ],
@@ -111,6 +142,31 @@ export function mustBuild(resolved: ResolvedStyle, intent: CreativeIntent = natu
   return result.value;
 }
 
+/** Shaper HarfBuzz sur les polices de test, indexées par empreinte. */
+let fixtureShaperInstance: TextShaper | null = null;
+export function fixtureShaper(): TextShaper {
+  if (!fixtureShaperInstance) {
+    const dir = path.join(FIXTURES, 'fonts');
+    const bytes = new Map<string, Uint8Array>();
+    for (const name of readdirSync(dir).filter((n) => n.endsWith('.ttf'))) {
+      const data = readFileSync(path.join(dir, name));
+      bytes.set(sha256Hex(data), data);
+    }
+    fixtureShaperInstance = createHarfBuzzShaper((sha) => {
+      const data = bytes.get(sha);
+      if (!data) throw new Error(`police ${sha} absente des fixtures`);
+      return data;
+    });
+  }
+  return fixtureShaperInstance;
+}
+
+/** Empreinte d'un fichier de police de test. */
+export const fixtureFontSha = (name: string) => sha256Hex(readFileSync(path.join(FIXTURES, 'fonts', name)));
+
+/** Assets de test (image procédurale neutre), vérifiés à la lecture. */
+export const loadFixtureAssets = () => loadAssetDirs([path.join(FIXTURES, 'assets')]);
+
 export const DEV_OUTPUT = { width: 540, height: 960, fps: 30 };
 export const AUDIO_TARGETS = { target_lufs: -14, true_peak_dbtp: -1 };
 
@@ -124,6 +180,7 @@ export function mustCompile(spec: MotionSceneSpec, resolved: ResolvedStyle, outp
     output,
     audioTargets: AUDIO_TARGETS,
     allowStyleSubstitution: true,
+    shaper: fixtureShaper(),
   });
   if (!result.ok) throw new Error(`Compilation refusée :\n${formatIssues(result.issues)}`);
   return result.value;

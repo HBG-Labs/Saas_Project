@@ -7,7 +7,7 @@ import { hashDocument } from '../integrity/canonical.ts';
 // Ajouter ou modifier un comportement = nouvelle version, jamais une retouche
 // silencieuse d'une version publiée (le test d'empreinte le surveille).
 
-export const BEHAVIOR_REGISTRY_VERSION = '1.0.0';
+export const BEHAVIOR_REGISTRY_VERSION = '1.1.0';
 
 const header = { schema: BEHAVIOR_DEFINITION_SCHEMA, schema_version: BEHAVIOR_DEFINITION_VERSION } as const;
 const VISIBLE_START = ['scene_start', 'after', 'with', 'after_previous', 'with_layer', 'after_layer', 'beat', 'voice_segment', 'voice_word'] as const;
@@ -232,6 +232,14 @@ export function createBehaviorRegistry(definitions: readonly BehaviorDefinition[
 }
 
 /** Registre du moteur. */
+/**
+ * Registre 1.1.0 (P1.4) : EXIT_CLEAR@1.1.0 s'applique aussi aux images et aux
+ * masques. Même intention, mêmes pistes ; seule la compatibilité s'élargit.
+ * La définition 1.0.0 reste inchangée et utilisable par les specs qui l'épinglent.
+ */
+const EXIT_CLEAR_1_0 = DEFINITIONS.find((d) => d.id === 'EXIT_CLEAR' && d.version === '1.0.0')!;
+DEFINITIONS.push({ ...EXIT_CLEAR_1_0, version: '1.1.0', compatible_primitives: ['text', 'shape', 'path', 'group', 'image', 'mask'] });
+
 export const BEHAVIORS = createBehaviorRegistry(DEFINITIONS, BEHAVIOR_REGISTRY_VERSION);
 
 /** Version courante d'un comportement (utilisée par le SpecBuilder pour épingler). */

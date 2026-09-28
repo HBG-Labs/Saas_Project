@@ -72,6 +72,11 @@ export function validateStyleSemantics(style: CreativeStyleProfile, prefix = '',
   if (style.image_treatment.grade === 'duotone' && !style.image_treatment.duotone) {
     c.error('image.duotone_missing', at('image_treatment.duotone'), 'un traitement duotone exige ses deux couleurs');
   }
+  const grade = style.image_treatment.grade;
+  if ((grade === 'warm' || grade === 'cool' || grade === 'duotone') && !style.image_treatment.tint) {
+    c.error('image.tint_missing', at('image_treatment.tint'), `l'étalonnage « ${grade} » exige un voile déclaré (couleur et opacité)`);
+  }
+  if (style.image_treatment.tint) colorRef(style.image_treatment.tint.color, 'image_treatment.tint.color');
   style.illustration_treatment.palette_roles.forEach((ref, i) => colorRef(ref, `illustration_treatment.palette_roles[${i}]`));
 
   for (const [kind, cue] of Object.entries(style.sound_personality.event_cues)) {

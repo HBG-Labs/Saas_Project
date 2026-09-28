@@ -18,9 +18,16 @@ export interface CompositionAudio {
   cues: { src: string; t_s: number; gain_db: number }[];
 }
 
+/** Image fournie au navigateur : octets de l'asset déclaré par le Render Plan, vérifiés par empreinte. */
+export interface ImageSource {
+  asset: string;
+  data_url: string;
+}
+
 export interface PlanVideoProps extends Record<string, unknown> {
   plan: RenderPlan;
   fonts: FontSource[];
+  images: ImageSource[];
   audio: CompositionAudio | null;
 }
 

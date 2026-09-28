@@ -54,7 +54,7 @@ describe('manifeste de reproductibilité', () => {
   it('trace le style lié, résolu et ses sources, sans substitution', () => {
     const manifest = buildReproducibilityManifest(inputFor(ink));
     expect(manifest.style).toMatchObject({
-      binding: { kind: 'style', id: 'fixture_ink', version: '1.2.0' },
+      binding: { kind: 'style', id: 'fixture_ink', version: '1.3.0' },
       mode: 'creative',
       resolved_sha256: ink.sha256,
       substituted: false,
@@ -135,7 +135,7 @@ describe('manifeste 0.3.0 : état git, éligibilité, timing, registre', () => {
   it('reprend du Render Plan la source du timing, le registre et le mouvement réduit', () => {
     const manifest = buildReproducibilityManifest(inputFor(ink));
     expect(manifest.timing_source).toBe('estimated');
-    expect(manifest.behavior_registry).toEqual({ version: '1.0.0', sha256: 'd'.repeat(64) });
+    expect(manifest.behavior_registry).toEqual({ version: '1.1.0', sha256: 'd'.repeat(64) });
     expect(manifest.render_config.reduced_motion).toBe(false);
   });
 

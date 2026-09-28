@@ -10,7 +10,7 @@ import { loadRenderProfile } from './profile.ts';
 //   node renderer-remotion/src/pipeline/cli.ts --intent <intent.json> --style <style.json> --lib <polices> --out <dossier>
 //   … --spec <spec.json> --style <autre-style.json> --substitution "motif"   (même spec, autre style)
 //   … --brand <brand.json> | --series <series.json>
-// Options : --patterns <dossier> (répétable), --presets <fichier>, --profile dev|master|smoke|<fichier>, --no-render, --reduced-motion
+// Options : --patterns <dossier> (répétable), --assets <dossier> (répétable), --presets <fichier>, --profile dev|master|smoke|<fichier>, --no-render, --reduced-motion
 
 const WORKSPACE = path.resolve(import.meta.dirname, '..', '..', '..');
 
@@ -23,6 +23,7 @@ const { values } = parseArgs({
     series: { type: 'string' },
     lib: { type: 'string' },
     patterns: { type: 'string', multiple: true },
+    assets: { type: 'string', multiple: true },
     presets: { type: 'string' },
     profile: { type: 'string', default: 'dev' },
     out: { type: 'string' },
@@ -73,6 +74,7 @@ const result = await runPipeline({
   render: !values['no-render'],
   git: gitState(),
   reducedMotion: values['reduced-motion'],
+  assetDirs: (values.assets ?? []).map(abs),
   createdAt: new Date().toISOString(),
 });
 
@@ -89,6 +91,7 @@ console.log(
       git: { commit: result.manifest.engine.git_commit, dirty: result.manifest.engine.git_dirty },
       reference_eligible: result.manifest.reference_eligible,
       timing_source: result.plan.timing_source,
+      typography: result.plan.provenance.typography,
       duration_s: result.plan.canvas.duration_frames / result.plan.canvas.fps,
       render: s
         ? {

@@ -13,6 +13,7 @@ import {
   mustCompile,
   resolvedInk,
   resolvedSignal,
+  fixtureShaper,
 } from '../test-support.ts';
 import { validateRenderPlan } from '../validation/validate.ts';
 import { compileSpec } from './compile.ts';
@@ -49,7 +50,8 @@ describe('compilateur', () => {
     expect(text.lines[0]!.runs[0]!.color).toMatch(/^#[0-9A-F]{6}$/i);
     expect(text.tracks.every((t) => t.keys.every((k) => Number.isInteger(k.frame)))).toBe(true);
     expect(plan.fonts.map((f) => f.file)).toEqual(['lib:playfair-display-latin-900.ttf']);
-    expect(text.lines.every((l) => l.measured_width === null)).toBe(true);
+    expect(text.lines.every((l) => l.measured_width > 0 && l.measured_width <= text.box.w + 1e-6)).toBe(true);
+    expect(text.fit).toMatchObject({ role: 'display.m', policy: 'explicit' });
   });
 
   it('une seule piste par propriété et par cible, fusionnée dans l’ordre du temps', () => {
@@ -116,21 +118,21 @@ describe('compilateur', () => {
   });
 
   it('refuse une sortie qui n’a pas le ratio du format', () => {
-    const result = compileSpec({ spec, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 1080, height: 1080, fps: 30 }, audioTargets: AUDIO_TARGETS });
+    const result = compileSpec({ spec, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 1080, height: 1080, fps: 30 }, audioTargets: AUDIO_TARGETS, shaper: fixtureShaper() });
     expect(codes(result)).toEqual(['compile.layout']);
   });
 
   it('refuse une substitution de style non déclarée', () => {
-    const result = compileSpec({ spec, resolved: signal, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS });
+    const result = compileSpec({ spec, resolved: signal, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS, shaper: fixtureShaper() });
     expect(codes(result)).toEqual(['style.binding_mismatch']);
   });
 
   it('refuse un comportement inconnu ou une version inexistante, sans repli', () => {
     const unknown = clone(spec);
     unknown.scenes[0]!.layers[0]!.behaviors[0]!.behavior = 'SPIN_WILDLY';
-    expect(codes(compileSpec({ spec: unknown, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS }))).toContain('behavior.unknown');
+    expect(codes(compileSpec({ spec: unknown, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS, shaper: fixtureShaper() }))).toContain('behavior.unknown');
     const wrongVersion = clone(spec);
     wrongVersion.scenes[0]!.layers[0]!.behaviors[0]!.version = '9.0.0';
-    expect(codes(compileSpec({ spec: wrongVersion, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS }))).toEqual(['behavior.unknown_version']);
+    expect(codes(compileSpec({ spec: wrongVersion, resolved: ink, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: { width: 540, height: 960, fps: 30 }, audioTargets: AUDIO_TARGETS, shaper: fixtureShaper() }))).toEqual(['behavior.unknown_version']);
   });
 });

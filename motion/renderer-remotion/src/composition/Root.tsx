@@ -9,19 +9,24 @@ import type { PlanVideoProps } from './types.ts';
 const emptyProps: PlanVideoProps = {
   plan: {
     schema: 'render-plan',
-    schema_version: '0.3.0',
+    schema_version: '0.4.0',
     spec: { spec_id: 'empty', revision: 1, sha256: '0'.repeat(64) },
     style: { mode: 'creative', sha256: '0'.repeat(64) },
     compiler_version: '0.0.0',
     timing_source: 'none',
     reduced_motion: false,
-    provenance: { behavior_registry: { version: '0.0.0', sha256: '0'.repeat(64) }, behaviors: [] },
-    canvas: { width: 540, height: 960, fps: 30, duration_frames: 1 },
+    provenance: {
+      behavior_registry: { version: '0.0.0', sha256: '0'.repeat(64) },
+      behaviors: [],
+      typography: { rules: 'none@0.0.0', shaper: 'none', substitutions: [] },
+    },
+    canvas: { width: 540, height: 960, fps: 30, duration_frames: 1, safe_area: { x: 0, y: 0, w: 540, h: 960 } },
     fonts: [],
     assets: [],
     scenes: [{ id: 'empty', from: 0, to: 1, background: '#000000', nodes: [], voice_only: [] }],
   },
   fonts: [],
+  images: [],
   audio: null,
 };
 

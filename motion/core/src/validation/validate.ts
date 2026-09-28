@@ -1,3 +1,4 @@
+import type { AssetDefinition } from '../contracts/asset.ts';
 import type { BrandMotionProfile } from '../contracts/brand-profile.ts';
 import type { CreativeIntent } from '../contracts/creative-intent.ts';
 import type { MotionSceneSpec } from '../contracts/motion-spec.ts';
@@ -68,6 +69,19 @@ export function validatePlatformPresets(input: unknown): ValidationResult<Platfo
       }
     }
   }
+  return finish(read.value, issues);
+}
+
+/** Métadonnées d'asset : schéma strict (dimensions et fichier sont vérifiés à la lecture, côté io). */
+export function validateAsset(input: unknown): ValidationResult<AssetDefinition> {
+  const read = readVersioned('asset-definition', input);
+  if (!read.ok) return read;
+  const issues: ValidationIssue[] = [];
+  const fp = read.value.focal_point;
+  for (const [name, r] of Object.entries(read.value.regions)) {
+    if (r.x + r.w > 1 + 1e-9 || r.y + r.h > 1 + 1e-9) issues.push({ code: 'asset.region_bounds', path: `regions.${name}`, message: `région « ${name} » hors de l'image`, severity: 'error' });
+  }
+  if (fp.x < 0 || fp.x > 1 || fp.y < 0 || fp.y > 1) issues.push({ code: 'asset.focal_point', path: 'focal_point', message: 'point focal hors de l’image', severity: 'error' });
   return finish(read.value, issues);
 }
 

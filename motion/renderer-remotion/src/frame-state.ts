@@ -1,5 +1,5 @@
 import { sampleProperty } from '@motion-engine/core/runtime';
-import type { PlanNode, PlanScene, RenderPlan, Track, TrackProperty } from '@motion-engine/core/runtime';
+import type { PlanImageNode, PlanMaskNode, PlanNode, PlanScene, RenderPlan, Track, TrackProperty } from '@motion-engine/core/runtime';
 
 // État visuel d'un nœud à une frame donnée : pure traduction du Render Plan.
 // Aucune décision artistique ici — seulement l'échantillonnage des pistes.
@@ -73,13 +73,33 @@ export function pathProgress(node: PlanNode, frame: number, fps: number): number
   return Math.min(1, Math.max(0, num(node.tracks, 'path_progress', frame, fps, 1)));
 }
 
+/**
+ * Géométrie d'une image : le recadrage du plan (pixels source) projeté dans la
+ * boîte. Aucune décision de cadrage ici — ni cover, ni contain, ni point focal.
+ */
+export function imageGeometry(node: PlanImageNode, asset: { width: number; height: number }) {
+  const kx = node.box.w / node.crop.w;
+  const ky = node.box.h / node.crop.h;
+  return { left: -node.crop.x * kx, top: -node.crop.y * ky, width: asset.width * kx, height: asset.height * ky };
+}
+
+/** Filtre CSS équivalent au traitement résolu par le compilateur. */
+export function imageFilter(node: PlanImageNode): string {
+  return `grayscale(${node.treatment.grayscale}) contrast(${node.treatment.contrast})`;
+}
+
+/** Fenêtre d'un masque : forme et rayon viennent du plan. */
+export function maskRadius(node: PlanMaskNode): string {
+  return node.clip.shape === 'ellipse' ? '50%' : `${node.clip.radius}px`;
+}
+
 /** Scène active à une frame (frames de fin exclusives). */
 export function sceneAt(plan: RenderPlan, frame: number): PlanScene | undefined {
   return plan.scenes.find((s) => frame >= s.from && frame < s.to);
 }
 
-/** Les primitives que ce renderer sait dessiner (P1.2). */
-export const SUPPORTED_NODE_TYPES = ['text', 'shape', 'path', 'group'] as const;
+/** Les primitives que ce renderer sait dessiner (P1.4 : toutes). */
+export const SUPPORTED_NODE_TYPES = ['text', 'shape', 'path', 'group', 'image', 'mask'] as const;
 
 export function unsupportedNodes(plan: RenderPlan): string[] {
   const out: string[] = [];

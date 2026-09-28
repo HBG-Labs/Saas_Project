@@ -18,6 +18,7 @@ import {
   mustResolve,
   resolvedInk,
   resolvedSignal,
+  fixtureShaper,
 } from '../test-support.ts';
 import { EasingError, resolveAllEasings, resolveEasing } from './easing-catalog.ts';
 
@@ -26,7 +27,7 @@ const signal = resolvedSignal();
 const base = () => clone(mustBuild(ink));
 
 const compile = (spec: MotionSceneSpec, resolved: ResolvedStyle = ink, reducedMotion = false) =>
-  compileSpec({ spec, resolved, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: DEV_OUTPUT, audioTargets: AUDIO_TARGETS, allowStyleSubstitution: true, reducedMotion });
+  compileSpec({ spec, resolved, presets: loadFixturePresets(), patterns: loadFixturePatterns(), output: DEV_OUTPUT, audioTargets: AUDIO_TARGETS, allowStyleSubstitution: true, reducedMotion, shaper: fixtureShaper() });
 
 const nodes = (plan: RenderPlan): PlanNode[] => plan.scenes.flatMap((s) => s.nodes);
 const node = (plan: RenderPlan, id: string) => nodes(plan).find((n) => n.id === id)!;
