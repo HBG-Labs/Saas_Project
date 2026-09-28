@@ -28,7 +28,8 @@ export class TemporalError extends Error {
 export const SCENE_PHASES = ['ENTER', 'ACCENT', 'SETTLE', 'HOLD', 'EXIT', 'CUT'] as const;
 export type ScenePhase = (typeof SCENE_PHASES)[number];
 
-const PHASE_OF: Record<Exclude<BehaviorPhase, 'transition'>, ScenePhase> = {
+/** `ambient` (P1.5) n'est pas une phase de scène : il accompagne la scène entière. */
+const PHASE_OF: Record<Exclude<BehaviorPhase, 'transition' | 'ambient'>, ScenePhase> = {
   enter: 'ENTER',
   accent: 'ACCENT',
   settle: 'SETTLE',
@@ -61,6 +62,11 @@ export interface ResolvedBehavior {
   lanes: Lane[];
   declaration_index: number;
   params: Record<string, number | string | boolean>;
+  /**
+   * P1.5 : `scene_end` — dure jusqu'à la dernière milliseconde de la scène,
+   * résolu APRÈS la durée de la scène, dont il ne dépend jamais.
+   */
+  span: 'scene_end' | null;
 }
 
 export interface PhaseSpan {
@@ -135,12 +141,19 @@ function sceneContext(spec: MotionSceneSpec, scene: Scene, style: CreativeStyleP
 }
 
 /** Durée d'un comportement : verrou de la spec, sinon durée de phase du style × énergie. */
-function behaviorDuration(ctx: SceneContext, b: BehaviorInstance, def: BehaviorDefinition): { ms: number; locked: boolean } {
-  if (def.phase === 'transition') return { ms: 0, locked: true };
-  if (b.duration) return { ms: ctx.ms(b.duration), locked: true };
+function behaviorDuration(ctx: SceneContext, b: BehaviorInstance, def: BehaviorDefinition): { ms: number; locked: boolean; span: 'scene_end' | null } {
+  const until = b.duration !== undefined && 'until' in b.duration;
+  if (def.phase === 'ambient' || def.constraints.until_scene_end === 'required') {
+    if (!until) throw new TemporalError('temporal.span_required', `${b.id} : ${b.behavior} dure jusqu'à la fin de la scène (duration: { until: 'scene_end' })`);
+    // Durée inconnue tant que la scène n'est pas placée : 0 ici, résolue dans place().
+    return { ms: 0, locked: true, span: 'scene_end' };
+  }
+  if (until) throw new TemporalError('temporal.span_not_allowed', `${b.id} : ${b.behavior} n'accepte pas une durée « jusqu'à la fin de la scène »`);
+  if (def.phase === 'transition') return { ms: 0, locked: true, span: null };
+  if (b.duration && !('until' in b.duration)) return { ms: ctx.ms(b.duration), locked: true, span: null };
   const t = ctx.style.motion_personality.timing;
   const beats = { enter: t.enter_beats, accent: t.accent_beats, settle: t.settle_beats, exit: t.exit_beats }[def.phase];
-  return { ms: Math.round(beats * ctx.factor * ctx.beatMs), locked: false };
+  return { ms: Math.round(beats * ctx.factor * ctx.beatMs), locked: false, span: null };
 }
 
 const usesLines = (def: BehaviorDefinition): boolean => Object.values(def.variants).some((v) => v.tracks.some((t) => t.scope === 'line'));
@@ -212,7 +225,8 @@ function resolveLocalScene(spec: MotionSceneSpec, scene: Scene, style: CreativeS
       const def = registry.get(b.behavior, b.version);
       if (!def) throw new TemporalError('behavior.unknown_version', `${b.behavior}@${b.version} absent du registre`);
       const duration = behaviorDuration(ctx, b, def);
-      if (duration.ms < def.duration_budget.min_ms || duration.ms > def.duration_budget.max_ms) {
+      // Budget d'un comportement « jusqu'à la fin » : vérifié une fois sa durée connue (place()).
+      if (duration.span === null && (duration.ms < def.duration_budget.min_ms || duration.ms > def.duration_budget.max_ms)) {
         throw new TemporalError(
           'temporal.duration_out_of_budget',
           `${b.id} : ${duration.ms} ms hors du budget de ${b.behavior} [${def.duration_budget.min_ms}, ${def.duration_budget.max_ms}]`,
@@ -236,6 +250,7 @@ function resolveLocalScene(spec: MotionSceneSpec, scene: Scene, style: CreativeS
         lanes: [],
         declaration_index: index++,
         params: b.params ?? {},
+        span: duration.span,
       });
     }
   }
@@ -265,20 +280,25 @@ function resolveLocalScene(spec: MotionSceneSpec, scene: Scene, style: CreativeS
       case 'after':
       case 'with': {
         const ref = 'after' in a ? a.after : 'with' in a ? a.with : '';
+        if (kind === 'after' && byId.get(ref)?.span) {
+          throw new TemporalError('temporal.anchor_after_span', `${id} : « après » ${ref}, qui dure jusqu'à la fin de la scène, n'a pas de sens`);
+        }
         if (!isResolved(ref)) return null;
         const r = resolved(ref)!;
         return (kind === 'after' ? r.end_ms : r.start_ms) + offset;
       }
       case 'after_previous': {
         const self = byId.get(id);
-        const previous = self ? behaviors.filter((b) => b.declaration_index < self.declaration_index && !isEndAnchor(anchorOf.get(b.instance)!)).pop() : undefined;
+        const previous = self
+          ? behaviors.filter((b) => b.declaration_index < self.declaration_index && !isEndAnchor(anchorOf.get(b.instance)!) && b.span === null).pop()
+          : undefined;
         if (!previous) return offset;
         return isResolved(previous.instance) ? previous.end_ms + offset : null;
       }
       case 'with_layer':
       case 'after_layer': {
         const layerId = 'with_layer' in a ? a.with_layer : 'after_layer' in a ? a.after_layer : '';
-        const own = layerBehaviors(layerId).filter((b) => b.phase !== 'exit' && b.instance !== id);
+        const own = layerBehaviors(layerId).filter((b) => b.phase !== 'exit' && b.span === null && b.instance !== id);
         if (own.some((b) => !isResolved(b.instance))) return null;
         if (own.length === 0) return offset;
         return (kind === 'with_layer' ? Math.min(...own.map((b) => b.start_ms)) : Math.max(...own.map((b) => b.end_ms))) + offset;
@@ -339,7 +359,9 @@ function resolveLocalScene(spec: MotionSceneSpec, scene: Scene, style: CreativeS
   resolvePending([...anchorOf.keys()].filter((id) => !late.has(id)));
 
   // 4. Contraintes de fin de scène.
-  const startAnchored = behaviors.filter((b) => !late.has(b.instance));
+  // Les comportements « jusqu'à la fin » ne comptent JAMAIS dans la durée de la scène.
+  const startAnchored = behaviors.filter((b) => !late.has(b.instance) && b.span === null);
+  const spanning = behaviors.filter((b) => b.span !== null);
   const endAnchored = behaviors.filter((b) => isEndAnchor(anchorOf.get(b.instance)!));
   const earlyEvents = Object.entries(events).filter(([id]) => !late.has(id)).map(([, ms]) => ms);
   const contentEnd = Math.max(voiceEnd, 0, ...startAnchored.map((b) => b.end_ms), ...earlyEvents);
@@ -410,6 +432,19 @@ function resolveLocalScene(spec: MotionSceneSpec, scene: Scene, style: CreativeS
     place: (end: number) => {
       for (const b of endAnchored) withLanes(b, end + offsetOf(b.instance) - spanOf(b), lines.get(b.layer) ?? 1);
       resolvePending([...late].filter((id) => !isEndAnchor(anchorOf.get(id)!)));
+      // Jusqu'à la dernière milliseconde de la scène (fin imposée comprise).
+      for (const b of spanning) {
+        const duration = end + tail - b.start_ms;
+        if (duration <= 0) throw new TemporalError('temporal.span_empty', `${b.instance} commence à ${b.start_ms} ms, après la fin de la scène (${end + tail} ms)`);
+        if (duration < b.definition.duration_budget.min_ms || duration > b.definition.duration_budget.max_ms) {
+          throw new TemporalError(
+            'temporal.duration_out_of_budget',
+            `${b.instance} : ${duration} ms hors du budget de ${b.behavior} [${b.definition.duration_budget.min_ms}, ${b.definition.duration_budget.max_ms}]`,
+          );
+        }
+        b.duration_ms = duration;
+        withLanes(b, b.start_ms, 1);
+      }
     },
     readability: readability.map((r) => ({ layer: r.layer, requirement: r.requirement, enteredAt: r.enteredAt, exitLead: r.exitLead })),
   };

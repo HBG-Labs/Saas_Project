@@ -60,9 +60,41 @@ export interface BuildContext {
   ratios: Map<string, { role: string; ratio: number }>;
   substitutions: Map<string, { font: string; character: string; replacement: string }>;
   warnings: { code: string; path: string; message: string }[];
+  /** P1.5 : encre réelle de chaque glyphe (coordonnées absolues) et couleurs portées, pour la mesure du contraste. */
+  textSamples: Map<string, TextSamples>;
 }
 
+export interface GlyphSample {
+  run: string;
+  line: number;
+  /** Couleurs que prend le run (couleur de repos, et couleur d'accent s'il est accentué). */
+  colors: string[];
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface TextSamples {
+  scene: string;
+  size: number;
+  weight: number;
+  glyphs: GlyphSample[];
+  override: { min_ratio: number; reason: string } | null;
+}
+
+/** Valeur provisoire : remplacée par la mesure réelle avant la validation du plan. */
+export const PENDING_CONTRAST = {
+  category: 'normal' as const,
+  required: 21,
+  measured: 1,
+  worst: { run: 'pending', line: 0, frame: 0 },
+  frames: 1,
+  override: null,
+};
+
 interface SceneBuild extends BuildContext {
+  sceneId: string;
   slots: Record<string, SlotGeometry>;
   occupied: Map<string, Box>;
   regions: Map<string, Box>;
@@ -97,6 +129,12 @@ function layerRegion(build: SceneBuild, layer: Layer, parent: Box | null): Regio
     const box = projected ? intersect(projected, build.frame.content) : null;
     if (!box) throw new CompileError('layout.region_unavailable', `${layer.id} : région « ${layer.region.name} » hors cadre ou hors zone sûre après recadrage`);
     return { box, align_x: layer.region.align_x ?? 'start', align_y: layer.region.align_y ?? 'start', height: box.h };
+  }
+  if (layer.area) {
+    // Portable : fractions de la zone utile, SANS calage sur la grille du style.
+    const c = build.frame.content;
+    const box = { x: c.x + layer.area.x[0] * c.w, y: c.y + layer.area.y[0] * c.h, w: (layer.area.x[1] - layer.area.x[0]) * c.w, h: (layer.area.y[1] - layer.area.y[0]) * c.h };
+    return { box, align_x: layer.area.align_x ?? 'start', align_y: layer.area.align_y ?? 'start', height: box.h };
   }
   if (layer.placement) {
     const box = placementBox(build.frame, layer.placement);
@@ -225,13 +263,49 @@ function buildText(build: SceneBuild, layer: TextLayer, region: Region, base: Pi
   const box: Box = { x: region.box.x, y, w: region.box.w, h: laid.height };
   const ink = laid.ink ? { x: box.x + laid.ink.x0, y: box.y + laid.ink.y0, w: laid.ink.x1 - laid.ink.x0, h: laid.ink.y1 - laid.ink.y0 } : null;
   if (ink) assertSafe(build, layer.id, ink, 'encre du texte');
+  const accentOf = (runId: string) => (build.accentTargets.has(runId) && accentColor ? [accentColor] : []);
+  build.textSamples.set(layer.id, {
+    scene: build.sceneId,
+    size: laid.size,
+    weight: typeStyle.weight,
+    override: layer.contrast_override ?? null,
+    glyphs: laid.lines.flatMap((line, li) =>
+      line.runs.flatMap((run) =>
+        run.glyphs
+          .filter((g) => g.ink !== null)
+          .map((g) => {
+            const gx = box.x + run.x + g.x + g.x_offset;
+            const gy = box.y + line.baseline - g.y_offset;
+            return {
+              run: run.id,
+              line: li,
+              colors: [runBaseColor.get(run.id)!, ...accentOf(run.id)],
+              x0: gx + g.ink!.x0,
+              x1: gx + g.ink!.x1,
+              y0: gy + g.ink!.y0,
+              y1: gy + g.ink!.y1,
+            };
+          }),
+      ),
+    ),
+  });
   if (layer.slot) {
     // L'élément suivant se place sous l'ENCRE (espacement optique), pas sous l'interlignage.
     build.occupied.set(layer.slot, ink ? { x: box.x, y: box.y, w: box.w, h: ink.y + ink.h - box.y } : box);
     build.regions.set(layer.slot, region.box);
   }
   return {
-    node: { ...base, type: 'text' as const, box, align, lines, fit: { role, ratio: laid.ratio, size: laid.size, policy: layer.content.break_policy }, ink },
+    node: {
+      ...base,
+      type: 'text' as const,
+      box,
+      align,
+      lines,
+      fit: { role, ratio: laid.ratio, size: laid.size, policy: layer.content.break_policy },
+      ink,
+      // Rempli par la mesure du contraste, une fois les pistes connues (compile.ts).
+      contrast: PENDING_CONTRAST,
+    },
     context: { baseColor, accentColor, runBaseColor },
   };
 }
@@ -271,6 +345,8 @@ function buildNode(build: SceneBuild, layer: Layer, parent: Box | null): { node:
           focus: fitted.focus,
           regions: fitted.regions,
           treatment: resolveTreatment(style, (ref) => color(style, ref)),
+          // Les mouvements de contenu (content_*) partent du point focal projeté dans la boîte.
+          content_origin: { x: (fitted.focus.x - fitted.crop.x) / fitted.crop.w, y: (fitted.focus.y - fitted.crop.y) / fitted.crop.h },
         },
         context: none,
       };
@@ -301,7 +377,11 @@ function buildNode(build: SceneBuild, layer: Layer, parent: Box | null): { node:
       } else {
         // Points en unités de grille continue : x ∈ [0, colonnes], y ∈ [0, rangées] de la zone utile.
         const c = frame.content;
-        const pts = layer.geometry.points.map((p) => ({ x: c.x + (p.x * c.w) / frame.columns, y: c.y + (p.y * c.h) / frame.rows }));
+        // P1.5 : `area_points` en fractions de la zone utile (portable) ; `points` en unités de grille (lié au style).
+        const pts =
+          'area_points' in layer.geometry
+            ? layer.geometry.area_points.map((p) => ({ x: c.x + p.x * c.w, y: c.y + p.y * c.h }))
+            : layer.geometry.points.map((p) => ({ x: c.x + (p.x * c.w) / frame.columns, y: c.y + (p.y * c.h) / frame.rows }));
         const pad = strokeWidth / 2;
         const x0 = Math.min(...pts.map((p) => p.x)) - pad;
         const y0 = Math.min(...pts.map((p) => p.y)) - pad;
@@ -402,6 +482,7 @@ export function buildScenes(
     const layout = pattern.layouts[scene.pattern.variation.layout_variant ?? pattern.variation_axes.layout_variant.default]!;
     const build: SceneBuild = {
       ...context,
+      sceneId: scene.id,
       slots: layout.slots,
       occupied: new Map(),
       regions: new Map(),

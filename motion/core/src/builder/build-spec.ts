@@ -22,7 +22,8 @@ import { BEHAVIORS, latestVersion } from '../motion/registry.ts';
 import type { BehaviorRegistry } from '../motion/registry.ts';
 
 /** 0.2.0 : versions de comportements épinglées, phases stabilisation/sortie, durées laissées au style. */
-export const SPEC_BUILDER_VERSION = '0.2.0';
+/** 0.3.0 (P1.5) : la spec produite est déclarée portable (slots de pattern uniquement). */
+export const SPEC_BUILDER_VERSION = '0.3.0';
 
 // Correspondances sémantiques du récit : elles décrivent le sens d'un rôle
 // narratif, jamais une valeur visuelle ou temporelle.
@@ -309,6 +310,8 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
     parent_revision: null,
     created_from: { intent_id: intent.intent_id, intent_sha256: hashDocument(intent), builder_version: SPEC_BUILDER_VERSION },
     locale: intent.locale,
+    // Le builder ne place qu'avec des slots de pattern : la composition est portable (validée).
+    composition: { portability: 'portable' },
     style_binding: bindingOf(resolved),
     format: { preset: 'vertical_9x16', platform_safe_zones: [...intent.platforms] },
     system: { id: intent.system ?? 'freeform', version: '0.1.0' },

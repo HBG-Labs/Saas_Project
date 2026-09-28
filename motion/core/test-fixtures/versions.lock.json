@@ -27,6 +27,12 @@
       "sha256": "f3e07fa1ecd447f88be346233657d62938b68ae1198176116f2eaf519ed62073"
     },
     {
+      "kind": "brand-motion-profile",
+      "id": "fixture_brand",
+      "version": "1.4.0",
+      "sha256": "9f4dc82dff9c073c5e1f5c3ebfbd5d5b1ff0a82c3e28bce5cd0cbd168688fc98"
+    },
+    {
       "kind": "creative-style-profile",
       "id": "fixture_ink",
       "version": "1.0.0",
@@ -52,6 +58,12 @@
     },
     {
       "kind": "creative-style-profile",
+      "id": "fixture_ink",
+      "version": "1.4.0",
+      "sha256": "906a846046fd95c9562c212ff295b2d6071f1b82881aeceb489c32b49e378d89"
+    },
+    {
+      "kind": "creative-style-profile",
       "id": "fixture_signal",
       "version": "1.0.0",
       "sha256": "9c45fff2567fbb5c9603a7f5bf3915f3f78d5ada43d310146207b1e8cb7cbf59"
@@ -73,6 +85,12 @@
       "id": "fixture_signal",
       "version": "1.3.0",
       "sha256": "f8b41c39b66528d1a657f636df57006c8c6a25e1962536e078e508805119ad18"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "fixture_signal",
+      "version": "1.4.0",
+      "sha256": "cf16d48fc9ead6f3c1e7fbd0dd6861df5c7927ecbb35cf95f8e34b52756bcdbd"
     },
     {
       "kind": "pattern-definition",
@@ -109,6 +127,12 @@
       "id": "fixture_series",
       "version": "1.3.0",
       "sha256": "9585561432ad33a23ea451e649dd1d811d7c0180c526d4e46a2b75ef08d21f0a"
+    },
+    {
+      "kind": "series-motion-profile",
+      "id": "fixture_series",
+      "version": "1.4.0",
+      "sha256": "5a6c2eeb783c6d3462f2567fc2036dd6ebe3f4ec9dba713541b41a6f98d40675"
     }
   ]
 }

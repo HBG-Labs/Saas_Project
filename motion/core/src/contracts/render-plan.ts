@@ -11,7 +11,13 @@ export const RENDER_PLAN_SCHEMA = 'render-plan';
  * lignes de base, encre, ajustement ; images recadrées (point focal, régions,
  * traitement) ; zone utile du canevas ; provenance typographique.
  */
-export const RENDER_PLAN_VERSION = '0.4.0';
+/**
+ * 0.5.0 (P1.5 — Visual Integrity & Image Motion) : propriétés génériques de
+ * contenu d'image (content_scale, content_x, content_y) et origine du contenu ;
+ * rapport de contraste MESURÉ par texte (et dérogation explicite) ; provenance
+ * des analyses d'assets et des règles de lisibilité ; portabilité déclarée.
+ */
+export const RENDER_PLAN_VERSION = '0.5.0';
 
 const Frame = z.number().int().min(0);
 const Px = z.number().finite();
@@ -32,6 +38,9 @@ export const TRACK_PROPERTIES = [
   'clip_left',
   'path_progress',
   'color',
+  'content_scale',
+  'content_x',
+  'content_y',
 ] as const;
 export const TrackPropertySchema = z.enum(TRACK_PROPERTIES);
 export type TrackProperty = z.infer<typeof TrackPropertySchema>;
@@ -115,6 +124,20 @@ export interface PlanTextNode extends PlanNodeCommon {
   fit: { role: string; ratio: number; size: number; policy: 'explicit' | 'balance' };
   /** Encre du bloc au repos, coordonnées absolues (null : aucun glyphe dessiné). */
   ink: Box | null;
+  /** Lisibilité MESURÉE sur le fond réellement rencontré (P1.5). */
+  contrast: PlanTextContrast;
+}
+export interface PlanTextContrast {
+  category: 'large' | 'normal';
+  /** Seuil appliqué : plancher du moteur relevé par le style, ou dérogation explicite. */
+  required: number;
+  /** Plus petit contraste mesuré (quantile par glyphe, minimum sur glyphes, couleurs et frames). */
+  measured: number;
+  /** Où le minimum a été rencontré. */
+  worst: { run: string; line: number; frame: number };
+  /** Frames examinées (une seule si rien ne bouge sous le texte). */
+  frames: number;
+  override: { min_ratio: number; reason: string } | null;
 }
 export interface PlanShapeNode extends PlanNodeCommon {
   type: 'shape';
@@ -139,6 +162,8 @@ export interface PlanImageNode extends PlanNodeCommon {
   crop: Box;
   /** Point focal retenu, en pixels source (traçabilité). */
   focus: { x: number; y: number };
+  /** Origine des transformations de CONTENU (content_*), relative à la boîte (0..1) : le point focal projeté. */
+  content_origin: { x: number; y: number };
   /** Régions sémantiques projetées sur le canevas (coordonnées absolues, découpées à la boîte). */
   regions: Record<string, Box>;
   treatment: PlanImageTreatment;
@@ -182,6 +207,14 @@ export const PlanNodeSchema: z.ZodType<PlanNode> = z.lazy(() =>
         policy: z.enum(['explicit', 'balance']),
       }),
       ink: BoxSchema.nullable(),
+      contrast: z.strictObject({
+        category: z.enum(['large', 'normal']),
+        required: z.number().min(1).max(21),
+        measured: z.number().min(1).max(21),
+        worst: z.strictObject({ run: IdSchema, line: z.number().int().min(0), frame: Frame }),
+        frames: z.number().int().min(1),
+        override: z.strictObject({ min_ratio: z.number().min(1).max(21), reason: z.string().min(1) }).nullable(),
+      }),
     }),
     z.strictObject({
       ...nodeCommon,
@@ -198,6 +231,7 @@ export const PlanNodeSchema: z.ZodType<PlanNode> = z.lazy(() =>
       fit: z.enum(['cover', 'contain']),
       crop: BoxSchema,
       focus: z.strictObject({ x: Px, y: Px }),
+      content_origin: z.strictObject({ x: z.number(), y: z.number() }),
       regions: z.record(z.string(), BoxSchema),
       treatment: z.strictObject({
         grayscale: z.number().min(0).max(1),
@@ -247,6 +281,8 @@ export const RenderPlanSchema = z.strictObject({
   /** Style résolu utilisé : empreinte du ResolvedStyle et mode. */
   style: z.strictObject({ mode: z.enum(['creative', 'brand', 'series']), sha256: Sha256Schema }),
   compiler_version: SemVerSchema,
+  /** Promesse de la spec compilée (P1.5). */
+  composition: z.strictObject({ portability: z.enum(['portable', 'style_bound']) }),
   /** estimated : parole estimée (aucune voix réelle) ; aligned : voix alignée (P3) ; none : aucune ancre de parole. */
   timing_source: z.enum(['estimated', 'aligned', 'none']),
   reduced_motion: z.boolean(),
@@ -257,6 +293,12 @@ export const RenderPlanSchema = z.strictObject({
       z.strictObject({ instance: IdSchema, behavior: z.string(), version: SemVerSchema, scene: IdSchema, layer: IdSchema.nullable() }),
     ),
     /** Règles typographiques de locale, moteur de mesure, et replis de glyphes appliqués. */
+    /** Analyses de pixels utilisées (empreinte du document d'analyse) et règles de lisibilité. */
+    visual: z.strictObject({
+      readability_rules: z.string().min(1),
+      analysis_algorithm: SemVerSchema,
+      analyses: z.array(z.strictObject({ ref: IdSchema, decoder: z.string().min(1), sha256: Sha256Schema })),
+    }),
     typography: z.strictObject({
       rules: z.string().min(1),
       shaper: z.string().min(1),

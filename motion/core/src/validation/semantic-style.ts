@@ -13,6 +13,7 @@ import {
 import { BEHAVIORS } from '../motion/registry.ts';
 import type { BehaviorRegistry } from '../motion/registry.ts';
 import { contrastRatio } from '../style/contrast.ts';
+import { CONTRAST_FLOORS } from '../visual/contrast.ts';
 import { IssueCollector } from './issues.ts';
 import type { ValidationIssue } from './issues.ts';
 
@@ -138,6 +139,21 @@ export function validateStyleSemantics(style: CreativeStyleProfile, prefix = '',
   for (const name of ['enter_travel', 'exit_travel'] as const) {
     if (style.space[mp.amplitude[name]] === undefined) {
       c.error('motion.amplitude_unknown', at(`motion_personality.amplitude.${name}`), `espacement « ${mp.amplitude[name]} » absent`);
+    }
+  }
+  const travel = mp.amplitude.image_pan_travel;
+  if (travel !== null && style.space[travel] === undefined) {
+    c.error('motion.amplitude_unknown', at('motion_personality.amplitude.image_pan_travel'), `espacement « ${travel} » absent`);
+  }
+  // P1.5 : les planchers de contraste du moteur ne s'abaissent jamais.
+  const minContrast = style.rhythm_personality.reading.min_contrast;
+  for (const kind of ['large', 'normal'] as const) {
+    if (minContrast[kind] < CONTRAST_FLOORS[kind]) {
+      c.error(
+        'style.contrast_floor',
+        at(`rhythm_personality.reading.min_contrast.${kind}`),
+        `contraste minimal ${minContrast[kind]}:1 sous le plancher du moteur ${CONTRAST_FLOORS[kind]}:1 (${kind === 'large' ? 'grand texte' : 'texte courant'})`,
+      );
     }
   }
   const hold = mp.timing.hold;

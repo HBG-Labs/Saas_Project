@@ -1,0 +1,746 @@
+{
+  "schema": "motion-scene-spec",
+  "schema_version": "0.4.0",
+  "spec_id": "moon_portable",
+  "revision": 1,
+  "parent_revision": null,
+  "created_from": {
+    "intent_id": "moon_portable",
+    "builder_version": "0.0.0"
+  },
+  "locale": "fr-FR",
+  "composition": {
+    "portability": "portable"
+  },
+  "style_binding": {
+    "kind": "style",
+    "id": "fixture_ink",
+    "version": "1.4.0"
+  },
+  "format": {
+    "preset": "vertical_9x16",
+    "platform_safe_zones": [
+      "tiktok",
+      "reels"
+    ]
+  },
+  "system": {
+    "id": "kinetic_statement",
+    "version": "0.1.0"
+  },
+  "rhythm": {
+    "curve": "cold_open_interruption",
+    "sections": [
+      {
+        "id": "sec_static",
+        "phase": "CALM",
+        "scenes": [
+          "sc_static"
+        ]
+      },
+      {
+        "id": "sec_push",
+        "phase": "BUILD",
+        "scenes": [
+          "sc_push"
+        ]
+      },
+      {
+        "id": "sec_pan",
+        "phase": "INTERRUPTION",
+        "scenes": [
+          "sc_pan"
+        ]
+      },
+      {
+        "id": "sec_reveal",
+        "phase": "REVEAL",
+        "scenes": [
+          "sc_reveal"
+        ]
+      }
+    ]
+  },
+  "voice": {
+    "direction": {
+      "persona": "narrator",
+      "intention": "calme, puis inquiétude",
+      "tempo": "measured"
+    },
+    "segments": [
+      {
+        "id": "vo_static",
+        "text": "Chaque nuit, la Lune veille.",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "veille"
+        ]
+      },
+      {
+        "id": "vo_push",
+        "text": "Elle règle nos marées.",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "marées"
+        ]
+      },
+      {
+        "id": "vo_pan",
+        "text": "Sans elle, tout vacille.",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "vacille"
+        ]
+      },
+      {
+        "id": "vo_reveal",
+        "text": "Et si elle disparaissait ?",
+        "gap_after": {
+          "beats": 1
+        },
+        "emphasis": [
+          "disparaissait"
+        ]
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "id": "sc_static",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "hook",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_static"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "img_static",
+          "primitive": "image",
+          "asset": "night_moon",
+          "fit": "cover",
+          "bleed": true,
+          "focus": {
+            "region": "moon"
+          },
+          "behaviors": []
+        },
+        {
+          "id": "tx_static",
+          "primitive": "text",
+          "region": {
+            "layer": "img_static",
+            "name": "sky",
+            "align_x": "start",
+            "align_y": "center"
+          },
+          "content": {
+            "runs": [
+              {
+                "id": "r_static_1",
+                "text": "Chaque nuit, la Lune veille."
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.l",
+            "color": "color.text.primary",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_static_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_static_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "id": "ev_static_open",
+          "kind": "INTERRUPTION",
+          "at": {
+            "event": "scene.start"
+          }
+        }
+      ],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      },
+      "transition_out": {
+        "behavior": "CUT",
+        "version": "1.0.0",
+        "to": "sc_push"
+      }
+    },
+    {
+      "id": "sc_push",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "reveal",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_push"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "img_push",
+          "primitive": "image",
+          "asset": "night_moon",
+          "fit": "cover",
+          "bleed": true,
+          "focus": {
+            "region": "moon"
+          },
+          "behaviors": [
+            {
+              "id": "bh_push",
+              "behavior": "IMAGE_PUSH_IN",
+              "version": "1.0.0",
+              "at": {
+                "event": "scene.start"
+              },
+              "duration": {
+                "until": "scene_end"
+              }
+            }
+          ]
+        },
+        {
+          "id": "tx_push",
+          "primitive": "text",
+          "region": {
+            "layer": "img_push",
+            "name": "sky",
+            "align_x": "start",
+            "align_y": "center"
+          },
+          "content": {
+            "runs": [
+              {
+                "id": "r_push_1",
+                "text": "Elle règle nos marées."
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.l",
+            "color": "color.text.primary",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_push_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_push_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        }
+      ],
+      "events": [],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      },
+      "transition_out": {
+        "behavior": "CUT",
+        "version": "1.0.0",
+        "to": "sc_pan"
+      }
+    },
+    {
+      "id": "sc_pan",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "reveal",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_pan"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "msk_pan",
+          "primitive": "mask",
+          "area": {
+            "x": [
+              0.15,
+              0.85
+            ],
+            "y": [
+              0,
+              0.27
+            ]
+          },
+          "clip": {
+            "shape": "ellipse"
+          },
+          "children": [
+            {
+              "id": "img_pan",
+              "primitive": "image",
+              "asset": "night_moon",
+              "fit": "cover",
+              "focus": {
+                "region": "moon",
+                "fill": true
+              },
+              "behaviors": [
+                {
+                  "id": "bh_pan",
+                  "behavior": "IMAGE_PAN",
+                  "version": "1.0.0",
+                  "variant": "right",
+                  "at": {
+                    "event": "scene.start"
+                  },
+                  "duration": {
+                    "until": "scene_end"
+                  }
+                }
+              ]
+            }
+          ],
+          "behaviors": [
+            {
+              "id": "bh_pan_mask_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "tx_pan",
+          "primitive": "text",
+          "slot": "statement.primary",
+          "content": {
+            "runs": [
+              {
+                "id": "r_pan_1",
+                "text": "Sans elle, tout "
+              },
+              {
+                "id": "r_pan_2",
+                "text": "vacille.",
+                "role": "accent"
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.m",
+            "color": "color.text.primary",
+            "accent_color": "color.accent",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_pan_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_pan_accent",
+              "behavior": "ACCENT_WORD",
+              "version": "1.0.0",
+              "variant": "color_scale",
+              "target": {
+                "run": "r_pan_2"
+              },
+              "at": {
+                "voice_word": {
+                  "segment": "vo_pan",
+                  "match": "vacille"
+                },
+                "offset": {
+                  "beats": -0.25
+                }
+              }
+            },
+            {
+              "id": "bh_pan_settle",
+              "behavior": "SETTLE",
+              "version": "1.0.0",
+              "target": {
+                "run": "r_pan_2"
+              },
+              "at": {
+                "after": "bh_pan_accent"
+              }
+            },
+            {
+              "id": "bh_pan_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "ln_pan",
+          "primitive": "path",
+          "geometry": {
+            "area_points": [
+              {
+                "x": 0.02,
+                "y": 0.8
+              },
+              {
+                "x": 0.2,
+                "y": 0.83
+              },
+              {
+                "x": 0.38,
+                "y": 0.8
+              },
+              {
+                "x": 0.56,
+                "y": 0.83
+              },
+              {
+                "x": 0.74,
+                "y": 0.8
+              }
+            ]
+          },
+          "style": {
+            "stroke": "color.accent",
+            "weight": "stroke.emphasis",
+            "cap": "round"
+          },
+          "behaviors": [
+            {
+              "id": "bh_pan_draw",
+              "behavior": "DRAW_PATH",
+              "version": "1.0.0",
+              "at": {
+                "after": "bh_pan_settle"
+              }
+            },
+            {
+              "id": "bh_pan_line_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "with": "bh_pan_out"
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "id": "ev_pan_impact",
+          "kind": "IMPACT",
+          "at": {
+            "with": "bh_pan_accent"
+          }
+        }
+      ],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      },
+      "transition_out": {
+        "behavior": "CUT",
+        "version": "1.0.0",
+        "to": "sc_reveal"
+      }
+    },
+    {
+      "id": "sc_reveal",
+      "pattern": {
+        "id": "statement.interrupt",
+        "version": "0.2.0",
+        "variation": {
+          "layout_variant": "stack_start",
+          "motion_variant": "rise_reveal",
+          "energy": "medium",
+          "hierarchy_variant": "accent_last"
+        }
+      },
+      "purpose": "reveal",
+      "locks": [],
+      "timing": {
+        "anchor": {
+          "voice_segments": [
+            "vo_reveal"
+          ]
+        },
+        "lead_in": {
+          "beats": 0
+        },
+        "tail": {
+          "beats": 0
+        },
+        "min_hold": "reading"
+      },
+      "background": {
+        "fill": "color.surface.primary"
+      },
+      "layers": [
+        {
+          "id": "img_reveal",
+          "primitive": "image",
+          "asset": "night_moon",
+          "fit": "cover",
+          "area": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              0,
+              0.27
+            ]
+          },
+          "focus": {
+            "region": "moon",
+            "fill": true
+          },
+          "behaviors": [
+            {
+              "id": "bh_reveal",
+              "behavior": "IMAGE_REVEAL",
+              "version": "1.0.0",
+              "variant": "from_bottom",
+              "at": {
+                "event": "scene.start"
+              }
+            },
+            {
+              "id": "bh_reveal_img_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "fade",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "tx_reveal",
+          "primitive": "text",
+          "slot": "statement.primary",
+          "content": {
+            "runs": [
+              {
+                "id": "r_reveal_1",
+                "text": "Et si elle "
+              },
+              {
+                "id": "r_reveal_2",
+                "text": "disparaissait",
+                "role": "accent"
+              },
+              {
+                "id": "r_reveal_3",
+                "text": " ?"
+              }
+            ],
+            "break_policy": "balance"
+          },
+          "style": {
+            "type": "type.display.m",
+            "color": "color.text.primary",
+            "accent_color": "color.accent",
+            "align": "start"
+          },
+          "behaviors": [
+            {
+              "id": "bh_reveal_in",
+              "behavior": "REVEAL_TEXT",
+              "version": "1.0.0",
+              "variant": "rise",
+              "at": {
+                "after": "bh_reveal"
+              }
+            },
+            {
+              "id": "bh_reveal_accent",
+              "behavior": "ACCENT_WORD",
+              "version": "1.0.0",
+              "variant": "color_scale",
+              "target": {
+                "run": "r_reveal_2"
+              },
+              "at": {
+                "voice_word": {
+                  "segment": "vo_reveal",
+                  "match": "disparaissait"
+                },
+                "offset": {
+                  "beats": -0.25
+                }
+              }
+            },
+            {
+              "id": "bh_reveal_settle",
+              "behavior": "SETTLE",
+              "version": "1.0.0",
+              "target": {
+                "run": "r_reveal_2"
+              },
+              "at": {
+                "after": "bh_reveal_accent"
+              }
+            },
+            {
+              "id": "bh_reveal_out",
+              "behavior": "EXIT_CLEAR",
+              "version": "1.1.0",
+              "variant": "lift",
+              "at": {
+                "before_next": true
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "id": "ev_reveal_impact",
+          "kind": "IMPACT",
+          "at": {
+            "with": "bh_reveal_accent"
+          }
+        }
+      ],
+      "sound": {
+        "derive_from_events": true,
+        "overrides": []
+      },
+      "subtitles": {
+        "mode": "off",
+        "reason": "le texte à l'écran est la voix"
+      }
+    }
+  ]
+}

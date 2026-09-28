@@ -33,7 +33,14 @@ export const MOTION_SPEC_SCHEMA = 'motion-scene-spec';
  * 0.3.0 : placement dans une région sémantique d'image (`region`), image plein
  * cadre (`bleed`). Champs facultatifs : migration depuis 0.2.0 sans changement.
  */
-export const MOTION_SPEC_VERSION = '0.3.0';
+/*
+ * 0.4.0 (P1.5 — Visual Integrity & Image Motion) : portabilité DÉCLARÉE
+ * (`composition.portability`), placements portables en fractions de la zone
+ * utile (`area`, `area_points`), dérogation de contraste explicite et tracée,
+ * durée `{ until: 'scene_end' }` des mouvements d'image. Migration depuis 0.3.0 :
+ * `style_bound` (jamais de promesse de portabilité inférée).
+ */
+export const MOTION_SPEC_VERSION = '0.4.0';
 
 const ParamValueSchema = z.union([z.number().finite(), z.string().max(64), z.boolean()]);
 
@@ -52,7 +59,8 @@ export const BehaviorInstanceSchema = z.strictObject({
     })
     .optional(),
   at: AnchorSchema,
-  duration: DurationSchema.optional(),
+  /** `{ until: 'scene_end' }` (P1.5) : résolue par le compilateur, ne rallonge jamais la scène. */
+  duration: z.union([DurationSchema, z.strictObject({ until: z.literal('scene_end') })]).optional(),
   continues_in: z.strictObject({ scene: IdSchema, layer: IdSchema }).optional(),
 });
 export type BehaviorInstance = z.infer<typeof BehaviorInstanceSchema>;
@@ -74,6 +82,17 @@ export type TextRun = z.infer<typeof TextRunSchema>;
  * (ex. le « ciel » d'une photo, pour y poser un titre). La région vient des
  * métadonnées de l'asset ; le compilateur la projette selon le recadrage réel.
  */
+/**
+ * Placement PORTABLE (P1.5) : fractions de la zone utile (marges du style ∩
+ * zones sûres), indépendantes de la grille du style. Jamais calé sur la grille.
+ */
+export interface AreaPlacement {
+  x: [number, number];
+  y: [number, number];
+  align_x?: 'start' | 'center' | 'end' | undefined;
+  align_y?: 'start' | 'center' | 'end' | undefined;
+}
+
 export interface RegionPlacement {
   layer: string;
   name: string;
@@ -86,12 +105,18 @@ interface LayerCommon {
   slot?: string | undefined;
   placement?: GridPlacement | undefined;
   region?: RegionPlacement | undefined;
+  area?: AreaPlacement | undefined;
   opacity?: number | undefined;
   behaviors: BehaviorInstance[];
 }
 
 export interface TextLayer extends LayerCommon {
   primitive: 'text';
+  /**
+   * Dérogation EXPLICITE au contraste minimal (P1.5) : jamais implicite, toujours
+   * motivée, recopiée dans le Render Plan et signalée à chaque compilation.
+   */
+  contrast_override?: { min_ratio: number; reason: string } | undefined;
   content: { runs: TextRun[]; break_policy: 'explicit' | 'balance' };
   style: {
     type: string;
@@ -126,7 +151,9 @@ export interface PathLayer extends LayerCommon {
   primitive: 'path';
   geometry:
     | { motif: string }
-    | { points: { x: number; y: number }[]; closed?: boolean | undefined };
+    | { points: { x: number; y: number }[]; closed?: boolean | undefined }
+    /** Points en fractions de la zone utile (0..1) : portable (P1.5). */
+    | { area_points: { x: number; y: number }[]; closed?: boolean | undefined };
   style: { stroke: string; weight: string; cap?: 'butt' | 'round' | 'square' | undefined };
 }
 
@@ -154,6 +181,15 @@ const layerCommon = {
   region: z
     .strictObject({ layer: IdSchema, name: SlotNameSchema, align_x: AlignSchema.optional(), align_y: AlignSchema.optional() })
     .optional(),
+  area: z
+    .strictObject({
+      x: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]),
+      y: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]),
+      align_x: AlignSchema.optional(),
+      align_y: AlignSchema.optional(),
+    })
+    .refine((a) => a.x[0] < a.x[1] && a.y[0] < a.y[1], 'zone vide ou inversée')
+    .optional(),
   opacity: z.number().min(0).max(1).optional(),
   behaviors: z.array(BehaviorInstanceSchema).max(12),
 };
@@ -172,6 +208,7 @@ const TextLayerSchema = z.strictObject({
     muted_color: ColorTokenSchema.optional(),
     align: z.enum(['start', 'center', 'end']).optional(),
   }),
+  contrast_override: z.strictObject({ min_ratio: z.number().min(1).max(21), reason: z.string().min(12).max(300) }).optional(),
 });
 
 const ShapeLayerSchema = z.strictObject({
@@ -209,6 +246,13 @@ const PathLayerSchema = z.strictObject({
       // Points en unités de grille (colonnes, rangées), jamais en pixels.
       points: z
         .array(z.strictObject({ x: z.number().min(0).max(48), y: z.number().min(0).max(96) }))
+        .min(2)
+        .max(64),
+      closed: z.boolean().optional(),
+    }),
+    z.strictObject({
+      area_points: z
+        .array(z.strictObject({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }))
         .min(2)
         .max(64),
       closed: z.boolean().optional(),
@@ -328,6 +372,14 @@ export const MotionSceneSpecSchema = z.strictObject({
     builder_version: SemVerSchema,
   }),
   locale: LocaleSchema,
+  /**
+   * P1.5 : promesse de la composition. `portable` : n'utilise que des placements
+   * indépendants du style (slots de pattern, régions d'image, zones `area`,
+   * `area_points`, enfants de masque, plein cadre) et peut être rendue avec
+   * n'importe quel style par substitution explicite. `style_bound` : peut
+   * utiliser la grille de SON style, et refuse toute substitution.
+   */
+  composition: z.strictObject({ portability: z.enum(['portable', 'style_bound']) }),
   /**
    * Style prévu pour cette spec. Le compilateur reçoit un ResolvedStyle : s'il
    * ne correspond pas à cette liaison, c'est une substitution explicite,

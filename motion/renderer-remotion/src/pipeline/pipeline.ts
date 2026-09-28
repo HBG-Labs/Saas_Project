@@ -23,6 +23,7 @@ import {
 } from '@motion-engine/core';
 import type {
   AudioPlan,
+  CompileOutput,
   MotionSceneSpec,
   RenderPlan,
   ReproducibilityManifest,
@@ -62,6 +63,8 @@ export interface PipelineRequest {
   reducedMotion?: boolean;
   /** Dossiers d'assets (`*.asset.json` + images) ; chaque image est vérifiée par empreinte et dimensions. */
   assetDirs?: string[];
+  /** Cache des analyses de pixels (P1.5), adressé par contenu : optimisation pure, résultat identique. */
+  analysisCacheDir?: string;
   /** Date de création du manifeste, fournie par l'appelant (le pipeline ne lit pas l'horloge pour décider). */
   createdAt: string;
 }
@@ -75,6 +78,10 @@ export interface PipelineResult {
   manifest: ReproducibilityManifest;
   stats: RenderStats | null;
   files: Record<string, string>;
+  /** Encre réelle des glyphes (P1.5), pour confronter la métrique de contraste à un rendu réel. */
+  textSamples: CompileOutput['textSamples'];
+  /** Analyse des assets (P1.5) : durée et état du cache par asset. */
+  analysis: { ms: number; cache: Record<string, string> };
 }
 
 function unwrap<T>(what: string, result: ValidationResult<T>): T {
@@ -138,7 +145,12 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
   const { resolved, styleDir } = loadStyleSource(request.style);
   const presets = loadPlatformPresetsFile(request.presetsFile);
   const patterns = loadPatternPacks(...request.patternDirs);
-  const assets = loadAssetDirs(request.assetDirs ?? [], request.style.libraryRoot ? { libraryRoot: request.style.libraryRoot } : {});
+  const analysisStarted = performance.now();
+  const assets = loadAssetDirs(request.assetDirs ?? [], {
+    ...(request.style.libraryRoot ? { libraryRoot: request.style.libraryRoot } : {}),
+    ...(request.analysisCacheDir ? { cacheDir: request.analysisCacheDir } : {}),
+  });
+  const analysisMs = performance.now() - analysisStarted;
   const shaper = createStyleShaper(resolved.style, styleDir, request.style.libraryRoot ? { libraryRoot: request.style.libraryRoot } : {});
 
   let spec: MotionSceneSpec;
@@ -164,6 +176,7 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
       reducedMotion: request.reducedMotion ?? false,
       shaper,
       assets: assets.registry,
+      analyses: assets.analyses,
     }),
   );
 
@@ -213,5 +226,16 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
   });
   write('manifest.json', manifest);
 
-  return { spec, resolved, plan: compiled.plan, audio: compiled.audio, subtitles: compiled.subtitles, manifest, stats, files };
+  return {
+    spec,
+    resolved,
+    plan: compiled.plan,
+    audio: compiled.audio,
+    subtitles: compiled.subtitles,
+    manifest,
+    stats,
+    files,
+    textSamples: compiled.textSamples,
+    analysis: { ms: analysisMs, cache: Object.fromEntries(assets.cache) },
+  };
 }

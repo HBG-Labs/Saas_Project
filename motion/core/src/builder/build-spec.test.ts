@@ -32,7 +32,7 @@ function flatten(value: unknown, path = ''): { path: string; key: string; value:
 describe('SpecBuilder', () => {
   it('produit une spec valide, liée au style résolu', () => {
     const spec = mustBuild(ink);
-    expect(spec.style_binding).toEqual({ kind: 'style', id: 'fixture_ink', version: '1.3.0' });
+    expect(spec.style_binding).toEqual({ kind: 'style', id: 'fixture_ink', version: '1.4.0' });
     expect(spec.scenes.map((s) => s.id)).toEqual(['sc_b1', 'sc_b2']);
     expect(validateSpec(spec, ink, { patterns: loadFixturePatterns() }).ok).toBe(true);
   });

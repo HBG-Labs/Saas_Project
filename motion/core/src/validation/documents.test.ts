@@ -85,14 +85,21 @@ describe('versionnement', () => {
     cool.image_treatment.grade = 'cool';
     expect(codes(validateStyle(cool))).toContain('image.tint_missing');
   });
-  it('migre une spec 0.2.0 en 0.3.0 sans rien transformer', () => {
+  it('migre une spec 0.2.0 jusqu’à 0.4.0 : rien de transformé, sauf la portabilité, « style_bound » (jamais inférée)', () => {
     const doc = clone(readFixture('moon.spec.json'));
     doc.schema_version = '0.2.0';
+    delete doc.composition;
     const read = readVersioned('motion-scene-spec', doc);
     expect(read.ok && read.migratedFrom).toBe('0.2.0');
     const { schema_version: _a, ...before } = doc;
-    const { schema_version: _b, ...after } = read.ok ? (read.value as Record<string, unknown>) : {};
+    const { schema_version: _b, composition, ...after } = read.ok ? (read.value as Record<string, unknown>) : {};
     expect(after).toEqual(before);
+    expect(composition).toEqual({ portability: 'style_bound' });
+  });
+  it('la spec visuelle P1.4 (0.3.0, grille) devient « style_bound » : elle n’est plus une preuve de portabilité', () => {
+    const read = readVersioned('motion-scene-spec', readFixture('moon.visual.spec.json'));
+    expect(read.ok && read.migratedFrom).toBe('0.3.0');
+    expect(read.ok && read.value.composition).toEqual({ portability: 'style_bound' });
   });
   it('refuse un document sans version', () => {
     const doc = clone(readFixture('moon.intent.json'));

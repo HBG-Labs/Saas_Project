@@ -6,7 +6,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { bundle } from '@remotion/bundler';
-import { ensureBrowser, openBrowser, renderMedia, selectComposition } from '@remotion/renderer';
+import { ensureBrowser, openBrowser, renderMedia, renderStill, selectComposition } from '@remotion/renderer';
 
 import type { RenderPlan } from '@motion-engine/core';
 
@@ -151,6 +151,35 @@ export interface RenderRequest {
   audio: CompositionAudio | null;
   profile: RenderProfile;
   outputFile: string;
+}
+
+/**
+ * Image fixe SANS PERTE (PNG) d'une frame du plan : sert à confronter les
+ * mesures du cœur (contraste, fond composité) aux pixels réellement dessinés
+ * par Chromium. Même navigateur, même composition, même nettoyage de profil.
+ */
+export async function renderPlanStill(request: Omit<RenderRequest, 'profile'> & { frame: number }): Promise<void> {
+  const bundled = await bundleComposition();
+  await prepareBrowser();
+  const inputProps: PlanVideoProps = { plan: request.plan, fonts: request.fonts, images: request.images, audio: request.audio };
+  const own = await openOwnBrowser();
+  try {
+    const composition = await selectComposition({ serveUrl: bundled.location, id: COMPOSITION_ID, inputProps, logLevel: 'error', puppeteerInstance: own.browser });
+    await renderStill({
+      composition,
+      serveUrl: bundled.location,
+      frame: request.frame,
+      output: request.outputFile,
+      imageFormat: 'png',
+      inputProps,
+      logLevel: 'error',
+      licenseKey: null,
+      puppeteerInstance: own.browser,
+    });
+  } finally {
+    await own.browser.close({ silent: true });
+    removeProfiles(own.profileDirs);
+  }
 }
 
 export async function renderPlanToMp4(request: RenderRequest): Promise<RenderStats> {

@@ -11,6 +11,20 @@ export interface NodeState {
   opacity: number;
   transform: string;
   transformOrigin: string;
+  /** Rognage du nœud entier (pistes clip_* sans cible) ; `undefined` si rien n'est rogné. */
+  clipPath: string | undefined;
+}
+
+/** Rognage en fractions de chaque bord, traduit en `inset()` : aucune décision, une conversion. */
+function insetOf(t: readonly Track[], frame: number, fps: number, target: { line?: number } = {}): string | undefined {
+  const clip = {
+    top: num(t, 'clip_top', frame, fps, 0, target),
+    right: num(t, 'clip_right', frame, fps, 0, target),
+    bottom: num(t, 'clip_bottom', frame, fps, 0, target),
+    left: num(t, 'clip_left', frame, fps, 0, target),
+  };
+  const clipped = clip.top > 0 || clip.right > 0 || clip.bottom > 0 || clip.left > 0;
+  return clipped ? `inset(${clip.top * 100}% ${clip.right * 100}% ${clip.bottom * 100}% ${clip.left * 100}%)` : undefined;
 }
 
 /** Transformations au niveau du nœud (pistes sans cible). */
@@ -25,7 +39,20 @@ export function nodeState(node: PlanNode, frame: number, fps: number): NodeState
     opacity,
     transform: `translate(${tx}px, ${ty}px) rotate(${rotate}deg) scale(${scale})`,
     transformOrigin: `${node.origin.x * 100}% ${node.origin.y * 100}%`,
+    clipPath: insetOf(t, frame, fps),
   };
+}
+
+/**
+ * Transformation du CONTENU d'une image dans sa boîte (pistes content_*), autour
+ * de l'origine décidée par le compilateur. La boîte ne bouge pas et rogne.
+ */
+export function imageContentState(node: PlanImageNode, frame: number, fps: number): { transform: string; transformOrigin: string } {
+  const t = node.tracks;
+  const s = num(t, 'content_scale', frame, fps, 1);
+  const x = num(t, 'content_x', frame, fps, 0);
+  const y = num(t, 'content_y', frame, fps, 0);
+  return { transform: `translate(${x}px, ${y}px) scale(${s})`, transformOrigin: `${node.content_origin.x * 100}% ${node.content_origin.y * 100}%` };
 }
 
 export interface LineState {
@@ -39,20 +66,11 @@ export interface LineState {
 export function lineState(node: PlanNode, line: number, frame: number, fps: number): LineState {
   const t = node.tracks;
   const target = { line };
-  const clip = {
-    top: num(t, 'clip_top', frame, fps, 0, target),
-    right: num(t, 'clip_right', frame, fps, 0, target),
-    bottom: num(t, 'clip_bottom', frame, fps, 0, target),
-    left: num(t, 'clip_left', frame, fps, 0, target),
-  };
-  const clipped = clip.top > 0 || clip.right > 0 || clip.bottom > 0 || clip.left > 0;
   return {
     opacity: num(t, 'opacity', frame, fps, 1, target),
     translateX: num(t, 'translate_x', frame, fps, 0, target),
     translateY: num(t, 'translate_y', frame, fps, 0, target),
-    clipPath: clipped
-      ? `inset(${clip.top * 100}% ${clip.right * 100}% ${clip.bottom * 100}% ${clip.left * 100}%)`
-      : undefined,
+    clipPath: insetOf(t, frame, fps, target),
   };
 }
 

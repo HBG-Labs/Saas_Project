@@ -27,6 +27,12 @@
       "sha256": "92b6732b61bf07ba559a3ca79bc408ab759c54a93a391d517a14bf6512712bbd"
     },
     {
+      "kind": "brand-motion-profile",
+      "id": "rezo360",
+      "version": "1.4.0",
+      "sha256": "640db8a291b507ad32b798abcc2aa4e073a999c4fd1a8c88d67a631497afd3ec"
+    },
+    {
       "kind": "creative-style-profile",
       "id": "control_nocturne",
       "version": "1.0.0",
@@ -52,6 +58,12 @@
     },
     {
       "kind": "creative-style-profile",
+      "id": "control_nocturne",
+      "version": "1.4.0",
+      "sha256": "3432a7df998f81a6175d20bfc02d635e39b5d90c079e4ebe1964b13bc099b5b5"
+    },
+    {
+      "kind": "creative-style-profile",
       "id": "rezo360_style",
       "version": "1.0.0",
       "sha256": "88180b7dbf4e03360be41c6050ed812ae5d83fbf7b049f9752e181599a42924a"
@@ -73,6 +85,12 @@
       "id": "rezo360_style",
       "version": "1.3.0",
       "sha256": "2a305d89a7ec8984a410256f396558f85b3f8275f3dca3fd418f6b76be90ea88"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "rezo360_style",
+      "version": "1.4.0",
+      "sha256": "f1b37a4847364f51513751aaff3a643c550602c39c0cad570a19b5eaf29e9d48"
     },
     {
       "kind": "pattern-definition",

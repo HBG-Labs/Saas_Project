@@ -19,12 +19,21 @@ Solde : nouvelle version du profil, mesurée et comparée à 1.2.0.
 Calibration `control_nocturne` validée comme baseline (27/09/2026). Toute
 évolution passe par une nouvelle version du profil, comparable à celle-ci.
 
-### Contraste texte / image non vérifié (P1.4)
+### Contraste texte / image — SOLDÉ en P1.5 (plancher technique uniquement)
 
-Le moteur vérifie les contrastes de palette du style, pas celui d'un texte posé
-sur une image : il ne lit pas les pixels. Visible avec SIGNAL sur la spec
-visuelle (texte noir sur le ciel assombri par le voile). Solde : luminance par
-région déclarée dans l'asset (ou mesurée à l'import), puis contrôle au compilateur.
+Mesuré dans les pixels, sous l'encre réelle, après traitement (voir
+`docs/P1.5-visual-integrity.md`). Reste créatif : SIGNAL passe à 3,25:1 sur
+l'image (plancher 3:1) — techniquement valide, pas un contraste « agence » ; son
+accent rouge sur l'image est refusé (1,16:1).
+
+### Limites connues de la mesure de contraste (P1.5)
+
+- Cellules d'analyse de 4 px : écart de luminance jusqu'à ~0,065 sur les bords nets
+  (lune, cratères) ; écart moyen ≤ 0,0015. Métrique complète : ≤ 0,16 % mesuré.
+- Grain du style non modélisé (ni rendu) ; coins arrondis d'un masque rectangulaire
+  ignorés ; opacité de groupe approchée (exacte à opacité 1).
+- Texte évalué à sa position de repos ; les frames d'entrée et de sortie du texte
+  ne sont pas examinées.
 
 ### Espace fine insécable absente des polices (P1.4)
 

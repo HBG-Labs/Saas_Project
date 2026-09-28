@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PlanImageNode, PlanMaskNode, PlanTextNode, RenderPlan } from '@motion-engine/core/runtime';
 
-import { imageFilter, imageGeometry, lineState, maskRadius, nodeState, pathProgress, runState, sceneAt, unsupportedNodes } from './frame-state.ts';
+import { imageContentState, imageFilter, imageGeometry, lineState, maskRadius, nodeState, pathProgress, runState, sceneAt, unsupportedNodes } from './frame-state.ts';
 
 // Plan écrit à la main : le renderer se teste sans le compilateur ni aucun style.
 const text: PlanTextNode = {
@@ -18,6 +18,7 @@ const text: PlanTextNode = {
   ],
   fit: { role: 'display.m', ratio: 1, size: 40, policy: 'explicit' },
   ink: null,
+  contrast: { category: 'large', required: 3, measured: 12, worst: { run: 'r0', line: 0, frame: 0 }, frames: 1, override: null },
   tracks: [
     { property: 'clip_top', target: { line: 0 }, keys: [{ frame: 0, value: 1 }, { frame: 10, value: 0 }], sources: ['bh_in'] },
     { property: 'translate_y', target: { line: 0 }, keys: [{ frame: 0, value: 20 }, { frame: 10, value: 0 }], sources: ['bh_in'] },
@@ -29,15 +30,17 @@ const text: PlanTextNode = {
 
 const plan: RenderPlan = {
   schema: 'render-plan',
-  schema_version: '0.4.0',
+  schema_version: '0.5.0',
   spec: { spec_id: 's', revision: 1, sha256: 'a'.repeat(64) },
   style: { mode: 'creative', sha256: 'b'.repeat(64) },
-  compiler_version: '0.4.0',
+  compiler_version: '0.5.0',
+  composition: { portability: 'portable' },
   timing_source: 'none',
   reduced_motion: false,
   provenance: {
-    behavior_registry: { version: '1.1.0', sha256: 'c'.repeat(64) },
+    behavior_registry: { version: '1.2.0', sha256: 'c'.repeat(64) },
     behaviors: [],
+    visual: { readability_rules: '1.0.0', analysis_algorithm: '1.0.0', analyses: [] },
     typography: { rules: 'none@1.0.0', shaper: 'test', substitutions: [] },
   },
   canvas: { width: 540, height: 960, fps: 30, duration_frames: 60, safe_area: { x: 30, y: 60, w: 480, h: 780 } },
@@ -119,6 +122,7 @@ const image: PlanImageNode = {
   fit: 'cover',
   crop: { x: 50, y: 100, w: 600, h: 300 },
   focus: { x: 350, y: 250 },
+  content_origin: { x: 0.5, y: 0.5 },
   regions: {},
   treatment: { grayscale: 1, contrast: 1.2, tint: null },
 };
@@ -137,6 +141,27 @@ describe('images et masques : pure projection du plan', () => {
   it('projette le recadrage du plan dans la boîte, sans décider du cadrage', () => {
     // Recadrage 600×300 dessiné en 300×150 : facteur 0,5 ; origine décalée de −crop.
     expect(imageGeometry(image, { width: 1000, height: 800 })).toEqual({ left: -25, top: -50, width: 500, height: 400 });
+  });
+
+  it('P1.5 : transforme le CONTENU autour de l’origine du plan, sans décider ni trajectoire ni recadrage', () => {
+    const moving: PlanImageNode = {
+      ...image,
+      content_origin: { x: 0.25, y: 0.75 },
+      tracks: [
+        { property: 'content_scale', keys: [{ frame: 0, value: 1 }, { frame: 10, value: 1.1 }], sources: ['bh'] },
+        { property: 'content_x', keys: [{ frame: 0, value: 0 }, { frame: 10, value: -8 }], sources: ['bh'] },
+      ],
+    };
+    expect(imageContentState(moving, 0, 30)).toEqual({ transform: 'translate(0px, 0px) scale(1)', transformOrigin: '25% 75%' });
+    expect(imageContentState(moving, 10, 30)).toEqual({ transform: 'translate(-8px, 0px) scale(1.1)', transformOrigin: '25% 75%' });
+  });
+
+  it('P1.5 : rognage du nœud entier (clip_*) traduit en inset(), absent au repos', () => {
+    const revealing: PlanImageNode = { ...image, tracks: [{ property: 'clip_top', keys: [{ frame: 0, value: 1 }, { frame: 10, value: 0 }], sources: ['bh'] }] };
+    expect(nodeState(revealing, 0, 30).clipPath).toBe('inset(100% 0% 0% 0%)');
+    expect(nodeState(revealing, 5, 30).clipPath).toBe('inset(50% 0% 0% 0%)');
+    expect(nodeState(revealing, 10, 30).clipPath).toBeUndefined();
+    expect(nodeState(image, 0, 30).clipPath).toBeUndefined();
   });
 
   it('traduit le traitement résolu en filtre, et la forme du masque en rayon', () => {

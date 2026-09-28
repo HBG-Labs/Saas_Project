@@ -2,13 +2,13 @@
   "schema": "brand-motion-profile",
   "schema_version": "0.1.0",
   "id": "fixture_brand",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "name": "Atelier Boréal (marque fictive de test)",
   "style": {
     "ref": {
       "id": "fixture_ink",
-      "version": "1.3.0",
-      "sha256": "8b350764e4ec9c7ddb68318511e5a010c6118fd1ee0e9dde535ea3239fc9e98e"
+      "version": "1.4.0",
+      "sha256": "906a846046fd95c9562c212ff295b2d6071f1b82881aeceb489c32b49e378d89"
     },
     "src": "pack:fixture_ink.style.json"
   },

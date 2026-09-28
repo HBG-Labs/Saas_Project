@@ -4,7 +4,7 @@ import { Img } from 'remotion';
 
 import type { PlanImageNode, PlanMaskNode, PlanNode, PlanPathNode, PlanShapeNode, PlanTextNode, RenderPlan } from '@motion-engine/core/runtime';
 
-import { imageFilter, imageGeometry, lineState, maskRadius, nodeState, pathProgress, runState } from '../frame-state.ts';
+import { imageContentState, imageFilter, imageGeometry, lineState, maskRadius, nodeState, pathProgress, runState } from '../frame-state.ts';
 import type { ImageSource } from './types.ts';
 import { QC_PREFIX } from './types.ts';
 
@@ -28,6 +28,7 @@ function boxStyle(node: PlanNode, frame: number, fps: number): CSSProperties {
     opacity: state.opacity,
     transform: state.transform,
     transformOrigin: state.transformOrigin,
+    clipPath: state.clipPath,
   };
 }
 
@@ -162,12 +163,15 @@ function ImageNode({ node, plan, images, frame }: { node: PlanImageNode; plan: R
   const source = images.find((i) => i.asset === node.asset);
   if (!asset || !source) throw new Error(`Image « ${node.asset} » absente des sources fournies au renderer`);
   const g = imageGeometry(node, asset);
+  const content = imageContentState(node, frame, plan.canvas.fps);
   return (
     <div style={{ ...boxStyle(node, frame, plan.canvas.fps), overflow: 'hidden' }}>
-      <Img
-        src={source.data_url}
-        style={{ position: 'absolute', left: g.left, top: g.top, width: g.width, height: g.height, maxWidth: 'none', filter: imageFilter(node) }}
-      />
+      <div style={{ position: 'absolute', inset: 0, transform: content.transform, transformOrigin: content.transformOrigin }}>
+        <Img
+          src={source.data_url}
+          style={{ position: 'absolute', left: g.left, top: g.top, width: g.width, height: g.height, maxWidth: 'none', filter: imageFilter(node) }}
+        />
+      </div>
       {node.treatment.tint ? (
         <div style={{ position: 'absolute', inset: 0, background: node.treatment.tint.color, opacity: node.treatment.tint.opacity }} />
       ) : null}

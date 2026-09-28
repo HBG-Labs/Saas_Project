@@ -75,6 +75,7 @@ const result = await runPipeline({
   git: gitState(),
   reducedMotion: values['reduced-motion'],
   assetDirs: (values.assets ?? []).map(abs),
+  analysisCacheDir: path.join(WORKSPACE, 'node_modules', '.cache', 'motion-analysis'),
   createdAt: new Date().toISOString(),
 });
 
@@ -92,6 +93,9 @@ console.log(
       reference_eligible: result.manifest.reference_eligible,
       timing_source: result.plan.timing_source,
       typography: result.plan.provenance.typography,
+      visual: result.plan.provenance.visual,
+      analysis: { ms: Math.round(result.analysis.ms), cache: result.analysis.cache },
+      contrast: Object.fromEntries(result.plan.scenes.flatMap((sc) => sc.nodes).filter((n) => n.type === 'text').map((n) => [n.id, n.type === 'text' ? `${n.contrast.measured}/${n.contrast.required}` : ''])),
       duration_s: result.plan.canvas.duration_frames / result.plan.canvas.fps,
       render: s
         ? {

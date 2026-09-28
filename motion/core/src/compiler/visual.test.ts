@@ -28,12 +28,28 @@ import {
 } from '../test-support.ts';
 import { NBSP } from '../text/typography.ts';
 import { validateSpec } from '../validation/validate.ts';
+import { readVersioned } from '../validation/versioning.ts';
 import { compileSpec } from './compile.ts';
 
 const ink = resolvedInk();
 const signal = resolvedSignal();
-const assets = loadFixtureAssets().registry;
-const visual = (): MotionSceneSpec => clone(readFixture('moon.visual.spec.json')) as unknown as MotionSceneSpec;
+const fixtureAssets = loadFixtureAssets();
+const assets = fixtureAssets.registry;
+const analyses = fixtureAssets.analyses;
+/**
+ * Spec visuelle P1.4 (fichier inchangé, référence historique) : migrée en 0.4.0,
+ * elle est « style_bound ». Pour éprouver les fonctions P1.4 avec LE style
+ * auquel elle est liée, sa liaison est portée en mémoire à fixture_ink 1.4.0.
+ */
+const visual = (): MotionSceneSpec => {
+  const read = readVersioned('motion-scene-spec', readFixture('moon.visual.spec.json'));
+  if (!read.ok) throw new Error(JSON.stringify(read.issues));
+  const spec = clone(read.value);
+  spec.style_binding.version = '1.4.0';
+  return spec;
+};
+/** Spec portable P1.5 : la preuve de portabilité entre styles. */
+const portable = (): MotionSceneSpec => clone(readFixture('moon.portable.spec.json')) as unknown as MotionSceneSpec;
 
 const compile = (spec: MotionSceneSpec, resolved: ResolvedStyle = ink, output = DEV_OUTPUT) =>
   compileSpec({
@@ -46,6 +62,7 @@ const compile = (spec: MotionSceneSpec, resolved: ResolvedStyle = ink, output = 
     allowStyleSubstitution: true,
     shaper: fixtureShaper(),
     assets,
+    analyses,
   });
 
 function must(spec: MotionSceneSpec, resolved: ResolvedStyle = ink, output = DEV_OUTPUT): RenderPlan {
@@ -117,12 +134,17 @@ describe('spec visuelle : images, masques, régions, tracés, texte mesuré', ()
     expect(result.ok && result.warnings.map((w) => w.code)).toContain('type.glyph_substituted');
   });
 
-  it('la spec voyage entre styles : même spec, autre style, autre mise en page mesurée', () => {
-    const a = must(visual(), ink);
-    const b = must(visual(), signal);
+  it('P1.5 : la spec visuelle P1.4 (grille) est « style_bound » et refuse tout autre style', () => {
+    expect(codes(compile(visual(), signal))).toEqual(['composition.style_bound_substitution']);
+  });
+
+  it('P1.5 : la spec PORTABLE voyage entre styles : même spec, autre style, autre mise en page mesurée', () => {
+    const a = must(portable(), ink);
+    const b = must(portable(), signal);
     expect(a.spec.sha256).toBe(b.spec.sha256);
-    expect(find<PlanTextNode>(b, 'tx_sky').lines[0]!.runs[0]!.text).toBe('ET SI LA');
-    expect(find<PlanTextNode>(a, 'tx_sky').fit.size).not.toBe(find<PlanTextNode>(b, 'tx_sky').fit.size);
+    expect(a.composition.portability).toBe('portable');
+    expect(find<PlanTextNode>(b, 'tx_static').lines[0]!.runs[0]!.text).toMatch(/^CHAQUE/);
+    expect(find<PlanTextNode>(a, 'tx_static').fit.size).not.toBe(find<PlanTextNode>(b, 'tx_static').fit.size);
   });
 });
 
@@ -199,14 +221,14 @@ describe('zone sûre et placements', () => {
     expect(codes(validateSpec(twice, ink, { patterns: loadFixturePatterns(), assets }))).toContain('layout.placement_conflict');
   });
 
-  it('refuse deux contenus qui se chevauchent au repos (défaut réel, vu sur la planche SIGNAL)', () => {
-    const spec = visual();
-    const mask = spec.scenes[1]!.layers[0]!;
-    // Vignette sur 5 rangées : avec la grille 6×12 de SIGNAL, elle mord sur le texte.
-    mask.placement = { col: 2, col_span: 5, row: 1, row_span: 5 };
+  it('refuse deux contenus qui se chevauchent au repos (défaut réel, vu sur la planche SIGNAL en P1.4)', () => {
+    const spec = portable();
+    const mask = spec.scenes[2]!.layers[0]!;
+    // Vignette agrandie : elle mord sur le texte avec SIGNAL.
+    mask.area = { x: [0.15, 0.85], y: [0, 0.5] };
     const result = compile(spec, signal);
     expect(codes(result)).toEqual(['layout.collision']);
-    expect(result.ok ? '' : result.issues.find((i) => i.code === 'layout.collision')!.message).toMatch(/msk_moon.*tx_tides/);
+    expect(result.ok ? '' : result.issues.find((i) => i.code === 'layout.collision')!.message).toMatch(/msk_pan.*tx_pan/);
   });
 
   it('un chevauchement déclaré (texte posé dans la région d’une image) est permis', () => {

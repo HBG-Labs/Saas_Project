@@ -66,6 +66,25 @@ const REGISTRY: { [K in DocumentKind]: KindEntry<DocumentKinds[K]> } = {
           image_treatment: { ...(doc['image_treatment'] as Record<string, unknown>), tint: null },
         }),
       },
+      // P1.5 : aucun mouvement d'image avant 0.5.0 (amplitudes nulles) ; planchers du moteur.
+      '0.4.0': {
+        to: '0.5.0',
+        migrate: (doc) => {
+          const motion = doc['motion_personality'] as Record<string, unknown>;
+          const rhythm = doc['rhythm_personality'] as Record<string, unknown>;
+          return {
+            ...doc,
+            motion_personality: {
+              ...motion,
+              amplitude: { ...(motion['amplitude'] as Record<string, unknown>), image_push_scale: null, image_pan_scale: null, image_pan_travel: null },
+            },
+            rhythm_personality: {
+              ...rhythm,
+              reading: { ...(rhythm['reading'] as Record<string, unknown>), min_contrast: { large: 3, normal: 4.5 } },
+            },
+          };
+        },
+      },
     },
   },
   [BRAND_PROFILE_SCHEMA]: { current: BRAND_PROFILE_VERSION, schema: BrandMotionProfileSchema, migrations: {} },
@@ -128,6 +147,14 @@ REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.1.0'] = {
 };
 /** Spec 0.2.0 → 0.3.0 : ajouts facultatifs (region, bleed), rien à transformer. */
 REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.2.0'] = { to: '0.3.0', migrate: (doc) => doc };
+/**
+ * Spec 0.3.0 → 0.4.0 (P1.5) : une spec antérieure n'a jamais PROMIS d'être portable.
+ * Elle devient `style_bound` ; la déclarer portable est un acte explicite, validé.
+ */
+REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.3.0'] = {
+  to: '0.4.0',
+  migrate: (doc) => ({ ...doc, composition: { portability: 'style_bound' } }),
+};
 
 export function currentVersion(kind: DocumentKind): string {
   return REGISTRY[kind].current;

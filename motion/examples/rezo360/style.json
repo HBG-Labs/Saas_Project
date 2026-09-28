@@ -1,8 +1,8 @@
 {
   "schema": "creative-style-profile",
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "id": "rezo360_style",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "name": "REZO360 — langage visuel",
   "origin": "authored",
   "role_contract": "0.1.0",
@@ -217,6 +217,15 @@
       },
       "DRAW_PATH": {
         "allowed": true
+      },
+      "IMAGE_PUSH_IN": {
+        "allowed": true
+      },
+      "IMAGE_PAN": {
+        "allowed": true
+      },
+      "IMAGE_REVEAL": {
+        "allowed": true
       }
     },
     "timing": {
@@ -239,7 +248,10 @@
     "amplitude": {
       "enter_travel": "md",
       "exit_travel": "sm",
-      "accent_scale": 1.03
+      "accent_scale": 1.03,
+      "image_push_scale": 1.05,
+      "image_pan_scale": 1.06,
+      "image_pan_travel": "sm"
     },
     "budget": {
       "attention_peak": 6,
@@ -265,6 +277,10 @@
       "importance": {
         "primary": 1,
         "secondary": 0.7
+      },
+      "min_contrast": {
+        "large": 3,
+        "normal": 4.5
       }
     },
     "preferred_curves": [

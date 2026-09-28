@@ -75,7 +75,14 @@ export function validateSpecSemantics(
   if (!bindingMatches(spec.style_binding, resolved)) {
     const b = spec.style_binding;
     const message = `spec liée à ${b.kind}:${b.id}@${b.version}, style fourni ${styleName}`;
-    if (options.allowStyleSubstitution) c.warn('style.substituted', 'style_binding', `substitution explicite : ${message}`);
+    if (spec.composition.portability === 'style_bound') {
+      // P1.5 : une composition liée à son style ne se rend avec AUCUN autre, même déclaré.
+      c.error(
+        'composition.style_bound_substitution',
+        'composition.portability',
+        `${message} : composition « style_bound », aucune substitution possible (déclarer « portable » et n'utiliser que des placements portables)`,
+      );
+    } else if (options.allowStyleSubstitution) c.warn('style.substituted', 'style_binding', `substitution explicite : ${message}`);
     else c.error('style.binding_mismatch', 'style_binding', `${message} (substitution non déclarée)`);
   }
 
@@ -224,8 +231,17 @@ export function validateSpecSemantics(
       if (layer.primitive === 'image' && layer.focus && 'region' in layer.focus && asset && !asset.regions[layer.focus.region]) {
         c.error('asset.region_unknown', `${path}.focus.region`, `région « ${layer.focus.region} » absente de l'asset « ${asset.id} »`);
       }
-      const placements = [layer.slot, layer.placement, layer.region].filter((p) => p !== undefined).length;
-      if (placements > 1) c.error('layout.placement_conflict', path, `${layer.id} : un seul placement parmi slot, placement et region`);
+      const placements = [layer.slot, layer.placement, layer.region, layer.area].filter((p) => p !== undefined).length;
+      if (placements > 1) c.error('layout.placement_conflict', path, `${layer.id} : un seul placement parmi slot, placement, region et area`);
+      // P1.5 : une composition PORTABLE n'utilise jamais la grille propre à un style.
+      if (spec.composition.portability === 'portable') {
+        if (layer.placement) {
+          c.error('composition.not_portable', `${path}.placement`, `${layer.id} : placement en cellules de grille (propre au style) dans une composition portable — utiliser slot, region ou area`);
+        }
+        if (layer.primitive === 'path' && 'points' in layer.geometry) {
+          c.error('composition.not_portable', `${path}.geometry`, `${layer.id} : points en unités de grille dans une composition portable — utiliser area_points`);
+        }
+      }
       if (layer.primitive === 'image' && layer.bleed && placements > 0) {
         c.error('layout.placement_conflict', path, `${layer.id} : une image plein cadre n'a pas d'autre placement`);
       }
@@ -351,6 +367,14 @@ export function validateSpecSemantics(
     }
     if (!def.constraints.accepts_run && b.target?.run !== undefined) {
       c.error('behavior.target', `${path}.target`, `${b.behavior} ne cible pas un run`);
+    }
+    // P1.5 : « jusqu'à la fin de la scène » exigé par la définition, et nulle part ailleurs.
+    const until = b.duration !== undefined && 'until' in b.duration;
+    if (def.constraints.until_scene_end === 'required' && !until) {
+      c.error('behavior.span_required', `${path}.duration`, `${b.behavior} dure jusqu'à la fin de la scène : duration { until: 'scene_end' } attendu`);
+    }
+    if (def.constraints.until_scene_end !== 'required' && until) {
+      c.error('behavior.span_not_allowed', `${path}.duration`, `${b.behavior} n'accepte pas une durée « jusqu'à la fin de la scène »`);
     }
     for (const [name, value] of Object.entries(b.params ?? {})) {
       const spec = def.parameters_schema[name];

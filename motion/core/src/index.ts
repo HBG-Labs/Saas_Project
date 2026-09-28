@@ -84,3 +84,12 @@ export type { TextBlockInput, TextBlockLayout } from './text/layout-text.ts';
 export { applyTypography, applyTypographyToRuns, GLYPH_FALLBACKS, NBSP, NNBSP, TYPOGRAPHY_RULES_VERSION, typographyProvenance } from './text/typography.ts';
 export { fitImage, ImageFitError, resolveTreatment } from './visual/image-fit.ts';
 export type { ImageFit } from './visual/image-fit.ts';
+
+// P1.5 — Visual Integrity & Image Motion.
+export { analyzeImage, analysisFingerprint, decodePng, sampleAnalysis, AnalysisError, AssetAnalysisSchema, ANALYSIS_ALGORITHM_VERSION, ASSET_ANALYSIS_VERSION, JPEG_DECODER } from './visual/analysis.ts';
+export type { AssetAnalysis } from './visual/analysis.ts';
+export { analyzeAssetFile } from './io/visual.ts';
+export type { AnalysisOptions, AnalysisResult } from './io/visual.ts';
+export { applyTreatment, CONTRAST_FLOORS, contrastOfLuminances, READABILITY_RULES_VERSION, relativeLuminanceRgb, textCategory } from './visual/contrast.ts';
+export { backgroundAt, checkImageMotion, GLYPH_QUANTILE, glyphPoints, measureContrast, SAMPLE_STEP_REF_PX, scoreGlyphs } from './compiler/visual-integrity.ts';
+export type { GlyphSample, TextSamples } from './compiler/build-nodes.ts';

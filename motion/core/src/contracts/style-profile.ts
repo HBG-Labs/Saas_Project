@@ -29,7 +29,13 @@ export const STYLE_PROFILE_SCHEMA = 'creative-style-profile';
  * 0.4.0 : ajustement typographique mesuré (typography.fit). Migration depuis
  * 0.3.0 : min_scale 1 (aucune réduction, comportement antérieur), portée « role ».
  */
-export const STYLE_PROFILE_VERSION = '0.4.0';
+/*
+ * 0.5.0 (P1.5 — Visual Integrity & Image Motion) : amplitudes des mouvements
+ * d'image (nulles = mouvement indisponible pour ce style, jamais une valeur par
+ * défaut cachée) et planchers de contraste du style (≥ planchers du moteur).
+ * Migration depuis 0.4.0 : amplitudes d'image nulles, planchers = ceux du moteur.
+ */
+export const STYLE_PROFILE_VERSION = '0.5.0';
 
 /** Clé de jeton sans espace de noms : `surface.primary`, `display.xl`. */
 export const TokenKeySchema = z.string().regex(/^[a-z0-9_]+(\.[a-z0-9_]+)*$/, 'clé de jeton attendue');
@@ -157,6 +163,12 @@ export const CreativeStyleProfileSchema = z.strictObject({
       exit_travel: TokenKeySchema,
       /** Échelle d'accentuation (1 = aucune). */
       accent_scale: z.number().min(1).max(1.3),
+      /** P1.5 : échelle atteinte en fin de poussée d'image (null : IMAGE_PUSH_IN indisponible). */
+      image_push_scale: z.number().gt(1).max(1.3).nullable(),
+      /** P1.5 : agrandissement tenu pendant un panoramique (null : IMAGE_PAN indisponible). */
+      image_pan_scale: z.number().gt(1).max(1.3).nullable(),
+      /** P1.5 : course du panoramique, rôle d'espacement du style (null : IMAGE_PAN indisponible). */
+      image_pan_travel: TokenKeySchema.nullable(),
     }),
     /** Seuils au-delà desquels une scène sollicite trop l'attention. */
     budget: z.strictObject({
@@ -181,6 +193,12 @@ export const CreativeStyleProfileSchema = z.strictObject({
       ms_per_char: z.number().int().min(10).max(200),
       min_hold_ms: z.number().int().min(200).max(5000),
       importance: z.strictObject({ primary: z.number().min(0.3).max(2), secondary: z.number().min(0.3).max(2) }),
+      /**
+       * P1.5 : contraste minimal texte / fond RÉELLEMENT rencontré (mesuré dans les pixels).
+       * Le moteur impose 3:1 (grand texte) et 4.5:1 (texte courant) ; un style peut
+       * relever ces planchers, jamais les abaisser (validation).
+       */
+      min_contrast: z.strictObject({ large: z.number().min(1).max(21), normal: z.number().min(1).max(21) }),
     }),
     preferred_curves: z.array(Weighted).max(16),
   }),

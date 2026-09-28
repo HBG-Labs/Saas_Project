@@ -60,9 +60,16 @@ function restValue(property: MotionProperty, baseColor: string | null): number |
     case 'opacity':
     case 'scale':
     case 'path_progress':
+    case 'content_scale':
       return 1;
     case 'translate_x':
     case 'translate_y':
+    case 'content_x':
+    case 'content_y':
+    case 'clip_top':
+    case 'clip_right':
+    case 'clip_bottom':
+    case 'clip_left':
       return 0;
     case 'color':
       if (!baseColor) throw new TrackError('motion.color_unavailable', 'couleur de base absente pour une piste de couleur');
@@ -77,6 +84,8 @@ function reduce(b: ResolvedBehavior, templates: readonly TrackTemplate[], reduce
   if (strategy.strategy === 'drop_properties') {
     return { templates: templates.filter((t) => !strategy.properties.includes(t.property)), instant: false };
   }
+  // « static » (P1.5) : aucune piste, l'élément reste dans son état de repos.
+  if (strategy.strategy === 'static') return { templates: [], instant: false };
   return { templates: [...templates], instant: strategy.strategy === 'instant' };
 }
 
@@ -134,9 +143,16 @@ export function compileTracks(input: TrackCompileInput): CompiledTracks {
             case 'amplitude': {
               const override = b.params[source.name];
               let value: number;
-              if (source.name === 'accent_scale') value = style.motion_personality.amplitude.accent_scale;
-              else {
-                const key = typeof override === 'string' ? override : style.motion_personality.amplitude[source.name];
+              const amplitude = style.motion_personality.amplitude;
+              if (source.name === 'accent_scale') value = amplitude.accent_scale;
+              else if (source.name === 'image_push_scale' || source.name === 'image_pan_scale') {
+                // Échelles d'image : jamais de valeur par défaut, un style sans amplitude refuse le mouvement.
+                const factor = amplitude[source.name];
+                if (factor === null) throw new TrackError('motion.amplitude_missing', `${b.instance} : le style ne définit pas « ${source.name} » (${b.behavior} indisponible)`);
+                value = factor;
+              } else {
+                const key = typeof override === 'string' ? override : amplitude[source.name];
+                if (key === null) throw new TrackError('motion.amplitude_missing', `${b.instance} : le style ne définit pas « ${source.name} » (${b.behavior} indisponible)`);
                 const space = style.space[key];
                 if (space === undefined) throw new TrackError('motion.amplitude_unknown', `${b.instance} : espacement « ${key} » absent du style`);
                 value = space * scale;
@@ -154,7 +170,9 @@ export function compileTracks(input: TrackCompileInput): CompiledTracks {
           return key;
         });
         if (instant) keys = [{ ms: start, value: keys[0]!.value }, { ms: start + 1, value: keys[keys.length - 1]!.value }];
-        if (keys.every((k) => k.value === keys[0]!.value)) continue; // aucun changement : pas de piste
+        // Aucun changement ET déjà au repos : pas de piste. Une valeur constante hors repos (échelle
+        // tenue pendant un panoramique, P1.5) est une piste à part entière.
+        if (keys.every((k) => k.value === keys[0]!.value) && keys[0]!.value === rest) continue;
 
         const id = trackKey(b.layer, template.property, target);
         const list = all.get(id) ?? [];

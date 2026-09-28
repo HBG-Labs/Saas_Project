@@ -5,6 +5,8 @@ import { hashDocument } from '../integrity/canonical.ts';
 import { BEHAVIORS, createBehaviorRegistry, latestVersion } from './registry.ts';
 
 const reveal = () => structuredClone(BEHAVIORS.get('REVEAL_TEXT', '1.0.0')!);
+/** Comportements publiés avant P1.5 (registres 1.0.0 et 1.1.0). */
+const P1_3 = ['ACCENT_WORD', 'CUT', 'DRAW_PATH', 'EXIT_CLEAR', 'REVEAL_TEXT', 'SETTLE'];
 
 describe('BehaviorDefinition', () => {
   it('chaque définition du registre respecte le contrat strict', () => {
@@ -19,7 +21,7 @@ describe('BehaviorDefinition', () => {
       expect(def.duration_budget.max_ms).toBeGreaterThanOrEqual(def.duration_budget.min_ms);
       expect(def.attention_cost).toBeGreaterThanOrEqual(0);
       expect(['C0', 'C1', 'C2', 'C3']).toContain(def.render_cost);
-      expect(['keep', 'drop_properties', 'instant']).toContain(def.reduced_motion_strategy.strategy);
+      expect(['keep', 'drop_properties', 'instant', 'static']).toContain(def.reduced_motion_strategy.strategy);
     }
   });
 
@@ -36,12 +38,30 @@ describe('BehaviorDefinition', () => {
 });
 
 describe('registre fermé et versionné', () => {
-  it('registre 1.1.0 : les comportements de P1.3 en 1.0.0, plus EXIT_CLEAR 1.1.0 (images et masques)', () => {
-    expect(BEHAVIORS.version).toBe('1.1.0');
-    expect(BEHAVIORS.ids().sort()).toEqual(['ACCENT_WORD', 'CUT', 'DRAW_PATH', 'EXIT_CLEAR', 'REVEAL_TEXT', 'SETTLE']);
+  it('registre 1.2.0 (P1.5) : P1.3 en 1.0.0, EXIT_CLEAR 1.1.0, et les trois mouvements d’image', () => {
+    expect(BEHAVIORS.version).toBe('1.2.0');
+    expect(BEHAVIORS.ids().sort()).toEqual([...P1_3, 'IMAGE_PAN', 'IMAGE_PUSH_IN', 'IMAGE_REVEAL'].sort());
     for (const id of BEHAVIORS.ids()) expect(BEHAVIORS.versions(id)).toEqual(id === 'EXIT_CLEAR' ? ['1.0.0', '1.1.0'] : ['1.0.0']);
     expect(latestVersion(BEHAVIORS, 'SETTLE')).toBe('1.0.0');
     expect(latestVersion(BEHAVIORS, 'EXIT_CLEAR')).toBe('1.1.0');
+  });
+
+  it('mouvements d’image : pistes génériques uniquement, stratégie de mouvement réduit explicite', () => {
+    const push = BEHAVIORS.get('IMAGE_PUSH_IN', '1.0.0')!;
+    const pan = BEHAVIORS.get('IMAGE_PAN', '1.0.0')!;
+    const reveal = BEHAVIORS.get('IMAGE_REVEAL', '1.0.0')!;
+    expect(push.animatable_properties).toEqual(['content_scale']);
+    expect(pan.animatable_properties).toEqual(['content_scale', 'content_x', 'content_y']);
+    expect(reveal.animatable_properties).toEqual(['clip_top', 'clip_right', 'clip_bottom', 'clip_left']);
+    expect([push, pan].map((d) => [d.phase, d.constraints.until_scene_end, d.reduced_motion_strategy.strategy])).toEqual([
+      ['ambient', 'required', 'static'],
+      ['ambient', 'required', 'static'],
+    ]);
+    expect(reveal.reduced_motion_strategy.strategy).toBe('instant');
+    expect(push.incompatibilities).toEqual(['IMAGE_PAN']);
+    // Définitions P1.5 : contrat 0.2.0 ; définitions publiées : en-tête 0.1.0 figé.
+    expect(new Set([push, pan, reveal].map((d) => d.schema_version))).toEqual(new Set(['0.2.0']));
+    expect(new Set(BEHAVIORS.all().filter((d) => P1_3.includes(d.id)).map((d) => d.schema_version))).toEqual(new Set(['0.1.0']));
   });
 
   it('EXIT_CLEAR 1.1.0 n’élargit que la compatibilité : 1.0.0 reste identique', () => {
@@ -79,16 +99,18 @@ describe('registre fermé et versionné', () => {
     expect(createBehaviorRegistry(altered, BEHAVIORS.version).sha256).not.toBe(BEHAVIORS.sha256);
   });
 
-  it('empreinte figée du registre publié 1.1.0 : toute retouche impose une nouvelle version', () => {
+  it('empreinte figée du registre publié 1.2.0 : toute retouche impose une nouvelle version', () => {
     // Si ce test échoue, une définition publiée a changé : incrémenter sa version
     // (et celle du registre) au lieu de mettre à jour cette empreinte.
-    // Registre 1.0.0 (P1.3) : a380aadd483e25c8b04a4fd3ec8d5eece16182a8b19d8a0cff5111ac2a335066.
     expect(hashDocument({ version: BEHAVIORS.version, definitions: BEHAVIORS.all() })).toBe(BEHAVIORS.sha256);
-    expect(BEHAVIORS.sha256).toMatchInlineSnapshot(`"0c7669f1cd7d293915590f114d8291a0035ddb10076ba89dc00821c25248b7f2"`);
+    expect(BEHAVIORS.sha256).toMatchInlineSnapshot(`"4e580c32e5a326c991e5f3b43af6999c731037e4b3d78c962b6c43aaa2611c32"`);
   });
 
-  it('les définitions 1.0.0 publiées en P1.3 sont inchangées (registre 1.0.0 reconstruit à l’identique)', () => {
-    const v10 = BEHAVIORS.all().filter((d) => d.version === '1.0.0');
-    expect(createBehaviorRegistry(v10, '1.0.0').sha256).toBe('a380aadd483e25c8b04a4fd3ec8d5eece16182a8b19d8a0cff5111ac2a335066');
+  it('les registres publiés 1.0.0 (P1.3) et 1.1.0 (P1.4) se reconstruisent À L’IDENTIQUE', () => {
+    // Ensembles EXPLICITES : les comportements P1.5 sont eux aussi en version 1.0.0.
+    const v1_0 = BEHAVIORS.all().filter((d) => P1_3.includes(d.id) && d.version === '1.0.0');
+    expect(createBehaviorRegistry(v1_0, '1.0.0').sha256).toBe('a380aadd483e25c8b04a4fd3ec8d5eece16182a8b19d8a0cff5111ac2a335066');
+    const v1_1 = BEHAVIORS.all().filter((d) => P1_3.includes(d.id));
+    expect(createBehaviorRegistry(v1_1, '1.1.0').sha256).toBe('0c7669f1cd7d293915590f114d8291a0035ddb10076ba89dc00821c25248b7f2');
   });
 });

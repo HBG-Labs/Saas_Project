@@ -56,15 +56,17 @@ export function codes(result: { ok: boolean; issues?: { code: string; severity?:
 export function minimalPlan(): Json {
   return {
     schema: 'render-plan',
-    schema_version: '0.4.0',
+    schema_version: '0.5.0',
     spec: { spec_id: 'moon_question', revision: 1, sha256: 'a'.repeat(64) },
     style: { mode: 'creative', sha256: 'b'.repeat(64) },
-    compiler_version: '0.4.0',
+    compiler_version: '0.5.0',
+    composition: { portability: 'portable' },
     timing_source: 'estimated',
     reduced_motion: false,
     provenance: {
-      behavior_registry: { version: '1.1.0', sha256: 'd'.repeat(64) },
+      behavior_registry: { version: '1.2.0', sha256: 'd'.repeat(64) },
       behaviors: [],
+      visual: { readability_rules: '1.0.0', analysis_algorithm: '1.0.0', analyses: [] },
       typography: { rules: 'fr@1.0.0', shaper: 'harfbuzz 14.5.0', substitutions: [] },
     },
     canvas: { width: 1080, height: 1920, fps: 30, duration_frames: 60, safe_area: { x: 60, y: 120, w: 960, h: 1560 } },
@@ -116,6 +118,7 @@ export function minimalPlan(): Json {
             ],
             fit: { role: 'display.xl', ratio: 1, size: 150, policy: 'explicit' },
             ink: { x: 120, y: 772, w: 308, h: 108 },
+            contrast: { category: 'large', required: 3, measured: 14.5, worst: { run: 'r_setup', line: 0, frame: 10 }, frames: 1, override: null },
             tracks: [{ property: 'opacity', keys: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }], sources: ['bh_question_in'] }],
           },
         ],

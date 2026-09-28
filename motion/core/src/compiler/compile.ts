@@ -22,8 +22,12 @@ import { ShaperError } from '../text/shaper.ts';
 import type { TextShaper } from '../text/shaper.ts';
 import { typographyProvenance } from '../text/typography.ts';
 import { ImageFitError } from '../visual/image-fit.ts';
+import { analysisFingerprint, ANALYSIS_ALGORITHM_VERSION } from '../visual/analysis.ts';
+import type { AssetAnalysis } from '../visual/analysis.ts';
+import { READABILITY_RULES_VERSION } from '../visual/contrast.ts';
 import { buildScenes, color, CompileError } from './build-nodes.ts';
-import type { BuildContext } from './build-nodes.ts';
+import { checkImageMotion, measureContrast } from './visual-integrity.ts';
+import type { BuildContext, TextSamples } from './build-nodes.ts';
 import { layoutFrame, LayoutError } from './layout.ts';
 
 /**
@@ -32,7 +36,11 @@ import { layoutFrame, LayoutError } from './layout.ts';
  * 0.4.0 : cœur visuel (P1.4) — texte mesuré et ajusté, typographie de locale,
  * images recadrées, masques, tracés par points, régions sémantiques, zone sûre.
  */
-export const COMPILER_VERSION = '0.4.0';
+/*
+ * 0.5.0 : P1.5 — Visual Integrity & Image Motion : mouvements d'image vérifiés
+ * image par image, contraste mesuré dans les pixels, portabilité validée.
+ */
+export const COMPILER_VERSION = '0.5.0';
 
 export interface OutputConfig {
   width: number;
@@ -57,6 +65,8 @@ export interface CompileInput {
   shaper: TextShaper;
   /** Assets visuels disponibles (métadonnées vérifiées à la lecture). */
   assets?: AssetRegistry;
+  /** Analyses de pixels des assets (P1.5), par identifiant d'asset. */
+  analyses?: ReadonlyMap<string, AssetAnalysis>;
 }
 
 export interface CompileOutput {
@@ -64,6 +74,8 @@ export interface CompileOutput {
   audio: AudioPlan;
   subtitles: SubtitlePlan;
   temporal: TemporalPlan;
+  /** Encre réelle des glyphes (P1.5) : diagnostic et vérification de la métrique de contraste contre un rendu réel. */
+  textSamples: ReadonlyMap<string, TextSamples>;
 }
 
 function findNode(nodes: readonly PlanNode[], id: string): PlanNode | undefined {
@@ -125,6 +137,7 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
       ratios: new Map(),
       substitutions: new Map(),
       warnings: [],
+      textSamples: new Map(),
     });
     let context = makeContext(new Map());
     let built = buildScenes(spec, patterns, context);
@@ -189,6 +202,7 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
       spec: { spec_id: spec.spec_id, revision: spec.revision, sha256: hashDocument(spec) },
       style: { mode: resolved.mode, sha256: resolved.sha256 },
       compiler_version: COMPILER_VERSION,
+      composition: { portability: spec.composition.portability },
       timing_source: temporal.timing_source,
       reduced_motion: reducedMotion,
       provenance: {
@@ -199,6 +213,17 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
             ? [{ instance: `${scene.id}_transition`, behavior: scene.transition_out.behavior, version: scene.transition_out.version, scene: scene.id, layer: null }]
             : []),
         ]),
+        visual: {
+          readability_rules: `${READABILITY_RULES_VERSION}`,
+          analysis_algorithm: ANALYSIS_ALGORITHM_VERSION,
+          analyses: [...context.planAssets.keys()]
+            .sort()
+            .filter((ref) => (input.analyses ?? new Map()).has(ref))
+            .map((ref) => {
+              const analysis = input.analyses!.get(ref)!;
+              return { ref, decoder: analysis.decoder, sha256: analysisFingerprint(analysis) };
+            }),
+        },
         typography: {
           rules: typographyProvenance(spec.locale),
           shaper: input.shaper.engine,
@@ -226,6 +251,25 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
           .filter((i) => i.to > i.from),
       })),
     });
+    // 6. Intégrité visuelle (P1.5) : mouvement d'image image par image, puis contraste mesuré.
+    checkImageMotion(plan);
+    const measured = measureContrast({ plan, temporal, style, samples: context.textSamples, analyses: input.analyses ?? new Map() });
+    const assign = (nodes: PlanNode[]) => {
+      for (const node of nodes) {
+        if (node.type === 'text') node.contrast = measured.contrasts.get(node.id)!;
+        if (node.type === 'group' || node.type === 'mask') assign(node.children);
+      }
+    };
+    for (const scene of plan.scenes) assign(scene.nodes);
+    for (const [layer, report] of measured.contrasts) {
+      if (report.override) {
+        c.warn(
+          'contrast.override',
+          layer,
+          `dérogation explicite : ${report.required}:1 au lieu du plancher, mesuré ${report.measured}:1 — « ${report.override.reason} »`,
+        );
+      }
+    }
     const planIssues = validateRenderPlanSemantics(plan);
     if (planIssues.length > 0) return { ok: false, issues: [...c.issues, ...planIssues] };
 
@@ -244,7 +288,7 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
       true_peak_dbtp: input.audioTargets.true_peak_dbtp,
     };
     const subtitles: SubtitlePlan = { schema: 'subtitle-plan', schema_version: RENDER_PLAN_VERSION, cues: subtitleCues };
-    return { ok: true, value: { plan, audio, subtitles, temporal }, warnings: c.issues };
+    return { ok: true, value: { plan, audio, subtitles, temporal, textSamples: context.textSamples }, warnings: c.issues };
   } catch (error) {
     if (
       error instanceof CompileError ||

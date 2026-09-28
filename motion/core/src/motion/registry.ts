@@ -7,9 +7,16 @@ import { hashDocument } from '../integrity/canonical.ts';
 // Ajouter ou modifier un comportement = nouvelle version, jamais une retouche
 // silencieuse d'une version publiée (le test d'empreinte le surveille).
 
-export const BEHAVIOR_REGISTRY_VERSION = '1.1.0';
+export const BEHAVIOR_REGISTRY_VERSION = '1.2.0';
 
-const header = { schema: BEHAVIOR_DEFINITION_SCHEMA, schema_version: BEHAVIOR_DEFINITION_VERSION } as const;
+/**
+ * En-tête des définitions publiées en 1.0.0 et 1.1.0 : FIGÉ à la version de
+ * contrat avec laquelle elles ont été écrites. Le lier à la constante courante
+ * changerait leur empreinte à chaque évolution du contrat.
+ */
+const header = { schema: BEHAVIOR_DEFINITION_SCHEMA, schema_version: '0.1.0' } as const;
+/** En-tête des définitions P1.5 (contrat 0.2.0). */
+const header_0_2 = { schema: BEHAVIOR_DEFINITION_SCHEMA, schema_version: BEHAVIOR_DEFINITION_VERSION } as const;
 const VISIBLE_START = ['scene_start', 'after', 'with', 'after_previous', 'with_layer', 'after_layer', 'beat', 'voice_segment', 'voice_word'] as const;
 
 const DEFINITIONS: BehaviorDefinition[] = [
@@ -239,6 +246,149 @@ export function createBehaviorRegistry(definitions: readonly BehaviorDefinition[
  */
 const EXIT_CLEAR_1_0 = DEFINITIONS.find((d) => d.id === 'EXIT_CLEAR' && d.version === '1.0.0')!;
 DEFINITIONS.push({ ...EXIT_CLEAR_1_0, version: '1.1.0', compatible_primitives: ['text', 'shape', 'path', 'group', 'image', 'mask'] });
+
+/**
+ * Registre 1.2.0 — P1.5 Visual Integrity & Image Motion : mouvements d'image.
+ * Aucune logique dans le renderer : ces définitions produisent des pistes
+ * génériques (content_scale, content_x/y, clip_*), vérifiées image par image au
+ * compilateur (jamais de zone hors image : image.motion_out_of_bounds).
+ * « Évolution de recadrage » (d'une région à l'autre) : exprimable avec les
+ * mêmes primitives ; pas de comportement public tant que son contrat n'est pas
+ * distinct de IMAGE_PUSH_IN + IMAGE_PAN (capacité future documentée).
+ */
+const IMAGE_ANCHORS = ['scene_start', 'after', 'with', 'after_previous', 'with_layer', 'after_layer', 'beat'] as const;
+DEFINITIONS.push(
+  {
+    ...header_0_2,
+    id: 'IMAGE_PUSH_IN',
+    version: '1.0.0',
+    intent: 'Avancer lentement dans l’image, vers son point focal, jusqu’à la fin de la scène.',
+    phase: 'ambient',
+    scope: 'layer',
+    compatible_primitives: ['image'],
+    parameters_schema: {},
+    variants: {
+      focal: {
+        description: 'Le contenu grossit du repos à l’amplitude du style, centré sur le point focal projeté.',
+        tracks: [
+          {
+            property: 'content_scale',
+            scope: 'layer',
+            keys: [
+              { at: 0, value: { kind: 'rest' }, ease: 'inout' },
+              { at: 1, value: { kind: 'amplitude', name: 'image_push_scale' } },
+            ],
+          },
+        ],
+      },
+    },
+    default_variant: 'focal',
+    animatable_properties: ['content_scale'],
+    accepted_anchors: [...IMAGE_ANCHORS],
+    constraints: { requires_run: false, accepts_run: false, until_scene_end: 'required' },
+    incompatibilities: ['IMAGE_PAN'],
+    duration_budget: { min_ms: 500, max_ms: 60000 },
+    attention_cost: 1,
+    render_cost: 'C1',
+    reduced_motion_strategy: { strategy: 'static' },
+  },
+  {
+    ...header_0_2,
+    id: 'IMAGE_PAN',
+    version: '1.0.0',
+    intent: 'Glisser dans l’image, légèrement agrandie, sur une course bornée par le style.',
+    phase: 'ambient',
+    scope: 'layer',
+    compatible_primitives: ['image'],
+    parameters_schema: { image_pan_travel: { type: 'space_role' } },
+    variants: Object.fromEntries(
+      (
+        [
+          ['left', 'content_x', true],
+          ['right', 'content_x', false],
+          ['up', 'content_y', true],
+          ['down', 'content_y', false],
+        ] as const
+      ).map(([name, property, negate]) => [
+        name,
+        {
+          description: `Le contenu, agrandi de l’amplitude de panoramique, glisse vers ${name === 'left' ? 'la gauche' : name === 'right' ? 'la droite' : name === 'up' ? 'le haut' : 'le bas'}.`,
+          tracks: [
+            {
+              property: 'content_scale' as const,
+              scope: 'layer' as const,
+              keys: [
+                { at: 0, value: { kind: 'amplitude' as const, name: 'image_pan_scale' as const } },
+                { at: 1, value: { kind: 'amplitude' as const, name: 'image_pan_scale' as const } },
+              ],
+            },
+            {
+              property,
+              scope: 'layer' as const,
+              keys: [
+                { at: 0, value: { kind: 'rest' as const }, ease: 'inout' as const },
+                { at: 1, value: { kind: 'amplitude' as const, name: 'image_pan_travel' as const, negate } },
+              ],
+            },
+          ],
+        },
+      ]),
+    ),
+    default_variant: 'left',
+    animatable_properties: ['content_scale', 'content_x', 'content_y'],
+    accepted_anchors: [...IMAGE_ANCHORS],
+    constraints: { requires_run: false, accepts_run: false, until_scene_end: 'required' },
+    incompatibilities: ['IMAGE_PUSH_IN'],
+    duration_budget: { min_ms: 500, max_ms: 60000 },
+    attention_cost: 1,
+    render_cost: 'C1',
+    reduced_motion_strategy: { strategy: 'static' },
+  },
+  {
+    ...header_0_2,
+    id: 'IMAGE_REVEAL',
+    version: '1.0.0',
+    intent: 'Découvrir une image (ou un masque) par un rognage qui se retire.',
+    phase: 'enter',
+    scope: 'layer',
+    compatible_primitives: ['image', 'mask'],
+    parameters_schema: {},
+    variants: Object.fromEntries(
+      (
+        [
+          ['from_bottom', 'clip_top'],
+          ['from_top', 'clip_bottom'],
+          ['from_left', 'clip_right'],
+          ['from_right', 'clip_left'],
+        ] as const
+      ).map(([name, property]) => [
+        name,
+        {
+          description: `Le rognage se retire (${property} de 1 à 0) : l’image apparaît depuis ${name.replace('from_', 'le côté ')}.`,
+          tracks: [
+            {
+              property,
+              scope: 'layer' as const,
+              keys: [
+                { at: 0, value: { kind: 'const' as const, value: 1 }, ease: 'enter' as const },
+                { at: 1, value: { kind: 'rest' as const } },
+              ],
+            },
+          ],
+        },
+      ]),
+    ),
+    default_variant: 'from_bottom',
+    animatable_properties: ['clip_top', 'clip_right', 'clip_bottom', 'clip_left'],
+    accepted_anchors: [...IMAGE_ANCHORS],
+    constraints: { requires_run: false, accepts_run: false },
+    incompatibilities: [],
+    duration_budget: { min_ms: 120, max_ms: 4000 },
+    attention_cost: 2,
+    render_cost: 'C1',
+    reduced_motion_strategy: { strategy: 'instant' },
+  },
+);
 
 export const BEHAVIORS = createBehaviorRegistry(DEFINITIONS, BEHAVIOR_REGISTRY_VERSION);
 

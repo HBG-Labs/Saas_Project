@@ -94,17 +94,34 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     expect(reduced.manifest.render_plan_sha256).not.toBe(full.manifest.render_plan_sha256);
   });
 
-  it('spec visuelle (P1.4) : assets vérifiés, texte mesuré, images et masque dans le plan', async () => {
+  it('P1.5 : la spec visuelle P1.4 (grille, « style_bound ») est refusée avec un autre style ; elle reste reproductible depuis 4816633', async () => {
+    const { intentFile: _intent, ...withoutIntent } = base;
+    await expect(
+      runPipeline({
+        ...withoutIntent,
+        specFile: path.join(CORE, 'test-fixtures', 'moon.visual.spec.json'),
+        assetDirs: [path.join(CORE, 'test-fixtures', 'assets')],
+        style: nocturne,
+        substitutionReason: 'preuve de refus',
+        outDir: path.join(out, 'visual-p14'),
+      }),
+    ).rejects.toThrowError(/composition\.style_bound_substitution/);
+  });
+
+  it('P1.5 : spec PORTABLE — assets vérifiés et analysés, texte mesuré, contraste, images en mouvement', async () => {
     const { intentFile: _intent, ...withoutIntent } = base;
     const result = await runPipeline({
       ...withoutIntent,
-      specFile: path.join(CORE, 'test-fixtures', 'moon.visual.spec.json'),
+      specFile: path.join(CORE, 'test-fixtures', 'moon.portable.spec.json'),
       patternDirs: [path.join(WORKSPACE, 'packs', 'patterns', 'generic')],
       assetDirs: [path.join(CORE, 'test-fixtures', 'assets')],
       style: nocturne,
-      substitutionReason: 'P1.4 : spec visuelle neutre, profil Nocturne',
+      substitutionReason: 'P1.5 : spec portable, profil Nocturne',
       outDir: path.join(out, 'visual'),
     });
+    expect(result.plan.composition).toEqual({ portability: 'portable' });
+    expect(result.plan.provenance.visual.analyses.map((a) => a.ref)).toEqual(['night_moon']);
+    expect(result.plan.scenes.flatMap((s) => s.nodes).filter((n) => n.type === 'text').every((n) => n.type === 'text' && n.contrast.measured >= n.contrast.required)).toBe(true);
     expect(result.plan.assets.map((a) => a.ref)).toEqual(['night_moon']);
     expect(result.manifest.assets).toEqual([{ ref: 'night_moon', sha256: result.plan.assets[0]!.sha256 }]);
     expect(result.plan.provenance.typography.rules).toBe('fr@1.0.0');
@@ -113,6 +130,38 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     // Le navigateur recevra les octets vérifiés de l'image.
     const sources = imageSources(result.plan, new Map([['night_moon', path.join(CORE, 'test-fixtures', 'assets', 'night_moon.png')]]));
     expect(sources[0]!.data_url.startsWith('data:image/png;base64,')).toBe(true);
+  });
+
+  it('P1.5 : le cache des analyses est une pure optimisation (même plan avec, sans, et cache chaud)', async () => {
+    const { intentFile: _intent, ...withoutIntent } = base;
+    const run = (name: string, cache: string | undefined) =>
+      runPipeline({
+        ...withoutIntent,
+        specFile: path.join(CORE, 'test-fixtures', 'moon.portable.spec.json'),
+        assetDirs: [path.join(CORE, 'test-fixtures', 'assets')],
+        ...(cache ? { analysisCacheDir: cache } : {}),
+        style: nocturne,
+        substitutionReason: 'cache',
+        outDir: path.join(out, name),
+      });
+    const cacheDir = path.join(out, 'analysis-cache');
+    const none = await run('cache-none', undefined);
+    const cold = await run('cache-cold', cacheDir);
+    const warm = await run('cache-warm', cacheDir);
+    expect([none.analysis.cache['night_moon'], cold.analysis.cache['night_moon'], warm.analysis.cache['night_moon']]).toEqual(['none', 'miss', 'hit']);
+    expect(cold.manifest.render_plan_sha256).toBe(none.manifest.render_plan_sha256);
+    expect(warm.manifest.render_plan_sha256).toBe(none.manifest.render_plan_sha256);
+  });
+
+  it('P1.5 : les films P1.3/P1.4 gardent leurs durées (300 et 180 frames) et leur mise en page', async () => {
+    const a = await runPipeline({ ...base, style: nocturne, outDir: path.join(out, 'film-n') });
+    const { intentFile: _intent, ...withoutIntent } = base;
+    const b = await runPipeline({ ...withoutIntent, specFile: a.files['spec.json']!, style: signal, substitutionReason: 'film', outDir: path.join(out, 'film-s') });
+    expect([a.plan.canvas.duration_frames, b.plan.canvas.duration_frames]).toEqual([300, 180]);
+    expect(a.plan.scenes.map((s) => [s.from, s.to])).toEqual([
+      [0, 169],
+      [169, 300],
+    ]);
   });
 
   it('REZO360 passe par le même moteur, en consommateur (mode marque)', async () => {
