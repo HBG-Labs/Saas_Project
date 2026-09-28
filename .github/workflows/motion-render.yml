@@ -3,6 +3,9 @@ name: Moteur de motion design — rendu réel
 # Rendu vidéo de bout en bout (Chromium + encodage) sur fixtures neutres.
 # Séparé de quality.yml : il télécharge un navigateur (~110 Mo) et ne
 # concerne que les changements du moteur. Aucun fournisseur payant, aucun secret.
+# ÉTAT (P1.3) : CI Linux NON VALIDÉE. Ce workflow n'a encore jamais tourné sur
+# un runner GitHub (branche non poussée) ; le rendu n'est vérifié que sous
+# Windows, en local. Première exécution Linux à observer avant d'y croire.
 on:
   pull_request:
     paths:

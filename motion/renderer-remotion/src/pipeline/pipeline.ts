@@ -52,7 +52,10 @@ export interface PipelineRequest {
   profile: RenderProfile;
   outDir: string;
   render: boolean;
-  gitCommit: string | null;
+  /** État git réel du dépôt au moment du rendu, lu par l'appelant. */
+  git: { commit: string | null; dirty: boolean | null };
+  /** Préférence « mouvement réduit » : chaque comportement applique sa propre stratégie. */
+  reducedMotion?: boolean;
   /** Date de création du manifeste, fournie par l'appelant (le pipeline ne lit pas l'horloge pour décider). */
   createdAt: string;
 }
@@ -138,6 +141,7 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
       output: { width: request.profile.width, height: request.profile.height, fps: request.profile.fps },
       audioTargets: request.profile.audio,
       allowStyleSubstitution: request.substitutionReason !== undefined,
+      reducedMotion: request.reducedMotion ?? false,
     }),
   );
 
@@ -167,7 +171,8 @@ export async function runPipeline(request: PipelineRequest): Promise<PipelineRes
 
   const manifest = buildReproducibilityManifest({
     createdAt: request.createdAt,
-    engine: { name: '@motion-engine/core', version: '0.1.0', git_commit: request.gitCommit },
+    engine: { name: '@motion-engine/core', version: '0.1.0' },
+    git: request.git,
     spec,
     resolvedStyle: resolved,
     plan: compiled.plan,

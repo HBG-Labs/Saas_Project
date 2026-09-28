@@ -6,7 +6,8 @@ import type { RenderPlan } from '../contracts/render-plan.ts';
 import type { ResolvedStyle } from '../contracts/resolved-style.ts';
 import { clone, minimalPlan, readFixture, resolvedInk, resolvedSignal } from '../test-support.ts';
 import { canonicalJson, hashDocument } from './canonical.ts';
-import { buildReproducibilityManifest, ManifestError, manifestHash, verifyManifest } from './manifest.ts';
+import { buildReproducibilityManifest, isReferenceEligible, ManifestError, manifestHash, verifyManifest } from './manifest.ts';
+import { readVersioned } from '../validation/versioning.ts';
 import type { ManifestInput } from './manifest.ts';
 
 const spec = readFixture('moon.spec.json') as unknown as MotionSceneSpec;
@@ -22,7 +23,8 @@ function planFor(resolved: ResolvedStyle): RenderPlan {
 function inputFor(resolved: ResolvedStyle, extra: Partial<ManifestInput> = {}): ManifestInput {
   return {
     createdAt: '2026-09-27T18:00:00+02:00',
-    engine: { name: '@motion-engine/core', version: '0.1.0', git_commit: 'c906ca8' },
+    engine: { name: '@motion-engine/core', version: '0.1.0' },
+    git: { commit: 'c906ca8', dirty: false },
     spec,
     resolvedStyle: resolved,
     plan: planFor(resolved),
@@ -52,7 +54,7 @@ describe('manifeste de reproductibilité', () => {
   it('trace le style lié, résolu et ses sources, sans substitution', () => {
     const manifest = buildReproducibilityManifest(inputFor(ink));
     expect(manifest.style).toMatchObject({
-      binding: { kind: 'style', id: 'fixture_ink', version: '1.0.0' },
+      binding: { kind: 'style', id: 'fixture_ink', version: '1.1.0' },
       mode: 'creative',
       resolved_sha256: ink.sha256,
       substituted: false,
@@ -105,5 +107,61 @@ describe('manifeste de reproductibilité', () => {
     const tampered = { ...manifest, render_plan_sha256: 'f'.repeat(64) };
     expect(verifyManifest(tampered)).toBe(false);
     expect(manifestHash(tampered)).not.toBe(manifest.manifest_sha256);
+  });
+});
+
+describe('manifeste 0.3.0 : état git, éligibilité, timing, registre', () => {
+  const ink = resolvedInk();
+  const complete = { node: 'v24.19.0', remotion: '4.0.529', chromium: '149.0.7790.0', ffmpeg: 'ffmpeg version n7.1' };
+  const video = { width: 540, height: 960, fps: 30, codec: 'h264' as const, crf: 20, pixel_format: 'yuv420p', color_space: 'bt709' as const };
+
+  it('dit la vérité sur l’état git : un arbre modifié n’est jamais une référence', () => {
+    const clean = buildReproducibilityManifest(inputFor(ink, { toolchain: complete, renderConfig: video }));
+    expect(clean.engine).toMatchObject({ git_commit: 'c906ca8', git_dirty: false });
+    expect(clean.reference_eligible).toBe(true);
+    const dirty = buildReproducibilityManifest(inputFor(ink, { git: { commit: 'c906ca8', dirty: true }, toolchain: complete, renderConfig: video }));
+    expect(dirty.engine.git_dirty).toBe(true);
+    expect(dirty.reference_eligible).toBe(false);
+    expect(dirty.manifest_sha256).not.toBe(clean.manifest_sha256);
+  });
+
+  it('l’éligibilité exige commit connu, arbre propre et outillage identifié pour une vidéo', () => {
+    expect(isReferenceEligible({ commit: null, dirty: false }, complete, 'h264')).toBe(false);
+    expect(isReferenceEligible({ commit: 'abc1234', dirty: null }, complete, 'h264')).toBe(false);
+    expect(isReferenceEligible({ commit: 'abc1234', dirty: false }, { ...complete, chromium: null }, 'h264')).toBe(false);
+    expect(isReferenceEligible({ commit: 'abc1234', dirty: false }, complete, 'h264')).toBe(true);
+  });
+
+  it('reprend du Render Plan la source du timing, le registre et le mouvement réduit', () => {
+    const manifest = buildReproducibilityManifest(inputFor(ink));
+    expect(manifest.timing_source).toBe('estimated');
+    expect(manifest.behavior_registry).toEqual({ version: '1.0.0', sha256: 'd'.repeat(64) });
+    expect(manifest.render_config.reduced_motion).toBe(false);
+  });
+
+  it('migre un manifeste 0.2.0 en 0.3.0 sans rien affirmer de ce qu’il ignore', () => {
+    const current = buildReproducibilityManifest(inputFor(ink));
+    const { reference_eligible: _r, timing_source: _t, behavior_registry: _b, ...rest } = current;
+    const v2 = {
+      ...rest,
+      schema_version: '0.2.0',
+      engine: { name: current.engine.name, version: current.engine.version, git_commit: current.engine.git_commit },
+      render_config: { ...current.render_config, reduced_motion: undefined },
+    };
+    const read = readVersioned('reproducibility-manifest', JSON.parse(JSON.stringify(v2)));
+    expect(read.ok && read.migratedFrom).toBe('0.2.0');
+    if (!read.ok) throw new Error('migration refusée');
+    expect(read.value.engine.git_dirty).toBeNull();
+    expect(read.value.reference_eligible).toBe(false);
+    expect(read.value.timing_source).toBe('unknown');
+    expect(read.value.behavior_registry).toBeNull();
+  });
+
+  it('aller-retour : un manifeste 0.3.0 se relit à l’identique et reste vérifiable', () => {
+    const manifest = buildReproducibilityManifest(inputFor(ink, { toolchain: complete, renderConfig: video }));
+    const read = readVersioned('reproducibility-manifest', JSON.parse(JSON.stringify(manifest)));
+    expect(read.ok && read.migratedFrom).toBeNull();
+    expect(read.ok && read.value).toEqual(manifest);
+    expect(verifyManifest(manifest)).toBe(true);
   });
 });

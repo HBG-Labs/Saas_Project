@@ -12,12 +12,14 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "check": "npm run check -w @motion-engine/core && npm run check -w @motion-engine/renderer-remotion && npm run typecheck && npm run lint && npm run test",
+    "check": "npm run check -w @motion-engine/core && npm run check -w @motion-engine/renderer-remotion && npm run typecheck && npm run lint && npm run test && npm run versions:check",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "fonts:prepare": "node scripts/prepare-fonts.mjs",
-    "test:render": "npm run test:render -w @motion-engine/renderer-remotion"
+    "test:render": "npm run test:render -w @motion-engine/renderer-remotion",
+    "versions:check": "node scripts/versions-lock.mts --check",
+    "versions:lock": "node scripts/versions-lock.mts --write"
   },
   "devDependencies": {
     "@fontsource/archivo": "5.3.0",

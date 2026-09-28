@@ -22,7 +22,7 @@ const base: Omit<PipelineRequest, 'style' | 'outDir'> = {
   presetsFile: path.join(WORKSPACE, 'packs', 'platforms', 'platforms.json'),
   profile: loadRenderProfile('dev'),
   render: false,
-  gitCommit: null,
+  git: { commit: null, dirty: null },
   createdAt: '2026-09-27T18:00:00+02:00',
 };
 const nocturne = { kind: 'style' as const, file: path.join(EXAMPLES, 'control_nocturne', 'style.json'), libraryRoot: path.join(WORKSPACE, 'packs', 'fonts') };
@@ -40,7 +40,10 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     expect(hashDocument(onDisk('render-plan.json'))).toBe(result.manifest.render_plan_sha256);
     expect(result.manifest.style.resolved_sha256).toBe(result.resolved.sha256);
     expect(result.manifest.platform_presets).not.toBeNull();
-    expect(result.manifest.render_config).toMatchObject({ width: 540, height: 960, fps: 30, codec: 'h264', color_space: 'bt709' });
+    expect(result.manifest.render_config).toMatchObject({ width: 540, height: 960, fps: 30, codec: 'h264', color_space: 'bt709', reduced_motion: false });
+    expect(result.manifest.schema_version).toBe('0.3.0');
+    expect(result.manifest.timing_source).toBe('estimated');
+    expect(result.manifest.behavior_registry).toEqual(result.plan.provenance.behavior_registry);
     // Chaque police du manifeste correspond octet pour octet au fichier de la bibliothèque.
     for (const font of result.manifest.fonts) {
       const file = path.join(WORKSPACE, 'packs', 'fonts', font.file.replace(/^lib:/, ''));
@@ -70,6 +73,24 @@ describe('pipeline Intent → Spec → Render Plan → manifeste', () => {
     expect(b.manifest.style.substituted).toBe(true);
     expect(b.manifest.style.sources.style.id).toBe('fixture_signal');
     expect(b.plan.scenes[0]!.background).not.toBe(a.plan.scenes[0]!.background);
+  });
+
+  it('état git inconnu ou sale : jamais un rendu de référence', async () => {
+    const unknown = await runPipeline({ ...base, style: nocturne, outDir: path.join(out, 'git-unknown') });
+    expect(unknown.manifest.engine.git_dirty).toBeNull();
+    expect(unknown.manifest.reference_eligible).toBe(false);
+    const dirty = await runPipeline({ ...base, git: { commit: 'a'.repeat(40), dirty: true }, style: nocturne, outDir: path.join(out, 'git-dirty') });
+    expect(dirty.manifest.engine).toMatchObject({ git_commit: 'a'.repeat(40), git_dirty: true });
+    expect(dirty.manifest.reference_eligible).toBe(false);
+  });
+
+  it('mouvement réduit : tracé dans le plan et le manifeste, sans changer le temps', async () => {
+    const full = await runPipeline({ ...base, style: nocturne, outDir: path.join(out, 'rm-full') });
+    const reduced = await runPipeline({ ...base, reducedMotion: true, style: nocturne, outDir: path.join(out, 'rm-reduced') });
+    expect(reduced.manifest.render_config.reduced_motion).toBe(true);
+    expect(reduced.plan.reduced_motion).toBe(true);
+    expect(reduced.plan.canvas.duration_frames).toBe(full.plan.canvas.duration_frames);
+    expect(reduced.manifest.render_plan_sha256).not.toBe(full.manifest.render_plan_sha256);
   });
 
   it('REZO360 passe par le même moteur, en consommateur (mode marque)', async () => {

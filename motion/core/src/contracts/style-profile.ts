@@ -20,7 +20,12 @@ export const STYLE_PROFILE_SCHEMA = 'creative-style-profile';
  * 0.2.0 : ajout de `voice_personality.pace_wpm`. Aucune migration depuis
  * 0.1.0 : le débit d'une voix ne se devine pas, il doit être écrit.
  */
-export const STYLE_PROFILE_VERSION = '0.2.0';
+/*
+ * 0.3.0 : le style gouverne le mouvement — durées par phase, décalage, pause
+ * élastique, énergie, amplitudes, budget d'attention, lisibilité. Aucune
+ * migration automatique : une personnalité de mouvement ne se devine pas.
+ */
+export const STYLE_PROFILE_VERSION = '0.3.0';
 
 /** Clé de jeton sans espace de noms : `surface.primary`, `display.xl`. */
 export const TokenKeySchema = z.string().regex(/^[a-z0-9_]+(\.[a-z0-9_]+)*$/, 'clé de jeton attendue');
@@ -78,6 +83,9 @@ export const BehaviorPolicySchema = z.strictObject({
   param_bounds: z.record(z.string(), z.strictObject({ min: z.number(), max: z.number() })).optional(),
 });
 
+const Beats = z.number().positive().max(16);
+const EnergyFactor = z.number().min(0.5).max(2);
+
 const Weighted = z.strictObject({ id: DottedIdSchema, weight: z.number().min(0).max(1) });
 
 export const CreativeStyleProfileSchema = z.strictObject({
@@ -121,6 +129,30 @@ export const CreativeStyleProfileSchema = z.strictObject({
     easings: z.record(TokenKeySchema, EasingSchema),
     max_overshoot: z.number().min(0).max(0.2),
     behaviors: z.record(BehaviorIdSchema, BehaviorPolicySchema),
+    /** Durées par phase, en beats du tempo de la section. */
+    timing: z.strictObject({
+      enter_beats: Beats,
+      accent_beats: Beats,
+      settle_beats: Beats,
+      exit_beats: Beats,
+      /** Décalage entre deux unités (lignes) d'une même entrée. */
+      stagger_beats: z.number().min(0).max(4),
+      /** Pause élastique entre la stabilisation et la sortie. */
+      hold: z.strictObject({ min_beats: z.number().min(0).max(16), preferred_beats: z.number().min(0).max(16), max_beats: z.number().min(0).max(32) }),
+      /** Multiplicateur des durées selon l'énergie demandée par la spec. */
+      energy: z.strictObject({ low: EnergyFactor, medium: EnergyFactor, high: EnergyFactor }),
+    }),
+    amplitude: z.strictObject({
+      enter_travel: TokenKeySchema,
+      exit_travel: TokenKeySchema,
+      /** Échelle d'accentuation (1 = aucune). */
+      accent_scale: z.number().min(1).max(1.3),
+    }),
+    /** Seuils au-delà desquels une scène sollicite trop l'attention. */
+    budget: z.strictObject({
+      attention_peak: z.number().int().min(1).max(20),
+      attention_total: z.number().int().min(1).max(60),
+    }),
   }),
 
   rhythm_personality: z.strictObject({
@@ -133,9 +165,12 @@ export const CreativeStyleProfileSchema = z.strictObject({
       ),
       breath_ms: z.number().int().min(100).max(2000),
     }),
+    /** Heuristique de production pour la durée minimale de lecture (voir temporal/readability.ts). */
     reading: z.strictObject({
       ms_per_word: z.number().int().min(100).max(1000),
+      ms_per_char: z.number().int().min(10).max(200),
       min_hold_ms: z.number().int().min(200).max(5000),
+      importance: z.strictObject({ primary: z.number().min(0.3).max(2), secondary: z.number().min(0.3).max(2) }),
     }),
     preferred_curves: z.array(Weighted).max(16),
   }),

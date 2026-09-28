@@ -9,18 +9,35 @@ import { hashDocument } from './canonical.ts';
 
 export interface ManifestInput {
   createdAt: string;
-  engine: ReproducibilityManifest['engine'];
+  engine: { name: string; version: string };
+  /** État git RÉEL au moment du rendu (fourni par l'appelant, qui lit le dépôt). */
+  git: { commit: string | null; dirty: boolean | null };
   spec: MotionSceneSpec;
   resolvedStyle: ResolvedStyle;
   plan: RenderPlan;
   platformPresets: PlatformPresets | null;
   toolchain: ReproducibilityManifest['toolchain'];
-  renderConfig: ReproducibilityManifest['render_config'];
+  renderConfig: Omit<ReproducibilityManifest['render_config'], 'reduced_motion'>;
   /** Obligatoire si le style utilisé n'est pas celui de la liaison de la spec. */
   substitutionReason?: string;
 }
 
 type ManifestBody = Omit<ReproducibilityManifest, 'created_at' | 'manifest_sha256'>;
+
+/**
+ * Rendu de référence : commit connu, arbre propre, et — pour une vidéo —
+ * outillage entièrement identifié. Toute autre situation reste un rendu de
+ * développement, explicitement marqué.
+ */
+export function isReferenceEligible(
+  git: ManifestInput['git'],
+  toolchain: ReproducibilityManifest['toolchain'],
+  codec: ReproducibilityManifest['render_config']['codec'],
+): boolean {
+  if (git.commit === null || git.dirty !== false) return false;
+  if (codec === 'h264') return toolchain.remotion !== null && toolchain.chromium !== null && toolchain.ffmpeg !== null;
+  return true;
+}
 
 export class ManifestError extends Error {
   constructor(message: string) {
@@ -53,7 +70,8 @@ export function buildReproducibilityManifest(input: ManifestInput): Reproducibil
   const body: ManifestBody = {
     schema: MANIFEST_SCHEMA,
     schema_version: MANIFEST_VERSION,
-    engine: input.engine,
+    engine: { ...input.engine, git_commit: input.git.commit, git_dirty: input.git.dirty },
+    reference_eligible: isReferenceEligible(input.git, input.toolchain, input.renderConfig.codec),
     spec: { spec_id: spec.spec_id, revision: spec.revision, sha256: specHash },
     style: {
       binding: spec.style_binding,
@@ -67,6 +85,8 @@ export function buildReproducibilityManifest(input: ManifestInput): Reproducibil
       substituted,
       substitution_reason: reason,
     },
+    timing_source: plan.timing_source,
+    behavior_registry: plan.provenance.behavior_registry,
     platform_presets: input.platformPresets
       ? { version: input.platformPresets.version, sha256: hashDocument(input.platformPresets) }
       : null,
@@ -78,7 +98,7 @@ export function buildReproducibilityManifest(input: ManifestInput): Reproducibil
       .sort((a, b) => a.ref.localeCompare(b.ref)),
     render_plan_sha256: hashDocument(plan),
     toolchain: input.toolchain,
-    render_config: input.renderConfig,
+    render_config: { ...input.renderConfig, reduced_motion: plan.reduced_motion },
   };
   return ReproducibilityManifestSchema.parse({
     ...body,

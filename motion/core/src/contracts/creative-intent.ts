@@ -32,6 +32,11 @@ export const INTENT_CONSTRAINTS = [
 /**
  * Un temps narratif : ce qui est dit et montré, et pourquoi. Jamais comment
  * c'est disposé ou animé, ni à quel instant.
+ *
+ * Décision P1.3 (n° 3) : le texte est conservé TEL QUEL. Aucune normalisation
+ * typographique (espaces fines insécables avant « ? ! ; : », guillemets,
+ * apostrophes) n'est appliquée ici : elle dépend de la locale et du rendu
+ * des glyphes, et relève du moteur typographique prévu en P1.4.
  */
 export const IntentBeatSchema = z.strictObject({
   id: IdSchema,

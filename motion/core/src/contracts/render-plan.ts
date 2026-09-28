@@ -4,7 +4,8 @@ import { CueIdSchema, HexColorSchema, IdSchema, SemVerSchema, Sha256Schema } fro
 import { EasingSchema } from './style-profile.ts';
 
 export const RENDER_PLAN_SCHEMA = 'render-plan';
-export const RENDER_PLAN_VERSION = '0.1.0';
+/** 0.2.0 : pistes fusionnées par propriété (sources multiples), provenance des comportements, source du timing. */
+export const RENDER_PLAN_VERSION = '0.2.0';
 
 const Frame = z.number().int().min(0);
 const Px = z.number().finite();
@@ -41,8 +42,8 @@ export const TrackSchema = z.strictObject({
   property: TrackPropertySchema,
   target: z.strictObject({ run: IdSchema.optional(), line: z.number().int().min(0).optional() }).optional(),
   keys: z.array(KeyframeSchema).min(1),
-  /** Comportement d'origine, pour la traçabilité et la régénération sélective. */
-  source: IdSchema,
+  /** Instances de comportements ayant produit ces clés, dans l'ordre du temps (traçabilité). */
+  sources: z.array(IdSchema).min(1),
 });
 export type Track = z.infer<typeof TrackSchema>;
 
@@ -181,6 +182,16 @@ export const RenderPlanSchema = z.strictObject({
   /** Style résolu utilisé : empreinte du ResolvedStyle et mode. */
   style: z.strictObject({ mode: z.enum(['creative', 'brand', 'series']), sha256: Sha256Schema }),
   compiler_version: SemVerSchema,
+  /** estimated : parole estimée (aucune voix réelle) ; aligned : voix alignée (P3) ; none : aucune ancre de parole. */
+  timing_source: z.enum(['estimated', 'aligned', 'none']),
+  reduced_motion: z.boolean(),
+  /** Métadonnées de traçabilité : ignorées par les renderers. */
+  provenance: z.strictObject({
+    behavior_registry: z.strictObject({ version: SemVerSchema, sha256: Sha256Schema }),
+    behaviors: z.array(
+      z.strictObject({ instance: IdSchema, behavior: z.string(), version: SemVerSchema, scene: IdSchema, layer: IdSchema.nullable() }),
+    ),
+  }),
   canvas: z.strictObject({
     width: z.number().int().positive(),
     height: z.number().int().positive(),

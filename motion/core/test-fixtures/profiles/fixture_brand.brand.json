@@ -2,24 +2,59 @@
   "schema": "brand-motion-profile",
   "schema_version": "0.1.0",
   "id": "fixture_brand",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Atelier Boréal (marque fictive de test)",
   "style": {
-    "ref": { "id": "fixture_ink", "version": "1.0.0", "sha256": "540446d36837c85895129f66ef83c5b71c576cf6fd3f268b80889b83e107c5c3" },
+    "ref": {
+      "id": "fixture_ink",
+      "version": "1.1.0",
+      "sha256": "74050a08b68546923541e2560127ce2de4df48a0ef974685c127e08c5535ac02"
+    },
     "src": "pack:fixture_ink.style.json"
   },
-  "locks": ["palette", "typography.families", "forbidden"],
+  "locks": [
+    "palette",
+    "typography.families",
+    "forbidden"
+  ],
   "logos": {
     "primary": {
       "runs": [
-        { "text": "ATELIER", "color": "color.text.primary" },
-        { "text": "BORÉAL", "color": "color.accent" }
+        {
+          "text": "ATELIER",
+          "color": "color.text.primary"
+        },
+        {
+          "text": "BORÉAL",
+          "color": "color.accent"
+        }
       ],
       "type": "type.headline"
     }
   },
-  "assets": { "approved": [], "priority": ["illustration", "photo"], "allow_generated_images": false },
-  "lexicon": [{ "term": "Boréal", "say": "Bo-ré-al", "locale": "fr-FR" }],
-  "claims_policy": { "forbid": ["invented_numbers", "unverified_claims"], "disclaimer": null },
-  "mandatory": { "end_card_logo": "primary" }
+  "assets": {
+    "approved": [],
+    "priority": [
+      "illustration",
+      "photo"
+    ],
+    "allow_generated_images": false
+  },
+  "lexicon": [
+    {
+      "term": "Boréal",
+      "say": "Bo-ré-al",
+      "locale": "fr-FR"
+    }
+  ],
+  "claims_policy": {
+    "forbid": [
+      "invented_numbers",
+      "unverified_claims"
+    ],
+    "disclaimer": null
+  },
+  "mandatory": {
+    "end_card_logo": "primary"
+  }
 }

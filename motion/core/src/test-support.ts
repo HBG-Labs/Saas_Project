@@ -52,10 +52,13 @@ export function codes(result: { ok: boolean; issues?: { code: string; severity?:
 export function minimalPlan(): Json {
   return {
     schema: 'render-plan',
-    schema_version: '0.1.0',
+    schema_version: '0.2.0',
     spec: { spec_id: 'moon_question', revision: 1, sha256: 'a'.repeat(64) },
     style: { mode: 'creative', sha256: 'b'.repeat(64) },
-    compiler_version: '0.1.0',
+    compiler_version: '0.2.0',
+    timing_source: 'estimated',
+    reduced_motion: false,
+    provenance: { behavior_registry: { version: '1.0.0', sha256: 'd'.repeat(64) }, behaviors: [] },
     canvas: { width: 1080, height: 1920, fps: 30, duration_frames: 60 },
     fonts: [{ id: 'display_900', css_name: 'fixture-ink-serif', weight: 900, style: 'normal', file: 'lib:playfair-display-latin-900.ttf', sha256: 'c'.repeat(64) }],
     assets: [],
@@ -81,7 +84,7 @@ export function minimalPlan(): Json {
                 measured_width: null,
               },
             ],
-            tracks: [{ property: 'opacity', keys: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }], source: 'bh_question_in' }],
+            tracks: [{ property: 'opacity', keys: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }], sources: ['bh_question_in'] }],
           },
         ],
       },
@@ -94,7 +97,14 @@ export const loadFixturePatterns = () => loadPatternPacks(path.join(FIXTURES, 'p
 export const loadFixturePresets = () => loadPlatformPresetsFile(path.join(FIXTURES, 'platforms.json'));
 export const readFilmIntent = (): CreativeIntent => readFixture('moon.film.intent.json') as unknown as CreativeIntent;
 
-export function mustBuild(resolved: ResolvedStyle, intent: CreativeIntent = readFilmIntent()): MotionSceneSpec {
+/** Même intent, sans durée cible : les durées naturelles du style s'appliquent. */
+export function naturalIntent(): CreativeIntent {
+  const intent = clone(readFilmIntent());
+  delete intent.target_duration_s;
+  return intent;
+}
+
+export function mustBuild(resolved: ResolvedStyle, intent: CreativeIntent = naturalIntent()): MotionSceneSpec {
   const result = buildSpec({ intent, resolved, presets: loadFixturePresets(), patterns: loadFixturePatterns() });
   if (!result.ok) throw new Error(`Construction refusée :\n${formatIssues(result.issues)}`);
   return result.value;
@@ -103,8 +113,9 @@ export function mustBuild(resolved: ResolvedStyle, intent: CreativeIntent = read
 export const DEV_OUTPUT = { width: 540, height: 960, fps: 30 };
 export const AUDIO_TARGETS = { target_lufs: -14, true_peak_dbtp: -1 };
 
-export function mustCompile(spec: MotionSceneSpec, resolved: ResolvedStyle, output = DEV_OUTPUT): CompileOutput {
+export function mustCompile(spec: MotionSceneSpec, resolved: ResolvedStyle, output = DEV_OUTPUT, reducedMotion = false): CompileOutput {
   const result = compileSpec({
+    reducedMotion,
     spec,
     resolved,
     presets: loadFixturePresets(),

@@ -18,7 +18,7 @@ export { bindingMatches, describeResolved } from './style/binding.ts';
 export { contrastRatio, relativeLuminance } from './style/contrast.ts';
 
 export { canonicalJson, hashDocument, sha256Hex } from './integrity/canonical.ts';
-export { buildReproducibilityManifest, manifestHash, verifyManifest, ManifestError } from './integrity/manifest.ts';
+export { buildReproducibilityManifest, isReferenceEligible, manifestHash, verifyManifest, ManifestError } from './integrity/manifest.ts';
 export type { ManifestInput } from './integrity/manifest.ts';
 
 export {
@@ -35,7 +35,7 @@ export { readVersioned, currentVersion, documentKinds } from './validation/versi
 export type { DocumentKind, DocumentKinds } from './validation/versioning.ts';
 export { formatIssues, hasErrors, ValidationFailure } from './validation/issues.ts';
 export type { ValidationIssue, ValidationResult } from './validation/issues.ts';
-export type { SemanticRegistry, SpecSemanticOptions, BehaviorInfo } from './validation/semantic-spec.ts';
+export type { SpecSemanticOptions } from './validation/semantic-spec.ts';
 
 export { loadBrandFile, loadPlatformPresetsFile, loadSeriesFile, loadStyleFile, resolveResource } from './io/load.ts';
 export type { LoadedBrand, LoadedSeries, LoadOptions } from './io/load.ts';
@@ -50,7 +50,21 @@ export { buildSpec, SPEC_BUILDER_VERSION } from './builder/build-spec.ts';
 export type { BuildSpecInput } from './builder/build-spec.ts';
 export { compileSpec, COMPILER_VERSION } from './compiler/compile.ts';
 export type { CompileInput, CompileOutput, OutputConfig } from './compiler/compile.ts';
-export { BEHAVIOR_REGISTRY, supportedBehaviors } from './compiler/behaviors.ts';
-export type { SceneTimeline } from './compiler/timeline.ts';
+export * from './contracts/behavior.ts';
+export { BEHAVIORS, BEHAVIOR_REGISTRY_VERSION, createBehaviorRegistry, latestVersion } from './motion/registry.ts';
+export type { BehaviorRegistry } from './motion/registry.ts';
+export { EASING_ROLE_INTENTS, EASING_TYPES, resolveEasing, resolveAllEasings } from './motion/easing-catalog.ts';
+export { compileTracks } from './motion/tracks.ts';
+export { resolveTemporalPlan, distribute, SCENE_PHASES, TemporalError } from './temporal/engine.ts';
+export type { TemporalPlan, TemporalScene, ResolvedBehavior, PhaseSpan, ScenePhase } from './temporal/engine.ts';
+export { estimateSpeech } from './temporal/speech.ts';
+export type { EstimatedSpeechTiming, VoiceAlignment, SpeechTiming } from './temporal/speech.ts';
+export { readingTime } from './temporal/readability.ts';
+export type { ReadingRequirement } from './temporal/readability.ts';
+export { msToFrame, toSceneFrames } from './temporal/frames.ts';
 
 export { cubicBezier, evaluateEasing, mixColor, sampleProperty, sampleTrack, springResponse } from './runtime/index.ts';
+
+export { appendToLock, checkVersionLock, LOCKED_KINDS, VersionLockSchema } from './integrity/version-lock.ts';
+export type { VersionedDocument, VersionLock } from './integrity/version-lock.ts';
+export { collectVersionedDocuments, loadVersionLock } from './io/load.ts';

@@ -1,4 +1,4 @@
-import type { Layer, MotionSceneSpec, Scene } from '../contracts/motion-spec.ts';
+import type { Layer, MotionSceneSpec } from '../contracts/motion-spec.ts';
 import { patternKey } from '../contracts/pattern.ts';
 import type { PatternRegistry, SlotGeometry } from '../contracts/pattern.ts';
 import type { PlatformPresets } from '../contracts/platform.ts';
@@ -7,18 +7,23 @@ import type { AudioPlan, Box, PlanLine, PlanNode, PlanRun, RenderPlan, SubtitleP
 import type { ResolvedStyle } from '../contracts/resolved-style.ts';
 import type { CreativeStyleProfile } from '../contracts/style-profile.ts';
 import { hashDocument } from '../integrity/canonical.ts';
+import { EasingError } from '../motion/easing-catalog.ts';
+import { BEHAVIORS } from '../motion/registry.ts';
+import type { BehaviorRegistry } from '../motion/registry.ts';
+import { compileTracks, TrackError } from '../motion/tracks.ts';
+import type { LayerContext } from '../motion/tracks.ts';
+import { resolveTemporalPlan, TemporalError } from '../temporal/engine.ts';
+import type { TemporalPlan } from '../temporal/engine.ts';
+import { FrameError, msToFrame } from '../temporal/frames.ts';
 import { IssueCollector } from '../validation/issues.ts';
 import type { ValidationResult } from '../validation/issues.ts';
 import { validateRenderPlanSemantics } from '../validation/semantic-plan.ts';
 import { validateSpecSemantics } from '../validation/semantic-spec.ts';
-import { BEHAVIOR_REGISTRY, BehaviorError, expandBehavior } from './behaviors.ts';
-import type { PathContext, SceneFrames, TextContext } from './behaviors.ts';
 import { alignHorizontally, alignVertically, columnsLength, layoutFrame, LayoutError, placementBox, regionBox } from './layout.ts';
 import type { LayoutFrame } from './layout.ts';
-import { resolveSceneTimeline, TimelineError, toFrame } from './timeline.ts';
-import type { SceneTimeline } from './timeline.ts';
 
-export const COMPILER_VERSION = '0.1.0';
+/** 0.2.0 : mouvement résolu par le registre de comportements et le moteur temporel (P1.3). */
+export const COMPILER_VERSION = '0.2.0';
 
 export interface OutputConfig {
   width: number;
@@ -35,13 +40,17 @@ export interface CompileInput {
   /** Cibles de mixage : fournies par le profil de rendu, jamais inventées par le compilateur. */
   audioTargets: { target_lufs: number; true_peak_dbtp: number };
   allowStyleSubstitution?: boolean;
+  /** Applique la stratégie « mouvement réduit » de chaque comportement. */
+  reducedMotion?: boolean;
+  /** Registre de comportements (par défaut : celui du moteur). */
+  registry?: BehaviorRegistry;
 }
 
 export interface CompileOutput {
   plan: RenderPlan;
   audio: AudioPlan;
   subtitles: SubtitlePlan;
-  timeline: SceneTimeline[];
+  temporal: TemporalPlan;
 }
 
 class CompileError extends Error {
@@ -70,6 +79,8 @@ interface SceneBuild {
   occupied: Map<string, Box>;
   regions: Map<string, Box>;
   fonts: Map<string, RenderPlan['fonts'][number]>;
+  /** Contextes de couleur des calques imbriqués (groupes). */
+  contexts: Map<string, Omit<LayerContext, 'scene'>>;
 }
 
 function slotRegion(build: SceneBuild, slot: string): { box: Box; align_x: 'start' | 'center' | 'end'; align_y: 'start' | 'center' | 'end' } {
@@ -99,7 +110,7 @@ function layerRegion(build: SceneBuild, layer: Layer) {
   return { box: build.frame.content, align_x: 'start' as const, align_y: 'start' as const };
 }
 
-function buildNode(build: SceneBuild, layer: Layer, accentTargets: ReadonlySet<string>): { node: PlanNode; context: TextContext | PathContext | null } {
+function buildNode(build: SceneBuild, layer: Layer, accentTargets: ReadonlySet<string>): { node: PlanNode; context: Omit<LayerContext, 'scene'> } {
   const { style, frame } = build;
   const s = frame.scale;
   const region = layerRegion(build, layer);
@@ -151,11 +162,11 @@ function buildNode(build: SceneBuild, layer: Layer, accentTargets: ReadonlySet<s
       const align = layer.style.align ?? region.align_x;
       return {
         node: { ...base, type: 'text', box, align, lines },
-        context: { kind: 'text', lineCount: lines.length, runBaseColor, accentColor },
+        context: { baseColor, accentColor, runBaseColor },
       };
     }
     case 'path': {
-      if (!('motif' in layer.geometry)) throw new CompileError('compile.unsupported', `${layer.id} : tracé par points non pris en charge en P1.2`);
+      if (!('motif' in layer.geometry)) throw new CompileError('compile.unsupported', `${layer.id} : tracé par points non pris en charge (P1.4)`);
       const motif = style.motifs[tokenKey(layer.geometry.motif)];
       const weight = style.strokes[tokenKey(layer.style.weight)];
       if (!motif || weight === undefined) throw new CompileError('compile.motif', `${layer.id} : motif ou trait absent du style`);
@@ -178,7 +189,7 @@ function buildNode(build: SceneBuild, layer: Layer, accentTargets: ReadonlySet<s
           d: `M ${inset} ${strokeWidth / 2} L ${length - inset} ${strokeWidth / 2}`,
           stroke: { color: color(style, layer.style.stroke), width: strokeWidth, cap },
         },
-        context: { kind: 'path' },
+        context: { baseColor: color(style, layer.style.stroke), accentColor: null, runBaseColor: new Map() },
       };
     }
     case 'shape': {
@@ -188,16 +199,20 @@ function buildNode(build: SceneBuild, layer: Layer, accentTargets: ReadonlySet<s
         : null;
       return {
         node: { ...base, type: 'shape', box: region.box, shape: layer.shape, radius, fill: layer.fill ? color(style, layer.fill) : null, stroke },
-        context: null,
+        context: { baseColor: layer.fill ? color(style, layer.fill) : null, accentColor: null, runBaseColor: new Map() },
       };
     }
     case 'group': {
-      const children = layer.children.map((child) => buildNode(build, child, accentTargets).node);
-      return { node: { ...base, type: 'group', box: region.box, children }, context: null };
+      const children = layer.children.map((child) => {
+        const built = buildNode(build, child, accentTargets);
+        build.contexts.set(child.id, built.context);
+        return built.node;
+      });
+      return { node: { ...base, type: 'group', box: region.box, children }, context: { baseColor: null, accentColor: null, runBaseColor: new Map() } };
     }
     case 'mask':
     case 'image':
-      throw new CompileError('compile.unsupported', `${layer.id} : primitive « ${layer.primitive} » non prise en charge en P1.2`);
+      throw new CompileError('compile.unsupported', `${layer.id} : primitive « ${layer.primitive} » non prise en charge (P1.4)`);
   }
 }
 
@@ -219,84 +234,119 @@ function findNode(nodes: readonly PlanNode[], id: string): PlanNode | undefined 
 export function compileSpec(input: CompileInput): ValidationResult<CompileOutput> {
   const { spec, resolved, presets, patterns, output } = input;
   const style = resolved.style;
-  const issues = validateSpecSemantics(spec, resolved, {
-    patterns,
-    registry: BEHAVIOR_REGISTRY,
-    allowStyleSubstitution: input.allowStyleSubstitution ?? false,
-  });
+  const registry = input.registry ?? BEHAVIORS;
+  const reducedMotion = input.reducedMotion ?? false;
   const c = new IssueCollector();
-  c.issues.push(...issues);
+  c.issues.push(
+    ...validateSpecSemantics(spec, resolved, { patterns, registry, allowStyleSubstitution: input.allowStyleSubstitution ?? false }),
+  );
   if (c.issues.some((i) => i.severity === 'error')) return { ok: false, issues: c.issues };
 
   try {
     const frame = layoutFrame(style, presets, spec.format.preset, spec.format.platform_safe_zones, output);
-    const fonts = new Map<string, RenderPlan['fonts'][number]>();
-    const planScenes: RenderPlan['scenes'] = [];
-    const timelines: SceneTimeline[] = [];
-    const cues: AudioPlan['cues'] = [];
-    const subtitleCues: SubtitlePlan['cues'] = [];
-    let cursor = 0;
+    // 1. Temps : moteur temporel (millisecondes entières, ancres sémantiques).
+    const temporal = resolveTemporalPlan({ spec, style, registry });
+    for (const w of temporal.warnings) c.warn(w.code, '', w.message);
 
-    for (const scene of spec.scenes) {
-      const timeline = resolveSceneTimeline(spec, scene, style, cursor);
-      timelines.push(timeline);
-      const frames: SceneFrames = { from: toFrame(timeline.start_ms, output.fps), to: toFrame(timeline.end_ms, output.fps), fps: output.fps };
+    // 2. Mise en page des calques, par scène.
+    const fonts = new Map<string, RenderPlan['fonts'][number]>();
+    const contexts = new Map<string, LayerContext>();
+    const sceneFrames = new Map<string, { from: number; to: number }>();
+    const sceneNodes = new Map<string, PlanNode[]>();
+    for (const [i, scene] of spec.scenes.entries()) {
+      const timing = temporal.scenes[i]!;
+      const from = msToFrame(timing.start_ms, output.fps);
+      const to = msToFrame(timing.end_ms, output.fps);
+      if (to <= from) {
+        throw new CompileError('temporal.scene_too_short', `${scene.id} : ${timing.end_ms - timing.start_ms} ms ne couvrent aucune frame à ${output.fps} fps`);
+      }
+      sceneFrames.set(scene.id, { from, to });
       const pattern = patterns.get(patternKey(scene.pattern.id, scene.pattern.version))!;
       const layout = pattern.layouts[scene.pattern.variation.layout_variant ?? pattern.variation_axes.layout_variant.default]!;
-      const build: SceneBuild = { style, frame, locale: spec.locale, slots: layout.slots, occupied: new Map(), regions: new Map(), fonts };
-
+      const build: SceneBuild = { style, frame, locale: spec.locale, slots: layout.slots, occupied: new Map(), regions: new Map(), fonts, contexts: new Map() };
       const accentTargets = new Set(
         flattenLayers(scene.layers).flatMap((l) => l.behaviors.filter((b) => b.behavior === 'ACCENT_WORD').map((b) => b.target?.run ?? '')),
       );
-      const contexts = new Map<string, TextContext | PathContext | null>();
-      const nodes: PlanNode[] = scene.layers.map((layer) => {
-        const built = buildNode(build, layer, accentTargets);
-        contexts.set(layer.id, built.context);
-        return built.node;
-      });
-
-      const beatMs = style.rhythm_personality.tempo.beat_ms[timeline.phase];
-      for (const layer of flattenLayers(scene.layers)) {
-        const node = findNode(nodes, layer.id);
-        const context = contexts.get(layer.id);
-        for (const behavior of layer.behaviors) {
-          if (!node || !context) {
-            if (behavior.behavior === 'CUT') continue;
-            throw new CompileError('compile.behavior_target', `${behavior.id} : calque « ${layer.id} » non animable en P1.2`);
-          }
-          node.tracks.push(
-            ...expandBehavior({ behavior, interval: timeline.timed[behavior.id]!, style, scale: frame.scale, beatMs, scene: frames, target: context }),
-          );
-        }
-      }
-
-      collectAudio(scene, timeline, style, cues);
-      if (scene.subtitles.mode === 'auto') {
-        for (const segment of timeline.segments) {
-          const text = spec.voice.segments.find((s) => s.id === segment.id)?.text ?? '';
-          subtitleCues.push({ scene: scene.id, start_s: segment.start_ms / 1000, end_s: segment.end_ms / 1000, lines: [text] });
-        }
-      }
-      planScenes.push({ id: scene.id, from: frames.from, to: frames.to, background: color(style, scene.background.fill), nodes });
-      cursor = timeline.end_ms;
+      sceneNodes.set(
+        scene.id,
+        scene.layers.map((layer) => {
+          const built = buildNode(build, layer, accentTargets);
+          build.contexts.set(layer.id, built.context);
+          return built.node;
+        }),
+      );
+      for (const [id, ctx] of build.contexts) contexts.set(id, { ...ctx, scene: scene.id });
     }
 
-    const durationFrames = planScenes[planScenes.length - 1]!.to;
+    // 3. Mouvement : gabarits du registre → pistes concrètes (frames en dernier).
+    const tracks = compileTracks({ temporal, style, scale: frame.scale, fps: output.fps, reducedMotion, layers: contexts, sceneFrames });
+    for (const [layerId, list] of tracks.byLayer) {
+      const scene = contexts.get(layerId)!.scene;
+      const node = findNode(sceneNodes.get(scene)!, layerId);
+      if (!node) throw new CompileError('compile.node_missing', `calque ${layerId} introuvable`);
+      node.tracks = list;
+    }
+
+    // 4. Audio (signaux dérivés des événements) et sous-titres (parole).
+    const cues: AudioPlan['cues'] = [];
+    const subtitleCues: SubtitlePlan['cues'] = [];
+    const sound = style.sound_personality;
+    for (const [i, scene] of spec.scenes.entries()) {
+      const timing = temporal.scenes[i]!;
+      if (scene.sound.derive_from_events) {
+        for (const event of scene.events) {
+          const cue = sound.event_cues[event.kind];
+          const at = timing.events[event.id];
+          if (cue && at !== undefined) cues.push({ cue, t_s: at / 1000, gain_db: sound.cues[cue]?.gain_db ?? 0, source_event: event.id });
+        }
+      }
+      for (const override of scene.sound.overrides) {
+        const ref = 'with' in override.at ? override.at.with : 'after' in override.at ? override.at.after : null;
+        const b = ref ? timing.behaviors.find((x) => x.instance === ref) : undefined;
+        const at = ref ? (timing.events[ref] ?? (b ? ('with' in override.at ? b.start_ms : b.end_ms) : undefined)) : undefined;
+        if (at !== undefined) {
+          cues.push({ cue: override.cue, t_s: at / 1000, gain_db: override.gain_db ?? sound.cues[override.cue]?.gain_db ?? 0, source_event: scene.id });
+        }
+      }
+      if (scene.subtitles.mode === 'auto') {
+        for (const speech of timing.speech) {
+          const text = spec.voice.segments.find((s) => s.id === speech.segment)?.text ?? '';
+          subtitleCues.push({ scene: scene.id, start_s: speech.start_ms / 1000, end_s: speech.end_ms / 1000, lines: [text] });
+        }
+      }
+    }
+
     const plan = RenderPlanSchema.parse({
       schema: RENDER_PLAN_SCHEMA,
       schema_version: RENDER_PLAN_VERSION,
       spec: { spec_id: spec.spec_id, revision: spec.revision, sha256: hashDocument(spec) },
       style: { mode: resolved.mode, sha256: resolved.sha256 },
       compiler_version: COMPILER_VERSION,
-      canvas: { width: output.width, height: output.height, fps: output.fps, duration_frames: durationFrames },
+      timing_source: temporal.timing_source,
+      reduced_motion: reducedMotion,
+      provenance: {
+        behavior_registry: { version: registry.version, sha256: registry.sha256 },
+        behaviors: temporal.scenes.flatMap((scene) => [
+          ...scene.behaviors.map((b) => ({ instance: b.instance, behavior: b.behavior, version: b.version, scene: scene.id, layer: b.layer })),
+          ...(scene.transition_out
+            ? [{ instance: `${scene.id}_transition`, behavior: scene.transition_out.behavior, version: scene.transition_out.version, scene: scene.id, layer: null }]
+            : []),
+        ]),
+      },
+      canvas: { width: output.width, height: output.height, fps: output.fps, duration_frames: msToFrame(temporal.total_ms, output.fps) },
       fonts: [...fonts.values()].sort((a, b) => a.id.localeCompare(b.id)),
       assets: [],
-      scenes: planScenes,
+      scenes: spec.scenes.map((scene) => ({
+        id: scene.id,
+        ...sceneFrames.get(scene.id)!,
+        background: color(style, scene.background.fill),
+        nodes: sceneNodes.get(scene.id)!,
+      })),
     });
     const planIssues = validateRenderPlanSemantics(plan);
     if (planIssues.length > 0) return { ok: false, issues: [...c.issues, ...planIssues] };
 
-    const maxCues = style.sound_personality.max_cues_per_video;
+    const maxCues = sound.max_cues_per_video;
     cues.sort((a, b) => a.t_s - b.t_s || a.source_event.localeCompare(b.source_event));
     if (cues.length > maxCues) {
       c.warn('audio.cues_truncated', 'scenes', `${cues.length} signaux sonores, limite du style ${maxCues} : les suivants sont ignorés`);
@@ -304,37 +354,20 @@ export function compileSpec(input: CompileInput): ValidationResult<CompileOutput
     const audio: AudioPlan = {
       schema: 'audio-plan',
       schema_version: RENDER_PLAN_VERSION,
-      duration_s: cursor / 1000,
+      duration_s: temporal.total_ms / 1000,
       voice: null,
       cues: cues.slice(0, maxCues),
       target_lufs: input.audioTargets.target_lufs,
       true_peak_dbtp: input.audioTargets.true_peak_dbtp,
     };
     const subtitles: SubtitlePlan = { schema: 'subtitle-plan', schema_version: RENDER_PLAN_VERSION, cues: subtitleCues };
-    return { ok: true, value: { plan, audio, subtitles, timeline: timelines }, warnings: c.issues };
+    return { ok: true, value: { plan, audio, subtitles, temporal }, warnings: c.issues };
   } catch (error) {
-    if (error instanceof CompileError) c.error(error.code, '', error.message);
-    else if (error instanceof LayoutError) c.error('compile.layout', '', error.message);
-    else if (error instanceof TimelineError) c.error('compile.timeline', '', error.message);
-    else if (error instanceof BehaviorError) c.error('compile.behavior', '', error.message);
+    if (error instanceof CompileError || error instanceof TemporalError || error instanceof TrackError || error instanceof FrameError) {
+      c.error(error.code, '', error.message);
+    } else if (error instanceof LayoutError) c.error('compile.layout', '', error.message);
+    else if (error instanceof EasingError) c.error('motion.easing', '', error.message);
     else throw error;
     return { ok: false, issues: c.issues };
   }
-}
-
-function collectAudio(scene: Scene, timeline: SceneTimeline, style: CreativeStyleProfile, cues: AudioPlan['cues']) {
-  const sound = style.sound_personality;
-  if (scene.sound.derive_from_events) {
-    for (const event of scene.events) {
-      const cue = sound.event_cues[event.kind];
-      const at = timeline.timed[event.id];
-      if (!cue || !at) continue;
-      cues.push({ cue, t_s: at.start_ms / 1000, gain_db: sound.cues[cue]?.gain_db ?? 0, source_event: event.id });
-    }
-  }
-  scene.sound.overrides.forEach((override) => {
-    const at = 'with' in override.at ? timeline.timed[override.at.with] : 'after' in override.at ? timeline.timed[override.at.after] : undefined;
-    if (!at) return;
-    cues.push({ cue: override.cue, t_s: at.start_ms / 1000, gain_db: override.gain_db ?? sound.cues[override.cue]?.gain_db ?? 0, source_event: scene.id });
-  });
 }

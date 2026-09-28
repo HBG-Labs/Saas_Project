@@ -21,7 +21,7 @@ function request(overrides: Partial<PipelineRequest>): PipelineRequest {
     intentFile: path.join(CORE_FIXTURES, 'moon.film.intent.json'),
     style: {
       kind: 'style',
-      file: path.join(CORE_FIXTURES, 'profiles', 'fixture_ink.style.json'),
+      file: path.join(CORE_FIXTURES, 'profiles', 'fixture_signal.style.json'),
       libraryRoot: path.join(CORE_FIXTURES, 'fonts'),
     },
     patternDirs: [path.join(CORE_FIXTURES, 'patterns')],
@@ -29,7 +29,7 @@ function request(overrides: Partial<PipelineRequest>): PipelineRequest {
     profile: loadRenderProfile('smoke'),
     outDir: out,
     render: true,
-    gitCommit: null,
+    git: { commit: null, dirty: null },
     createdAt: '2026-09-27T18:00:00+02:00',
     ...overrides,
   };
@@ -43,6 +43,8 @@ describe('smoke test de rendu', () => {
     expect(stats.probe.frames).toBe(result.plan.canvas.duration_frames);
     expect(stats.qc).toEqual([]);
     expect(result.manifest.render_config.color_space).toBe('bt709');
+    expect(result.manifest.schema_version).toBe('0.3.0');
+    expect(result.manifest.reference_eligible).toBe(false);
     expect(result.manifest.toolchain.remotion).toBe('4.0.529');
     expect(result.manifest.toolchain.chromium).not.toBeNull();
 

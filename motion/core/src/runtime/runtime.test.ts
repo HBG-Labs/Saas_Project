@@ -49,8 +49,8 @@ describe('échantillonnage des pistes', () => {
 
   it('trouve la piste de la bonne cible, sinon la valeur par défaut', () => {
     const tracks = [
-      { property: 'opacity' as const, target: { line: 1 }, keys: [{ frame: 0, value: 0.25 }], source: 'bh' },
-      { property: 'color' as const, target: { run: 'r1' }, keys: [{ frame: 0, value: '#123456' }], source: 'bh' },
+      { property: 'opacity' as const, target: { line: 1 }, keys: [{ frame: 0, value: 0.25 }], sources: ['bh'] },
+      { property: 'color' as const, target: { run: 'r1' }, keys: [{ frame: 0, value: '#123456' }], sources: ['bh'] },
     ];
     expect(sampleProperty(tracks, 'opacity', { line: 1 }, 5, 30, 1)).toBe(0.25);
     expect(sampleProperty(tracks, 'opacity', { line: 0 }, 5, 30, 1)).toBe(1);

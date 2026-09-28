@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { clone, codes, readFixture, resolvedInk, resolvedSignal } from '../test-support.ts';
 import type { Json } from '../test-support.ts';
-import type { SemanticRegistry } from './semantic-spec.ts';
+import { BEHAVIORS } from '../motion/registry.ts';
 import { validateSpec } from './validate.ts';
 
 const ink = resolvedInk();
@@ -96,12 +96,12 @@ describe('validation sémantique de la spec', () => {
     expect(codes(validateSpec(forbidden, ink))).toContain('behavior.forbidden');
 
     const variant = base();
-    variant.scenes[0].layers[0].behaviors[0].variant = 'fade_up';
+    variant.scenes[0].layers[0].behaviors[0].variant = 'fade';
     expect(validateSpec(variant, ink).ok).toBe(true);
     expect(codes(validateSpec(variant, signal, { allowStyleSubstitution: true }))).toContain('behavior.variant');
 
     const push = base();
-    push.scenes[0].layers[1].behaviors[0] = { id: 'bh_push', behavior: 'CAMERA_PUSH', params: { scale: 1.2 }, at: { event: 'scene.start' } };
+    push.scenes[0].layers[1].behaviors[0] = { id: 'bh_push', behavior: 'CAMERA_PUSH', version: '1.0.0', params: { scale: 1.2 }, at: { event: 'scene.start' } };
     expect(codes(validateSpec(push, ink))).toContain('behavior.param_bounds');
     expect(codes(validateSpec(push, signal, { allowStyleSubstitution: true }))).toContain('behavior.forbidden');
   });
@@ -135,14 +135,15 @@ describe('validation sémantique de la spec', () => {
     doc.scenes[0].layers[1].behaviors.push({
       id: 'bh_rule_carry',
       behavior: 'MATCH_LINE',
+      version: '1.0.0',
       at: { after: 'bh_rule_draw' },
       continues_in: { scene: 'sc_answer', layer: 'ln_rule_next' },
     });
-    doc.scenes[0].transition_out = { behavior: 'MATCH_LINE', to: 'sc_answer' };
+    doc.scenes[0].transition_out = { behavior: 'MATCH_LINE', version: '1.0.0', to: 'sc_answer' };
     const result = validateSpec(doc, ink);
     expect(result.ok, JSON.stringify(result)).toBe(true);
 
-    doc.scenes[0].layers[1].behaviors[1].continues_in.layer = 'ln_missing';
+    doc.scenes[0].layers[1].behaviors.find((b: any) => b.id === 'bh_rule_carry').continues_in.layer = 'ln_missing';
     expect(codes(validateSpec(doc, ink))).toContain('behavior.continues_in');
   });
 
@@ -152,11 +153,54 @@ describe('validation sémantique de la spec', () => {
     expect(codes(validateSpec(doc, ink))).toContain('lock.unknown_target');
   });
 
-  it('consulte le registre de comportements du moteur quand il est fourni', () => {
-    const registry: SemanticRegistry = {
-      behavior: (id) => (id === 'REVEAL_TEXT' ? { applies_to: ['text'], variants: ['mask_up'] } : undefined),
-    };
-    expect(codes(validateSpec(base(), ink, { registry }))).toContain('behavior.unknown');
+  it('la spec neutre est valide face au registre fermé du moteur', () => {
+    const result = validateSpec(base(), ink, { registry: BEHAVIORS });
+    expect(result.ok, JSON.stringify(result)).toBe(true);
+  });
+
+  it('refuse un comportement inconnu du registre, ou à une version inexistante', () => {
+    const unknown = base();
+    unknown.scenes[0].layers[0].behaviors[0].behavior = 'SPIN';
+    expect(codes(validateSpec(unknown, ink, { registry: BEHAVIORS }))).toContain('behavior.unknown');
+    const version = base();
+    version.scenes[0].layers[0].behaviors[0].version = '2.0.0';
+    expect(codes(validateSpec(version, ink, { registry: BEHAVIORS }))).toEqual(['behavior.unknown_version']);
+  });
+
+  it('vérifie la compatibilité comportement × primitive', () => {
+    const doc = base();
+    doc.scenes[0].layers[1].behaviors[0] = { id: 'bh_rule_draw', behavior: 'REVEAL_TEXT', version: '1.0.0', at: { after: 'bh_accent' } };
+    expect(codes(validateSpec(doc, ink, { registry: BEHAVIORS }))).toContain('behavior.primitive');
+    doc.scenes[0].layers.push({ id: 'sh_box', primitive: 'shape', shape: 'rect', fill: 'color.accent', behaviors: [{ id: 'bh_box', behavior: 'ACCENT_WORD', version: '1.0.0', target: { run: 'r_turn' }, at: { event: 'scene.start' } }] });
+    expect(codes(validateSpec(doc, ink, { registry: BEHAVIORS }))).toContain('behavior.primitive');
+  });
+
+  it('applique les contraintes du registre : ancre acceptée, cible exigée, paramètres typés', () => {
+    const anchor = base();
+    anchor.scenes[0].layers[0].behaviors[3].at = { voice_word: { segment: 'vo_question', match: 'Lune' } };
+    expect(codes(validateSpec(anchor, ink, { registry: BEHAVIORS }))).toContain('behavior.anchor_not_accepted');
+    const target = base();
+    delete target.scenes[0].layers[0].behaviors[1].target;
+    expect(codes(validateSpec(target, ink, { registry: BEHAVIORS }))).toContain('behavior.target_required');
+    const param = base();
+    param.scenes[0].layers[0].behaviors[0].params = { stagger_beats: 9 };
+    expect(codes(validateSpec(param, ink, { registry: BEHAVIORS }))).toContain('behavior.param_invalid');
+    param.scenes[0].layers[0].behaviors[0].params = { wobble: 1 };
+    expect(codes(validateSpec(param, ink, { registry: BEHAVIORS }))).toContain('behavior.param_unknown');
+  });
+
+  it('refuse une ancre réservée tant qu’aucune voix n’est alignée', () => {
+    const doc = base();
+    doc.scenes[0].layers[0].behaviors[0].at = { voice_breath: { segment: 'vo_question', index: 0 } };
+    expect(codes(validateSpec(doc, ink))).toContain('anchor.reserved');
+  });
+
+  it('accepte les ancres de calque et refuse un calque inexistant', () => {
+    const doc = base();
+    doc.scenes[0].layers[1].behaviors[0].at = { after_layer: 'tx_question' };
+    expect(validateSpec(doc, ink, { registry: BEHAVIORS }).ok).toBe(true);
+    doc.scenes[0].layers[1].behaviors[0].at = { with_layer: 'tx_ghost' };
+    expect(codes(validateSpec(doc, ink, { registry: BEHAVIORS }))).toContain('anchor.unknown_layer');
   });
 
   it('signale sans bloquer un segment de voix rattaché à aucune scène', () => {

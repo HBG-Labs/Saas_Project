@@ -17,7 +17,11 @@ export function validateRenderPlanSemantics(plan: RenderPlan): ValidationIssue[]
     const visit = (node: PlanNode, path: string) => {
       if (ids.has(node.id)) c.error('id.duplicate', path, `nœud « ${node.id} » en double`);
       ids.add(node.id);
+      const seenTracks = new Set<string>();
       node.tracks.forEach((track, ti) => {
+        const key = `${track.property}|${track.target?.run ?? ''}|${track.target?.line ?? ''}`;
+        if (seenTracks.has(key)) c.error('plan.duplicate_track', `${path}.tracks[${ti}]`, `deux pistes pour ${track.property} sur la même cible`);
+        seenTracks.add(key);
         const tpath = `${path}.tracks[${ti}]`;
         let previous = -1;
         for (const key of track.keys) {

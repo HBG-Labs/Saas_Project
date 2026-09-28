@@ -1,9 +1,9 @@
 {
   "schema": "pattern-definition",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "statement.interrupt",
-  "version": "0.1.0",
-  "description": "Affirmation courte lue ligne à ligne ; un mot pivot peut s'accentuer au moment où la voix le prononce ; un trait ponctue la phrase.",
+  "version": "0.2.0",
+  "description": "Affirmation courte lue ligne à ligne ; un mot pivot peut s'accentuer au moment où la voix le prononce puis se stabiliser ; un trait ponctue la phrase ; l'ensemble libère l'écran avant la suite.",
   "family": "statement",
   "accepts": {
     "roles": ["setup", "tension", "interruption", "turn", "resolution"],
@@ -11,7 +11,7 @@
   },
   "variation_axes": {
     "layout_variant": { "values": ["stack_start", "stack_center"], "default": "stack_start" },
-    "motion_variant": { "values": ["mask_reveal", "fade_reveal"], "default": "mask_reveal" },
+    "motion_variant": { "values": ["rise_reveal", "soft_reveal"], "default": "rise_reveal" },
     "energy": { "values": ["low", "medium", "high"], "default": "medium" },
     "hierarchy_variant": { "values": ["accent_last", "uniform"], "default": "accent_last" }
   },
@@ -30,25 +30,24 @@
     }
   },
   "motions": {
-    "mask_reveal": {
-      "reveal": { "behavior": "REVEAL_TEXT", "variant": "mask_up" },
-      "accent": { "behavior": "ACCENT_WORD", "variant": "color_settle", "offset_beats": -0.25 },
-      "punctuate": { "behavior": "DRAW_PATH" }
+    "rise_reveal": {
+      "reveal": { "behavior": "REVEAL_TEXT", "variant": "rise" },
+      "accent": { "behavior": "ACCENT_WORD", "variant": "color_scale", "offset_beats": -0.25 },
+      "settle": { "behavior": "SETTLE" },
+      "punctuate": { "behavior": "DRAW_PATH" },
+      "exit": { "behavior": "EXIT_CLEAR", "variant": "lift" }
     },
-    "fade_reveal": {
-      "reveal": { "behavior": "REVEAL_TEXT", "variant": "fade_up" },
+    "soft_reveal": {
+      "reveal": { "behavior": "REVEAL_TEXT", "variant": "fade" },
       "accent": { "behavior": "ACCENT_WORD", "variant": "color_only", "offset_beats": 0 },
-      "punctuate": { "behavior": "DRAW_PATH" }
+      "settle": { "behavior": "SETTLE" },
+      "punctuate": { "behavior": "DRAW_PATH" },
+      "exit": { "behavior": "EXIT_CLEAR", "variant": "fade" }
     }
   },
   "hierarchies": {
     "accent_last": { "accent": true },
     "uniform": { "accent": false }
-  },
-  "energies": {
-    "low": { "lead_in_beats": 0.5, "reveal_beats": 1.5, "stagger_beats": 0.5, "accent_beats": 1, "draw_beats": 1.25, "tail_beats": 1.5, "travel": "lg" },
-    "medium": { "lead_in_beats": 0.25, "reveal_beats": 1, "stagger_beats": 0.25, "accent_beats": 0.75, "draw_beats": 1, "tail_beats": 1, "travel": "md" },
-    "high": { "lead_in_beats": 0, "reveal_beats": 0.6, "stagger_beats": 0.15, "accent_beats": 0.5, "draw_beats": 0.6, "tail_beats": 0.75, "travel": "sm" }
   },
   "elements": {
     "statement": { "slot": "statement.primary", "type": "type.display.m", "color": "color.text.primary", "accent_color": "color.accent" },

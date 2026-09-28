@@ -10,7 +10,7 @@ import { loadRenderProfile } from './profile.ts';
 //   node renderer-remotion/src/pipeline/cli.ts --intent <intent.json> --style <style.json> --lib <polices> --out <dossier>
 //   … --spec <spec.json> --style <autre-style.json> --substitution "motif"   (même spec, autre style)
 //   … --brand <brand.json> | --series <series.json>
-// Options : --patterns <dossier> (répétable), --presets <fichier>, --profile dev|master|smoke|<fichier>, --no-render
+// Options : --patterns <dossier> (répétable), --presets <fichier>, --profile dev|master|smoke|<fichier>, --no-render, --reduced-motion
 
 const WORKSPACE = path.resolve(import.meta.dirname, '..', '..', '..');
 
@@ -28,6 +28,7 @@ const { values } = parseArgs({
     out: { type: 'string' },
     substitution: { type: 'string' },
     'no-render': { type: 'boolean', default: false },
+    'reduced-motion': { type: 'boolean', default: false },
   },
 });
 
@@ -49,11 +50,14 @@ const abs = (p: string) => path.resolve(p);
 const source = sources[0]!;
 const style = { kind: source.kind, file: abs(source.file), ...(values.lib ? { libraryRoot: abs(values.lib) } : {}) } as StyleSource;
 
-function gitCommit(): string | null {
+/** Commit courant et état du moteur : « sale » dès qu'un fichier suivi ou non ignoré de motion/ diffère du commit. */
+function gitState(): { commit: string | null; dirty: boolean | null } {
   try {
-    return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8', cwd: WORKSPACE }).trim();
+    const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', cwd: WORKSPACE }).trim();
+    const status = execFileSync('git', ['status', '--porcelain', '--', '.'], { encoding: 'utf8', cwd: WORKSPACE });
+    return { commit, dirty: status.trim().length > 0 };
   } catch {
-    return null;
+    return { commit: null, dirty: null };
   }
 }
 
@@ -67,7 +71,8 @@ const result = await runPipeline({
   profile: loadRenderProfile(values.profile),
   outDir: abs(values.out),
   render: !values['no-render'],
-  gitCommit: gitCommit(),
+  git: gitState(),
+  reducedMotion: values['reduced-motion'],
   createdAt: new Date().toISOString(),
 });
 
@@ -81,6 +86,9 @@ console.log(
       substituted: result.manifest.style.substituted,
       render_plan_sha256: result.manifest.render_plan_sha256,
       manifest_sha256: result.manifest.manifest_sha256,
+      git: { commit: result.manifest.engine.git_commit, dirty: result.manifest.engine.git_dirty },
+      reference_eligible: result.manifest.reference_eligible,
+      timing_source: result.plan.timing_source,
       duration_s: result.plan.canvas.duration_frames / result.plan.canvas.fps,
       render: s
         ? {

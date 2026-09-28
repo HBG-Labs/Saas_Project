@@ -90,6 +90,21 @@ export function validateStyleSemantics(style: CreativeStyleProfile, prefix = '')
     if (prefs.avoid.includes(id)) c.error('transition.contradiction', at('transition_preferences'), `${id} à la fois préféré et évité`);
   }
 
+  // Personnalité de mouvement : cohérence interne, sans valeur imposée.
+  const mp = style.motion_personality;
+  if (mp.amplitude.accent_scale - 1 > mp.max_overshoot + 1e-9) {
+    c.error('motion.accent_scale', at('motion_personality.amplitude.accent_scale'), `échelle d'accent ${mp.amplitude.accent_scale} au-delà du dépassement autorisé (${mp.max_overshoot})`);
+  }
+  for (const name of ['enter_travel', 'exit_travel'] as const) {
+    if (style.space[mp.amplitude[name]] === undefined) {
+      c.error('motion.amplitude_unknown', at(`motion_personality.amplitude.${name}`), `espacement « ${mp.amplitude[name]} » absent`);
+    }
+  }
+  const hold = mp.timing.hold;
+  if (!(hold.min_beats <= hold.preferred_beats && hold.preferred_beats <= hold.max_beats)) {
+    c.error('motion.hold_range', at('motion_personality.timing.hold'), 'la pause doit vérifier min ≤ préférée ≤ max');
+  }
+
   const { width, height } = style.reference_canvas;
   const m = style.grid.margin;
   if (m.left + m.right >= width || m.top + m.bottom >= height) {

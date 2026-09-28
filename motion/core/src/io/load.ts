@@ -7,7 +7,9 @@ import type { PatternDefinition, PatternRegistry } from '../contracts/pattern.ts
 import type { PlatformPresets } from '../contracts/platform.ts';
 import type { SeriesMotionProfile } from '../contracts/series-profile.ts';
 import type { CreativeStyleProfile } from '../contracts/style-profile.ts';
-import { sha256Hex } from '../integrity/canonical.ts';
+import { hashDocument, sha256Hex } from '../integrity/canonical.ts';
+import { LOCKED_KINDS, VersionLockSchema } from '../integrity/version-lock.ts';
+import type { LockedKind, VersionedDocument, VersionLock } from '../integrity/version-lock.ts';
 import { IssueCollector, ValidationFailure } from '../validation/issues.ts';
 import type { ValidationResult } from '../validation/issues.ts';
 import {
@@ -137,4 +139,17 @@ export function loadPatternPacks(...dirs: string[]): PatternRegistry {
     }
   }
   return registry;
+}
+
+/** Documents versionnés d'un ou plusieurs dossiers, pour le verrou de versions. */
+export function collectVersionedDocuments(...files: string[]): VersionedDocument[] {
+  return files.map((file) => {
+    const doc = readJsonFile(file) as { schema: string; id: string; version: string };
+    if (!(LOCKED_KINDS as readonly string[]).includes(doc.schema)) throw new Error(`${file} : type « ${doc.schema} » non verrouillable`);
+    return { kind: doc.schema as LockedKind, id: doc.id, version: doc.version, sha256: hashDocument(doc), path: file };
+  });
+}
+
+export function loadVersionLock(file: string): VersionLock {
+  return VersionLockSchema.parse(readJsonFile(file));
 }

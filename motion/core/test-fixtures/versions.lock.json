@@ -1,0 +1,66 @@
+{
+  "schema": "version-lock",
+  "schema_version": "0.1.0",
+  "entries": [
+    {
+      "kind": "brand-motion-profile",
+      "id": "fixture_brand",
+      "version": "1.0.0",
+      "sha256": "9ea11f956624946881265098f69e551897257c8023b0104602c188cf3e5021c6"
+    },
+    {
+      "kind": "brand-motion-profile",
+      "id": "fixture_brand",
+      "version": "1.1.0",
+      "sha256": "87e99deb91f4fd97b9856b0fd8427a8bea8ff38349dbb2a47fa7ceab7c083ee1"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "fixture_ink",
+      "version": "1.0.0",
+      "sha256": "540446d36837c85895129f66ef83c5b71c576cf6fd3f268b80889b83e107c5c3"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "fixture_ink",
+      "version": "1.1.0",
+      "sha256": "74050a08b68546923541e2560127ce2de4df48a0ef974685c127e08c5535ac02"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "fixture_signal",
+      "version": "1.0.0",
+      "sha256": "9c45fff2567fbb5c9603a7f5bf3915f3f78d5ada43d310146207b1e8cb7cbf59"
+    },
+    {
+      "kind": "creative-style-profile",
+      "id": "fixture_signal",
+      "version": "1.1.0",
+      "sha256": "4e339f6b83152c9a844d1b495bdd87e32eb85cac62ee9b5c6174110727866f5c"
+    },
+    {
+      "kind": "pattern-definition",
+      "id": "statement.interrupt",
+      "version": "0.1.0",
+      "sha256": "9e55f6f62ce085926eb6c105fe906bad51aa89e55ce38d2bb7f479e88947de3c"
+    },
+    {
+      "kind": "pattern-definition",
+      "id": "statement.interrupt",
+      "version": "0.2.0",
+      "sha256": "04d4c25ce3060c88cbe13920f6763c6165dd5fd431f4dd15cf1b7fd350574a6c"
+    },
+    {
+      "kind": "series-motion-profile",
+      "id": "fixture_series",
+      "version": "1.0.0",
+      "sha256": "32e201abbcbb74a7f5f3c9bd551f9010f6e17f13395f69f07539556e50140d13"
+    },
+    {
+      "kind": "series-motion-profile",
+      "id": "fixture_series",
+      "version": "1.1.0",
+      "sha256": "8c090ee22ea64565f499d0807a4aa4d9c325fc3e4f9d77090b10492db7e81e95"
+    }
+  ]
+}

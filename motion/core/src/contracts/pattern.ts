@@ -14,7 +14,8 @@ import {
 import { BEAT_ROLES } from './creative-intent.ts';
 
 export const PATTERN_SCHEMA = 'pattern-definition';
-export const PATTERN_VERSION = '0.1.0';
+/** 0.2.0 : les durées quittent le pattern (le style les gouverne) ; les mouvements décrivent entrée, accent, stabilisation, ponctuation et sortie. */
+export const PATTERN_VERSION = '0.2.0';
 
 const SlotNameSchema = z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/, 'nom de slot attendu');
 /** Clé d'espacement du style (`sm`, `md`…), jamais une valeur. */
@@ -46,18 +47,6 @@ export type SlotGeometry = z.infer<typeof SlotGeometrySchema>;
 
 const BehaviorCallSchema = z.strictObject({ behavior: BehaviorIdSchema, variant: IdSchema.optional() });
 
-/** Profil d'énergie : durées en beats (le style fixe la durée d'un beat), amplitude par clé d'espacement. */
-export const EnergyProfileSchema = z.strictObject({
-  lead_in_beats: z.number().min(0).max(8),
-  reveal_beats: z.number().positive().max(16),
-  stagger_beats: z.number().min(0).max(4),
-  accent_beats: z.number().positive().max(8),
-  draw_beats: z.number().positive().max(8),
-  tail_beats: z.number().min(0).max(8),
-  travel: SpaceKeySchema,
-});
-export type EnergyProfile = z.infer<typeof EnergyProfileSchema>;
-
 const axis = <T extends z.ZodType<string>>(value: T) =>
   z.strictObject({ values: z.array(value).min(1).max(8), default: value });
 
@@ -85,11 +74,12 @@ export const PatternDefinitionSchema = z.strictObject({
     z.strictObject({
       reveal: BehaviorCallSchema,
       accent: BehaviorCallSchema.extend({ offset_beats: z.number().min(-4).max(4) }),
+      settle: BehaviorCallSchema,
       punctuate: BehaviorCallSchema,
+      exit: BehaviorCallSchema,
     }),
   ),
   hierarchies: z.record(IdSchema, z.strictObject({ accent: z.boolean() })),
-  energies: z.partialRecord(z.enum(ENERGY_LEVELS), EnergyProfileSchema),
   elements: z.strictObject({
     statement: z.strictObject({
       slot: SlotNameSchema,

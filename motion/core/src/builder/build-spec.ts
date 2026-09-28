@@ -18,8 +18,11 @@ import { hashDocument } from '../integrity/canonical.ts';
 import { IssueCollector } from '../validation/issues.ts';
 import type { ValidationResult } from '../validation/issues.ts';
 import { validateSpec } from '../validation/validate.ts';
+import { BEHAVIORS, latestVersion } from '../motion/registry.ts';
+import type { BehaviorRegistry } from '../motion/registry.ts';
 
-export const SPEC_BUILDER_VERSION = '0.1.0';
+/** 0.2.0 : versions de comportements épinglées, phases stabilisation/sortie, durées laissées au style. */
+export const SPEC_BUILDER_VERSION = '0.2.0';
 
 // Correspondances sémantiques du récit : elles décrivent le sens d'un rôle
 // narratif, jamais une valeur visuelle ou temporelle.
@@ -62,6 +65,8 @@ export interface BuildSpecInput {
   presets: PlatformPresets;
   patterns: PatternRegistry;
   format?: string;
+  /** Registre de comportements (par défaut : celui du moteur). */
+  registry?: BehaviorRegistry;
 }
 
 function bindingOf(resolved: ResolvedStyle): StyleBinding {
@@ -92,11 +97,7 @@ function chooseMotion(pattern: PatternDefinition, resolved: ResolvedStyle): stri
   return (
     ordered.find((id) => {
       const m = pattern.motions[id];
-      return (
-        m !== undefined &&
-        allowed(resolved, m.reveal.behavior, m.reveal.variant) &&
-        allowed(resolved, m.punctuate.behavior, m.punctuate.variant)
-      );
+      return m !== undefined && [m.reveal, m.settle, m.punctuate, m.exit].every((call) => allowed(resolved, call.behavior, call.variant));
     }) ?? null
   );
 }
@@ -153,6 +154,7 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
   }
 
   const energy = intent.energy;
+  const registry = input.registry ?? BEHAVIORS;
   const segments: VoiceSegment[] = [];
   const scenes: Scene[] = [];
   const phases: RhythmPhase[] = [];
@@ -173,11 +175,10 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
     const energyLevel = energy && axes.energy.values.includes(energy) ? energy : axes.energy.default;
     const layoutId = axes.layout_variant.default;
     const hierarchyId = axes.hierarchy_variant.default;
-    const profile = pattern.energies[energyLevel];
     const layout = pattern.layouts[layoutId];
     const motion = pattern.motions[motionId]!;
-    if (!profile || !layout) {
-      c.error('builder.pattern_incomplete', path, `${pattern.id} ne définit pas ${energyLevel}/${layoutId}`);
+    if (!layout) {
+      c.error('builder.pattern_incomplete', path, `${pattern.id} ne définit pas la mise en page ${layoutId}`);
       return;
     }
 
@@ -196,14 +197,16 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
     const statementSlot = layout.slots[statement.slot];
     const align = statementSlot?.align_x ?? 'start';
 
-    const reveal: BehaviorInstance = {
-      id: `bh_${id}_reveal`,
-      behavior: motion.reveal.behavior,
-      params: { unit: 'line', stagger_beats: profile.stagger_beats, travel: profile.travel },
-      at: { event: 'scene.start' },
-      duration: { beats: profile.reveal_beats },
+    /** Instance épinglée à la version courante du registre ; durée laissée au style. */
+    const instance = (suffix: string, call: { behavior: string; variant?: string | undefined }, at: BehaviorInstance['at']): BehaviorInstance => {
+      const version = latestVersion(registry, call.behavior);
+      if (!version) throw new Error(`${call.behavior} absent du registre`);
+      const b: BehaviorInstance = { id: `bh_${id}_${suffix}`, behavior: call.behavior, version, at };
+      if (call.variant) b.variant = call.variant;
+      return b;
     };
-    if (motion.reveal.variant) reveal.variant = motion.reveal.variant;
+
+    const reveal = instance('reveal', motion.reveal, { event: 'scene.start' });
     const textBehaviors: BehaviorInstance[] = [reveal];
     const events: SceneEvent[] = [];
     if (PHASE_BY_ROLE[beat.role] === 'INTERRUPTION') {
@@ -214,23 +217,24 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
     let lastId = reveal.id;
     const emphasisWord = beat.emphasis?.[0];
     if (accentRun && allowed(resolved, motion.accent.behavior, motion.accent.variant)) {
-      const accentBehavior: BehaviorInstance = {
-        id: `bh_${id}_accent`,
-        behavior: motion.accent.behavior,
-        target: { run: accentRun },
-        at: emphasisWord
+      const accent = instance(
+        'accent',
+        motion.accent,
+        emphasisWord
           ? {
               voice_word: { segment: segmentId, match: emphasisWord },
               ...(motion.accent.offset_beats !== 0 ? { offset: { beats: motion.accent.offset_beats } } : {}),
             }
           : { after: reveal.id },
-        duration: { beats: profile.accent_beats },
-      };
-      if (motion.accent.variant) accentBehavior.variant = motion.accent.variant;
-      textBehaviors.push(accentBehavior);
-      events.push({ id: `ev_${id}_impact`, kind: 'IMPACT', at: { with: accentBehavior.id } });
-      lastId = accentBehavior.id;
+      );
+      accent.target = { run: accentRun };
+      const settle = instance('settle', motion.settle, { after: accent.id });
+      settle.target = { run: accentRun };
+      textBehaviors.push(accent, settle);
+      events.push({ id: `ev_${id}_impact`, kind: 'IMPACT', at: { with: accent.id } });
+      lastId = settle.id;
     }
+    textBehaviors.push(instance('exit', motion.exit, { before_next: true }));
 
     const layers: Layer[] = [
       {
@@ -249,20 +253,13 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
     ];
     const rule = pattern.elements.rule;
     if (rule) {
-      const draw: BehaviorInstance = {
-        id: `bh_${id}_draw`,
-        behavior: motion.punctuate.behavior,
-        at: { after: lastId },
-        duration: { beats: profile.draw_beats },
-      };
-      if (motion.punctuate.variant) draw.variant = motion.punctuate.variant;
       layers.push({
         id: `ln_${id}`,
         primitive: 'path',
         slot: rule.slot,
         geometry: { motif: rule.motif },
         style: { stroke: rule.stroke, weight: rule.weight },
-        behaviors: [draw],
+        behaviors: [instance('draw', motion.punctuate, { after: lastId }), instance('rule_exit', motion.exit, { before_next: true })],
       });
     }
 
@@ -276,12 +273,7 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
       },
       purpose: PURPOSE_BY_ROLE[beat.role],
       locks: [],
-      timing: {
-        anchor: { voice_segments: [segmentId] },
-        lead_in: { beats: profile.lead_in_beats },
-        tail: { beats: profile.tail_beats },
-        min_hold: 'reading',
-      },
+      timing: { anchor: { voice_segments: [segmentId] }, min_hold: 'reading' },
       background: { fill: pattern.background },
       layers,
       events,
@@ -293,10 +285,11 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
 
   if (c.issues.length > 0) return { ok: false, issues: c.issues };
 
-  // Transitions : coupe franche vers la scène suivante (seule transition en P1.2).
+  // Transitions : coupe franche vers la scène suivante, version épinglée.
+  const cutVersion = latestVersion(registry, 'CUT');
   scenes.forEach((scene, i) => {
     const next = scenes[i + 1];
-    if (next) scene.transition_out = { behavior: 'CUT', to: next.id };
+    if (next && cutVersion) scene.transition_out = { behavior: 'CUT', version: cutVersion, to: next.id };
   });
 
   // Sections de rythme : scènes consécutives de même phase regroupées.
@@ -328,7 +321,10 @@ export function buildSpec(input: BuildSpecInput): ValidationResult<MotionSceneSp
       },
       segments,
     },
+    ...(intent.target_duration_s
+      ? { duration_target: { min_ms: Math.round(intent.target_duration_s.min * 1000), max_ms: Math.round(intent.target_duration_s.max * 1000) } }
+      : {}),
     scenes,
   };
-  return validateSpec(spec, resolved, { patterns });
+  return validateSpec(spec, resolved, { patterns, registry });
 }

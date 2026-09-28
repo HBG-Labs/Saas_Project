@@ -1,5 +1,7 @@
+import { anchorKind, ANCHOR_KINDS } from '../contracts/common.ts';
 import type { Anchor } from '../contracts/common.ts';
-import type { BehaviorInstance, Layer, MotionSceneSpec, PrimitiveType, Scene } from '../contracts/motion-spec.ts';
+import type { BehaviorInstance, Layer, MotionSceneSpec, Scene } from '../contracts/motion-spec.ts';
+import type { BehaviorRegistry } from '../motion/registry.ts';
 import { patternKey } from '../contracts/pattern.ts';
 import type { PatternRegistry } from '../contracts/pattern.ts';
 import type { ResolvedStyle } from '../contracts/resolved-style.ts';
@@ -9,18 +11,9 @@ import { IssueCollector } from './issues.ts';
 import type { ValidationIssue } from './issues.ts';
 import { hasToken } from './tokens.ts';
 
-export interface BehaviorInfo {
-  applies_to: readonly PrimitiveType[];
-  variants: readonly string[];
-}
-
-/** Registre de la grammaire de mouvement, injecté pour ne pas coupler la validation au moteur. */
-export interface SemanticRegistry {
-  behavior(id: string): BehaviorInfo | undefined;
-}
-
 export interface SpecSemanticOptions {
-  registry?: SemanticRegistry;
+  /** Registre fermé des comportements : s'il est fourni, tout comportement doit y exister à la version demandée. */
+  registry?: BehaviorRegistry;
   /** Assets disponibles en plus de ceux approuvés par l'identité. */
   assetRefs?: ReadonlySet<string>;
   /** Autorise un style différent de la liaison de la spec (substitution tracée). */
@@ -175,6 +168,14 @@ export function validateSpecSemantics(
     const edges = new Map<string, string>();
 
     const checkAnchor = (anchor: Anchor, path: string, owner: string) => {
+      if (ANCHOR_KINDS[anchorKind(anchor)] === 'reserved') {
+        c.error('anchor.reserved', path, `ancre « ${anchorKind(anchor)} » réservée : aucune voix alignée n'existe encore`);
+        return;
+      }
+      if ('with_layer' in anchor || 'after_layer' in anchor) {
+        const target = 'with_layer' in anchor ? anchor.with_layer : anchor.after_layer;
+        if (!layers.has(target)) c.error('anchor.unknown_layer', path, `calque « ${target} » absent de la scène`);
+      }
       if ('voice_segment' in anchor || 'voice_word' in anchor) {
         const segId = 'voice_segment' in anchor ? anchor.voice_segment.segment : anchor.voice_word.segment;
         if (!segmentIndex.has(segId)) {
@@ -258,6 +259,12 @@ export function validateSpecSemantics(
       if (!exists) c.error('lock.unknown_target', `${base}.locks[${li}]`, `verrou sur « ${id} » inexistant`);
     }
 
+    if (scene.transition_out && options.registry) {
+      const t = scene.transition_out;
+      const def = options.registry.get(t.behavior, t.version);
+      if (!def) c.error('behavior.unknown_version', `${base}.transition_out`, `${t.behavior}@${t.version} absent du registre`);
+      else if (def.scope !== 'transition') c.error('behavior.not_transition', `${base}.transition_out`, `${t.behavior} n'est pas une transition`);
+    }
     if (scene.transition_out?.to !== undefined) {
       const next = spec.scenes[si + 1];
       if (!next || next.id !== scene.transition_out.to) {
@@ -293,6 +300,47 @@ export function validateSpecSemantics(
     }
   }
 
+  /** Comportement × registre fermé : existence, version, primitive, variante, ancre, cible, paramètres. */
+  function checkAgainstRegistry(registry: BehaviorRegistry, b: BehaviorInstance, layer: Layer, path: string) {
+    const def = registry.get(b.behavior, b.version);
+    if (!def) {
+      if (registry.versions(b.behavior).length === 0) c.error('behavior.unknown', path, `comportement ${b.behavior} inconnu du registre`);
+      else c.error('behavior.unknown_version', `${path}.version`, `${b.behavior}@${b.version} n'existe pas (versions : ${registry.versions(b.behavior).join(', ')})`);
+      return;
+    }
+    if (def.scope !== 'layer') c.error('behavior.scope', path, `${b.behavior} est une transition, pas un comportement de calque`);
+    if (!def.compatible_primitives.includes(layer.primitive)) {
+      c.error('behavior.primitive', path, `${b.behavior} ne s'applique pas à une primitive « ${layer.primitive} »`);
+    }
+    if (b.variant !== undefined && !def.variants[b.variant]) {
+      c.error('behavior.variant_unknown', `${path}.variant`, `variante « ${b.variant} » inconnue de ${b.behavior}@${b.version}`);
+    }
+    const kind = anchorKind(b.at);
+    if (!(def.accepted_anchors as readonly string[]).includes(kind)) {
+      c.error('behavior.anchor_not_accepted', `${path}.at`, `${b.behavior} n'accepte pas l'ancre « ${kind} »`);
+    }
+    if (def.constraints.requires_run && b.target?.run === undefined) {
+      c.error('behavior.target_required', `${path}.target`, `${b.behavior} exige une cible « run »`);
+    }
+    if (!def.constraints.accepts_run && b.target?.run !== undefined) {
+      c.error('behavior.target', `${path}.target`, `${b.behavior} ne cible pas un run`);
+    }
+    for (const [name, value] of Object.entries(b.params ?? {})) {
+      const spec = def.parameters_schema[name];
+      if (!spec) {
+        c.error('behavior.param_unknown', `${path}.params.${name}`, `paramètre « ${name} » inconnu de ${b.behavior}@${b.version}`);
+        continue;
+      }
+      const valid =
+        spec.type === 'number'
+          ? typeof value === 'number' && value >= spec.min && value <= spec.max
+          : spec.type === 'enum'
+            ? typeof value === 'string' && spec.values.includes(value)
+            : typeof value === 'string' && style.space[value] !== undefined;
+      if (!valid) c.error('behavior.param_invalid', `${path}.params.${name}`, `valeur « ${String(value)} » invalide pour ${name}`);
+    }
+  }
+
   function checkBehavior(b: BehaviorInstance, layer: Layer, path: string) {
     if (style.forbidden.behaviors.includes(b.behavior)) {
       c.error('behavior.forbidden', path, `${b.behavior} est interdit par le style ${styleName}`);
@@ -311,16 +359,7 @@ export function validateSpecSemantics(
         }
       }
     }
-    const info = options.registry?.behavior(b.behavior);
-    if (options.registry && !info) c.error('behavior.unknown', path, `comportement ${b.behavior} inconnu du moteur`);
-    if (info) {
-      if (!info.applies_to.includes(layer.primitive)) {
-        c.error('behavior.primitive', path, `${b.behavior} ne s'applique pas à une primitive « ${layer.primitive} »`);
-      }
-      if (b.variant && !info.variants.includes(b.variant)) {
-        c.error('behavior.variant_unknown', `${path}.variant`, `variante « ${b.variant} » inconnue du moteur`);
-      }
-    }
+    if (options.registry) checkAgainstRegistry(options.registry, b, layer, path);
     if (b.target?.run !== undefined) {
       if (layer.primitive !== 'text') {
         c.error('behavior.target', `${path}.target`, 'une cible de run exige un calque texte');

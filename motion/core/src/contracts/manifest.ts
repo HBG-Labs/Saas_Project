@@ -4,8 +4,12 @@ import { DocumentRefSchema, IdSchema, SemVerSchema, Sha256Schema } from './commo
 import { StyleBindingSchema } from './motion-spec.ts';
 
 export const MANIFEST_SCHEMA = 'reproducibility-manifest';
-/** 0.2.0 : ajout de render_config.color_space (l'espace colorimétrique change le fichier produit). */
-export const MANIFEST_VERSION = '0.2.0';
+/**
+ * 0.2.0 : ajout de render_config.color_space.
+ * 0.3.0 : état git réel (git_dirty), éligibilité « rendu de référence »,
+ * source du timing, empreinte du registre de comportements, mouvement réduit.
+ */
+export const MANIFEST_VERSION = '0.3.0';
 
 /**
  * Tout ce qui détermine le rendu. Deux manifestes d'empreinte égale doivent
@@ -20,10 +24,16 @@ export const ReproducibilityManifestSchema = z.strictObject({
     name: z.string().min(1),
     version: SemVerSchema,
     git_commit: z.string().regex(/^[0-9a-f]{7,40}$/).nullable(),
+    /** true : le code rendu n'est PAS exactement celui du commit. null : inconnu (manifeste migré). */
+    git_dirty: z.boolean().nullable(),
   }),
+  /**
+   * Un rendu de référence exige un commit connu, un arbre propre et un
+   * outillage entièrement identifié. Calculé par le moteur, jamais déclaré.
+   */
+  reference_eligible: z.boolean(),
   spec: z.strictObject({ spec_id: IdSchema, revision: z.number().int().min(1), sha256: Sha256Schema }),
   style: z.strictObject({
-    /** Liaison déclarée par la spec. */
     binding: StyleBindingSchema,
     mode: z.enum(['creative', 'brand', 'series']),
     resolved_sha256: Sha256Schema,
@@ -32,10 +42,12 @@ export const ReproducibilityManifestSchema = z.strictObject({
       brand: DocumentRefSchema.nullable(),
       series: DocumentRefSchema.nullable(),
     }),
-    /** Vrai si le style utilisé n'est pas celui de la liaison. */
     substituted: z.boolean(),
     substitution_reason: z.string().min(1).max(300).nullable(),
   }),
+  /** `estimated` : aucune voix réelle, parole estimée ; `unknown` : manifeste migré depuis une version antérieure. */
+  timing_source: z.enum(['estimated', 'aligned', 'none', 'unknown']),
+  behavior_registry: z.strictObject({ version: SemVerSchema, sha256: Sha256Schema }).nullable(),
   platform_presets: z.strictObject({ version: SemVerSchema, sha256: Sha256Schema }).nullable(),
   fonts: z.array(z.strictObject({ file: z.string(), sha256: Sha256Schema })),
   assets: z.array(z.strictObject({ ref: IdSchema, sha256: Sha256Schema })),
@@ -54,6 +66,7 @@ export const ReproducibilityManifestSchema = z.strictObject({
     crf: z.number().int().min(0).max(51).nullable(),
     pixel_format: z.string().nullable(),
     color_space: z.enum(['bt601', 'bt709', 'bt2020-ncl']).nullable(),
+    reduced_motion: z.boolean(),
   }),
   manifest_sha256: Sha256Schema,
 });

@@ -134,10 +134,31 @@ const offset = { offset: OffsetSchema.optional() };
 
 /**
  * Ancre temporelle : le moment où quelque chose se produit, exprimé par
- * rapport à la scène, à la voix réelle ou à un autre événement.
+ * rapport à la scène, à la parole ou à un autre élément de la scène.
+ *
+ * - `scene.start` : le comportement COMMENCE au début de la scène ;
+ * - `scene.end` / `before_next` : le comportement se TERMINE à la fin de la
+ *   scène (avant la transition vers la suivante) ;
+ * - `after` / `with` : après la fin / au début d'un comportement ou d'un événement ;
+ * - `after_previous` : après le comportement déclaré juste avant dans la scène ;
+ * - `with_layer` / `after_layer` : au début de l'entrée / après le dernier
+ *   comportement (hors sortie) d'un calque ;
+ * - `beat` : n beats après le début de la scène ;
+ * - `voice_segment` / `voice_word` : sur la parole (estimée tant qu'aucun
+ *   alignement réel n'existe) ;
+ * - `voice_breath` : réservé, refusé tant que la voix n'est pas alignée.
  */
 export const AnchorSchema = z.union([
   z.strictObject({ event: z.enum(['scene.start', 'scene.end']), ...offset }),
+  z.strictObject({ after_previous: z.literal(true), ...offset }),
+  z.strictObject({ before_next: z.literal(true), ...offset }),
+  z.strictObject({ with_layer: IdSchema, ...offset }),
+  z.strictObject({ after_layer: IdSchema, ...offset }),
+  z.strictObject({ beat: z.number().finite().min(0).max(64), ...offset }),
+  z.strictObject({
+    voice_breath: z.strictObject({ segment: IdSchema, index: z.number().int().min(0).max(64) }),
+    ...offset,
+  }),
   z.strictObject({
     voice_segment: z.strictObject({ segment: IdSchema, edge: z.enum(['start', 'end']) }),
     ...offset,
@@ -154,6 +175,45 @@ export const AnchorSchema = z.union([
   z.strictObject({ with: IdSchema, ...offset }),
 ]);
 export type Anchor = z.infer<typeof AnchorSchema>;
+
+/** Catalogue des ancres et de leur statut réel dans le moteur. */
+export const ANCHOR_KINDS = {
+  scene_start: 'implemented',
+  scene_end: 'implemented',
+  before_next: 'implemented',
+  after: 'implemented',
+  with: 'implemented',
+  after_previous: 'implemented',
+  with_layer: 'implemented',
+  after_layer: 'implemented',
+  beat: 'implemented',
+  /** Résolues sur une parole ESTIMÉE (EstimatedSpeechTiming), jamais sur une voix réelle en P1.3. */
+  voice_segment: 'estimated',
+  voice_word: 'estimated',
+  /** Type prêt, refusé tant qu'aucun alignement vocal réel n'existe. */
+  voice_breath: 'reserved',
+} as const;
+export type AnchorKind = keyof typeof ANCHOR_KINDS;
+
+export function anchorKind(anchor: Anchor): AnchorKind {
+  if ('event' in anchor) return anchor.event === 'scene.start' ? 'scene_start' : 'scene_end';
+  if ('after_previous' in anchor) return 'after_previous';
+  if ('before_next' in anchor) return 'before_next';
+  if ('with_layer' in anchor) return 'with_layer';
+  if ('after_layer' in anchor) return 'after_layer';
+  if ('beat' in anchor) return 'beat';
+  if ('voice_breath' in anchor) return 'voice_breath';
+  if ('voice_segment' in anchor) return 'voice_segment';
+  if ('voice_word' in anchor) return 'voice_word';
+  if ('after' in anchor) return 'after';
+  return 'with';
+}
+
+/** Ancres qui fixent la FIN du comportement (et non son début). */
+export function isEndAnchor(anchor: Anchor): boolean {
+  const kind = anchorKind(anchor);
+  return kind === 'scene_end' || kind === 'before_next';
+}
 
 /** Placement explicite sur la grille de marque (surcharge d'un slot). */
 export const GridPlacementSchema = z.strictObject({

@@ -18,7 +18,6 @@ export function validatePatternSemantics(pattern: PatternDefinition): Validation
   cover('layout_variant', axes.layout_variant.values, pattern.layouts, 'layouts');
   cover('motion_variant', axes.motion_variant.values, pattern.motions, 'motions');
   cover('hierarchy_variant', axes.hierarchy_variant.values, pattern.hierarchies, 'hierarchies');
-  cover('energy', axes.energy.values, pattern.energies, 'energies');
 
   const usedSlots = [pattern.elements.statement.slot, ...(pattern.elements.rule ? [pattern.elements.rule.slot] : [])];
   for (const [layoutId, layout] of Object.entries(pattern.layouts)) {

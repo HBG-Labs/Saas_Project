@@ -69,8 +69,43 @@ const REGISTRY: { [K in DocumentKind]: KindEntry<DocumentKinds[K]> } = {
           render_config: { ...(doc['render_config'] as Record<string, unknown>), color_space: null },
         }),
       },
+      // Un manifeste 0.2.0 ne disait rien de l'état git ni de la source du
+      // timing : ils restent inconnus, et un rendu inconnu n'est jamais « de référence ».
+      '0.2.0': {
+        to: '0.3.0',
+        migrate: (doc) => ({
+          ...doc,
+          engine: { ...(doc['engine'] as Record<string, unknown>), git_dirty: null },
+          reference_eligible: false,
+          timing_source: 'unknown',
+          behavior_registry: null,
+          render_config: { ...(doc['render_config'] as Record<string, unknown>), reduced_motion: false },
+        }),
+      },
     },
   },
+};
+
+/** Spec 0.1.0 → 0.2.0 : chaque comportement épingle la version 1.0.0 (sémantique d'origine). */
+function pinBehaviorVersions(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(pinBehaviorVersions);
+  if (value === null || typeof value !== 'object') return value;
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(obj)) {
+    if (key === 'transition_out' && child !== null && typeof child === 'object') {
+      out[key] = { ...(child as Record<string, unknown>), version: '1.0.0' };
+    } else if (key === 'behaviors' && Array.isArray(child)) {
+      out[key] = child.map((b) => ({ ...(b as Record<string, unknown>), version: '1.0.0' }));
+    } else {
+      out[key] = pinBehaviorVersions(child);
+    }
+  }
+  return out;
+}
+REGISTRY[MOTION_SPEC_SCHEMA].migrations['0.1.0'] = {
+  to: '0.2.0',
+  migrate: (doc) => ({ ...doc, scenes: pinBehaviorVersions(doc['scenes']) }),
 };
 
 export function currentVersion(kind: DocumentKind): string {

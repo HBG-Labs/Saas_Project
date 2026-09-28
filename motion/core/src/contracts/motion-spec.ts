@@ -25,7 +25,11 @@ import {
 import type { Anchor, Duration, GridPlacement } from './common.ts';
 
 export const MOTION_SPEC_SCHEMA = 'motion-scene-spec';
-export const MOTION_SPEC_VERSION = '0.1.0';
+/**
+ * 0.2.0 : chaque comportement épingle sa version (registre fermé) ; ancres
+ * étendues ; cible de durée facultative. Migration depuis 0.1.0 : version 1.0.0.
+ */
+export const MOTION_SPEC_VERSION = '0.2.0';
 
 const ParamValueSchema = z.union([z.number().finite(), z.string().max(64), z.boolean()]);
 
@@ -33,6 +37,8 @@ const ParamValueSchema = z.union([z.number().finite(), z.string().max(64), z.boo
 export const BehaviorInstanceSchema = z.strictObject({
   id: IdSchema,
   behavior: BehaviorIdSchema,
+  /** Version du comportement dans le registre : aucune résolution implicite vers « la dernière ». */
+  version: SemVerSchema,
   variant: IdSchema.optional(),
   params: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), ParamValueSchema).optional(),
   target: z
@@ -264,7 +270,7 @@ export const SceneSchema = z.strictObject({
       .max(8),
   }),
   subtitles: z.strictObject({ mode: z.enum(['auto', 'off']), reason: z.string().max(120).optional() }),
-  transition_out: z.strictObject({ behavior: BehaviorIdSchema, to: IdSchema.optional() }).optional(),
+  transition_out: z.strictObject({ behavior: BehaviorIdSchema, version: SemVerSchema, to: IdSchema.optional() }).optional(),
 });
 export type Scene = z.infer<typeof SceneSchema>;
 export type SceneEvent = z.infer<typeof SceneEventSchema>;
@@ -328,6 +334,8 @@ export const MotionSceneSpecSchema = z.strictObject({
     }),
     segments: z.array(VoiceSegmentSchema).max(24),
   }),
+  /** Durée visée pour l'ensemble : les silences élastiques s'ajustent, rien n'est accéléré. */
+  duration_target: z.strictObject({ min_ms: z.number().int().min(0), max_ms: z.number().int().min(0) }).optional(),
   scenes: z.array(SceneSchema).min(1).max(16),
 });
 export type MotionSceneSpec = z.infer<typeof MotionSceneSpecSchema>;

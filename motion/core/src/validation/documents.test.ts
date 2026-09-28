@@ -40,7 +40,7 @@ describe('versionnement', () => {
     delete doc.voice_personality.pace_wpm;
     expect(codes(readVersioned('creative-style-profile', doc))).toEqual(['version.unsupported']);
   });
-  it('migre un manifeste 0.1.0 en 0.2.0 (espace colorimétrique inconnu)', () => {
+  it('migre un manifeste 0.1.0 jusqu’à 0.3.0 (espace colorimétrique et état git inconnus)', () => {
     const v1 = {
       schema: 'reproducibility-manifest',
       schema_version: '0.1.0',
@@ -66,7 +66,8 @@ describe('versionnement', () => {
     const read = readVersioned('reproducibility-manifest', v1);
     expect(read.ok && read.migratedFrom).toBe('0.1.0');
     expect(read.ok && read.value.render_config.color_space).toBeNull();
-    expect(read.ok && read.value.schema_version).toBe('0.2.0');
+    expect(read.ok && read.value.schema_version).toBe('0.3.0');
+    expect(read.ok && read.value.reference_eligible).toBe(false);
   });
   it('refuse un document sans version', () => {
     const doc = clone(readFixture('moon.intent.json'));
