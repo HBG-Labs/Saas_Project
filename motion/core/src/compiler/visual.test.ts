@@ -199,6 +199,26 @@ describe('zone sûre et placements', () => {
     expect(codes(validateSpec(twice, ink, { patterns: loadFixturePatterns(), assets }))).toContain('layout.placement_conflict');
   });
 
+  it('refuse deux contenus qui se chevauchent au repos (défaut réel, vu sur la planche SIGNAL)', () => {
+    const spec = visual();
+    const mask = spec.scenes[1]!.layers[0]!;
+    // Vignette sur 5 rangées : avec la grille 6×12 de SIGNAL, elle mord sur le texte.
+    mask.placement = { col: 2, col_span: 5, row: 1, row_span: 5 };
+    const result = compile(spec, signal);
+    expect(codes(result)).toEqual(['layout.collision']);
+    expect(result.ok ? '' : result.issues.find((i) => i.code === 'layout.collision')!.message).toMatch(/msk_moon.*tx_tides/);
+  });
+
+  it('un chevauchement déclaré (texte posé dans la région d’une image) est permis', () => {
+    const spec = visual();
+    const image = spec.scenes[0]!.layers[0]!;
+    if (image.primitive !== 'image') throw new Error('image attendue');
+    // Image non plein cadre : elle compte comme contenu, mais le titre est posé DANS sa région.
+    image.bleed = false;
+    image.placement = { col: 1, col_span: 6, row: 1, row_span: 12 };
+    expect(compile(spec).ok).toBe(true);
+  });
+
   it('une région rognée par le recadrage n’est jamais inventée', () => {
     const spec = visual();
     const image = spec.scenes[0]!.layers[0]!;

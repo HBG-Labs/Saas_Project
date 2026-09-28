@@ -349,6 +349,42 @@ function buildNode(build: SceneBuild, layer: Layer, parent: Box | null): { node:
   }
 }
 
+/**
+ * Collisions au repos : deux contenus d'une même scène ne se chevauchent jamais,
+ * sauf chevauchement DÉCLARÉ (calque posé dans une région d'image, enfant d'un
+ * masque ou d'un groupe). Les images plein cadre et les formes sont du décor.
+ * Emprise : encre pour le texte, boîte pour tracés, masques et images.
+ * Séparation minimale : le plus petit espacement du style (`space.xs`).
+ */
+function checkCollisions(sceneId: string, layers: readonly Layer[], nodes: readonly PlanNode[], gap: number) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const content = layers.filter((l) => !(l.primitive === 'image' && l.bleed) && l.primitive !== 'shape' && l.primitive !== 'group');
+  const inflate = (b: Box): Box => ({ x: b.x - gap / 2, y: b.y - gap / 2, w: b.w + gap, h: b.h + gap });
+  const footprint = (node: PlanNode): Box | null => {
+    const box = node.type === 'text' ? node.ink : node.box;
+    return box ? inflate(box) : null;
+  };
+  for (let i = 0; i < content.length; i++) {
+    for (let j = i + 1; j < content.length; j++) {
+      const a = content[i]!;
+      const b = content[j]!;
+      if (a.region?.layer === b.id || b.region?.layer === a.id) continue;
+      const na = byId.get(a.id);
+      const nb = byId.get(b.id);
+      const fa = na ? footprint(na) : null;
+      const fb = nb ? footprint(nb) : null;
+      const overlap = fa && fb ? intersect(fa, fb) : null;
+      if (overlap && overlap.w > SAFE_TOLERANCE && overlap.h > SAFE_TOLERANCE) {
+        throw new CompileError(
+          'layout.collision',
+          `${sceneId} : « ${a.id} » et « ${b.id} » se chevauchent ou sont à moins de ${gap.toFixed(1)} px au repos ` +
+            `(${overlap.w.toFixed(1)}×${overlap.h.toFixed(1)} px) ; déclarer une superposition (région d'image, masque) ou déplacer un des calques`,
+        );
+      }
+    }
+  }
+}
+
 function flattenLayers(layers: readonly Layer[]): Layer[] {
   return layers.flatMap((l) => (l.primitive === 'group' || l.primitive === 'mask' ? [l, ...flattenLayers(l.children)] : [l]));
 }
@@ -375,14 +411,13 @@ export function buildScenes(
         flattenLayers(scene.layers).flatMap((l) => l.behaviors.filter((b) => b.behavior === 'ACCENT_WORD').map((b) => b.target?.run ?? '')),
       ),
     };
-    nodes.set(
-      scene.id,
-      scene.layers.map((layer) => {
-        const built = buildNode(build, layer, null);
-        build.contexts.set(layer.id, built.context);
-        return built.node;
-      }),
-    );
+    const built = scene.layers.map((layer) => {
+      const result = buildNode(build, layer, null);
+      build.contexts.set(layer.id, result.context);
+      return result.node;
+    });
+    checkCollisions(scene.id, scene.layers, built, (context.style.space['xs'] ?? 0) * context.frame.scale);
+    nodes.set(scene.id, built);
     for (const [id, ctx] of build.contexts) contexts.set(id, { ...ctx, scene: scene.id });
   }
   return { nodes, contexts };
