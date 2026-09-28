@@ -17,8 +17,11 @@ const isolatedCore = path.join(sandbox, 'core');
 afterAll(() => rmSync(sandbox, { recursive: true, force: true }));
 
 function run(args: string[]) {
-  const result = spawnSync(process.execPath, args, { cwd: isolatedCore, encoding: 'utf8', timeout: 240_000 });
-  return { status: result.status, output: `${result.stdout ?? ''}\n${result.stderr ?? ''}` };
+  // Sans couleurs : en CI (FORCE_COLOR), les codes ANSI s'intercalent dans « Tests  N passed ».
+  const env = { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' };
+  const result = spawnSync(process.execPath, args, { cwd: isolatedCore, encoding: 'utf8', timeout: 240_000, env });
+  const plain = (s: string | null) => (s ?? '').replace(/\u001b\[[0-9;]*m/g, '');
+  return { status: result.status, output: `${plain(result.stdout)}\n${plain(result.stderr)}` };
 }
 
 describe('isolement du cœur', () => {
