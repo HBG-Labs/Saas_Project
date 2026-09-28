@@ -1,6 +1,6 @@
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -139,9 +139,29 @@ async function openOwnBrowser(): Promise<{ browser: Awaited<ReturnType<typeof op
   return { browser, profileDirs: created.map((name) => path.join(os.tmpdir(), name)) };
 }
 
-/** Suppression patiente : les verrous de fichiers de Chrome tombent peu après la fin du processus. */
-export function removeProfiles(dirs: readonly string[]): void {
-  for (const dir of dirs) rmSync(dir, { recursive: true, force: true, maxRetries: 40, retryDelay: 250 });
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Suppression patiente et VÉRIFIÉE du profil temporaire.
+ *
+ * Sous Windows, Remotion arrête Chrome par un `taskkill` qu'il n'attend pas :
+ * `browser.close()` rend la main pendant que Chrome vit encore, et un Chrome
+ * mourant peut recréer des fichiers (DevToolsActivePort…) APRÈS la suppression.
+ * On supprime donc, puis on vérifie que le dossier ne réapparaît pas pendant une
+ * période de calme ; sinon on recommence (jusqu'à ~10 s). Sans effet sur le rendu.
+ */
+export async function removeProfiles(dirs: readonly string[]): Promise<void> {
+  for (const dir of dirs) {
+    let quiet = 0;
+    for (let attempt = 0; attempt < 40 && quiet < 3; attempt++) {
+      if (existsSync(dir)) {
+        rmSync(dir, { recursive: true, force: true, maxRetries: 40, retryDelay: 250 });
+        quiet = 0;
+      } else quiet++;
+      await pause(250);
+    }
+    if (existsSync(dir)) throw new Error(`Profil Chrome temporaire impossible à supprimer : ${dir}`);
+  }
 }
 
 export interface RenderRequest {
@@ -178,7 +198,7 @@ export async function renderPlanStill(request: Omit<RenderRequest, 'profile'> & 
     });
   } finally {
     await own.browser.close({ silent: true });
-    removeProfiles(own.profileDirs);
+    await removeProfiles(own.profileDirs);
   }
 }
 
@@ -237,7 +257,7 @@ export async function renderPlanToMp4(request: RenderRequest): Promise<RenderSta
   } finally {
     clearInterval(sampler);
     await own.browser.close({ silent: true });
-    removeProfiles(own.profileDirs);
+    await removeProfiles(own.profileDirs);
   }
   const renderMs = performance.now() - started;
   const cpu = process.cpuUsage(cpuBefore);

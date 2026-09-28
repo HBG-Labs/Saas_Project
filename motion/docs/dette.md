@@ -48,6 +48,11 @@ Solde : sous-ensembles de polices incluant U+202F.
   le profil temporaire pendant que Chrome le verrouillait encore ; ~56 Mo restaient par
   rendu (308 profils, 3,9 Go, disque plein). Le pipeline ouvre désormais son propre
   navigateur, le ferme, puis supprime le profil avec reprises.
+  **P1.5** : fuite résiduelle intermittente (31 profils pendant les campagnes d'images
+  fixes) — Remotion lance `taskkill` sans l'attendre, et Chrome mourant recréait des
+  fichiers après la suppression. Correctif : suppression vérifiée jusqu'à stabilité
+  (le dossier ne doit pas réapparaître) ; test de fuite étendu aux images fixes
+  enchaînées. La course étant intermittente, le test ne la déclenche pas à coup sûr.
 - **Texte** : pas de césure ; coupure seulement sur U+0020 ; alignement optique
   horizontal uniquement (pas de compensation verticale de ponctuation suspendue).
 - **Ajustement** : pas de 1 % de la taille du rôle ; aucune variation d'interlignage.

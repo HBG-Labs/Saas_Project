@@ -120,7 +120,14 @@ describe('smoke test de rendu', () => {
     // Uniquement les profils CRÉÉS pendant ce test, dans le dossier temporaire du système.
     const profiles = () => new Set(readdirSync(tmpdir()).filter((n) => n.startsWith('puppeteer_dev_chrome_profile-')));
     const before = profiles();
-    await runPipeline(request({ outDir: path.join(out, 'leak') }));
+    const result = await runPipeline(request({ outDir: path.join(out, 'leak') }));
+    // Images fixes enchaînées : le chemin où la course « Chrome encore vivant après close() »
+    // (taskkill non attendu sous Windows) laissait des profils en P1.5.
+    const { styleDir } = loadStyleSource(request({}).style);
+    const fonts = fontSources(result.plan, styleDir, request({}).style.libraryRoot);
+    for (let i = 0; i < 3; i++) {
+      await renderPlanStill({ plan: result.plan, fonts, images: [], audio: null, frame: i, outputFile: path.join(out, `leak-${i}.png`) });
+    }
     const leaked = [...profiles()].filter((n) => !before.has(n));
     expect(leaked).toEqual([]);
   });
